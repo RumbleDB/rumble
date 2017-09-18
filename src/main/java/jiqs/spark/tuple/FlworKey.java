@@ -23,7 +23,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import jiqs.jsoniq.exceptions.IqRuntimeException;
+import jiqs.jsoniq.exceptions.SparksoniqRuntimeException;
 import jiqs.jsoniq.item.*;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -98,7 +98,7 @@ public class FlworKey implements KryoSerializable, Comparable<FlworKey> {
             //Non atomics cannot be compared
             } else if (currentItem instanceof ArrayItem || currentItem instanceof ObjectItem ||
                     comparisonItem instanceof ArrayItem || comparisonItem instanceof ObjectItem)
-                throw new IqRuntimeException("Non atomic key not allowed");
+                throw new SparksoniqRuntimeException("Non atomic key not allowed");
             //Boolean comparison
             else if (currentItem instanceof BooleanItem && comparisonItem instanceof BooleanItem) {
                 result = new Boolean(((BooleanItem)currentItem).getBooleanValue()).
@@ -114,7 +114,7 @@ public class FlworKey implements KryoSerializable, Comparable<FlworKey> {
             else if(currentItem instanceof StringItem && comparisonItem instanceof StringItem)
                 result = currentItem.serialize().compareTo(comparisonItem.serialize());
             else if(!currentItem.getClass().getSimpleName().equals(comparisonItem.getClass().getSimpleName()))
-                throw new IqRuntimeException("Invalid sort key, different Item types");
+                throw new SparksoniqRuntimeException("Invalid sort key, different Item types");
             else
                 result = currentItem.serialize().compareTo(comparisonItem.serialize());
 

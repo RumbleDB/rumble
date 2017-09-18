@@ -19,12 +19,11 @@
  */
  package jiqs.jsoniq.runtime.iterator.functions;
 
-import jiqs.jsoniq.exceptions.IqRuntimeException;
+import jiqs.jsoniq.exceptions.SparksoniqRuntimeException;
 import jiqs.jsoniq.exceptions.IteratorFlowException;
 import jiqs.jsoniq.item.ArrayItem;
 import jiqs.jsoniq.item.IntegerItem;
 import jiqs.jsoniq.item.Item;
-import jiqs.jsoniq.item.ObjectItem;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
 import jiqs.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 
@@ -49,7 +48,7 @@ public class ArrayFunctionIterator extends LocalFunctionCallIterator {
             arrayIterator.open(_currentDynamicContext);
             Item iteratorResult = arrayIterator.next();
             if(!(iteratorResult instanceof ArrayItem))
-                throw new IqRuntimeException("Invalid argument to "
+                throw new SparksoniqRuntimeException("Invalid argument to "
                         + _operator.toString() + " function, array expected");
             ArrayItem array = (ArrayItem) iteratorResult;
             arrayIterator.close();

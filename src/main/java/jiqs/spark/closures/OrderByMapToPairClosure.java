@@ -19,7 +19,7 @@
  */
  package jiqs.spark.closures;
 
-import jiqs.jsoniq.exceptions.IqRuntimeException;
+import jiqs.jsoniq.exceptions.SparksoniqRuntimeException;
 import jiqs.jsoniq.item.Item;
 import jiqs.semantics.DynamicContext;
 import jiqs.spark.tuple.FlworKey;
@@ -48,7 +48,7 @@ public class OrderByMapToPairClosure implements PairFunction<FlworTuple, FlworKe
             while (orderByExpression.getExpression().hasNext()){
                 Item resultItem = orderByExpression.getExpression().next();
                 if(resultItem != null && !Item.isAtomic(resultItem))
-                    throw new IqRuntimeException("Order by keys must be atomics");
+                    throw new SparksoniqRuntimeException("Order by keys must be atomics");
                 results.add(resultItem);
             }
             orderByExpression.getExpression().close();

@@ -1,4 +1,4 @@
 (:JIQS: ShouldRun; Output="( 4, 10, 0)" :)
-length((1,2,3,4)),
-length(1 to 10),
-length(())
+count((1,2,3,4)),
+count(1 to 10),
+count(())

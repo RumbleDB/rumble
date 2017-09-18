@@ -19,14 +19,13 @@
  */
  package jiqs.jsoniq.runtime.iterator.functions;
 
-import jiqs.jsoniq.exceptions.IqRuntimeException;
+import jiqs.jsoniq.exceptions.SparksoniqRuntimeException;
 import jiqs.jsoniq.exceptions.IteratorFlowException;
 import jiqs.jsoniq.item.Item;
 import jiqs.jsoniq.item.ObjectItem;
 import jiqs.jsoniq.item.StringItem;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
 import jiqs.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import jiqs.jsoniq.runtime.iterator.primary.ObjectRuntimeIterator;
 import jiqs.semantics.DynamicContext;
 
 import java.util.ArrayList;
@@ -40,7 +39,7 @@ public class ObjectFunctionIterator extends LocalFunctionCallIterator {
     public ObjectFunctionIterator(List<RuntimeIterator> arguments, ObjectFunctionOperators op) {
         super(arguments);
         if(arguments.size() != 1)
-            throw new IqRuntimeException("Incorrect number of arguments for object function; " +
+            throw new SparksoniqRuntimeException("Incorrect number of arguments for object function; " +
                     "Only one object argument is allowed");
         this._operator = op;
     }
@@ -55,7 +54,7 @@ public class ObjectFunctionIterator extends LocalFunctionCallIterator {
                 objectIterator.open(_currentDynamicContext);
                 Item iteratorResult = objectIterator.next();
                 if(!(iteratorResult instanceof ObjectItem))
-                    throw new IqRuntimeException("Invalid argument to "
+                    throw new SparksoniqRuntimeException("Invalid argument to "
                             + _operator.toString() + " function, object expected");
                 ObjectItem object = (ObjectItem) iteratorResult;
                 objectIterator.close();

@@ -19,7 +19,7 @@
  */
  package jiqs.jsoniq.runtime.iterator.control;
 
-import jiqs.jsoniq.exceptions.IqRuntimeException;
+import jiqs.jsoniq.exceptions.SparksoniqRuntimeException;
 import jiqs.jsoniq.exceptions.IteratorFlowException;
 import jiqs.jsoniq.item.Item;
 import jiqs.jsoniq.runtime.iterator.LocalRuntimeIterator;
@@ -57,7 +57,7 @@ public class IfRuntimeIterator extends LocalRuntimeIterator{
             condition.open(this._currentDynamicContext);
             Item conditionResult = condition.next();
             if(condition.hasNext())
-                throw new IqRuntimeException("Effective boolean value not defined for sequences");
+                throw new SparksoniqRuntimeException("Effective boolean value not defined for sequences");
             condition.close();
             result = new ArrayList<>();
             if(Item.getEffectiveBooleanValue(conditionResult)){

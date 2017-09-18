@@ -20,11 +20,10 @@
  package jiqs.spark.iterator.flowr;
 
 import jiqs.jsoniq.compiler.translator.expr.flowr.FLWOR_CLAUSES;
-import jiqs.jsoniq.exceptions.IqRuntimeException;
+import jiqs.jsoniq.exceptions.SparksoniqRuntimeException;
 import jiqs.jsoniq.exceptions.IteratorFlowException;
 import jiqs.jsoniq.item.Item;
 import jiqs.semantics.DynamicContext;
-import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
 import jiqs.spark.iterator.SparkRuntimeIterator;
 import jiqs.spark.iterator.flowr.base.FlowrClauseSparkIterator;
 import org.apache.spark.api.java.JavaRDD;
@@ -42,7 +41,7 @@ public class FlworExpressionSparkRuntimeIterator extends SparkRuntimeIterator {
         super(null);
         _clauses = new ArrayList<>();
         if(startClause.getClauseType() != FLWOR_CLAUSES.FOR && startClause.getClauseType() != FLWOR_CLAUSES.LET)
-            throw new IqRuntimeException("FLOWR clauses must start with a for/let clause");
+            throw new SparksoniqRuntimeException("FLOWR clauses must start with a for/let clause");
         this._returnClause = returnClause;
         this._clauses.add(startClause);
         this._clauses.addAll(contentClauses);

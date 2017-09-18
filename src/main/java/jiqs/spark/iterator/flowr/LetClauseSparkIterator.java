@@ -20,7 +20,7 @@
  package jiqs.spark.iterator.flowr;
 
 import jiqs.jsoniq.compiler.translator.expr.flowr.FLWOR_CLAUSES;
-import jiqs.jsoniq.exceptions.IqRuntimeException;
+import jiqs.jsoniq.exceptions.SparksoniqRuntimeException;
 import jiqs.jsoniq.item.Item;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
 import jiqs.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
@@ -61,7 +61,7 @@ public class LetClauseSparkIterator extends FlowrClauseSparkIterator {
     private JavaRDD<FlworTuple> getNewRDDFromExpression(RuntimeIterator expression) {
         JavaRDD<FlworTuple> rdd;
         if(expression.isRDD())
-            throw new IqRuntimeException("Initial let clauses don't support RDDs");
+            throw new SparksoniqRuntimeException("Initial let clauses don't support RDDs");
         else {
             List<Item> contents = new ArrayList<>();
             expression.open(this._currentDynamicContext);

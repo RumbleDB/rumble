@@ -25,7 +25,7 @@ import jiqs.jsoniq.compiler.JsoniqExpressionTreeVisitor;
 import jiqs.jsoniq.compiler.parser.JsoniqLexer;
 import jiqs.jsoniq.compiler.parser.JsoniqParser;
 import jiqs.jsoniq.compiler.translator.expr.Expression;
-import jiqs.jsoniq.exceptions.IqRuntimeException;
+import jiqs.jsoniq.exceptions.SparksoniqRuntimeException;
 import jiqs.jsoniq.exceptions.ParsingException;
 import jiqs.jsoniq.item.Item;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
@@ -44,8 +44,6 @@ import org.apache.spark.api.java.JavaRDD;
 
 import java.io.*;
 import java.net.URI;
-import java.nio.file.OpenOption;
-import java.nio.file.StandardOpenOption;
 
 
 public class JsoniqQueryExecutor {
@@ -108,7 +106,7 @@ public class JsoniqQueryExecutor {
             //else write from Spark RDD
         } else {
             if(!result.isRDD())
-                throw new IqRuntimeException("Could not find any RDD iterators in executor");
+                throw new SparksoniqRuntimeException("Could not find any RDD iterators in executor");
             JavaRDD<Item> rdd = result.getRDD();
             JavaRDD<String> output = rdd.map(o -> o.serialize());
             output.saveAsTextFile(outputPath);

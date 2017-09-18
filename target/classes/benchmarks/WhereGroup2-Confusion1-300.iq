@@ -3,4 +3,4 @@ let $country := $i.country, $target := $i."target"
 group by $target, $country
 return {"Language": $target,
         "Country" : $country,
-        "Guesses": length($i)}
+        "Guesses": count($i)}

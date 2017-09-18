@@ -23,7 +23,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import jiqs.jsoniq.exceptions.IqRuntimeException;
+import jiqs.jsoniq.exceptions.SparksoniqRuntimeException;
 import jiqs.jsoniq.item.Item;
 import jiqs.spark.tuple.FlworTuple;
 
@@ -55,7 +55,7 @@ public class DynamicContext implements KryoSerializable{
         else if(_parent !=null)
             return _parent.getVariableValue(varName);
         else
-            throw new IqRuntimeException("Runtime error retrieving variable " +
+            throw new SparksoniqRuntimeException("Runtime error retrieving variable " +
                     "" + varName + " value");
     }
 

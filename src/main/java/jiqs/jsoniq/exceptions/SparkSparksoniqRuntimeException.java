@@ -19,8 +19,8 @@
  */
  package jiqs.jsoniq.exceptions;
 
-public class IqRuntimeException extends RuntimeException {
-    public IqRuntimeException(String message) {
+public class SparkSparksoniqRuntimeException extends SparksoniqRuntimeException {
+    public SparkSparksoniqRuntimeException(String message) {
         super(message);
     }
 }

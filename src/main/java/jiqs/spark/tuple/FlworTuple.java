@@ -23,10 +23,9 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import jiqs.jsoniq.exceptions.IqRuntimeException;
+import jiqs.jsoniq.exceptions.SparksoniqRuntimeException;
 import jiqs.jsoniq.item.Item;
 
-import java.io.Serializable;
 import java.util.*;
 
 public class FlworTuple implements KryoSerializable{
@@ -60,7 +59,7 @@ public class FlworTuple implements KryoSerializable{
         if(contains(key))
             return variables.get(key);
 
-        throw new IqRuntimeException("Undeclared FLOWR variable");
+        throw new SparksoniqRuntimeException("Undeclared FLOWR variable");
     }
 
     public Set<String> getKeys() {

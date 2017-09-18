@@ -21,8 +21,6 @@
 
 import jiqs.io.json.JiqsItemParser;
 import jiqs.jsoniq.compiler.translator.expr.flowr.FLWOR_CLAUSES;
-import jiqs.jsoniq.exceptions.IqRuntimeException;
-import jiqs.jsoniq.item.Item;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
 import jiqs.semantics.DynamicContext;
 import jiqs.spark.tuple.FlworTuple;

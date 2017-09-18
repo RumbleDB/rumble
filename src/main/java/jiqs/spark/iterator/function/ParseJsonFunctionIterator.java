@@ -20,7 +20,7 @@
  package jiqs.spark.iterator.function;
 
 import jiqs.io.json.StringToItemMapper;
-import jiqs.jsoniq.exceptions.IqRuntimeException;
+import jiqs.jsoniq.exceptions.SparksoniqRuntimeException;
 import jiqs.jsoniq.item.Item;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
 import jiqs.spark.SparkContextManager;
@@ -64,7 +64,7 @@ public class ParseJsonFunctionIterator extends SparkFunctionCallIterator {
     public ParseJsonFunctionIterator(List<RuntimeIterator> arguments) {
         super(arguments);
         if(arguments.size() > 2 || arguments.size() < 1)
-            throw new IqRuntimeException("Incorrect number of arguments for parse-json function; " +
+            throw new SparksoniqRuntimeException("Incorrect number of arguments for parse-json function; " +
                     "Allowed signatures: (filePath) ; (filePath, minPartitions)");
 
 

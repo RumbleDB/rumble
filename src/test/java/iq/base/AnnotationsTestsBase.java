@@ -27,7 +27,7 @@ import jiqs.jsoniq.exceptions.ParsingException;
 import jiqs.jsoniq.exceptions.SemanticException;
 import jiqs.semantics.visitor.StaticContextVisitor;
 import jiqs.semantics.visitor.RuntimeIteratorVisitor;
-import jiqs.jsoniq.exceptions.IqRuntimeException;
+import jiqs.jsoniq.exceptions.SparksoniqRuntimeException;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BailErrorStrategy;
@@ -108,7 +108,7 @@ public class AnnotationsTestsBase {
             }catch (Exception ex){}
 
             //RUNTIME
-        } catch (IqRuntimeException exception){
+        } catch (SparksoniqRuntimeException exception){
             String errorOutput = exception.getMessage();
             try{
             if(currentAnnotation.shouldRun()) {
@@ -138,7 +138,7 @@ public class AnnotationsTestsBase {
                 currentAnnotation.shouldRun()){
             try {
                 checkExpectedOutput( currentAnnotation.getOutput(), runtimeIterator);
-            } catch (IqRuntimeException exception){
+            } catch (SparksoniqRuntimeException exception){
                 String errorOutput = exception.getMessage();
                 Assert.fail("Program did not runLocal when expected to.\nError output: " + errorOutput + "\n");
             }
@@ -148,7 +148,7 @@ public class AnnotationsTestsBase {
                     !currentAnnotation.shouldRun()) {
                 try {
                     testCrashOutput(currentAnnotation.getErrorMessage(), runtimeIterator);
-                }  catch (IqRuntimeException exception){
+                }  catch (SparksoniqRuntimeException exception){
                     String errorOutput = exception.getMessage();
                     Assert.assertTrue(errorOutput, true);
                     return context;

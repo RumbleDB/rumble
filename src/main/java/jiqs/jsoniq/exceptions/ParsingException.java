@@ -17,11 +17,11 @@
  * Author: Stefan Irimescu
  *
  */
- package jiqs.jsoniq.exceptions;
+package jiqs.jsoniq.exceptions;
 
-public class ParsingException extends RuntimeException{
+public class ParsingException extends SparksoniqRuntimeException {
 
     public ParsingException(String message, int line) {
-        super(String.format("Parser failed on line %d %s", line, message));
+        super(String.format("Parser failed on line %d %s", line, message), ErrorCodes.ParsingErrorCode);
     }
 }

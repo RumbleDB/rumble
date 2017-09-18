@@ -19,7 +19,7 @@
  */
  package jiqs.jsoniq.exceptions;
 
-public class IteratorFlowException extends IqRuntimeException {
+public class IteratorFlowException extends SparksoniqRuntimeException {
 
     public IteratorFlowException(String message)
     {

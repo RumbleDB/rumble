@@ -19,12 +19,11 @@
  */
  package jiqs.spark.iterator.function;
 
-import jiqs.jsoniq.exceptions.IqRuntimeException;
+import jiqs.jsoniq.exceptions.SparksoniqRuntimeException;
 import jiqs.jsoniq.item.Item;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
 import jiqs.spark.SparkContextManager;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaSparkContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,7 +32,7 @@ public class ParallelizeFunctionIterator extends SparkFunctionCallIterator {
     public ParallelizeFunctionIterator(List<RuntimeIterator> parameters) {
         super(parameters);
         if(parameters.size() > 1 || parameters.size() < 1)
-            throw new IqRuntimeException("Incorrect number of arguments for parallelize function");
+            throw new SparksoniqRuntimeException("Incorrect number of arguments for parallelize function");
     }
 
     @Override

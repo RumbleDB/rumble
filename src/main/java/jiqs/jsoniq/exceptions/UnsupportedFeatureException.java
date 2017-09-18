@@ -19,8 +19,8 @@
  */
  package jiqs.jsoniq.exceptions;
 
-public class UnsupportedFeatureException extends IqRuntimeException {
+public class UnsupportedFeatureException extends SparksoniqRuntimeException {
     public UnsupportedFeatureException(String message) {
-        super(message);
+        super(message, ErrorCodes.UnimplementedErrorCode);
     }
 }

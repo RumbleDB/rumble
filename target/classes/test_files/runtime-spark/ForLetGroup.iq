@@ -4,4 +4,4 @@ let $guess := $i."guess", $target := $i."target"
 where $guess eq $target
 group by $target
 return {"Language": $target,
-        "Correct guesses": length($i)}
+        "Correct guesses": count($i)}

@@ -19,7 +19,7 @@
  */
  package jiqs.jsoniq.runtime.iterator.functions;
 
-import jiqs.jsoniq.exceptions.IqRuntimeException;
+import jiqs.jsoniq.exceptions.SparksoniqRuntimeException;
 import jiqs.jsoniq.exceptions.IteratorFlowException;
 import jiqs.jsoniq.item.IntegerItem;
 import jiqs.jsoniq.item.Item;
@@ -48,7 +48,7 @@ public class CountFunctionIterator extends LocalFunctionCallIterator {
     public CountFunctionIterator(List<RuntimeIterator> arguments) {
         super(arguments);
         if(arguments.size() != 1)
-            throw new IqRuntimeException("Incorrect number of arguments for count function; " +
+            throw new SparksoniqRuntimeException("Incorrect number of arguments for count function; " +
                     "Only one sequence argument is allowed");
     }
 

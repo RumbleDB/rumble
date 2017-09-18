@@ -1,4 +1,4 @@
-package jiqs.jsoniq.exceptions.errors;
+package jiqs.jsoniq.exceptions;
 
 public class ErrorCodes {
 
@@ -27,5 +27,9 @@ public class ErrorCodes {
     public static final String NonAtomicElementErrorCode = "JNTY0004";
 
     public static final String InvalidSelectorErrorCode = "JNTY0018";
+
+    public static final String RuntimeExceptionErrorCode = "XPDY0130";
+
+    public static final String UnimplementedErrorCode = "XPDY0139";
 
 }

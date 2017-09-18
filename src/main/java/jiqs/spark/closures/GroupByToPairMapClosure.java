@@ -19,7 +19,7 @@
  */
  package jiqs.spark.closures;
 
-import jiqs.jsoniq.exceptions.IqRuntimeException;
+import jiqs.jsoniq.exceptions.SparksoniqRuntimeException;
 import jiqs.jsoniq.item.Item;
 import jiqs.semantics.DynamicContext;
 import jiqs.spark.tuple.FlworKey;
@@ -46,13 +46,13 @@ public class GroupByToPairMapClosure implements PairFunction<FlworTuple, FlworKe
         for (GroupByClauseSparkIteratorExpression _groupVariable : _groupVariables) {
             if (_groupVariable.getExpression() != null) {
                 if (tuple.contains(_groupVariable.getVariableReference().getVariableName()))
-                    throw new IqRuntimeException("Group by variable redeclaration is illegal");
+                    throw new SparksoniqRuntimeException("Group by variable redeclaration is illegal");
                 List<Item> newVariableResults = new ArrayList<>();
                 _groupVariable.getExpression().open(new DynamicContext(tuple));
                 while (_groupVariable.getExpression().hasNext()){
                     Item resultItem = _groupVariable.getExpression().next();
                     if(!Item.isAtomic(resultItem))
-                        throw new IqRuntimeException("Group by keys must be atomics");
+                        throw new SparksoniqRuntimeException("Group by keys must be atomics");
                     newVariableResults.add(resultItem);
                 }
 

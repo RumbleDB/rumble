@@ -21,7 +21,7 @@
 
 import jiqs.jsoniq.item.Item;
 import jiqs.semantics.DynamicContext;
-import jiqs.jsoniq.exceptions.IqRuntimeException;
+import jiqs.jsoniq.exceptions.SparksoniqRuntimeException;
 import jiqs.jsoniq.exceptions.IteratorFlowException;
 import jiqs.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
@@ -41,7 +41,7 @@ public class PredicateIterator extends LocalRuntimeIterator {
     @Override
     public Item next() {
         if(this._children.size() < 2)
-            throw new IqRuntimeException("Invalid Predicate! Must initialize filter before calling next");
+            throw new SparksoniqRuntimeException("Invalid Predicate! Must initialize filter before calling next");
 
         if(result == null) {
             unfilteredSequence = new ArrayList<>();

@@ -19,10 +19,9 @@
  */
  package jiqs.jsoniq.runtime.iterator.functions;
 
-import jiqs.jsoniq.exceptions.IqRuntimeException;
+import jiqs.jsoniq.exceptions.SparksoniqRuntimeException;
 import jiqs.jsoniq.exceptions.IteratorFlowException;
 import jiqs.jsoniq.item.DecimalItem;
-import jiqs.jsoniq.item.IntegerItem;
 import jiqs.jsoniq.item.Item;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
 import jiqs.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
@@ -106,7 +105,7 @@ public class ArithmeticFunctionIterator extends LocalFunctionCallIterator {
                                       ArithmeticFunctionOperator operator) {
         super(arguments);
         if(arguments.size() != 1)
-        throw new IqRuntimeException("Incorrect number of arguments for arithmetic function; " +
+        throw new SparksoniqRuntimeException("Incorrect number of arguments for arithmetic function; " +
                 "Only one sequence argument is allowed");
         this._operator  = operator;
     }

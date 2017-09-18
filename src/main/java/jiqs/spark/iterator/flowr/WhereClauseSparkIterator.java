@@ -20,7 +20,7 @@
  package jiqs.spark.iterator.flowr;
 
 import jiqs.jsoniq.compiler.translator.expr.flowr.FLWOR_CLAUSES;
-import jiqs.jsoniq.exceptions.IqRuntimeException;
+import jiqs.jsoniq.exceptions.SparksoniqRuntimeException;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
 import jiqs.spark.closures.WhereClauseClosure;
 import jiqs.spark.tuple.FlworTuple;
@@ -41,7 +41,7 @@ public class WhereClauseSparkIterator extends FlowrClauseSparkIterator {
                 this._rdd = _previousClause.getTupleRDD();
                 this._rdd = this._rdd.filter(new WhereClauseClosure(expression));
             } else {
-                throw new IqRuntimeException("Invalid where clause");
+                throw new SparksoniqRuntimeException("Invalid where clause");
             }
         }
         return _rdd;
