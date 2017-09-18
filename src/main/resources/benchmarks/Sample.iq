@@ -1,0 +1,43 @@
+for $i in json-file("hdfs:///user/gfourny/Redditaa", 500)
+for $j in json-file("hdfs:///user/gfourny/Redditaa", 500)
+return $i
+where $i.parent_id eq $j.name
+let $author := $i.author, $score := $i.score, $sub := $i.subreddit, $parent := $i.parent_id
+group by $parent
+let $totalUserScore := size($score)
+order by $totalUserScore
+return {"ParentId": $parent,
+        "Count": $totalUserScore,
+        "ParentAuthor" : $j.author}
+
+
+length(for $i in json-file("hdfs:///user/gfourny/Reddit*", 500)
+where $i.subreddit eq "AskReddit" and $i.score gt 4500
+let $author := $i.author, $score := $i.score
+group by $author
+let $totalScore := sum($score)
+order by $totalScore descending
+return {"Author": $author,
+        "TotalScore": $totalScore})
+
+for $i in json-file("hdfs:///user/gfourny/Reddit*", 500)
+where $i.subreddit eq "AskReddit" and $i.score gt 4500
+return $i
+
+for $i in json-file("hdfs:///user/gfourny/Reddita*", 500)
+where $i.subreddit eq "AskReddit" and $i.score gt 4500
+let $author := $i.author, $score := $i.score
+group by $author
+let $totalScore := sum($score)
+order by $totalScore descending
+return {"Author": $author,
+        "TotalScore": $totalScore}
+
+for $i in json-file("hdfs:///user/gfourny/Redditaa", 500)
+where $i.subreddit eq "AskReddit" and $i.score gt 1500
+let $author := $i.author, $score := $i.score
+group by $author
+let $totalScore := sum($score)
+order by $totalScore descending
+return {"Author": $author,
+        "TotalScore": $totalScore}

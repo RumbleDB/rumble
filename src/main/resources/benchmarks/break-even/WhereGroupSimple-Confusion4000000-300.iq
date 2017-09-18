@@ -1,0 +1,6 @@
+for $i in json-file("hdfs:///user/istefan/confusion4000000.json", 300)
+let $guess := $i."guess", $target := $i."target"
+where $guess eq $target
+group by $target
+return {"Language": $target,
+        "Correct guesses": length($i)}

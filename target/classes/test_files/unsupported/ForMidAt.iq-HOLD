@@ -1,0 +1,4 @@
+(:JIQS: ShouldRun; Output="( { "j" : 5, "pos" : 1 }, { "j" : 6, "pos" : 2 }, { "j" : 7, "pos" : 3 }, { "j" : 5, "pos" : 1 }, { "j" : 6, "pos" : 2 }, { "j" : 7, "pos" : 3 }, { "j" : 5, "pos" : 1 }, { "j" : 6, "pos" : 2 }, { "j" : 7, "pos" : 3 })" :)
+for $i in 1 to 3
+for $j at $pos in 5 to 7
+return {"j" : $j, "pos": $pos}

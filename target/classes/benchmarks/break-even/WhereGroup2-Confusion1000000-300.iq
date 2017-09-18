@@ -1,0 +1,6 @@
+for $i in json-file("hdfs:///user/istefan/confusion1000000.json", 300)
+let $country := $i.country, $target := $i."target"
+group by $target, $country
+return {"Language": $target,
+        "Country" : $country,
+        "Correct guesses": length($i)}

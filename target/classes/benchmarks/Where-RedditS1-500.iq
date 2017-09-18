@@ -1,0 +1,3 @@
+length(for $i in json-file("hdfs:///user/gfourny/Reddit*", 500)
+where $i.score gt 30 and $i.subreddit eq "AskReddit"
+return $i)

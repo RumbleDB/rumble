@@ -1,0 +1,36 @@
+<project name="antlr-parser" default="generate-parser" basedir=".">
+
+    <!-- A very simple ant file that primarily existsrunLocal run cup and lex;
+    it also includes targets to build the compiler runLocal run tests for those
+    who would rather not use Eclipse -->
+
+    <!-- Set project properties. -->
+    <property name="src.dir" value="${basedir}/src/main/java/jiqs"/>
+    <property name="parser.dir" value="${src.dir}/jsoniq/compiler/parser"/>
+    <property name="antlr.jar" value="/usr/local/lib/antlr-4.6-complete.jar"/>
+
+
+    <target name="clean-parser">
+        <delete file="/jiqs/jsoniq/compiler/parser/Jsoniq.tokens"/>
+        <delete file="/jiqs/jsoniq/compiler/parser/JsoniqLexer.java"/>
+        <delete file="/jiqs/jsoniq/compiler/parser/JsoniqParser.java"/>
+        <delete file="/jiqs/jsoniq/compiler/parser/JsoniqBaseVisitor.java"/>
+        <delete file="/jiqs/jsoniq/compiler/parser/JsoniqVisitor.java"/>
+        <delete file="/jiqs/jsoniq/compiler/parser/JsoniqLexer.tokens"/>
+    </target>
+
+
+    <target name="generate-parser">
+        <echo message="ANTLR4 ${parser.dir}/Jsoniq.g4" level="info"/>
+        <echo>${basedir}</echo>
+        <java classname="org.antlr.v4.Tool" failonerror="true" classpath="${antlr.jar}">
+            <arg value="${parser.dir}/Jsoniq.g4" />
+            <arg value="-o" />
+            <arg value="${parser.dir}" />
+            <arg value="-no-listener" />
+            <arg value="-visitor" />
+        </java>
+    </target>
+
+
+</project>

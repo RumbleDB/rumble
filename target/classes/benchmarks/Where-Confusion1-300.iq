@@ -1,0 +1,6 @@
+for $i in json-file("hdfs:///user/istefan/confusion-2014-03-02.json", 300)
+let $guess := $i."guess"
+let $target := $i."target"
+where $guess eq $target
+where $target eq "Russian"
+return $i

@@ -1,0 +1,1 @@
+Sparksoniq was started in February 2017 at ETH Zurich as the Master's thesis of Stefan Irimescu, under the supervision of Ghislain Fourny and Gustavo Alonso.
