@@ -29,7 +29,9 @@ public class ErrorCodes {
     public static final String InvalidSelectorErrorCode = "JNTY0018";
 
     public static final String RuntimeExceptionErrorCode = "XPDY0130";
-
+    //TODO get correct error code
     public static final String UnimplementedErrorCode = "XPDY0139";
+    //TODO get correct error code
+    public static final String UndeclaredVariableErrorCode = "XPDY0140";
 
 }

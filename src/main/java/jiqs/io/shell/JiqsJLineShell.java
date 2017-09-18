@@ -22,7 +22,6 @@
 import jiqs.JsoniqQueryExecutor;
 import jiqs.config.RuntimeConfiguration;
 import jiqs.io.FileUtils;
-import org.jline.reader.Highlighter;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.UserInterruptException;
@@ -92,7 +91,7 @@ public class JiqsJLineShell {
         Path file = FileUtils.writeToFileInCurrentDirectory(currentQueryContent);
         long startTime = System.currentTimeMillis();
         try {
-            String result = jsoniqQueryExecutor.runInteractive(file, _configuration);
+            String result = jsoniqQueryExecutor.runInteractive(file);
             output(result);
             long time = System.currentTimeMillis() - startTime;
             if(_printTime)

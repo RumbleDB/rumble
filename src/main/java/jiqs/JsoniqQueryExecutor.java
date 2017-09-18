@@ -117,8 +117,7 @@ public class JsoniqQueryExecutor {
             writeTimeLog(totalTime);
     }
 
-    public String runInteractive(java.nio.file.Path queryFile,
-                                 RuntimeConfiguration configuration) throws IOException, InterruptedException {
+    public String runInteractive(java.nio.file.Path queryFile) throws IOException, InterruptedException {
         //create temp file
         JsoniqLexer lexer = getInputSource(queryFile.toString());
         JsoniqExpressionTreeVisitor visitor = this.parse(lexer);

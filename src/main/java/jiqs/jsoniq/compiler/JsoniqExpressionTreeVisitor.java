@@ -23,6 +23,7 @@ import jiqs.jsoniq.compiler.translator.expr.control.IfExpression;
 import jiqs.jsoniq.compiler.translator.expr.operational.InstanceOfExpression;
 import jiqs.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpression;
 import jiqs.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpressionVar;
+import jiqs.jsoniq.exceptions.UnsupportedFeatureException;
 import jiqs.semantics.types.ItemTypes;
 import jiqs.jsoniq.compiler.translator.expr.flowr.FlworVarSequenceType;
 import jiqs.jsoniq.compiler.translator.expr.CommaExpression;
@@ -147,7 +148,7 @@ public class JsoniqExpressionTreeVisitor extends jiqs.jsoniq.compiler.parser.Jso
                 childClause = this.currentFlworClause;
             }
             else
-                throw new UnsupportedOperationException("FLOWR clause not implemented yet");
+                throw new UnsupportedFeatureException("FLOWR clause not implemented yet");
 
             contentClauses.add(childClause);
         }
@@ -622,7 +623,7 @@ public class JsoniqExpressionTreeVisitor extends jiqs.jsoniq.compiler.parser.Jso
                 node = this.currentPrimaryExpression;
             }
             else
-                throw new UnsupportedOperationException("NOT yet implemented");
+                throw new UnsupportedFeatureException("Primary expression not yet implemented");
         }
 
         this.currentPrimaryExpression = node;

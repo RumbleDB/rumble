@@ -26,6 +26,7 @@ import jiqs.jsoniq.compiler.translator.expr.primary.ContextExpression;
 import jiqs.jsoniq.compiler.translator.expr.primary.VariableReference;
 import jiqs.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpression;
 import jiqs.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpressionVar;
+import jiqs.jsoniq.exceptions.UndeclaredVariableException;
 import jiqs.semantics.StaticContext;
 import jiqs.semantics.types.ItemType;
 import jiqs.semantics.types.ItemTypes;
@@ -44,7 +45,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
     @Override
     public StaticContext visitVariableReference(VariableReference expression, StaticContext argument){
         if(argument == null || !argument.isInScope(expression.getVariableName()))
-            throw new SemanticException("Uninitialized variable reference: " + expression.getVariableName());
+            throw new UndeclaredVariableException("Uninitialized variable reference: " + expression.getVariableName());
         else {
             expression.setType(argument.getVariableSequenceType(expression.getVariableName()));
             return defaultAction(expression, argument);
