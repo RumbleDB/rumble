@@ -19,6 +19,7 @@
  */
  package jiqs.jsoniq.runtime.iterator.operational;
 
+import jiqs.jsoniq.exceptions.UnexpectedTypeException;
 import jiqs.jsoniq.item.*;
 import jiqs.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import jiqs.jsoniq.runtime.iterator.EmptySequenceIterator;
@@ -53,7 +54,8 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
         Item right = _rightIterator.next();
 
         if(!Item.isNumeric(left) || !Item.isNumeric(right))
-            throw new IteratorFlowException("Additive expression has non numeric args");
+            throw new UnexpectedTypeException("Additive expression has non numeric args " +
+                    left.serialize() + ", " + right.serialize());
 
         this._hasNext = false;
         _leftIterator.close();

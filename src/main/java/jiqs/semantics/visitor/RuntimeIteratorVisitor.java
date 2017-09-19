@@ -51,7 +51,7 @@ import jiqs.spark.iterator.flowr.base.FlowrClauseSparkIterator;
 import jiqs.spark.iterator.function.ParallelizeFunctionIterator;
 import jiqs.spark.iterator.function.ParseJsonFunctionIterator;
 import jiqs.jsoniq.runtime.iterator.operational.*;
-import jiqs.jsoniq.runtime.iterator.postfix.ArrayLookupItertor;
+import jiqs.jsoniq.runtime.iterator.postfix.ArrayLookupIterator;
 import jiqs.jsoniq.runtime.iterator.postfix.ArrayUnboxingItertor;
 import jiqs.jsoniq.runtime.iterator.postfix.ObjectLookupItertor;
 import jiqs.jsoniq.runtime.iterator.postfix.PredicateIterator;
@@ -154,7 +154,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                     if (extension instanceof ArrayLookupExtension) {
                         RuntimeIterator iterator =
                                 this.visit(((ArrayLookupExtension) extension).getExpression(), argument);
-                        previous = new ArrayLookupItertor(previous, iterator);
+                        previous = new ArrayLookupIterator(previous, iterator);
                     }
                     if (extension instanceof ObjectLookupExtension) {
                         StringRuntimeIterator iterator = (StringRuntimeIterator)

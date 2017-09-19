@@ -19,6 +19,8 @@
  */
  package jiqs.jsoniq.runtime.iterator.postfix;
 
+import jiqs.jsoniq.exceptions.InvalidSelectorException;
+import jiqs.jsoniq.exceptions.UnexpectedTypeException;
 import jiqs.jsoniq.item.ArrayItem;
 import jiqs.jsoniq.item.Item;
 import jiqs.jsoniq.runtime.iterator.CommaExpressionIterator;
@@ -26,8 +28,8 @@ import jiqs.jsoniq.exceptions.IteratorFlowException;
 import jiqs.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
 
-public class ArrayLookupItertor extends LocalRuntimeIterator {
-    public ArrayLookupItertor(RuntimeIterator array, RuntimeIterator iterator) {
+public class ArrayLookupIterator extends LocalRuntimeIterator {
+    public ArrayLookupIterator(RuntimeIterator array, RuntimeIterator iterator) {
         super(null);
         this._children.add(array);
         this._children.add(iterator);
@@ -39,7 +41,12 @@ public class ArrayLookupItertor extends LocalRuntimeIterator {
             this._children.get(0).open(_currentDynamicContext);
             this._children.get(1).open(_currentDynamicContext);
             this._array = (ArrayItem) this._children.get(0).next();
-            this._lookup = Item.getNumericValue(this._children.get(1).next(), Integer.class);
+            Item lookup = this._children.get(1).next();
+            if(this._children.get(1).hasNext() || lookup.isObject() || lookup.isArray())
+                throw new InvalidSelectorException("Invalid selector item: " + lookup.serialize());
+            if(!Item.isNumeric(lookup))
+                throw new UnexpectedTypeException("Non numeric array lookup for " + lookup.serialize());
+            this._lookup = Item.getNumericValue(lookup, Integer.class);
             this._children.get(0).close();
             this._children.get(1).close();
             this._hasNext = false;

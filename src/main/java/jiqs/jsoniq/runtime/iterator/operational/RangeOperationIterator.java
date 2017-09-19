@@ -19,6 +19,7 @@
  */
  package jiqs.jsoniq.runtime.iterator.operational;
 
+import jiqs.jsoniq.exceptions.UnexpectedTypeException;
 import jiqs.jsoniq.item.*;
 import jiqs.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
@@ -48,7 +49,8 @@ public class RangeOperationIterator extends BinaryOperationBaseIterator {
             _rightIterator.close();
 
             if(!(left instanceof IntegerItem) || !(right instanceof IntegerItem))
-                throw new IteratorFlowException("Invalid Range Operation");
+                throw new UnexpectedTypeException("Range expression has non numeric args " +
+                        left.serialize() + ", " + right.serialize());
             _left = Item.getNumericValue(left, Integer.class);
             _right = Item.getNumericValue(right, Integer.class);
             if(_right < _left) {

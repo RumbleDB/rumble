@@ -112,7 +112,7 @@ public class AnnotationsTestsBase {
             checkErrorCode(errorOutput, currentAnnotation.getErrorCode());
             try{
             if(currentAnnotation.shouldRun()) {
-                Assert.fail("Program did not runLocal when expected to.\nError output: " + errorOutput + "\n");
+                Assert.fail("Program did not run when expected to.\nError output: " + errorOutput + "\n");
                 return context;
             }else {
                 System.out.println(errorOutput);
@@ -140,7 +140,7 @@ public class AnnotationsTestsBase {
                 checkExpectedOutput( currentAnnotation.getOutput(), runtimeIterator);
             } catch (SparksoniqRuntimeException exception){
                 String errorOutput = exception.getMessage();
-                Assert.fail("Program did not runLocal when expected to.\nError output: " + errorOutput + "\n");
+                Assert.fail("Program did not run when expected to.\nError output: " + errorOutput + "\n");
             }
         } else {
             //PROGRAM SHOULD CRASH
@@ -154,7 +154,7 @@ public class AnnotationsTestsBase {
                     return context;
                 }
 
-                Assert.fail("Program runLocal when not expected to");
+                Assert.fail("Program executed when not expected to");
             }
         }
 

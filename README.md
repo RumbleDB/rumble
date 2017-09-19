@@ -25,6 +25,7 @@ spark-submit --class jiqs.ShellStart     --master yarn-client     --deploy-mode 
 
 
 <h5>LICENSES</h5>
+
 - Spark 1.6.2 Libraries - Apache License
 
 - ANTLR v4 Framework - BSD License

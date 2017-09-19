@@ -19,6 +19,7 @@
  */
  package jiqs.jsoniq.runtime.iterator.operational;
 
+import jiqs.jsoniq.exceptions.UnexpectedTypeException;
 import jiqs.jsoniq.item.*;
 import jiqs.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
@@ -47,7 +48,8 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
         //TODO implement all comparisons (strings, objects)
         if(Item.isNumeric(left)) {
             if(!Item.isNumeric(left) || !Item.isNumeric(right))
-                throw new IteratorFlowException("Invalid numeric comparison");
+                throw new UnexpectedTypeException("Invalid args for numeric comparison " + left.serialize() +
+                        ", " + right.serialize());
             double l = Item.getNumericValue(left, Double.class);
             double r = Item.getNumericValue(right, Double.class);
             switch (this._operator){

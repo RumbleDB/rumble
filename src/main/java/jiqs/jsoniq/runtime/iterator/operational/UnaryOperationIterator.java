@@ -19,6 +19,7 @@
  */
  package jiqs.jsoniq.runtime.iterator.operational;
 
+import jiqs.jsoniq.exceptions.UnexpectedTypeException;
 import jiqs.jsoniq.item.*;
 import jiqs.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import jiqs.jsoniq.runtime.iterator.EmptySequenceIterator;
@@ -58,7 +59,8 @@ public class UnaryOperationIterator extends UnaryOperationBaseIterator {
                 if(child instanceof DecimalItem)
                     return new DecimalItem(((DecimalItem)child).getDecimalValue().multiply(new BigDecimal(-1)));
             }
-            throw new IteratorFlowException("Invalid Unary operation");
+            throw new UnexpectedTypeException("Unary expression has non numeric args " +
+                    child.serialize());
         } else return child;
 
     }

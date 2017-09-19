@@ -21,6 +21,7 @@
 
 import jiqs.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import jiqs.jsoniq.exceptions.IteratorFlowException;
+import jiqs.jsoniq.exceptions.UnexpectedTypeException;
 import jiqs.jsoniq.item.AtomicItem;
 import jiqs.jsoniq.item.BooleanItem;
 import jiqs.jsoniq.item.Item;
@@ -41,7 +42,8 @@ public class StringConcatIterator extends BinaryOperationBaseIterator {
             Item left = _leftIterator.next();
             Item right = _rightIterator.next();
             if(!(left instanceof StringItem) || !(right instanceof StringItem))
-                throw new IteratorFlowException("Concat expression expects string args");
+                throw new UnexpectedTypeException("String concat expression has non strings args " +
+                        left.serialize() + ", " + right.serialize());
             StringItem leftString = (StringItem)left;
             StringItem rightString = (StringItem)right;
             _leftIterator.close();

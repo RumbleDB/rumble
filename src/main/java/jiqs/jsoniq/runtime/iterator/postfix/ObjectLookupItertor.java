@@ -19,6 +19,8 @@
  */
  package jiqs.jsoniq.runtime.iterator.postfix;
 
+import jiqs.jsoniq.exceptions.InvalidSelectorException;
+import jiqs.jsoniq.exceptions.UnexpectedTypeException;
 import jiqs.jsoniq.item.Item;
 import jiqs.jsoniq.item.ObjectItem;
 import jiqs.jsoniq.item.StringItem;
@@ -40,16 +42,19 @@ public class ObjectLookupItertor extends LocalRuntimeIterator {
             this._children.get(0).open(_currentDynamicContext);
             this._children.get(1).open(_currentDynamicContext);
             _object = (ObjectItem) this._children.get(0).next();
-            _lookupKey = ((StringItem)this._children.get(1).next()).getStringValue();
+            Item _lookupKey = this._children.get(1).next();
+            if(this._children.get(1).hasNext() || _lookupKey.isObject() || _lookupKey.isArray())
+                throw new InvalidSelectorException("Invalid selector item: " + _lookupKey.serialize());
+            if(!_lookupKey.isString())
+                throw new UnexpectedTypeException("Non numeric array lookup for " + _lookupKey.serialize());
             this._children.get(0).close();
             this._children.get(1).close();
             _hasNext = false;
-            return _object.getItemByKey(_lookupKey);
+            return _object.getItemByKey(((StringItem)_lookupKey).getStringValue());
         }
         throw new IteratorFlowException("Invalid next call in Object Lookup");
     }
 
 
     private ObjectItem _object = null;
-    private String _lookupKey = null;
 }
