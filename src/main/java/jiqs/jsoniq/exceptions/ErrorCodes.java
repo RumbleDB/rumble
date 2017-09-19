@@ -2,6 +2,7 @@ package jiqs.jsoniq.exceptions;
 
 public class ErrorCodes {
 
+    //tested
     public static final String ParsingErrorCode = "XPST0003";
 
     public static final String UnexpectedTypeErrorCode = "XPTY0004";
@@ -22,6 +23,7 @@ public class ErrorCodes {
 
     public static final String InvalidGroupVariableErrorCode = "XQST0094";
 
+    //tested
     public static final String DuplicatePairNameErrorCode = "JNDY0003";
 
     public static final String NonAtomicElementErrorCode = "JNTY0004";
@@ -32,8 +34,9 @@ public class ErrorCodes {
     //TODO get correct error code
     public static final String UnimplementedErrorCode = "XPDY0139";
     //TODO get correct error code
+    //tested
     public static final String UndeclaredVariableErrorCode = "XPDY0140";
     //TODO invalid key?
-    
+
 
 }

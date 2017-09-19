@@ -74,7 +74,7 @@ public class JsoniqExpressionTreeVisitor extends jiqs.jsoniq.compiler.parser.Jso
     public JsoniqExpressionTreeVisitor() {}
 
     @Override public Void visitModule(JsoniqParser.ModuleContext ctx) {
-        if(!(ctx.version == null) && !ctx.version.isEmpty() && !ctx.version.getText().trim().equals("1.0"))
+        if(!(ctx.vers == null) && !ctx.vers.isEmpty() && !ctx.vers.getText().trim().equals("1.0"))
             throw new JsoniqVersionException();
         this.visitMainModule(ctx.mainModule());
         return null;

@@ -1,4 +1,4 @@
-(:JIQS: ShouldNotParse :)
+(:JIQS: ShouldNotParse; ErrorCode="XPST0003" :)
 if( 1 gt 2)
 then
 "first branch"

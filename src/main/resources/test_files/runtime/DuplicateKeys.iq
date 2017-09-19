@@ -1,0 +1,2 @@
+(:JIQS: ShouldCrash; ErrorCode="JNDY0003" :)
+{"a" : 1 , "b" : 2, "a" : 3}

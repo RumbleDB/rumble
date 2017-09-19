@@ -21,6 +21,7 @@
 
 import iq.base.AnnotationsTestsBase;
 import jiqs.jsoniq.compiler.JsoniqExpressionTreeVisitor;
+import jiqs.jsoniq.exceptions.SparksoniqRuntimeException;
 import jiqs.jsoniq.item.Item;
 import jiqs.semantics.DynamicContext;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
@@ -80,11 +81,6 @@ public class RuntimeTests extends AnnotationsTestsBase{
                 actualOutput.equals(expectedOutput));
     }
 
-    @Override
-    //TODO maybe check error message is equal to some expected error code
-    protected void testCrashOutput(String expectedOutput, RuntimeIterator runtimeIterator) {
-        runIterators(runtimeIterator);
-    }
 
     protected String getIteratorOutput(RuntimeIterator iterator){
         iterator.open(new DynamicContext());

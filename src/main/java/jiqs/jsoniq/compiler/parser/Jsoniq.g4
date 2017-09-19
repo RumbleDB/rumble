@@ -4,9 +4,8 @@ grammar Jsoniq; // parser grammar, parses streams of tokens
 	// Java header
 	package jiqs.jsoniq.compiler.parser;
 }
-module   : ('jsoniq' (('encoding' stringLiteral)
-         | (Kversion version=stringLiteral ('encoding' stringLiteral)?)) ';')? (libraryModule | main=mainModule);
 
+module   : (Kjsoniq Kversion vers=stringLiteral ';')? (libraryModule | main=mainModule);
 mainModule: prolog expr;//hack (expr)*;
 libraryModule: 'module' 'namespace' NCName '=' uriLiteral ';' prolog;
 prolog:
@@ -161,7 +160,7 @@ itemType
 jSONItemTest
          : 'object'
            | 'array'
-           | 'json-item';
+           | Kjson;
 atomicType
          : 'atomic' | 'string' | 'integer'
          | 'decimal' | 'double' | 'boolean' | 'null';
@@ -176,6 +175,8 @@ uriLiteral: stringLiteral;
 ///////////////////////////////////////////////////////literals
 
 keyWords:
+        Kjsoniq  |
+        Kjson |
         Kversion |
         Ktypeswitch |
         Kor      |
@@ -259,6 +260,8 @@ Ktreat   : 'treat';
 Kcast    : 'cast';
 Kcastable : 'castable';
 Kversion : 'version';
+Kjsoniq : 'jsoniq';
+Kjson : 'json-item';
 
 
 
@@ -316,7 +319,7 @@ NameChar: NameStartChar
         | '\u203F'..'\u2040'
         ;
 
-XQComment: '(' ':' (XQComment | '(' ~[:] | ':' ~[)] | ~[:(])* ':'+ ')' -> channel(HIDDEN); 
+XQComment: '(' ':' (XQComment | '(' ~[:] | ':' ~[)] | ~[:(])* ':'+ ')' -> channel(HIDDEN);
 
 
 ContentChar:  ~["'{}<&]  ;

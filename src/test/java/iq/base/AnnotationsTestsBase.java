@@ -82,7 +82,7 @@ public class AnnotationsTestsBase {
             //PARSING
         } catch (ParsingException exception) {
             String errorOutput = exception.getMessage();
-
+            checkErrorCode(errorOutput, currentAnnotation.getErrorCode());
             if(currentAnnotation.shouldParse()) {
                 Assert.fail("Program did not parse when expected to.\nError output: " + errorOutput + "\n");
                 return context;
@@ -96,7 +96,7 @@ public class AnnotationsTestsBase {
             //SEMANTIC
         } catch (SemanticException exception){
             String errorOutput = exception.getMessage();
-
+            checkErrorCode(errorOutput, currentAnnotation.getErrorCode());
             try{if(currentAnnotation.shouldCompile()) {
                 Assert.fail("Program did not compile when expected to.\nError output: " + errorOutput + "\n");
                 return context;
@@ -109,6 +109,7 @@ public class AnnotationsTestsBase {
             //RUNTIME
         } catch (SparksoniqRuntimeException exception){
             String errorOutput = exception.getMessage();
+            checkErrorCode(errorOutput, currentAnnotation.getErrorCode());
             try{
             if(currentAnnotation.shouldRun()) {
                 Assert.fail("Program did not runLocal when expected to.\nError output: " + errorOutput + "\n");
@@ -146,10 +147,10 @@ public class AnnotationsTestsBase {
             if(currentAnnotation instanceof AnnotationProcessor.UnrunnableTestAnnotation &&
                     !currentAnnotation.shouldRun()) {
                 try {
-                    testCrashOutput(currentAnnotation.getErrorMessage(), runtimeIterator);
+                    checkExpectedOutput( currentAnnotation.getOutput(), runtimeIterator);
                 }  catch (SparksoniqRuntimeException exception){
                     String errorOutput = exception.getMessage();
-                    Assert.assertTrue(errorOutput, true);
+                    checkErrorCode(errorOutput, currentAnnotation.getErrorCode());
                     return context;
                 }
 
@@ -160,8 +161,10 @@ public class AnnotationsTestsBase {
         return context;
     }
 
-    protected void testCrashOutput(String expectedOutput, RuntimeIterator runtimeIterator) {
-        Assert.assertTrue(true);
+    protected void checkErrorCode(String errorOutput, String expectedErrorCode) {
+        if(errorOutput != null && expectedErrorCode != null)
+            Assert.assertTrue("Unexpected error code returned; Expected: " + expectedErrorCode +
+                    "; Error: " + errorOutput,errorOutput.contains(expectedErrorCode));
     }
 
     protected void checkExpectedOutput(String expectedOutput, RuntimeIterator runtimeIterator) {

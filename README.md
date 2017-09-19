@@ -14,7 +14,9 @@
 
 <h5>SETUP</h5>
 1) Generate ANTLR Lexer and Parser - run ant build on build_antlr_parser.xml
+
 2) Packaging (with requirements) - mvn clean compile assembly:single
+
 3) Submit jar using spark-submit [CLI TBD]
 
 Example:
@@ -24,9 +26,13 @@ spark-submit --class jiqs.ShellStart     --master yarn-client     --deploy-mode 
 
 <h5>LICENSES</h5>
 - Spark 1.6.2 Libraries - Apache License
+
 - ANTLR v4 Framework - BSD License
+
 - org.json parser - JSON License
+
 - JLine 3.0.2 terminal framework - BSD License
+
 - Kryo 4.0.0 serialization framework - BSD License
 
 <h5>Unsupported/Unimplemented features</h5>
