@@ -148,7 +148,7 @@ public class AnnotationsTestsBase {
                     !currentAnnotation.shouldRun()) {
                 try {
                     checkExpectedOutput( currentAnnotation.getOutput(), runtimeIterator);
-                }  catch (SparksoniqRuntimeException exception){
+                }  catch (Exception exception){
                     String errorOutput = exception.getMessage();
                     checkErrorCode(errorOutput, currentAnnotation.getErrorCode());
                     return context;

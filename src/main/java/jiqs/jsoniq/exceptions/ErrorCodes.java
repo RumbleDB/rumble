@@ -25,7 +25,7 @@ public class ErrorCodes {
 
     //tested
     public static final String DuplicatePairNameErrorCode = "JNDY0003";
-
+    //teste
     public static final String NonAtomicElementErrorCode = "JNTY0004";
 
     public static final String InvalidSelectorErrorCode = "JNTY0018";
