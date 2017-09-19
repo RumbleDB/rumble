@@ -52,7 +52,6 @@ public class AnnotationsTestsBase {
 
     public void initializeTests(File dir) {
         FileManager.loadJiqFiles(dir).forEach(file -> testFiles.add(file));
-        //SparkContextManager.getInstance().initializeConfigurationAndContext("local[2]");
     }
 
     /**

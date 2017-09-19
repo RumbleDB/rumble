@@ -1,28 +1,36 @@
-Jsoniq on Spark
+<h1 align="center">Sparksoniq</h1>
 
-CURRENT STATUS: 
-- Grammar, ANTLR generated parser + lexer, ANTLR generated AST;
-- Expression Tree 
-- Static Context (in scope variables only)
-- Runtime iterators
-- Working basic FLOWRs (for, let, where, return)
+<h3 align="center">JSON at the scale of Spark </h3>
 
-Unsupported/Unimplemented features
+<h5 align="center">A JSONiq engine to query large-scale JSON datasets stored on HDFS. Spark under the hood. Alpha release coming soon. </h5>
+
+
+<a href="https://ibb.co/j5nnB5"><img src="https://preview.ibb.co/nQPpPQ/icon.png" alt="icon" border="0"></a>
+
+<h5>REQUIREMENTS</h5>
+- Spark 1.6.2
+- ANTLRv4
+
+
+<h5>SETUP</h5>
+1) Generate ANTLR Lexer and Parser - run ant build on build_antlr_parser.xml
+2) Packaging (with requirements) - mvn clean compile assembly:single
+3) Submit jar using spark-submit [CLI TBD]
+
+
+<h5>LICENSES</h5>
+- Spark 1.6.2 Libraries - Apache License
+- ANTLR v4 Framework - BSD License
+- org.json parser - JSON License
+- JLine 3.0.2 terminal framework - BSD License
+- Kryo 4.0.0 serialization framework - BSD License
+
+<h5>Unsupported/Unimplemented features</h5>
 - prolog
 - modules
 - separate variable declarations
-- switch/if/try/catch/quantified expressions
+- switch/try/catchexpressions
 - string concat/cast/treat/instance of expressions
-- advanced object lookup/context expression/ {||} pairs
+- advanced object lookup
+- positional variables
 
-FILES
-- pom.xml - Maven Build File;
-- build_antlr_parser.xml - ANT build File, generates Parser, Lexer, Tokens;
-- src/test/java/iq/frontend/FrontendTests.java - JUnit Tests for Parser
-- src/test/java/iq/frontend/RuntimeTests.java - JUnit Tests for local runtime iterators
-- src/test/java/iq/frontend/SparkRuntimeTests.java - JUnit Tests for spark runtime iterators
-
-SETUP
-- Requirements: maven, Spark (tested on 2.1.0), org.json parser
-- 1) Packaging (with requirements) - mvn clean compile assembly:single
-- 2) Tests:     - mvn -Dtest=FrontendTests test &&     - mvn -Dtest=RuntimeTests test && - mvn -Dtest=SparkRuntimeTests test
