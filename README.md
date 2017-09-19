@@ -17,6 +17,10 @@
 2) Packaging (with requirements) - mvn clean compile assembly:single
 3) Submit jar using spark-submit [CLI TBD]
 
+Example:
+
+spark-submit --class jiqs.ShellStart     --master yarn-client     --deploy-mode client --num-executors 40 --conf spark.yarn.maxAppAttempts=1 --conf spark.ui.port=4051  --conf spark.executor.memory=10g --conf spark.executor.heartbeatInterval=3600s --conf spark.network.timeout=3600s  jsoniq-spark-app-1.0-jar-with-dependencies.jar yarn-client 1000
+
 
 <h5>LICENSES</h5>
 - Spark 1.6.2 Libraries - Apache License
