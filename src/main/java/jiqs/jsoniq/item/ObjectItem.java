@@ -22,6 +22,7 @@
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import jiqs.jsoniq.exceptions.DuplicateObjectKeyException;
 import jiqs.semantics.types.ItemType;
 import jiqs.semantics.types.ItemTypes;
 import scala.util.parsing.combinator.testing.Str;
@@ -29,6 +30,7 @@ import scala.util.parsing.combinator.testing.Str;
 import javax.naming.OperationNotSupportedException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 
 public class ObjectItem extends JsonItem{
@@ -42,8 +44,19 @@ public class ObjectItem extends JsonItem{
     }
 
     public ObjectItem(List<String> keys, List<Item> values){
+        checkForDuplicateKeys(keys);
         this._keys = keys;
         this._values = values;
+    }
+
+    private void checkForDuplicateKeys(List<String> keys) {
+        HashMap<String, Integer> frequencies = new HashMap<>();
+        for(String key : keys) {
+            if(frequencies.containsKey(key))
+                throw new DuplicateObjectKeyException("Object key " + key + " is duplicated");
+            else
+                frequencies.put(key, 1);
+        }
     }
 
     @Override

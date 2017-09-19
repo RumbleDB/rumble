@@ -10,7 +10,7 @@ public class ErrorCodes {
 
     public static final String InvalidFunctionCallErrorCode = "XPST0017";
 
-    public static final String InvalidVersionErrorCode = "XQST0031";
+    public static final String InvalidJsoniqVersionErrorCode = "XQST0031";
 
     public static final String DynamicTypeTreatErrorCode = "XPDY0050";
 
@@ -33,5 +33,7 @@ public class ErrorCodes {
     public static final String UnimplementedErrorCode = "XPDY0139";
     //TODO get correct error code
     public static final String UndeclaredVariableErrorCode = "XPDY0140";
+    //TODO invalid key?
+    
 
 }

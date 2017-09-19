@@ -5,7 +5,7 @@ grammar Jsoniq; // parser grammar, parses streams of tokens
 	package jiqs.jsoniq.compiler.parser;
 }
 module   : ('jsoniq' (('encoding' stringLiteral)
-         | ('version' stringLiteral ('encoding' stringLiteral)?)) ';')? (libraryModule | mainModule);
+         | (Kversion version=stringLiteral ('encoding' stringLiteral)?)) ';')? (libraryModule | main=mainModule);
 
 mainModule: prolog expr;//hack (expr)*;
 libraryModule: 'module' 'namespace' NCName '=' uriLiteral ';' prolog;
@@ -176,6 +176,7 @@ uriLiteral: stringLiteral;
 ///////////////////////////////////////////////////////literals
 
 keyWords:
+        Kversion |
         Ktypeswitch |
         Kor      |
         Kand     |
@@ -257,6 +258,7 @@ Kof      : 'of' ;
 Ktreat   : 'treat';
 Kcast    : 'cast';
 Kcastable : 'castable';
+Kversion : 'version';
 
 
 

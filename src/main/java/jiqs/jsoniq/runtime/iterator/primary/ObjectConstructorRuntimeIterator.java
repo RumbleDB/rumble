@@ -26,21 +26,20 @@ import jiqs.jsoniq.item.StringItem;
 import jiqs.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
 import jiqs.jsoniq.exceptions.IteratorFlowException;
-import jiqs.semantics.DynamicContext;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ObjectRuntimeIterator extends LocalRuntimeIterator {
+public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
 
-    public ObjectRuntimeIterator(List<RuntimeIterator> keys, List<RuntimeIterator> values) {
+    public ObjectConstructorRuntimeIterator(List<RuntimeIterator> keys, List<RuntimeIterator> values) {
         super(keys);
         this._children.addAll(values);
         this._keys = keys;
         this._values = values;
     }
 
-    public ObjectRuntimeIterator(List<ObjectRuntimeIterator> childExpressions) {
+    public ObjectConstructorRuntimeIterator(List<ObjectConstructorRuntimeIterator> childExpressions) {
         super(null);
         childExpressions.forEach(c -> this._children.add(c));
         this._isMergedObject = true;

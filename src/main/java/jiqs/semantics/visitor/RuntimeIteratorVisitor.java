@@ -23,7 +23,6 @@ import jiqs.jsoniq.compiler.translator.expr.control.IfExpression;
 import jiqs.jsoniq.compiler.translator.expr.flowr.*;
 import jiqs.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpression;
 import jiqs.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpressionVar;
-import jiqs.jsoniq.exceptions.SemanticException;
 import jiqs.jsoniq.compiler.translator.expr.CommaExpression;
 import jiqs.jsoniq.compiler.translator.expr.Expression;
 import jiqs.jsoniq.compiler.translator.expr.ExpressionOrClause;
@@ -32,6 +31,7 @@ import jiqs.jsoniq.compiler.translator.expr.operational.base.OperationalExpressi
 import jiqs.jsoniq.compiler.translator.expr.postfix.PostFixExpression;
 import jiqs.jsoniq.compiler.translator.expr.postfix.extensions.*;
 import jiqs.jsoniq.compiler.translator.expr.primary.*;
+import jiqs.jsoniq.exceptions.UnknownFunctionCallException;
 import jiqs.jsoniq.exceptions.UnsupportedFeatureException;
 import jiqs.jsoniq.runtime.iterator.CommaExpressionIterator;
 import jiqs.jsoniq.runtime.iterator.EmptySequenceIterator;
@@ -60,9 +60,9 @@ import jiqs.jsoniq.runtime.iterator.primary.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<RuntimeIterator> {
+import static jiqs.jsoniq.runtime.iterator.functions.ArithmeticFunctionIterator.*;
 
-    public RuntimeIteratorVisitor(){}
+public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<RuntimeIterator> {
 
     @Override
     public RuntimeIterator visit(ExpressionOrClause expression, RuntimeIterator argument) {
@@ -167,13 +167,12 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                     if (extension instanceof PredicateExtension) {
                         RuntimeIterator filterExpression = //pass the predicate as argument for $$ expresions
                                 this.visit(((PredicateExtension) extension).getExpression(), argument);
-                        PredicateIterator predicate = new PredicateIterator(previous, filterExpression);
-                        previous = predicate;
+                        previous = new PredicateIterator(previous, filterExpression);
                     }
                 }
                 catch (Exception ex) {
                     ex.printStackTrace();
-                    throw new SemanticException("Invalid Postfix extension");
+                    throw new UnsupportedFeatureException("Invalid Postfix extension");
                 }
             }
             return previous;
@@ -189,10 +188,10 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
     @Override
     public RuntimeIterator visitObjectConstructor(ObjectConstructor expression, RuntimeIterator argument){
         if(expression.isMergedConstructor()) {
-            List<ObjectRuntimeIterator> childExpressions = new ArrayList<>();
+            List<ObjectConstructorRuntimeIterator> childExpressions = new ArrayList<>();
             for(Expression child : expression.getChildExpression().getExpressions())
-                childExpressions.add(((ObjectRuntimeIterator) this.visit(child, argument)));
-            return new ObjectRuntimeIterator(childExpressions);
+                childExpressions.add(((ObjectConstructorRuntimeIterator) this.visit(child, argument)));
+            return new ObjectConstructorRuntimeIterator(childExpressions);
         } else {
             List<RuntimeIterator> keys = new ArrayList<>();
             List<RuntimeIterator> values = new ArrayList<>();
@@ -200,7 +199,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 keys.add(this.visit(key,argument));
             for(Expression value: expression.getValues())
                 values.add(this.visit(value,argument));
-            return new ObjectRuntimeIterator(keys,values);
+            return new ObjectConstructorRuntimeIterator(keys,values);
         }
     }
 
@@ -403,16 +402,16 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 return new CountFunctionIterator(arguments);
             case Functions.MAX:
                 return new ArithmeticFunctionIterator(arguments,
-                        ArithmeticFunctionIterator.ArithmeticFunctionOperator.MAX);
+                        ArithmeticFunctionOperator.MAX);
             case Functions.MIN:
                 return new ArithmeticFunctionIterator(arguments,
-                        ArithmeticFunctionIterator.ArithmeticFunctionOperator.MIN);
+                        ArithmeticFunctionOperator.MIN);
             case Functions.AVG:
                 return new ArithmeticFunctionIterator(arguments,
-                        ArithmeticFunctionIterator.ArithmeticFunctionOperator.AVG);
+                        ArithmeticFunctionOperator.AVG);
             case Functions.SUM:
                 return new ArithmeticFunctionIterator(arguments,
-                        ArithmeticFunctionIterator.ArithmeticFunctionOperator.SUM);
+                        ArithmeticFunctionOperator.SUM);
             case Functions.KEYS:
                 return new ObjectFunctionIterator(arguments,
                         ObjectFunctionIterator.ObjectFunctionOperators.KEYS);
@@ -425,7 +424,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
 
         }
 
-        throw new UnsupportedFeatureException("Unknown/Unsupported function call");
+        throw new UnknownFunctionCallException();
     }
 
     @Override
@@ -460,19 +459,17 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
     }
 
     @Override public RuntimeIterator visitIfExpression(IfExpression expression, RuntimeIterator argument){
-        IfRuntimeIterator iterator = new IfRuntimeIterator(this.visit(expression.getCondition(), argument),
+        return new IfRuntimeIterator(this.visit(expression.getCondition(), argument),
                                          this.visit(expression.getBranch(), argument),
                                          this.visit(expression.getElseBranch(), argument));
-        return iterator;
     }
 
     @Override public RuntimeIterator visitQuantifiedExpression(QuantifiedExpression expression, RuntimeIterator argument){
         List<QuantifiedExpressionVarIterator> variables = new ArrayList<>();
         expression.getVariables().forEach(var -> variables.add((QuantifiedExpressionVarIterator) this.visit(var, argument)));
         RuntimeIterator evaluationExpression = this.visit(expression.getEvaluationExpression(), argument);
-        QuantifiedExpressionIterator iterator = new QuantifiedExpressionIterator(expression.getOperator(),
+        return new QuantifiedExpressionIterator(expression.getOperator(),
                 variables, evaluationExpression);
-        return iterator;
     }
 
     @Override public RuntimeIterator visitQuantifiedExpressionVar(QuantifiedExpressionVar expression, RuntimeIterator argument){

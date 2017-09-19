@@ -20,10 +20,15 @@
  package jiqs.jsoniq.exceptions;
 
 
-public class SemanticException extends RuntimeException {
+public class SemanticException extends SparksoniqRuntimeException {
 
     public SemanticException(String message)
     {
         super(message);
+    }
+
+    public SemanticException(String message, String errorCode)
+    {
+        super(message, errorCode);
     }
 }

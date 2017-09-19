@@ -23,6 +23,8 @@ import jiqs.jsoniq.compiler.translator.expr.control.IfExpression;
 import jiqs.jsoniq.compiler.translator.expr.operational.InstanceOfExpression;
 import jiqs.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpression;
 import jiqs.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpressionVar;
+import jiqs.jsoniq.exceptions.JsoniqVersionException;
+import jiqs.jsoniq.exceptions.ParsingException;
 import jiqs.jsoniq.exceptions.UnsupportedFeatureException;
 import jiqs.semantics.types.ItemTypes;
 import jiqs.jsoniq.compiler.translator.expr.flowr.FlworVarSequenceType;
@@ -71,6 +73,13 @@ public class JsoniqExpressionTreeVisitor extends jiqs.jsoniq.compiler.parser.Jso
 
     public JsoniqExpressionTreeVisitor() {}
 
+    @Override public Void visitModule(JsoniqParser.ModuleContext ctx) {
+        if(!(ctx.version == null) && !ctx.version.isEmpty() && !ctx.version.getText().trim().equals("1.0"))
+            throw new JsoniqVersionException();
+        this.visitMainModule(ctx.mainModule());
+        return null;
+    }
+
     //region expr
     @Override public Void visitExpr(JsoniqParser.ExprContext ctx) {
         CommaExpression node;
@@ -89,7 +98,7 @@ public class JsoniqExpressionTreeVisitor extends jiqs.jsoniq.compiler.parser.Jso
             queryExpression = node;
         return null;
     }
-    //TODO single expression is only or and flowr for now
+
     @Override public Void visitExprSingle(JsoniqParser.ExprSingleContext ctx) {
 
         Expression node;
@@ -809,6 +818,8 @@ public class JsoniqExpressionTreeVisitor extends jiqs.jsoniq.compiler.parser.Jso
         this.currentExpression = new QuantifiedExpression(operator, expression, vars);
         return null;
     }
+
+
 
 
 
