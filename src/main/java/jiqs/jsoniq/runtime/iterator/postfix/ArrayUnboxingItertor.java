@@ -22,7 +22,7 @@
 import jiqs.jsoniq.item.ArrayItem;
 import jiqs.jsoniq.item.Item;
 import jiqs.semantics.DynamicContext;
-import jiqs.jsoniq.exceptions.IteratorFlowException;
+import jiqs.exceptions.IteratorFlowException;
 import jiqs.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
 

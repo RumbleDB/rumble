@@ -19,12 +19,11 @@
  */
  package jiqs.jsoniq.runtime.iterator.postfix;
 
-import jiqs.jsoniq.exceptions.InvalidSelectorException;
-import jiqs.jsoniq.exceptions.UnexpectedTypeException;
+import jiqs.exceptions.InvalidSelectorException;
+import jiqs.exceptions.UnexpectedTypeException;
 import jiqs.jsoniq.item.ArrayItem;
 import jiqs.jsoniq.item.Item;
-import jiqs.jsoniq.runtime.iterator.CommaExpressionIterator;
-import jiqs.jsoniq.exceptions.IteratorFlowException;
+import jiqs.exceptions.IteratorFlowException;
 import jiqs.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
 

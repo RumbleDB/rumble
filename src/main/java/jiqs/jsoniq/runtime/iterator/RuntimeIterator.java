@@ -23,7 +23,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import jiqs.jsoniq.exceptions.IteratorFlowException;
+import jiqs.exceptions.IteratorFlowException;
 import jiqs.jsoniq.item.Item;
 import jiqs.semantics.DynamicContext;
 import org.apache.spark.api.java.JavaRDD;

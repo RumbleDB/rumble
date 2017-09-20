@@ -21,7 +21,7 @@
 
 import jiqs.jsoniq.item.DecimalItem;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
-import jiqs.jsoniq.exceptions.IteratorFlowException;
+import jiqs.exceptions.IteratorFlowException;
 
 import java.math.BigDecimal;
 

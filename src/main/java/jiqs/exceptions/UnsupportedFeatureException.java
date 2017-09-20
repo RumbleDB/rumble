@@ -17,10 +17,10 @@
  * Author: Stefan Irimescu
  *
  */
- package jiqs.jsoniq.exceptions;
+ package jiqs.exceptions;
 
-public class SparkSparksoniqRuntimeException extends SparksoniqRuntimeException {
-    public SparkSparksoniqRuntimeException(String message) {
-        super(message);
+public class UnsupportedFeatureException extends SparksoniqRuntimeException {
+    public UnsupportedFeatureException(String message) {
+        super(message, ErrorCodes.UnimplementedErrorCode);
     }
 }

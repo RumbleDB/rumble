@@ -1,4 +1,4 @@
-package jiqs.jsoniq.exceptions;
+package jiqs.exceptions;
 
 public class NonAtomicKeyException extends SparksoniqRuntimeException{
     public NonAtomicKeyException(String message) {

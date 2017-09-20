@@ -1,4 +1,4 @@
-package jiqs.jsoniq.exceptions;
+package jiqs.exceptions;
 
 public class UndeclaredVariableException extends SemanticException {
     public UndeclaredVariableException(String message) {

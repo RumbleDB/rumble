@@ -20,7 +20,7 @@
  package jiqs.jsoniq.runtime.iterator.quantifiers;
 
 import jiqs.jsoniq.compiler.translator.expr.primary.VariableReference;
-import jiqs.jsoniq.exceptions.IteratorFlowException;
+import jiqs.exceptions.IteratorFlowException;
 import jiqs.jsoniq.item.Item;
 import jiqs.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;

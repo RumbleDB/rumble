@@ -19,12 +19,12 @@
  */
  package jiqs.jsoniq.runtime.iterator.operational;
 
-import jiqs.jsoniq.exceptions.UnexpectedTypeException;
+import jiqs.exceptions.UnexpectedTypeException;
 import jiqs.jsoniq.item.*;
 import jiqs.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import jiqs.jsoniq.runtime.iterator.EmptySequenceIterator;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
-import jiqs.jsoniq.exceptions.IteratorFlowException;
+import jiqs.exceptions.IteratorFlowException;
 import jiqs.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
 
 import java.lang.reflect.Type;

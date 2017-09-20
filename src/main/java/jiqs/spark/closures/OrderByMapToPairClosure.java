@@ -19,8 +19,7 @@
  */
  package jiqs.spark.closures;
 
-import jiqs.jsoniq.exceptions.NonAtomicKeyException;
-import jiqs.jsoniq.exceptions.SparksoniqRuntimeException;
+import jiqs.exceptions.NonAtomicKeyException;
 import jiqs.jsoniq.item.Item;
 import jiqs.semantics.DynamicContext;
 import jiqs.spark.tuple.FlworKey;

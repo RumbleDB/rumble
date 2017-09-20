@@ -25,7 +25,7 @@ import jiqs.jsoniq.item.ObjectItem;
 import jiqs.jsoniq.item.StringItem;
 import jiqs.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
-import jiqs.jsoniq.exceptions.IteratorFlowException;
+import jiqs.exceptions.IteratorFlowException;
 
 import java.util.ArrayList;
 import java.util.List;

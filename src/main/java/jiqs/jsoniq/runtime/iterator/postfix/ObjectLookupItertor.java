@@ -17,14 +17,12 @@
  * Author: Stefan Irimescu
  *
  */
- package jiqs.jsoniq.runtime.iterator.postfix;
+package jiqs.jsoniq.runtime.iterator.postfix;
 
-import jiqs.jsoniq.exceptions.InvalidSelectorException;
-import jiqs.jsoniq.exceptions.UnexpectedTypeException;
 import jiqs.jsoniq.item.Item;
 import jiqs.jsoniq.item.ObjectItem;
 import jiqs.jsoniq.item.StringItem;
-import jiqs.jsoniq.exceptions.IteratorFlowException;
+import jiqs.exceptions.IteratorFlowException;
 import jiqs.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
 import jiqs.jsoniq.runtime.iterator.primary.StringRuntimeIterator;
@@ -43,10 +41,10 @@ public class ObjectLookupItertor extends LocalRuntimeIterator {
             this._children.get(1).open(_currentDynamicContext);
             _object = (ObjectItem) this._children.get(0).next();
             Item _lookupKey = this._children.get(1).next();
-            if(this._children.get(1).hasNext() || _lookupKey.isObject() || _lookupKey.isArray())
-                throw new InvalidSelectorException("Invalid selector item: " + _lookupKey.serialize());
-            if(!_lookupKey.isString())
-                throw new UnexpectedTypeException("Non numeric array lookup for " + _lookupKey.serialize());
+//            if(this._children.get(1).hasNext() || _lookupKey.isObject() || _lookupKey.isArray())
+//                throw new InvalidSelectorException("Invalid selector item: " + _lookupKey.serialize());
+//            if(!_lookupKey.isString())
+//                throw new UnexpectedTypeException("Non numeric array lookup for " + _lookupKey.serialize());
             this._children.get(0).close();
             this._children.get(1).close();
             _hasNext = false;

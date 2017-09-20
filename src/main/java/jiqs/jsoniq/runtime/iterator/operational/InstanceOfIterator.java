@@ -20,12 +20,11 @@
  package jiqs.jsoniq.runtime.iterator.operational;
 
 import jiqs.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
-import jiqs.jsoniq.exceptions.IteratorFlowException;
+import jiqs.exceptions.IteratorFlowException;
 import jiqs.jsoniq.item.AtomicItem;
 import jiqs.jsoniq.item.BooleanItem;
 import jiqs.jsoniq.item.Item;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
-import jiqs.semantics.types.ItemType;
 import jiqs.semantics.types.SequenceType;
 
 import java.util.ArrayList;

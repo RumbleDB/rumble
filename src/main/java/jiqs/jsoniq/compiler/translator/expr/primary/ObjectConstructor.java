@@ -20,7 +20,6 @@
  package jiqs.jsoniq.compiler.translator.expr.primary;
 
 import jiqs.jsoniq.compiler.translator.expr.CommaExpression;
-import jiqs.jsoniq.exceptions.SemanticException;
 import jiqs.semantics.visitor.AbstractExpressionOrClauseVisitor;
 import jiqs.jsoniq.compiler.translator.expr.Expression;
 import jiqs.jsoniq.compiler.translator.expr.ExpressionOrClause;

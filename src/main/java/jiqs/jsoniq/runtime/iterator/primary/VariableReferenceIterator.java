@@ -21,7 +21,7 @@
 
 import jiqs.semantics.DynamicContext;
 import jiqs.semantics.types.SequenceType;
-import jiqs.jsoniq.exceptions.IteratorFlowException;
+import jiqs.exceptions.IteratorFlowException;
 import jiqs.jsoniq.item.Item;
 import jiqs.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;

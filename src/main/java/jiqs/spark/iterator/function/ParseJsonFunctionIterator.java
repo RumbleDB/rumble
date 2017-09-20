@@ -20,7 +20,7 @@
  package jiqs.spark.iterator.function;
 
 import jiqs.io.json.StringToItemMapper;
-import jiqs.jsoniq.exceptions.SparksoniqRuntimeException;
+import jiqs.exceptions.SparksoniqRuntimeException;
 import jiqs.jsoniq.item.Item;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
 import jiqs.spark.SparkContextManager;

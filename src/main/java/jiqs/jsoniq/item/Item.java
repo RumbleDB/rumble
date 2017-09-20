@@ -20,9 +20,8 @@
  package jiqs.jsoniq.item;
 
 import jiqs.jsoniq.item.base.SerializableItem;
-import jiqs.jsoniq.exceptions.IteratorFlowException;
+import jiqs.exceptions.IteratorFlowException;
 import jiqs.semantics.types.ItemType;
-import jiqs.semantics.types.ItemTypes;
 
 import javax.naming.OperationNotSupportedException;
 import java.io.*;

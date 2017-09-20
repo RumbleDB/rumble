@@ -22,10 +22,9 @@
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import jiqs.jsoniq.exceptions.DuplicateObjectKeyException;
+import jiqs.exceptions.DuplicateObjectKeyException;
 import jiqs.semantics.types.ItemType;
 import jiqs.semantics.types.ItemTypes;
-import scala.util.parsing.combinator.testing.Str;
 
 import javax.naming.OperationNotSupportedException;
 import java.util.ArrayList;

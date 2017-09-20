@@ -19,14 +19,13 @@
  */
  package jiqs;
 
-import jiqs.config.RuntimeConfiguration;
 import jiqs.io.FileUtils;
 import jiqs.jsoniq.compiler.JsoniqExpressionTreeVisitor;
 import jiqs.jsoniq.compiler.parser.JsoniqLexer;
 import jiqs.jsoniq.compiler.parser.JsoniqParser;
 import jiqs.jsoniq.compiler.translator.expr.Expression;
-import jiqs.jsoniq.exceptions.SparksoniqRuntimeException;
-import jiqs.jsoniq.exceptions.ParsingException;
+import jiqs.exceptions.SparksoniqRuntimeException;
+import jiqs.exceptions.ParsingException;
 import jiqs.jsoniq.item.Item;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
 import jiqs.semantics.DynamicContext;

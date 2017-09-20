@@ -26,12 +26,11 @@ import jiqs.jsoniq.compiler.translator.expr.primary.ContextExpression;
 import jiqs.jsoniq.compiler.translator.expr.primary.VariableReference;
 import jiqs.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpression;
 import jiqs.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpressionVar;
-import jiqs.jsoniq.exceptions.UndeclaredVariableException;
+import jiqs.exceptions.UndeclaredVariableException;
 import jiqs.semantics.StaticContext;
 import jiqs.semantics.types.ItemType;
 import jiqs.semantics.types.ItemTypes;
 import jiqs.semantics.types.SequenceType;
-import jiqs.jsoniq.exceptions.SemanticException;
 
 public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<StaticContext> {
 

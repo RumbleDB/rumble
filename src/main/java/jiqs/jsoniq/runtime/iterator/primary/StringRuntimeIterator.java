@@ -21,7 +21,7 @@
 
 import jiqs.jsoniq.item.StringItem;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
-import jiqs.jsoniq.exceptions.IteratorFlowException;
+import jiqs.exceptions.IteratorFlowException;
 
 public class StringRuntimeIterator extends AtomicRuntimeIterator {
 

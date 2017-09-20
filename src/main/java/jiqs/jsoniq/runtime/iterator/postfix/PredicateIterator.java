@@ -21,8 +21,8 @@
 
 import jiqs.jsoniq.item.Item;
 import jiqs.semantics.DynamicContext;
-import jiqs.jsoniq.exceptions.SparksoniqRuntimeException;
-import jiqs.jsoniq.exceptions.IteratorFlowException;
+import jiqs.exceptions.SparksoniqRuntimeException;
+import jiqs.exceptions.IteratorFlowException;
 import jiqs.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
 

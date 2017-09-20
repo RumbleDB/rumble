@@ -21,7 +21,7 @@
 
 import jiqs.jsoniq.item.DoubleItem;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
-import jiqs.jsoniq.exceptions.IteratorFlowException;
+import jiqs.exceptions.IteratorFlowException;
 
 public class DoubleRuntimeIterator extends AtomicRuntimeIterator{
 

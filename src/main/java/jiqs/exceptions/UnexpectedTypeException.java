@@ -1,4 +1,4 @@
-package jiqs.jsoniq.exceptions;
+package jiqs.exceptions;
 
 public class UnexpectedTypeException extends SparksoniqRuntimeException{
     public UnexpectedTypeException(String message) {

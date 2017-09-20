@@ -19,7 +19,7 @@
  */
  package jiqs.jsoniq.runtime.iterator.operational;
 
-import jiqs.jsoniq.exceptions.IteratorFlowException;
+import jiqs.exceptions.IteratorFlowException;
 import jiqs.jsoniq.item.AtomicItem;
 import jiqs.jsoniq.item.BooleanItem;
 import jiqs.jsoniq.item.Item;

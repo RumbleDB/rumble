@@ -1,4 +1,4 @@
-package jiqs.jsoniq.exceptions;
+package jiqs.exceptions;
 
 public class DuplicateObjectKeyException extends SparksoniqRuntimeException{
     public DuplicateObjectKeyException(String message) {

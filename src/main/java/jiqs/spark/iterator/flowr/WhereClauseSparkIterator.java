@@ -20,7 +20,7 @@
  package jiqs.spark.iterator.flowr;
 
 import jiqs.jsoniq.compiler.translator.expr.flowr.FLWOR_CLAUSES;
-import jiqs.jsoniq.exceptions.SparksoniqRuntimeException;
+import jiqs.exceptions.SparksoniqRuntimeException;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
 import jiqs.spark.closures.WhereClauseClosure;
 import jiqs.spark.tuple.FlworTuple;

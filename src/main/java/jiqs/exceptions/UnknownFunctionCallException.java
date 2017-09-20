@@ -1,4 +1,4 @@
-package jiqs.jsoniq.exceptions;
+package jiqs.exceptions;
 
 public class UnknownFunctionCallException extends SparksoniqRuntimeException {
     public UnknownFunctionCallException(String message) {

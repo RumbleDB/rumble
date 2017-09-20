@@ -20,8 +20,8 @@
  package jiqs.spark.iterator.flowr;
 
 import jiqs.jsoniq.compiler.translator.expr.flowr.FLWOR_CLAUSES;
-import jiqs.jsoniq.exceptions.SparksoniqRuntimeException;
-import jiqs.jsoniq.exceptions.IteratorFlowException;
+import jiqs.exceptions.SparksoniqRuntimeException;
+import jiqs.exceptions.IteratorFlowException;
 import jiqs.jsoniq.item.Item;
 import jiqs.semantics.DynamicContext;
 import jiqs.spark.iterator.SparkRuntimeIterator;

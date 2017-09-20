@@ -19,9 +19,8 @@
  */
  package jiqs.spark.iterator;
 
-import jiqs.JsoniqQueryExecutor;
 import jiqs.io.json.JiqsItemParser;
-import jiqs.jsoniq.exceptions.IteratorFlowException;
+import jiqs.exceptions.IteratorFlowException;
 import jiqs.jsoniq.item.Item;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
 import jiqs.semantics.DynamicContext;

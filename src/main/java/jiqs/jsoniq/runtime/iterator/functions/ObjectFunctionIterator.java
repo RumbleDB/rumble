@@ -19,8 +19,8 @@
  */
  package jiqs.jsoniq.runtime.iterator.functions;
 
-import jiqs.jsoniq.exceptions.SparksoniqRuntimeException;
-import jiqs.jsoniq.exceptions.IteratorFlowException;
+import jiqs.exceptions.SparksoniqRuntimeException;
+import jiqs.exceptions.IteratorFlowException;
 import jiqs.jsoniq.item.Item;
 import jiqs.jsoniq.item.ObjectItem;
 import jiqs.jsoniq.item.StringItem;

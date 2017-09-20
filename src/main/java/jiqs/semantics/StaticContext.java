@@ -20,7 +20,7 @@
  package jiqs.semantics;
 
 import jiqs.semantics.types.SequenceType;
-import jiqs.jsoniq.exceptions.SemanticException;
+import jiqs.exceptions.SemanticException;
 
 import java.util.HashMap;
 import java.util.Map;

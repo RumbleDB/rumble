@@ -20,7 +20,7 @@
  package jiqs.jsoniq.runtime.iterator.primary;
 
 import jiqs.jsoniq.item.IntegerItem;
-import jiqs.jsoniq.exceptions.IteratorFlowException;
+import jiqs.exceptions.IteratorFlowException;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
 
 public class IntegerRuntimeIterator extends AtomicRuntimeIterator {

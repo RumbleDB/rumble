@@ -17,7 +17,7 @@
  * Author: Stefan Irimescu
  *
  */
- package jiqs.jsoniq.exceptions;
+ package jiqs.exceptions;
 
 
 public class SemanticException extends SparksoniqRuntimeException {

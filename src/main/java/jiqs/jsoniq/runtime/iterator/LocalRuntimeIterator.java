@@ -19,7 +19,7 @@
  */
  package jiqs.jsoniq.runtime.iterator;
 
-import jiqs.jsoniq.exceptions.SparkSparksoniqRuntimeException;
+import jiqs.exceptions.SparkSparksoniqRuntimeException;
 import jiqs.jsoniq.item.Item;
 import org.apache.spark.api.java.JavaRDD;
 

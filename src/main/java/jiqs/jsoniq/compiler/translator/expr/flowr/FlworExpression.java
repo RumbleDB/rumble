@@ -22,7 +22,7 @@
 import jiqs.jsoniq.compiler.translator.expr.Expression;
 import jiqs.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import jiqs.semantics.visitor.AbstractExpressionOrClauseVisitor;
-import jiqs.jsoniq.exceptions.SemanticException;
+import jiqs.exceptions.SemanticException;
 
 import java.util.ArrayList;
 import java.util.List;

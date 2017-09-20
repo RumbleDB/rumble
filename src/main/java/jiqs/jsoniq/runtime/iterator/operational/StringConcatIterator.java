@@ -20,10 +20,9 @@
  package jiqs.jsoniq.runtime.iterator.operational;
 
 import jiqs.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
-import jiqs.jsoniq.exceptions.IteratorFlowException;
-import jiqs.jsoniq.exceptions.UnexpectedTypeException;
+import jiqs.exceptions.IteratorFlowException;
+import jiqs.exceptions.UnexpectedTypeException;
 import jiqs.jsoniq.item.AtomicItem;
-import jiqs.jsoniq.item.BooleanItem;
 import jiqs.jsoniq.item.Item;
 import jiqs.jsoniq.item.StringItem;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;

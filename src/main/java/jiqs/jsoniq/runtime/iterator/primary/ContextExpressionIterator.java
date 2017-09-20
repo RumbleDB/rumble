@@ -20,9 +20,8 @@
  package jiqs.jsoniq.runtime.iterator.primary;
 
 import jiqs.jsoniq.item.Item;
-import jiqs.jsoniq.exceptions.IteratorFlowException;
+import jiqs.exceptions.IteratorFlowException;
 import jiqs.jsoniq.runtime.iterator.LocalRuntimeIterator;
-import jiqs.jsoniq.runtime.iterator.postfix.PredicateIterator;
 
 import java.util.ArrayList;
 import java.util.List;

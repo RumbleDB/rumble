@@ -21,7 +21,6 @@
 
 import iq.base.AnnotationsTestsBase;
 import jiqs.jsoniq.compiler.JsoniqExpressionTreeVisitor;
-import jiqs.jsoniq.exceptions.SparksoniqRuntimeException;
 import jiqs.jsoniq.item.Item;
 import jiqs.semantics.DynamicContext;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;

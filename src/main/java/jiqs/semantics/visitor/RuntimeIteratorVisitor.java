@@ -31,8 +31,8 @@ import jiqs.jsoniq.compiler.translator.expr.operational.base.OperationalExpressi
 import jiqs.jsoniq.compiler.translator.expr.postfix.PostFixExpression;
 import jiqs.jsoniq.compiler.translator.expr.postfix.extensions.*;
 import jiqs.jsoniq.compiler.translator.expr.primary.*;
-import jiqs.jsoniq.exceptions.UnknownFunctionCallException;
-import jiqs.jsoniq.exceptions.UnsupportedFeatureException;
+import jiqs.exceptions.UnknownFunctionCallException;
+import jiqs.exceptions.UnsupportedFeatureException;
 import jiqs.jsoniq.runtime.iterator.CommaExpressionIterator;
 import jiqs.jsoniq.runtime.iterator.EmptySequenceIterator;
 import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
