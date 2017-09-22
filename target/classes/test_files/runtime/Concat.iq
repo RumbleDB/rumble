@@ -1,2 +1,0 @@
-(:JIQS: ShouldRun; Output="aabbccdd" :)
-"aa" || "bb" || "cc" || "" || "dd"

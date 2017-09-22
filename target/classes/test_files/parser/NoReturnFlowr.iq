@@ -1,3 +1,0 @@
-(:JIQS: ShouldNotParse; ErrorCode="XPST0003" :)
-for $var in [1,2,3][]
-where $var eq 1
