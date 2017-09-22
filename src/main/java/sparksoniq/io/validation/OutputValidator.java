@@ -20,10 +20,8 @@
  package sparksoniq.io.validation;
 
 
-import akka.japi.pf.FI;
-
 import org.apache.commons.io.FileUtils;
-import scala.util.parsing.combinator.testing.Str;
+
 
 import java.io.BufferedReader;
 import java.io.File;

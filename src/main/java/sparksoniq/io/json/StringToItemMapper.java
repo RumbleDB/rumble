@@ -29,11 +29,11 @@ import java.util.List;
 
 public class StringToItemMapper implements FlatMapFunction<Iterator<String>, Item> {
     @Override
-    public Iterable<Item> call(Iterator<String> stringIterator) throws Exception {
+    public Iterator<Item> call(Iterator<String> stringIterator) throws Exception {
         JiqsItemParser parser = new JiqsItemParser();
         List<JSONObject> objects = parser.parseJsonLinesFromIterator(stringIterator);
         List<Item> items = new ArrayList<>();
         objects.forEach(obj -> items.add(parser.getItemFromObject(obj)));
-        return items;
+        return items.iterator();
     }
 }

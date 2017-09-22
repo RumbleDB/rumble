@@ -26,6 +26,7 @@ import sparksoniq.spark.tuple.FlworTuple;
 import org.apache.spark.api.java.function.FlatMapFunction;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class ReturnFlatMapClosure implements FlatMapFunction<FlworTuple, Item> {
@@ -36,12 +37,12 @@ public class ReturnFlatMapClosure implements FlatMapFunction<FlworTuple, Item> {
     }
 
     @Override
-    public Iterable<Item> call(FlworTuple v1) throws Exception {
+    public Iterator<Item> call(FlworTuple v1) throws Exception {
         List<Item> result = new ArrayList<>();
         _expression.open(new DynamicContext(v1));
         while(_expression.hasNext())
            result.add(_expression.next());
         _expression.close();
-        return result;//.iterator();
+        return result.iterator();
     }
 }

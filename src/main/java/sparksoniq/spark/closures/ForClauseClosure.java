@@ -26,6 +26,7 @@ import sparksoniq.spark.tuple.FlworTuple;
 import org.apache.spark.api.java.function.FlatMapFunction;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class ForClauseClosure implements FlatMapFunction<FlworTuple, FlworTuple> {
@@ -39,7 +40,7 @@ public class ForClauseClosure implements FlatMapFunction<FlworTuple, FlworTuple>
     }
 
     @Override
-    public Iterable<FlworTuple> call(FlworTuple tuple) throws Exception {
+    public Iterator<FlworTuple> call(FlworTuple tuple) throws Exception {
         List<FlworTuple> results = new ArrayList<>();
         List<Item> items = new ArrayList<>();
         _expression.open(new DynamicContext(tuple));
@@ -53,7 +54,7 @@ public class ForClauseClosure implements FlatMapFunction<FlworTuple, FlworTuple>
             results.add(newTuple);
 
         }
-        return results;
+        return results.iterator();
     }
 
     private FlworTuple createNewTuple(FlworTuple tuple, String newKey, List<Item> value) {
