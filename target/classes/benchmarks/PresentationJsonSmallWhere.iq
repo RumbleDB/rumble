@@ -1,0 +1,6 @@
+for $i in json-file("hdfs:///user/istefan/conf1aa", 50)
+let $guess := $i."guess"
+let $target := $i."target"
+where $guess eq $target
+where $target eq "German"
+return $i

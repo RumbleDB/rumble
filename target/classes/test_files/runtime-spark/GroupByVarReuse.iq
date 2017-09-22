@@ -1,0 +1,5 @@
+(:JIQS: ShouldCrash; ErrorCode="XQST0094" :)
+for $i in json-file("./src/main/resources/queries/conf-ex.json", 10)
+let $j := $i.choices
+group by $j := $i.choices
+return $j
