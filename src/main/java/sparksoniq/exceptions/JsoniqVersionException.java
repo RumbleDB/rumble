@@ -1,11 +1,8 @@
 package sparksoniq.exceptions;
 
-public class JsoniqVersionException extends SparksoniqRuntimeException{
+public class JsoniqVersionException extends ParsingException{
     public JsoniqVersionException() {
         super("Invalid JSONiq Version", ErrorCodes.InvalidJsoniqVersionErrorCode);
     }
 
-    public JsoniqVersionException(String message) {
-        super(message, ErrorCodes.InvalidJsoniqVersionErrorCode);
-    }
 }

@@ -19,6 +19,7 @@
  */
  package sparksoniq.jsoniq.compiler;
 
+import sparksoniq.exceptions.ModuleDeclarationException;
 import sparksoniq.jsoniq.compiler.translator.expr.control.IfExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.InstanceOfExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpression;
@@ -77,6 +78,10 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
             throw new JsoniqVersionException();
         this.visitMainModule(ctx.mainModule());
         return null;
+    }
+
+    @Override public Void visitModuleImport(JsoniqParser.ModuleImportContext ctx) {
+        throw new ModuleDeclarationException("Modules are not supported in Sparksoniq");
     }
 
     //region expr

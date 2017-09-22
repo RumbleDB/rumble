@@ -66,6 +66,7 @@ sparksoniq/jsoniq/compiler/parser/JsoniqParser$PairConstructorContext.class
 sparksoniq/jsoniq/compiler/parser/JsoniqParser$UnorderedExprContext.class
 sparksoniq/jsoniq/compiler/translator/expr/flowr/OrderByClauseExpr$EMPTY_ORDER.class
 sparksoniq/jsoniq/compiler/translator/expr/primary/ObjectConstructor$PairConstructor.class
+sparksoniq/exceptions/ModuleDeclarationException.class
 sparksoniq/jsoniq/compiler/parser/JsoniqParser$ComparisonExprContext.class
 sparksoniq/semantics/visitor/RuntimeIteratorVisitor.class
 sparksoniq/jsoniq/runtime/iterator/primary/IntegerRuntimeIterator.class

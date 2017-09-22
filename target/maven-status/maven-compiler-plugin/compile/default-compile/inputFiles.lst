@@ -156,6 +156,7 @@
 /home/stefan/Work/Sparksoniq/sparksoniq/src/main/java/sparksoniq/jsoniq/runtime/iterator/primary/ObjectConstructorRuntimeIterator.java
 /home/stefan/Work/Sparksoniq/sparksoniq/src/main/java/sparksoniq/jsoniq/compiler/translator/expr/operational/base/BinaryExpressionBase.java
 /home/stefan/Work/Sparksoniq/sparksoniq/src/main/java/sparksoniq/spark/iterator/flowr/OrderByClauseSparkIterator.java
+/home/stefan/Work/Sparksoniq/sparksoniq/src/main/java/sparksoniq/exceptions/ModuleDeclarationException.java
 /home/stefan/Work/Sparksoniq/sparksoniq/src/main/java/sparksoniq/jsoniq/runtime/iterator/functions/ArithmeticFunctionIterator.java
 /home/stefan/Work/Sparksoniq/sparksoniq/src/main/java/sparksoniq/io/FileUtils.java
 /home/stefan/Work/Sparksoniq/sparksoniq/src/main/java/sparksoniq/spark/iterator/SparkRuntimeIterator.java
