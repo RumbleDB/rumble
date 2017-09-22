@@ -1,2 +1,0 @@
-(:JIQS: ShouldNotCompile; ErrorCode="XPDY0140" :)
-1 or 2 + 3 - 2 and $i

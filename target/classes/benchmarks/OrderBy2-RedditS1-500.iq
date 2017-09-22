@@ -1,4 +1,0 @@
-for $i in json-file("hdfs:///user/gfourny/Reddit*", 500)
-         where $i.subreddit eq "AskReddit"
-         order by $i.score descending, $i.author
-         return $i

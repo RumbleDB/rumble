@@ -1,7 +1,0 @@
-for $i in json-file("hdfs:///user/istefan/full{,2,4}/RC*", 3000)
-where $i.score gt 100 and $i.subreddit eq "AskReddit"
-let $author := $i.author, $score := $i.score
-group by $author
-let $totalScore := sum($score)
-return {"Author": $author,
-        "TotalScore": $totalScore}

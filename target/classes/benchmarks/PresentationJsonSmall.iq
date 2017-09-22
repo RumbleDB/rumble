@@ -1,6 +1,0 @@
-for $i in json-file("hdfs:///user/istefan/conf1aa", 50)
-let $country := $i.country, $target := $i."target"
-group by $target, $country
-return {"Language": $target,
-        "Country" : $country,
-        "Guesses": length($i)}

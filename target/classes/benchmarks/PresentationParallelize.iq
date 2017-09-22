@@ -1,4 +1,0 @@
-for $i in parallelize(1 to 1000)
-group by $modVar :=$i mod 13
-return {"mod 13": $modVar,
-        "i" : $i}
