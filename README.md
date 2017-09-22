@@ -8,21 +8,20 @@
 <a href="https://ibb.co/j5nnB5"><img src="https://preview.ibb.co/nQPpPQ/icon.png" alt="icon" border="0"></a>
 
 <h5>REQUIREMENTS</h5>
-- Spark 1.6.2
-- ANTLRv4
+- Spark 2.1.0
+- ANTLRv4 4.6
 
 
 <h5>SETUP</h5>
-1) Generate ANTLR Lexer and Parser - run ant build on build_antlr_parser.xml
+1. Generate ANTLR Lexer and Parser - run ant build on build_antlr_parser.xml
 
-2) Packaging (with requirements) - mvn clean compile assembly:single
+2. Packaging (with requirements) - mvn clean compile assembly:single
 
-3) Submit jar using spark-submit [CLI TBD]
+3. Submit jar using spark-submit [CLI TBD]
 
 Example:
 
-spark-submit --class jiqs.ShellStart     --master yarn-client     --deploy-mode client --num-executors 40 --conf spark.yarn.maxAppAttempts=1 --conf spark.ui.port=4051  --conf spark.executor.memory=10g --conf spark.executor.heartbeatInterval=3600s --conf spark.network.timeout=3600s  jsoniq-spark-app-1.0-jar-with-dependencies.jar yarn-client 1000
-
+spark-submit --class sparksoniq.ShellStart     --master yarn-client     --deploy-mode client --num-executors 40 --conf spark.yarn.maxAppAttempts=1 --conf spark.ui.port=4051  --conf spark.executor.memory=10g --conf spark.executor.heartbeatInterval=3600s --conf spark.network.timeout=3600s  jsoniq-spark-app-1.0-jar-with-dependencies.jar yarn-client 1000
 
 <h5>LICENSES</h5>
 
