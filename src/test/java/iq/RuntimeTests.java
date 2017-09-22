@@ -20,10 +20,10 @@
  package iq;
 
 import iq.base.AnnotationsTestsBase;
-import jiqs.jsoniq.compiler.JsoniqExpressionTreeVisitor;
-import jiqs.jsoniq.item.Item;
-import jiqs.semantics.DynamicContext;
-import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
+import sparksoniq.jsoniq.item.Item;
+import sparksoniq.semantics.DynamicContext;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -80,11 +80,6 @@ public class RuntimeTests extends AnnotationsTestsBase{
                 actualOutput.equals(expectedOutput));
     }
 
-    @Override
-    //TODO maybe check error message is equal to some expected error code
-    protected void testCrashOutput(String expectedOutput, RuntimeIterator runtimeIterator) {
-        runIterators(runtimeIterator);
-    }
 
     protected String getIteratorOutput(RuntimeIterator iterator){
         iterator.open(new DynamicContext());

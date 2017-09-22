@@ -19,7 +19,7 @@
  */
  package iq;
 
-import jiqs.spark.SparkContextManager;
+import sparksoniq.spark.SparkContextManager;
 import org.apache.spark.SparkConf;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;

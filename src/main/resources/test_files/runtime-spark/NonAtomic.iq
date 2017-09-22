@@ -1,0 +1,4 @@
+(:JIQS: ShouldCrash; ErrorCode="JNTY0004" :)
+for $i in json-file("./src/main/resources/queries/conf-ex.json", 10)
+group by $catt := $i.choices
+return $catt

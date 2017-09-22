@@ -1,22 +1,18 @@
 <project name="antlr-parser" default="generate-parser" basedir=".">
 
-    <!-- A very simple ant file that primarily existsrunLocal run cup and lex;
-    it also includes targets to build the compiler runLocal run tests for those
-    who would rather not use Eclipse -->
-
     <!-- Set project properties. -->
-    <property name="src.dir" value="${basedir}/src/main/java/jiqs"/>
+    <property name="src.dir" value="${basedir}/src/main/java/sparksoniq"/>
     <property name="parser.dir" value="${src.dir}/jsoniq/compiler/parser"/>
     <property name="antlr.jar" value="/usr/local/lib/antlr-4.6-complete.jar"/>
 
 
     <target name="clean-parser">
-        <delete file="/jiqs/jsoniq/compiler/parser/Jsoniq.tokens"/>
-        <delete file="/jiqs/jsoniq/compiler/parser/JsoniqLexer.java"/>
-        <delete file="/jiqs/jsoniq/compiler/parser/JsoniqParser.java"/>
-        <delete file="/jiqs/jsoniq/compiler/parser/JsoniqBaseVisitor.java"/>
-        <delete file="/jiqs/jsoniq/compiler/parser/JsoniqVisitor.java"/>
-        <delete file="/jiqs/jsoniq/compiler/parser/JsoniqLexer.tokens"/>
+        <delete file="/sparksoniq/jsoniq/compiler/parser/Jsoniq.tokens"/>
+        <delete file="/sparksoniq/jsoniq/compiler/parser/JsoniqLexer.java"/>
+        <delete file="/sparksoniq/jsoniq/compiler/parser/JsoniqParser.java"/>
+        <delete file="/sparksoniq/jsoniq/compiler/parser/JsoniqBaseVisitor.java"/>
+        <delete file="/sparksoniq/jsoniq/compiler/parser/JsoniqVisitor.java"/>
+        <delete file="/sparksoniq/jsoniq/compiler/parser/JsoniqLexer.tokens"/>
     </target>
 
 

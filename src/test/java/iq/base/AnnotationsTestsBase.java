@@ -19,16 +19,16 @@
  */
  package iq.base;
 
-import jiqs.jsoniq.compiler.JsoniqExpressionTreeVisitor;
-import jiqs.jsoniq.compiler.parser.JsoniqBaseVisitor;
-import jiqs.jsoniq.compiler.parser.JsoniqLexer;
-import jiqs.jsoniq.compiler.parser.JsoniqParser;
-import jiqs.jsoniq.exceptions.ParsingException;
-import jiqs.jsoniq.exceptions.SemanticException;
-import jiqs.semantics.visitor.StaticContextVisitor;
-import jiqs.semantics.visitor.RuntimeIteratorVisitor;
-import jiqs.jsoniq.exceptions.SparksoniqRuntimeException;
-import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
+import sparksoniq.jsoniq.compiler.parser.JsoniqBaseVisitor;
+import sparksoniq.jsoniq.compiler.parser.JsoniqLexer;
+import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
+import sparksoniq.exceptions.ParsingException;
+import sparksoniq.exceptions.SemanticException;
+import sparksoniq.semantics.visitor.StaticContextVisitor;
+import sparksoniq.semantics.visitor.RuntimeIteratorVisitor;
+import sparksoniq.exceptions.SparksoniqRuntimeException;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -82,7 +82,7 @@ public class AnnotationsTestsBase {
             //PARSING
         } catch (ParsingException exception) {
             String errorOutput = exception.getMessage();
-
+            checkErrorCode(errorOutput, currentAnnotation.getErrorCode());
             if(currentAnnotation.shouldParse()) {
                 Assert.fail("Program did not parse when expected to.\nError output: " + errorOutput + "\n");
                 return context;
@@ -96,7 +96,7 @@ public class AnnotationsTestsBase {
             //SEMANTIC
         } catch (SemanticException exception){
             String errorOutput = exception.getMessage();
-
+            checkErrorCode(errorOutput, currentAnnotation.getErrorCode());
             try{if(currentAnnotation.shouldCompile()) {
                 Assert.fail("Program did not compile when expected to.\nError output: " + errorOutput + "\n");
                 return context;
@@ -109,9 +109,10 @@ public class AnnotationsTestsBase {
             //RUNTIME
         } catch (SparksoniqRuntimeException exception){
             String errorOutput = exception.getMessage();
+            checkErrorCode(errorOutput, currentAnnotation.getErrorCode());
             try{
             if(currentAnnotation.shouldRun()) {
-                Assert.fail("Program did not runLocal when expected to.\nError output: " + errorOutput + "\n");
+                Assert.fail("Program did not run when expected to.\nError output: " + errorOutput + "\n");
                 return context;
             }else {
                 System.out.println(errorOutput);
@@ -139,29 +140,31 @@ public class AnnotationsTestsBase {
                 checkExpectedOutput( currentAnnotation.getOutput(), runtimeIterator);
             } catch (SparksoniqRuntimeException exception){
                 String errorOutput = exception.getMessage();
-                Assert.fail("Program did not runLocal when expected to.\nError output: " + errorOutput + "\n");
+                Assert.fail("Program did not run when expected to.\nError output: " + errorOutput + "\n");
             }
         } else {
             //PROGRAM SHOULD CRASH
             if(currentAnnotation instanceof AnnotationProcessor.UnrunnableTestAnnotation &&
                     !currentAnnotation.shouldRun()) {
                 try {
-                    testCrashOutput(currentAnnotation.getErrorMessage(), runtimeIterator);
-                }  catch (SparksoniqRuntimeException exception){
+                    checkExpectedOutput( currentAnnotation.getOutput(), runtimeIterator);
+                }  catch (Exception exception){
                     String errorOutput = exception.getMessage();
-                    Assert.assertTrue(errorOutput, true);
+                    checkErrorCode(errorOutput, currentAnnotation.getErrorCode());
                     return context;
                 }
 
-                Assert.fail("Program runLocal when not expected to");
+                Assert.fail("Program executed when not expected to");
             }
         }
 
         return context;
     }
 
-    protected void testCrashOutput(String expectedOutput, RuntimeIterator runtimeIterator) {
-        Assert.assertTrue(true);
+    protected void checkErrorCode(String errorOutput, String expectedErrorCode) {
+        if(errorOutput != null && expectedErrorCode != null)
+            Assert.assertTrue("Unexpected error code returned; Expected: " + expectedErrorCode +
+                    "; Error: " + errorOutput,errorOutput.contains(expectedErrorCode));
     }
 
     protected void checkExpectedOutput(String expectedOutput, RuntimeIterator runtimeIterator) {

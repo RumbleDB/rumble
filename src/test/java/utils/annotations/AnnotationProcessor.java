@@ -19,8 +19,6 @@
  */
  package utils.annotations;
 
-import utils.annotations.AnnotationParseException;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -34,7 +32,7 @@ import java.util.Optional;
 public class AnnotationProcessor {
 
     public static final String OUTPUT_KEY = "Output";
-    public static final String ERROR_MESSAGE = "Error";
+    public static final String ERROR_MESSAGE = "ErrorCode";
     public static final String SHOULD_PARSE = "ShouldParse";
     public static final String SHOULD_NOT_PARSE = "ShouldNotParse";
     public static final String SHOULD_COMPILE = "ShouldCompile";
@@ -50,12 +48,8 @@ public class AnnotationProcessor {
             return expectedOutput;
         }
 
-        public String getErrorMessage() {
-            return errorMessage;
-        }
-
-        public CompilationErrorType getCompilationErrorType() {
-            return CompilationErrorType.PARSE_ERROR;
+        public String getErrorCode() {
+            return errorCode;
         }
 
         public abstract boolean shouldParse();
@@ -63,7 +57,7 @@ public class AnnotationProcessor {
         public abstract boolean shouldRun();
 
         protected String expectedOutput = "";
-        protected String errorMessage = "";
+        protected String errorCode = "";
     }
 
     public static class RunnableTestAnnotation extends TestAnnotation {
@@ -74,6 +68,7 @@ public class AnnotationProcessor {
         public RunnableTestAnnotation(String expectedOut) {
             super();
             this.expectedOutput = expectedOut;
+            this.errorCode = null;
         }
 
         @Override
@@ -90,9 +85,9 @@ public class AnnotationProcessor {
 
     public static class UnrunnableTestAnnotation extends TestAnnotation {
 
-        public UnrunnableTestAnnotation( String error) {
+        public UnrunnableTestAnnotation(String errorCode) {
             super();
-            this.errorMessage = error;
+            this.errorCode = errorCode;
         }
 
         @Override
@@ -106,21 +101,13 @@ public class AnnotationProcessor {
         @Override
         public boolean shouldRun() {return false;}
 
-        @Override
-        public CompilationErrorType getCompilationErrorType() {
-            return CompilationErrorType.RUNTIME_ERROR;
-        }
     }
 
     public static class UncompilableTestAnnotation extends TestAnnotation {
 
-        public UncompilableTestAnnotation() {
+        public UncompilableTestAnnotation(String errorCode) {
             super();
-        }
-
-        @Override
-        public CompilationErrorType getCompilationErrorType() {
-            return CompilationErrorType.SEMANTIC_ERROR;
+            this.errorCode = errorCode;
         }
 
         @Override
@@ -139,8 +126,14 @@ public class AnnotationProcessor {
 
     public static class CompilableTestAnnotation extends TestAnnotation {
 
+        public CompilableTestAnnotation(String errorCode) {
+            super();
+            this.errorCode = errorCode;
+        }
+
         public CompilableTestAnnotation() {
             super();
+            this.errorCode = null;
         }
 
         @Override
@@ -161,6 +154,12 @@ public class AnnotationProcessor {
 
         public ParsableTestAnnotation() {
             super();
+            this.errorCode = null;
+        }
+
+        public ParsableTestAnnotation(String errorCode) {
+            super();
+            this.errorCode = errorCode;
         }
 
         @Override
@@ -180,8 +179,9 @@ public class AnnotationProcessor {
     }
 
     public static class UnparsableTestAnnotation extends TestAnnotation {
-        public UnparsableTestAnnotation() {
+        public UnparsableTestAnnotation(String errorCode) {
             super();
+            this.errorCode = errorCode;
         }
 
         @Override
@@ -201,9 +201,6 @@ public class AnnotationProcessor {
 
     }
 
-    public enum CompilationErrorType {
-        PARSE_ERROR, SEMANTIC_ERROR, RUNTIME_ERROR
-    }
 
     public static final String MAGIC_COOKIE = "(:JIQS:";
 
@@ -228,7 +225,6 @@ public class AnnotationProcessor {
         Optional<Boolean> shouldCompile = Optional.empty();
         Optional<Boolean> shouldRun = Optional.empty();
 
-        boolean shouldSkip = false;
         Map<String, String> parameters = new HashMap<>();
         for (String token : annotationTokens) {
             if (token.equals(SHOULD_PARSE)) {
@@ -246,6 +242,7 @@ public class AnnotationProcessor {
             } else if (token.equals(SHOULD_CRASH)) {
                 shouldRun = Optional.of(false);
             } else if (token.contains("=")) {
+
             String[] tokenParts = token.split("=", 2);
             String key = tokenParts[0].trim();
             String value = tokenParts[1].trim();
@@ -274,12 +271,12 @@ public class AnnotationProcessor {
             if(shouldCompile.get())
                 return new CompilableTestAnnotation();
             else
-                return new UncompilableTestAnnotation();
+                return new UncompilableTestAnnotation(parameters.get(ERROR_MESSAGE));
         }
 
         if (shouldParse.get())
             return new ParsableTestAnnotation();
         else
-            return new UnparsableTestAnnotation();
+            return new UnparsableTestAnnotation(parameters.get(ERROR_MESSAGE));
     }
 }
