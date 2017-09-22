@@ -20,10 +20,10 @@
  package iq;
 
 import iq.base.AnnotationsTestsBase;
-import jiqs.jsoniq.compiler.JsoniqExpressionTreeVisitor;
-import jiqs.jsoniq.item.Item;
-import jiqs.semantics.DynamicContext;
-import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
+import sparksoniq.jsoniq.item.Item;
+import sparksoniq.semantics.DynamicContext;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;

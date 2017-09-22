@@ -19,16 +19,16 @@
  */
  package iq.base;
 
-import jiqs.jsoniq.compiler.JsoniqExpressionTreeVisitor;
-import jiqs.jsoniq.compiler.parser.JsoniqBaseVisitor;
-import jiqs.jsoniq.compiler.parser.JsoniqLexer;
-import jiqs.jsoniq.compiler.parser.JsoniqParser;
-import jiqs.exceptions.ParsingException;
-import jiqs.exceptions.SemanticException;
-import jiqs.semantics.visitor.StaticContextVisitor;
-import jiqs.semantics.visitor.RuntimeIteratorVisitor;
-import jiqs.exceptions.SparksoniqRuntimeException;
-import jiqs.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
+import sparksoniq.jsoniq.compiler.parser.JsoniqBaseVisitor;
+import sparksoniq.jsoniq.compiler.parser.JsoniqLexer;
+import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
+import sparksoniq.exceptions.ParsingException;
+import sparksoniq.exceptions.SemanticException;
+import sparksoniq.semantics.visitor.StaticContextVisitor;
+import sparksoniq.semantics.visitor.RuntimeIteratorVisitor;
+import sparksoniq.exceptions.SparksoniqRuntimeException;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CommonTokenStream;

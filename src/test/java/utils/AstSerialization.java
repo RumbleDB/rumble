@@ -19,8 +19,8 @@
  */
  package utils;
 
-import jiqs.jsoniq.compiler.JsoniqExpressionTreeVisitor;
-import jiqs.jsoniq.compiler.parser.JsoniqParser;
+import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
+import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
 
 import java.util.Arrays;
 

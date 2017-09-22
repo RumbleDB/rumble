@@ -21,21 +21,21 @@
 
 
 import iq.base.AnnotationsTestsBase;
-import jiqs.jsoniq.compiler.JsoniqExpressionTreeVisitor;
-import jiqs.semantics.types.ItemTypes;
-import jiqs.jsoniq.compiler.translator.expr.ExpressionOrClause;
-import jiqs.jsoniq.compiler.translator.expr.operational.NotExpression;
-import jiqs.jsoniq.compiler.translator.expr.operational.OrExpression;
-import jiqs.jsoniq.compiler.translator.expr.operational.RangeExpression;
-import jiqs.jsoniq.compiler.translator.expr.operational.UnaryExpression;
-import jiqs.jsoniq.compiler.translator.expr.postfix.PostFixExpression;
-import jiqs.jsoniq.compiler.translator.expr.flowr.*;
-import jiqs.jsoniq.compiler.translator.expr.primary.ArrayConstructor;
-import jiqs.jsoniq.compiler.translator.expr.primary.IntegerLiteral;
-import jiqs.jsoniq.compiler.translator.expr.primary.ObjectConstructor;
-import jiqs.jsoniq.compiler.parser.JsoniqBaseVisitor;
-import jiqs.jsoniq.compiler.parser.JsoniqParser;
-import jiqs.jsoniq.compiler.translator.expr.primary.VariableReference;
+import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
+import sparksoniq.semantics.types.ItemTypes;
+import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.NotExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.OrExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.RangeExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.UnaryExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.postfix.PostFixExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.*;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.ArrayConstructor;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.IntegerLiteral;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.ObjectConstructor;
+import sparksoniq.jsoniq.compiler.parser.JsoniqBaseVisitor;
+import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
 import org.junit.Assert;
 import org.junit.Test;
 import utils.AstSerialization;
