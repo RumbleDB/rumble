@@ -19,27 +19,46 @@
  */
  package sparksoniq;
 
-import sparksoniq.config.RuntimeConfiguration;
+import sparksoniq.config.SparksoniqRuntimeConfiguration;
+import sparksoniq.exceptions.CliException;
 import sparksoniq.io.shell.JiqsJLineShell;
 import sparksoniq.spark.SparkContextManager;
 
 import java.io.IOException;
+import java.util.HashMap;
 
 /*
 GENERIC LAUNCH COMMAND
-spark-submit --class jiqs.ShellStart     --master yarn-client     --deploy-mode client --num-executors 50 --conf spark.yarn.maxAppAttempts=1 --conf spark.ui.port=4050 jsoniq-spark-app-1.0-jar-with-dependencies.jar yarn-client
+spark-submit --class sparksoniq.ShellStart     --master yarn-client     --deploy-mode client
+--num-executors 40 --conf spark.yarn.maxAppAttempts=1 --conf spark.ui.port=4051
+--conf spark.executor.memory=10g --conf spark.executor.heartbeatInterval=3600s
+--conf spark.network.timeout=3600s
+jsoniq-spark-app-1.0-jar-with-dependencies.jar  --master yarn-client --result-size 1000
+
+
+spark-submit --class sparksoniq.ShellStart   --deploy-mode client --num-executors 40 --conf spark.yarn.maxAppAttempts=1 --conf spark.ui.port=4051 --conf spark.executor.memory=10g --conf spark.executor.heartbeatInterval=3600s --conf spark.network.timeout=3600s  jsoniq-spark-app-1.0-jar-with-dependencies.jar --master yarn-client --result-size 1000
+
+
 
  */
+
 public class ShellStart {
     public static void main(String[] args) throws IOException {
         String masterConfig = "local[*]";
-        if(args.length >= 1)
-            masterConfig = args[0];
+        HashMap<String, String> arguments;
+        try {
+            arguments = SparksoniqRuntimeConfiguration.processCommandLineArgs(args);
+        } catch (CliException ex) {
+            System.out.println(ex.getMessage());
+            return;
+        }
+        if(arguments.containsKey("master"))
+            masterConfig = arguments.get("master");
         SparkContextManager.getInstance().initializeConfigurationAndContext(masterConfig);
-        if(args.length >= 2) {
-            int itemLimit = Integer.valueOf(args[1]);
-            new JiqsJLineShell(new RuntimeConfiguration(null), itemLimit).launch();
+        if(arguments.containsKey("result-size")) {
+            int itemLimit = Integer.parseInt(arguments.get("result-size"));
+            new JiqsJLineShell(new SparksoniqRuntimeConfiguration(arguments), itemLimit).launch();
         } else
-            new JiqsJLineShell(new RuntimeConfiguration(null)).launch();
+            new JiqsJLineShell(new SparksoniqRuntimeConfiguration(arguments)).launch();
     }
 }

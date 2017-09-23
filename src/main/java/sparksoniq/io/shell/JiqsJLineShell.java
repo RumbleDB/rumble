@@ -20,7 +20,7 @@
  package sparksoniq.io.shell;
 
 import sparksoniq.JsoniqQueryExecutor;
-import sparksoniq.config.RuntimeConfiguration;
+import sparksoniq.config.SparksoniqRuntimeConfiguration;
 import sparksoniq.io.FileUtils;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
@@ -42,21 +42,21 @@ public class JiqsJLineShell {
     private final boolean _printTime;
     private int _itemLimit;
 
-    public JiqsJLineShell(RuntimeConfiguration configuration) throws IOException {
+    public JiqsJLineShell(SparksoniqRuntimeConfiguration configuration) throws IOException {
         this._configuration = configuration;
         this._itemLimit = 100;
         initialize(_configuration);
         this._printTime = true;
     }
 
-    public JiqsJLineShell(RuntimeConfiguration configuration, int itemLimit) throws IOException {
+    public JiqsJLineShell(SparksoniqRuntimeConfiguration configuration, int itemLimit) throws IOException {
         this._configuration = configuration;
         this._itemLimit = itemLimit;
         initialize(_configuration);
         this._printTime = true;
     }
 
-    public JiqsJLineShell(RuntimeConfiguration configuration, int itemLimit, boolean printTime) throws IOException {
+    public JiqsJLineShell(SparksoniqRuntimeConfiguration configuration, int itemLimit, boolean printTime) throws IOException {
         this._configuration = configuration;
         this._itemLimit = itemLimit;
         initialize(_configuration);
@@ -111,7 +111,7 @@ public class JiqsJLineShell {
         } catch (Exception deleteException){}
     }
 
-    private void initialize(RuntimeConfiguration _configuration) throws IOException {
+    private void initialize(SparksoniqRuntimeConfiguration _configuration) throws IOException {
         terminal = TerminalBuilder.builder().system(true).build();
         lineReader = LineReaderBuilder.builder()
                 .terminal(terminal)
@@ -160,7 +160,7 @@ public class JiqsJLineShell {
     }
 
     private String getInitializationMessage() {
-        return "Welcome to Sparsonic \n";
+        return "WELCOME to SPARKSONiq \n" + _configuration.toString();
     }
 
     private Terminal terminal;
@@ -172,7 +172,7 @@ public class JiqsJLineShell {
     private String previousLine = "";
     private String currentLine = "";
     private String currentQueryContent = "";
-    private final RuntimeConfiguration _configuration;
+    private final SparksoniqRuntimeConfiguration _configuration;
 
 
 }

@@ -20,6 +20,7 @@
  package sparksoniq;
 
 
+import sparksoniq.config.SparksoniqRuntimeConfiguration;
 import sparksoniq.spark.SparkContextManager;
 
 import java.io.IOException;
@@ -29,23 +30,32 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 public class Main {
     public static void main(String[] args) throws IOException, URISyntaxException {
-        String config = args[0];
-        String masterConfig = args[1];
-        String outputDataFilePath = args[2];
-        String queryFilePath = "";
-        String logFilePath = "";
+        HashMap<String, String> arguments;
+        String config = "local", masterConfig, outputDataFilePath, queryFilePath = "", logFilePath = "";
         int outputItemLimit = 200;
-        if(args.length > 3)
-            queryFilePath = args[3];
-        if(args.length > 4)
-            logFilePath =  args[4];
-        if(args.length > 5)
-            outputItemLimit =  Integer.valueOf(args[5]);
-        initializeApplication(masterConfig);
+        try {
+            arguments= SparksoniqRuntimeConfiguration.processCommandLineArgs(args);
+            config = arguments.get("config");
+            masterConfig = arguments.get("master");
+            outputDataFilePath = arguments.get("output-path");
+            initializeApplication(masterConfig);
+            if(arguments.containsKey("query-path"))
+                queryFilePath = arguments.get("query-path");
+            if(arguments.containsKey("log-path"))
+                logFilePath =  arguments.get("log-path");
+            if(arguments.containsKey("result-size"))
+                outputItemLimit =  Integer.valueOf(arguments.get("result-size"));
+
+        } catch (Exception ex) {
+            System.out.println(ex.getMessage());
+            return;
+        }
+
         if(config.equals("local")) {
             System.out.println("Running in local mode");
             runQueryExecutor(queryFilePath, outputDataFilePath, true, logFilePath, outputItemLimit);

@@ -38,5 +38,7 @@ public class ErrorCodes {
     public static final String UndeclaredVariableErrorCode = "XPDY0140";
     //TODO invalid key?
 
+    public static final String CliErrorCode = "SPRKIQ0001";
+
 
 }

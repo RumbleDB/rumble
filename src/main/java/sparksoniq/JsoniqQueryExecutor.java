@@ -143,7 +143,7 @@ public class JsoniqQueryExecutor {
     private JsoniqLexer getInputSource(String arg) throws IOException {
         arg = arg.trim();
         //return embedded file
-        if(arg == null)
+        if(arg == null || arg.isEmpty())
             new JsoniqLexer(new ANTLRInputStream(new Main().getClass().getResourceAsStream("/queries/runQuery.iq")));
         if(arg.startsWith("file://") || arg.startsWith("/")) {
             FileReader reader = this.getFileReader(arg);
