@@ -98,7 +98,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         }
         node = new CommaExpression(expressions);
         this.currentExpression = node;
-        if(getDepthLevel(ctx) == 2)
+        if(getDepthLevel(ctx) == 3)
             queryExpression = node;
         return null;
     }

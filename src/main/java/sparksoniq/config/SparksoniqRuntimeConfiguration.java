@@ -53,7 +53,7 @@ public class SparksoniqRuntimeConfiguration {
                 "Item Display Limit: " + (_arguments.getOrDefault("result-size", "-")) + "\n" +
                 "Output Path: " + (_arguments.getOrDefault("output-path", "-")) + "\n" +
                 "Log Path: " + (_arguments.getOrDefault("log-path", "-")) + "\n" +
-                "Query Path: " + (_arguments.getOrDefault("query-path", "-")) + "\n";
+                "Query Path : " + (_arguments.getOrDefault("query-path", "-")) + "\n";
         return result;
     }
 

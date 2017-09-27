@@ -178,9 +178,10 @@ public class AnnotationsTestsBase {
 
         try
         {
-            JsoniqParser.MainModuleContext unit = parser.mainModule();
+            JsoniqParser.ModuleContext unit = parser.module();
+            JsoniqParser.MainModuleContext main = unit.main;
             visitor.visit(unit);
-            return unit;
+            return main;
 
         } catch (ParseCancellationException ex)
         {

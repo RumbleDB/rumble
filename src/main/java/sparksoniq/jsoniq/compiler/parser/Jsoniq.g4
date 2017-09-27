@@ -9,7 +9,7 @@ module   : (Kjsoniq Kversion vers=stringLiteral ';')? (libraryModule | main=main
 mainModule: prolog expr;//hack (expr)*;
 libraryModule: 'module' 'namespace' NCName '=' uriLiteral ';' prolog;
 prolog:
-    ((defaultCollationDecl | orderingModeDecl | emptyOrderDecl | decimalFormatDecl | moduleImport) ';')* ((functionDecl | varDecl ) ';')* ;
+        ((defaultCollationDecl | orderingModeDecl | emptyOrderDecl | decimalFormatDecl | moduleImport) ';')* ((functionDecl | varDecl ) ';')* ;
 defaultCollationDecl: 'declare' Kdefault Kcollation uriLiteral;
 orderingModeDecl: 'declare' 'ordering' ('ordered' | 'unordered');
 emptyOrderDecl: 'declare' Kdefault 'order' Kempty (Kgreatest | Kleast);

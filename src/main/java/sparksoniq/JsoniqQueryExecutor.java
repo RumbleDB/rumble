@@ -182,7 +182,9 @@ public class JsoniqQueryExecutor {
         JsoniqExpressionTreeVisitor visitor = new JsoniqExpressionTreeVisitor();
         try
         {
-            JsoniqParser.MainModuleContext unit = parser.mainModule();
+            //TODO Handle module extras
+            JsoniqParser.ModuleContext module = parser.module();
+            JsoniqParser.MainModuleContext unit = module.main;
             visitor.visit(unit);
 
         } catch (ParseCancellationException ex)
