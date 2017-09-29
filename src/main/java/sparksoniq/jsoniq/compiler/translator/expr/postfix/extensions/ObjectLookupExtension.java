@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ObjectLookupExtension extends PostfixExtension {
-//TODO check for keywords $i.count...
     public StringLiteral getField() {
         return field;
     }

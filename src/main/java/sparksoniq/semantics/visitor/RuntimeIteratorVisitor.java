@@ -20,6 +20,8 @@
  package sparksoniq.semantics.visitor;
 
 import sparksoniq.jsoniq.compiler.translator.expr.control.IfExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.control.SwitchCaseExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.control.SwitchExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.*;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpressionVar;
@@ -37,6 +39,7 @@ import sparksoniq.jsoniq.runtime.iterator.CommaExpressionIterator;
 import sparksoniq.jsoniq.runtime.iterator.EmptySequenceIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.control.IfRuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.control.SwitchRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.ArrayFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.CountFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.ArithmeticFunctionIterator;
@@ -58,7 +61,9 @@ import sparksoniq.jsoniq.runtime.iterator.postfix.PredicateIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.*;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import static sparksoniq.jsoniq.runtime.iterator.functions.ArithmeticFunctionIterator.*;
 
@@ -477,5 +482,14 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         iterator = new QuantifiedExpressionVarIterator(expression.getVariableReference(),
                 expression.getSequenceType(), this.visit(expression.getExpression(), argument));
         return iterator;
+    }
+
+    @Override public RuntimeIterator visitSwitchExpression(SwitchExpression expression, RuntimeIterator argument){
+        Map<RuntimeIterator, RuntimeIterator> cases = new LinkedHashMap<>();
+        for(SwitchCaseExpression caseExpression : expression.getCases())
+            cases.put(this.visit(caseExpression.getCondition(), argument),
+                    this.visit(caseExpression.getReturnExpression(), argument));
+        return new SwitchRuntimeIterator(this.visit(expression.getTestCondition(), argument),
+                cases, this.visit(expression.getDefaultExpression(), argument));
     }
 }

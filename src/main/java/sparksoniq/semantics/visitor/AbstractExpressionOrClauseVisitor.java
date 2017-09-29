@@ -22,6 +22,8 @@
 import sparksoniq.jsoniq.compiler.translator.expr.CommaExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.expr.control.IfExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.control.SwitchCaseExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.control.SwitchExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.InstanceOfExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.*;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.*;
@@ -147,4 +149,7 @@ public abstract class AbstractExpressionOrClauseVisitor<T> {
 
     public T visitQuantifiedExpressionVar(QuantifiedExpressionVar expression, T argument){ return defaultAction(expression, argument);}
 
-    }
+    public T visitSwitchExpression(SwitchExpression expression, T argument){ return defaultAction(expression, argument);}
+
+    public T visitSwitchCaseExpression(SwitchCaseExpression expression, T argument){ return defaultAction(expression, argument);}
+}

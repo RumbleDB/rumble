@@ -70,14 +70,14 @@ quantifiedExpr
 quantifiedExprVar
          : varRef (Kas sequenceType)? Kin exprSingle;
 switchExpr
-         : Kswitch '(' expr ')' switchCaseClause+ Kdefault Kreturn exprSingle;
+         : Kswitch '(' cond=expr ')' cses+=switchCaseClause+ Kdefault Kreturn def=exprSingle;
 switchCaseClause
-         : (Kcase exprSingle)+ Kreturn exprSingle;
+         : (Kcase cond+=exprSingle)+ Kreturn ret=exprSingle;
 typeSwitchExpr
          : Ktypeswitch '(' expr ')' caseClause+ Kdefault (varRef)? Kreturn exprSingle;
 caseClause
          : Kcase (varRef Kas)? sequenceType ('|' sequenceType)* Kreturn exprSingle;
-ifExpr   : Kif '(' condition=expr ')' Kthen branch=exprSingle Kelse elseBranch=exprSingle;
+ifExpr   : Kif '(' testCondition=expr ')' Kthen branch=exprSingle Kelse elseBranch=exprSingle;
 tryCatchExpr
          : Ktry '{' expr '}' Kcatch '*' '{' expr '}';
 /////////////////////////////////////expression

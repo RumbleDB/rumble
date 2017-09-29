@@ -19,6 +19,7 @@
  */
  package sparksoniq.jsoniq.item;
 
+import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.base.SerializableItem;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.semantics.types.ItemType;
@@ -32,6 +33,18 @@ import java.util.List;
 //TODO serialize with indentation
 public abstract class Item implements SerializableItem {
 
+    public abstract Item getItemAt(int i) throws OperationNotSupportedException;
+    public abstract Item getItemByKey(String s) throws OperationNotSupportedException;
+    public abstract void putItemByKey(String s, Item value) throws OperationNotSupportedException;
+    public abstract List<String> getKeys() throws OperationNotSupportedException;
+    public abstract int getSize() throws OperationNotSupportedException;
+    public abstract String getStringValue() throws OperationNotSupportedException;
+    public abstract boolean getBooleanValue() throws OperationNotSupportedException;
+    public abstract double getDoubleValue() throws OperationNotSupportedException;
+    public abstract int getIntegerValue() throws OperationNotSupportedException;
+    public abstract BigDecimal getDecimalValue() throws OperationNotSupportedException;
+    public abstract boolean isTypeOf(ItemType type);
+
     public boolean isArray(){ return false; }
     public boolean isObject(){ return false; }
     public boolean isAtomic(){ return false; }
@@ -43,18 +56,6 @@ public abstract class Item implements SerializableItem {
     public boolean isDouble(){ return false; }
     public boolean isDecimal(){ return false; }
 
-    public abstract Item getItemAt(int i) throws OperationNotSupportedException;
-    public abstract Item getItemByKey(String s) throws OperationNotSupportedException;
-    public abstract void putItemByKey(String s, Item value) throws OperationNotSupportedException;
-    public abstract List<String> getKeys() throws OperationNotSupportedException;
-    public abstract int getSize() throws OperationNotSupportedException;
-
-    public abstract String getStringValue() throws OperationNotSupportedException;
-    public abstract boolean getBooleanValue() throws OperationNotSupportedException;
-    public abstract double getDoubleValue() throws OperationNotSupportedException;
-    public abstract int getIntegerValue() throws OperationNotSupportedException;
-    public abstract BigDecimal getDecimalValue() throws OperationNotSupportedException;
-    public abstract boolean isTypeOf(ItemType type);
 
     public static boolean isNumeric(Item item){
         return item instanceof IntegerItem || item instanceof DecimalItem || item instanceof DoubleItem;
@@ -81,7 +82,6 @@ public abstract class Item implements SerializableItem {
         }
         return DecimalItem.class;
     }
-
     public static <T> T getNumericValue(Item item, Class<T> type){
         if(isNumeric(item)){
             if(item instanceof DoubleItem) {
@@ -112,7 +112,6 @@ public abstract class Item implements SerializableItem {
         }
         throw new IteratorFlowException("Cannot call getNumericValue on non numerics");
     }
-
     //returns an effective boolean value of any item type
     public static boolean getEffectiveBooleanValue(Item item) {
         if(item == null)
@@ -138,10 +137,37 @@ public abstract class Item implements SerializableItem {
 
         return true;
     }
-
     public static boolean isAtomic(Item resultItem) {
         return resultItem instanceof AtomicItem;
     }
+    public static int compareItems(Item v1, Item v2){
+        int result;
+        //numeric comparison
+        if(Item.isNumeric(v1) && Item.isNumeric(v2)){
+            BigDecimal value1 = Item.getNumericValue(v1, BigDecimal.class);
+            BigDecimal value2 = Item.getNumericValue(v2, BigDecimal.class);
+            result = value1.compareTo(value2);
+            //Non atomics cannot be compared
+        } else if (v1 instanceof BooleanItem && v2 instanceof BooleanItem) {
+            result = new Boolean(((BooleanItem)v1).getBooleanValue()).
+                    compareTo(((BooleanItem)v2).getBooleanValue());
+        }
+        //NULL is smaller than anything
+        else if (v1 instanceof NullItem || v2 instanceof NullItem) {
+            if(v1 instanceof NullItem)
+                result = -1;
+            else
+                result = 1;
+        }
+        else
+            result = v1.serialize().compareTo(v2.serialize());
+        return result;
+    }
+    
+    public static boolean checkEquality(Item v1, Item v2){
+        return compareItems(v1, v2) == 0;
+    }
+
 
     private void readObject(ObjectInputStream aInputStream)
             throws ClassNotFoundException, IOException {
@@ -153,6 +179,4 @@ public abstract class Item implements SerializableItem {
             throws IOException {
         aOutputStream.defaultWriteObject();
     }
-
-
 }

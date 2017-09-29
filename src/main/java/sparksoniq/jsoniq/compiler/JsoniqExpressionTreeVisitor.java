@@ -21,6 +21,8 @@
 
 import sparksoniq.exceptions.ModuleDeclarationException;
 import sparksoniq.jsoniq.compiler.translator.expr.control.IfExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.control.SwitchCaseExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.control.SwitchExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.InstanceOfExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpressionVar;
@@ -115,6 +117,8 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
             this.visitIfExpr((JsoniqParser.IfExprContext)content);
         else if(content instanceof JsoniqParser.QuantifiedExprContext)
             this.visitQuantifiedExpr((JsoniqParser.QuantifiedExprContext)content);
+        else if(content instanceof JsoniqParser.SwitchExprContext)
+            this.visitSwitchExpr((JsoniqParser.SwitchExprContext)content);
         node = this.currentExpression;
         this.currentExpression = node;
         return null;
@@ -791,6 +795,38 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         this.currentExpression = node;
         return null;
     }
+
+
+    @Override public Void visitSwitchExpr(JsoniqParser.SwitchExprContext ctx){
+        SwitchExpression node;
+        Expression condition, defaultCase;
+        this.visitExpr(ctx.cond);
+        condition = this.currentExpression;
+        List<SwitchCaseExpression> cases = new ArrayList<>();
+        for(JsoniqParser.SwitchCaseClauseContext expr : ctx.cses) {
+            this.visitSwitchCaseClause(expr);
+            cases.add((SwitchCaseExpression) this.currentExpression);
+        }
+        this.visitExprSingle(ctx.def);
+        defaultCase = this.currentExpression;
+        node = new SwitchExpression(condition, cases, defaultCase);
+        this.currentExpression = node;
+        return null;
+    }
+
+    @Override public Void visitSwitchCaseClause(JsoniqParser.SwitchCaseClauseContext ctx){
+        SwitchCaseExpression node;
+        Expression condition, returnExpression;
+        //TODO multiple case expressions?
+        this.visitExprSingle(ctx.cond.get(0));
+        condition = this.currentExpression;
+        this.visitExprSingle(ctx.ret);
+        returnExpression = this.currentExpression;
+        node = new SwitchCaseExpression(condition, returnExpression);
+        this.currentExpression = node;
+        return null;
+    }
+
 
     @Override public Void visitQuantifiedExpr(JsoniqParser.QuantifiedExprContext ctx){
         List<QuantifiedExpressionVar> vars = new ArrayList<>();

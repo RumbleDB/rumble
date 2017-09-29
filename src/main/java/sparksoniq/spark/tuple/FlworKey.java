@@ -90,33 +90,14 @@ public class FlworKey implements KryoSerializable, Comparable<FlworKey> {
             if(currentItem == null || comparisonItem == null)
                 return new ResultIndexKeyTuple(1, index);
 
-            //numeric comparison
-            if(Item.isNumeric(currentItem) && Item.isNumeric(comparisonItem)){
-                BigDecimal value1 = Item.getNumericValue(currentItem, BigDecimal.class);
-                BigDecimal value2 = Item.getNumericValue(comparisonItem, BigDecimal.class);
-                result = value1.compareTo(value2);
-            //Non atomics cannot be compared
-            } else if (currentItem instanceof ArrayItem || currentItem instanceof ObjectItem ||
+            if (currentItem instanceof ArrayItem || currentItem instanceof ObjectItem ||
                     comparisonItem instanceof ArrayItem || comparisonItem instanceof ObjectItem)
                 throw new SparksoniqRuntimeException("Non atomic key not allowed");
-            //Boolean comparison
-            else if (currentItem instanceof BooleanItem && comparisonItem instanceof BooleanItem) {
-                result = new Boolean(((BooleanItem)currentItem).getBooleanValue()).
-                        compareTo(((BooleanItem)comparisonItem).getBooleanValue());
-            }
-            //NULL is smaller than anything
-            else if (currentItem instanceof NullItem || comparisonItem instanceof NullItem) {
-                if(currentItem instanceof NullItem)
-                    result = -1;
-                else
-                    result = 1;
-            }
-            else if(currentItem instanceof StringItem && comparisonItem instanceof StringItem)
-                result = currentItem.serialize().compareTo(comparisonItem.serialize());
-            else if(!currentItem.getClass().getSimpleName().equals(comparisonItem.getClass().getSimpleName()))
+            else if(!currentItem.getClass().getSimpleName().equals(comparisonItem.getClass().getSimpleName())
+                    && (!Item.isNumeric(comparisonItem) || !Item.isNumeric(currentItem)))
                 throw new SparksoniqRuntimeException("Invalid sort key, different Item types");
             else
-                result = currentItem.serialize().compareTo(comparisonItem.serialize());
+                result = Item.compareItems(currentItem, comparisonItem);
 
             if(result != 0)
                 return new ResultIndexKeyTuple(result, index);
