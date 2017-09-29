@@ -39,10 +39,16 @@ spark-submit --class sparksoniq.ShellStart   --master yarn-client  --deploy-mode
 
 <h5>Unsupported/Unimplemented features</h5>
 - prolog
+
 - modules
+
 - separate variable declarations
-- switch/try/catchexpressions
-- string concat/cast/treat/instance of expressions
+
+- try/catch expressions
+
+- cast/treat expressions
+
 - advanced object lookup
+
 - positional variables
 
