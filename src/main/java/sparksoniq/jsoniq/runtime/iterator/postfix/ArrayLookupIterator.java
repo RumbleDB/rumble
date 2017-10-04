@@ -42,7 +42,8 @@ public class ArrayLookupIterator extends LocalRuntimeIterator {
             this._array = (ArrayItem) this._children.get(0).next();
             Item lookup = this._children.get(1).next();
             if(this._children.get(1).hasNext() || lookup.isObject() || lookup.isArray())
-                throw new InvalidSelectorException("Invalid selector item: " + lookup.serialize());
+                throw new InvalidSelectorException("Type error; There is not exactly one supplied parameter for an array selector: "
+                        + lookup.serialize());
             if(!Item.isNumeric(lookup))
                 throw new UnexpectedTypeException("Non numeric array lookup for " + lookup.serialize());
             this._lookup = Item.getNumericValue(lookup, Integer.class);

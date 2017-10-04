@@ -52,7 +52,8 @@ public class ObjectItem extends JsonItem{
         HashMap<String, Integer> frequencies = new HashMap<>();
         for(String key : keys) {
             if(frequencies.containsKey(key))
-                throw new DuplicateObjectKeyException("Object key " + key + " is duplicated");
+                throw new DuplicateObjectKeyException(key);
+
             else
                 frequencies.put(key, 1);
         }

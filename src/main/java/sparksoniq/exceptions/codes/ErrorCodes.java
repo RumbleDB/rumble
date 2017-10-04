@@ -1,4 +1,4 @@
-package sparksoniq.exceptions;
+package sparksoniq.exceptions.codes;
 
 public class ErrorCodes {
 

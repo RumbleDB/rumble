@@ -19,6 +19,8 @@
  */
 package sparksoniq.exceptions;
 
+import sparksoniq.exceptions.codes.ErrorCodes;
+
 import java.util.Arrays;
 
 public class SparksoniqRuntimeException extends RuntimeException {
@@ -27,12 +29,12 @@ public class SparksoniqRuntimeException extends RuntimeException {
     }
 
     public SparksoniqRuntimeException(String message) {
-        super("[ERROR CODE]: " + ErrorCodes.RuntimeExceptionErrorCode + ";" + message);
+        super("Error [err: " + ErrorCodes.RuntimeExceptionErrorCode + " ] " + message);
         this.errorCode = ErrorCodes.RuntimeExceptionErrorCode;
     }
 
     public SparksoniqRuntimeException(String message, String errorCode) {
-        super("[ERROR CODE]: " + errorCode + ";" + message);
+        super("Error [err: " + errorCode + " ] " + message);
         if(!Arrays.asList(ErrorCodes.class.getFields()).stream().anyMatch(f -> {
             try {
                 return f.get(null).equals(errorCode);

@@ -19,6 +19,8 @@
  */
 package sparksoniq.exceptions;
 
+import sparksoniq.exceptions.codes.ErrorCodes;
+
 public class ParsingException extends SparksoniqRuntimeException {
 
     public ParsingException(String message, int line) {

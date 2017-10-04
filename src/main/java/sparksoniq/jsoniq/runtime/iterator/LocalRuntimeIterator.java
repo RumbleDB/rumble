@@ -19,7 +19,7 @@
  */
  package sparksoniq.jsoniq.runtime.iterator;
 
-import sparksoniq.exceptions.SparkSparksoniqRuntimeException;
+import sparksoniq.exceptions.SparkRuntimeException;
 import sparksoniq.jsoniq.item.Item;
 import org.apache.spark.api.java.JavaRDD;
 
@@ -33,7 +33,7 @@ public abstract class LocalRuntimeIterator extends RuntimeIterator {
     @Override
     public JavaRDD<Item> getRDD()
     {
-        throw new SparkSparksoniqRuntimeException("Iterator has no RDDs");
+        throw new SparkRuntimeException("Iterator has no RDDs");
     }
 
     @Override

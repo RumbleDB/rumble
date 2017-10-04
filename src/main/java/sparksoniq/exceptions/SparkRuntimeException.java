@@ -19,8 +19,8 @@
  */
  package sparksoniq.exceptions;
 
-public class SparkSparksoniqRuntimeException extends SparksoniqRuntimeException {
-    public SparkSparksoniqRuntimeException(String message) {
+public class SparkRuntimeException extends SparksoniqRuntimeException {
+    public SparkRuntimeException(String message) {
         super(message);
     }
 }

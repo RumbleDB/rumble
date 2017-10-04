@@ -19,6 +19,8 @@
  */
  package sparksoniq.exceptions;
 
+import sparksoniq.exceptions.codes.ErrorCodes;
+
 public class UnsupportedFeatureException extends SparksoniqRuntimeException {
     public UnsupportedFeatureException(String message) {
         super(message, ErrorCodes.UnimplementedErrorCode);
