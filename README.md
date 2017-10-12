@@ -28,7 +28,7 @@ This will launch a shell session where users can run queries.
 
     - Args: --master [MASTER URL, optional defaults to local], --result-size [INTEGER LIMIT, optional]
     - Example:   spark-submit --class sparksoniq.ShellStart   --master yarn-client  --deploy-mode client --num-executors 40  jsoniq-spark-app-1.0-jar-with-dependencies.jar --master yarn-client --result-size 1000
-    - Example(local): spark-submit --class sparksoniq.ShellStart  --master local[*]  --deploy-mode client jsoniq-spark-app-1.0-jar-with-dependencies.jar  --master local[*] --result-size 1000
+    - Example(local): spark-submit --class sparksoniq.ShellStart  --master local[2]  --deploy-mode client jsoniq-spark-app-1.0-jar-with-dependencies.jar  --master local[2] --result-size 1000
 
 2. Fixed query mode, either local or by using yarn-cluster mode. 
 This will run a specific query file (a local/HDFS/S3 path is expected), output the results to the supplied output path and terminate
@@ -55,6 +55,7 @@ This will run a specific query file (a local/HDFS/S3 path is expected), output t
 
 
 <h5>ERROR CODES</h5>
+
 - [XPST0003] - Parsing error. 
 Invalid syntax or unsupported feature in query.
 
