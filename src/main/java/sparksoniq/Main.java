@@ -21,6 +21,7 @@
 
 
 import sparksoniq.config.SparksoniqRuntimeConfiguration;
+import sparksoniq.exceptions.CliException;
 import sparksoniq.spark.SparkContextManager;
 
 import java.io.IOException;
@@ -36,11 +37,10 @@ import java.util.List;
 public class Main {
     public static void main(String[] args) throws IOException, URISyntaxException {
         HashMap<String, String> arguments;
-        String config = "local", masterConfig, outputDataFilePath, queryFilePath = "", logFilePath = "";
+        String masterConfig, outputDataFilePath, queryFilePath = "", logFilePath = "";
         int outputItemLimit = 200;
         try {
             arguments= SparksoniqRuntimeConfiguration.processCommandLineArgs(args);
-            config = arguments.get("config");
             masterConfig = arguments.get("master");
             outputDataFilePath = arguments.get("output-path");
             initializeApplication(masterConfig);
@@ -52,11 +52,10 @@ public class Main {
                 outputItemLimit =  Integer.valueOf(arguments.get("result-size"));
 
         } catch (Exception ex) {
-            System.out.println(ex.getMessage());
-            return;
+            throw new CliException(ex.getMessage());
         }
 
-        if(config.equals("local")) {
+        if(masterConfig.contains("local")) {
             System.out.println("Running in local mode");
             runQueryExecutor(queryFilePath, outputDataFilePath, true, logFilePath, outputItemLimit);
         }
