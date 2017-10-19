@@ -19,7 +19,9 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
+import sparksoniq.exceptions.SemanticException;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
@@ -31,10 +33,10 @@ public class GroupByClause extends FlworClause {
         return groupVars;
     }
 
-    public GroupByClause(List<GroupByClauseVar> vars) {
-        super(FLWOR_CLAUSES.GROUP_BY);
+    public GroupByClause(List<GroupByClauseVar> vars, ExpressionMetadata metadata) {
+        super(FLWOR_CLAUSES.GROUP_BY, metadata);
         if(vars == null || vars.isEmpty())
-            throw new IllegalArgumentException("Group clause must have at least one variable");
+            throw new SemanticException("Group clause must have at least one variable", metadata);
         this.groupVars = vars;
     }
 

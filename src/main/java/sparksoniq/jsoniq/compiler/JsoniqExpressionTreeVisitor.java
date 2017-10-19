@@ -19,6 +19,7 @@
  */
  package sparksoniq.jsoniq.compiler;
 
+import org.antlr.v4.runtime.ParserRuleContext;
 import sparksoniq.exceptions.ModuleDeclarationException;
 import sparksoniq.jsoniq.compiler.translator.expr.control.IfExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.control.SwitchCaseExpression;
@@ -28,6 +29,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpressi
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpressionVar;
 import sparksoniq.exceptions.JsoniqVersionException;
 import sparksoniq.exceptions.UnsupportedFeatureException;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworVarSequenceType;
 import sparksoniq.jsoniq.compiler.translator.expr.CommaExpression;
@@ -50,40 +52,18 @@ import java.util.List;
 //used to build AST, will override methods
 public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.parser.JsoniqBaseVisitor<Void> {
 
-    public Expression getQueryExpression() {
-        return queryExpression;
-    }
-
-    private CommaExpression queryExpression;
-    private Expression currentExpression;
-    private PrimaryExpression currentPrimaryExpression;
-    private PostfixExtension currentPostFixExtension;
-    private FlworClause currentFlworClause;
-
-    private int getDepthLevel(JsoniqParser.ExprContext ctx)
-    {
-        int count = 0;
-        ParseTree level = ctx;
-        while(level != null)
-        {
-            level = level.getParent();
-            count++;
-        }
-
-        return count;
-    }
-
+    public Expression getQueryExpression() { return queryExpression; }
     public JsoniqExpressionTreeVisitor() {}
 
     @Override public Void visitModule(JsoniqParser.ModuleContext ctx) {
         if(!(ctx.vers == null) && !ctx.vers.isEmpty() && !ctx.vers.getText().trim().equals("1.0"))
-            throw new JsoniqVersionException();
+            throw new JsoniqVersionException(createMetadataFromContext(ctx));
         this.visitMainModule(ctx.mainModule());
         return null;
     }
 
     @Override public Void visitModuleImport(JsoniqParser.ModuleImportContext ctx) {
-        throw new ModuleDeclarationException("Modules are not supported in Sparksoniq");
+        throw new ModuleDeclarationException("Modules are not supported in Sparksoniq", createMetadataFromContext(ctx));
     }
 
     //region expr
@@ -98,7 +78,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
             expressions.add(expression);
 
         }
-        node = new CommaExpression(expressions);
+        node = new CommaExpression(expressions, createMetadataFromContext(ctx));
         this.currentExpression = node;
         if(getDepthLevel(ctx) == 3)
             queryExpression = node;
@@ -173,9 +153,10 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         //visit return
         this.visitExprSingle(ctx.return_Expr);
         Expression returnExpr = this.currentExpression;
-        returnClause = new ReturnClause(returnExpr);
+        returnClause = new ReturnClause(returnExpr, new ExpressionMetadata(ctx.getStop().getLine(),
+                ctx.getStop().getCharPositionInLine()));
 
-        node = new FlworExpression(startClause, contentClauses, returnClause);
+        node = new FlworExpression(startClause, contentClauses, returnClause, createMetadataFromContext(ctx));
         this.currentExpression = node;
         return null;
     }
@@ -190,7 +171,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
             vars.add(child);
         }
 
-        node = new ForClause(vars);
+        node = new ForClause(vars, createMetadataFromContext(ctx));
         this.currentFlworClause = node;
         return null;
     }
@@ -214,7 +195,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         this.visitExprSingle(ctx.ex);
         expr = this.currentExpression;
 
-        ForClauseVar node = new ForClauseVar(var,seq,emptyFlag,atVarRef,expr);
+        ForClauseVar node = new ForClauseVar(var,seq,emptyFlag,atVarRef,expr, createMetadataFromContext(ctx));
         this.currentFlworClause = node;
         return null;
     }
@@ -229,7 +210,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
             vars.add(child);
         }
 
-        node = new LetClause(vars);
+        node = new LetClause(vars, createMetadataFromContext(ctx));
         this.currentFlworClause = node;
         return null;
     }
@@ -247,7 +228,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         this.visitExprSingle(ctx.ex);
         expr = this.currentExpression;
 
-        LetClauseVar node = new LetClauseVar(var,seq,expr);
+        LetClauseVar node = new LetClauseVar(var,seq,expr, createMetadataFromContext(ctx));
         this.currentFlworClause = node;
         return null;
     }
@@ -261,7 +242,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
             child = (GroupByClauseVar)this.currentFlworClause;
             vars.add(child);
         }
-        node = new GroupByClause(vars);
+        node = new GroupByClause(vars, createMetadataFromContext(ctx));
         this.currentFlworClause = node;
         return null;
 
@@ -279,7 +260,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         }
         if(ctx.stb!=null && !ctx.stb.getText().isEmpty())
             stable = true;
-        node = new OrderByClause(exprs, stable);
+        node = new OrderByClause(exprs, stable, createMetadataFromContext(ctx));
         this.currentFlworClause = node;
         return null;
 
@@ -300,7 +281,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
             empty_order = OrderByClauseExpr.EMPTY_ORDER.FIRST;
         this.visitExprSingle(ctx.exprSingle());
         Expression expression = this.currentExpression;
-        node = new OrderByClauseExpr(expression,ascending, uri, empty_order);
+        node = new OrderByClauseExpr(expression,ascending, uri, empty_order, createMetadataFromContext(ctx));
         this.currentFlworClause = node;
         return null;
     }
@@ -326,7 +307,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         if(ctx.uri!=null)
             uri = ctx.uri.getText();
 
-        GroupByClauseVar node = new GroupByClauseVar(var,seq,expr, uri);
+        GroupByClauseVar node = new GroupByClauseVar(var,seq,expr, uri, createMetadataFromContext(ctx));
         this.currentFlworClause = node;
         return null;
     }
@@ -336,7 +317,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         Expression expr;
         this.visitExprSingle(ctx.exprSingle());
         expr = this.currentExpression;
-        node = new WhereClause(expr);
+        node = new WhereClause(expr, createMetadataFromContext(ctx));
         this.currentFlworClause = node;
         return null; }
     //endregion
@@ -354,9 +335,9 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
                 childExpression = (AndExpression)this.currentExpression;
                 rhs.add(childExpression);
             }
-             node = new OrExpression(mainExpression, rhs);
+             node = new OrExpression(mainExpression, rhs, createMetadataFromContext(ctx));
         }else{
-             node = new OrExpression(mainExpression);
+             node = new OrExpression(mainExpression, createMetadataFromContext(ctx));
         }
        this.currentExpression = node;
         return null;
@@ -375,9 +356,9 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
                 childExpression = (NotExpression)this.currentExpression;
                 rhs.add(childExpression);
             }
-            node = new AndExpression(mainExpression, rhs);
+            node = new AndExpression(mainExpression, rhs, createMetadataFromContext(ctx));
         }else{
-            node = new AndExpression(mainExpression);
+            node = new AndExpression(mainExpression, createMetadataFromContext(ctx));
         }
        this.currentExpression = node;
         return null;
@@ -388,7 +369,8 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         NotExpression node;
         this.visitComparisonExpr(ctx.mainExpr);
         mainExpression = (ComparisonExpression)this.currentExpression;
-        node = new NotExpression(mainExpression, !(ctx.op == null || ctx.op.isEmpty()));
+        node = new NotExpression(mainExpression, !(ctx.op == null || ctx.op.isEmpty()),
+                createMetadataFromContext(ctx));
         this.currentExpression = node;
         return null;
     }
@@ -404,9 +386,10 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
                 childExpression = (StringConcatExpression)this.currentExpression;
 
             node = new ComparisonExpression(mainExpression, childExpression,
-                    OperationalExpressionBase.getOperatorFromString(ctx.op.get(0).getText()));
+                    OperationalExpressionBase.getOperatorFromString(ctx.op.get(0).getText()),
+                    createMetadataFromContext(ctx));
         }else{
-            node = new ComparisonExpression(mainExpression);
+            node = new ComparisonExpression(mainExpression, createMetadataFromContext(ctx));
         }
        this.currentExpression = node;
         return null;
@@ -424,9 +407,9 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
                 childExpression = (RangeExpression)this.currentExpression;
                 rhs.add(childExpression);
             }
-            node = new StringConcatExpression(mainExpression, rhs);
+            node = new StringConcatExpression(mainExpression, rhs, createMetadataFromContext(ctx));
         }else{
-            node = new StringConcatExpression(mainExpression);
+            node = new StringConcatExpression(mainExpression, createMetadataFromContext(ctx));
         }
         this.currentExpression = node;
         return null;
@@ -442,9 +425,9 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
             JsoniqParser.AdditiveExprContext child = ctx.rhs.get(0);
             this.visitAdditiveExpr(child);
             childExpression = (AdditiveExpression)this.currentExpression;
-            node = new RangeExpression(mainExpression, childExpression);
+            node = new RangeExpression(mainExpression, childExpression, createMetadataFromContext(ctx));
         }else{
-            node = new RangeExpression(mainExpression);
+            node = new RangeExpression(mainExpression, createMetadataFromContext(ctx));
         }
 
         this.currentExpression = node;
@@ -464,9 +447,10 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
                 rhs.add(childExpression);
             }
             node = new AdditiveExpression(mainExpression, rhs,
-                    OperationalExpressionBase.getOperatorFromOpList( ctx.op));
+                    OperationalExpressionBase.getOperatorFromOpList( ctx.op),
+                    createMetadataFromContext(ctx));
         }else{
-            node = new AdditiveExpression(mainExpression);
+            node = new AdditiveExpression(mainExpression, createMetadataFromContext(ctx));
         }
        this.currentExpression = node;
         return null;
@@ -485,9 +469,10 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
                 rhs.add(childExpression);
             }
             node = new MultiplicativeExpression(mainExpression, rhs,
-                    OperationalExpressionBase.getOperatorFromOpList( ctx.op));
+                    OperationalExpressionBase.getOperatorFromOpList( ctx.op),
+                    createMetadataFromContext(ctx));
         }else{
-            node = new MultiplicativeExpression(mainExpression);
+            node = new MultiplicativeExpression(mainExpression, createMetadataFromContext(ctx));
         }
         this.currentExpression = node;
         return null;
@@ -503,9 +488,9 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
             JsoniqParser.SequenceTypeContext child = ctx.seq;
             this.visitSequenceType(child);
             sequenceType = (FlworVarSequenceType) this.currentExpression;
-            node = new InstanceOfExpression(mainExpression, sequenceType);
+            node = new InstanceOfExpression(mainExpression, sequenceType, createMetadataFromContext(ctx));
         }else{
-            node = new InstanceOfExpression(mainExpression);
+            node = new InstanceOfExpression(mainExpression, createMetadataFromContext(ctx));
         }
         this.currentExpression = node;
         return null;
@@ -518,10 +503,10 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         this.visitSimpleMapExpr(ctx.mainExpr);
         mainExpression = (PostFixExpression)this.currentExpression;
         if(ctx.op == null || ctx.op.isEmpty())
-            node = new UnaryExpression(mainExpression);
+            node = new UnaryExpression(mainExpression, createMetadataFromContext(ctx));
         else
             node = new UnaryExpression(mainExpression,
-                    OperationalExpressionBase.getOperatorFromOpList(ctx.op));
+                    OperationalExpressionBase.getOperatorFromOpList(ctx.op), createMetadataFromContext(ctx));
        this.currentExpression = node;
         return null;
     }
@@ -785,7 +770,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
     @Override public Void visitIfExpr(JsoniqParser.IfExprContext ctx){
         IfExpression node;
         Expression condition, branch, elseBranch;
-        this.visitExpr(ctx.condition);
+        this.visitExpr(ctx.testCondition);
         condition = this.currentExpression;
         this.visitExprSingle(ctx.branch);
         branch = this.currentExpression;
@@ -860,9 +845,29 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
     }
 
 
+    private int getDepthLevel(JsoniqParser.ExprContext ctx)
+    {
+        int count = 0;
+        ParseTree level = ctx;
+        while(level != null)
+        {
+            level = level.getParent();
+            count++;
+        }
+
+        return count;
+    }
+
+    private ExpressionMetadata createMetadataFromContext(ParserRuleContext ctx) {
+        return new ExpressionMetadata(ctx);
+    }
 
 
-
+    private CommaExpression queryExpression;
+    private Expression currentExpression;
+    private PrimaryExpression currentPrimaryExpression;
+    private PostfixExtension currentPostFixExtension;
+    private FlworClause currentFlworClause;
 
 }
 

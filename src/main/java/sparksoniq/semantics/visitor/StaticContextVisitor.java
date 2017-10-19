@@ -44,7 +44,8 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
     @Override
     public StaticContext visitVariableReference(VariableReference expression, StaticContext argument){
         if(argument == null || !argument.isInScope(expression.getVariableName()))
-            throw new UndeclaredVariableException("Uninitialized variable reference: " + expression.getVariableName());
+            throw new UndeclaredVariableException("Uninitialized variable reference: " + expression.getVariableName(),
+                    expression.getMetadata());
         else {
             expression.setType(argument.getVariableSequenceType(expression.getVariableName()));
             return defaultAction(expression, argument);

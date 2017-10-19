@@ -253,7 +253,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 left = this.visit(
                         new AdditiveExpression(expression.getMainExpression(),
                                 expression.getRightExpressions().subList(0, expression.getRightExpressions().size() - 1),
-                                expression.getOperators().subList(0, expression.getOperators().size() - 1)), argument);
+                                expression.getOperators().subList(0, expression.getOperators().size() - 1), expression.getMetadata()), argument);
             }else{
                 left = this.visit(expression.getMainExpression(),argument);
                 right = this.visit(expression.getRightExpressions().get(0), argument);
@@ -277,7 +277,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 left = this.visit(
                         new MultiplicativeExpression(expression.getMainExpression(),
                                 expression.getRightExpressions().subList(0, expression.getRightExpressions().size() - 1),
-                                expression.getOperators().subList(0, expression.getOperators().size() - 1)), argument);
+                                expression.getOperators().subList(0, expression.getOperators().size() - 1), expression.getMetadata()), argument);
             }else{
                 left = this.visit(expression.getMainExpression(),argument);
                 right = this.visit(expression.getRightExpressions().get(0), argument);
@@ -300,7 +300,9 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                         argument);
                 left = this.visit(
                         new AndExpression(expression.getMainExpression(),
-                                expression.getRightExpressions().subList(0, expression.getRightExpressions().size() - 1)), argument);
+                                expression.getRightExpressions().
+                                        subList(0, expression.getRightExpressions().size() - 1),
+                                expression.getMetadata()), argument);
             }else{
                 left = this.visit(expression.getMainExpression(),argument);
                 right = this.visit(expression.getRightExpressions().get(0), argument);
@@ -321,7 +323,9 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                         argument);
                 left = this.visit(
                         new OrExpression(expression.getMainExpression(),
-                                expression.getRightExpressions().subList(0, expression.getRightExpressions().size() - 1)), argument);
+                                expression.getRightExpressions()
+                                        .subList(0, expression.getRightExpressions().size() - 1),
+                                expression.getMetadata()), argument);
             }else{
                 left = this.visit(expression.getMainExpression(),argument);
                 right = this.visit(expression.getRightExpressions().get(0), argument);
@@ -442,7 +446,9 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                         argument);
                 left = this.visit(
                         new StringConcatExpression(expression.getMainExpression(),
-                                expression.getRightExpressions().subList(0, expression.getRightExpressions().size() - 1)), argument);
+                                expression.getRightExpressions()
+                                        .subList(0, expression.getRightExpressions().size() - 1),
+                                expression.getMetadata()), argument);
             }else{
                 left = this.visit(expression.getMainExpression(),argument);
                 right = this.visit(expression.getRightExpressions().get(0), argument);

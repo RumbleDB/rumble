@@ -19,6 +19,7 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
@@ -31,8 +32,8 @@ public class WhereClause extends FlworClause {
         return whereExpression;
     }
 
-    public WhereClause(Expression expr) {
-        super(FLWOR_CLAUSES.WHERE);
+    public WhereClause(Expression expr, ExpressionMetadata metadata) {
+        super(FLWOR_CLAUSES.WHERE, metadata);
         this.whereExpression = expr;
     }
 

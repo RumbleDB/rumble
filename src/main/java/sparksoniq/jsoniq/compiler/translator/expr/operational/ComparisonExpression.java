@@ -19,6 +19,7 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr.operational;
 
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.BinaryExpressionBase;
@@ -31,13 +32,13 @@ public class ComparisonExpression extends BinaryExpressionBase {
     Operator.EQ, Operator.NE, Operator.LE, Operator.LT};
 
 
-    public ComparisonExpression(Expression _mainExpression) {
-        super(_mainExpression);
+    public ComparisonExpression(Expression _mainExpression, ExpressionMetadata metadata) {
+        super(_mainExpression, metadata);
     }
 
     public ComparisonExpression(Expression _mainExpression, Expression rhs,
-                                Operator op) {
-        super(_mainExpression, rhs, op);
+                                Operator op, ExpressionMetadata metadata) {
+        super(_mainExpression, rhs, op, metadata);
         validateOperator(Arrays.asList(operators), op);
     }
 

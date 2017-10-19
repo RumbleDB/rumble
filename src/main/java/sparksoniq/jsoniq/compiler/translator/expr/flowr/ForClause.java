@@ -19,7 +19,9 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
+import sparksoniq.exceptions.SemanticException;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
@@ -34,10 +36,10 @@ public class ForClause extends FlworClause {
 
     private final List<ForClauseVar> forVariables;
 
-    public ForClause(List<ForClauseVar> vars) {
-        super(FLWOR_CLAUSES.FOR);
+    public ForClause(List<ForClauseVar> vars, ExpressionMetadata metadataFromContext) {
+        super(FLWOR_CLAUSES.FOR, metadataFromContext);
         if(vars == null || vars.isEmpty())
-            throw new IllegalArgumentException("For clause must have at least one variable");
+            throw new SemanticException("For clause must have at least one variable", metadataFromContext);
         this.forVariables = vars;
     }
 

@@ -21,6 +21,7 @@
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 
@@ -31,8 +32,9 @@ public class GroupByClauseVar extends FlworVarDecl {
     }
 
 
-    public GroupByClauseVar(VariableReference varRef, FlworVarSequenceType sequence, Expression expr, String uri) {
-        super(FLWOR_CLAUSES.GROUP_VAR, varRef, sequence,expr);
+    public GroupByClauseVar(VariableReference varRef, FlworVarSequenceType sequence, Expression expr,
+                            String uri, ExpressionMetadata metadata) {
+        super(FLWOR_CLAUSES.GROUP_VAR, varRef, sequence, expr, metadata);
         this.uri = uri;
     }
 

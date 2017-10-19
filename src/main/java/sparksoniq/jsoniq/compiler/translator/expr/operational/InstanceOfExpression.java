@@ -22,18 +22,20 @@
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworVarSequenceType;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.UnaryExpressionBase;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 
 public class InstanceOfExpression extends UnaryExpressionBase {
 
-    public InstanceOfExpression(Expression _mainExpression) {
-        super(_mainExpression);
+    public InstanceOfExpression(Expression _mainExpression, ExpressionMetadata metadata) {
+        super(_mainExpression, metadata);
         this._isActive = false;
     }
 
-    public InstanceOfExpression(Expression _mainExpression, FlworVarSequenceType sequenceType) {
-        super(_mainExpression, Operator.INSTANCE_OF , true);
+    public InstanceOfExpression(Expression _mainExpression, FlworVarSequenceType sequenceType,
+                                ExpressionMetadata metadata) {
+        super(_mainExpression, Operator.INSTANCE_OF , true, metadata);
         this._sequenceType = sequenceType;
     }
 

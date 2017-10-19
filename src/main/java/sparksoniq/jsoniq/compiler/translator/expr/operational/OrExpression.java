@@ -19,6 +19,7 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr.operational;
 
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.NaryExpressionBase;
@@ -28,13 +29,14 @@ import java.util.List;
 
 public class OrExpression extends NaryExpressionBase {
 
-    public OrExpression(Expression _mainExpression) {
-        super(_mainExpression);
+    public OrExpression(Expression _mainExpression, ExpressionMetadata metadata) {
+        super(_mainExpression, metadata);
 
     }
 
-    public OrExpression(Expression _mainExpression, List<Expression> rhs) {
-        super(_mainExpression, rhs, Operator.OR);
+    public OrExpression(Expression _mainExpression, List<Expression> rhs,
+                        ExpressionMetadata metadata) {
+        super(_mainExpression, rhs, Operator.OR, metadata);
     }
 
     @Override

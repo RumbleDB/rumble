@@ -19,6 +19,7 @@
  */
  package sparksoniq.semantics;
 
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.types.SequenceType;
 import sparksoniq.exceptions.SemanticException;
 
@@ -61,7 +62,8 @@ public class StaticContext {
         else if(_parent !=null)
             return _parent.getVariableSequenceType(varName);
         else
-            throw new SemanticException("Variable " + varName + " not in scope");
+            //TODO fix metadata
+            throw new SemanticException("Variable " + varName + " not in scope", new ExpressionMetadata(0,0));
     }
 
     public void addVariable(String varName, SequenceType type){

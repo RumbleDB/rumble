@@ -19,6 +19,7 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr.operational;
 
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.UnaryExpressionBase;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.PostFixExpression;
@@ -37,14 +38,14 @@ public class UnaryExpression extends UnaryExpressionBase {
 
     private PostFixExpression _postfixExpression;
 
-    public UnaryExpression(PostFixExpression _mainExpression) {
-        super(_mainExpression);
+    public UnaryExpression(PostFixExpression _mainExpression, ExpressionMetadata metadata) {
+        super(_mainExpression, metadata);
         this._postfixExpression = _mainExpression;
         this._isActive = false;
     }
 
-    public UnaryExpression(PostFixExpression _mainExpression, List<Operator> ops) {
-        super(_mainExpression, ops, ops!=null && !ops.isEmpty());
+    public UnaryExpression(PostFixExpression _mainExpression, List<Operator> ops, ExpressionMetadata metadata) {
+        super(_mainExpression, ops, ops!=null && !ops.isEmpty(), metadata);
         this.validateOperators(Arrays.asList(operators), ops);
         this._postfixExpression = _mainExpression;
     }

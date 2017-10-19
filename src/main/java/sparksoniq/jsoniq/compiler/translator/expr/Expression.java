@@ -19,6 +19,7 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr;
 
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 import sparksoniq.semantics.StaticContext;
 
@@ -27,6 +28,11 @@ public abstract class Expression extends ExpressionOrClause {
     public Expression()
     {
         super();
+    }
+
+    public Expression(ExpressionMetadata metadata)
+    {
+        super(metadata);
     }
 
     @Override

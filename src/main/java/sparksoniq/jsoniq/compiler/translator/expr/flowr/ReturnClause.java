@@ -19,6 +19,7 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
@@ -33,8 +34,8 @@ public class ReturnClause extends FlworClause {
         return returnExpr;
     }
 
-    public ReturnClause(Expression expr) {
-        super(FLWOR_CLAUSES.RETURN);
+    public ReturnClause(Expression expr, ExpressionMetadata metadata) {
+        super(FLWOR_CLAUSES.RETURN, metadata);
         this.returnExpr = expr;
     }
 

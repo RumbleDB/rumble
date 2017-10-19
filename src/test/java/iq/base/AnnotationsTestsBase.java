@@ -25,6 +25,7 @@ import sparksoniq.jsoniq.compiler.parser.JsoniqLexer;
 import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
 import sparksoniq.exceptions.ParsingException;
 import sparksoniq.exceptions.SemanticException;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.StaticContextVisitor;
 import sparksoniq.semantics.visitor.RuntimeIteratorVisitor;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
@@ -185,7 +186,8 @@ public class AnnotationsTestsBase {
 
         } catch (ParseCancellationException ex)
         {
-            ParsingException e = new ParsingException(lexer.getText(), lexer.getLine());
+            ParsingException e = new ParsingException(lexer.getText(), new ExpressionMetadata(lexer.getLine(),
+                    lexer.getCharPositionInLine()));
             e.initCause(ex);
             throw e;
         }

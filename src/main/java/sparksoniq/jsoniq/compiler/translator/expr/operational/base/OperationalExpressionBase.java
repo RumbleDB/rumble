@@ -22,6 +22,7 @@
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import org.antlr.v4.runtime.Token;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -128,19 +129,6 @@ public abstract class OperationalExpressionBase extends Expression {
 
     public abstract boolean isActive();
 
-    public Expression getContent()
-    {
-        if(this.isActive())
-            return this;
-        else
-        {
-            if(this._mainExpression != null && this._mainExpression instanceof OperationalExpressionBase)
-                return ((OperationalExpressionBase)_mainExpression).getContent();
-        }
-
-        return this;
-    }
-
 
     public void validateOperators(List<Operator> validOps, List<Operator> ops)
     {
@@ -169,16 +157,11 @@ public abstract class OperationalExpressionBase extends Expression {
         return result;
     }
 
-    protected OperationalExpressionBase()
-    {
-        super();
-    }
-
 
     protected OperationalExpressionBase(Expression _mainExpression,
-                                        Operator op)
+                                        Operator op, ExpressionMetadata metadata)
     {
-        super();
+        super(metadata);
         this._mainExpression = _mainExpression;
         this._singleOperator = op;
         this._hasMultipleOperators = false;
@@ -186,9 +169,9 @@ public abstract class OperationalExpressionBase extends Expression {
     }
 
     protected OperationalExpressionBase(Expression _mainExpression,
-                                        List<Operator> ops)
+                                        List<Operator> ops, ExpressionMetadata metadata)
     {
-        super();
+        super(metadata);
         this._mainExpression = _mainExpression;
         this._multipleOperators = ops;
         this._hasMultipleOperators = true;

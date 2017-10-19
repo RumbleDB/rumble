@@ -19,7 +19,9 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
+import sparksoniq.exceptions.SemanticException;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
@@ -31,11 +33,11 @@ public class LetClause extends FlworClause {
         return letVars;
     }
 
-    public LetClause(List<LetClauseVar> vars)
+    public LetClause(List<LetClauseVar> vars, ExpressionMetadata metadataFromContext)
     {
-        super(FLWOR_CLAUSES.LET);
+        super(FLWOR_CLAUSES.LET, metadataFromContext);
         if(vars == null || vars.isEmpty())
-            throw new IllegalArgumentException("Let clause must have at least one variable");
+            throw new SemanticException("Let clause must have at least one variable", metadataFromContext);
         this.letVars = vars;
 
     }

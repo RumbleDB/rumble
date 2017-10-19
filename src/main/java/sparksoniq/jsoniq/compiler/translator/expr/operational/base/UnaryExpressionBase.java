@@ -21,6 +21,7 @@
 
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 
 import java.util.List;
 
@@ -35,18 +36,20 @@ public abstract class UnaryExpressionBase extends OperationalExpressionBase {
 
     public Operator getSingleOperator(){return _singleOperator;}
 
-    protected UnaryExpressionBase(Expression _mainExpression) {
-        super(_mainExpression, Operator.NONE);
+    protected UnaryExpressionBase(Expression _mainExpression, ExpressionMetadata metadata) {
+        super(_mainExpression, Operator.NONE, metadata);
     }
 
-    protected UnaryExpressionBase(Expression _mainExpression, List<Operator> ops, boolean isActive) {
-        super(_mainExpression, ops);
+    protected UnaryExpressionBase(Expression _mainExpression, List<Operator> ops, boolean isActive,
+                                  ExpressionMetadata metadata) {
+        super(_mainExpression, ops, metadata);
         this._isActive = isActive;
 
     }
 
-    protected UnaryExpressionBase(Expression _mainExpression, Operator singleOperator, boolean isActive) {
-        super(_mainExpression, singleOperator);
+    protected UnaryExpressionBase(Expression _mainExpression, Operator singleOperator, boolean isActive,
+                                  ExpressionMetadata metadata) {
+        super(_mainExpression, singleOperator, metadata);
         this._isActive = isActive;
     }
 }

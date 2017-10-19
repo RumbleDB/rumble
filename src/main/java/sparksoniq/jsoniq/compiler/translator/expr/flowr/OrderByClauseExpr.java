@@ -19,6 +19,7 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 
@@ -40,8 +41,8 @@ public class OrderByClauseExpr extends FlworClause {
     }
 
     public OrderByClauseExpr(Expression expression, boolean ascending,
-                             String uri, EMPTY_ORDER empty_order) {
-        super(FLWOR_CLAUSES.ORDER_BY_EXPR);
+                             String uri, EMPTY_ORDER empty_order, ExpressionMetadata metadata) {
+        super(FLWOR_CLAUSES.ORDER_BY_EXPR, metadata);
         this._expression = expression;
         this._ascending = ascending;
         this._uri = uri;

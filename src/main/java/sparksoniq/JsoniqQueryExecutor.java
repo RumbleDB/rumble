@@ -26,6 +26,7 @@ import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.ParsingException;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
@@ -189,7 +190,8 @@ public class JsoniqQueryExecutor {
 
         } catch (ParseCancellationException ex)
         {
-            ParsingException e = new ParsingException(lexer.getText(), lexer.getLine());
+            ParsingException e = new ParsingException(lexer.getText(), new ExpressionMetadata(lexer.getLine(),
+                    lexer.getCharPositionInLine()));
             e.initCause(ex);
             throw e;
         }

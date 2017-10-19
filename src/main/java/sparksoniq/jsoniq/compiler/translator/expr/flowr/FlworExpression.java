@@ -21,6 +21,7 @@
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 import sparksoniq.exceptions.SemanticException;
 
@@ -44,11 +45,11 @@ public class FlworExpression extends Expression {
 
     public FlworExpression(FlworClause startClause,
                            List<FlworClause> containingClauses,
-                           ReturnClause returnClause) {
-        super();
+                           ReturnClause returnClause, ExpressionMetadata metadata) {
+        super(metadata);
         if(startClause.getClauseType() != FLWOR_CLAUSES.FOR &&
                 startClause.getClauseType() != FLWOR_CLAUSES.LET)
-            throw new SemanticException("FLOWR clause must starts with a FOR or a LET\n");
+            throw new SemanticException("FLOWR clause must starts with a FOR or a LET\n", this.getMetadata());
 
         set_startClause(startClause);
         set_contentClauses(containingClauses);

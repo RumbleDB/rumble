@@ -19,6 +19,7 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr;
 
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
@@ -49,7 +50,15 @@ public abstract class ExpressionOrClause {
         return filter;
     }
 
+    public ExpressionMetadata getMetadata() {
+        return metadata;
+    }
+
     protected ExpressionOrClause() {}
+
+    protected ExpressionOrClause(ExpressionMetadata metadata) {
+        this.metadata = metadata;
+    }
 
     protected List<ExpressionOrClause> getDescendantsFromChildren(List<ExpressionOrClause> result, boolean depthSearch){
         if(depthSearch) {
@@ -59,5 +68,7 @@ public abstract class ExpressionOrClause {
         }
         return result;
     }
+
+    private ExpressionMetadata metadata;
 
 }

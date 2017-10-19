@@ -21,10 +21,11 @@
 package sparksoniq.exceptions;
 
 import sparksoniq.exceptions.codes.ErrorCodes;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 
 public class UndeclaredVariableException extends SemanticException {
-    public UndeclaredVariableException(String message) {
-        super(message, ErrorCodes.UndeclaredVariableErrorCode);
+    public UndeclaredVariableException(String message, ExpressionMetadata metadata) {
+        super(message, ErrorCodes.UndeclaredVariableErrorCode, metadata);
     }
 
 }

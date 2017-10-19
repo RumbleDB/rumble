@@ -22,12 +22,13 @@
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 public class LetClauseVar extends FlworVarDecl {
 
-    public LetClauseVar(VariableReference varRef, FlworVarSequenceType sequence, Expression expr) {
-        super(FLWOR_CLAUSES.LET_VAR, varRef, sequence,expr);
+    public LetClauseVar(VariableReference varRef, FlworVarSequenceType sequence, Expression expr, ExpressionMetadata metadataFromContext) {
+        super(FLWOR_CLAUSES.LET_VAR, varRef, sequence,expr, metadataFromContext);
         this.variableReferenceNode = varRef;
         this.asSequence = sequence;
         this.expression = expr;
