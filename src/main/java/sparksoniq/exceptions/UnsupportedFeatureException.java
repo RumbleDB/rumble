@@ -20,9 +20,10 @@
  package sparksoniq.exceptions;
 
 import sparksoniq.exceptions.codes.ErrorCodes;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 
 public class UnsupportedFeatureException extends SparksoniqRuntimeException {
-    public UnsupportedFeatureException(String message) {
-        super(message, ErrorCodes.UnimplementedErrorCode);
+    public UnsupportedFeatureException(String message, ExpressionMetadata metadata) {
+        super(message, ErrorCodes.UnimplementedErrorCode, metadata);
     }
 }

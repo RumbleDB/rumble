@@ -19,6 +19,7 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr.primary;
 
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.math.BigDecimal;
@@ -32,8 +33,8 @@ public class DecimalLiteral extends PrimaryExpression {
 
     private BigDecimal value;
 
-    public DecimalLiteral(BigDecimal _value){
-        super();
+    public DecimalLiteral(BigDecimal _value, ExpressionMetadata metadata){
+        super(metadata);
         this.value = _value;
     }
 

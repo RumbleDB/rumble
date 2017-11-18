@@ -20,11 +20,12 @@
  package sparksoniq.jsoniq.compiler.translator.expr.primary;
 
 
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 public class NullLiteral extends PrimaryExpression {
 
-    public NullLiteral(){}
+    public NullLiteral(ExpressionMetadata metadata){super(metadata);}
 
     @Override
     public String serializationString(boolean prefix){

@@ -20,6 +20,7 @@
  package sparksoniq.jsoniq.compiler.translator.expr.primary;
 
 import sparksoniq.jsoniq.compiler.translator.expr.CommaExpression;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
@@ -31,8 +32,9 @@ public class ObjectConstructor extends PrimaryExpression {
 
     public static class PairConstructor extends PrimaryExpression {
 
-        public PairConstructor(Expression key, Expression value)
+        public PairConstructor(Expression key, Expression value, ExpressionMetadata metadata)
         {
+            super(metadata);
             this._key = key;
             this._value = value;
         }
@@ -75,14 +77,15 @@ public class ObjectConstructor extends PrimaryExpression {
         return childExpression;
     }
 
-    public ObjectConstructor(List<Expression> keys, List<Expression> values) {
-        super();
+    public ObjectConstructor(List<Expression> keys, List<Expression> values,
+                             ExpressionMetadata metadata) {
+        super(metadata);
         this._keys = keys;
         this._values = values;
     }
 
-    public ObjectConstructor(CommaExpression expression) {
-        super();
+    public ObjectConstructor(CommaExpression expression, ExpressionMetadata metadata) {
+        super(metadata);
         this.childExpression = expression;
         this.isMergedConstructor = true;
     }
@@ -110,7 +113,7 @@ public class ObjectConstructor extends PrimaryExpression {
         if(!isMergedConstructor) {
             result += " ";
             for (Expression key : _keys)
-                result += new PairConstructor(key, _values.get(_keys.indexOf(key))).serializationString(true)
+                result += new PairConstructor(key, _values.get(_keys.indexOf(key)), key.getMetadata()).serializationString(true)
                         + (_keys.indexOf(key) < _keys.size() - 1 ? " , " : " ");
         }
         else

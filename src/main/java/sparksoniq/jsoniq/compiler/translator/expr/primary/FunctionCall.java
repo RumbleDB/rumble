@@ -19,6 +19,7 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr.primary;
 
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
@@ -39,8 +40,8 @@ public class FunctionCall extends PrimaryExpression {
     }
 
 
-    public FunctionCall(String functionName, List<Expression> parameters){
-        super();
+    public FunctionCall(String functionName, List<Expression> parameters, ExpressionMetadata metadata){
+        super(metadata);
         this._functionName = functionName;
         this._parameters = parameters;
     }

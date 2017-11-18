@@ -23,7 +23,9 @@ package sparksoniq.jsoniq.compiler.translator.metadata;
 import org.antlr.v4.runtime.ParserRuleContext;
 import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
 
-public class ExpressionMetadata {
+import java.io.Serializable;
+
+public class ExpressionMetadata implements Serializable{
 
 
     public int getTokenLineNumber() {
@@ -32,12 +34,6 @@ public class ExpressionMetadata {
 
     public int getTokenColumnNumber() {
         return tokenColumnNumber;
-    }
-
-    public ExpressionMetadata(ParserRuleContext ctx) {
-        this.tokenLineNumber = ctx.getStart().getLine();
-        this.tokenColumnNumber = ctx.getStart().getCharPositionInLine();
-
     }
 
     public ExpressionMetadata(int line, int column) {

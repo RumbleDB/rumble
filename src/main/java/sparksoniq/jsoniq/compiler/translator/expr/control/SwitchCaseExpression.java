@@ -2,6 +2,7 @@ package sparksoniq.jsoniq.compiler.translator.expr.control;
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
@@ -9,7 +10,9 @@ import java.util.List;
 
 public class SwitchCaseExpression extends Expression{
 
-    public SwitchCaseExpression(Expression condition, Expression returnExpression) {
+    public SwitchCaseExpression(Expression condition, Expression returnExpression,
+                                ExpressionMetadata metadataFromContext) {
+        super(metadataFromContext);
         this.condition = condition;
         this.returnExpression = returnExpression;
     }

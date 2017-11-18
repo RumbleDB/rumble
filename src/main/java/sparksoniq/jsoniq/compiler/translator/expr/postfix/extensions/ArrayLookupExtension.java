@@ -21,6 +21,7 @@
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,8 +35,8 @@ public class ArrayLookupExtension extends PostfixExtension {
 
     Expression _expression;
 
-    public ArrayLookupExtension(Expression commaExpr) {
-        super();
+    public ArrayLookupExtension(Expression commaExpr, ExpressionMetadata metadata) {
+        super(metadata);
         this._expression = commaExpr;
     }
 

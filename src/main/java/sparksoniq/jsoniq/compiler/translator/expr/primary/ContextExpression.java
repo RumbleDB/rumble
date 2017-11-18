@@ -19,11 +19,14 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr.primary;
 
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 public class ContextExpression extends PrimaryExpression {
 
-    public ContextExpression() {}
+    public ContextExpression(ExpressionMetadata metadataFromContext) {
+        super(metadataFromContext);
+    }
 
     @Override
     public String serializationString(boolean prefix){

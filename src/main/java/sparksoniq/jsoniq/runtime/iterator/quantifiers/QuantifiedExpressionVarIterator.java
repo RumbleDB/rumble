@@ -19,7 +19,6 @@
  */
  package sparksoniq.jsoniq.runtime.iterator.quantifiers;
 
-import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
@@ -32,16 +31,17 @@ import java.util.List;
 
 public class QuantifiedExpressionVarIterator extends LocalRuntimeIterator {
 
-    public VariableReference getVariableReference() {
+
+    public String getVariableReference() {
         return _variableReference;
     }
 
-    public QuantifiedExpressionVarIterator(VariableReference variableReference, SequenceType sequenceType,
+    public QuantifiedExpressionVarIterator(String variableReference, SequenceType sequenceType,
                                            RuntimeIterator expression) {
         super(null);
         this._children.add(expression);
         this._variableReference = variableReference;
-        this._variableReference.setType(sequenceType);
+        this._sequenceType = sequenceType;
     }
 
     @Override
@@ -73,6 +73,7 @@ public class QuantifiedExpressionVarIterator extends LocalRuntimeIterator {
 
     private List<Item> result = null;
     private int currentResultIndex;
-    private final VariableReference _variableReference;
+    private final String _variableReference;
+    private final SequenceType _sequenceType;
 
 }

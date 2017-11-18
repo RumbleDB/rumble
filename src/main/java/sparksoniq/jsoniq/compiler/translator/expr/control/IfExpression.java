@@ -21,6 +21,7 @@
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
@@ -40,7 +41,8 @@ public class IfExpression extends Expression {
         return _branch;
     }
 
-    public IfExpression(Expression condition, Expression branch, Expression elseBranch){
+    public IfExpression(Expression condition, Expression branch, Expression elseBranch,
+                        ExpressionMetadata metadataFromContext){
         this._condition = condition;
         this._branch = branch;
         this._elseBranch = elseBranch;

@@ -20,10 +20,12 @@
  package sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions;
 
 
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+
 public class ArrayUnboxingExtension extends PostfixExtension {
 
-    public ArrayUnboxingExtension() {
-        super();
+    public ArrayUnboxingExtension(ExpressionMetadata metadata) {
+        super(metadata);
     }
 
     @Override

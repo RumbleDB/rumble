@@ -177,7 +177,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 }
                 catch (Exception ex) {
                     ex.printStackTrace();
-                    throw new UnsupportedFeatureException("Invalid Postfix extension");
+                    throw new UnsupportedFeatureException("Invalid Postfix extension", expression.getMetadata());
                 }
             }
             return previous;
@@ -485,7 +485,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
 
     @Override public RuntimeIterator visitQuantifiedExpressionVar(QuantifiedExpressionVar expression, RuntimeIterator argument){
         QuantifiedExpressionVarIterator iterator;
-        iterator = new QuantifiedExpressionVarIterator(expression.getVariableReference(),
+        iterator = new QuantifiedExpressionVarIterator(expression.getVariableReference().getVariableName(),
                 expression.getSequenceType(), this.visit(expression.getExpression(), argument));
         return iterator;
     }

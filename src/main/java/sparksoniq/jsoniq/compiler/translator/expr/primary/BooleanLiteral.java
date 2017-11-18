@@ -20,6 +20,7 @@
  package sparksoniq.jsoniq.compiler.translator.expr.primary;
 
 
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 public class BooleanLiteral extends PrimaryExpression {
@@ -30,8 +31,8 @@ public class BooleanLiteral extends PrimaryExpression {
 
     private boolean value;
 
-    public BooleanLiteral(boolean _value){
-        super();
+    public BooleanLiteral(boolean _value, ExpressionMetadata metadata){
+        super(metadata);
         this.value = _value;
     }
 

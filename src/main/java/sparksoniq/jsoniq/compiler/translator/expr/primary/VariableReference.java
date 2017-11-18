@@ -20,6 +20,7 @@
  package sparksoniq.jsoniq.compiler.translator.expr.primary;
 
 
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 import sparksoniq.semantics.types.SequenceType;
 
@@ -31,8 +32,8 @@ public class VariableReference extends PrimaryExpression implements Serializable
         return name;
     }
 
-    public VariableReference(String _name) {
-        super();
+    public VariableReference(String _name, ExpressionMetadata metadata) {
+        super(metadata);
         this.name = _name;
     }
 

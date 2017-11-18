@@ -21,6 +21,7 @@
 
 import sparksoniq.jsoniq.compiler.translator.expr.primary.*;
 import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 
 import java.math.BigDecimal;
 
@@ -32,27 +33,27 @@ public class ValueTypeHandler {
         return ctx.getText().substring(1, ctx.getText().length() - 1);
     }
 
-    public static PrimaryExpression getValueType(String token)
+    public static PrimaryExpression getValueType(String token, ExpressionMetadata metadataFromContext)
     {
         switch (token){
             case "null":
-                return new NullLiteral();
+                return new NullLiteral(metadataFromContext);
             case "true":
-                return new BooleanLiteral(true);
+                return new BooleanLiteral(true, metadataFromContext);
             case "false":
-                return new BooleanLiteral(false);
+                return new BooleanLiteral(false, metadataFromContext);
             default:
-                return ValueTypeHandler.getNumericLiteral(token);
+                return ValueTypeHandler.getNumericLiteral(token, metadataFromContext);
         }
     }
 
     //TODO think of beter way to distinguish numeric literals
-    private static PrimaryExpression getNumericLiteral(String token) {
+    private static PrimaryExpression getNumericLiteral(String token, ExpressionMetadata metadataFromContext) {
         if(!token.contains(".") && !token.contains("e") && !token.contains("E"))
-            return new IntegerLiteral(Integer.parseInt(token));
+            return new IntegerLiteral(Integer.parseInt(token), metadataFromContext);
         if(!token.contains("e") && !token.contains("E"))
-            return new DecimalLiteral(new BigDecimal(token));
-        return new DoubleLiteral(Double.parseDouble(token));
+            return new DecimalLiteral(new BigDecimal(token), metadataFromContext);
+        return new DoubleLiteral(Double.parseDouble(token), metadataFromContext);
 
     }
 
