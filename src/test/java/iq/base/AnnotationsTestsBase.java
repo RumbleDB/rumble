@@ -43,6 +43,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class AnnotationsTestsBase {
@@ -53,6 +54,7 @@ public class AnnotationsTestsBase {
 
     public void initializeTests(File dir) {
         FileManager.loadJiqFiles(dir).forEach(file -> testFiles.add(file));
+        testFiles.sort(Comparator.comparing(File::getName));
     }
 
     /**
@@ -83,7 +85,7 @@ public class AnnotationsTestsBase {
             //PARSING
         } catch (ParsingException exception) {
             String errorOutput = exception.getMessage();
-            checkErrorCode(errorOutput, currentAnnotation.getErrorCode());
+            checkErrorCode(errorOutput, currentAnnotation.getErrorCode(), currentAnnotation.getErrorMetadata());
             if(currentAnnotation.shouldParse()) {
                 Assert.fail("Program did not parse when expected to.\nError output: " + errorOutput + "\n");
                 return context;
@@ -97,7 +99,7 @@ public class AnnotationsTestsBase {
             //SEMANTIC
         } catch (SemanticException exception){
             String errorOutput = exception.getMessage();
-            checkErrorCode(errorOutput, currentAnnotation.getErrorCode());
+            checkErrorCode(errorOutput, currentAnnotation.getErrorCode(), currentAnnotation.getErrorMetadata());
             try{if(currentAnnotation.shouldCompile()) {
                 Assert.fail("Program did not compile when expected to.\nError output: " + errorOutput + "\n");
                 return context;
@@ -110,7 +112,7 @@ public class AnnotationsTestsBase {
             //RUNTIME
         } catch (SparksoniqRuntimeException exception){
             String errorOutput = exception.getMessage();
-            checkErrorCode(errorOutput, currentAnnotation.getErrorCode());
+            checkErrorCode(errorOutput, currentAnnotation.getErrorCode(), currentAnnotation.getErrorMetadata());
             try{
             if(currentAnnotation.shouldRun()) {
                 Assert.fail("Program did not run when expected to.\nError output: " + errorOutput + "\n");
@@ -151,7 +153,7 @@ public class AnnotationsTestsBase {
                     checkExpectedOutput( currentAnnotation.getOutput(), runtimeIterator);
                 }  catch (Exception exception){
                     String errorOutput = exception.getMessage();
-                    checkErrorCode(errorOutput, currentAnnotation.getErrorCode());
+                    checkErrorCode(errorOutput, currentAnnotation.getErrorCode(), currentAnnotation.getErrorMetadata());
                     return context;
                 }
 
@@ -162,10 +164,13 @@ public class AnnotationsTestsBase {
         return context;
     }
 
-    protected void checkErrorCode(String errorOutput, String expectedErrorCode) {
+    protected void checkErrorCode(String errorOutput, String expectedErrorCode, String errorMetadata) {
         if(errorOutput != null && expectedErrorCode != null)
             Assert.assertTrue("Unexpected error code returned; Expected: " + expectedErrorCode +
                     "; Error: " + errorOutput,errorOutput.contains(expectedErrorCode));
+        if(errorOutput != null && errorMetadata != null)
+            Assert.assertTrue("Unexpected metadata returned; Expected: " + errorMetadata +
+                    "; Error: " + errorOutput, errorOutput.contains(errorMetadata));
     }
 
     protected void checkExpectedOutput(String expectedOutput, RuntimeIterator runtimeIterator) {
