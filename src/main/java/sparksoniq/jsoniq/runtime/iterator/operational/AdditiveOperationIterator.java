@@ -26,6 +26,7 @@ import sparksoniq.jsoniq.runtime.iterator.EmptySequenceIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
@@ -33,8 +34,9 @@ import java.math.BigDecimal;
 
 public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
 
-    public AdditiveOperationIterator(RuntimeIterator left, RuntimeIterator right, OperationalExpressionBase.Operator operator) {
-        super(left,right,operator);
+    public AdditiveOperationIterator(RuntimeIterator left, RuntimeIterator right,
+                                     OperationalExpressionBase.Operator operator, IteratorMetadata iteratorMetadata) {
+        super(left,right,operator, iteratorMetadata);
     }
 
     @Override

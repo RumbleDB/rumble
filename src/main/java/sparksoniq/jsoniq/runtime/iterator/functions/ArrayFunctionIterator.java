@@ -26,6 +26,7 @@ import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.List;
 
@@ -35,8 +36,9 @@ public class ArrayFunctionIterator extends LocalFunctionCallIterator {
         SIZE
     }
 
-    public ArrayFunctionIterator(List<RuntimeIterator> arguments, ArrayFunctionOperators op) {
-        super(arguments);
+    public ArrayFunctionIterator(List<RuntimeIterator> arguments, ArrayFunctionOperators op,
+                                 IteratorMetadata iteratorMetadata) {
+        super(arguments, iteratorMetadata);
         this._operator = op;
     }
 

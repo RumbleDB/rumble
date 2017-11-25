@@ -24,6 +24,7 @@ import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
@@ -32,8 +33,9 @@ import java.util.List;
 
 public class IfRuntimeIterator extends LocalRuntimeIterator{
 
-    public IfRuntimeIterator(RuntimeIterator condition, RuntimeIterator branch, RuntimeIterator elseBranch) {
-        super(null);
+    public IfRuntimeIterator(RuntimeIterator condition, RuntimeIterator branch, RuntimeIterator elseBranch,
+                             IteratorMetadata iteratorMetadata) {
+        super(null, iteratorMetadata);
         this._children.add(condition);
         this._children.add(branch);
         this._children.add(elseBranch);

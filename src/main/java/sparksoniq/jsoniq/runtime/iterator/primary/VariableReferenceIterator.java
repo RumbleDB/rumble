@@ -19,6 +19,7 @@
  */
  package sparksoniq.jsoniq.runtime.iterator.primary;
 
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.SequenceType;
 import sparksoniq.exceptions.IteratorFlowException;
@@ -30,8 +31,8 @@ import java.util.List;
 
 public class VariableReferenceIterator extends LocalRuntimeIterator {
 
-    public VariableReferenceIterator(String variableName, SequenceType seq) {
-        super(null);
+    public VariableReferenceIterator(String variableName, SequenceType seq, IteratorMetadata iteratorMetadata) {
+        super(null, iteratorMetadata);
         this._variableName = "$" + variableName;
         this.sequence = seq;
     }

@@ -23,11 +23,12 @@ import sparksoniq.jsoniq.item.*;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class OrOperationIterator extends BinaryOperationBaseIterator {
 
-    public OrOperationIterator(RuntimeIterator left, RuntimeIterator right) {
-        super(left,right, OperationalExpressionBase.Operator.OR);
+    public OrOperationIterator(RuntimeIterator left, RuntimeIterator right, IteratorMetadata iteratorMetadata) {
+        super(left,right, OperationalExpressionBase.Operator.OR, iteratorMetadata);
     }
 
     @Override

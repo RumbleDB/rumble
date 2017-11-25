@@ -25,13 +25,14 @@ import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalEx
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 
 public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
 
     public ComparisonOperationIterator(RuntimeIterator left, RuntimeIterator right,
-                                       OperationalExpressionBase.Operator operator) {
-        super(left,right,operator);
+                                       OperationalExpressionBase.Operator operator, IteratorMetadata iteratorMetadata) {
+        super(left,right,operator, iteratorMetadata);
     }
 
     @Override

@@ -26,6 +26,7 @@ import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
@@ -36,8 +37,9 @@ public class ObjectFunctionIterator extends LocalFunctionCallIterator {
         KEYS,
         VALUES
     }
-    public ObjectFunctionIterator(List<RuntimeIterator> arguments, ObjectFunctionOperators op) {
-        super(arguments);
+    public ObjectFunctionIterator(List<RuntimeIterator> arguments, ObjectFunctionOperators op,
+                                  IteratorMetadata iteratorMetadata) {
+        super(arguments, iteratorMetadata);
         if(arguments.size() != 1)
             throw new SparksoniqRuntimeException("Incorrect number of arguments for object function; " +
                     "Only one object argument is allowed");

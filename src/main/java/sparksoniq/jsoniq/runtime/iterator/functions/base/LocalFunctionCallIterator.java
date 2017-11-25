@@ -21,11 +21,12 @@
 
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.List;
 
 public abstract class LocalFunctionCallIterator extends LocalRuntimeIterator {
-    protected LocalFunctionCallIterator(List<RuntimeIterator> parameters) {
-        super(parameters);
+    protected LocalFunctionCallIterator(List<RuntimeIterator> parameters, IteratorMetadata iteratorMetadata) {
+        super(parameters, iteratorMetadata);
     }
 }

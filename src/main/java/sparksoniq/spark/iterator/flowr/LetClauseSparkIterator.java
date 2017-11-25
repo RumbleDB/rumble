@@ -24,6 +24,7 @@ import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.spark.SparkContextManager;
 import sparksoniq.spark.closures.LetClauseMapClosure;
 import sparksoniq.spark.tuple.FlworTuple;
@@ -34,8 +35,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LetClauseSparkIterator extends FlowrClauseSparkIterator {
-    public LetClauseSparkIterator(VariableReferenceIterator variableReference, RuntimeIterator expression) {
-        super(null, FLWOR_CLAUSES.LET);
+    public LetClauseSparkIterator(VariableReferenceIterator variableReference, RuntimeIterator expression, IteratorMetadata iteratorMetadata) {
+        super(null, FLWOR_CLAUSES.LET, iteratorMetadata);
         this._children.add(variableReference);
         this._children.add(expression);
     }

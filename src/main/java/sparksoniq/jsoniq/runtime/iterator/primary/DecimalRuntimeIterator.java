@@ -22,6 +22,7 @@
 import sparksoniq.jsoniq.item.DecimalItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.math.BigDecimal;
 
@@ -37,8 +38,8 @@ public class DecimalRuntimeIterator extends AtomicRuntimeIterator {
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item);
     }
 
-    public DecimalRuntimeIterator(BigDecimal value) {
-        super(null);
+    public DecimalRuntimeIterator(BigDecimal value, IteratorMetadata iteratorMetadata) {
+        super(null, iteratorMetadata);
         this._item = value;
 
     }

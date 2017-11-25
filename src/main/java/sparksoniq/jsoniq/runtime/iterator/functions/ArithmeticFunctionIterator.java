@@ -25,6 +25,7 @@ import sparksoniq.jsoniq.item.DecimalItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -102,8 +103,8 @@ public class ArithmeticFunctionIterator extends LocalFunctionCallIterator {
     }
 
     public ArithmeticFunctionIterator(List<RuntimeIterator> arguments,
-                                      ArithmeticFunctionOperator operator) {
-        super(arguments);
+                                      ArithmeticFunctionOperator operator, IteratorMetadata iteratorMetadata) {
+        super(arguments, iteratorMetadata);
         if(arguments.size() != 1)
         throw new SparksoniqRuntimeException("Incorrect number of arguments for arithmetic function; " +
                 "Only one sequence argument is allowed");

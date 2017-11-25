@@ -23,6 +23,7 @@ import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.SequenceType;
 
@@ -37,8 +38,8 @@ public class QuantifiedExpressionVarIterator extends LocalRuntimeIterator {
     }
 
     public QuantifiedExpressionVarIterator(String variableReference, SequenceType sequenceType,
-                                           RuntimeIterator expression) {
-        super(null);
+                                           RuntimeIterator expression, IteratorMetadata iteratorMetadata) {
+        super(null, iteratorMetadata);
         this._children.add(expression);
         this._variableReference = variableReference;
         this._sequenceType = sequenceType;

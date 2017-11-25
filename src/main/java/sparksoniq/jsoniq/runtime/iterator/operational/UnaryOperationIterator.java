@@ -26,13 +26,15 @@ import sparksoniq.jsoniq.runtime.iterator.EmptySequenceIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.UnaryOperationBaseIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.math.BigDecimal;
 
 public class UnaryOperationIterator extends UnaryOperationBaseIterator {
 
-    public UnaryOperationIterator(RuntimeIterator child, OperationalExpressionBase.Operator operator) {
-        super(child, operator);
+    public UnaryOperationIterator(RuntimeIterator child, OperationalExpressionBase.Operator operator,
+                                  IteratorMetadata iteratorMetadata) {
+        super(child, operator, iteratorMetadata);
     }
 
     @Override

@@ -22,14 +22,15 @@
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FLWOR_CLAUSES;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.spark.tuple.FlworTuple;
 import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
 import sparksoniq.spark.closures.ReturnFlatMapClosure;
 import org.apache.spark.api.java.JavaRDD;
 
 public class ReturnClauseSparkIterator extends FlowrClauseSparkIterator {
-    public ReturnClauseSparkIterator(RuntimeIterator expression) {
-        super(null, FLWOR_CLAUSES.RETURN);
+    public ReturnClauseSparkIterator(RuntimeIterator expression, IteratorMetadata iteratorMetadata) {
+        super(null, FLWOR_CLAUSES.RETURN, iteratorMetadata);
         this._children.add(expression);
     }
 

@@ -27,10 +27,11 @@ import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class StringConcatIterator extends BinaryOperationBaseIterator {
-    public StringConcatIterator(RuntimeIterator left, RuntimeIterator right) {
-        super(left, right, OperationalExpressionBase.Operator.CONCAT);
+    public StringConcatIterator(RuntimeIterator left, RuntimeIterator right, IteratorMetadata iteratorMetadata) {
+        super(left, right, OperationalExpressionBase.Operator.CONCAT, iteratorMetadata);
     }
 
     @Override

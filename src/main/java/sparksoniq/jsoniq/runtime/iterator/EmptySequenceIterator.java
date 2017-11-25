@@ -20,11 +20,12 @@
  package sparksoniq.jsoniq.runtime.iterator;
 
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class EmptySequenceIterator extends LocalRuntimeIterator {
 
-    public EmptySequenceIterator() {
-        super(null);
+    public EmptySequenceIterator(IteratorMetadata iteratorMetadata) {
+        super(null, iteratorMetadata);
     }
 
     @Override

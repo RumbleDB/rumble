@@ -24,14 +24,15 @@ import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class ArrayRuntimeIterator extends LocalRuntimeIterator {
 
-    public ArrayRuntimeIterator(RuntimeIterator arrayItems) {
-        super(new ArrayList<>());
+    public ArrayRuntimeIterator(RuntimeIterator arrayItems, IteratorMetadata iteratorMetadata) {
+        super(new ArrayList<>(), iteratorMetadata);
         if(arrayItems!=null)
             this._children.add(arrayItems);
     }

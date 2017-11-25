@@ -28,10 +28,11 @@ import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.StringRuntimeIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class ObjectLookupItertor extends LocalRuntimeIterator {
-    public ObjectLookupItertor(RuntimeIterator object, StringRuntimeIterator stringRuntimeIterator) {
-        super(null);
+    public ObjectLookupItertor(RuntimeIterator object, StringRuntimeIterator stringRuntimeIterator, IteratorMetadata iteratorMetadata) {
+        super(null, iteratorMetadata);
         this._children.add(object);
         this._children.add(stringRuntimeIterator);
     }

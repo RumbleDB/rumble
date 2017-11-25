@@ -26,11 +26,12 @@ import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class AndOperationIterator extends BinaryOperationBaseIterator {
 
-    public AndOperationIterator(RuntimeIterator left, RuntimeIterator right) {
-        super(left,right, OperationalExpressionBase.Operator.AND);
+    public AndOperationIterator(RuntimeIterator left, RuntimeIterator right, IteratorMetadata iteratorMetadata) {
+        super(left,right, OperationalExpressionBase.Operator.AND, iteratorMetadata);
     }
 
     @Override

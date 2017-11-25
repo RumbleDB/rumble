@@ -20,11 +20,12 @@
  package sparksoniq.jsoniq.runtime.iterator.primary;
 
 import sparksoniq.jsoniq.item.AtomicItem;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class NullRuntimeIterator extends AtomicRuntimeIterator {
 
-    public NullRuntimeIterator() {
-        super(null);
+    public NullRuntimeIterator(IteratorMetadata iteratorMetadata) {
+        super(null, iteratorMetadata);
     }
 
     @Override

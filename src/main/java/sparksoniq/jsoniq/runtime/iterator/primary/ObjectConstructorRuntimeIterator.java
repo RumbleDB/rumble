@@ -26,21 +26,25 @@ import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
 
-    public ObjectConstructorRuntimeIterator(List<RuntimeIterator> keys, List<RuntimeIterator> values) {
-        super(keys);
+    public ObjectConstructorRuntimeIterator(List<RuntimeIterator> keys, List<RuntimeIterator> values,
+                                            IteratorMetadata iteratorMetadata) {
+        super(keys, iteratorMetadata);
         this._children.addAll(values);
         this._keys = keys;
         this._values = values;
     }
 
-    public ObjectConstructorRuntimeIterator(List<ObjectConstructorRuntimeIterator> childExpressions) {
-        super(null);
+
+    public ObjectConstructorRuntimeIterator(List<ObjectConstructorRuntimeIterator> childExpressions,
+                                            IteratorMetadata iteratorMetadata) {
+        super(null, iteratorMetadata);
         childExpressions.forEach(c -> this._children.add(c));
         this._isMergedObject = true;
     }

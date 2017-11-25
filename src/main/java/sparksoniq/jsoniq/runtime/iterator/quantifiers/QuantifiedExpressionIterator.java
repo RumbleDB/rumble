@@ -25,6 +25,7 @@ import sparksoniq.jsoniq.item.BooleanItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
@@ -34,8 +35,8 @@ public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
 
     public QuantifiedExpressionIterator(QuantifiedExpression.QuantifiedOperators operator,
                                         List<QuantifiedExpressionVarIterator> children,
-                                        RuntimeIterator evaluationExpression) {
-        super(null);
+                                        RuntimeIterator evaluationExpression, IteratorMetadata iteratorMetadata) {
+        super(null, iteratorMetadata);
         this._operator = operator;
         children.forEach(c -> this._children.add(c));
         this._evaluationExpression = evaluationExpression;

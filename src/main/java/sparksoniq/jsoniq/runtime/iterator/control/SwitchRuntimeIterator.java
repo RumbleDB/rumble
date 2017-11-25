@@ -4,6 +4,7 @@ import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.Map;
@@ -12,8 +13,8 @@ import java.util.Map;
 public class SwitchRuntimeIterator extends LocalRuntimeIterator {
 
     public SwitchRuntimeIterator(RuntimeIterator test, Map<RuntimeIterator, RuntimeIterator> cases,
-                                 RuntimeIterator defaultReturn) {
-        super(null);
+                                 RuntimeIterator defaultReturn, IteratorMetadata iteratorMetadata) {
+        super(null, iteratorMetadata);
         this._children.add(test);
         for(RuntimeIterator key : cases.keySet())
             this._children.add(key);

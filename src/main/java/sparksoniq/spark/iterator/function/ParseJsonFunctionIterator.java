@@ -23,6 +23,7 @@ import sparksoniq.io.json.StringToItemMapper;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.spark.SparkContextManager;
 import org.apache.spark.api.java.JavaRDD;
 
@@ -61,8 +62,8 @@ public class ParseJsonFunctionIterator extends SparkFunctionCallIterator {
         return _rdd;
     }
 
-    public ParseJsonFunctionIterator(List<RuntimeIterator> arguments) {
-        super(arguments);
+    public ParseJsonFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
+        super(arguments, iteratorMetadata);
         if(arguments.size() > 2 || arguments.size() < 1)
             throw new SparksoniqRuntimeException("Incorrect number of arguments for parse-json function; " +
                     "Allowed signatures: (filePath) ; (filePath, minPartitions)");

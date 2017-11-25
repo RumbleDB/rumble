@@ -22,6 +22,7 @@
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class IntegerRuntimeIterator extends AtomicRuntimeIterator {
 
@@ -35,8 +36,8 @@ public class IntegerRuntimeIterator extends AtomicRuntimeIterator {
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item);
     }
 
-    public IntegerRuntimeIterator(int value) {
-        super(null);
+    public IntegerRuntimeIterator(int value, IteratorMetadata iteratorMetadata) {
+        super(null, iteratorMetadata);
         this._item = value;
 
     }

@@ -25,6 +25,7 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import org.apache.spark.api.java.JavaRDD;
 import java.util.ArrayList;
@@ -32,6 +33,7 @@ import java.util.List;
 
 public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoSerializable {
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
+
     public void open(DynamicContext context){
         if(this._isOpen)
             throw new IteratorFlowException("Runtime iterator cannot be opened twice");
@@ -73,23 +75,21 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
 
     public boolean isOpen() { return _isOpen;}
 
+    public IteratorMetadata getMetadata() { return metadata; }
+
     public abstract boolean isRDD();
 
     public abstract JavaRDD<Item> getRDD();
 
     public abstract Item next();
 
-    protected RuntimeIterator(List<RuntimeIterator> children){
+    protected RuntimeIterator(List<RuntimeIterator> children, IteratorMetadata metadata){
+        this.metadata = metadata;
         this._isOpen = false;
         this._children = new ArrayList<>();
         if(children!=null && !children.isEmpty())
             this._children.addAll(children);
     }
-
-    protected boolean _hasNext;
-    protected boolean _isOpen;
-    protected List<RuntimeIterator> _children;
-    protected DynamicContext _currentDynamicContext;
 
     protected List<Item> runChildrenIterators(DynamicContext context){
         List<Item> values = new ArrayList<>();
@@ -103,6 +103,9 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         return values;
     }
 
-
-
+    protected boolean _hasNext;
+    protected boolean _isOpen;
+    protected List<RuntimeIterator> _children;
+    protected DynamicContext _currentDynamicContext;
+    private final IteratorMetadata metadata;
 }

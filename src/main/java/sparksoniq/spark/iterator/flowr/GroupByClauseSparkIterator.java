@@ -20,6 +20,7 @@
  package sparksoniq.spark.iterator.flowr;
 
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FLWOR_CLAUSES;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.spark.closures.GroupByLinearizeTupleClosure;
 import sparksoniq.spark.closures.GroupByToPairMapClosure;
 import sparksoniq.spark.tuple.FlworKey;
@@ -34,8 +35,9 @@ import java.util.List;
 public class GroupByClauseSparkIterator extends FlowrClauseSparkIterator {
     private final List<GroupByClauseSparkIteratorExpression> _variables;
 
-    public GroupByClauseSparkIterator(List<GroupByClauseSparkIteratorExpression> variables) {
-        super(null, FLWOR_CLAUSES.GROUP_BY);
+    public GroupByClauseSparkIterator(List<GroupByClauseSparkIteratorExpression> variables,
+                                      IteratorMetadata iteratorMetadata) {
+        super(null, FLWOR_CLAUSES.GROUP_BY, iteratorMetadata);
         this._variables = variables;
         _variables.forEach(var -> {
             this._children.add(var.getVariableReference());

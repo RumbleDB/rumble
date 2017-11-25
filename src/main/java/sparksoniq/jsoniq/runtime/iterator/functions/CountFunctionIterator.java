@@ -25,6 +25,7 @@ import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,8 +46,8 @@ public class CountFunctionIterator extends LocalFunctionCallIterator {
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " count function");
     }
 
-    public CountFunctionIterator(List<RuntimeIterator> arguments) {
-        super(arguments);
+    public CountFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
+        super(arguments, iteratorMetadata);
         if(arguments.size() != 1)
             throw new SparksoniqRuntimeException("Incorrect number of arguments for count function; " +
                     "Only one sequence argument is allowed");

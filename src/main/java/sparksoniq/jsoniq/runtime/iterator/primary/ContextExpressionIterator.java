@@ -22,13 +22,14 @@
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class ContextExpressionIterator extends LocalRuntimeIterator {
-    public ContextExpressionIterator() {
-        super(null);
+    public ContextExpressionIterator(IteratorMetadata iteratorMetadata) {
+        super(null, iteratorMetadata);
     }
 
     @Override

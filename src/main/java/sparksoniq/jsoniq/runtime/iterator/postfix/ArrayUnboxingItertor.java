@@ -21,14 +21,15 @@
 
 import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 
 public class ArrayUnboxingItertor extends LocalRuntimeIterator {
-    public ArrayUnboxingItertor(RuntimeIterator arrayIterator) {
-        super(null);
+    public ArrayUnboxingItertor(RuntimeIterator arrayIterator, IteratorMetadata iteratorMetadata) {
+        super(null, iteratorMetadata);
         this._children.add(arrayIterator);
     }
 

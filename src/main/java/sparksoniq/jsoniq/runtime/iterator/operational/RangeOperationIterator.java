@@ -25,12 +25,13 @@ import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalEx
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 public class RangeOperationIterator extends BinaryOperationBaseIterator {
 
-    public RangeOperationIterator(RuntimeIterator left, RuntimeIterator right) {
-        super(left,right, OperationalExpressionBase.Operator.TO);
+    public RangeOperationIterator(RuntimeIterator left, RuntimeIterator right, IteratorMetadata iteratorMetadata) {
+        super(left,right, OperationalExpressionBase.Operator.TO, iteratorMetadata);
     }
 
     public boolean hasNext(){

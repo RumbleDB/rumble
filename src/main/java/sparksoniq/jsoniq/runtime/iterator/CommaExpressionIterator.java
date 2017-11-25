@@ -20,6 +20,7 @@
  package sparksoniq.jsoniq.runtime.iterator;
 
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.exceptions.IteratorFlowException;
 
@@ -27,8 +28,8 @@ import java.util.List;
 
 public class CommaExpressionIterator extends LocalRuntimeIterator {
 
-    public CommaExpressionIterator(List<RuntimeIterator> childIterators) {
-        super(childIterators);
+    public CommaExpressionIterator(List<RuntimeIterator> childIterators, IteratorMetadata iteratorMetadata) {
+        super(childIterators, iteratorMetadata);
     }
 
     @Override

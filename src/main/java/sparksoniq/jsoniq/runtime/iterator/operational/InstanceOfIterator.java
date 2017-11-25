@@ -25,6 +25,7 @@ import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.jsoniq.item.BooleanItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.types.SequenceType;
 
 import java.util.ArrayList;
@@ -34,8 +35,8 @@ public class InstanceOfIterator extends UnaryOperationIterator {
 
     private final SequenceType _sequenceType;
 
-    public InstanceOfIterator(RuntimeIterator child, SequenceType sequenceType) {
-        super(child, OperationalExpressionBase.Operator.INSTANCE_OF);
+    public InstanceOfIterator(RuntimeIterator child, SequenceType sequenceType, IteratorMetadata iteratorMetadata) {
+        super(child, OperationalExpressionBase.Operator.INSTANCE_OF, iteratorMetadata);
         this._sequenceType = sequenceType;
     }
 
