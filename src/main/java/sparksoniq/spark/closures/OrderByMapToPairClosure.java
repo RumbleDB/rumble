@@ -50,7 +50,8 @@ public class OrderByMapToPairClosure implements PairFunction<FlworTuple, FlworKe
             while (orderByExpression.getExpression().hasNext()){
                 Item resultItem = orderByExpression.getExpression().next();
                 if(resultItem != null && !Item.isAtomic(resultItem))
-                    throw new NonAtomicKeyException("Order by keys must be atomics");
+                    throw new NonAtomicKeyException("Order by keys must be atomics",
+                            orderByExpression.getIteratorMetadata().getExpressionMetadata());
                 results.add(resultItem);
             }
             orderByExpression.getExpression().close();

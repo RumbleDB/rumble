@@ -22,9 +22,10 @@
 package sparksoniq.exceptions;
 
 import sparksoniq.exceptions.codes.ErrorCodes;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 
 public class NonAtomicKeyException extends SparksoniqRuntimeException{
-    public NonAtomicKeyException(String message) {
-        super(message, ErrorCodes.NonAtomicElementErrorCode);
+    public NonAtomicKeyException(String message, ExpressionMetadata expressionMetadata) {
+        super(message, ErrorCodes.NonAtomicElementErrorCode, expressionMetadata);
     }
 }

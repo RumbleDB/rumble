@@ -57,7 +57,7 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
 
         if(!Item.isNumeric(left) || !Item.isNumeric(right))
             throw new UnexpectedTypeException("Additive expression has non numeric args " +
-                    left.serialize() + ", " + right.serialize());
+                    left.serialize() + ", " + right.serialize(), getMetadata());
 
         this._hasNext = false;
         _leftIterator.close();

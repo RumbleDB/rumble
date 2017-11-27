@@ -43,7 +43,7 @@ public class StringConcatIterator extends BinaryOperationBaseIterator {
             Item right = _rightIterator.next();
             if(!(left instanceof StringItem) || !(right instanceof StringItem))
                 throw new UnexpectedTypeException("String concat expression has non strings args " +
-                        left.serialize() + ", " + right.serialize());
+                        left.serialize() + ", " + right.serialize(), getMetadata());
             StringItem leftString = (StringItem)left;
             StringItem rightString = (StringItem)right;
             _leftIterator.close();

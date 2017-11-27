@@ -54,7 +54,7 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
         Item right = _rightIterator.next();
         if(!Item.isNumeric(left) || !Item.isNumeric(right))
             throw new UnexpectedTypeException("Multiplicative expression has non numeric args " +
-                    left.serialize() + ", " + right.serialize());
+                    left.serialize() + ", " + right.serialize(), getMetadata());
 
         _leftIterator.close();
         _rightIterator.close();

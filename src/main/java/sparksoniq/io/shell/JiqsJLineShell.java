@@ -21,7 +21,7 @@
 
 import sparksoniq.JsoniqQueryExecutor;
 import sparksoniq.config.SparksoniqRuntimeConfiguration;
-import sparksoniq.io.FileUtils;
+import sparksoniq.utils.FileUtils;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.UserInterruptException;

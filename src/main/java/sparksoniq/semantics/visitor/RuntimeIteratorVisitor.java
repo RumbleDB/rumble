@@ -119,17 +119,18 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
             }
         }else if (clause instanceof GroupByClause){
             List<GroupByClauseSparkIteratorExpression> expressions = new ArrayList<>();
-            for(GroupByClauseVar orderExpr : ((GroupByClause) clause).getGroupVariables()) {
+            for(GroupByClauseVar groupExpr : ((GroupByClause) clause).getGroupVariables()) {
                 expressions.add( new GroupByClauseSparkIteratorExpression(
-                        orderExpr.getExpression() != null? this.visit(orderExpr.getExpression(), argument): null,
-                        (VariableReferenceIterator) this.visit(orderExpr.getVariableReference(), argument)));
+                        groupExpr.getExpression() != null? this.visit(groupExpr.getExpression(), argument): null,
+                        (VariableReferenceIterator) this.visit(groupExpr.getVariableReference(), argument),
+                        createIteratorMetadata(groupExpr)));
             }
             result.add(new GroupByClauseSparkIterator(expressions, createIteratorMetadata(clause)));
         }else if (clause instanceof OrderByClause){
             List<OrderByClauseSparkIteratorExpression> expressions = new ArrayList<>();
             for(OrderByClauseExpr orderExpr : ((OrderByClause)clause).getExpressions()) {
                 expressions.add( new OrderByClauseSparkIteratorExpression(this.visit(orderExpr.getExpression(), argument),
-                        orderExpr.isAscending(), orderExpr.getUri(), orderExpr.getEmptyOrder()));
+                        orderExpr.isAscending(), orderExpr.getUri(), orderExpr.getEmptyOrder(), createIteratorMetadata(orderExpr)));
             }
             result.add(new OrderByClauseSparkIterator(expressions, ((OrderByClause)clause).isStable(),
                     createIteratorMetadata(clause)));
@@ -444,7 +445,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
 
         }
 
-        throw new UnknownFunctionCallException();
+        throw new UnknownFunctionCallException(createIteratorMetadata(expression));
     }
 
     @Override

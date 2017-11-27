@@ -19,7 +19,7 @@
  */
  package sparksoniq;
 
-import sparksoniq.io.FileUtils;
+import sparksoniq.utils.FileUtils;
 import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
 import sparksoniq.jsoniq.compiler.parser.JsoniqLexer;
 import sparksoniq.jsoniq.compiler.parser.JsoniqParser;

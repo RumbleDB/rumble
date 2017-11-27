@@ -62,7 +62,7 @@ public class UnaryOperationIterator extends UnaryOperationBaseIterator {
                     return new DecimalItem(((DecimalItem)child).getDecimalValue().multiply(new BigDecimal(-1)));
             }
             throw new UnexpectedTypeException("Unary expression has non numeric args " +
-                    child.serialize());
+                    child.serialize(), getMetadata());
         } else return child;
 
     }

@@ -21,9 +21,10 @@
 package sparksoniq.exceptions;
 
 import sparksoniq.exceptions.codes.ErrorCodes;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class UnexpectedTypeException extends SparksoniqRuntimeException{
-    public UnexpectedTypeException(String message) {
-        super(message, ErrorCodes.UnexpectedTypeErrorCode);
+    public UnexpectedTypeException(String message, IteratorMetadata metadata) {
+        super(message, ErrorCodes.UnexpectedTypeErrorCode, metadata.getExpressionMetadata());
     }
 }

@@ -55,13 +55,13 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
         test.open(_currentDynamicContext);
         Item testValue = test.next();
         if(test.hasNext())
-            throw new NonAtomicKeyException("Switch test must be atomic");
+            throw new NonAtomicKeyException("Switch test must be atomic", getMetadata().getExpressionMetadata());
         test.close();
         for(RuntimeIterator caseKey : cases.keySet()){
             caseKey.open(_currentDynamicContext);
             Item caseValue = caseKey.next();
             if(caseKey.hasNext())
-                throw new NonAtomicKeyException("Switch case test must be atomic");
+                throw new NonAtomicKeyException("Switch case test must be atomic", getMetadata().getExpressionMetadata());
             caseKey.close();
             if(Item.checkEquality(testValue, caseValue)) {
                 matchingIterator = cases.get(caseKey);
