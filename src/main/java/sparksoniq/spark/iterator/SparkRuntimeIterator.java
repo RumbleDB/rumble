@@ -58,7 +58,7 @@ public abstract class SparkRuntimeIterator extends RuntimeIterator {
     @Override
     public Item next(){
         if(!this._isOpen)
-            throw new IteratorFlowException("Runtime iterator is not open");
+            throw new IteratorFlowException("Runtime iterator is not open", getMetadata());
 
         if(result == null){
             currentResultIndex = 0;
@@ -71,7 +71,8 @@ public abstract class SparkRuntimeIterator extends RuntimeIterator {
         }
 
         if(!(currentResultIndex <= result.size() - 1))
-             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.getClass().getSimpleName());
+             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.getClass().getSimpleName(),
+                     getMetadata());
         if(currentResultIndex == result.size() - 1)
              this._hasNext = false;
 

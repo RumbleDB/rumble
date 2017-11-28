@@ -36,7 +36,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
 
     public void open(DynamicContext context){
         if(this._isOpen)
-            throw new IteratorFlowException("Runtime iterator cannot be opened twice");
+            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
         this._isOpen = true;
         this._hasNext = true;
         this._currentDynamicContext = context;

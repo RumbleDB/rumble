@@ -47,7 +47,8 @@ public class GroupByToPairMapClosure implements PairFunction<FlworTuple, FlworKe
         for (GroupByClauseSparkIteratorExpression _groupVariable : _groupVariables) {
             if (_groupVariable.getExpression() != null) {
                 if (tuple.contains(_groupVariable.getVariableReference().getVariableName()))
-                    throw new InvalidGroupVariableException("Group by variable redeclaration is illegal");
+                    throw new InvalidGroupVariableException("Group by variable redeclaration is illegal",
+                            _groupVariable.getIteratorMetadata());
                 List<Item> newVariableResults = new ArrayList<>();
                 _groupVariable.getExpression().open(new DynamicContext(tuple));
                 while (_groupVariable.getExpression().hasNext()){
@@ -65,7 +66,7 @@ public class GroupByToPairMapClosure implements PairFunction<FlworTuple, FlworKe
                  if(! tuple.contains(_groupVariable.getVariableReference().getVariableName()))
                      throw new InvalidGroupVariableException("Variable " +
                              _groupVariable.getVariableReference().getVariableName() +
-                             " cannot be used in group clause");
+                             " cannot be used in group clause", _groupVariable.getIteratorMetadata());
                 _groupVariable.getVariableReference().open(new DynamicContext(tuple));
                 while (_groupVariable.getVariableReference().hasNext())
                     results.add(_groupVariable.getVariableReference().next());

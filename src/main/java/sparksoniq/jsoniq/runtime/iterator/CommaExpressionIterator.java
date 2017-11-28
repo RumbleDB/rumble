@@ -45,7 +45,7 @@ public class CommaExpressionIterator extends LocalRuntimeIterator {
         {
             currentChild.close();
             if(this._children.indexOf(currentChild) == this._children.size() - 1)
-                throw new IteratorFlowException("Invalid next() call in Comma expression");
+                throw new IteratorFlowException("Invalid next() call in Comma expression", getMetadata());
             currentChild = this._children.get(_children.indexOf(currentChild) + 1);
             currentChild.open(_currentDynamicContext);
             return currentChild.next();

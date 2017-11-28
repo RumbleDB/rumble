@@ -40,7 +40,7 @@ public class VariableReferenceIterator extends LocalRuntimeIterator {
     @Override
     public Item next() {
         if(!this.hasNext())
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "$" + _variableName);
+            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "$" + _variableName, getMetadata());
         if(items == null){
             items = this._currentDynamicContext.getVariableValue(this._variableName);
         }
@@ -61,7 +61,7 @@ public class VariableReferenceIterator extends LocalRuntimeIterator {
     @Override
     public void open(DynamicContext context){
         if(this.isOpen())
-            throw new IteratorFlowException("Variable reference iterator already open");
+            throw new IteratorFlowException("Variable reference iterator already open", getMetadata());
         this._currentDynamicContext = context;
         this.currentIndex = 0;
         this.items = null;

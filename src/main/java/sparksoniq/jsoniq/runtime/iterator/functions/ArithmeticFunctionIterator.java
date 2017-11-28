@@ -97,9 +97,10 @@ public class ArithmeticFunctionIterator extends LocalFunctionCallIterator {
                     return new DecimalItem(sumResult);
 
             }
-            throw new IteratorFlowException("Unsupported arithmetic function");
+            throw new IteratorFlowException("Unsupported arithmetic function", getMetadata());
         } else
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + _operator.toString() + " function");
+            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + _operator.toString() + " function",
+                    getMetadata());
     }
 
     public ArithmeticFunctionIterator(List<RuntimeIterator> arguments,

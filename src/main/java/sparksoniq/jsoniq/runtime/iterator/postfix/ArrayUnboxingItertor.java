@@ -48,7 +48,7 @@ public class ArrayUnboxingItertor extends LocalRuntimeIterator {
         }
 
         else
-            throw new IteratorFlowException("Illegal next() call in Array Unboxing!");
+            throw new IteratorFlowException("Illegal next() call in Array Unboxing!", getMetadata());
     }
 
     @Override

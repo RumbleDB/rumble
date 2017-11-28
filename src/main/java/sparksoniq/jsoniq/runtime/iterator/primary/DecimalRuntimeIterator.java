@@ -35,7 +35,7 @@ public class DecimalRuntimeIterator extends AtomicRuntimeIterator {
             return new DecimalItem(_item);
         }
 
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item);
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item, getMetadata());
     }
 
     public DecimalRuntimeIterator(BigDecimal value, IteratorMetadata iteratorMetadata) {

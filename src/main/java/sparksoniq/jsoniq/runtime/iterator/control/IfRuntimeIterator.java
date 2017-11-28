@@ -75,7 +75,7 @@ public class IfRuntimeIterator extends LocalRuntimeIterator{
             }
         }
         if(currentIndex > result.size() -1)
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "If expr");
+            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "If expr", getMetadata());
         if(currentIndex == result.size() -1)
             this._hasNext = false;
         return result.get(currentIndex++);

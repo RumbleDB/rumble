@@ -45,7 +45,7 @@ public class ArrayRuntimeIterator extends LocalRuntimeIterator {
             this._hasNext = false;
             return _item;
         }
-        else throw new IteratorFlowException("Invalid next() call on array iterator");
+        else throw new IteratorFlowException("Invalid next() call on array iterator", getMetadata());
     }
 
     private ArrayItem _item = null;

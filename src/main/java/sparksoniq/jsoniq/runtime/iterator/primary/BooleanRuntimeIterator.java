@@ -32,7 +32,7 @@ public class BooleanRuntimeIterator extends AtomicRuntimeIterator {
             return new BooleanItem(_item);
         }
 
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item);
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item, getMetadata());
     }
 
     public BooleanRuntimeIterator(boolean value, IteratorMetadata iteratorMetadata) {

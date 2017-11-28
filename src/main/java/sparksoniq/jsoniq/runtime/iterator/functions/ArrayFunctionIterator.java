@@ -56,7 +56,8 @@ public class ArrayFunctionIterator extends LocalFunctionCallIterator {
             arrayIterator.close();
             return new IntegerItem(array.getSize());
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + _operator.toString() + " function");
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + _operator.toString() + " function",
+                getMetadata());
     }
 
     private final ArrayFunctionOperators _operator;

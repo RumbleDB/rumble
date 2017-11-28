@@ -64,7 +64,7 @@ public class QuantifiedExpressionVarIterator extends LocalRuntimeIterator {
         }
 
         if(currentResultIndex > result.size() -1)
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " Quantified Expr Var");
+            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " Quantified Expr Var", getMetadata());
 
         if(currentResultIndex == result.size() -1)
             this._hasNext = false;

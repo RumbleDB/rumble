@@ -86,17 +86,17 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
                     keyIterator.open(this._currentDynamicContext);
                     try{
                         keys.add(((StringItem) keyIterator.next()).getStringValue());} catch (Exception ex) {
-                        throw new IteratorFlowException("Object must have string keys!");
+                        throw new IteratorFlowException("Object must have string keys!", getMetadata());
                     }
                     if(keyIterator.hasNext())
-                        throw new IteratorFlowException("Object value must return one item!");
+                        throw new IteratorFlowException("Object value must return one item!", getMetadata());
                     keyIterator.close();
                 }
                 this._hasNext = false;
                 return new ObjectItem(keys, values);
             }
         }
-        throw new IteratorFlowException("Invalid next() call on object!");
+        throw new IteratorFlowException("Invalid next() call on object!", getMetadata());
     }
 
     private List<RuntimeIterator>  _keys;

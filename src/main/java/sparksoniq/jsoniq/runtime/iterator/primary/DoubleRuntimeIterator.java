@@ -33,7 +33,7 @@ public class DoubleRuntimeIterator extends AtomicRuntimeIterator{
             return new DoubleItem(_item);
         }
 
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item);
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item, getMetadata());
     }
 
     public DoubleRuntimeIterator(Double value, IteratorMetadata iteratorMetadata) {

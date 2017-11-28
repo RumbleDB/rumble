@@ -62,6 +62,6 @@ public class InstanceOfIterator extends UnaryOperationIterator {
                     return new BooleanItem(false);
             return new BooleanItem(true);
         }else
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE);
+            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
     }
 }

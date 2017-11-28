@@ -21,9 +21,10 @@
 package sparksoniq.exceptions;
 
 import sparksoniq.exceptions.codes.ErrorCodes;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class InvalidGroupVariableException extends SparksoniqRuntimeException{
-    public InvalidGroupVariableException(String message) {
-        super(message, ErrorCodes.InvalidGroupVariableErrorCode);
+    public InvalidGroupVariableException(String message, IteratorMetadata iteratorMetadata) {
+        super(message, ErrorCodes.InvalidGroupVariableErrorCode, iteratorMetadata.getExpressionMetadata());
     }
 }

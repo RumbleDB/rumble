@@ -76,7 +76,7 @@ public class PredicateIterator extends LocalRuntimeIterator {
             return result.get(currentIndex++);
         }
 
-        throw new IteratorFlowException("Invalid next() call in Predicate!");
+        throw new IteratorFlowException("Invalid next() call in Predicate!", getMetadata());
     }
 
     @Override

@@ -33,7 +33,7 @@ public class IntegerRuntimeIterator extends AtomicRuntimeIterator {
             return new IntegerItem(_item);
         }
 
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item);
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item, getMetadata());
     }
 
     public IntegerRuntimeIterator(int value, IteratorMetadata iteratorMetadata) {

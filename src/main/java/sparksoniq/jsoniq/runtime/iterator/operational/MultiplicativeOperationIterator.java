@@ -42,7 +42,7 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
     public AtomicItem next() {
 
         if(!this._hasNext)
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE);
+            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
         if(_leftIterator instanceof EmptySequenceIterator || _rightIterator instanceof EmptySequenceIterator){
             this._hasNext = false;
             return null;
@@ -104,7 +104,7 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
             }
 
         }
-        throw new IteratorFlowException("Additive expression has non numeric args");
+        throw new IteratorFlowException("Additive expression has non numeric args", getMetadata());
     }
 
 }

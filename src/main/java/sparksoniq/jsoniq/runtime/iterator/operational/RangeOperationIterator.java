@@ -69,7 +69,7 @@ public class RangeOperationIterator extends BinaryOperationBaseIterator {
 
         } else {
             if(_index > _right)
-                throw new IteratorFlowException("Range Operation invalid next() call");
+                throw new IteratorFlowException("Range Operation invalid next() call", getMetadata());
             if(_index == _right)
                 this._hasNext = false;
             return new IntegerItem(_index++);

@@ -33,7 +33,7 @@ public class StringRuntimeIterator extends AtomicRuntimeIterator {
             return new StringItem(_item);
         }
 
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item);
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item, getMetadata());
     }
 
     public StringRuntimeIterator(String value, IteratorMetadata iteratorMetadata) {

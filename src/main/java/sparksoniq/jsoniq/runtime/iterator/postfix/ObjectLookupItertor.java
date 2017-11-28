@@ -46,7 +46,7 @@ public class ObjectLookupItertor extends LocalRuntimeIterator {
             Item _lookupKey = this._children.get(1).next();
             if(this._children.get(1).hasNext() || _lookupKey.isObject() || _lookupKey.isArray())
                 throw new InvalidSelectorException("Type error; There is not exactly one supplied parameter for an array selector: "
-                        + _lookupKey.serialize());
+                        + _lookupKey.serialize(), getMetadata());
             if(!_lookupKey.isString())
                 throw new UnexpectedTypeException("Non numeric array lookup for " + _lookupKey.serialize(), getMetadata());
             this._children.get(0).close();
@@ -54,7 +54,7 @@ public class ObjectLookupItertor extends LocalRuntimeIterator {
             _hasNext = false;
             return _object.getItemByKey(((StringItem)_lookupKey).getStringValue());
         }
-        throw new IteratorFlowException("Invalid next call in Object Lookup");
+        throw new IteratorFlowException("Invalid next call in Object Lookup", getMetadata());
     }
 
 

@@ -51,7 +51,7 @@ public class StringConcatIterator extends BinaryOperationBaseIterator {
             this._hasNext = false;
             return new StringItem(leftString.getStringValue().concat(rightString.getStringValue()));
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE);
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
 
     }
 }

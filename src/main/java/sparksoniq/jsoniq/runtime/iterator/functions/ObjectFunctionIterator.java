@@ -75,7 +75,8 @@ public class ObjectFunctionIterator extends LocalFunctionCallIterator {
                 this._hasNext = false;
             return results.get(_currentIndex++);
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + _operator.toString() + " function");
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + _operator.toString() + " function",
+                getMetadata());
     }
 
     @Override

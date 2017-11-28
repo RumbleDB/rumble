@@ -70,7 +70,7 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
         }
         if(left instanceof StringItem) {
             if(!(right instanceof StringItem))
-                throw new IteratorFlowException("Invalid String comparison");
+                throw new IteratorFlowException("Invalid String comparison", getMetadata());
             String l = ((StringItem)left).getStringValue();
             String r = ((StringItem)right).getStringValue();
             switch (this._operator){
@@ -82,6 +82,6 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
 
         }
 
-        throw new IteratorFlowException("Invalid comparison expression");
+        throw new IteratorFlowException("Invalid comparison expression", getMetadata());
     }
 }

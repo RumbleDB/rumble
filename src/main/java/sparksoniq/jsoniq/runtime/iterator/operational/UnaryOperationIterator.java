@@ -41,7 +41,7 @@ public class UnaryOperationIterator extends UnaryOperationBaseIterator {
     public Item next() {
 
         if(!this._hasNext)
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE);
+            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
         if(_child instanceof EmptySequenceIterator){
             this._hasNext = false;
             return null;

@@ -43,7 +43,7 @@ public class CountFunctionIterator extends LocalFunctionCallIterator {
             this._hasNext = false;
             return new IntegerItem(results.size());
         } else
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " count function");
+            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " count function", getMetadata());
     }
 
     public CountFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {

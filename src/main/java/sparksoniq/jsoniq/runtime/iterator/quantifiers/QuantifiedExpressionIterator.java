@@ -71,7 +71,7 @@ public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
                         result && res.getBooleanValue() : result || res.getBooleanValue();
             return new BooleanItem(result);
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "Quantified Expr");
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "Quantified Expr", getMetadata());
     }
 
     public List<DynamicContext> generateContexts(List<DynamicContext> previousContexts, QuantifiedExpressionVarIterator var){
