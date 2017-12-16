@@ -57,7 +57,7 @@ public class SparksoniqRuntimeException extends RuntimeException {
     public SparksoniqRuntimeException(String message, String errorCode, ExpressionMetadata metadata) {
         super("Error [err: " + errorCode + "]" + (metadata != null?
                 "LINE:" + metadata.getTokenLineNumber() +
-                ";COLUMN:" + metadata.getTokenColumnNumber() + ";" : "")
+                ":COLUMN:" + metadata.getTokenColumnNumber() + ":" : "")
                 + message);
         if(!Arrays.asList(ErrorCodes.class.getFields()).stream().anyMatch(f -> {
             try {

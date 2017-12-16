@@ -1,4 +1,4 @@
-(:JIQS: ShouldNotParse; ErrorCode="XPST0003"; ErrorMetadata="LINE:22;COLUMN:44;" :)
+(:JIQS: ShouldNotParse; ErrorCode="XPST0003"; ErrorMetadata="LINE:22:COLUMN:44:" :)
 let $correct := (
     for $item in jn:parse-json(f:read-text("confusion_sample.json"))
     let $guess := $item."guess", $target := $item."target"

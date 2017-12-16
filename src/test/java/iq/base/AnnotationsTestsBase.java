@@ -17,24 +17,24 @@
  * Author: Stefan Irimescu
  *
  */
- package iq.base;
+package iq.base;
 
-import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
-import sparksoniq.jsoniq.compiler.parser.JsoniqBaseVisitor;
-import sparksoniq.jsoniq.compiler.parser.JsoniqLexer;
-import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
-import sparksoniq.exceptions.ParsingException;
-import sparksoniq.exceptions.SemanticException;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-import sparksoniq.semantics.visitor.StaticContextVisitor;
-import sparksoniq.semantics.visitor.RuntimeIteratorVisitor;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.Assert;
+import sparksoniq.exceptions.ParsingException;
+import sparksoniq.exceptions.SemanticException;
+import sparksoniq.exceptions.SparksoniqRuntimeException;
+import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
+import sparksoniq.jsoniq.compiler.parser.JsoniqBaseVisitor;
+import sparksoniq.jsoniq.compiler.parser.JsoniqLexer;
+import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.semantics.visitor.RuntimeIteratorVisitor;
+import sparksoniq.semantics.visitor.StaticContextVisitor;
 import utils.FileManager;
 import utils.annotations.AnnotationParseException;
 import utils.annotations.AnnotationProcessor;
@@ -58,12 +58,11 @@ public class AnnotationsTestsBase {
     }
 
     /**
-     Tests annotations
+     * Tests annotations
      */
-    protected JsoniqParser.MainModuleContext testAnnotations(String path , JsoniqBaseVisitor visitor) throws IOException
-    {
+    protected JsoniqParser.MainModuleContext testAnnotations(String path, JsoniqBaseVisitor visitor) throws IOException {
         JsoniqParser.MainModuleContext context = null;
-        RuntimeIterator runtimeIterator =  null;
+        RuntimeIterator runtimeIterator = null;
         try {
             currentAnnotation = AnnotationProcessor.readAnnotation(new FileReader(path));
         } catch (AnnotationParseException e) {
@@ -75,83 +74,89 @@ public class AnnotationsTestsBase {
             context = this.parse(new FileReader(path), visitor);
 
             //generate static context and runtime iterators
-            if(visitor instanceof JsoniqExpressionTreeVisitor) {
-                JsoniqExpressionTreeVisitor completeVisitor = ((JsoniqExpressionTreeVisitor)visitor);
+            if (visitor instanceof JsoniqExpressionTreeVisitor) {
+                JsoniqExpressionTreeVisitor completeVisitor = ((JsoniqExpressionTreeVisitor) visitor);
                 //generate static context
-                new StaticContextVisitor().visit( completeVisitor.getQueryExpression(),  completeVisitor.getQueryExpression().getStaticContext());
+                new StaticContextVisitor().visit(completeVisitor.getQueryExpression(), completeVisitor.getQueryExpression().getStaticContext());
                 //generate iterators
-                runtimeIterator = new RuntimeIteratorVisitor().visit( completeVisitor.getQueryExpression(), null);
+                runtimeIterator = new RuntimeIteratorVisitor().visit(completeVisitor.getQueryExpression(), null);
             }
             //PARSING
         } catch (ParsingException exception) {
             String errorOutput = exception.getMessage();
             checkErrorCode(errorOutput, currentAnnotation.getErrorCode(), currentAnnotation.getErrorMetadata());
-            if(currentAnnotation.shouldParse()) {
+            if (currentAnnotation.shouldParse()) {
                 Assert.fail("Program did not parse when expected to.\nError output: " + errorOutput + "\n");
                 return context;
-            }
-            else{
+            } else {
                 System.out.println(errorOutput);
                 Assert.assertTrue(true);
                 return context;
             }
 
             //SEMANTIC
-        } catch (SemanticException exception){
+        } catch (SemanticException exception) {
             String errorOutput = exception.getMessage();
             checkErrorCode(errorOutput, currentAnnotation.getErrorCode(), currentAnnotation.getErrorMetadata());
-            try{if(currentAnnotation.shouldCompile()) {
-                Assert.fail("Program did not compile when expected to.\nError output: " + errorOutput + "\n");
-                return context;
-            } else {
-                System.out.println(errorOutput);
-                Assert.assertTrue(true);
-                return context;}
-            }catch (Exception ex){}
+            try {
+                if (currentAnnotation.shouldCompile()) {
+                    Assert.fail("Program did not compile when expected to.\nError output: " + errorOutput + "\n");
+                    return context;
+                } else {
+                    System.out.println(errorOutput);
+                    Assert.assertTrue(true);
+                    return context;
+                }
+            } catch (Exception ex) {
+            }
 
             //RUNTIME
-        } catch (SparksoniqRuntimeException exception){
+        } catch (SparksoniqRuntimeException exception) {
             String errorOutput = exception.getMessage();
             checkErrorCode(errorOutput, currentAnnotation.getErrorCode(), currentAnnotation.getErrorMetadata());
-            try{
-            if(currentAnnotation.shouldRun()) {
-                Assert.fail("Program did not run when expected to.\nError output: " + errorOutput + "\n");
-                return context;
-            }else {
-                System.out.println(errorOutput);
-                Assert.assertTrue(true);
-                return context;
-            }}catch (Exception ex){}
+            try {
+                if (currentAnnotation.shouldRun()) {
+                    Assert.fail("Program did not run when expected to.\nError output: " + errorOutput + "\n");
+                    return context;
+                } else {
+                    System.out.println(errorOutput);
+                    Assert.assertTrue(true);
+                    return context;
+                }
+            } catch (Exception ex) {
+            }
 
         }
 
-        try{
-            if(!currentAnnotation.shouldCompile()) {
+        try {
+            if (!currentAnnotation.shouldCompile()) {
                 Assert.fail("Program compiled when not expected to.\n");
                 return context;
-            }} catch (Exception ex){}
+            }
+        } catch (Exception ex) {
+        }
 
-        if(!currentAnnotation.shouldParse()) {
+        if (!currentAnnotation.shouldParse()) {
             Assert.fail("Program parsed when not expected to.\n");
             return context;
         }
 
         //PROGRAM SHOULD RUN
-        if(currentAnnotation instanceof AnnotationProcessor.RunnableTestAnnotation &&
-                currentAnnotation.shouldRun()){
+        if (currentAnnotation instanceof AnnotationProcessor.RunnableTestAnnotation &&
+                currentAnnotation.shouldRun()) {
             try {
-                checkExpectedOutput( currentAnnotation.getOutput(), runtimeIterator);
-            } catch (SparksoniqRuntimeException exception){
+                checkExpectedOutput(currentAnnotation.getOutput(), runtimeIterator);
+            } catch (SparksoniqRuntimeException exception) {
                 String errorOutput = exception.getMessage();
                 Assert.fail("Program did not run when expected to.\nError output: " + errorOutput + "\n");
             }
         } else {
             //PROGRAM SHOULD CRASH
-            if(currentAnnotation instanceof AnnotationProcessor.UnrunnableTestAnnotation &&
+            if (currentAnnotation instanceof AnnotationProcessor.UnrunnableTestAnnotation &&
                     !currentAnnotation.shouldRun()) {
                 try {
-                    checkExpectedOutput( currentAnnotation.getOutput(), runtimeIterator);
-                }  catch (Exception exception){
+                    checkExpectedOutput(currentAnnotation.getOutput(), runtimeIterator);
+                } catch (Exception exception) {
                     String errorOutput = exception.getMessage();
                     checkErrorCode(errorOutput, currentAnnotation.getErrorCode(), currentAnnotation.getErrorMetadata());
                     return context;
@@ -165,10 +170,10 @@ public class AnnotationsTestsBase {
     }
 
     protected void checkErrorCode(String errorOutput, String expectedErrorCode, String errorMetadata) {
-        if(errorOutput != null && expectedErrorCode != null)
+        if (errorOutput != null && expectedErrorCode != null)
             Assert.assertTrue("Unexpected error code returned; Expected: " + expectedErrorCode +
-                    "; Error: " + errorOutput,errorOutput.contains(expectedErrorCode));
-        if(errorOutput != null && errorMetadata != null)
+                    "; Error: " + errorOutput, errorOutput.contains(expectedErrorCode));
+        if (errorOutput != null && errorMetadata != null)
             Assert.assertTrue("Unexpected metadata returned; Expected: " + errorMetadata +
                     "; Error: " + errorOutput, errorOutput.contains(errorMetadata));
     }
@@ -177,20 +182,18 @@ public class AnnotationsTestsBase {
         Assert.assertTrue(true);
     }
 
-    private  JsoniqParser.MainModuleContext parse(FileReader reader, JsoniqBaseVisitor visitor) throws IOException {
+    private JsoniqParser.MainModuleContext parse(FileReader reader, JsoniqBaseVisitor visitor) throws IOException {
         JsoniqLexer lexer = new JsoniqLexer(new ANTLRInputStream(reader));
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
 
-        try
-        {
+        try {
             JsoniqParser.ModuleContext unit = parser.module();
             JsoniqParser.MainModuleContext main = unit.main;
             visitor.visit(unit);
             return main;
 
-        } catch (ParseCancellationException ex)
-        {
+        } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(lexer.getText(), new ExpressionMetadata(lexer.getLine(),
                     lexer.getCharPositionInLine()));
             e.initCause(ex);

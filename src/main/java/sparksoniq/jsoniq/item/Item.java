@@ -17,7 +17,7 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.jsoniq.item;
+package sparksoniq.jsoniq.item;
 
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.base.SerializableItem;
@@ -38,7 +38,7 @@ public abstract class Item implements SerializableItem {
         return resultItem instanceof AtomicItem;
     }
 
-    public static boolean isNumeric(Item item){
+    public static boolean isNumeric(Item item) {
         return item instanceof IntegerItem || item instanceof DecimalItem || item instanceof DoubleItem;
     }
 
@@ -47,128 +47,172 @@ public abstract class Item implements SerializableItem {
     //(int,decimal) -> decimal
     //(decimal,double) -> double
     public static Type getNumericResultType(Item left, Item right) {
-        if(left instanceof DecimalItem)
+        if (left instanceof DecimalItem)
             return DecimalItem.class;
-        if(left instanceof DoubleItem){
-            if(right instanceof DecimalItem)
+        if (left instanceof DoubleItem) {
+            if (right instanceof DecimalItem)
                 return DecimalItem.class;
             return DoubleItem.class;
         }
-        if(left instanceof IntegerItem){
-            if(right instanceof DoubleItem)
+        if (left instanceof IntegerItem) {
+            if (right instanceof DoubleItem)
                 return DoubleItem.class;
-            if(right instanceof DecimalItem)
+            if (right instanceof DecimalItem)
                 return DecimalItem.class;
             return IntegerItem.class;
         }
         return DecimalItem.class;
     }
-    public static <T> T getNumericValue(Item item, Class<T> type){
-        if(isNumeric(item)){
-            if(item instanceof DoubleItem) {
-                Double result = ((DoubleItem)item).getDoubleValue();
-                if(type.equals(BigDecimal.class))
-                    return (T)BigDecimal.valueOf(result);
-                if(type.equals(Integer.class))
-                    return (T)new Integer(result.intValue());
-                return (T)result;
+
+    public static <T> T getNumericValue(Item item, Class<T> type) {
+        if (isNumeric(item)) {
+            if (item instanceof DoubleItem) {
+                Double result = ((DoubleItem) item).getDoubleValue();
+                if (type.equals(BigDecimal.class))
+                    return (T) BigDecimal.valueOf(result);
+                if (type.equals(Integer.class))
+                    return (T) new Integer(result.intValue());
+                return (T) result;
             }
-            if(item instanceof IntegerItem) {
-                Integer result = ((IntegerItem)item).getIntegerValue();
-                if(type.equals(BigDecimal.class))
-                    return (T)BigDecimal.valueOf(result);
-                if(type.equals(Double.class))
-                    return (T)new Double(result.doubleValue());
-                return (T)result;
+            if (item instanceof IntegerItem) {
+                Integer result = ((IntegerItem) item).getIntegerValue();
+                if (type.equals(BigDecimal.class))
+                    return (T) BigDecimal.valueOf(result);
+                if (type.equals(Double.class))
+                    return (T) new Double(result.doubleValue());
+                return (T) result;
             }
-            if(item instanceof DecimalItem) {
-                BigDecimal result = ((DecimalItem)item).getDecimalValue();
-                if(type.equals(Integer.class))
-                    return (T)new Integer(result.intValue());
-                if(type.equals(Double.class))
-                    return (T)new Double(result.doubleValue());
-                return (T)result;
+            if (item instanceof DecimalItem) {
+                BigDecimal result = ((DecimalItem) item).getDecimalValue();
+                if (type.equals(Integer.class))
+                    return (T) new Integer(result.intValue());
+                if (type.equals(Double.class))
+                    return (T) new Double(result.doubleValue());
+                return (T) result;
             }
 
         }
-        throw new IteratorFlowException("Cannot call getNumericValue on non numerics");
+        throw new IteratorFlowException("Cannot call getNumericValue on non numerics", item.getItemMetadata());
     }
+
     //returns an effective boolean value of any item type
     public static boolean getEffectiveBooleanValue(Item item) {
-        if(item == null)
+        if (item == null)
             return false;
-        if(item instanceof BooleanItem)
-            return ((BooleanItem)item).getBooleanValue();
-        if(isNumeric(item)){
-            if(item instanceof IntegerItem)
-                return ((IntegerItem)item).getIntegerValue() != 0;
-            if(item instanceof DoubleItem)
-                return ((DoubleItem)item).getDoubleValue() != 0;
-            if(item instanceof DecimalItem)
-                return !((DecimalItem)item).getDecimalValue().equals(0);
+        if (item instanceof BooleanItem)
+            return ((BooleanItem) item).getBooleanValue();
+        if (isNumeric(item)) {
+            if (item instanceof IntegerItem)
+                return ((IntegerItem) item).getIntegerValue() != 0;
+            if (item instanceof DoubleItem)
+                return ((DoubleItem) item).getDoubleValue() != 0;
+            if (item instanceof DecimalItem)
+                return !((DecimalItem) item).getDecimalValue().equals(0);
         }
-        if(item instanceof NullItem)
+        if (item instanceof NullItem)
             return false;
-        if(item instanceof StringItem)
-            return !((StringItem)item).getStringValue().isEmpty();
-        if(item instanceof ObjectItem)
-            return ((ObjectItem)item).getKeys() != null && !((ObjectItem)item).getKeys().isEmpty();
-        if(item instanceof ArrayItem)
-            return ((ArrayItem)item).getItems() !=null && !((ArrayItem)item).getItems().isEmpty();
+        if (item instanceof StringItem)
+            return !((StringItem) item).getStringValue().isEmpty();
+        if (item instanceof ObjectItem)
+            return ((ObjectItem) item).getKeys() != null && !((ObjectItem) item).getKeys().isEmpty();
+        if (item instanceof ArrayItem)
+            return ((ArrayItem) item).getItems() != null && !((ArrayItem) item).getItems().isEmpty();
 
         return true;
     }
 
-    public static int compareItems(Item v1, Item v2){
+    public static int compareItems(Item v1, Item v2) {
         int result;
         //numeric comparison
-        if(Item.isNumeric(v1) && Item.isNumeric(v2)){
+        if (Item.isNumeric(v1) && Item.isNumeric(v2)) {
             BigDecimal value1 = Item.getNumericValue(v1, BigDecimal.class);
             BigDecimal value2 = Item.getNumericValue(v2, BigDecimal.class);
             result = value1.compareTo(value2);
             //Non atomics cannot be compared
         } else if (v1 instanceof BooleanItem && v2 instanceof BooleanItem) {
-            result = new Boolean(((BooleanItem)v1).getBooleanValue()).
-                    compareTo(((BooleanItem)v2).getBooleanValue());
+            result = new Boolean(((BooleanItem) v1).getBooleanValue()).
+                    compareTo(((BooleanItem) v2).getBooleanValue());
         }
         //NULL is smaller than anything
         else if (v1 instanceof NullItem || v2 instanceof NullItem) {
-            if(v1 instanceof NullItem)
+            if (v1 instanceof NullItem)
                 result = -1;
             else
                 result = 1;
-        }
-        else
+        } else
             result = v1.serialize().compareTo(v2.serialize());
         return result;
     }
 
-    public static boolean checkEquality(Item v1, Item v2){
+    public static boolean checkEquality(Item v1, Item v2) {
         return compareItems(v1, v2) == 0;
     }
 
     public abstract Item getItemAt(int i) throws OperationNotSupportedException;
+
     public abstract Item getItemByKey(String s) throws OperationNotSupportedException;
+
     public abstract void putItemByKey(String s, Item value) throws OperationNotSupportedException;
+
     public abstract List<String> getKeys() throws OperationNotSupportedException;
+
     public abstract int getSize() throws OperationNotSupportedException;
+
     public abstract String getStringValue() throws OperationNotSupportedException;
+
     public abstract boolean getBooleanValue() throws OperationNotSupportedException;
+
     public abstract double getDoubleValue() throws OperationNotSupportedException;
+
     public abstract int getIntegerValue() throws OperationNotSupportedException;
+
     public abstract BigDecimal getDecimalValue() throws OperationNotSupportedException;
+
     public abstract boolean isTypeOf(ItemType type);
 
-    public boolean isArray(){ return false; }
-    public boolean isObject(){ return false; }
-    public boolean isAtomic(){ return false; }
-    public boolean isNumber(){ return false; }
-    public boolean isString(){ return false; }
-    public boolean isBoolean(){ return false; }
-    public boolean isNull(){ return false; }
-    public boolean isInteger(){ return false; }
-    public boolean isDouble(){ return false; }
-    public boolean isDecimal(){ return false; }
+    public boolean isArray() {
+        return false;
+    }
+
+    public boolean isObject() {
+        return false;
+    }
+
+    public boolean isAtomic() {
+        return false;
+    }
+
+    public boolean isNumber() {
+        return false;
+    }
+
+    public boolean isString() {
+        return false;
+    }
+
+    public boolean isBoolean() {
+        return false;
+    }
+
+    public boolean isNull() {
+        return false;
+    }
+
+    public boolean isInteger() {
+        return false;
+    }
+
+    public boolean isDouble() {
+        return false;
+    }
+
+    public boolean isDecimal() {
+        return false;
+    }
+
+    public ItemMetadata getItemMetadata() {
+        return itemMetadata;
+    }
 
     protected Item(ItemMetadata itemMetadata) {
         this.itemMetadata = itemMetadata;

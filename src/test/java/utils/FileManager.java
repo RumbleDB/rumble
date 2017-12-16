@@ -17,7 +17,7 @@
  * Author: Stefan Irimescu
  *
  */
- package utils;
+package utils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -28,8 +28,7 @@ public class FileManager {
 
     public static final String TEST_FILE_EXTENSION = ".iq";
 
-    public static List<File> loadJiqFiles(File directory)
-    {
+    public static List<File> loadJiqFiles(File directory) {
         List<File> files = new ArrayList<>();
         Arrays.asList(directory.listFiles()).stream().filter(file -> file.getName().endsWith(TEST_FILE_EXTENSION))
                 .forEach(file -> files.add(file));

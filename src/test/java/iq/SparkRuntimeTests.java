@@ -17,12 +17,12 @@
  * Author: Stefan Irimescu
  *
  */
- package iq;
+package iq;
 
-import sparksoniq.spark.SparkContextManager;
 import org.apache.spark.SparkConf;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import sparksoniq.spark.SparkContextManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -50,7 +50,7 @@ public class SparkRuntimeTests extends RuntimeTests {
         List<Object[]> result = new ArrayList<Object[]>();
         _testFiles.clear();
         readFileList(sparkRuntimeTestsDirectory);
-        _testFiles.forEach(file -> result.add(new Object[]{ file }));
+        _testFiles.forEach(file -> result.add(new Object[]{file}));
         return result;
     }
 
