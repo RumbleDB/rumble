@@ -24,6 +24,7 @@ import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.item.StringItem;
+import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -63,7 +64,7 @@ public class ObjectFunctionIterator extends LocalFunctionCallIterator {
                 switch (_operator) {
                     case KEYS:
                         for(String key : object.getKeys())
-                            results.add(new StringItem(key));
+                            results.add(new StringItem(key, ItemMetadata.fromIteratorMetadata(getMetadata())));
                         break;
                     case VALUES:
                         for(Item item : object.getValues())

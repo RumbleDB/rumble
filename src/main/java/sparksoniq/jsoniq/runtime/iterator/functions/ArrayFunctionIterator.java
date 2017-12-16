@@ -24,6 +24,7 @@ import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -54,7 +55,7 @@ public class ArrayFunctionIterator extends LocalFunctionCallIterator {
                         + _operator.toString() + " function, array expected");
             ArrayItem array = (ArrayItem) iteratorResult;
             arrayIterator.close();
-            return new IntegerItem(array.getSize());
+            return new IntegerItem(array.getSize(), ItemMetadata.fromIteratorMetadata(getMetadata()));
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + _operator.toString() + " function",
                 getMetadata());

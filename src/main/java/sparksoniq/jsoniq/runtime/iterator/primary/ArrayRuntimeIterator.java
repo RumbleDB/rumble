@@ -21,6 +21,7 @@
 
 import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -41,7 +42,7 @@ public class ArrayRuntimeIterator extends LocalRuntimeIterator {
     public ArrayItem next() {
         if(this._hasNext) {
             List<Item> result = this.runChildrenIterators(this._currentDynamicContext);
-            this._item = new ArrayItem(result);
+            this._item = new ArrayItem(result, ItemMetadata.fromIteratorMetadata(getMetadata()));
             this._hasNext = false;
             return _item;
         }

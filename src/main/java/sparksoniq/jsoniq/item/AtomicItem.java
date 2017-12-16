@@ -19,6 +19,7 @@
  */
  package sparksoniq.jsoniq.item;
 
+import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
@@ -61,6 +62,10 @@ public abstract class AtomicItem extends Item {
         if(type.getType().equals(ItemTypes.AtomicItem) || type.getType().equals(ItemTypes.Item))
             return true;
         return false;
+    }
+
+    protected AtomicItem(ItemMetadata itemMetadata) {
+        super(itemMetadata);
     }
 
 }

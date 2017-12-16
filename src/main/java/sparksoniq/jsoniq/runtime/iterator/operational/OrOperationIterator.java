@@ -21,6 +21,7 @@
 
 import sparksoniq.jsoniq.item.*;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
+import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -40,6 +41,7 @@ public class OrOperationIterator extends BinaryOperationBaseIterator {
         _leftIterator.close();
         _rightIterator.close();
         this._hasNext = false;
-        return new BooleanItem(Item.getEffectiveBooleanValue(left) || Item.getEffectiveBooleanValue(right));
+        return new BooleanItem(Item.getEffectiveBooleanValue(left) || Item.getEffectiveBooleanValue(right)
+                , ItemMetadata.fromIteratorMetadata(getMetadata()));
     }
 }

@@ -25,6 +25,6 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class InvalidSelectorException extends SparksoniqRuntimeException{
     public InvalidSelectorException(String message, IteratorMetadata metadata) {
-        super(message, ErrorCodes.InvalidSelectorErrorCode);
+        super(message, ErrorCodes.InvalidSelectorErrorCode, metadata.getExpressionMetadata());
     }
 }

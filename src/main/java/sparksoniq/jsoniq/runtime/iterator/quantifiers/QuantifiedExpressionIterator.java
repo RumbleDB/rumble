@@ -17,12 +17,13 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.jsoniq.runtime.iterator.quantifiers;
+package sparksoniq.jsoniq.runtime.iterator.quantifiers;
 
-import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpression;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpression;
 import sparksoniq.jsoniq.item.BooleanItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -45,19 +46,19 @@ public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
 
     @Override
     public Item next() {
-        if(this._hasNext) {
+        if (this._hasNext) {
             this._hasNext = false;
             List<DynamicContext> contexts = new ArrayList<>();
             contexts.add(new DynamicContext(_currentDynamicContext));
-            for(RuntimeIterator iterator: _children){
-                if(iterator instanceof QuantifiedExpressionVarIterator){
+            for (RuntimeIterator iterator : _children) {
+                if (iterator instanceof QuantifiedExpressionVarIterator) {
                     QuantifiedExpressionVarIterator var = (QuantifiedExpressionVarIterator) iterator;
                     contexts = generateContexts(contexts, var);
                 }
             }
 
             List<BooleanItem> results = new ArrayList<>();
-            for (DynamicContext context : contexts){
+            for (DynamicContext context : contexts) {
                 _evaluationExpression.open(context);
                 _evaluationExpression.reset(context);
                 BooleanItem result = (BooleanItem) _evaluationExpression.next();
@@ -65,25 +66,25 @@ public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
                 results.add(result);
             }
 
-            boolean result = this._operator == QuantifiedExpression.QuantifiedOperators.EVERY ? true : false;
-            for (BooleanItem res: results)
+            boolean result = this._operator == QuantifiedExpression.QuantifiedOperators.EVERY;
+            for (BooleanItem res : results)
                 result = this._operator == QuantifiedExpression.QuantifiedOperators.EVERY ?
                         result && res.getBooleanValue() : result || res.getBooleanValue();
-            return new BooleanItem(result);
+            return new BooleanItem(result, ItemMetadata.fromIteratorMetadata(getMetadata()));
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "Quantified Expr", getMetadata());
     }
 
-    public List<DynamicContext> generateContexts(List<DynamicContext> previousContexts, QuantifiedExpressionVarIterator var){
+    public List<DynamicContext> generateContexts(List<DynamicContext> previousContexts, QuantifiedExpressionVarIterator var) {
         List<DynamicContext> results = new ArrayList<>();
-        for(DynamicContext currentContext : previousContexts){
+        for (DynamicContext currentContext : previousContexts) {
             var.open(currentContext);
             var.reset(currentContext);
             while (var.hasNext()) {
                 DynamicContext context = new DynamicContext(currentContext);
                 List<Item> contents = new ArrayList<>();
                 Item currentItem = var.next();
-                if(currentItem != null){
+                if (currentItem != null) {
                     contents.add(currentItem);
                     context.addVariableValue("$" + var.getVariableReference(), contents);
                     results.add(context);

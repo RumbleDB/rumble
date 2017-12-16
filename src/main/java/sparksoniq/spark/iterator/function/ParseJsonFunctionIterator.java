@@ -17,15 +17,15 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.spark.iterator.function;
+package sparksoniq.spark.iterator.function;
 
-import sparksoniq.io.json.StringToItemMapper;
+import org.apache.spark.api.java.JavaRDD;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
+import sparksoniq.io.json.StringToItemMapper;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.spark.SparkContextManager;
-import org.apache.spark.api.java.JavaRDD;
 
 import javax.naming.OperationNotSupportedException;
 import java.util.List;
@@ -33,11 +33,11 @@ import java.util.List;
 public class ParseJsonFunctionIterator extends SparkFunctionCallIterator {
     @Override
     public JavaRDD<Item> getRDD() {
-        if(this._rdd == null){
+        if (this._rdd == null) {
             JavaRDD<String> strings = null;
             RuntimeIterator urlIterator = this._children.get(0);
             urlIterator.open(this._currentDynamicContext);
-            if(this._children.size() == 1)
+            if (this._children.size() == 1)
                 try {
                     strings = SparkContextManager.getInstance().getContext().textFile(urlIterator.next().getStringValue());
                 } catch (OperationNotSupportedException e) {
@@ -48,15 +48,15 @@ public class ParseJsonFunctionIterator extends SparkFunctionCallIterator {
                 partitionsIterator.open(_currentDynamicContext);
                 try {
                     strings = SparkContextManager.getInstance().getContext().textFile(
-                             urlIterator.next().getStringValue(),
-                             partitionsIterator.next().getIntegerValue());
+                            urlIterator.next().getStringValue(),
+                            partitionsIterator.next().getIntegerValue());
                 } catch (OperationNotSupportedException e) {
                     throw new IllegalArgumentException("parse-json illegal argument");
                 }
                 partitionsIterator.close();
             }
 
-            _rdd = strings.mapPartitions(new StringToItemMapper());
+            _rdd = strings.mapPartitions(new StringToItemMapper(getMetadata()));
             urlIterator.close();
         }
         return _rdd;
@@ -64,7 +64,7 @@ public class ParseJsonFunctionIterator extends SparkFunctionCallIterator {
 
     public ParseJsonFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
-        if(arguments.size() > 2 || arguments.size() < 1)
+        if (arguments.size() > 2 || arguments.size() < 1)
             throw new SparksoniqRuntimeException("Incorrect number of arguments for parse-json function; " +
                     "Allowed signatures: (filePath) ; (filePath, minPartitions)");
 

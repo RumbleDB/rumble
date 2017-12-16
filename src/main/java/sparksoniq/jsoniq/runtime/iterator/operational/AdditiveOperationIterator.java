@@ -22,6 +22,7 @@
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.*;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
+import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.EmptySequenceIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.exceptions.IteratorFlowException;
@@ -68,20 +69,26 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
             int l = Item.<Integer>getNumericValue(left, Integer.class);
             int r = Item.<Integer>getNumericValue(right, Integer.class);
             return this._operator == OperationalExpressionBase.Operator.PLUS?
-                    new IntegerItem(l + r) :
-                    new IntegerItem(l - r);
+                    new IntegerItem(l + r,
+                            ItemMetadata.fromIteratorMetadata(getMetadata())) :
+                    new IntegerItem(l - r,
+                            ItemMetadata.fromIteratorMetadata(getMetadata()));
         } else if(returnType.equals(DoubleItem.class)){
             double l = Item.<Double>getNumericValue(left, Double.class);
             double r = Item.<Double>getNumericValue(right, Double.class);
             return this._operator == OperationalExpressionBase.Operator.PLUS?
-                    new DoubleItem(l + r) :
-                    new DoubleItem(l - r);
+                    new DoubleItem(l + r,
+                            ItemMetadata.fromIteratorMetadata(getMetadata())) :
+                    new DoubleItem(l - r,
+                            ItemMetadata.fromIteratorMetadata(getMetadata()));
         } else if(returnType.equals(DecimalItem.class)){
             BigDecimal l = Item.<BigDecimal>getNumericValue(left, BigDecimal.class);
             BigDecimal r = Item.<BigDecimal>getNumericValue(right, BigDecimal.class);
             return this._operator == OperationalExpressionBase.Operator.PLUS?
-                    new DecimalItem(l.add(r)) :
-                    new DecimalItem(l.subtract(r));
+                    new DecimalItem(l.add(r),
+                            ItemMetadata.fromIteratorMetadata(getMetadata())) :
+                    new DecimalItem(l.subtract(r),
+                            ItemMetadata.fromIteratorMetadata(getMetadata()));
         }
         throw new IteratorFlowException("Additive expression has non numeric args", getMetadata());
     }

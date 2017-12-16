@@ -20,6 +20,7 @@
  package sparksoniq.jsoniq.runtime.iterator.primary;
 
 import sparksoniq.jsoniq.item.DecimalItem;
+import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -32,7 +33,7 @@ public class DecimalRuntimeIterator extends AtomicRuntimeIterator {
     public DecimalItem next() {
         if (this._hasNext) {
             this._hasNext = false;
-            return new DecimalItem(_item);
+            return new DecimalItem(_item, ItemMetadata.fromIteratorMetadata(getMetadata()));
         }
 
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item, getMetadata());

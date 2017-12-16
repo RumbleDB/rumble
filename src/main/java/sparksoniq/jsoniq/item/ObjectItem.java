@@ -23,6 +23,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import sparksoniq.exceptions.DuplicateObjectKeyException;
+import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
@@ -42,7 +43,8 @@ public class ObjectItem extends JsonItem{
         return _values;
     }
 
-    public ObjectItem(List<String> keys, List<Item> values){
+    public ObjectItem(List<String> keys, List<Item> values, ItemMetadata itemMetadata){
+        super(itemMetadata);
         checkForDuplicateKeys(keys);
         this._keys = keys;
         this._values = values;

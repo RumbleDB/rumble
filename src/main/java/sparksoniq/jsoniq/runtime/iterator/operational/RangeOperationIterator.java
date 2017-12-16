@@ -17,13 +17,16 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.jsoniq.runtime.iterator.operational;
+package sparksoniq.jsoniq.runtime.iterator.operational;
 
-import sparksoniq.exceptions.UnexpectedTypeException;
-import sparksoniq.jsoniq.item.*;
-import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.UnexpectedTypeException;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
+import sparksoniq.jsoniq.item.AtomicItem;
+import sparksoniq.jsoniq.item.IntegerItem;
+import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.metadata.ItemMetadata;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
@@ -31,16 +34,16 @@ import sparksoniq.semantics.DynamicContext;
 public class RangeOperationIterator extends BinaryOperationBaseIterator {
 
     public RangeOperationIterator(RuntimeIterator left, RuntimeIterator right, IteratorMetadata iteratorMetadata) {
-        super(left,right, OperationalExpressionBase.Operator.TO, iteratorMetadata);
+        super(left, right, OperationalExpressionBase.Operator.TO, iteratorMetadata);
     }
 
-    public boolean hasNext(){
+    public boolean hasNext() {
         return this._hasNext;
     }
 
     @Override
     public AtomicItem next() {
-        if(!isInitialized){
+        if (!isInitialized) {
             _index = 0;
             _leftIterator.open(_currentDynamicContext);
             _rightIterator.open(_currentDynamicContext);
@@ -49,35 +52,34 @@ public class RangeOperationIterator extends BinaryOperationBaseIterator {
             _leftIterator.close();
             _rightIterator.close();
 
-            if(!(left instanceof IntegerItem) || !(right instanceof IntegerItem))
+            if (!(left instanceof IntegerItem) || !(right instanceof IntegerItem))
                 throw new UnexpectedTypeException("Range expression has non numeric args " +
                         left.serialize() + ", " + right.serialize(), getMetadata());
             _left = Item.getNumericValue(left, Integer.class);
             _right = Item.getNumericValue(right, Integer.class);
-            if(_right < _left) {
+            if (_right < _left) {
                 this._hasNext = false;
                 return null;
-//                throw new IteratorFlowException("Invalid Range Operation");
             }
 
 
             isInitialized = true;
             _index = _left;
-            if(_index == _right)
+            if (_index == _right)
                 this._hasNext = false;
-            return new IntegerItem(_index++);
+            return new IntegerItem(_index++, ItemMetadata.fromIteratorMetadata(getMetadata()));
 
         } else {
-            if(_index > _right)
+            if (_index > _right)
                 throw new IteratorFlowException("Range Operation invalid next() call", getMetadata());
-            if(_index == _right)
+            if (_index == _right)
                 this._hasNext = false;
-            return new IntegerItem(_index++);
+            return new IntegerItem(_index++, ItemMetadata.fromIteratorMetadata(getMetadata()));
         }
     }
 
     @Override
-    public void open(DynamicContext context){
+    public void open(DynamicContext context) {
         super.open(context);
         this.isInitialized = false;
     }

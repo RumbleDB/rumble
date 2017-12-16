@@ -23,6 +23,7 @@ import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -41,7 +42,8 @@ public class CountFunctionIterator extends LocalFunctionCallIterator {
                 results.add(sequenceIterator.next());
             sequenceIterator.close();
             this._hasNext = false;
-            return new IntegerItem(results.size());
+            return new IntegerItem(results.size(),
+                    ItemMetadata.fromIteratorMetadata(getMetadata()));
         } else
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " count function", getMetadata());
     }

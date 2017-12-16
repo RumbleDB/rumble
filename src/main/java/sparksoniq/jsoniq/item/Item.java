@@ -19,43 +19,24 @@
  */
  package sparksoniq.jsoniq.item;
 
-import sparksoniq.exceptions.SparksoniqRuntimeException;
-import sparksoniq.jsoniq.item.base.SerializableItem;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.item.base.SerializableItem;
+import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.semantics.types.ItemType;
 
 import javax.naming.OperationNotSupportedException;
-import java.io.*;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.util.List;
 
 //TODO serialize with indentation
 public abstract class Item implements SerializableItem {
-
-    public abstract Item getItemAt(int i) throws OperationNotSupportedException;
-    public abstract Item getItemByKey(String s) throws OperationNotSupportedException;
-    public abstract void putItemByKey(String s, Item value) throws OperationNotSupportedException;
-    public abstract List<String> getKeys() throws OperationNotSupportedException;
-    public abstract int getSize() throws OperationNotSupportedException;
-    public abstract String getStringValue() throws OperationNotSupportedException;
-    public abstract boolean getBooleanValue() throws OperationNotSupportedException;
-    public abstract double getDoubleValue() throws OperationNotSupportedException;
-    public abstract int getIntegerValue() throws OperationNotSupportedException;
-    public abstract BigDecimal getDecimalValue() throws OperationNotSupportedException;
-    public abstract boolean isTypeOf(ItemType type);
-
-    public boolean isArray(){ return false; }
-    public boolean isObject(){ return false; }
-    public boolean isAtomic(){ return false; }
-    public boolean isNumber(){ return false; }
-    public boolean isString(){ return false; }
-    public boolean isBoolean(){ return false; }
-    public boolean isNull(){ return false; }
-    public boolean isInteger(){ return false; }
-    public boolean isDouble(){ return false; }
-    public boolean isDecimal(){ return false; }
-
+    public static boolean isAtomic(Item resultItem) {
+        return resultItem instanceof AtomicItem;
+    }
 
     public static boolean isNumeric(Item item){
         return item instanceof IntegerItem || item instanceof DecimalItem || item instanceof DoubleItem;
@@ -137,9 +118,7 @@ public abstract class Item implements SerializableItem {
 
         return true;
     }
-    public static boolean isAtomic(Item resultItem) {
-        return resultItem instanceof AtomicItem;
-    }
+
     public static int compareItems(Item v1, Item v2){
         int result;
         //numeric comparison
@@ -163,16 +142,44 @@ public abstract class Item implements SerializableItem {
             result = v1.serialize().compareTo(v2.serialize());
         return result;
     }
-    
+
     public static boolean checkEquality(Item v1, Item v2){
         return compareItems(v1, v2) == 0;
     }
 
+    public abstract Item getItemAt(int i) throws OperationNotSupportedException;
+    public abstract Item getItemByKey(String s) throws OperationNotSupportedException;
+    public abstract void putItemByKey(String s, Item value) throws OperationNotSupportedException;
+    public abstract List<String> getKeys() throws OperationNotSupportedException;
+    public abstract int getSize() throws OperationNotSupportedException;
+    public abstract String getStringValue() throws OperationNotSupportedException;
+    public abstract boolean getBooleanValue() throws OperationNotSupportedException;
+    public abstract double getDoubleValue() throws OperationNotSupportedException;
+    public abstract int getIntegerValue() throws OperationNotSupportedException;
+    public abstract BigDecimal getDecimalValue() throws OperationNotSupportedException;
+    public abstract boolean isTypeOf(ItemType type);
+
+    public boolean isArray(){ return false; }
+    public boolean isObject(){ return false; }
+    public boolean isAtomic(){ return false; }
+    public boolean isNumber(){ return false; }
+    public boolean isString(){ return false; }
+    public boolean isBoolean(){ return false; }
+    public boolean isNull(){ return false; }
+    public boolean isInteger(){ return false; }
+    public boolean isDouble(){ return false; }
+    public boolean isDecimal(){ return false; }
+
+    protected Item(ItemMetadata itemMetadata) {
+        this.itemMetadata = itemMetadata;
+    }
 
     private void readObject(ObjectInputStream aInputStream)
             throws ClassNotFoundException, IOException {
         aInputStream.defaultReadObject();
     }
+
+    private final ItemMetadata itemMetadata;
 
 
     private void writeObject(ObjectOutputStream aOutputStream)

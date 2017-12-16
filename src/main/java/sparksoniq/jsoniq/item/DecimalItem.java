@@ -22,6 +22,7 @@
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
@@ -35,7 +36,8 @@ public class DecimalItem extends AtomicItem {
         return _value;
     }
 
-    public DecimalItem(BigDecimal decimal){
+    public DecimalItem(BigDecimal decimal, ItemMetadata itemMetadata){
+        super(itemMetadata);
         this._value = decimal;
     }
 

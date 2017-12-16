@@ -23,6 +23,7 @@ import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.DecimalItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -64,7 +65,8 @@ public class ArithmeticFunctionIterator extends LocalFunctionCallIterator {
                     BigDecimal sum = new BigDecimal(0);
                     for(Item r: results)
                         sum = sum.add(Item.getNumericValue(r, BigDecimal.class));
-                    return new DecimalItem(sum.divide(new BigDecimal(results.size())));
+                    return new DecimalItem(sum.divide(new BigDecimal(results.size())),
+                            ItemMetadata.fromIteratorMetadata(getMetadata()));
                 case MIN:
                     itemResult = results.get(0);
                     BigDecimal min  = Item.getNumericValue(results.get(0), BigDecimal.class);
@@ -94,7 +96,7 @@ public class ArithmeticFunctionIterator extends LocalFunctionCallIterator {
                         BigDecimal current = Item.getNumericValue(r, BigDecimal.class);
                         sumResult = sumResult.add(current);
                     }
-                    return new DecimalItem(sumResult);
+                    return new DecimalItem(sumResult, ItemMetadata.fromIteratorMetadata(getMetadata()));
 
             }
             throw new IteratorFlowException("Unsupported arithmetic function", getMetadata());

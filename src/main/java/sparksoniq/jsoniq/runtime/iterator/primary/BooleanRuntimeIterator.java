@@ -17,11 +17,12 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.jsoniq.runtime.iterator.primary;
+package sparksoniq.jsoniq.runtime.iterator.primary;
 
-import sparksoniq.jsoniq.item.BooleanItem;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.item.BooleanItem;
+import sparksoniq.jsoniq.item.metadata.ItemMetadata;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class BooleanRuntimeIterator extends AtomicRuntimeIterator {
@@ -29,7 +30,7 @@ public class BooleanRuntimeIterator extends AtomicRuntimeIterator {
     public BooleanItem next() {
         if (this._hasNext) {
             this._hasNext = false;
-            return new BooleanItem(_item);
+            return new BooleanItem(_item, ItemMetadata.fromIteratorMetadata(getMetadata()));
         }
 
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item, getMetadata());

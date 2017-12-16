@@ -17,11 +17,13 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.io.json;
+package sparksoniq.io.json;
 
-import sparksoniq.jsoniq.item.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import sparksoniq.jsoniq.item.*;
+import sparksoniq.jsoniq.item.metadata.ItemMetadata;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -30,33 +32,28 @@ import java.util.List;
 
 public class JiqsItemParser extends OrgJsonParser {
 
-    public JiqsItemParser(){}
-
-    public Item getJsonValueItem(JSONObject object, String key){
-        if(object.has(key))
-            return this.getItemFromObject(object.get(key));
-        return null;
+    public JiqsItemParser() {
     }
 
-    public Item getItemFromObject(Object object){
-        if(object !=null) {
+    public Item getItemFromObject(Object object, IteratorMetadata metadata) {
+        if (object != null) {
             if (object instanceof String)
-                return new StringItem(object.toString());
+                return new StringItem(object.toString(), ItemMetadata.fromIteratorMetadata(metadata));
             if (object instanceof Integer)
-                return new IntegerItem((int) object);
+                return new IntegerItem((int) object, ItemMetadata.fromIteratorMetadata(metadata));
             if (object instanceof Double)
-                return new DoubleItem((double) object);
+                return new DoubleItem((double) object, ItemMetadata.fromIteratorMetadata(metadata));
             if (object instanceof BigDecimal)
-                return new DecimalItem(new BigDecimal(object.toString()));
+                return new DecimalItem(new BigDecimal(object.toString()), ItemMetadata.fromIteratorMetadata(metadata));
             if (object instanceof Boolean)
-                return new BooleanItem((boolean) object);
+                return new BooleanItem((boolean) object, ItemMetadata.fromIteratorMetadata(metadata));
             if (object instanceof JSONArray) {
                 JSONArray curentArray = (JSONArray) object;
                 List<Item> values = new ArrayList<>();
                 int index = 0;
                 while (index < curentArray.length())
-                    values.add(this.getItemFromObject(curentArray.get(index++)));
-                return new ArrayItem(values);
+                    values.add(this.getItemFromObject(curentArray.get(index++), metadata));
+                return new ArrayItem(values, ItemMetadata.fromIteratorMetadata(metadata));
             }
             if (object instanceof JSONObject) {
                 JSONObject currentObject = (JSONObject) object;
@@ -65,26 +62,12 @@ public class JiqsItemParser extends OrgJsonParser {
                 Iterator<String> keyIterator = currentObject.keys();
                 while (keyIterator.hasNext())
                     keys.add(keyIterator.next());
-                keys.forEach(_key -> values.add(this.getItemFromObject(currentObject.get(_key))));
-                return new ObjectItem(keys, values);
+                keys.forEach(_key -> values.add(this.getItemFromObject(currentObject.get(_key), metadata)));
+                return new ObjectItem(keys, values, ItemMetadata.fromIteratorMetadata(metadata));
             }
 
         }
-        return new NullItem();
+        return new NullItem(ItemMetadata.fromIteratorMetadata(metadata));
     }
 
-
-    public Item getItemFromString(String string){
-        if(string.trim().startsWith("{"))
-            return this.getItemFromObject(new JSONObject(string));
-        else
-            return this.getItemFromObject(new JSONObject("{ \"item\" : " + string + "}").get("item"));
-    }
-
-    public List<Item> parseJsonItemsFromIterator(Iterator<String> stringIterator){
-        List<Item> result = new ArrayList<>();
-        List<JSONObject> objects = super.parseJsonLinesFromIterator(stringIterator);
-        objects.forEach(obj -> result.add(this.getItemFromObject(obj)));
-        return result;
-    }
 }

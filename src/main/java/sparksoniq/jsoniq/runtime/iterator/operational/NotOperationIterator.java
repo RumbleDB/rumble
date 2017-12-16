@@ -23,6 +23,7 @@ import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.jsoniq.item.BooleanItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
+import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.UnaryOperationBaseIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -39,6 +40,6 @@ public class NotOperationIterator extends UnaryOperationBaseIterator {
         Item child = _child.next();
         _child.close();
         this._hasNext = false;
-        return new BooleanItem(!Item.getEffectiveBooleanValue(child));
+        return new BooleanItem(!Item.getEffectiveBooleanValue(child), ItemMetadata.fromIteratorMetadata(getMetadata()));
     }
 }
