@@ -785,7 +785,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
     @Override public Void visitIfExpr(JsoniqParser.IfExprContext ctx){
         IfExpression node;
         Expression condition, branch, elseBranch;
-        this.visitExpr(ctx.condition);
+        this.visitExpr(ctx.testCondition);
         condition = this.currentExpression;
         this.visitExprSingle(ctx.branch);
         branch = this.currentExpression;

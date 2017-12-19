@@ -2729,7 +2729,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public static class IfExprContext extends ParserRuleContext {
-		public ExprContext condition;
+		public ExprContext testCondition;
 		public ExprSingleContext branch;
 		public ExprSingleContext elseBranch;
 		public TerminalNode Kif() { return getToken(JsoniqParser.Kif, 0); }
@@ -2766,7 +2766,7 @@ public class JsoniqParser extends Parser {
 			setState(520);
 			match(T__26);
 			setState(521);
-			((IfExprContext)_localctx).condition = expr();
+			((IfExprContext)_localctx).testCondition = expr();
 			setState(522);
 			match(T__27);
 			setState(523);
