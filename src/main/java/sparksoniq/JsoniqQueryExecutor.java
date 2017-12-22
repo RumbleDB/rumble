@@ -17,22 +17,8 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq;
+package sparksoniq;
 
-import sparksoniq.utils.FileUtils;
-import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
-import sparksoniq.jsoniq.compiler.parser.JsoniqLexer;
-import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
-import sparksoniq.jsoniq.compiler.translator.expr.Expression;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
-import sparksoniq.exceptions.ParsingException;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.semantics.DynamicContext;
-import sparksoniq.semantics.visitor.RuntimeIteratorVisitor;
-import sparksoniq.semantics.visitor.StaticContextVisitor;
-import sparksoniq.spark.SparkContextManager;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -41,6 +27,20 @@ import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.Path;
 import org.apache.spark.api.java.JavaRDD;
+import sparksoniq.exceptions.ParsingException;
+import sparksoniq.exceptions.SparksoniqRuntimeException;
+import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
+import sparksoniq.jsoniq.compiler.parser.JsoniqLexer;
+import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
+import sparksoniq.jsoniq.compiler.translator.expr.Expression;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.semantics.DynamicContext;
+import sparksoniq.semantics.visitor.RuntimeIteratorVisitor;
+import sparksoniq.semantics.visitor.StaticContextVisitor;
+import sparksoniq.spark.SparkContextManager;
+import sparksoniq.utils.FileUtils;
 
 import java.io.*;
 import java.net.URI;
@@ -53,14 +53,7 @@ public class JsoniqQueryExecutor {
     private int _itemOutputLimit;
     private String _logFilePath = null;
 
-    public JsoniqQueryExecutor(boolean useLocalOutputLog){
-        this._useLocalOutputLog = useLocalOutputLog;
-        this._itemOutputLimit = 0;
-        this._outputTimeLog = false;
-        SparkContextManager.COLLECT_ITEM_LIMIT = 0;
-    }
-
-    public JsoniqQueryExecutor(boolean useLocalOutputLog, int itemLimit){
+    public JsoniqQueryExecutor(boolean useLocalOutputLog, int itemLimit) {
         this._useLocalOutputLog = useLocalOutputLog;
         this._itemOutputLimit = itemLimit;
         this._outputTimeLog = false;
@@ -75,9 +68,9 @@ public class JsoniqQueryExecutor {
         SparkContextManager.COLLECT_ITEM_LIMIT = itemLimit;
     }
 
-    public String runLocal(String arg) throws IOException {
-        JsoniqExpressionTreeVisitor visitor = this.parse( new JsoniqLexer(new ANTLRInputStream(new Main()
-                .getClass().getResourceAsStream("/queries/runQuery.iq"))));
+    public String runLocal() throws IOException {
+        JsoniqExpressionTreeVisitor visitor = this.parse(new JsoniqLexer(
+                new ANTLRInputStream(Main.class.getResourceAsStream("/queries/runQuery.iq"))));
         //generate static context
         generateStaticContext(visitor.getQueryExpression());
         //generate iterators
@@ -86,7 +79,7 @@ public class JsoniqQueryExecutor {
         return output;
     }
 
-    public void run(String queryFile, String  outputPath) throws IOException {
+    public void run(String queryFile, String outputPath) throws IOException {
         JsoniqLexer lexer = getInputSource(queryFile);
         long startTime = System.currentTimeMillis();
         JsoniqExpressionTreeVisitor visitor = this.parse(lexer);
@@ -95,7 +88,7 @@ public class JsoniqQueryExecutor {
         //generate iterators
         RuntimeIterator result = generateRuntimeIterators(visitor.getQueryExpression());
         //collect output in memory and write to filesystem from java
-        if(_useLocalOutputLog) {
+        if (_useLocalOutputLog) {
             String output = runIterators(result, true);
             org.apache.hadoop.fs.FileSystem fileSystem = org.apache.hadoop.fs.FileSystem
                     .get(SparkContextManager.getInstance().getContext().hadoopConfiguration());
@@ -105,19 +98,19 @@ public class JsoniqQueryExecutor {
             stream.close();
             //else write from Spark RDD
         } else {
-            if(!result.isRDD())
+            if (!result.isRDD())
                 throw new SparksoniqRuntimeException("Could not find any RDD iterators in executor");
             JavaRDD<Item> rdd = result.getRDD();
             JavaRDD<String> output = rdd.map(o -> o.serialize());
             output.saveAsTextFile(outputPath);
         }
-        long endTime   = System.currentTimeMillis();
+        long endTime = System.currentTimeMillis();
         long totalTime = endTime - startTime;
-        if(this._outputTimeLog)
+        if (this._outputTimeLog)
             writeTimeLog(totalTime);
     }
 
-    public String runInteractive(java.nio.file.Path queryFile) throws IOException, InterruptedException {
+    public String runInteractive(java.nio.file.Path queryFile) throws IOException {
         //create temp file
         JsoniqLexer lexer = getInputSource(queryFile.toString());
         JsoniqExpressionTreeVisitor visitor = this.parse(lexer);
@@ -126,15 +119,14 @@ public class JsoniqQueryExecutor {
         //generate iterators
         RuntimeIterator result = generateRuntimeIterators(visitor.getQueryExpression());
         //execute locally for simple expressions
-        if(!result.isRDD()) {
+        if (!result.isRDD()) {
             String localOutput = this.runIterators(result, false);
             return localOutput;
-        }
-        else {
+        } else {
             JavaRDD<Item> rdd = result.getRDD();
             JavaRDD<String> output = rdd.map(o -> o.serialize());
             String localOutput = "";
-            for (String item : SparkContextManager.LIMIT_COLLECT()?
+            for (String item : SparkContextManager.LIMIT_COLLECT() ?
                     output.take(SparkContextManager.COLLECT_ITEM_LIMIT) : output.collect())
                 localOutput += item + "\n";
             return localOutput;
@@ -144,20 +136,20 @@ public class JsoniqQueryExecutor {
     private JsoniqLexer getInputSource(String arg) throws IOException {
         arg = arg.trim();
         //return embedded file
-        if(arg == null || arg.isEmpty())
-            new JsoniqLexer(new ANTLRInputStream(new Main().getClass().getResourceAsStream("/queries/runQuery.iq")));
-        if(arg.startsWith("file://") || arg.startsWith("/")) {
+        if (arg.isEmpty())
+            new JsoniqLexer(new ANTLRInputStream(Main.class.getResourceAsStream("/queries/runQuery.iq")));
+        if (arg.startsWith("file://") || arg.startsWith("/")) {
             FileReader reader = this.getFileReader(arg);
             return new JsoniqLexer(new ANTLRInputStream(reader));
         }
-        if(arg.startsWith("hdfs://")) {
+        if (arg.startsWith("hdfs://")) {
             org.apache.hadoop.fs.FileSystem fileSystem = org.apache.hadoop.fs.FileSystem
-                    .get( URI.create(arg) ,SparkContextManager.getInstance().getContext().hadoopConfiguration());
+                    .get(URI.create(arg), SparkContextManager.getInstance().getContext().hadoopConfiguration());
             FSDataInputStream in;
             try {
                 in = fileSystem.open(new Path(arg));
-            } catch (Exception ex){
-                ex.printStackTrace();
+            } catch (Exception ex) {
+//                ex.printStackTrace();
                 throw ex;
             }
             return new JsoniqLexer(new ANTLRInputStream(in));
@@ -170,26 +162,24 @@ public class JsoniqQueryExecutor {
         try {
             reader = new FileReader(new File(arg));
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+//            e.printStackTrace();
             throw e;
         }
 
         return reader;
     }
 
-    private JsoniqExpressionTreeVisitor parse(JsoniqLexer lexer) throws IOException {
+    private JsoniqExpressionTreeVisitor parse(JsoniqLexer lexer) {
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
         JsoniqExpressionTreeVisitor visitor = new JsoniqExpressionTreeVisitor();
-        try
-        {
+        try {
             //TODO Handle module extras
             JsoniqParser.ModuleContext module = parser.module();
             JsoniqParser.MainModuleContext unit = module.main;
             visitor.visit(unit);
 
-        } catch (ParseCancellationException ex)
-        {
+        } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(lexer.getText(), new ExpressionMetadata(lexer.getLine(),
                     lexer.getCharPositionInLine()));
             e.initCause(ex);
@@ -200,30 +190,30 @@ public class JsoniqQueryExecutor {
 
     }
 
-    private RuntimeIterator generateRuntimeIterators(Expression expression){
+    private RuntimeIterator generateRuntimeIterators(Expression expression) {
         RuntimeIterator result = new RuntimeIteratorVisitor().visit(expression, null);
         return result;
     }
 
-    private void generateStaticContext(Expression expression){
+    private void generateStaticContext(Expression expression) {
         new StaticContextVisitor().visit(expression, expression.getStaticContext());
     }
 
-    private String getIteratorOutput(RuntimeIterator iterator, boolean indent){
+    private String getIteratorOutput(RuntimeIterator iterator, boolean indent) {
         iterator.open(new DynamicContext());
         Item result = iterator.next();
-        if(result == null)
+        if (result == null)
             return "";
         String singleOutput = result.serialize();
-        if(!iterator.hasNext())
+        if (!iterator.hasNext())
             return singleOutput;
         else {
             int itemCount = 0;
-            String output = "( " + result.serialize() +", " + (indent? "\n": "");
+            String output = "( " + result.serialize() + ", " + (indent ? "\n" : "");
             while (iterator.hasNext() &&
-                    ((itemCount< this._itemOutputLimit && _itemOutputLimit > 0) ||
-                    _itemOutputLimit == 0 )) {
-                output += iterator.next().serialize() + ", " + (indent? "\n": "");
+                    ((itemCount < this._itemOutputLimit && _itemOutputLimit > 0) ||
+                            _itemOutputLimit == 0)) {
+                output += iterator.next().serialize() + ", " + (indent ? "\n" : "");
                 itemCount++;
             }
             //remove last comma
@@ -235,13 +225,13 @@ public class JsoniqQueryExecutor {
 
     private void writeTimeLog(long totalTime) throws IOException {
         String result = "[ExecTime]" + totalTime;
-        if(_logFilePath.startsWith("file://") || _logFilePath.startsWith("/")) {
+        if (_logFilePath.startsWith("file://") || _logFilePath.startsWith("/")) {
             String timeLogPath = _logFilePath.substring(0, _logFilePath.lastIndexOf("/"));
             timeLogPath += Path.SEPARATOR + "time_log_";
             java.nio.file.Path finalPath = FileUtils.getUniqueFileName(timeLogPath);
             java.nio.file.Files.write(finalPath, result.getBytes());
         }
-        if(_logFilePath.startsWith("hdfs://")) {
+        if (_logFilePath.startsWith("hdfs://")) {
             org.apache.hadoop.fs.FileSystem fileSystem = org.apache.hadoop.fs.FileSystem
                     .get(SparkContextManager.getInstance().getContext().hadoopConfiguration());
             FSDataOutputStream fsDataOutputStream = fileSystem.create(new Path(_logFilePath));
@@ -251,7 +241,7 @@ public class JsoniqQueryExecutor {
         }
     }
 
-    protected String runIterators(RuntimeIterator iterator, boolean indent){
+    protected String runIterators(RuntimeIterator iterator, boolean indent) {
         String actualOutput = getIteratorOutput(iterator, indent);
         return actualOutput;
     }

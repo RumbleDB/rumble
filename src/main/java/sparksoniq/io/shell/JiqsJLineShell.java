@@ -17,17 +17,17 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.io.shell;
+package sparksoniq.io.shell;
 
-import sparksoniq.JsoniqQueryExecutor;
-import sparksoniq.config.SparksoniqRuntimeConfiguration;
-import sparksoniq.utils.FileUtils;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.UserInterruptException;
 import org.jline.reader.impl.DefaultHighlighter;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
+import sparksoniq.JsoniqQueryExecutor;
+import sparksoniq.config.SparksoniqRuntimeConfiguration;
+import sparksoniq.utils.FileUtils;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -40,46 +40,48 @@ public class JiqsJLineShell {
     public static final String MID_QUERY_PROMPT = ">>> ";
     public static final String ERROR_MESSAGE_PROMPT = "[ERROR] ";
     private final boolean _printTime;
+    private final SparksoniqRuntimeConfiguration _configuration;
     private int _itemLimit;
+    private Terminal terminal;
+    private LineReader lineReader;
+    private PrintWriter outputWriter;
+    private JsoniqQueryExecutor jsoniqQueryExecutor;
+    private boolean queryStarted;
+    private String previousLine = "";
+    private String currentLine = "";
+    private String currentQueryContent = "";
 
     public JiqsJLineShell(SparksoniqRuntimeConfiguration configuration) throws IOException {
         this._configuration = configuration;
         this._itemLimit = 100;
-        initialize(_configuration);
+        initialize();
         this._printTime = true;
     }
 
     public JiqsJLineShell(SparksoniqRuntimeConfiguration configuration, int itemLimit) throws IOException {
         this._configuration = configuration;
         this._itemLimit = itemLimit;
-        initialize(_configuration);
+        initialize();
         this._printTime = true;
     }
 
-    public JiqsJLineShell(SparksoniqRuntimeConfiguration configuration, int itemLimit, boolean printTime) throws IOException {
-        this._configuration = configuration;
-        this._itemLimit = itemLimit;
-        initialize(_configuration);
-        this._printTime = printTime;
-    }
-
-    public void launch() throws IOException {
+    public void launch() {
         this.output(getInitializationMessage());
         while (!exitCalled()) {
             try {
                 currentLine = lineReader.readLine(getPrompt());
-                if(!isConfig()) {
+                if (!isConfig()) {
 
-                    if(!currentLine.isEmpty()) {
-                        currentQueryContent += "\n" + currentLine ;
+                    if (!currentLine.isEmpty()) {
+                        currentQueryContent += "\n" + currentLine;
                         queryStarted = true;
                     }
 
-                    if(isInQuery() && isQueryEnd()) {
+                    if (isInQuery() && isQueryEnd()) {
                         processQuery();
                     }
                 }
-                previousLine =currentLine;
+                previousLine = currentLine;
             } catch (Exception ex) {
                 handleException(ex);
             }
@@ -94,10 +96,10 @@ public class JiqsJLineShell {
             String result = jsoniqQueryExecutor.runInteractive(file);
             output(result);
             long time = System.currentTimeMillis() - startTime;
-            if(_printTime)
+            if (_printTime)
                 output("[EXEC TIME]: " + time);
             removeQueryFile(file);
-        } catch (Exception ex){
+        } catch (Exception ex) {
             handleException(ex);
             removeQueryFile(file);
         }
@@ -108,10 +110,11 @@ public class JiqsJLineShell {
     private void removeQueryFile(Path file) {
         try {
             Files.delete(file);
-        } catch (Exception deleteException){}
+        } catch (Exception deleteException) {
+        }
     }
 
-    private void initialize(SparksoniqRuntimeConfiguration _configuration) throws IOException {
+    private void initialize() throws IOException {
         terminal = TerminalBuilder.builder().system(true).build();
         lineReader = LineReaderBuilder.builder()
                 .terminal(terminal)
@@ -124,11 +127,8 @@ public class JiqsJLineShell {
     }
 
     private void handleException(Exception ex) {
-        if(ex != null && !(ex instanceof UserInterruptException)) {
+        if (ex != null && !(ex instanceof UserInterruptException))
             output(ERROR_MESSAGE_PROMPT + ex.getMessage());
-//            output(ERROR_MESSAGE_PROMPT + ex.getStackTrace());
-//            ex.printStackTrace();
-        }
     }
 
     private void output(String message) {
@@ -136,9 +136,9 @@ public class JiqsJLineShell {
     }
 
     private String getPrompt() {
-        if(isInQuery())
+        if (isInQuery())
             return MID_QUERY_PROMPT;
-       return PROMPT;
+        return PROMPT;
     }
 
     private boolean isInQuery() {
@@ -146,15 +146,17 @@ public class JiqsJLineShell {
     }
 
     private boolean isQueryEnd() {
-        return previousLine!= null && currentLine!=null &&
+        return previousLine != null && currentLine != null &&
                 previousLine.equals("") && currentLine.equals("")
                 && !currentQueryContent.isEmpty();
     }
 
-    private boolean isConfig() { return false; }
+    private boolean isConfig() {
+        return false;
+    }
 
     private boolean exitCalled() {
-        if(currentLine == null)
+        if (currentLine == null)
             return false;
         return this.currentLine.trim().toLowerCase().equals(JiqsJLineShell.EXIT_COMMAND);
     }
@@ -162,17 +164,6 @@ public class JiqsJLineShell {
     private String getInitializationMessage() {
         return "WELCOME to SPARKSONiq \n" + _configuration.toString();
     }
-
-    private Terminal terminal;
-    private LineReader lineReader;
-    private PrintWriter outputWriter;
-    private JsoniqQueryExecutor jsoniqQueryExecutor;
-
-    private boolean queryStarted;
-    private String previousLine = "";
-    private String currentLine = "";
-    private String currentQueryContent = "";
-    private final SparksoniqRuntimeConfiguration _configuration;
 
 
 }

@@ -184,7 +184,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                     }
                 }
                 catch (Exception ex) {
-                    ex.printStackTrace();
+//                    ex.printStackTrace();
                     throw new UnsupportedFeatureException("Invalid Postfix extension", expression.getMetadata());
                 }
             }

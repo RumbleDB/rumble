@@ -17,17 +17,17 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.spark.closures;
+package sparksoniq.spark.closures;
 
+import org.apache.spark.api.java.function.PairFunction;
+import scala.Tuple2;
 import sparksoniq.exceptions.InvalidGroupVariableException;
 import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
 import sparksoniq.spark.tuple.FlworKey;
 import sparksoniq.spark.tuple.FlworTuple;
-import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
-import org.apache.spark.api.java.function.PairFunction;
-import scala.Tuple2;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +41,7 @@ public class GroupByToPairMapClosure implements PairFunction<FlworTuple, FlworKe
     }
 
     @Override
-    public Tuple2<FlworKey, FlworTuple> call(FlworTuple tuple) throws Exception {
+    public Tuple2<FlworKey, FlworTuple> call(FlworTuple tuple) {
         //if a new variable is declared inside the group by clause, insert value in tuple
         List<Item> results = new ArrayList<>();
         for (GroupByClauseSparkIteratorExpression _groupVariable : _groupVariables) {
@@ -51,9 +51,9 @@ public class GroupByToPairMapClosure implements PairFunction<FlworTuple, FlworKe
                             _groupVariable.getIteratorMetadata());
                 List<Item> newVariableResults = new ArrayList<>();
                 _groupVariable.getExpression().open(new DynamicContext(tuple));
-                while (_groupVariable.getExpression().hasNext()){
+                while (_groupVariable.getExpression().hasNext()) {
                     Item resultItem = _groupVariable.getExpression().next();
-                    if(!Item.isAtomic(resultItem))
+                    if (!Item.isAtomic(resultItem))
                         throw new NonAtomicKeyException("Group by keys must be atomics",
                                 _groupVariable.getIteratorMetadata().getExpressionMetadata());
                     newVariableResults.add(resultItem);
@@ -63,10 +63,10 @@ public class GroupByToPairMapClosure implements PairFunction<FlworTuple, FlworKe
                         false);
                 results.addAll(newVariableResults);
             } else {
-                 if(! tuple.contains(_groupVariable.getVariableReference().getVariableName()))
-                     throw new InvalidGroupVariableException("Variable " +
-                             _groupVariable.getVariableReference().getVariableName() +
-                             " cannot be used in group clause", _groupVariable.getIteratorMetadata());
+                if (!tuple.contains(_groupVariable.getVariableReference().getVariableName()))
+                    throw new InvalidGroupVariableException("Variable " +
+                            _groupVariable.getVariableReference().getVariableName() +
+                            " cannot be used in group clause", _groupVariable.getIteratorMetadata());
                 _groupVariable.getVariableReference().open(new DynamicContext(tuple));
                 while (_groupVariable.getVariableReference().hasNext())
                     results.add(_groupVariable.getVariableReference().next());

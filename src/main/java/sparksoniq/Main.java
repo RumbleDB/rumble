@@ -17,7 +17,7 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq;
+package sparksoniq;
 
 
 import sparksoniq.config.SparksoniqRuntimeConfiguration;
@@ -25,7 +25,6 @@ import sparksoniq.exceptions.CliException;
 import sparksoniq.spark.SparkContextManager;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -35,31 +34,30 @@ import java.util.HashMap;
 import java.util.List;
 
 public class Main {
-    public static void main(String[] args) throws IOException, URISyntaxException {
+    public static void main(String[] args) throws IOException {
         HashMap<String, String> arguments;
         String masterConfig, outputDataFilePath, queryFilePath = "", logFilePath = "";
         int outputItemLimit = 200;
         try {
-            arguments= SparksoniqRuntimeConfiguration.processCommandLineArgs(args);
+            arguments = SparksoniqRuntimeConfiguration.processCommandLineArgs(args);
             masterConfig = arguments.get("master");
             outputDataFilePath = arguments.get("output-path");
             initializeApplication(masterConfig);
-            if(arguments.containsKey("query-path"))
+            if (arguments.containsKey("query-path"))
                 queryFilePath = arguments.get("query-path");
-            if(arguments.containsKey("log-path"))
-                logFilePath =  arguments.get("log-path");
-            if(arguments.containsKey("result-size"))
-                outputItemLimit =  Integer.valueOf(arguments.get("result-size"));
+            if (arguments.containsKey("log-path"))
+                logFilePath = arguments.get("log-path");
+            if (arguments.containsKey("result-size"))
+                outputItemLimit = Integer.valueOf(arguments.get("result-size"));
 
         } catch (Exception ex) {
             throw new CliException(ex.getMessage());
         }
 
-        if(masterConfig.contains("local")) {
+        if (masterConfig.contains("local")) {
             System.out.println("Running in local mode");
             runQueryExecutor(queryFilePath, outputDataFilePath, true, logFilePath, outputItemLimit);
-        }
-        else{
+        } else {
             System.out.println("Running in remote mode");
             runQueryExecutor(queryFilePath, outputDataFilePath, false, logFilePath, outputItemLimit);
         }
@@ -68,12 +66,12 @@ public class Main {
     private static void runQueryExecutor(String queryFile, String outputDataFilePath,
                                          boolean local, String logFilePath, int outputItemLimit) throws IOException {
         JsoniqQueryExecutor translator;
-        if(logFilePath.isEmpty())
+        if (logFilePath.isEmpty())
             translator = new JsoniqQueryExecutor(local, outputItemLimit);
         else
             translator = new JsoniqQueryExecutor(local, 200, logFilePath);
-        if(local) {
-            String result = translator.runLocal(queryFile);
+        if (local) {
+            String result = translator.runLocal();
             List<String> lines = Arrays.asList(result);
             Path file = Paths.get(outputDataFilePath);
             Files.write(file, lines, Charset.forName("UTF-8"));
