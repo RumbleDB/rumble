@@ -7,20 +7,28 @@
 
 <a href="https://ibb.co/j5nnB5"><img src="https://preview.ibb.co/nQPpPQ/icon.png" alt="icon" border="0"></a>
 
-<h5>REQUIREMENTS</h5>
-- Spark 2.1.0
-- ANTLRv4 4.6
+# Requirements
+- Spark, version 2.1.0
+- ANTLRv4, version 4.6 (see installation instructions on http://www.antlr.org/)
 
 
-<h5>SETUP</h5>
-1. Generate ANTLR Lexer and Parser - run ant build on build_antlr_parser.xml
+# Setup
+1. Generate ANTLR Lexer and Parser - run ant build on build_antlr_parser.xml from the root of this project's working tree like so:
 
-2. Packaging (with requirements) - mvn clean compile assembly:single
+    ant -buildfile build_antlr_parser.xml generate-parser
+    
+You may need to override the location of antlr-4.6-complete.jar with `-Dantlr.jar=thelocation`
 
-3. Submit jar using spark-submit [CLI TBD]
+2. Packaging (with requirements)
+
+    mvn clean compile assembly:single
+
+3. Submit jar using spark-submit as explained below.
+
+[CLI TBD]
 
 
-<h5>SETUP</h5>
+# Running
 The project can run in 2 modes:
 
 1. Interactive shell mode, either local or by using yarn-client mode.
@@ -36,7 +44,7 @@ This will run a specific query file (a local/HDFS/S3 path is expected), output t
     --query-path [PATH to query file], --log-path [Path to log directory, optional]
     
 
-<h5>LICENSES</h5>
+# Licenses
 
 - Spark 2.1.0 Libraries - Apache License
 - ANTLR v4 Framework - BSD License
@@ -44,7 +52,7 @@ This will run a specific query file (a local/HDFS/S3 path is expected), output t
 - JLine 3.0.2 terminal framework - BSD License
 - Kryo 4.0.0 serialization framework - BSD License
 
-<h5>Unsupported/Unimplemented features</h5>
+# Unsupported/Unimplemented features
 - prolog
 - modules
 - separate variable declarations
@@ -54,7 +62,7 @@ This will run a specific query file (a local/HDFS/S3 path is expected), output t
 - positional variables
 
 
-<h5>ERROR CODES</h5>
+# Error codes
 
 - [XPST0003] - Parsing error. 
 Invalid syntax or unsupported feature in query.
