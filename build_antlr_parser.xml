@@ -3,7 +3,7 @@
     <!-- Set project properties. -->
     <property name="src.dir" value="${basedir}/src/main/java/sparksoniq"/>
     <property name="parser.dir" value="${src.dir}/jsoniq/compiler/parser"/>
-    <property name="antlr.jar" value="/usr/local/lib/antlr-4.6-complete.jar"/>
+    <property name="antlr.jar" value="${basedir}/lib/antlr-4.6-complete.jar"/>
 
 
     <target name="clean-parser">
