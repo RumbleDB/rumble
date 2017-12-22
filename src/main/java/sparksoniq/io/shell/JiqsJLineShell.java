@@ -128,7 +128,7 @@ public class JiqsJLineShell {
 
     private void handleException(Exception ex) {
         if (ex != null && !(ex instanceof UserInterruptException))
-            output(ERROR_MESSAGE_PROMPT + ex.getMessage());
+            output(ERROR_MESSAGE_PROMPT + ex.getMessage().split("\n")[0]);
     }
 
     private void output(String message) {

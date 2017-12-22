@@ -17,18 +17,18 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.spark.iterator.flowr;
+package sparksoniq.spark.iterator.flowr;
 
+import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaRDD;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FLWOR_CLAUSES;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.spark.closures.GroupByLinearizeTupleClosure;
 import sparksoniq.spark.closures.GroupByToPairMapClosure;
-import sparksoniq.spark.tuple.FlworKey;
-import sparksoniq.spark.tuple.FlworTuple;
 import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
 import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
-import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaRDD;
+import sparksoniq.spark.tuple.FlworKey;
+import sparksoniq.spark.tuple.FlworTuple;
 
 import java.util.List;
 
@@ -41,23 +41,23 @@ public class GroupByClauseSparkIterator extends FlowrClauseSparkIterator {
         this._variables = variables;
         _variables.forEach(var -> {
             this._children.add(var.getVariableReference());
-            if(var.getExpression() != null)
+            if (var.getExpression() != null)
                 this._children.add(var.getExpression());
         });
     }
 
     @Override
     public JavaRDD<FlworTuple> getTupleRDD() {
-        if(_rdd == null) {
+        if (_rdd == null) {
             _rdd = this._previousClause.getTupleRDD();
             //map to pairs - ArrayItem [sort keys] , tuples
             JavaPairRDD<FlworKey, FlworTuple> keyTuplePair = this._rdd
                     .mapToPair(new GroupByToPairMapClosure(_variables));
-                //group by key
+            //group by key
             JavaPairRDD<FlworKey, Iterable<FlworTuple>> groupedPair =
                     keyTuplePair.groupByKey();
-                //linearize iterable tuples into arrays
-            this._rdd =groupedPair.map(new GroupByLinearizeTupleClosure(_variables));
+            //linearize iterable tuples into arrays
+            this._rdd = groupedPair.map(new GroupByLinearizeTupleClosure(_variables));
         }
         return _rdd;
     }

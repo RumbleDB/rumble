@@ -36,7 +36,7 @@ import org.apache.spark.api.java.JavaSparkContext;
 public class SparkContextManager {
 
     public static final String APP_NAME = "jsoniq-on-spark";
-    public static Level LOG_LEVEL = Level.WARN;
+    public static Level LOG_LEVEL = Level.FATAL;
     public static int COLLECT_ITEM_LIMIT = 0;
 
     public static boolean LIMIT_COLLECT(){return  COLLECT_ITEM_LIMIT > 0;}
