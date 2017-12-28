@@ -19,6 +19,7 @@
  */
 package sparksoniq.io.shell;
 
+import org.apache.commons.io.IOUtils;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.UserInterruptException;
@@ -26,6 +27,7 @@ import org.jline.reader.impl.DefaultHighlighter;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 import sparksoniq.JsoniqQueryExecutor;
+import sparksoniq.Main;
 import sparksoniq.config.SparksoniqRuntimeConfiguration;
 import sparksoniq.utils.FileUtils;
 
@@ -35,21 +37,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class JiqsJLineShell {
-    public static final String EXIT_COMMAND = "exit";
-    public static final String PROMPT = "jiqs$ ";
-    public static final String MID_QUERY_PROMPT = ">>> ";
-    public static final String ERROR_MESSAGE_PROMPT = "[ERROR] ";
-    private final boolean _printTime;
-    private final SparksoniqRuntimeConfiguration _configuration;
-    private int _itemLimit;
-    private Terminal terminal;
-    private LineReader lineReader;
-    private PrintWriter outputWriter;
-    private JsoniqQueryExecutor jsoniqQueryExecutor;
-    private boolean queryStarted;
-    private String previousLine = "";
-    private String currentLine = "";
-    private String currentQueryContent = "";
+    private static final String EXIT_COMMAND = "exit";
+    private static final String PROMPT = "jiqs$ ";
+    private static final String MID_QUERY_PROMPT = ">>> ";
+    private static final String ERROR_MESSAGE_PROMPT = "[ERROR] ";
 
     public JiqsJLineShell(SparksoniqRuntimeConfiguration configuration) throws IOException {
         this._configuration = configuration;
@@ -86,11 +77,10 @@ public class JiqsJLineShell {
                 handleException(ex);
             }
         }
-
     }
 
     private void processQuery() throws IOException {
-        Path file = FileUtils.writeToFileInCurrentDirectory(currentQueryContent);
+        Path file = FileUtils.writeToFileInCurrentDirectory(currentQueryContent.trim());
         long startTime = System.currentTimeMillis();
         try {
             String result = jsoniqQueryExecutor.runInteractive(file);
@@ -110,19 +100,20 @@ public class JiqsJLineShell {
     private void removeQueryFile(Path file) {
         try {
             Files.delete(file);
-        } catch (Exception deleteException) {
+        } catch (Exception ignored) {
         }
     }
 
     private void initialize() throws IOException {
-        terminal = TerminalBuilder.builder().system(true).build();
+        welcomeMessage = IOUtils.toString(Main.class.getResourceAsStream("/assets/banner.txt"), "UTF-8");
+        Terminal terminal = TerminalBuilder.builder().system(true).build();
         lineReader = LineReaderBuilder.builder()
                 .terminal(terminal)
 //                .completer(new MyCompleter())
                 .highlighter(new DefaultHighlighter())
 //                .parser(new JiqsJlineParser())
                 .build();
-        outputWriter = new PrintWriter(terminal.output());
+        PrintWriter outputWriter = new PrintWriter(terminal.output());
         jsoniqQueryExecutor = new JsoniqQueryExecutor(false, _itemLimit);
     }
 
@@ -156,14 +147,23 @@ public class JiqsJLineShell {
     }
 
     private boolean exitCalled() {
-        if (currentLine == null)
-            return false;
-        return this.currentLine.trim().toLowerCase().equals(JiqsJLineShell.EXIT_COMMAND);
+        return currentLine != null && this.currentLine.trim().toLowerCase().equals(JiqsJLineShell.EXIT_COMMAND);
     }
 
     private String getInitializationMessage() {
-        return "WELCOME to SPARKSONiq \n" + _configuration.toString();
+        return welcomeMessage + "\n" + _configuration.toString();
     }
+
+    private final boolean _printTime;
+    private final SparksoniqRuntimeConfiguration _configuration;
+    private int _itemLimit;
+    private LineReader lineReader;
+    private JsoniqQueryExecutor jsoniqQueryExecutor;
+    private boolean queryStarted;
+    private String previousLine = "";
+    private String currentLine = "";
+    private String currentQueryContent = "";
+    private String welcomeMessage;
 
 
 }
