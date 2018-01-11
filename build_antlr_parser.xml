@@ -15,7 +15,6 @@
         <delete file="/sparksoniq/jsoniq/compiler/parser/JsoniqLexer.tokens"/>
     </target>
 
-
     <target name="generate-parser">
         <echo message="ANTLR4 ${parser.dir}/Jsoniq.g4" level="info"/>
         <echo>${basedir}</echo>
@@ -27,6 +26,5 @@
             <arg value="-visitor" />
         </java>
     </target>
-
 
 </project>
