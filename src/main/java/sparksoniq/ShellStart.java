@@ -17,7 +17,7 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq;
+package sparksoniq;
 
 import sparksoniq.config.SparksoniqRuntimeConfiguration;
 import sparksoniq.exceptions.CliException;
@@ -50,7 +50,7 @@ public class ShellStart {
             System.out.println(ex.getMessage());
             return;
         }
-        if(arguments.containsKey("master"))
+        if (arguments.containsKey("master"))
             masterConfig = arguments.get("master");
         else {
             arguments.put("master", masterConfig);
@@ -58,7 +58,7 @@ public class ShellStart {
         }
 
         SparkContextManager.getInstance().initializeConfigurationAndContext(masterConfig);
-        if(arguments.containsKey("result-size")) {
+        if (arguments.containsKey("result-size")) {
             int itemLimit = Integer.parseInt(arguments.get("result-size"));
             new JiqsJLineShell(new SparksoniqRuntimeConfiguration(arguments), itemLimit).launch();
         } else
