@@ -22,6 +22,7 @@
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,22 +42,23 @@ public class NaryExpressionBase extends OperationalExpressionBase {
         return _isActive;
     }
 
-    public NaryExpressionBase(Expression mainExpression) {
-        super(mainExpression, Operator.NONE);
+    public NaryExpressionBase(Expression mainExpression, ExpressionMetadata metadata) {
+        super(mainExpression, Operator.NONE, metadata);
         this._isActive = false;
 
     }
 
-    public NaryExpressionBase(Expression mainExpression, List<Expression> rhs, Operator op) {
-        super(mainExpression, op);
+    public NaryExpressionBase(Expression mainExpression, List<Expression> rhs, Operator op,
+                              ExpressionMetadata metadata) {
+        super(mainExpression, op, metadata);
         this._rightExpressions = rhs;
         if(Operator.NONE != op)
             this._isActive = true;
     }
 
     public NaryExpressionBase(Expression mainExpression,
-                              List<Expression> rhs, List<Operator> ops) {
-        super(mainExpression, ops);
+                              List<Expression> rhs, List<Operator> ops, ExpressionMetadata metadata) {
+        super(mainExpression, ops, metadata);
         this._rightExpressions = rhs;
         this._isActive =true;
     }

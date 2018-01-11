@@ -17,7 +17,7 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.spark.closures;
+package sparksoniq.spark.closures;
 
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
 import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
@@ -40,36 +40,35 @@ public class OrderByClauseSortClosure implements Comparator<FlworKey>, Serializa
     public int compare(FlworKey key1, FlworKey key2) {
 
         FlworKey.ResultIndexKeyTuple result = key1.compareWithFlworKey(key2);
-        if(result.getIndex() != -1){
+        if (result.getIndex() != -1) {
             //handle empty items
-            if(hasEmpty(key1, key2, result)) {
-                return handleEmptyItem(key1, key2, result);
+            if (hasEmpty(key1, key2, result)) {
+                return handleEmptyItem(key1, result);
             }
             return result.getResult() * getSortOrder(result.getIndex());
-        }
-        else
+        } else
             return result.getResult();
     }
 
-    private int handleEmptyItem(FlworKey key1, FlworKey key2, FlworKey.ResultIndexKeyTuple result) {
+    private int handleEmptyItem(FlworKey key1, FlworKey.ResultIndexKeyTuple result) {
         int emptyResult;
-        if(key1.getKeyItems().get(result.getIndex()) == null)
+        if (key1.getKeyItems().get(result.getIndex()) == null)
             emptyResult = -1;
         else
             emptyResult = 1;
-        if(_expressions.get(result.getIndex()).getEmptyOrder() == OrderByClauseExpr.EMPTY_ORDER.FIRST)
+        if (_expressions.get(result.getIndex()).getEmptyOrder() == OrderByClauseExpr.EMPTY_ORDER.FIRST)
             emptyResult *= -1;
         return emptyResult;
     }
 
     private boolean hasEmpty(FlworKey key1, FlworKey key2, FlworKey.ResultIndexKeyTuple result) {
-        if(_expressions.get(result.getIndex()).getEmptyOrder() != OrderByClauseExpr.EMPTY_ORDER.NONE)
-            if(key1.getKeyItems().get(result.getIndex()) == null || key2.getKeyItems().get(result.getIndex()) == null)
+        if (_expressions.get(result.getIndex()).getEmptyOrder() != OrderByClauseExpr.EMPTY_ORDER.NONE)
+            if (key1.getKeyItems().get(result.getIndex()) == null || key2.getKeyItems().get(result.getIndex()) == null)
                 return true;
         return false;
     }
 
-    private int getSortOrder(int index){
-       return  (_expressions.get(index).isAscending() ? 1 : -1);
+    private int getSortOrder(int index) {
+        return (_expressions.get(index).isAscending() ? 1 : -1);
     }
 }

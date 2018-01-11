@@ -19,19 +19,20 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr.operational;
 
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.BinaryExpressionBase;
 
 public class RangeExpression extends BinaryExpressionBase {
 
-    public RangeExpression(Expression _mainExpression) {
-        super(_mainExpression);
+    public RangeExpression(Expression _mainExpression, ExpressionMetadata metadata) {
+        super(_mainExpression, metadata);
 
     }
 
-    public RangeExpression(Expression _mainExpression, Expression rhs) {
-        super(_mainExpression, rhs, Operator.TO);
+    public RangeExpression(Expression _mainExpression, Expression rhs, ExpressionMetadata metadata) {
+        super(_mainExpression, rhs, Operator.TO, metadata);
     }
 
     @Override

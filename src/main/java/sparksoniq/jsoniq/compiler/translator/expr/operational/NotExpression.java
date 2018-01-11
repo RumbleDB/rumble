@@ -19,14 +19,15 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr.operational;
 
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.UnaryExpressionBase;
 
 public class NotExpression extends UnaryExpressionBase {
 
-    public NotExpression(Expression _mainExpression, boolean _isActive) {
-        super(_mainExpression, Operator.NOT, _isActive);
+    public NotExpression(Expression _mainExpression, boolean _isActive, ExpressionMetadata metadata) {
+        super(_mainExpression, Operator.NOT, _isActive, metadata);
     }
 
     @Override

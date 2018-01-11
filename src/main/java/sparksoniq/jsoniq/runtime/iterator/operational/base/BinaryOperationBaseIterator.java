@@ -22,6 +22,7 @@
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.ArrayList;
 
@@ -31,8 +32,9 @@ public abstract class BinaryOperationBaseIterator extends LocalRuntimeIterator {
     protected final RuntimeIterator _rightIterator;
     protected final OperationalExpressionBase.Operator _operator;
 
-    protected BinaryOperationBaseIterator(RuntimeIterator left, RuntimeIterator right, OperationalExpressionBase.Operator operator) {
-        super(new ArrayList<>());
+    protected BinaryOperationBaseIterator(RuntimeIterator left, RuntimeIterator right,
+                                          OperationalExpressionBase.Operator operator, IteratorMetadata iteratorMetadata) {
+        super(new ArrayList<>(), iteratorMetadata);
         this._children.add(left);
         this._children.add(right);
         this._leftIterator = left;

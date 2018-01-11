@@ -22,6 +22,7 @@
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.List;
@@ -38,8 +39,8 @@ public class ForClauseVar extends FlworVarDecl {
     }
 
     public ForClauseVar(VariableReference varRef, FlworVarSequenceType seq, boolean emptyFlag,
-                        VariableReference atVarRef, Expression expression) {
-        super(FLWOR_CLAUSES.FOR_VAR, varRef, seq, expression);
+                        VariableReference atVarRef, Expression expression, ExpressionMetadata metadataFromContext) {
+        super(FLWOR_CLAUSES.FOR_VAR, varRef, seq, expression, metadataFromContext);
         this.allowEmpty = emptyFlag;
         this.positionalVariableReference =  atVarRef;
     }

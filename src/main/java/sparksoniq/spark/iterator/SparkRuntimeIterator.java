@@ -23,6 +23,7 @@ import sparksoniq.io.json.JiqsItemParser;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkContextManager;
 import org.apache.spark.api.java.JavaRDD;
@@ -31,8 +32,8 @@ import java.util.List;
 
 public abstract class SparkRuntimeIterator extends RuntimeIterator {
 
-    protected SparkRuntimeIterator(List<RuntimeIterator> children) {
-        super(children);
+    protected SparkRuntimeIterator(List<RuntimeIterator> children, IteratorMetadata iteratorMetadata) {
+        super(children, iteratorMetadata);
         this.parser = new JiqsItemParser();
     }
 
@@ -57,7 +58,7 @@ public abstract class SparkRuntimeIterator extends RuntimeIterator {
     @Override
     public Item next(){
         if(!this._isOpen)
-            throw new IteratorFlowException("Runtime iterator is not open");
+            throw new IteratorFlowException("Runtime iterator is not open", getMetadata());
 
         if(result == null){
             currentResultIndex = 0;
@@ -70,7 +71,8 @@ public abstract class SparkRuntimeIterator extends RuntimeIterator {
         }
 
         if(!(currentResultIndex <= result.size() - 1))
-             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.getClass().getSimpleName());
+             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.getClass().getSimpleName(),
+                     getMetadata());
         if(currentResultIndex == result.size() - 1)
              this._hasNext = false;
 

@@ -22,13 +22,14 @@
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class ContextExpressionIterator extends LocalRuntimeIterator {
-    public ContextExpressionIterator() {
-        super(null);
+    public ContextExpressionIterator(IteratorMetadata iteratorMetadata) {
+        super(null, iteratorMetadata);
     }
 
     @Override
@@ -37,10 +38,10 @@ public class ContextExpressionIterator extends LocalRuntimeIterator {
             this._hasNext = false;
             List<Item> results = new ArrayList<>();
             if(results.size() > 1)
-                throw new IteratorFlowException("Invalid context item expression");
+                throw new IteratorFlowException("Invalid context item expression", getMetadata());
             return _currentDynamicContext.getVariableValue("$$").get(0);
         }
-            throw new IteratorFlowException("Invalid next() call in Context Expression!");
+            throw new IteratorFlowException("Invalid next() call in Context Expression!", getMetadata());
     }
 
 

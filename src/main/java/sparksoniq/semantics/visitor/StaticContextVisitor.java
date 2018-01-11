@@ -44,7 +44,8 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
     @Override
     public StaticContext visitVariableReference(VariableReference expression, StaticContext argument){
         if(argument == null || !argument.isInScope(expression.getVariableName()))
-            throw new UndeclaredVariableException("Uninitialized variable reference: " + expression.getVariableName());
+            throw new UndeclaredVariableException("Uninitialized variable reference: " + expression.getVariableName(),
+                    expression.getMetadata());
         else {
             expression.setType(argument.getVariableSequenceType(expression.getVariableName()));
             return defaultAction(expression, argument);
@@ -97,7 +98,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
         StaticContext result = visitFlowrVarDeclaration(expression,argument);
         if(expression.getPositionalVariableReference() != null)
             result.addVariable(expression.getPositionalVariableReference().getVariableName(),
-                    new SequenceType(new ItemType(ItemTypes.IntegerItem)));
+                    new SequenceType(new ItemType(ItemTypes.IntegerItem)), expression.getMetadata());
         //TODO visit at...
         this.visit(expression.getExpression(), argument);
         return result;
@@ -129,7 +130,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
         //TODO for now we only suppot as/default, no inference, flags
         SequenceType type = expression.getAsSequence() == null?
                 new SequenceType() : expression.getAsSequence().getSequence();
-        result.addVariable(expression.getVariableReference().getVariableName(), type);
+        result.addVariable(expression.getVariableReference().getVariableName(), type, expression.getMetadata());
         return result;
     }
     //endregion
@@ -156,7 +157,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
         StaticContext result = new StaticContext(argument);
         SequenceType type = expression.getSequenceType() == null?
                 new SequenceType() : expression.getSequenceType();
-        result.addVariable(expression.getVariableReference().getVariableName(), type);
+        result.addVariable(expression.getVariableReference().getVariableName(), type, expression.getMetadata());
         this.visit(expression.getExpression(), argument);
         return result;
     }

@@ -20,8 +20,10 @@
  package sparksoniq.jsoniq.runtime.iterator.primary;
 
 import sparksoniq.jsoniq.item.DoubleItem;
+import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class DoubleRuntimeIterator extends AtomicRuntimeIterator{
 
@@ -29,14 +31,14 @@ public class DoubleRuntimeIterator extends AtomicRuntimeIterator{
     public DoubleItem next() {
         if (this._hasNext) {
             this._hasNext = false;
-            return new DoubleItem(_item);
+            return new DoubleItem(_item, ItemMetadata.fromIteratorMetadata(getMetadata()));
         }
 
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item);
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item, getMetadata());
     }
 
-    public DoubleRuntimeIterator(Double value) {
-        super(null);
+    public DoubleRuntimeIterator(Double value, IteratorMetadata iteratorMetadata) {
+        super(null, iteratorMetadata);
         this._item = value;
 
     }

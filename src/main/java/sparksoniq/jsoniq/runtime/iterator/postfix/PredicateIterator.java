@@ -20,6 +20,7 @@
  package sparksoniq.jsoniq.runtime.iterator.postfix;
 
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.IteratorFlowException;
@@ -31,8 +32,8 @@ import java.util.List;
 
 public class PredicateIterator extends LocalRuntimeIterator {
 
-    public PredicateIterator(RuntimeIterator sequence, RuntimeIterator filterExpression) {
-        super(null);
+    public PredicateIterator(RuntimeIterator sequence, RuntimeIterator filterExpression, IteratorMetadata iteratorMetadata) {
+        super(null, iteratorMetadata);
         this._children.add(sequence);
         this._children.add(filterExpression);
     }
@@ -75,7 +76,7 @@ public class PredicateIterator extends LocalRuntimeIterator {
             return result.get(currentIndex++);
         }
 
-        throw new IteratorFlowException("Invalid next() call in Predicate!");
+        throw new IteratorFlowException("Invalid next() call in Predicate!", getMetadata());
     }
 
     @Override

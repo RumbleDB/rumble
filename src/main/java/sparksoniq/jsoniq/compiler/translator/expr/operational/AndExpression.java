@@ -19,6 +19,7 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr.operational;
 
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.NaryExpressionBase;
@@ -28,12 +29,13 @@ import java.util.List;
 
 public class AndExpression extends NaryExpressionBase {
 
-    public AndExpression(Expression _mainExpression) {
-        super(_mainExpression);
+    public AndExpression(Expression _mainExpression, ExpressionMetadata metadata) {
+        super(_mainExpression, metadata);
 
     }
-    public AndExpression(Expression _mainExpression, List<Expression> rhs) {
-        super(_mainExpression, rhs, Operator.AND);
+    public AndExpression(Expression _mainExpression, List<Expression> rhs,
+                         ExpressionMetadata metadata) {
+        super(_mainExpression, rhs, Operator.AND, metadata);
     }
 
     @Override

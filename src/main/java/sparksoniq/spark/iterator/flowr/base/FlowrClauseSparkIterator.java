@@ -22,6 +22,7 @@
 import sparksoniq.io.json.JiqsItemParser;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FLWOR_CLAUSES;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.tuple.FlworTuple;
 import org.apache.spark.api.java.JavaRDD;
@@ -32,9 +33,12 @@ import java.util.List;
 
 public abstract class FlowrClauseSparkIterator implements Serializable {
 
+
     public abstract JavaRDD<FlworTuple> getTupleRDD();
 
     public FLWOR_CLAUSES getClauseType() { return _clauseType; }
+
+    public IteratorMetadata getMetadata() { return metadata; }
 
     public void setPreviousClause(FlowrClauseSparkIterator previousClause) {
         this._previousClause = previousClause;
@@ -42,7 +46,9 @@ public abstract class FlowrClauseSparkIterator implements Serializable {
 
     public void setDynamicContext(DynamicContext context){this._currentDynamicContext = context;}
 
-    protected FlowrClauseSparkIterator(List<RuntimeIterator> children, FLWOR_CLAUSES clauseType) {
+    protected FlowrClauseSparkIterator(List<RuntimeIterator> children, FLWOR_CLAUSES clauseType,
+                                       IteratorMetadata iteratorMetadata) {
+        this.metadata = iteratorMetadata;
         this._children = new ArrayList<>();
         if(children!=null && !children.isEmpty())
             this._children.addAll(children);
@@ -50,12 +56,13 @@ public abstract class FlowrClauseSparkIterator implements Serializable {
         this._parser = new JiqsItemParser();
     }
 
-
+    private final IteratorMetadata metadata;
     private final FLWOR_CLAUSES _clauseType;
     protected FlowrClauseSparkIterator _previousClause = null;
     protected JavaRDD<FlworTuple> _rdd;
     protected final JiqsItemParser _parser;
     protected DynamicContext _currentDynamicContext;
     protected List<RuntimeIterator> _children;
+
 
 }

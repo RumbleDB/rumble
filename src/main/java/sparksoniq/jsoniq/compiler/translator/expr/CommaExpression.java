@@ -20,6 +20,7 @@
  package sparksoniq.jsoniq.compiler.translator.expr;
 
 
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
@@ -27,16 +28,14 @@ import java.util.List;
 
 public class CommaExpression extends Expression {
 
-    public List<Expression> getExpressions() {
-        return _expressions;
-    }
-
-    public CommaExpression(List<Expression> expressions){
-        super();
+    public CommaExpression(List<Expression> expressions, ExpressionMetadata metadata) {
+        super(metadata);
         this._expressions = expressions;
     }
 
-    private final List<Expression> _expressions;
+    public List<Expression> getExpressions() {
+        return _expressions;
+    }
 
     @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
@@ -67,6 +66,8 @@ public class CommaExpression extends Expression {
         result += ")";
         return result;
     }
+
+    private final List<Expression> _expressions;
 
 
 }

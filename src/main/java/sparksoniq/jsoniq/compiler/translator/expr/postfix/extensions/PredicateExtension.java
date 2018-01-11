@@ -21,6 +21,7 @@
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,8 +35,8 @@ public class PredicateExtension extends  PostfixExtension  {
 
     Expression _expression;
 
-    public PredicateExtension(Expression _collection) {
-        super();
+    public PredicateExtension(Expression _collection, ExpressionMetadata metadata) {
+        super(metadata);
         this._expression = _collection;
     }
 

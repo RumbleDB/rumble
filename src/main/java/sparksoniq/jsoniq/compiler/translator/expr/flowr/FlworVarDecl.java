@@ -19,6 +19,7 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.types.SequenceType;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
@@ -40,14 +41,15 @@ public abstract class FlworVarDecl extends FlworClause {
     }
 
 
-    private FlworVarDecl(FLWOR_CLAUSES clauseType) {
-        super(clauseType);
+    private FlworVarDecl(FLWOR_CLAUSES clauseType, ExpressionMetadata metadata) {
+        super(clauseType, metadata);
     }
 
 
     public FlworVarDecl(FLWOR_CLAUSES forVar, VariableReference varRef,
-                        FlworVarSequenceType seq, Expression expression) {
-        this(forVar);
+                        FlworVarSequenceType seq, Expression expression,
+                        ExpressionMetadata metadata) {
+        this(forVar, metadata);
         if(varRef == null)
             throw new IllegalArgumentException("Flowr var decls cannot be empty");
         this.variableReferenceNode = varRef;

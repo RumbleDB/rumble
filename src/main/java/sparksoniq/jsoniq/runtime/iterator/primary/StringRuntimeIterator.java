@@ -20,8 +20,10 @@
  package sparksoniq.jsoniq.runtime.iterator.primary;
 
 import sparksoniq.jsoniq.item.StringItem;
+import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class StringRuntimeIterator extends AtomicRuntimeIterator {
 
@@ -29,14 +31,14 @@ public class StringRuntimeIterator extends AtomicRuntimeIterator {
     public StringItem next() {
         if (this._hasNext) {
             this._hasNext = false;
-            return new StringItem(_item);
+            return new StringItem(_item, ItemMetadata.fromIteratorMetadata(getMetadata()));
         }
 
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item);
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item, getMetadata());
     }
 
-    public StringRuntimeIterator(String value) {
-        super(null);
+    public StringRuntimeIterator(String value, IteratorMetadata iteratorMetadata) {
+        super(null, iteratorMetadata);
         this._item = value;
 
     }

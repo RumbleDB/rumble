@@ -22,24 +22,27 @@
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.*;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
+import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.EmptySequenceIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.UnaryOperationBaseIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.math.BigDecimal;
 
 public class UnaryOperationIterator extends UnaryOperationBaseIterator {
 
-    public UnaryOperationIterator(RuntimeIterator child, OperationalExpressionBase.Operator operator) {
-        super(child, operator);
+    public UnaryOperationIterator(RuntimeIterator child, OperationalExpressionBase.Operator operator,
+                                  IteratorMetadata iteratorMetadata) {
+        super(child, operator, iteratorMetadata);
     }
 
     @Override
     public Item next() {
 
         if(!this._hasNext)
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE);
+            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
         if(_child instanceof EmptySequenceIterator){
             this._hasNext = false;
             return null;
@@ -53,14 +56,17 @@ public class UnaryOperationIterator extends UnaryOperationBaseIterator {
         {
             if(Item.isNumeric(child)){
                 if(child instanceof IntegerItem)
-                    return new IntegerItem(-1 * ((IntegerItem)child).getIntegerValue());
+                    return new IntegerItem(-1 * ((IntegerItem)child).getIntegerValue(),
+                            ItemMetadata.fromIteratorMetadata(getMetadata()));
                 if(child instanceof DoubleItem)
-                    return new DoubleItem(-1 * ((DoubleItem)child).getDoubleValue());
+                    return new DoubleItem(-1 * ((DoubleItem)child).getDoubleValue(),
+                            ItemMetadata.fromIteratorMetadata(getMetadata()));
                 if(child instanceof DecimalItem)
-                    return new DecimalItem(((DecimalItem)child).getDecimalValue().multiply(new BigDecimal(-1)));
+                    return new DecimalItem(((DecimalItem)child).getDecimalValue().multiply(new BigDecimal(-1)),
+                            ItemMetadata.fromIteratorMetadata(getMetadata()));
             }
             throw new UnexpectedTypeException("Unary expression has non numeric args " +
-                    child.serialize());
+                    child.serialize(), getMetadata());
         } else return child;
 
     }

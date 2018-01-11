@@ -19,6 +19,7 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr.postfix;
 
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
@@ -44,13 +45,15 @@ public class PostFixExpression extends Expression {
         return _extensions;
     }
 
-    public PostFixExpression(PrimaryExpression primaryExpressionNode) {
-        super();
+    public PostFixExpression(PrimaryExpression primaryExpressionNode, ExpressionMetadata metadata) {
+        super(metadata);
         this._primaryExpressionNode = primaryExpressionNode;
     }
 
-    public PostFixExpression(PrimaryExpression primaryExpressionNode, List<PostfixExtension> extensions) {
-        this(primaryExpressionNode);
+    public PostFixExpression(PrimaryExpression primaryExpressionNode, List<PostfixExtension> extensions,
+                             ExpressionMetadata metadata) {
+        super(metadata);
+        this._primaryExpressionNode = primaryExpressionNode;
         this._extensions =  new ArrayList<>();
         this._extensions.addAll(extensions);
     }

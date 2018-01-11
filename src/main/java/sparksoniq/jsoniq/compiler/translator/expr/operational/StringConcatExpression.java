@@ -19,6 +19,7 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr.operational;
 
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.NaryExpressionBase;
@@ -26,12 +27,12 @@ import sparksoniq.jsoniq.compiler.translator.expr.operational.base.NaryExpressio
 import java.util.List;
 
 public class StringConcatExpression extends NaryExpressionBase {
-    public StringConcatExpression(Expression mainExpression, List<Expression> rhs) {
-        super(mainExpression, rhs, Operator.CONCAT);
+    public StringConcatExpression(Expression mainExpression, List<Expression> rhs, ExpressionMetadata metadata) {
+        super(mainExpression, rhs, Operator.CONCAT, metadata);
     }
 
-    public StringConcatExpression(RangeExpression mainExpression) {
-        super(mainExpression);
+    public StringConcatExpression(RangeExpression mainExpression, ExpressionMetadata metadata) {
+        super(mainExpression, metadata);
     }
 
     @Override

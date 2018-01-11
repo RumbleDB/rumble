@@ -20,6 +20,7 @@
  package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
@@ -36,9 +37,8 @@ public class FlworClause extends ExpressionOrClause {
         return clauseType;
     }
 
-    public FlworClause(FLWOR_CLAUSES clauseType)
-    {
-        super();
+    public FlworClause(FLWOR_CLAUSES clauseType, ExpressionMetadata metadata) {
+        super(metadata);
         this.clauseType = clauseType;
     }
 

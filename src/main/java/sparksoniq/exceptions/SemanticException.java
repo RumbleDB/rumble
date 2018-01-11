@@ -20,15 +20,15 @@
  package sparksoniq.exceptions;
 
 
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+
 public class SemanticException extends SparksoniqRuntimeException {
 
-    public SemanticException(String message)
-    {
-        super(message);
+    public SemanticException(String message, ExpressionMetadata metadata) {
+        super(message, metadata);
     }
 
-    public SemanticException(String message, String errorCode)
-    {
-        super(message, errorCode);
+    public SemanticException(String message, String errorCode, ExpressionMetadata metadata) {
+        super(message, errorCode, metadata);
     }
 }

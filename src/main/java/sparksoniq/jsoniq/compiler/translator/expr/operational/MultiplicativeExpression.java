@@ -20,6 +20,7 @@
  package sparksoniq.jsoniq.compiler.translator.expr.operational;
 
 
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.NaryExpressionBase;
@@ -33,14 +34,13 @@ public class MultiplicativeExpression extends NaryExpressionBase {
     Operator.DIV, Operator.MOD, Operator.IDIV};
 
 
-    public MultiplicativeExpression(Expression _mainExpression) {
-        super(_mainExpression);
+    public MultiplicativeExpression(Expression _mainExpression, ExpressionMetadata metadata) {
+        super(_mainExpression, metadata);
     }
 
-    public MultiplicativeExpression(Expression _mainExpression,
-                                    List<Expression> rhs,
-                                    List<Operator> ops) {
-        super(_mainExpression, rhs, ops);
+    public MultiplicativeExpression(Expression _mainExpression, List<Expression> rhs,
+                                    List<Operator> ops, ExpressionMetadata metadata) {
+        super(_mainExpression, rhs, ops, metadata);
         validateOperators(Arrays.asList(operators), ops);
     }
 

@@ -17,13 +17,12 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.io;
+ package sparksoniq.utils;
 
 import sparksoniq.JsoniqQueryExecutor;
 import org.apache.hadoop.fs.Path;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.nio.file.Files;

@@ -19,8 +19,11 @@
  */
  package sparksoniq.exceptions;
 
+import sparksoniq.exceptions.codes.ErrorCodes;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+
 public class SparkRuntimeException extends SparksoniqRuntimeException {
-    public SparkRuntimeException(String message) {
-        super(message);
+    public SparkRuntimeException(String message, IteratorMetadata metadata) {
+        super(message, ErrorCodes.RuntimeExceptionErrorCode,  metadata.getExpressionMetadata());
     }
 }

@@ -22,6 +22,7 @@
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.types.SequenceType;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
@@ -43,7 +44,9 @@ public class QuantifiedExpressionVar extends ExpressionOrClause {
         return _sequenceType;
     }
 
-    public QuantifiedExpressionVar(VariableReference varRef, Expression varExpression, SequenceType sequenceType) {
+    public QuantifiedExpressionVar(VariableReference varRef, Expression varExpression,
+                                   SequenceType sequenceType, ExpressionMetadata metadata) {
+        super(metadata);
         this._variableReference = varRef;
         this._expression = varExpression;
         this._sequenceType = sequenceType;

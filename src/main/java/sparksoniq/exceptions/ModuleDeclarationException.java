@@ -21,9 +21,10 @@
 package sparksoniq.exceptions;
 
 import sparksoniq.exceptions.codes.ErrorCodes;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 
 public class ModuleDeclarationException extends ParsingException {
-    public ModuleDeclarationException(String message) {
-        super(message, ErrorCodes.ModuleDeclarationErrorCode);
+    public ModuleDeclarationException(String message, ExpressionMetadata metadata) {
+        super(message, ErrorCodes.ModuleDeclarationErrorCode, metadata);
     }
 }

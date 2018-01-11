@@ -22,6 +22,7 @@
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,14 +38,15 @@ public abstract class BinaryExpressionBase extends OperationalExpressionBase {
         return _isActive;
     }
 
-    public BinaryExpressionBase(Expression mainExpression) {
-        super(mainExpression, Operator.NONE);
+    public BinaryExpressionBase(Expression mainExpression, ExpressionMetadata metadata) {
+        super(mainExpression, Operator.NONE, metadata);
         this._isActive = false;
 
     }
 
-    public BinaryExpressionBase(Expression mainExpression, Expression rhs, Operator op) {
-        super(mainExpression, op);
+    public BinaryExpressionBase(Expression mainExpression, Expression rhs, Operator op,
+                                ExpressionMetadata metadata) {
+        super(mainExpression, op, metadata);
         this.rightExpression = rhs;
         if(Operator.NONE != op && rhs!=null)
             this._isActive = true;

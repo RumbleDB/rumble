@@ -21,6 +21,7 @@
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
@@ -29,6 +30,10 @@ import java.util.List;
 
 //TODO(NOT IMPLEMENTED): orderedExpr, unorderedExpr
 public abstract class PrimaryExpression extends Expression {
+
+    protected PrimaryExpression(ExpressionMetadata metadata){
+        super(metadata);
+    }
 
     @Override
     public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {

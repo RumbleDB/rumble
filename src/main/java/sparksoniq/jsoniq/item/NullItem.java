@@ -22,13 +22,14 @@
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 
 import javax.naming.OperationNotSupportedException;
 import java.math.BigDecimal;
 
 public class NullItem extends AtomicItem {
 
-    public NullItem(){}
+    public NullItem(ItemMetadata itemMetadata){super(itemMetadata);}
 
     @Override
     public String getStringValue() throws OperationNotSupportedException {

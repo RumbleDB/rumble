@@ -19,8 +19,10 @@
  */
  package sparksoniq.semantics;
 
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.types.SequenceType;
 import sparksoniq.exceptions.SemanticException;
+import sparksoniq.utils.Tuple;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -57,26 +59,21 @@ public class StaticContext {
 
     public SequenceType getVariableSequenceType(String varName) {
         if(_inScopeVariables.containsKey(varName))
-            return _inScopeVariables.get(varName);
+            return _inScopeVariables.get(varName).getFirst();
         else if(_parent !=null)
             return _parent.getVariableSequenceType(varName);
         else
-            throw new SemanticException("Variable " + varName + " not in scope");
+            throw new SemanticException("Variable " + varName + " not in scope", null);
     }
 
-    public void addVariable(String varName, SequenceType type){
-//        if(this._inScopeVariables.containsKey(varName) || isInScope(varName))
-//            throw new SemanticException("Variable " + varName + " redeclared");
-//        else
-        //allow variables redeclaration
-        this._inScopeVariables.put(varName, type);
+    public void addVariable(String varName, SequenceType type, ExpressionMetadata metadata){
+        this._inScopeVariables.put(varName, new Tuple<>(type, metadata));
     }
 
 
-    protected Map<String, SequenceType> getInScopeVariables() {
+    protected Map<String, Tuple<SequenceType, ExpressionMetadata>> getInScopeVariables() {
         return _inScopeVariables;
     }
-
-    private Map<String, SequenceType> _inScopeVariables;
+    private Map<String, Tuple<SequenceType, ExpressionMetadata>> _inScopeVariables;
     private StaticContext _parent;
 }

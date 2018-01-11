@@ -20,12 +20,18 @@
 package sparksoniq.exceptions;
 
 import sparksoniq.exceptions.codes.ErrorCodes;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 
 import java.util.Arrays;
 
 public class SparksoniqRuntimeException extends RuntimeException {
+
     public String getErrorCode() {
         return errorCode;
+    }
+
+    public ExpressionMetadata getMetadata() {
+        return metadata;
     }
 
     public SparksoniqRuntimeException(String message) {
@@ -47,5 +53,34 @@ public class SparksoniqRuntimeException extends RuntimeException {
             this.errorCode = errorCode;
     }
 
+
+    public SparksoniqRuntimeException(String message, String errorCode, ExpressionMetadata metadata) {
+        super("Error [err: " + errorCode + "]" + (metadata != null?
+                "LINE:" + metadata.getTokenLineNumber() +
+                ":COLUMN:" + metadata.getTokenColumnNumber() + ":" : "")
+                + message);
+        if(!Arrays.asList(ErrorCodes.class.getFields()).stream().anyMatch(f -> {
+            try {
+                return f.get(null).equals(errorCode);
+            } catch (IllegalAccessException e) {
+                return true;
+            }
+        }))
+            this.errorCode = ErrorCodes.RuntimeExceptionErrorCode;
+        else
+            this.errorCode = errorCode;
+        this.metadata = metadata;
+    }
+
+    public SparksoniqRuntimeException(String message,  ExpressionMetadata metadata) {
+        super("Error [err: " + ErrorCodes.RuntimeExceptionErrorCode + "]" + (metadata != null?
+                "LINE:" + metadata.getTokenLineNumber() +
+                        ";COLUMN:" + metadata.getTokenColumnNumber() + ";" : "")
+                + message);
+        this.errorCode = ErrorCodes.RuntimeExceptionErrorCode;;
+        this.metadata = metadata;
+    }
+
     private final String errorCode;
+    private ExpressionMetadata metadata;
 }

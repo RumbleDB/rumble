@@ -17,25 +17,27 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.jsoniq.runtime.iterator.operational;
+package sparksoniq.jsoniq.runtime.iterator.operational;
 
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.jsoniq.item.BooleanItem;
 import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
+import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class AndOperationIterator extends BinaryOperationBaseIterator {
 
-    public AndOperationIterator(RuntimeIterator left, RuntimeIterator right) {
-        super(left,right, OperationalExpressionBase.Operator.AND);
+    public AndOperationIterator(RuntimeIterator left, RuntimeIterator right, IteratorMetadata iteratorMetadata) {
+        super(left, right, OperationalExpressionBase.Operator.AND, iteratorMetadata);
     }
 
     @Override
     public AtomicItem next() {
-        if(this._hasNext) {
+        if (this._hasNext) {
             _leftIterator.open(_currentDynamicContext);
             _rightIterator.open(_currentDynamicContext);
             Item left = _leftIterator.next();
@@ -43,9 +45,10 @@ public class AndOperationIterator extends BinaryOperationBaseIterator {
             _leftIterator.close();
             _rightIterator.close();
             this._hasNext = false;
-            return new BooleanItem(Item.getEffectiveBooleanValue(left) && Item.getEffectiveBooleanValue(right));
+            return new BooleanItem(Item.getEffectiveBooleanValue(left) && Item.getEffectiveBooleanValue(right)
+                    , ItemMetadata.fromIteratorMetadata(getMetadata()));
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE);
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
 
     }
 }

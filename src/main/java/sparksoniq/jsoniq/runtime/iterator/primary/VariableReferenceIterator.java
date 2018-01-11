@@ -19,6 +19,7 @@
  */
  package sparksoniq.jsoniq.runtime.iterator.primary;
 
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.SequenceType;
 import sparksoniq.exceptions.IteratorFlowException;
@@ -30,8 +31,8 @@ import java.util.List;
 
 public class VariableReferenceIterator extends LocalRuntimeIterator {
 
-    public VariableReferenceIterator(String variableName, SequenceType seq) {
-        super(null);
+    public VariableReferenceIterator(String variableName, SequenceType seq, IteratorMetadata iteratorMetadata) {
+        super(null, iteratorMetadata);
         this._variableName = "$" + variableName;
         this.sequence = seq;
     }
@@ -39,7 +40,7 @@ public class VariableReferenceIterator extends LocalRuntimeIterator {
     @Override
     public Item next() {
         if(!this.hasNext())
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "$" + _variableName);
+            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "$" + _variableName, getMetadata());
         if(items == null){
             items = this._currentDynamicContext.getVariableValue(this._variableName);
         }
@@ -60,7 +61,7 @@ public class VariableReferenceIterator extends LocalRuntimeIterator {
     @Override
     public void open(DynamicContext context){
         if(this.isOpen())
-            throw new IteratorFlowException("Variable reference iterator already open");
+            throw new IteratorFlowException("Variable reference iterator already open", getMetadata());
         this._currentDynamicContext = context;
         this.currentIndex = 0;
         this.items = null;

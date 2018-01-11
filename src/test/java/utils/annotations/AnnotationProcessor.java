@@ -33,6 +33,7 @@ public class AnnotationProcessor {
 
     public static final String OUTPUT_KEY = "Output";
     public static final String ERROR_MESSAGE = "ErrorCode";
+    public static final String ERROR_METADATA = "ErrorMetadata";
     public static final String SHOULD_PARSE = "ShouldParse";
     public static final String SHOULD_NOT_PARSE = "ShouldNotParse";
     public static final String SHOULD_COMPILE = "ShouldCompile";
@@ -52,12 +53,15 @@ public class AnnotationProcessor {
             return errorCode;
         }
 
+        public String getErrorMetadata() { return errorMetadata; }
+
         public abstract boolean shouldParse();
         public abstract boolean shouldCompile();
         public abstract boolean shouldRun();
 
         protected String expectedOutput = "";
         protected String errorCode = "";
+        protected String errorMetadata = "";
     }
 
     public static class RunnableTestAnnotation extends TestAnnotation {
@@ -69,6 +73,7 @@ public class AnnotationProcessor {
             super();
             this.expectedOutput = expectedOut;
             this.errorCode = null;
+            this.errorMetadata = null;
         }
 
         @Override
@@ -85,9 +90,10 @@ public class AnnotationProcessor {
 
     public static class UnrunnableTestAnnotation extends TestAnnotation {
 
-        public UnrunnableTestAnnotation(String errorCode) {
+        public UnrunnableTestAnnotation(String errorCode, String errorMetadata) {
             super();
             this.errorCode = errorCode;
+            this.errorMetadata = errorMetadata;
         }
 
         @Override
@@ -105,9 +111,10 @@ public class AnnotationProcessor {
 
     public static class UncompilableTestAnnotation extends TestAnnotation {
 
-        public UncompilableTestAnnotation(String errorCode) {
+        public UncompilableTestAnnotation(String errorCode, String errorMetadata) {
             super();
             this.errorCode = errorCode;
+            this.errorMetadata = errorMetadata;
         }
 
         @Override
@@ -125,12 +132,6 @@ public class AnnotationProcessor {
     }
 
     public static class CompilableTestAnnotation extends TestAnnotation {
-
-        public CompilableTestAnnotation(String errorCode) {
-            super();
-            this.errorCode = errorCode;
-        }
-
         public CompilableTestAnnotation() {
             super();
             this.errorCode = null;
@@ -157,11 +158,6 @@ public class AnnotationProcessor {
             this.errorCode = null;
         }
 
-        public ParsableTestAnnotation(String errorCode) {
-            super();
-            this.errorCode = errorCode;
-        }
-
         @Override
         public boolean shouldParse() {
             return true;
@@ -179,9 +175,10 @@ public class AnnotationProcessor {
     }
 
     public static class UnparsableTestAnnotation extends TestAnnotation {
-        public UnparsableTestAnnotation(String errorCode) {
+        public UnparsableTestAnnotation(String errorCode, String errorMetadata) {
             super();
             this.errorCode = errorCode;
+            this.errorMetadata = errorMetadata;
         }
 
         @Override
@@ -264,19 +261,22 @@ public class AnnotationProcessor {
             if(shouldRun.get())
                 return new RunnableTestAnnotation(parameters.get(OUTPUT_KEY));
             else
-                return new UnrunnableTestAnnotation(parameters.get(ERROR_MESSAGE));
+                return new UnrunnableTestAnnotation(parameters.get(ERROR_MESSAGE),
+                        parameters.get(ERROR_METADATA));
         }
 
         if(shouldCompile.isPresent()){
             if(shouldCompile.get())
                 return new CompilableTestAnnotation();
             else
-                return new UncompilableTestAnnotation(parameters.get(ERROR_MESSAGE));
+                return new UncompilableTestAnnotation(parameters.get(ERROR_MESSAGE),
+                        parameters.get(ERROR_METADATA));
         }
 
         if (shouldParse.get())
             return new ParsableTestAnnotation();
         else
-            return new UnparsableTestAnnotation(parameters.get(ERROR_MESSAGE));
+            return new UnparsableTestAnnotation(parameters.get(ERROR_MESSAGE),
+                    parameters.get(ERROR_METADATA));
     }
 }

@@ -22,23 +22,32 @@
 
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.io.Serializable;
 
 public class GroupByClauseSparkIteratorExpression implements Serializable {
+
     public VariableReferenceIterator getVariableReference() {
         return _variableReference;
+    }
+
+    public IteratorMetadata getIteratorMetadata() {
+        return iteratorMetadata;
     }
 
     public RuntimeIterator getExpression() {
         return _expression;
     }
 
-    public GroupByClauseSparkIteratorExpression(RuntimeIterator expression, VariableReferenceIterator variable) {
+    public GroupByClauseSparkIteratorExpression(RuntimeIterator expression, VariableReferenceIterator variable,
+                                                IteratorMetadata iteratorMetadata) {
         this._expression = expression;
         this._variableReference = variable;
+        this.iteratorMetadata = iteratorMetadata;
     }
 
     private final VariableReferenceIterator _variableReference;
     private final RuntimeIterator _expression;
+    private final IteratorMetadata iteratorMetadata;
 }

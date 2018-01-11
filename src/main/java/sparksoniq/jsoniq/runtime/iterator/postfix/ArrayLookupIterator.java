@@ -26,10 +26,11 @@ import sparksoniq.jsoniq.item.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class ArrayLookupIterator extends LocalRuntimeIterator {
-    public ArrayLookupIterator(RuntimeIterator array, RuntimeIterator iterator) {
-        super(null);
+    public ArrayLookupIterator(RuntimeIterator array, RuntimeIterator iterator, IteratorMetadata iteratorMetadata) {
+        super(null, iteratorMetadata);
         this._children.add(array);
         this._children.add(iterator);
     }
@@ -43,9 +44,9 @@ public class ArrayLookupIterator extends LocalRuntimeIterator {
             Item lookup = this._children.get(1).next();
             if(this._children.get(1).hasNext() || lookup.isObject() || lookup.isArray())
                 throw new InvalidSelectorException("Type error; There is not exactly one supplied parameter for an array selector: "
-                        + lookup.serialize());
+                        + lookup.serialize(), getMetadata());
             if(!Item.isNumeric(lookup))
-                throw new UnexpectedTypeException("Non numeric array lookup for " + lookup.serialize());
+                throw new UnexpectedTypeException("Non numeric array lookup for " + lookup.serialize(), getMetadata());
             this._lookup = Item.getNumericValue(lookup, Integer.class);
             this._children.get(0).close();
             this._children.get(1).close();
@@ -53,7 +54,7 @@ public class ArrayLookupIterator extends LocalRuntimeIterator {
             //-1 for Jsoniq convetion, arrays start from 1
             return _array.getItemAt(_lookup - 1);
         }
-        throw new IteratorFlowException("Invalid next call in Array Lookup");
+        throw new IteratorFlowException("Invalid next call in Array Lookup", getMetadata());
     }
 
     private ArrayItem _array;

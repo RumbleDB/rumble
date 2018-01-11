@@ -17,17 +17,17 @@
  * Author: Stefan Irimescu
  *
  */
- package iq;
+package iq;
 
 import iq.base.AnnotationsTestsBase;
-import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
-import sparksoniq.jsoniq.item.Item;
-import sparksoniq.semantics.DynamicContext;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
+import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.semantics.DynamicContext;
 import utils.FileManager;
 
 import java.io.File;
@@ -37,7 +37,7 @@ import java.util.Collection;
 import java.util.List;
 
 @RunWith(Parameterized.class)
-public class RuntimeTests extends AnnotationsTestsBase{
+public class RuntimeTests extends AnnotationsTestsBase {
 
     public static final File runtimeTestsDirectory = new File(System.getProperty("user.dir") +
             "/src/main/resources/test_files/runtime");
@@ -52,7 +52,7 @@ public class RuntimeTests extends AnnotationsTestsBase{
     public static Collection<Object[]> testFiles() throws IOException {
         List<Object[]> result = new ArrayList<Object[]>();
         readFileList(runtimeTestsDirectory);
-        _testFiles.forEach(file -> result.add(new Object[]{ file }));
+        _testFiles.forEach(file -> result.add(new Object[]{file}));
         return result;
     }
 
@@ -63,11 +63,11 @@ public class RuntimeTests extends AnnotationsTestsBase{
         testAnnotations(_testFile.getAbsolutePath(), visitor);
     }
 
-    public RuntimeTests(File testFile){
+    public RuntimeTests(File testFile) {
         this._testFile = testFile;
     }
 
-    protected String runIterators(RuntimeIterator iterator){
+    protected String runIterators(RuntimeIterator iterator) {
         String actualOutput = getIteratorOutput(iterator);
         return actualOutput;
     }
@@ -81,25 +81,25 @@ public class RuntimeTests extends AnnotationsTestsBase{
     }
 
 
-    protected String getIteratorOutput(RuntimeIterator iterator){
+    protected String getIteratorOutput(RuntimeIterator iterator) {
         iterator.open(new DynamicContext());
         Item result = iterator.next();
-        if(result == null)
+        if (result == null)
             return "";
         String singleOutput = result.serialize();
-        if(!iterator.hasNext())
+        if (!iterator.hasNext())
             return singleOutput;
         else {
-            String output = "( " + result.serialize() +", ";
+            String output = "( " + result.serialize() + ", ";
             while (iterator.hasNext()) {
                 result = iterator.next();
-                if(result!=null)
+                if (result != null)
                     output += result.serialize() + ", ";
             }
             //remove last comma
             output = output.substring(0, output.length() - 2);
             output += ")";
-          return output;
+            return output;
         }
     }
 

@@ -23,6 +23,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.flowr.FLWOR_CLAUSES;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.spark.SparkContextManager;
 import sparksoniq.spark.closures.ForClauseClosure;
 import sparksoniq.spark.closures.InitialForClauseClosure;
@@ -36,8 +37,8 @@ import java.util.List;
 public class ForClauseSparkIterator extends FlowrClauseSparkIterator {
 
     public ForClauseSparkIterator(VariableReferenceIterator variableReference,
-                                  RuntimeIterator assignmentExpression) {
-        super(null, FLWOR_CLAUSES.FOR);
+                                  RuntimeIterator assignmentExpression, IteratorMetadata iteratorMetadata) {
+        super(null, FLWOR_CLAUSES.FOR, iteratorMetadata);
         this._children.add(variableReference);
         this._children.add(assignmentExpression);
     }

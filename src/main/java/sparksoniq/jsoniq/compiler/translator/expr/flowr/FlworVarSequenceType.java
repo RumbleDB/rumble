@@ -20,6 +20,7 @@
  package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
 
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
@@ -67,19 +68,22 @@ public class FlworVarSequenceType extends Expression {
         return _sequence;
     }
     
-    public FlworVarSequenceType() {
+    public FlworVarSequenceType(ExpressionMetadata metadata) {
+        super(metadata);
         this._sequence = new SequenceType(new ItemType(ItemTypes.Item),
                 SequenceType.Arity.ZeroOrMore);
         this.isEmpty = true;
     }
 
-    public FlworVarSequenceType(ItemTypes item, SequenceType.Arity arity){
+    public FlworVarSequenceType(ItemTypes item, SequenceType.Arity arity, ExpressionMetadata metadata){
+        super(metadata);
         this._sequence = new SequenceType(new ItemType(item), arity);
         this.isEmpty = false;
 
     }
 
-    public FlworVarSequenceType(ItemTypes item){
+    public FlworVarSequenceType(ItemTypes item, ExpressionMetadata metadata){
+        super(metadata);
         this._sequence = new SequenceType(new ItemType(item), SequenceType.Arity.One);
         this.isEmpty = false;
 

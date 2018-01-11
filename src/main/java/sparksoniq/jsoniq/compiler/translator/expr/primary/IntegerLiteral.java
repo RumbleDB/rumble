@@ -20,6 +20,7 @@
  package sparksoniq.jsoniq.compiler.translator.expr.primary;
 
 
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 public class IntegerLiteral extends PrimaryExpression {
@@ -30,8 +31,8 @@ public class IntegerLiteral extends PrimaryExpression {
 
     private int value;
 
-    public IntegerLiteral(int _value){
-        super();
+    public IntegerLiteral(int _value, ExpressionMetadata metadata){
+        super(metadata);
         this.value = _value;
     }
 

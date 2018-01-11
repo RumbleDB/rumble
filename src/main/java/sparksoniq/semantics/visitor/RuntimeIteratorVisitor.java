@@ -47,6 +47,7 @@ import sparksoniq.jsoniq.runtime.iterator.functions.ObjectFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 import sparksoniq.jsoniq.runtime.iterator.quantifiers.QuantifiedExpressionIterator;
 import sparksoniq.jsoniq.runtime.iterator.quantifiers.QuantifiedExpressionVarIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
 import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 import sparksoniq.spark.iterator.flowr.*;
@@ -94,7 +95,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         ReturnClauseSparkIterator returnIterator =
                 (ReturnClauseSparkIterator) (this.visitFlowrClause(expression.get_returnClause(), argument).get(0));
         return new FlworExpressionSparkRuntimeIterator(iterators.get(0), iterators.subList(1, iterators.size()),
-                returnIterator);
+                returnIterator, createIteratorMetadata(expression));
     }
 
     private List<FlowrClauseSparkIterator> visitFlowrClause(FlworClause clause,
@@ -105,35 +106,41 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 RuntimeIterator assignmentExpression = this.visit(var.getExpression(),argument);
                 VariableReferenceIterator variableReferenceIterator =
                         (VariableReferenceIterator) this.visit(var.getVariableReference(), argument);
-                result.add(new ForClauseSparkIterator(variableReferenceIterator, assignmentExpression));
+                result.add(new ForClauseSparkIterator(variableReferenceIterator, assignmentExpression,
+                        createIteratorMetadata(clause)));
             }
         } else if (clause instanceof LetClause) {
             for(LetClauseVar var : ((LetClause)clause).getLetVariables()) {
                 RuntimeIterator assignmentExpression = this.visit(var.getExpression(),argument);
                 VariableReferenceIterator variableReferenceIterator =
                         (VariableReferenceIterator) this.visit(var.getVariableReference(), argument);
-                result.add(new LetClauseSparkIterator(variableReferenceIterator, assignmentExpression));
+                result.add(new LetClauseSparkIterator(variableReferenceIterator, assignmentExpression,
+                        createIteratorMetadata(clause)));
             }
         }else if (clause instanceof GroupByClause){
             List<GroupByClauseSparkIteratorExpression> expressions = new ArrayList<>();
-            for(GroupByClauseVar orderExpr : ((GroupByClause) clause).getGroupVariables()) {
+            for(GroupByClauseVar groupExpr : ((GroupByClause) clause).getGroupVariables()) {
                 expressions.add( new GroupByClauseSparkIteratorExpression(
-                        orderExpr.getExpression() != null? this.visit(orderExpr.getExpression(), argument): null,
-                        (VariableReferenceIterator) this.visit(orderExpr.getVariableReference(), argument)));
+                        groupExpr.getExpression() != null? this.visit(groupExpr.getExpression(), argument): null,
+                        (VariableReferenceIterator) this.visit(groupExpr.getVariableReference(), argument),
+                        createIteratorMetadata(groupExpr)));
             }
-            result.add(new GroupByClauseSparkIterator(expressions));
+            result.add(new GroupByClauseSparkIterator(expressions, createIteratorMetadata(clause)));
         }else if (clause instanceof OrderByClause){
             List<OrderByClauseSparkIteratorExpression> expressions = new ArrayList<>();
             for(OrderByClauseExpr orderExpr : ((OrderByClause)clause).getExpressions()) {
                 expressions.add( new OrderByClauseSparkIteratorExpression(this.visit(orderExpr.getExpression(), argument),
-                        orderExpr.isAscending(), orderExpr.getUri(), orderExpr.getEmptyOrder()));
+                        orderExpr.isAscending(), orderExpr.getUri(), orderExpr.getEmptyOrder(), createIteratorMetadata(orderExpr)));
             }
-            result.add(new OrderByClauseSparkIterator(expressions, ((OrderByClause)clause).isStable()));
+            result.add(new OrderByClauseSparkIterator(expressions, ((OrderByClause)clause).isStable(),
+                    createIteratorMetadata(clause)));
         } else if (clause instanceof ReturnClause){
-            result.add(new ReturnClauseSparkIterator(this.visit(((ReturnClause)clause).getReturnExpr(), argument)));
+            result.add(new ReturnClauseSparkIterator(this.visit(((ReturnClause)clause).getReturnExpr(), argument),
+                    createIteratorMetadata(clause)));
         }
         else if(clause instanceof WhereClause) {
-            result.add(new WhereClauseSparkIterator(this.visit(((WhereClause)clause).getWhereExpression(), argument)));
+            result.add(new WhereClauseSparkIterator(this.visit(((WhereClause)clause).getWhereExpression(), argument),
+                    createIteratorMetadata(clause)));
         }
         return result;
     }
@@ -143,7 +150,8 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
     }
 
     @Override public RuntimeIterator visitVariableReference(VariableReference expression, RuntimeIterator argument){
-        return new VariableReferenceIterator(expression.getVariableName(), expression.getType());
+        return new VariableReferenceIterator(expression.getVariableName(), expression.getType(),
+                createIteratorMetadata(expression));
     }
     //endregion
 
@@ -159,25 +167,25 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                     if (extension instanceof ArrayLookupExtension) {
                         RuntimeIterator iterator =
                                 this.visit(((ArrayLookupExtension) extension).getExpression(), argument);
-                        previous = new ArrayLookupIterator(previous, iterator);
+                        previous = new ArrayLookupIterator(previous, iterator, createIteratorMetadata(expression));
                     }
                     if (extension instanceof ObjectLookupExtension) {
                         StringRuntimeIterator iterator = (StringRuntimeIterator)
                                 this.visit(((ObjectLookupExtension) extension).getField(), argument);
-                        previous = new ObjectLookupItertor(previous, iterator);
+                        previous = new ObjectLookupItertor(previous, iterator, createIteratorMetadata(expression));
                     }
                     if (extension instanceof ArrayUnboxingExtension) {
-                        previous = new ArrayUnboxingItertor(previous);
+                        previous = new ArrayUnboxingItertor(previous, createIteratorMetadata(expression));
                     }
                     if (extension instanceof PredicateExtension) {
                         RuntimeIterator filterExpression = //pass the predicate as argument for $$ expresions
                                 this.visit(((PredicateExtension) extension).getExpression(), argument);
-                        previous = new PredicateIterator(previous, filterExpression);
+                        previous = new PredicateIterator(previous, filterExpression, createIteratorMetadata(expression));
                     }
                 }
                 catch (Exception ex) {
-                    ex.printStackTrace();
-                    throw new UnsupportedFeatureException("Invalid Postfix extension");
+//                    ex.printStackTrace();
+                    throw new UnsupportedFeatureException("Invalid Postfix extension", expression.getMetadata());
                 }
             }
             return previous;
@@ -188,7 +196,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         RuntimeIterator result = null;
         if(expression.getExpression() != null)
             result = this.visit(expression.getExpression(), argument);
-        return new ArrayRuntimeIterator(result);
+        return new ArrayRuntimeIterator(result, createIteratorMetadata(expression));
     }
     @Override
     public RuntimeIterator visitObjectConstructor(ObjectConstructor expression, RuntimeIterator argument){
@@ -196,7 +204,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
             List<ObjectConstructorRuntimeIterator> childExpressions = new ArrayList<>();
             for(Expression child : expression.getChildExpression().getExpressions())
                 childExpressions.add(((ObjectConstructorRuntimeIterator) this.visit(child, argument)));
-            return new ObjectConstructorRuntimeIterator(childExpressions);
+            return new ObjectConstructorRuntimeIterator(childExpressions, createIteratorMetadata(expression));
         } else {
             List<RuntimeIterator> keys = new ArrayList<>();
             List<RuntimeIterator> values = new ArrayList<>();
@@ -204,40 +212,40 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 keys.add(this.visit(key,argument));
             for(Expression value: expression.getValues())
                 values.add(this.visit(value,argument));
-            return new ObjectConstructorRuntimeIterator(keys,values);
+            return new ObjectConstructorRuntimeIterator(keys,values, createIteratorMetadata(expression));
         }
     }
 
     @Override
     public RuntimeIterator visitContextExpr(ContextExpression expression, RuntimeIterator argument) {
-        return new ContextExpressionIterator();
+        return new ContextExpressionIterator(createIteratorMetadata(expression));
     }
     //endregion
 
     //region literals
     @Override
     public RuntimeIterator visitInteger(IntegerLiteral expression, RuntimeIterator argument){
-        return new IntegerRuntimeIterator(expression.getValue());
+        return new IntegerRuntimeIterator(expression.getValue(), createIteratorMetadata(expression));
     }
     @Override
     public RuntimeIterator visitString(StringLiteral expression, RuntimeIterator argument){
-        return new StringRuntimeIterator(expression.getValue());
+        return new StringRuntimeIterator(expression.getValue(),createIteratorMetadata(expression));
     }
     @Override
     public RuntimeIterator visitDouble(DoubleLiteral expression, RuntimeIterator argument){
-        return new DoubleRuntimeIterator(expression.getValue());
+        return new DoubleRuntimeIterator(expression.getValue(),createIteratorMetadata(expression));
     }
     @Override
     public RuntimeIterator visitDecimal(DecimalLiteral expression, RuntimeIterator argument){
-        return new DecimalRuntimeIterator(expression.getValue());
+        return new DecimalRuntimeIterator(expression.getValue(),createIteratorMetadata(expression));
     }
     @Override
     public RuntimeIterator visitNull(NullLiteral expression, RuntimeIterator argument){
-        return new NullRuntimeIterator();
+        return new NullRuntimeIterator(createIteratorMetadata(expression));
     }
     @Override
     public RuntimeIterator visitBoolean(BooleanLiteral expression, RuntimeIterator argument){
-        return new BooleanRuntimeIterator(expression.getValue());
+        return new BooleanRuntimeIterator(expression.getValue(),createIteratorMetadata(expression));
     }
     //endregion
 
@@ -253,7 +261,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 left = this.visit(
                         new AdditiveExpression(expression.getMainExpression(),
                                 expression.getRightExpressions().subList(0, expression.getRightExpressions().size() - 1),
-                                expression.getOperators().subList(0, expression.getOperators().size() - 1)), argument);
+                                expression.getOperators().subList(0, expression.getOperators().size() - 1), expression.getMetadata()), argument);
             }else{
                 left = this.visit(expression.getMainExpression(),argument);
                 right = this.visit(expression.getRightExpressions().get(0), argument);
@@ -261,7 +269,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
 
 
             return new AdditiveOperationIterator(left, right,
-                    expression.getOperators().get(expression.getOperators().size() - 1));
+                    expression.getOperators().get(expression.getOperators().size() - 1), createIteratorMetadata(expression));
 
         }
             return defaultAction(expression, argument);
@@ -277,7 +285,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 left = this.visit(
                         new MultiplicativeExpression(expression.getMainExpression(),
                                 expression.getRightExpressions().subList(0, expression.getRightExpressions().size() - 1),
-                                expression.getOperators().subList(0, expression.getOperators().size() - 1)), argument);
+                                expression.getOperators().subList(0, expression.getOperators().size() - 1), expression.getMetadata()), argument);
             }else{
                 left = this.visit(expression.getMainExpression(),argument);
                 right = this.visit(expression.getRightExpressions().get(0), argument);
@@ -285,7 +293,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
 
 
             return new MultiplicativeOperationIterator(left, right,
-                    expression.getOperators().get(expression.getOperators().size() - 1));
+                    expression.getOperators().get(expression.getOperators().size() - 1), createIteratorMetadata(expression));
 
         }
         return defaultAction(expression, argument);
@@ -300,13 +308,15 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                         argument);
                 left = this.visit(
                         new AndExpression(expression.getMainExpression(),
-                                expression.getRightExpressions().subList(0, expression.getRightExpressions().size() - 1)), argument);
+                                expression.getRightExpressions().
+                                        subList(0, expression.getRightExpressions().size() - 1),
+                                expression.getMetadata()), argument);
             }else{
                 left = this.visit(expression.getMainExpression(),argument);
                 right = this.visit(expression.getRightExpressions().get(0), argument);
             }
 
-            return new AndOperationIterator(left, right);
+            return new AndOperationIterator(left, right, createIteratorMetadata(expression));
 
         }
         return defaultAction(expression, argument);
@@ -321,13 +331,15 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                         argument);
                 left = this.visit(
                         new OrExpression(expression.getMainExpression(),
-                                expression.getRightExpressions().subList(0, expression.getRightExpressions().size() - 1)), argument);
+                                expression.getRightExpressions()
+                                        .subList(0, expression.getRightExpressions().size() - 1),
+                                expression.getMetadata()), argument);
             }else{
                 left = this.visit(expression.getMainExpression(),argument);
                 right = this.visit(expression.getRightExpressions().get(0), argument);
             }
 
-            return new OrOperationIterator(left, right);
+            return new OrOperationIterator(left, right, createIteratorMetadata(expression));
 
         }
         return defaultAction(expression, argument);
@@ -335,7 +347,8 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
     @Override
     public RuntimeIterator visitNotExpr(NotExpression expression, RuntimeIterator argument){
         if(expression.isActive())
-            return new NotOperationIterator(this.visit(expression.getMainExpression(), argument));
+            return new NotOperationIterator(this.visit(expression.getMainExpression(), argument),
+                    createIteratorMetadata(expression));
         return defaultAction(expression, argument);
     }
     @Override
@@ -348,7 +361,8 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 if(op == OperationalExpressionBase.Operator.MINUS)
                     result *= -1;
             return new UnaryOperationIterator(this.visit(expression.getMainExpression(), argument),
-                    result == -1? OperationalExpressionBase.Operator.MINUS: OperationalExpressionBase.Operator.PLUS);
+                    result == -1? OperationalExpressionBase.Operator.MINUS: OperationalExpressionBase.Operator.PLUS,
+                    createIteratorMetadata(expression));
         }
         return defaultAction(expression, argument);
     }
@@ -357,7 +371,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         if(expression.isActive()) {
             RuntimeIterator left = this.visit(expression.getMainExpression(), argument);
             RuntimeIterator right = this.visit(expression.getRightExpression(), argument);
-            return new RangeOperationIterator(left, right);
+            return new RangeOperationIterator(left, right, createIteratorMetadata(expression));
         }
         else
             return defaultAction(expression, argument);
@@ -367,7 +381,8 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         if(expression.isActive()) {
             RuntimeIterator left = this.visit(expression.getMainExpression(), argument);
             RuntimeIterator right = this.visit(expression.getRightExpression(), argument);
-            return new ComparisonOperationIterator(left, right, expression.getOperator());
+            return new ComparisonOperationIterator(left, right, expression.getOperator(),
+                    createIteratorMetadata(expression));
         }
         else
             return defaultAction(expression, argument);
@@ -381,55 +396,56 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         if(result.size() == 1)
             return result.get(0);
         else
-            return new CommaExpressionIterator(result);
+            return new CommaExpressionIterator(result, createIteratorMetadata(expression));
     }
 
     @Override
     public RuntimeIterator visitParenthesizedExpression(ParenthesizedExpression expression, RuntimeIterator argument){
         if(expression.getExpression() != null)
             return defaultAction(expression, argument);
-        return new EmptySequenceIterator();
+        return new EmptySequenceIterator(createIteratorMetadata(expression));
     }
 
     @Override
     public RuntimeIterator visitFunctionCall(FunctionCall expression, RuntimeIterator argument){
         List<RuntimeIterator> arguments = new ArrayList<>();
+        IteratorMetadata iteratorMetadata = createIteratorMetadata(expression);
         for(Expression arg: expression.getParameters())
             arguments.add(this.visit(arg, argument));
 
 
         switch (expression.getFunctionName()){
             case Functions.JSON_FILE:
-                return new ParseJsonFunctionIterator(arguments);
+                return new ParseJsonFunctionIterator(arguments,iteratorMetadata);
             case Functions.PARALLELIZE:
-                return new ParallelizeFunctionIterator(arguments);
+                return new ParallelizeFunctionIterator(arguments,iteratorMetadata);
             case Functions.COUNT:
-                return new CountFunctionIterator(arguments);
+                return new CountFunctionIterator(arguments, iteratorMetadata);
             case Functions.MAX:
                 return new ArithmeticFunctionIterator(arguments,
-                        ArithmeticFunctionOperator.MAX);
+                        ArithmeticFunctionOperator.MAX, iteratorMetadata);
             case Functions.MIN:
                 return new ArithmeticFunctionIterator(arguments,
-                        ArithmeticFunctionOperator.MIN);
+                        ArithmeticFunctionOperator.MIN, iteratorMetadata);
             case Functions.AVG:
                 return new ArithmeticFunctionIterator(arguments,
-                        ArithmeticFunctionOperator.AVG);
+                        ArithmeticFunctionOperator.AVG, iteratorMetadata);
             case Functions.SUM:
                 return new ArithmeticFunctionIterator(arguments,
-                        ArithmeticFunctionOperator.SUM);
+                        ArithmeticFunctionOperator.SUM, iteratorMetadata);
             case Functions.KEYS:
                 return new ObjectFunctionIterator(arguments,
-                        ObjectFunctionIterator.ObjectFunctionOperators.KEYS);
+                        ObjectFunctionIterator.ObjectFunctionOperators.KEYS, iteratorMetadata);
             case Functions.VALUES:
                 return new ObjectFunctionIterator(arguments,
-                        ObjectFunctionIterator.ObjectFunctionOperators.VALUES);
+                        ObjectFunctionIterator.ObjectFunctionOperators.VALUES, iteratorMetadata);
             case Functions.SIZE:
                 return new ArrayFunctionIterator(arguments,
-                        ArrayFunctionIterator.ArrayFunctionOperators.SIZE);
+                        ArrayFunctionIterator.ArrayFunctionOperators.SIZE, iteratorMetadata);
 
         }
 
-        throw new UnknownFunctionCallException();
+        throw new UnknownFunctionCallException(createIteratorMetadata(expression));
     }
 
     @Override
@@ -442,13 +458,15 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                         argument);
                 left = this.visit(
                         new StringConcatExpression(expression.getMainExpression(),
-                                expression.getRightExpressions().subList(0, expression.getRightExpressions().size() - 1)), argument);
+                                expression.getRightExpressions()
+                                        .subList(0, expression.getRightExpressions().size() - 1),
+                                expression.getMetadata()), argument);
             }else{
                 left = this.visit(expression.getMainExpression(),argument);
                 right = this.visit(expression.getRightExpressions().get(0), argument);
             }
 
-            return new StringConcatIterator(left, right);
+            return new StringConcatIterator(left, right, createIteratorMetadata(expression));
 
         }
         return defaultAction(expression, argument);
@@ -457,7 +475,8 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
     @Override public RuntimeIterator visitInstanceOfExpression(InstanceOfExpression expression, RuntimeIterator argument){
         if(expression.isActive()){
             RuntimeIterator childExpression = this.visit(expression.getMainExpression(), argument);
-            return new InstanceOfIterator(childExpression, expression.getsequenceType().getSequence());
+            return new InstanceOfIterator(childExpression, expression.getsequenceType().getSequence(),
+                    createIteratorMetadata(expression));
         }
         else
             return defaultAction(expression, argument);
@@ -465,8 +484,9 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
 
     @Override public RuntimeIterator visitIfExpression(IfExpression expression, RuntimeIterator argument){
         return new IfRuntimeIterator(this.visit(expression.getCondition(), argument),
-                                         this.visit(expression.getBranch(), argument),
-                                         this.visit(expression.getElseBranch(), argument));
+                                     this.visit(expression.getBranch(), argument),
+                                     this.visit(expression.getElseBranch(), argument),
+                                     createIteratorMetadata(expression));
     }
 
     @Override public RuntimeIterator visitQuantifiedExpression(QuantifiedExpression expression, RuntimeIterator argument){
@@ -474,13 +494,14 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         expression.getVariables().forEach(var -> variables.add((QuantifiedExpressionVarIterator) this.visit(var, argument)));
         RuntimeIterator evaluationExpression = this.visit(expression.getEvaluationExpression(), argument);
         return new QuantifiedExpressionIterator(expression.getOperator(),
-                variables, evaluationExpression);
+                variables, evaluationExpression, createIteratorMetadata(expression));
     }
 
     @Override public RuntimeIterator visitQuantifiedExpressionVar(QuantifiedExpressionVar expression, RuntimeIterator argument){
         QuantifiedExpressionVarIterator iterator;
-        iterator = new QuantifiedExpressionVarIterator(expression.getVariableReference(),
-                expression.getSequenceType(), this.visit(expression.getExpression(), argument));
+        iterator = new QuantifiedExpressionVarIterator(expression.getVariableReference().getVariableName(),
+                expression.getSequenceType(), this.visit(expression.getExpression(), argument),
+                createIteratorMetadata(expression));
         return iterator;
     }
 
@@ -490,6 +511,11 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
             cases.put(this.visit(caseExpression.getCondition(), argument),
                     this.visit(caseExpression.getReturnExpression(), argument));
         return new SwitchRuntimeIterator(this.visit(expression.getTestCondition(), argument),
-                cases, this.visit(expression.getDefaultExpression(), argument));
+                cases, this.visit(expression.getDefaultExpression(), argument),
+                createIteratorMetadata(expression));
+    }
+
+    private IteratorMetadata createIteratorMetadata(ExpressionOrClause expression) {
+        return new IteratorMetadata(expression.getMetadata());
     }
 }

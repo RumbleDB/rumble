@@ -20,6 +20,7 @@
  package sparksoniq.jsoniq.compiler.translator.expr.operational;
 
 
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.NaryExpressionBase;
@@ -31,14 +32,14 @@ public class AdditiveExpression extends NaryExpressionBase {
 
     public static final Operator[] operators = new Operator[] {Operator.PLUS, Operator.MINUS};
 
-    public AdditiveExpression(Expression _mainExpression) {
-        super(_mainExpression);
+    public AdditiveExpression(Expression _mainExpression, ExpressionMetadata metadata) {
+        super(_mainExpression, metadata);
 
     }
 
     public AdditiveExpression(Expression _mainExpression, List<Expression> rhs,
-                              List<Operator> ops) {
-        super(_mainExpression, rhs, ops);
+                              List<Operator> ops, ExpressionMetadata metadata) {
+        super(_mainExpression, rhs, ops, metadata);
         validateOperators(Arrays.asList(operators), ops);
     }
 

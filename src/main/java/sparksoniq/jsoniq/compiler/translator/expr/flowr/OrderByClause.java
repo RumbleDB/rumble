@@ -19,6 +19,8 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
+import sparksoniq.exceptions.SemanticException;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 
@@ -28,10 +30,10 @@ import java.util.List;
 public class OrderByClause extends FlworClause {
 
 
-    public OrderByClause(List<OrderByClauseExpr> exprs, boolean stable) {
-        super(FLWOR_CLAUSES.ORDER_BY);
+    public OrderByClause(List<OrderByClauseExpr> exprs, boolean stable, ExpressionMetadata metadata) {
+        super(FLWOR_CLAUSES.ORDER_BY, metadata);
         if(exprs == null || exprs.isEmpty())
-            throw new IllegalArgumentException("Group clause must have at least one variable");
+            throw new SemanticException("Group clause must have at least one variable", metadata);
         this.expressions = exprs;
         this.isStable = stable;
     }

@@ -19,6 +19,7 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr.primary;
 
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 import sparksoniq.jsoniq.compiler.translator.expr.CommaExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
@@ -36,13 +37,13 @@ public class ArrayConstructor extends PrimaryExpression {
 
     private Expression expression;
 
-    public ArrayConstructor(Expression expression) {
-        super();
+    public ArrayConstructor(Expression expression, ExpressionMetadata metadata) {
+        super(metadata);
         this.expression = expression;
     }
 
-    public ArrayConstructor() {
-        super();
+    public ArrayConstructor(ExpressionMetadata metadata) {
+        super(metadata);
         this.expression = null;
     }
 

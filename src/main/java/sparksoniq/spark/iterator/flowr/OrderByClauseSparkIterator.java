@@ -20,6 +20,7 @@
  package sparksoniq.spark.iterator.flowr;
 
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FLWOR_CLAUSES;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.spark.closures.OrderByClauseSortClosure;
 import sparksoniq.spark.closures.OrderByMapToPairClosure;
 import sparksoniq.spark.tuple.FlworKey;
@@ -36,8 +37,8 @@ public class OrderByClauseSparkIterator extends FlowrClauseSparkIterator {
     private final List<OrderByClauseSparkIteratorExpression> _expressions;
 
     public OrderByClauseSparkIterator(List<OrderByClauseSparkIteratorExpression> expressions,
-                                         boolean stable) {
-        super(null, FLWOR_CLAUSES.ORDER_BY);
+                                      boolean stable, IteratorMetadata iteratorMetadata) {
+        super(null, FLWOR_CLAUSES.ORDER_BY, iteratorMetadata);
         this._expressions = expressions;
         this._expressions.forEach(e -> this._children.add(e.getExpression()));
         this._isStable = stable;

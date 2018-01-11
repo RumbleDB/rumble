@@ -19,10 +19,16 @@
  */
  package sparksoniq.exceptions;
 
-public class IteratorFlowException extends SparksoniqRuntimeException {
+import sparksoniq.exceptions.codes.ErrorCodes;
+import sparksoniq.jsoniq.item.metadata.ItemMetadata;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
-    public IteratorFlowException(String message)
-    {
-        super(message);
+public class IteratorFlowException extends SparksoniqRuntimeException {
+    public IteratorFlowException(String message, IteratorMetadata metadata) {
+        super(message, ErrorCodes.RuntimeExceptionErrorCode, metadata.getExpressionMetadata());
+    }
+
+    public IteratorFlowException(String message, ItemMetadata metadata) {
+        super(message, ErrorCodes.RuntimeExceptionErrorCode, metadata.getExpressionMetadata());
     }
 }

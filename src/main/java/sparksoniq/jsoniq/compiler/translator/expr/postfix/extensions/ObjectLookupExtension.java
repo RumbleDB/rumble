@@ -21,6 +21,7 @@
 
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.StringLiteral;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,9 +33,8 @@ public class ObjectLookupExtension extends PostfixExtension {
 
     private StringLiteral field;
 
-    public ObjectLookupExtension(StringLiteral _field)
-    {
-        super();
+    public ObjectLookupExtension(StringLiteral _field, ExpressionMetadata metadata) {
+        super(metadata);
         this.field = _field;
     }
 

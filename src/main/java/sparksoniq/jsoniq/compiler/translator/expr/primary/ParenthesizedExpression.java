@@ -19,6 +19,7 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr.primary;
 
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 import sparksoniq.jsoniq.compiler.translator.expr.CommaExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
@@ -34,13 +35,13 @@ public class ParenthesizedExpression extends PrimaryExpression {
         return expression;
     }
 
-    public ParenthesizedExpression(Expression expression) {
-        super();
+    public ParenthesizedExpression(Expression expression, ExpressionMetadata metadata) {
+        super(metadata);
         this.expression = expression;
     }
 
-    public ParenthesizedExpression() {
-        super();
+    public ParenthesizedExpression(ExpressionMetadata metadata) {
+        super(metadata);
         this.expression = null;
     }
 
