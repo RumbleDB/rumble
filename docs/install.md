@@ -8,15 +8,18 @@ When the alpha release is done, many steps here will become unnecessary as the .
 
 The following software is required:
 
-- Java 8 (last tested on 1.8.0_121)
-- Spark 2.1.* (last tested on 2.1.1)
-- ANTLRv4, version 4.6
+- [Java SE](http://www.oracle.com/technetwork/java/javase/downloads/index.html) 8 (last tested on 1.8.0_121). The JDK is needed here, but the JRE will be enough when the packaged JAR is available.
+- [Spark](https://spark.apache.org/) 2.1.* (last tested on 2.1.1)
+- [ANTLRv4](http://www.antlr.org/), version 4.6
+- [Maven](https://maven.apache.org/) 3.5.0
 
 ### Checking the requirements
 
 Type the following commands to check that the necessary commands are available. If not, you may need to either install the software, or make sure that it is on the PATH.
 
     $ java -version
+    
+    $ mvn --version
 
     $ ant -version
 
@@ -106,3 +109,9 @@ You can try a few more queries.
     ( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
     
 This is it. Sparksoniq is step and ready to go locally. You can now move on to a JSONiq tutorial. A Sparksoniq tutorial will also follow soon.
+
+## Running on a cluster
+
+You can also try to run the Sparksoniq shell on a cluster if you have one available and configured -- this is done in the same way as any other `spark-submit` command:
+
+    $ spark-submit --class sparksoniq.ShellStart --master yarn-client --deploy-mode client --num-executors 40 jsoniq-spark-app-1.0-jar-with-dependencies.jar --master yarn-client --result-size 1000
