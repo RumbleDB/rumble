@@ -1,3 +1,0 @@
-for $i in json-file("hdfs:///user/istefan/full{,2}/RC*", 3000)
-where $i.score gt 5000 and $i.subreddit eq "AskReddit"
-return $i
