@@ -4,27 +4,9 @@
 
 *A JSONiq engine to query large-scale JSON datasets stored on HDFS. Spark under the hood. Alpha release coming soon.*
 
-![Sparksoniq](https://preview.ibb.co/nQPpPQ/icon.png)
-
 [Documentation is available here.](http://sparksoniq.readthedocs.io/en/latest/)
 
-# Licenses
-
-- Spark 2.1.0 Libraries - Apache License
-- ANTLR v4 Framework - BSD License
-- org.json parser - JSON License
-- JLine 3.0.2 terminal framework - BSD License
-- Kryo 4.0.0 serialization framework - BSD License
-
-# Unsupported/Unimplemented features
-- prolog
-- modules
-- separate variable declarations
-- try/catch expressions
-- cast/treat expressions
-- advanced object lookup
-- positional variables
-
+![Sparksoniq](https://preview.ibb.co/nQPpPQ/icon.png)
 
 # Error codes
 
