@@ -1,3 +1,4 @@
+site_name: Sparksoniq documentation
 pages:
 - '1. Documentation home': 'index.md'
 - '2. Getting started': 'Getting started.md'
