@@ -17,7 +17,7 @@ returns 10
 
 ```
 let $x := (1, 2, 3, 4)
-return sum($x)
+return count($x)
 ```
 
 returns 4
@@ -26,7 +26,7 @@ returns 4
 
 ```
 let $x := (1, 2, 3, 4)
-return sum($x)
+return min($x)
 ```
 
 returns 1
@@ -35,7 +35,7 @@ returns 1
 
 ```
 let $x := (1, 2, 3, 4)
-return sum($x)
+return max($x)
 ```
 
 returns 4
@@ -44,7 +44,7 @@ returns 4
 
 ```
 let $x := (1, 2, 3, 4)
-return sum($x)
+return avg($x)
 ```
 
 returns 2.5
@@ -102,7 +102,7 @@ where $i mod 1000 eq 0
 return $i
 ```
 
-It also has a second, optional parameter that specifies the number of partitions.
+In the future, it will also have a second, optional parameter that specifies the number of partitions.
 
 ```
 for $i in parallelize(1 to 1000000, 100)
