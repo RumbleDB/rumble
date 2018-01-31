@@ -25,17 +25,28 @@ public class SubstringFunctionIterator extends LocalFunctionCallIterator {
             String result;
             StringItem stringItem = this.getSingleItemOfTypeFromIterator(this._children.get(0), StringItem.class);
             IntegerItem indexItem = this.getSingleItemOfTypeFromIterator(this._children.get(1), IntegerItem.class);
+            int index = sanitizeIndexItem(indexItem);
             if (this._children.size() > 2) {
                 IntegerItem endIndexItem = this.getSingleItemOfTypeFromIterator(this._children.get(2), IntegerItem.class);
-                result = stringItem.getStringValue().substring(indexItem.getIntegerValue() - 1,
-                        indexItem.getIntegerValue() - 1 + endIndexItem.getIntegerValue());
+                int endIndex = sanitizeEndIndex(stringItem, endIndexItem, index);
+                result = stringItem.getStringValue().substring(index, endIndex);
             } else {
-                result = stringItem.getStringValue().substring(indexItem.getIntegerValue() - 1);
+                result = stringItem.getStringValue().substring(index);
             }
 
             this._hasNext = false;
             return new StringItem(result, ItemMetadata.fromIteratorMetadata(getMetadata()));
         } else
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " substring function", getMetadata());
+    }
+
+    private int sanitizeEndIndex(StringItem stringItem, IntegerItem endIndexItem, int startIndex) {
+        //char indexing starts from 1 in JSONiq
+        return Math.min(stringItem.getStringValue().length(), startIndex + endIndexItem.getIntegerValue());
+    }
+
+    private int sanitizeIndexItem(IntegerItem indexItem) {
+        //char indexing starts from 1 in JSONiq
+        return indexItem.getIntegerValue() - 1 > 0 ? indexItem.getIntegerValue() - 1 : 0;
     }
 }
