@@ -114,7 +114,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         return values;
     }
 
-    protected List<Item> runIteratorInCurrentContext(RuntimeIterator iterator) {
+    protected List<Item> getItemsFromIteratorWithCurrentContext(RuntimeIterator iterator) {
         List<Item> result = new ArrayList<>();
         iterator.open(_currentDynamicContext);
         while (iterator.hasNext())

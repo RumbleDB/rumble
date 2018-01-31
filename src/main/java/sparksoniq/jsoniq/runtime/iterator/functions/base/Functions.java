@@ -64,9 +64,13 @@ public class Functions {
      */
     public static final String SIZE = "size";
     /**
-     * function that returns the length of an array
+     * function that returns substrings
      */
     public static final String SUBSTRING = "substring";
+    /**
+     * function that returns substrings
+     */
+    public static final String CONCAT = "concat";
 
 
 }

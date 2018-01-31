@@ -441,6 +441,8 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                         ArrayFunctionIterator.ArrayFunctionOperators.SIZE, iteratorMetadata);
             case Functions.SUBSTRING:
                 return new SubstringFunctionIterator(arguments, iteratorMetadata);
+            case Functions.CONCAT:
+                return new ConcatFunctionIterator(arguments, iteratorMetadata);
 
         }
 
