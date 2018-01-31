@@ -1,2 +1,3 @@
-(:JIQS: ShouldRun; Output="Spock" :)
-substring("Mister Spock", 8, 5)
+(:JIQS: ShouldRun; Output="( Spock, cde)" :)
+substring("Mister Spock", 8, 5),
+substring("abcde",3)
