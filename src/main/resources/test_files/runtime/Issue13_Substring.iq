@@ -1,0 +1,2 @@
+(:JIQS: ShouldRun; Output="Spock" :)
+substring("Mister Spock", 8, 5)

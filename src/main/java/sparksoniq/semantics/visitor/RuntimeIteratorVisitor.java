@@ -40,10 +40,7 @@ import sparksoniq.jsoniq.runtime.iterator.EmptySequenceIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.control.IfRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.control.SwitchRuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.ArrayFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.CountFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.ArithmeticFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.ObjectFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 import sparksoniq.jsoniq.runtime.iterator.quantifiers.QuantifiedExpressionIterator;
 import sparksoniq.jsoniq.runtime.iterator.quantifiers.QuantifiedExpressionVarIterator;
@@ -442,6 +439,8 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
             case Functions.SIZE:
                 return new ArrayFunctionIterator(arguments,
                         ArrayFunctionIterator.ArrayFunctionOperators.SIZE, iteratorMetadata);
+            case Functions.SUBSTRING:
+                return new SubstringFunctionIterator(arguments, iteratorMetadata);
 
         }
 

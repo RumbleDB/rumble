@@ -63,6 +63,10 @@ public class Functions {
      * function that returns the length of an array
      */
     public static final String SIZE = "size";
+    /**
+     * function that returns the length of an array
+     */
+    public static final String SUBSTRING = "substring";
 
 
 }
