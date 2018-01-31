@@ -1,0 +1,2 @@
+(:JIQS: ShouldRun; Output="These-are-some-words" :)
+string-join(("These", "are", "some", "words"), "-")

@@ -17,7 +17,7 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.jsoniq.runtime.iterator.functions.base;
+package sparksoniq.jsoniq.runtime.iterator.functions.base;
 
 public class Functions {
     /**
@@ -71,6 +71,9 @@ public class Functions {
      * function that returns substrings
      */
     public static final String CONCAT = "concat";
-
+    /**
+     * function that returns substrings
+     */
+    public static final String STRINGJOIN = "string-join";
 
 }
