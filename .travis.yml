@@ -1,5 +1,9 @@
 language: java
 sudo: false
-script: mvn -Dtest=FrontendTests test && mvn -Dtest=RuntimeTests test && mvn -Dtest=SparkRuntimeTests test
+script:
+  - mvn clean compile assembly:single
+  - mvn -Dtest=FrontendTests test
+  - mvn -Dtest=RuntimeTests test
+  - mvn -Dtest=SparkRuntimeTests test
 
 
