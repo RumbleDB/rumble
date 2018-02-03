@@ -39,9 +39,10 @@ public class SparkRuntimeTests extends RuntimeTests {
         super(testFile);
         SparkConf sparkConfiguration = new SparkConf();
         sparkConfiguration.setMaster("local[*]");
-        sparkConfiguration.set("spark.driver.memory", "2g");
-        sparkConfiguration.set("spark.executor.memory",   "2g");
+//        sparkConfiguration.set("spark.driver.memory", "2g");
+//        sparkConfiguration.set("spark.executor.memory",   "2g");
         sparkConfiguration.set("spark.speculation", "true");
+        sparkConfiguration.set("spark.speculation.quantile", "0.5");
         SparkContextManager.getInstance().initializeConfigurationAndContext(sparkConfiguration, true);
 
     }

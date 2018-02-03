@@ -1,7 +1,7 @@
 language: java
 sudo: false
 before_script:
-  - _JAVA_OPTIONS="-Xmx4096m -Xms2048m"
+  - _JAVA_OPTIONS="-Xmx8192m -Xms512m"
 
 script:
   - mvn clean compile assembly:single
