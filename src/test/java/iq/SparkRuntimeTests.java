@@ -25,7 +25,6 @@ import org.junit.runners.Parameterized;
 import sparksoniq.spark.SparkContextManager;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -40,14 +39,16 @@ public class SparkRuntimeTests extends RuntimeTests {
         super(testFile);
         SparkConf sparkConfiguration = new SparkConf();
         sparkConfiguration.setMaster("local[*]");
-        sparkConfiguration.set("spark.driver.memory", "5g");
+        sparkConfiguration.set("spark.driver.memory", "2g");
+        sparkConfiguration.set("spark.executor.memory",   "2g");
+        sparkConfiguration.set("spark.speculation", "true");
         SparkContextManager.getInstance().initializeConfigurationAndContext(sparkConfiguration, true);
 
     }
 
     @Parameterized.Parameters(name = "{index}:{0}")
-    public static Collection<Object[]> testFiles() throws IOException {
-        List<Object[]> result = new ArrayList<Object[]>();
+    public static Collection<Object[]> testFiles() {
+        List<Object[]> result = new ArrayList<>();
         _testFiles.clear();
         readFileList(sparkRuntimeTestsDirectory);
         _testFiles.forEach(file -> result.add(new Object[]{file}));
