@@ -36,6 +36,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static utils.SequenceStringComparator.sequenceStringsAreEqual;
+
 @RunWith(Parameterized.class)
 public class RuntimeTests extends AnnotationsTestsBase {
 
@@ -45,20 +47,20 @@ public class RuntimeTests extends AnnotationsTestsBase {
     protected static List<File> _testFiles = new ArrayList<>();
 
     public static void readFileList(File dir) {
-        FileManager.loadJiqFiles(dir).forEach(file -> _testFiles.add(file));
+        FileManager.loadJiqFiles(dir).forEach(file -> RuntimeTests._testFiles.add(file));
     }
 
     @Parameterized.Parameters(name = "{index}:{0}")
-    public static Collection<Object[]> testFiles() throws IOException {
-        List<Object[]> result = new ArrayList<Object[]>();
-        readFileList(runtimeTestsDirectory);
-        _testFiles.forEach(file -> result.add(new Object[]{file}));
+    public static Collection<Object[]> testFiles() {
+        List<Object[]> result = new ArrayList<>();
+        RuntimeTests.readFileList(RuntimeTests.runtimeTestsDirectory);
+        RuntimeTests._testFiles.forEach(file -> result.add(new Object[]{file}));
         return result;
     }
 
     @Test(timeout = 1000000)
     public void testRuntimeIterators() throws Throwable {
-        System.err.println(counter++ + " : " + _testFile);
+        System.err.println(AnnotationsTestsBase.counter++ + " : " + _testFile);
         JsoniqExpressionTreeVisitor visitor = new JsoniqExpressionTreeVisitor();
         testAnnotations(_testFile.getAbsolutePath(), visitor);
     }
@@ -77,7 +79,7 @@ public class RuntimeTests extends AnnotationsTestsBase {
         String actualOutput = runIterators(runtimeIterator);
         Assert.assertTrue("Expected output: " + expectedOutput + " Actual result: "
                         + actualOutput,
-                actualOutput.equals(expectedOutput));
+                sequenceStringsAreEqual(actualOutput, expectedOutput));
     }
 
 
