@@ -2,11 +2,9 @@
 
 ## JSON at the scale of Spark
 
-*A JSONiq engine to query large-scale JSON datasets stored on HDFS. Spark under the hood. Alpha release coming soon.*
+*A JSONiq engine to query large-scale JSON datasets stored on HDFS. Spark under the hood.
 
 [Documentation is available here.](http://sparksoniq.readthedocs.io/en/latest/)
-
-![Sparksoniq](https://preview.ibb.co/nQPpPQ/icon.png)
 
 # Error codes
 
