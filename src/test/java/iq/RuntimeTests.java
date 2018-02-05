@@ -31,12 +31,11 @@ import sparksoniq.semantics.DynamicContext;
 import utils.FileManager;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static utils.SequenceStringComparator.sequenceStringsAreEqual;
+import static utils.SequenceStringComparator.unorderedItemSequenceStringsAreEqual;
 
 @RunWith(Parameterized.class)
 public class RuntimeTests extends AnnotationsTestsBase {
@@ -79,7 +78,7 @@ public class RuntimeTests extends AnnotationsTestsBase {
         String actualOutput = runIterators(runtimeIterator);
         Assert.assertTrue("Expected output: " + expectedOutput + " Actual result: "
                         + actualOutput,
-                sequenceStringsAreEqual(actualOutput, expectedOutput));
+                unorderedItemSequenceStringsAreEqual(actualOutput, expectedOutput));
     }
 
 
