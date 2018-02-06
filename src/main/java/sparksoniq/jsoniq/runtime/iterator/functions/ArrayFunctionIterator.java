@@ -17,9 +17,8 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.jsoniq.runtime.iterator.functions;
+package sparksoniq.jsoniq.runtime.iterator.functions;
 
-import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.IntegerItem;
@@ -33,9 +32,7 @@ import java.util.List;
 
 public class ArrayFunctionIterator extends LocalFunctionCallIterator {
 
-    public enum ArrayFunctionOperators{
-        SIZE
-    }
+    private final ArrayFunctionOperators _operator;
 
     public ArrayFunctionIterator(List<RuntimeIterator> arguments, ArrayFunctionOperators op,
                                  IteratorMetadata iteratorMetadata) {
@@ -45,21 +42,17 @@ public class ArrayFunctionIterator extends LocalFunctionCallIterator {
 
     @Override
     public Item next() {
-        if(this._hasNext) {
+        if (this._hasNext) {
             this._hasNext = false;
             RuntimeIterator arrayIterator = this._children.get(0);
-            arrayIterator.open(_currentDynamicContext);
-            Item iteratorResult = arrayIterator.next();
-            if(!(iteratorResult instanceof ArrayItem))
-                throw new SparksoniqRuntimeException("Invalid argument to "
-                        + _operator.toString() + " function, array expected");
-            ArrayItem array = (ArrayItem) iteratorResult;
-            arrayIterator.close();
+            ArrayItem array = getSingleItemOfTypeFromIterator(arrayIterator, ArrayItem.class);
             return new IntegerItem(array.getSize(), ItemMetadata.fromIteratorMetadata(getMetadata()));
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + _operator.toString() + " function",
                 getMetadata());
     }
 
-    private final ArrayFunctionOperators _operator;
+    public enum ArrayFunctionOperators {
+        SIZE
+    }
 }

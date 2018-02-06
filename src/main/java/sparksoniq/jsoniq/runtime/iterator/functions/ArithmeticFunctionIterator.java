@@ -44,12 +44,8 @@ public class ArithmeticFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public Item next() {
         if(this._hasNext) {
-            List<Item> results = new ArrayList<>();
             RuntimeIterator sequenceIterator = this._children.get(0);
-            sequenceIterator.open(_currentDynamicContext);
-            while (sequenceIterator.hasNext())
-                results.add(sequenceIterator.next());
-            sequenceIterator.close();
+            List<Item> results = getItemsFromIteratorWithCurrentContext(sequenceIterator);
             this._hasNext = false;
             results.forEach(r -> {
                 if(!Item.isNumeric(r))
