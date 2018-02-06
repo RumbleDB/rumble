@@ -28,7 +28,6 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class CountFunctionIterator extends LocalFunctionCallIterator {
@@ -42,12 +41,8 @@ public class CountFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public Item next() {
         if (this._hasNext) {
-            List<Item> results = new ArrayList<>();
             RuntimeIterator sequenceIterator = this._children.get(0);
-            sequenceIterator.open(_currentDynamicContext);
-            while (sequenceIterator.hasNext())
-                results.add(sequenceIterator.next());
-            sequenceIterator.close();
+            List<Item> results = getItemsFromIteratorWithCurrentContext(sequenceIterator);
             this._hasNext = false;
             return new IntegerItem(results.size(),
                     ItemMetadata.fromIteratorMetadata(getMetadata()));

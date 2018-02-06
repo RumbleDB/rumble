@@ -15,16 +15,18 @@ import java.util.List;
 public class StringJoinFunction extends LocalFunctionCallIterator {
     public StringJoinFunction(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
-        if (arguments.size() != 2)
+        if (arguments.size() != 2 && arguments.size() != 1)
             throw new SparksoniqRuntimeException("Incorrect number of arguments for string-join function; " +
-                    "Exactly 2 arguments are required.");
+                    "Exactly 1 or 2 arguments are required.");
     }
 
     @Override
     public Item next() {
         if (this._hasNext) {
+            StringItem joinString = new StringItem("", new ItemMetadata(getMetadata().getExpressionMetadata()));
             List<Item> strings = getItemsFromIteratorWithCurrentContext(this._children.get(0));
-            StringItem joinString = getSingleItemOfTypeFromIterator(this._children.get(1), StringItem.class);
+            if (this._children.size() > 1)
+                joinString = getSingleItemOfTypeFromIterator(this._children.get(1), StringItem.class);
             StringBuilder stringBuilder = new StringBuilder("");
             for (Item item : strings) {
                 if (!(item instanceof StringItem))

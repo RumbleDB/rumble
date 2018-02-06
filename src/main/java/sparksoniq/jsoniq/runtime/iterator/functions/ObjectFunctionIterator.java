@@ -17,10 +17,10 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.jsoniq.runtime.iterator.functions;
+package sparksoniq.jsoniq.runtime.iterator.functions;
 
-import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.item.StringItem;
@@ -34,14 +34,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ObjectFunctionIterator extends LocalFunctionCallIterator {
-    public enum ObjectFunctionOperators{
-        KEYS,
-        VALUES
-    }
+    private final ObjectFunctionOperators _operator;
+    private List<Item> results = null;
+    private int _currentIndex;
+
     public ObjectFunctionIterator(List<RuntimeIterator> arguments, ObjectFunctionOperators op,
                                   IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
-        if(arguments.size() != 1)
+        if (arguments.size() != 1)
             throw new SparksoniqRuntimeException("Incorrect number of arguments for object function; " +
                     "Only one object argument is allowed");
         this._operator = op;
@@ -49,30 +49,24 @@ public class ObjectFunctionIterator extends LocalFunctionCallIterator {
 
     @Override
     public Item next() {
-        if(this._hasNext) {
-            if(results == null) {
+        if (this._hasNext) {
+            if (results == null) {
                 _currentIndex = 0;
                 results = new ArrayList<>();
                 RuntimeIterator objectIterator = this._children.get(0);
-                objectIterator.open(_currentDynamicContext);
-                Item iteratorResult = objectIterator.next();
-                if(!(iteratorResult instanceof ObjectItem))
-                    throw new SparksoniqRuntimeException("Invalid argument to "
-                            + _operator.toString() + " function, object expected");
-                ObjectItem object = (ObjectItem) iteratorResult;
-                objectIterator.close();
+                ObjectItem object = getSingleItemOfTypeFromIterator(objectIterator, ObjectItem.class);
                 switch (_operator) {
                     case KEYS:
-                        for(String key : object.getKeys())
+                        for (String key : object.getKeys())
                             results.add(new StringItem(key, ItemMetadata.fromIteratorMetadata(getMetadata())));
                         break;
                     case VALUES:
-                        for(Item item : object.getValues())
+                        for (Item item : object.getValues())
                             results.add(item);
                         break;
                 }
             }
-            if(_currentIndex == results.size() - 1)
+            if (_currentIndex == results.size() - 1)
                 this._hasNext = false;
             return results.get(_currentIndex++);
         }
@@ -81,12 +75,12 @@ public class ObjectFunctionIterator extends LocalFunctionCallIterator {
     }
 
     @Override
-    public void reset(DynamicContext context){
+    public void reset(DynamicContext context) {
         super.reset(context);
         this.results = null;
     }
-
-    private List<Item> results = null;
-    private int _currentIndex;
-    private final ObjectFunctionOperators _operator;
+    public enum ObjectFunctionOperators {
+        KEYS,
+        VALUES
+    }
 }
