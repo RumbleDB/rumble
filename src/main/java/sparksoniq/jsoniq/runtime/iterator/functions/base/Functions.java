@@ -28,6 +28,8 @@ import sparksoniq.jsoniq.runtime.iterator.functions.arithmetic.AvgFunctionIterat
 import sparksoniq.jsoniq.runtime.iterator.functions.arithmetic.MaxFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arithmetic.MinFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arithmetic.SumFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectKeysFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectValuesFunctionIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.spark.iterator.function.ParallelizeFunctionIterator;
 import sparksoniq.spark.iterator.function.ParseJsonFunctionIterator;
@@ -61,6 +63,8 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(STRINGJOIN, 2), StringJoinFunction.class);
 
         buildInFunctions.put(new SparksoniqFunctionSignature(SIZE, 1), ArraySizeFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(KEYS, 1), ObjectKeysFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(VALUES, 1), ObjectValuesFunctionIterator.class);
     }
 
     public static Class<? extends RuntimeIterator> getFunctionIteratorClass(FunctionCall expression, List<RuntimeIterator> arguments) {
