@@ -30,14 +30,11 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.List;
 
-public class ArrayFunctionIterator extends LocalFunctionCallIterator {
+public class ArraySizeFunctionIterator extends LocalFunctionCallIterator {
 
-    private final ArrayFunctionOperators _operator;
 
-    public ArrayFunctionIterator(List<RuntimeIterator> arguments, ArrayFunctionOperators op,
-                                 IteratorMetadata iteratorMetadata) {
+    public ArraySizeFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
-        this._operator = op;
     }
 
     @Override
@@ -48,11 +45,8 @@ public class ArrayFunctionIterator extends LocalFunctionCallIterator {
             ArrayItem array = getSingleItemOfTypeFromIterator(arrayIterator, ArrayItem.class);
             return new IntegerItem(array.getSize(), ItemMetadata.fromIteratorMetadata(getMetadata()));
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + _operator.toString() + " function",
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "SIZE function",
                 getMetadata());
     }
 
-    public enum ArrayFunctionOperators {
-        SIZE
-    }
 }

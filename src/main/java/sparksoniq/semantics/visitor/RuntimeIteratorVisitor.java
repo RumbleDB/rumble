@@ -19,51 +19,47 @@
  */
 package sparksoniq.semantics.visitor;
 
+import sparksoniq.exceptions.UnknownFunctionCallException;
+import sparksoniq.exceptions.UnsupportedFeatureException;
+import sparksoniq.jsoniq.compiler.translator.expr.CommaExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.Expression;
+import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.expr.control.IfExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.control.SwitchCaseExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.control.SwitchExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.*;
-import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpression;
-import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpressionVar;
-import sparksoniq.jsoniq.compiler.translator.expr.CommaExpression;
-import sparksoniq.jsoniq.compiler.translator.expr.Expression;
-import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.*;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.PostFixExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.*;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.*;
-import sparksoniq.exceptions.UnknownFunctionCallException;
-import sparksoniq.exceptions.UnsupportedFeatureException;
+import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpressionVar;
 import sparksoniq.jsoniq.runtime.iterator.CommaExpressionIterator;
 import sparksoniq.jsoniq.runtime.iterator.EmptySequenceIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.control.IfRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.control.SwitchRuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
-import sparksoniq.jsoniq.runtime.iterator.quantifiers.QuantifiedExpressionIterator;
-import sparksoniq.jsoniq.runtime.iterator.quantifiers.QuantifiedExpressionVarIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
-import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
-import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
-import sparksoniq.spark.iterator.flowr.*;
-import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
-import sparksoniq.spark.iterator.function.ParallelizeFunctionIterator;
-import sparksoniq.spark.iterator.function.ParseJsonFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.*;
 import sparksoniq.jsoniq.runtime.iterator.postfix.ArrayLookupIterator;
 import sparksoniq.jsoniq.runtime.iterator.postfix.ArrayUnboxingItertor;
 import sparksoniq.jsoniq.runtime.iterator.postfix.ObjectLookupItertor;
 import sparksoniq.jsoniq.runtime.iterator.postfix.PredicateIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.*;
+import sparksoniq.jsoniq.runtime.iterator.quantifiers.QuantifiedExpressionIterator;
+import sparksoniq.jsoniq.runtime.iterator.quantifiers.QuantifiedExpressionVarIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.spark.iterator.flowr.*;
+import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
+import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
+import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import static sparksoniq.jsoniq.runtime.iterator.functions.ArithmeticFunctionIterator.*;
 
 public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<RuntimeIterator> {
 
@@ -422,45 +418,13 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         for (Expression arg : expression.getParameters())
             arguments.add(this.visit(arg, argument));
 
-
-        switch (expression.getFunctionName()) {
-            case Functions.JSON_FILE:
-                return new ParseJsonFunctionIterator(arguments, iteratorMetadata);
-            case Functions.PARALLELIZE:
-                return new ParallelizeFunctionIterator(arguments, iteratorMetadata);
-            case Functions.COUNT:
-                return new CountFunctionIterator(arguments, iteratorMetadata);
-            case Functions.MAX:
-                return new ArithmeticFunctionIterator(arguments,
-                        ArithmeticFunctionOperator.MAX, iteratorMetadata);
-            case Functions.MIN:
-                return new ArithmeticFunctionIterator(arguments,
-                        ArithmeticFunctionOperator.MIN, iteratorMetadata);
-            case Functions.AVG:
-                return new ArithmeticFunctionIterator(arguments,
-                        ArithmeticFunctionOperator.AVG, iteratorMetadata);
-            case Functions.SUM:
-                return new ArithmeticFunctionIterator(arguments,
-                        ArithmeticFunctionOperator.SUM, iteratorMetadata);
-            case Functions.KEYS:
-                return new ObjectFunctionIterator(arguments,
-                        ObjectFunctionIterator.ObjectFunctionOperators.KEYS, iteratorMetadata);
-            case Functions.VALUES:
-                return new ObjectFunctionIterator(arguments,
-                        ObjectFunctionIterator.ObjectFunctionOperators.VALUES, iteratorMetadata);
-            case Functions.SIZE:
-                return new ArrayFunctionIterator(arguments,
-                        ArrayFunctionIterator.ArrayFunctionOperators.SIZE, iteratorMetadata);
-            case Functions.SUBSTRING:
-                return new SubstringFunctionIterator(arguments, iteratorMetadata);
-            case Functions.CONCAT:
-                return new ConcatFunctionIterator(arguments, iteratorMetadata);
-            case Functions.STRINGJOIN:
-                return new StringJoinFunction(arguments, iteratorMetadata);
-
+        try {
+            Class<? extends RuntimeIterator> functionClass = Functions.getFunctionIteratorClass(expression, arguments);
+            Constructor<? extends RuntimeIterator> ctor = functionClass.getConstructor(List.class, IteratorMetadata.class);
+            return ctor.newInstance(arguments, iteratorMetadata);
+        } catch (Exception e) {
+            throw new UnknownFunctionCallException(createIteratorMetadata(expression));
         }
-
-        throw new UnknownFunctionCallException(createIteratorMetadata(expression));
     }
 
     @Override

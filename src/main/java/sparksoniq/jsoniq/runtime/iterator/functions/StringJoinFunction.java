@@ -1,7 +1,6 @@
 package sparksoniq.jsoniq.runtime.iterator.functions;
 
 import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.StringItem;
@@ -15,9 +14,6 @@ import java.util.List;
 public class StringJoinFunction extends LocalFunctionCallIterator {
     public StringJoinFunction(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
-        if (arguments.size() != 2 && arguments.size() != 1)
-            throw new SparksoniqRuntimeException("Incorrect number of arguments for string-join function; " +
-                    "Exactly 1 or 2 arguments are required.");
     }
 
     @Override

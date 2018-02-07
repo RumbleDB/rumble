@@ -1,7 +1,6 @@
 package sparksoniq.jsoniq.runtime.iterator.functions;
 
 import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
@@ -14,8 +13,6 @@ import java.util.List;
 public class ConcatFunctionIterator extends LocalFunctionCallIterator {
     public ConcatFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
-        if (arguments.size() < 2)
-            throw new SparksoniqRuntimeException("Incorrect number of arguments for concat function.");
     }
 
     @Override

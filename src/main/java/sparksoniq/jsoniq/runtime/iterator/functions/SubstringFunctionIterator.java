@@ -1,7 +1,6 @@
 package sparksoniq.jsoniq.runtime.iterator.functions;
 
 import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.StringItem;
@@ -15,8 +14,6 @@ import java.util.List;
 public class SubstringFunctionIterator extends LocalFunctionCallIterator {
     public SubstringFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
-        if (arguments.size() < 2 || arguments.size() > 3)
-            throw new SparksoniqRuntimeException("Incorrect number of arguments for substring function");
     }
 
     @Override
