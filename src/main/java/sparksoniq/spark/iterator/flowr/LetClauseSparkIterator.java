@@ -73,7 +73,7 @@ public class LetClauseSparkIterator extends FlowrClauseSparkIterator {
             FlworTuple tuple  = new FlworTuple();
             tuple.putValue(((VariableReferenceIterator)this._children.get(0)).getVariableName(), contents, false);
             tuples.add(tuple);
-            rdd = SparkContextManager.getInstance().getContext().parallelize(tuples);
+            rdd = getCurrentContext().parallelize(tuples);
         }
         return rdd;
     }

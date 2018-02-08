@@ -17,52 +17,70 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.spark.iterator.flowr.base;
+package sparksoniq.spark.iterator.flowr.base;
 
+import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
+import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.io.json.JiqsItemParser;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FLWOR_CLAUSES;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.spark.SparkContextManager;
 import sparksoniq.spark.tuple.FlworTuple;
-import org.apache.spark.api.java.JavaRDD;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import static sparksoniq.spark.SparkContextManager.APP_NAME;
+
 public abstract class FlowrClauseSparkIterator implements Serializable {
 
 
-    public abstract JavaRDD<FlworTuple> getTupleRDD();
-
-    public FLWOR_CLAUSES getClauseType() { return _clauseType; }
-
-    public IteratorMetadata getMetadata() { return metadata; }
-
-    public void setPreviousClause(FlowrClauseSparkIterator previousClause) {
-        this._previousClause = previousClause;
-    }
-
-    public void setDynamicContext(DynamicContext context){this._currentDynamicContext = context;}
+    protected final JiqsItemParser _parser;
+    private final IteratorMetadata metadata;
+    private final FLWOR_CLAUSES _clauseType;
+    protected FlowrClauseSparkIterator _previousClause = null;
+    protected JavaRDD<FlworTuple> _rdd;
+    protected DynamicContext _currentDynamicContext;
+    protected List<RuntimeIterator> _children;
 
     protected FlowrClauseSparkIterator(List<RuntimeIterator> children, FLWOR_CLAUSES clauseType,
                                        IteratorMetadata iteratorMetadata) {
         this.metadata = iteratorMetadata;
         this._children = new ArrayList<>();
-        if(children!=null && !children.isEmpty())
+        if (children != null && !children.isEmpty())
             this._children.addAll(children);
         this._clauseType = clauseType;
         this._parser = new JiqsItemParser();
     }
 
-    private final IteratorMetadata metadata;
-    private final FLWOR_CLAUSES _clauseType;
-    protected FlowrClauseSparkIterator _previousClause = null;
-    protected JavaRDD<FlworTuple> _rdd;
-    protected final JiqsItemParser _parser;
-    protected DynamicContext _currentDynamicContext;
-    protected List<RuntimeIterator> _children;
+    public abstract JavaRDD<FlworTuple> getTupleRDD();
 
+    public FLWOR_CLAUSES getClauseType() {
+        return _clauseType;
+    }
 
+    public IteratorMetadata getMetadata() {
+        return metadata;
+    }
+
+    public void setPreviousClause(FlowrClauseSparkIterator previousClause) {
+        this._previousClause = previousClause;
+    }
+
+    public void setDynamicContext(DynamicContext context) {
+        this._currentDynamicContext = context;
+    }
+
+    protected JavaSparkContext getCurrentContext() {
+        try {
+            return SparkContextManager.getInstance().getContext();
+        } catch (SparksoniqRuntimeException ex) {
+            return new JavaSparkContext(new SparkConf().setAppName(APP_NAME).setMaster("local[*]"));
+        }
+    }
 }

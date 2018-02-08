@@ -17,8 +17,10 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.spark.iterator.flowr;
+package sparksoniq.spark.iterator.flowr;
 
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FLWOR_CLAUSES;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -27,9 +29,8 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.spark.SparkContextManager;
 import sparksoniq.spark.closures.ForClauseClosure;
 import sparksoniq.spark.closures.InitialForClauseClosure;
-import sparksoniq.spark.tuple.FlworTuple;
 import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
-import org.apache.spark.api.java.JavaRDD;
+import sparksoniq.spark.tuple.FlworTuple;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,15 +48,15 @@ public class ForClauseSparkIterator extends FlowrClauseSparkIterator {
     @Override
     public JavaRDD<FlworTuple> getTupleRDD() {
         if (this._rdd == null) {
-            String variableReference = ((VariableReferenceIterator)this._children.get(0)).getVariableName();
+            String variableReference = ((VariableReferenceIterator) this._children.get(0)).getVariableName();
             RuntimeIterator assignmentExpression = this._children.get(1);
-            JavaRDD<Item> initialRdd = null;
+            JavaRDD<Item> initialRdd;
             //if it's a start clause
             if (this._previousClause == null) {
                 initialRdd = this.getNewRDDFromExpression(assignmentExpression);
                 this._rdd = initialRdd.map(new InitialForClauseClosure(variableReference));
             } else {
-            //if it's not a start clause
+                //if it's not a start clause
                 this._rdd = this._previousClause.getTupleRDD();
                 this._rdd = this._rdd.flatMap(new ForClauseClosure(assignmentExpression, variableReference));
             }
@@ -64,9 +65,9 @@ public class ForClauseSparkIterator extends FlowrClauseSparkIterator {
     }
 
     //used to generate inital RDD for start LET/FOR
-    protected JavaRDD<Item> getNewRDDFromExpression(RuntimeIterator expression){
+    private JavaRDD<Item> getNewRDDFromExpression(RuntimeIterator expression) {
         JavaRDD<Item> rdd;
-        if(expression.isRDD())
+        if (expression.isRDD())
             rdd = expression.getRDD();
         else {
             List<Item> contents = new ArrayList<>();
@@ -74,8 +75,10 @@ public class ForClauseSparkIterator extends FlowrClauseSparkIterator {
             while (expression.hasNext())
                 contents.add(expression.next());
             expression.close();
-            rdd = SparkContextManager.getInstance().getContext().parallelize(contents);
+            rdd = getCurrentContext().parallelize(contents);
         }
         return rdd;
     }
+
+
 }
