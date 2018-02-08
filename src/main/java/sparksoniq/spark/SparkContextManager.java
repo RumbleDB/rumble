@@ -80,7 +80,8 @@ public class SparkContextManager {
         initializeKryoSerialization();
         Logger.getLogger("org").setLevel(LOG_LEVEL);
         Logger.getLogger("akka").setLevel(LOG_LEVEL);
-        context = new JavaSparkContext(this.configuration);
+        if(context == null)
+            context = new JavaSparkContext(this.configuration);
     }
 
     private void initializeKryoSerialization() {
