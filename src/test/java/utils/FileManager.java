@@ -30,10 +30,10 @@ public class FileManager {
 
     public static List<File> loadJiqFiles(File directory) {
         List<File> files = new ArrayList<>();
-        Arrays.asList(directory.listFiles()).stream().filter(file -> file.getName().endsWith(TEST_FILE_EXTENSION))
+        Arrays.asList(directory.listFiles()).stream().filter(file -> file.getName().endsWith(FileManager.TEST_FILE_EXTENSION))
                 .forEach(file -> files.add(file));
         Arrays.asList(directory.listFiles()).stream().filter(file -> file.isDirectory())
-                .forEach(file -> files.addAll(loadJiqFiles(file)));
+                .forEach(file -> files.addAll(FileManager.loadJiqFiles(file)));
         return files;
     }
 
