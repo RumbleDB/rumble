@@ -17,13 +17,13 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.spark.closures;
+package sparksoniq.spark.closures;
 
-import sparksoniq.jsoniq.item.Item;
-import sparksoniq.semantics.DynamicContext;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.spark.tuple.FlworTuple;
 import org.apache.spark.api.java.function.FlatMapFunction;
+import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.semantics.DynamicContext;
+import sparksoniq.spark.tuple.FlworTuple;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -37,11 +37,11 @@ public class ReturnFlatMapClosure implements FlatMapFunction<FlworTuple, Item> {
     }
 
     @Override
-    public Iterator<Item> call(FlworTuple v1) throws Exception {
+    public Iterator<Item> call(FlworTuple v1) {
         List<Item> result = new ArrayList<>();
         _expression.open(new DynamicContext(v1));
-        while(_expression.hasNext())
-           result.add(_expression.next());
+        while (_expression.hasNext())
+            result.add(_expression.next());
         _expression.close();
         return result.iterator();
     }
