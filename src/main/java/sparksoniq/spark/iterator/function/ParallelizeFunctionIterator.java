@@ -17,14 +17,13 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.spark.iterator.function;
+package sparksoniq.spark.iterator.function;
 
-import sparksoniq.exceptions.SparksoniqRuntimeException;
+import org.apache.spark.api.java.JavaRDD;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.spark.SparkContextManager;
-import org.apache.spark.api.java.JavaRDD;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,16 +31,14 @@ import java.util.List;
 public class ParallelizeFunctionIterator extends SparkFunctionCallIterator {
     public ParallelizeFunctionIterator(List<RuntimeIterator> parameters, IteratorMetadata iteratorMetadata) {
         super(parameters, iteratorMetadata);
-        if(parameters.size() > 1 || parameters.size() < 1)
-            throw new SparksoniqRuntimeException("Incorrect number of arguments for parallelize function");
     }
 
     @Override
     public JavaRDD<Item> getRDD() {
 
-        if(this._rdd == null){
+        if (this._rdd == null) {
             List<Item> contents = new ArrayList<>();
-            for(RuntimeIterator iterator : this._children){
+            for (RuntimeIterator iterator : this._children) {
                 iterator.open(this._currentDynamicContext);
                 while (iterator.hasNext())
                     contents.add(iterator.next()/*.serialize()*/);

@@ -17,34 +17,35 @@
  * Author: Stefan Irimescu
  *
  */
-package sparksoniq.jsoniq.runtime.iterator.functions;
+package sparksoniq.jsoniq.runtime.iterator.functions.object;
 
-import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
 
-public class CountFunctionIterator extends LocalFunctionCallIterator {
-    public CountFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
+public abstract class ObjectFunctionIterator extends LocalFunctionCallIterator {
+    private final ObjectFunctionOperators _operator;
+    protected List<Item> results = null;
+    protected int _currentIndex;
+
+    protected ObjectFunctionIterator(List<RuntimeIterator> arguments, ObjectFunctionOperators op,
+                                     IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
+        this._operator = op;
     }
 
     @Override
-    public Item next() {
-        if (this._hasNext) {
-            RuntimeIterator sequenceIterator = this._children.get(0);
-            List<Item> results = getItemsFromIteratorWithCurrentContext(sequenceIterator);
-            this._hasNext = false;
-            return new IntegerItem(results.size(),
-                    ItemMetadata.fromIteratorMetadata(getMetadata()));
-        } else
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " count function", getMetadata());
+    public void reset(DynamicContext context) {
+        super.reset(context);
+        this.results = null;
     }
 
-
+    public enum ObjectFunctionOperators {
+        KEYS,
+        VALUES
+    }
 }

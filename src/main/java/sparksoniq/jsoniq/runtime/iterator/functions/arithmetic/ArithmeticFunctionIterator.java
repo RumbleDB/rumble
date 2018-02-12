@@ -17,34 +17,31 @@
  * Author: Stefan Irimescu
  *
  */
-package sparksoniq.jsoniq.runtime.iterator.functions;
+package sparksoniq.jsoniq.runtime.iterator.functions.arithmetic;
 
-import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.jsoniq.item.IntegerItem;
-import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.item.metadata.ItemMetadata;
+import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.List;
 
-public class CountFunctionIterator extends LocalFunctionCallIterator {
-    public CountFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
+public abstract class ArithmeticFunctionIterator extends LocalFunctionCallIterator {
+
+    protected ArithmeticFunctionIterator(List<RuntimeIterator> arguments,
+                                         ArithmeticFunctionOperator operator, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
+        if (arguments.size() != 1)
+            throw new SparksoniqRuntimeException("Incorrect number of arguments for arithmetic function; " +
+                    "Only one sequence argument is allowed");
+        ArithmeticFunctionOperator _operator = operator;
     }
 
-    @Override
-    public Item next() {
-        if (this._hasNext) {
-            RuntimeIterator sequenceIterator = this._children.get(0);
-            List<Item> results = getItemsFromIteratorWithCurrentContext(sequenceIterator);
-            this._hasNext = false;
-            return new IntegerItem(results.size(),
-                    ItemMetadata.fromIteratorMetadata(getMetadata()));
-        } else
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " count function", getMetadata());
+    public enum ArithmeticFunctionOperator {
+        MIN,
+        MAX,
+        AVG,
+        SUM,
     }
-
 
 }

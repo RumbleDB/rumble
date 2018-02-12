@@ -20,7 +20,6 @@
 package sparksoniq.jsoniq.runtime.iterator.control;
 
 import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -32,6 +31,9 @@ import java.util.List;
 
 
 public class IfRuntimeIterator extends LocalRuntimeIterator {
+
+    private List<Item> result = null;
+    private int currentIndex;
 
     public IfRuntimeIterator(RuntimeIterator condition, RuntimeIterator branch, RuntimeIterator elseBranch,
                              IteratorMetadata iteratorMetadata) {
@@ -62,22 +64,12 @@ public class IfRuntimeIterator extends LocalRuntimeIterator {
             RuntimeIterator elseBranch = null;
             if (this._children.size() > 2)
                 elseBranch = this._children.get(2);
-            condition.open(this._currentDynamicContext);
-            Item conditionResult = condition.next();
-            if (condition.hasNext())
-                throw new SparksoniqRuntimeException("Effective boolean value not defined for sequences");
-            condition.close();
+            Item conditionResult = getSingleItemOfTypeFromIterator(condition, Item.class);
             result = new ArrayList<>();
             if (Item.getEffectiveBooleanValue(conditionResult)) {
-                branch.open(_currentDynamicContext);
-                while (branch.hasNext())
-                    result.add(branch.next());
-                branch.close();
+                result = getItemsFromIteratorWithCurrentContext(branch);
             } else {
-                elseBranch.open(_currentDynamicContext);
-                while (elseBranch.hasNext())
-                    result.add(elseBranch.next());
-                elseBranch.close();
+                result = getItemsFromIteratorWithCurrentContext(elseBranch);
             }
         }
         if (currentIndex > result.size() - 1)
@@ -86,7 +78,4 @@ public class IfRuntimeIterator extends LocalRuntimeIterator {
             this._hasNext = false;
         return result.get(currentIndex++);
     }
-
-    private List<Item> result = null;
-    private int currentIndex;
 }
