@@ -57,7 +57,7 @@ public class ForClauseSparkIterator extends FlowrClauseSparkIterator {
             } else {
             //if it's not a start clause
                 this._rdd = this._previousClause.getTupleRDD();
-                this._rdd = this._rdd.flatMap(new ForClauseClosure(assignmentExpression, variableReference));
+                this._rdd = this._rdd.flatMap(new ForClauseClosure(assignmentExpression, variableReference, _currentDynamicContext));
             }
         }
         return _rdd;

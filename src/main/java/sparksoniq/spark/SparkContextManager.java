@@ -33,6 +33,9 @@ import org.apache.log4j.Logger;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+
 public class SparkContextManager {
 
     public static String DEFAULT_MASTER_CONFIG = "local[*]";
@@ -90,7 +93,7 @@ public class SparkContextManager {
         Class[] serializedClasses = new Class[]{Item.class, ArrayItem.class, ObjectItem.class,
                 StringItem.class, IntegerItem.class, DoubleItem.class, DecimalItem.class, NullItem.class,
                 BooleanItem.class, DynamicContext.class, FlworTuple.class, FlworKey.class,
-                FlowrClauseSparkIterator.class, RuntimeIterator.class};
+                FlowrClauseSparkIterator.class, RuntimeIterator.class, HashMap.class, ArrayList.class};
         configuration.registerKryoClasses(serializedClasses);
     }
 

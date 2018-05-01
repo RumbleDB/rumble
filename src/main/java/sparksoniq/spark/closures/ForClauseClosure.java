@@ -32,18 +32,20 @@ import java.util.List;
 public class ForClauseClosure implements FlatMapFunction<FlworTuple, FlworTuple> {
     private final String _variableName;
     private final RuntimeIterator _expression;
+    private final DynamicContext _parentContext;
 
 
-    public ForClauseClosure(RuntimeIterator expression, String variableName) {
+    public ForClauseClosure(RuntimeIterator expression, String variableName, DynamicContext parentContext) {
         this._variableName = variableName;
         this._expression = expression;
+        this._parentContext = parentContext;
     }
 
     @Override
-    public Iterator<FlworTuple> call(FlworTuple tuple) throws Exception {
+    public Iterator<FlworTuple> call(FlworTuple tuple) {
         List<FlworTuple> results = new ArrayList<>();
         List<Item> items = new ArrayList<>();
-        _expression.open(new DynamicContext(tuple));
+        _expression.open(new DynamicContext(_parentContext, tuple));
         while(_expression.hasNext())
             items.add(_expression.next());
         _expression.close();

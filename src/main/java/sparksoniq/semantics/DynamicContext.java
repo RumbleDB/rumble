@@ -17,7 +17,7 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.semantics;
+package sparksoniq.semantics;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
@@ -27,46 +27,52 @@ import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.spark.tuple.FlworTuple;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class DynamicContext implements KryoSerializable{
+public class DynamicContext implements KryoSerializable {
+
+    public DynamicContext(DynamicContext parent, FlworTuple tuple) {
+        this(parent);
+        generateDynamicContextFromTupleRdd(tuple);
+    }
 
     public DynamicContext(FlworTuple tuple) {
         this();
         generateDynamicContextFromTupleRdd(tuple);
     }
 
-    public DynamicContext(){
+    public DynamicContext() {
         this._parent = null;
         this._variableValues = new HashMap<>();
     }
 
-    public DynamicContext(DynamicContext parent){
+    public DynamicContext(DynamicContext parent) {
         this._parent = parent;
         this._variableValues = new HashMap<>();
     }
 
 
     public List<Item> getVariableValue(String varName) {
-        if(_variableValues.containsKey(varName))
+        if (_variableValues.containsKey(varName))
             return _variableValues.get(varName);
-        else if(_parent !=null)
+        else if (_parent != null)
             return _parent.getVariableValue(varName);
         else
             throw new SparksoniqRuntimeException("Runtime error retrieving variable " +
                     "" + varName + " value");
     }
 
-    public void addVariableValue(String varName, List<Item> value){
+    public void addVariableValue(String varName, List<Item> value) {
         this._variableValues.put(varName, value);
     }
 
     private void generateDynamicContextFromTupleRdd(FlworTuple tuple) {
-        for(String key : tuple.getKeys())
-            if(!key.startsWith("."))
-                this.addVariableValue(key,tuple.getValue(key));
+        for (String key : tuple.getKeys())
+            if (!key.startsWith("."))
+                this.addVariableValue(key, tuple.getValue(key));
     }
 
     public void removeVariable(String varName) {
@@ -75,17 +81,30 @@ public class DynamicContext implements KryoSerializable{
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, _parent);
-        kryo.writeObject(output, _variableValues);
+        HashMap<String, List<Item>> mergedVariables = new HashMap<>(_variableValues);
+        DynamicContext parent = this._parent;
+        while(parent != null) {
+            mergedVariables.putAll(parent._variableValues);
+            parent = parent._parent;
+        }
+        kryo.writeObject(output, new ArrayList<>(mergedVariables.keySet()));
+        kryo.writeObject(output, new ArrayList<>(mergedVariables.values()));
+        output.close();
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        _parent = kryo.readObjectOrNull(input, DynamicContext.class);
-        _variableValues = kryo.readObject(input, HashMap.class);
+        _parent = null;
+        _variableValues = new HashMap<>();
+        ArrayList<String> keys = kryo.readObject(input, ArrayList.class);
+        ArrayList<ArrayList<Item>> values = kryo.readObject(input, ArrayList.class);
+        for(String key : keys) {
+            _variableValues.put(key, values.get(keys.indexOf(key)));
+        }
+        input.close();
     }
 
-    private Map<String, List<Item>> _variableValues;
+    private HashMap<String, List<Item>> _variableValues;
     private DynamicContext _parent;
 }
 
