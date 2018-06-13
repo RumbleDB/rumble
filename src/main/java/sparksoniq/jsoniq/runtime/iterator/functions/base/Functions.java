@@ -87,18 +87,18 @@ public class Functions {
         /**
          * function that returns the length of a sequence
          */
-
         public static final String COUNT = "count";
+
         /**
-         * function that returns the maximum of a sequence
+         * function that returns the minimum of a sequence
          */
         public static final String MIN = "min";
         /**
-         * function that returns the minimum of a sequence
+         * function that returns the maximum of a sequence
          */
         public static final String MAX = "max";
         /**
-         * function that returns the minimum of a sequence
+         * function that returns the average of a sequence
          */
         public static final String AVG = "avg";
         /**
