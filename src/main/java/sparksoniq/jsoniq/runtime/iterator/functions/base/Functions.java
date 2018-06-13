@@ -54,6 +54,8 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(SUM, 1), SumFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(AVG, 1), AvgFunctionIterator.class);
 
+        buildInFunctions.put(new SparksoniqFunctionSignature(COS, 1), CosFunctionIterator.class);
+
         buildInFunctions.put(new SparksoniqFunctionSignature(SUBSTRING, 2), SubstringFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(SUBSTRING, 3), SubstringFunctionIterator.class);
         for(int i = 0; i <= 100; i++)
@@ -105,6 +107,12 @@ public class Functions {
          * function that returns the sum of a sequence
          */
         public static final String SUM = "sum";
+
+
+        /**
+         * function that returns the cosine of the angle given in radians
+         */
+        public static final String COS = "cos";
 
 
         /**
