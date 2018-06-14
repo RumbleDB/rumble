@@ -56,6 +56,7 @@ public class Functions {
 
         buildInFunctions.put(new SparksoniqFunctionSignature(SIN, 1), SinFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(COS, 1), CosFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(TAN, 1), TanFunctionIterator.class);
 
         buildInFunctions.put(new SparksoniqFunctionSignature(SUBSTRING, 2), SubstringFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(SUBSTRING, 3), SubstringFunctionIterator.class);
@@ -111,13 +112,17 @@ public class Functions {
 
 
         /**
-         * function that returns the cosine of the angle given in radians
+         * function that returns the sine of the angle given in radians
          */
         public static final String SIN = "sin";
         /**
          * function that returns the cosine of the angle given in radians
          */
         public static final String COS = "cos";
+        /**
+         * function that returns the tangent of the angle given in radians
+         */
+        public static final String TAN = "tan";
 
 
         /**
