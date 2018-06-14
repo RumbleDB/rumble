@@ -57,6 +57,10 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(SIN, 1), SinFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(COS, 1), CosFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(TAN, 1), TanFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(ASIN, 1), ASinFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(ACOS, 1), ACosFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(ATAN, 1), ATanFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(ATAN2, 2), ATan2FunctionIterator.class);
 
         buildInFunctions.put(new SparksoniqFunctionSignature(SUBSTRING, 2), SubstringFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(SUBSTRING, 3), SubstringFunctionIterator.class);
@@ -123,6 +127,22 @@ public class Functions {
          * function that returns the tangent of the angle given in radians
          */
         public static final String TAN = "tan";
+        /**
+         * function that returns the arc sine of the angle given in radians
+         */
+        public static final String ASIN = "asin";
+        /**
+         * function that returns the arc cosine of the angle given in radians
+         */
+        public static final String ACOS = "acos";
+        /**
+         * function that returns the arc tangent of the angle given in radians
+         */
+        public static final String ATAN = "atan";
+        /**
+         * function that returns the the angle in radians subtended at the origin by the point on a plane with coordinates (x, y) and the positive x-axis.
+         */
+        public static final String ATAN2 = "atan2";
 
 
         /**
