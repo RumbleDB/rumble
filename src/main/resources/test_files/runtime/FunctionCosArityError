@@ -1,0 +1,3 @@
+(:JIQS: ShouldCrash; ErrorCode="(XPST0017, XPST0017)"; ErrorMetadata="(LINE:1:COLUMN:0:, LINE:1:COLUMN:0:" :)
+cos(1,2),
+cos()
