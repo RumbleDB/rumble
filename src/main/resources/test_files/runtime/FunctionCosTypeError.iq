@@ -1,2 +1,2 @@
-(:JIQS: ShouldCrash; ErrorCode="XPTY0004"; ErrorMetadata="LINE:1:COLUMN:0:" :)
+(:JIQS: ShouldCrash; ErrorCode="XPTY0004"; ErrorMetadata="LINE:1:COLUMN:0:Cos expression has non numeric args 2.0" :)
 cos("2.0")
