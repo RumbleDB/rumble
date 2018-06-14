@@ -54,6 +54,7 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(SUM, 1), SumFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(AVG, 1), AvgFunctionIterator.class);
 
+        buildInFunctions.put(new SparksoniqFunctionSignature(SIN, 1), SinFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(COS, 1), CosFunctionIterator.class);
 
         buildInFunctions.put(new SparksoniqFunctionSignature(SUBSTRING, 2), SubstringFunctionIterator.class);
@@ -109,6 +110,10 @@ public class Functions {
         public static final String SUM = "sum";
 
 
+        /**
+         * function that returns the cosine of the angle given in radians
+         */
+        public static final String SIN = "sin";
         /**
          * function that returns the cosine of the angle given in radians
          */

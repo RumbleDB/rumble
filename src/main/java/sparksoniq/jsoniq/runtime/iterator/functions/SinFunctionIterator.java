@@ -11,10 +11,9 @@ import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterat
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.List;
-import java.lang.Math;
 
-public class CosFunctionIterator extends LocalFunctionCallIterator {
-    public CosFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
+public class SinFunctionIterator extends LocalFunctionCallIterator {
+    public SinFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
     }
 
@@ -29,18 +28,18 @@ public class CosFunctionIterator extends LocalFunctionCallIterator {
             else {
                 Item radians = this.getSingleItemOfTypeFromIterator(iterator, Item.class);
                 if (Item.isNumeric(radians)) {
-                    Double result = Math.cos(Item.getNumericValue(radians, Double.class));
+                    Double result = Math.sin(Item.getNumericValue(radians, Double.class));
                     this._hasNext = false;
                     return new DoubleItem(result,
                             ItemMetadata.fromIteratorMetadata(getMetadata()));
                 }
                 else {
-                    throw new UnexpectedTypeException("Cos expression has non numeric args " +
+                    throw new UnexpectedTypeException("Sin expression has non numeric args " +
                             radians.serialize(), getMetadata());
                 }
             }
         } else
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " cos function", getMetadata());
+            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " sin function", getMetadata());
     }
 
 
