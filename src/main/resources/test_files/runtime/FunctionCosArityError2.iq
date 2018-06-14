@@ -1,2 +1,2 @@
-(:JIQS: ShouldCrash; ErrorCode="XPST0017"; ErrorMetadata="LINE:1:COLUMN:0:Static error; The expanded QName and number of arguments in a static function call do not match the name and arity of a function signature in the static context." :)
+(:JIQS: ShouldCrash; ErrorCode="XPST0017"; ErrorMetadata="LINE:2:COLUMN:0:" :)
 cos(1,2)
