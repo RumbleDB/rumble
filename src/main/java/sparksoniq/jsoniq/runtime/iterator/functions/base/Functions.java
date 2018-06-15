@@ -54,6 +54,13 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(SUM, 1), SumFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(AVG, 1), AvgFunctionIterator.class);
 
+        buildInFunctions.put(new SparksoniqFunctionSignature(PI, 0), PiFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(EXP, 1), ExpFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(EXP10, 1), Exp10FunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(LOG, 1), LogFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(LOG10, 1), Log10FunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(POW, 2), PowFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(SQRT, 1), SqrtFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(SIN, 1), SinFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(COS, 1), CosFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(TAN, 1), TanFunctionIterator.class);
@@ -115,6 +122,34 @@ public class Functions {
         public static final String SUM = "sum";
 
 
+        /**
+         * function that returns the approximation the mathematical constant
+         */
+        public static final String PI = "pi";
+        /**
+         * function that returns the value of e^x
+         */
+        public static final String EXP = "exp";
+        /**
+         * function that returns the value of 10^x
+         */
+        public static final String EXP10 = "exp10";
+        /**
+         * function that returns the natural logarithm of the argument
+         */
+        public static final String LOG = "log";
+        /**
+         * function that returns the  base-ten logarithm of the argument
+         */
+        public static final String LOG10 = "log10";
+        /**
+         * function that returns the result of raising the first argument to the power of the second
+         */
+        public static final String POW = "pow";
+        /**
+         * function that returns the non-negative square root of the argument
+         */
+        public static final String SQRT = "sqrt";
         /**
          * function that returns the sine of the angle given in radians
          */
