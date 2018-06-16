@@ -54,6 +54,14 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(SUM, 1), SumFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(AVG, 1), AvgFunctionIterator.class);
 
+        buildInFunctions.put(new SparksoniqFunctionSignature(ABS, 1), AbsFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(CEILING, 1), CeilingFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(FLOOR, 1), FloorFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(ROUND, 1), RoundFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(ROUND, 2), RoundFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(ROUNDHALFTOEVEN, 1), RoundHalfToEvenFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(ROUNDHALFTOEVEN, 2), RoundHalfToEvenFunctionIterator.class);
+
         buildInFunctions.put(new SparksoniqFunctionSignature(PI, 0), PiFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(EXP, 1), ExpFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(EXP10, 1), Exp10FunctionIterator.class);
@@ -120,6 +128,28 @@ public class Functions {
          * function that returns the sum of a sequence
          */
         public static final String SUM = "sum";
+
+
+        /**
+         * function that returns the absolute value of the arg
+         */
+        public static final String ABS = "abs";
+        /**
+         * function that rounds $arg upwards to a whole number
+         */
+        public static final String CEILING = "ceiling";
+        /**
+         * function that rounds $arg downwards to a whole number
+         */
+        public static final String FLOOR = "floor";
+        /**
+         * function that rounds a value to a specified number of decimal places, rounding upwards if two such values are equally near
+         */
+        public static final String ROUND = "round";
+        /**
+         * function that rounds a value to a specified number of decimal places, rounding to make the last digit even if two such values are equally near
+         */
+        public static final String ROUNDHALFTOEVEN = "roundhalftoeven";
 
 
         /**

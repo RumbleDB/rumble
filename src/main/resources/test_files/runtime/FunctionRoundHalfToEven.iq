@@ -1,0 +1,7 @@
+(:JIQS: ShouldRun; Output="( 0.0, 2.0, 2.0, 3567.81, 0.0, 35600.0)" :)
+roundhalftoeven(0.5),
+roundhalftoeven(1.5),
+roundhalftoeven(2.5),
+roundhalftoeven(3.567812e+3, 2),
+roundhalftoeven(4.7564e-3, 2),
+roundhalftoeven(35612.25, -2)

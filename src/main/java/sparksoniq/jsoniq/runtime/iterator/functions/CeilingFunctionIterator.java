@@ -12,8 +12,8 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.List;
 
-public class Log10FunctionIterator extends LocalFunctionCallIterator {
-    public Log10FunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
+public class CeilingFunctionIterator extends LocalFunctionCallIterator {
+    public CeilingFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
     }
 
@@ -28,18 +28,18 @@ public class Log10FunctionIterator extends LocalFunctionCallIterator {
             else {
                 Item value = this.getSingleItemOfTypeFromIterator(iterator, Item.class);
                 if (Item.isNumeric(value)) {
-                    Double result = Math.log10(Item.getNumericValue(value, Double.class));
+                    Double result = Math.ceil(Item.getNumericValue(value, Double.class));
                     this._hasNext = false;
                     return new DoubleItem(result,
                             ItemMetadata.fromIteratorMetadata(getMetadata()));
                 }
                 else {
-                    throw new UnexpectedTypeException("Log10 expression has non numeric args " +
+                    throw new UnexpectedTypeException("Ceiling expression has non numeric args " +
                             value.serialize(), getMetadata());
                 }
             }
         } else
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " log10 function", getMetadata());
+            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " ceiling function", getMetadata());
     }
 
 
