@@ -149,7 +149,7 @@ public class Functions {
         /**
          * function that rounds a value to a specified number of decimal places, rounding to make the last digit even if two such values are equally near
          */
-        public static final String ROUNDHALFTOEVEN = "roundhalftoeven";
+        public static final String ROUNDHALFTOEVEN = "round-half-to-even";
 
 
         /**
