@@ -11,6 +11,7 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
+import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 
@@ -42,7 +43,10 @@ public class RoundHalfToEvenFunctionIterator extends LocalFunctionCallIterator {
                     Double val = Item.getNumericValue(value, Double.class);
                     Integer prec = Item.getNumericValue(precision, Integer.class);
 
-                    Double result = RoundFunctionIterator.getRoundedResult(val, prec, RoundingMode.HALF_EVEN);
+                    BigDecimal bd = new BigDecimal(val);
+                    bd = bd.setScale(prec, RoundingMode.HALF_EVEN);
+                    Double result = bd.doubleValue();
+
                     this._hasNext = false;
                     return new DoubleItem(result,
                             ItemMetadata.fromIteratorMetadata(getMetadata()));
