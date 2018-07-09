@@ -47,7 +47,7 @@ public class ValueTypeHandler {
         }
     }
 
-    //TODO think of beter way to distinguish numeric literals
+    //TODO think of beter way to distinguish numerics literals
     private static PrimaryExpression getNumericLiteral(String token, ExpressionMetadata metadataFromContext) {
         if(!token.contains(".") && !token.contains("e") && !token.contains("E"))
             return new IntegerLiteral(Integer.parseInt(token), metadataFromContext);

@@ -53,7 +53,7 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
         //TODO implement all comparisons (strings, objects)
         if (Item.isNumeric(left)) {
             if (!Item.isNumeric(left) || !Item.isNumeric(right))
-                throw new UnexpectedTypeException("Invalid args for numeric comparison " + left.serialize() +
+                throw new UnexpectedTypeException("Invalid args for numerics comparison " + left.serialize() +
                         ", " + right.serialize(), getMetadata());
             double l = Item.getNumericValue(left, Double.class);
             double r = Item.getNumericValue(right, Double.class);
