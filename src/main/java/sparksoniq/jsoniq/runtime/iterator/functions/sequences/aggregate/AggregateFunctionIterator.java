@@ -42,6 +42,7 @@ public abstract class AggregateFunctionIterator extends LocalFunctionCallIterato
         MAX,
         AVG,
         SUM,
+        COUNT
     }
 
 }

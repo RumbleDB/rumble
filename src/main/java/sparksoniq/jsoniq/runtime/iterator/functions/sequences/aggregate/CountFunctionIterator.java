@@ -17,7 +17,7 @@
  * Author: Stefan Irimescu
  *
  */
-package sparksoniq.jsoniq.runtime.iterator.functions;
+package sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate;
 
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.IntegerItem;
@@ -25,13 +25,14 @@ import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate.AggregateFunctionIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.List;
 
-public class CountFunctionIterator extends LocalFunctionCallIterator {
+public class CountFunctionIterator extends AggregateFunctionIterator {
     public CountFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
-        super(arguments, iteratorMetadata);
+        super(arguments, AggregateFunctionIterator.AggregateFunctionOperator.COUNT, iteratorMetadata);
     }
 
     @Override
@@ -43,7 +44,8 @@ public class CountFunctionIterator extends LocalFunctionCallIterator {
             return new IntegerItem(results.size(),
                     ItemMetadata.fromIteratorMetadata(getMetadata()));
         } else
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " count function", getMetadata());
+            throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + " count function",
+                    getMetadata());
     }
 
 
