@@ -54,6 +54,29 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(SUM, 1), SumFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(AVG, 1), AvgFunctionIterator.class);
 
+        buildInFunctions.put(new SparksoniqFunctionSignature(ABS, 1), AbsFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(CEILING, 1), CeilingFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(FLOOR, 1), FloorFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(ROUND, 1), RoundFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(ROUND, 2), RoundFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(ROUNDHALFTOEVEN, 1), RoundHalfToEvenFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(ROUNDHALFTOEVEN, 2), RoundHalfToEvenFunctionIterator.class);
+
+        buildInFunctions.put(new SparksoniqFunctionSignature(PI, 0), PiFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(EXP, 1), ExpFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(EXP10, 1), Exp10FunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(LOG, 1), LogFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(LOG10, 1), Log10FunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(POW, 2), PowFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(SQRT, 1), SqrtFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(SIN, 1), SinFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(COS, 1), CosFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(TAN, 1), TanFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(ASIN, 1), ASinFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(ACOS, 1), ACosFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(ATAN, 1), ATanFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(ATAN2, 2), ATan2FunctionIterator.class);
+
         buildInFunctions.put(new SparksoniqFunctionSignature(SUBSTRING, 2), SubstringFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(SUBSTRING, 3), SubstringFunctionIterator.class);
         for(int i = 0; i <= 100; i++)
@@ -87,24 +110,104 @@ public class Functions {
         /**
          * function that returns the length of a sequence
          */
-
         public static final String COUNT = "count";
+
         /**
-         * function that returns the maximum of a sequence
+         * function that returns the minimum of a sequence
          */
         public static final String MIN = "min";
         /**
-         * function that returns the minimum of a sequence
+         * function that returns the maximum of a sequence
          */
         public static final String MAX = "max";
         /**
-         * function that returns the minimum of a sequence
+         * function that returns the average of a sequence
          */
         public static final String AVG = "avg";
         /**
          * function that returns the sum of a sequence
          */
         public static final String SUM = "sum";
+
+
+        /**
+         * function that returns the absolute value of the arg
+         */
+        public static final String ABS = "abs";
+        /**
+         * function that rounds $arg upwards to a whole number
+         */
+        public static final String CEILING = "ceiling";
+        /**
+         * function that rounds $arg downwards to a whole number
+         */
+        public static final String FLOOR = "floor";
+        /**
+         * function that rounds a value to a specified number of decimal places, rounding upwards if two such values are equally near
+         */
+        public static final String ROUND = "round";
+        /**
+         * function that rounds a value to a specified number of decimal places, rounding to make the last digit even if two such values are equally near
+         */
+        public static final String ROUNDHALFTOEVEN = "round-half-to-even";
+
+
+        /**
+         * function that returns the approximation the mathematical constant
+         */
+        public static final String PI = "pi";
+        /**
+         * function that returns the value of e^x
+         */
+        public static final String EXP = "exp";
+        /**
+         * function that returns the value of 10^x
+         */
+        public static final String EXP10 = "exp10";
+        /**
+         * function that returns the natural logarithm of the argument
+         */
+        public static final String LOG = "log";
+        /**
+         * function that returns the  base-ten logarithm of the argument
+         */
+        public static final String LOG10 = "log10";
+        /**
+         * function that returns the result of raising the first argument to the power of the second
+         */
+        public static final String POW = "pow";
+        /**
+         * function that returns the non-negative square root of the argument
+         */
+        public static final String SQRT = "sqrt";
+        /**
+         * function that returns the sine of the angle given in radians
+         */
+        public static final String SIN = "sin";
+        /**
+         * function that returns the cosine of the angle given in radians
+         */
+        public static final String COS = "cos";
+        /**
+         * function that returns the tangent of the angle given in radians
+         */
+        public static final String TAN = "tan";
+        /**
+         * function that returns the arc sine of the angle given in radians
+         */
+        public static final String ASIN = "asin";
+        /**
+         * function that returns the arc cosine of the angle given in radians
+         */
+        public static final String ACOS = "acos";
+        /**
+         * function that returns the arc tangent of the angle given in radians
+         */
+        public static final String ATAN = "atan";
+        /**
+         * function that returns the the angle in radians subtended at the origin by the point on a plane with coordinates (x, y) and the positive x-axis.
+         */
+        public static final String ATAN2 = "atan2";
 
 
         /**
