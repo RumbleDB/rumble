@@ -17,7 +17,7 @@
  * Author: Stefan Irimescu
  *
  */
-package sparksoniq.jsoniq.runtime.iterator.functions.arrays;
+package sparksoniq.jsoniq.runtime.iterator.functions.sequences;
 
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.ArrayItem;
