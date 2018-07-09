@@ -26,18 +26,18 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.List;
 
-public abstract class ArithmeticFunctionIterator extends LocalFunctionCallIterator {
+public abstract class AggregateFunctionIterator extends LocalFunctionCallIterator {
 
-    protected ArithmeticFunctionIterator(List<RuntimeIterator> arguments,
-                                         ArithmeticFunctionOperator operator, IteratorMetadata iteratorMetadata) {
+    protected AggregateFunctionIterator(List<RuntimeIterator> arguments,
+                                        AggregateFunctionOperator operator, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
         if (arguments.size() != 1)
-            throw new SparksoniqRuntimeException("Incorrect number of arguments for arithmetic function; " +
+            throw new SparksoniqRuntimeException("Incorrect number of arguments for aggregate function; " +
                     "Only one sequence argument is allowed");
-        ArithmeticFunctionOperator _operator = operator;
+        AggregateFunctionOperator _operator = operator;
     }
 
-    public enum ArithmeticFunctionOperator {
+    public enum AggregateFunctionOperator {
         MIN,
         MAX,
         AVG,

@@ -10,9 +10,9 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import java.math.BigDecimal;
 import java.util.List;
 
-public class SumFunctionIterator extends ArithmeticFunctionIterator {
+public class SumFunctionIterator extends AggregateFunctionIterator {
     public SumFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
-        super(arguments, ArithmeticFunctionOperator.SUM, iteratorMetadata);
+        super(arguments, AggregateFunctionOperator.SUM, iteratorMetadata);
     }
 
     @Override
@@ -23,7 +23,7 @@ public class SumFunctionIterator extends ArithmeticFunctionIterator {
             this._hasNext = false;
             results.forEach(r -> {
                 if (!Item.isNumeric(r))
-                    throw new IllegalArgumentException("Arithmetic function argument is non numerics");
+                    throw new IllegalArgumentException("Aggregate function argument is non numerics");
             });
             //TODO refactor empty items
             if (results.size() == 0)

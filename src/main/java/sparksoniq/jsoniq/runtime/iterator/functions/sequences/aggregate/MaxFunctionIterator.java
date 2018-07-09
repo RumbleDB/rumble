@@ -8,9 +8,9 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import java.math.BigDecimal;
 import java.util.List;
 
-public class MaxFunctionIterator extends ArithmeticFunctionIterator {
+public class MaxFunctionIterator extends AggregateFunctionIterator {
     public MaxFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
-        super(arguments, ArithmeticFunctionOperator.MAX, iteratorMetadata);
+        super(arguments, AggregateFunctionOperator.MAX, iteratorMetadata);
     }
 
     @Override
@@ -21,7 +21,7 @@ public class MaxFunctionIterator extends ArithmeticFunctionIterator {
             this._hasNext = false;
             results.forEach(r -> {
                 if (!Item.isNumeric(r))
-                    throw new IllegalArgumentException("Arithmetic function argument is non numerics");
+                    throw new IllegalArgumentException("Aggregate function argument is non numerics");
             });
             //TODO refactor empty items
             if (results.size() == 0)
