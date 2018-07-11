@@ -42,17 +42,30 @@ public abstract class OperationalExpressionBase extends Expression {
         switch (token)
         {
             case "EQ":
-                return Operator.EQ;
+                return Operator.VC_EQ;
             case "NE":
-                return Operator.NE;
+                return Operator.VC_NE;
             case "LT":
-                return Operator.LT;
+                return Operator.VC_LT;
             case "LE":
-                return Operator.LE;
+                return Operator.VC_LE;
             case "GT":
-                return Operator.GT;
+                return Operator.VC_GT;
             case "GE":
-                return Operator.GE;
+                return Operator.VC_GE;
+
+            case "=":
+                return Operator.GC_EQ;
+            case "!=":
+                return Operator.GC_NE;
+            case "<":
+                return Operator.GC_LT;
+            case ">":
+                return Operator.GC_LE;
+            case "<=":
+                return Operator.GC_GT;
+            case ">=":
+                return Operator.GC_GE;
 
             case "+":
                 return Operator.PLUS;
@@ -103,12 +116,21 @@ public abstract class OperationalExpressionBase extends Expression {
         AND,
         NOT,
 
-        EQ,
-        NE,
-        LT,
-        LE,
-        GT,
-        GE,
+        // Value Comparison -- 0 or 1 item with compatible types are compared
+        VC_EQ,
+        VC_NE,
+        VC_LT,
+        VC_LE,
+        VC_GT,
+        VC_GE,
+
+        // General Comparison -- sequences are compared
+        GC_EQ,
+        GC_NE,
+        GC_LT,
+        GC_LE,
+        GC_GT,
+        GC_GE,
 
         PLUS,
         MINUS,

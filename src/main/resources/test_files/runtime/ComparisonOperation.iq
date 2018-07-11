@@ -1,0 +1,2 @@
+(:JIQS: ShouldRun; Output="( true)" :)
+("foo", 2) = ("foo", 3)
