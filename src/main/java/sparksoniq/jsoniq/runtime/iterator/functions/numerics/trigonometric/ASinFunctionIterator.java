@@ -34,7 +34,7 @@ public class ASinFunctionIterator extends LocalFunctionCallIterator {
                             ItemMetadata.fromIteratorMetadata(getMetadata()));
                 }
                 else {
-                    throw new UnexpectedTypeException("ASin expression has non numerics args " +
+                    throw new UnexpectedTypeException("ASin expression has non numeric args " +
                             radians.serialize(), getMetadata());
                 }
             }

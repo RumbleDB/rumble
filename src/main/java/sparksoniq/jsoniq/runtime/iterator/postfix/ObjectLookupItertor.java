@@ -48,7 +48,7 @@ public class ObjectLookupItertor extends LocalRuntimeIterator {
                 throw new InvalidSelectorException("Type error; There is not exactly one supplied parameter for an array selector: "
                         + _lookupKey.serialize(), getMetadata());
             if(!_lookupKey.isString())
-                throw new UnexpectedTypeException("Non numerics array lookup for " + _lookupKey.serialize(), getMetadata());
+                throw new UnexpectedTypeException("Non numeric array lookup for " + _lookupKey.serialize(), getMetadata());
             this._children.get(0).close();
             this._children.get(1).close();
             _hasNext = false;

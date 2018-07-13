@@ -42,7 +42,7 @@ public abstract class Item implements SerializableItem {
         return item instanceof IntegerItem || item instanceof DecimalItem || item instanceof DoubleItem;
     }
 
-    //performs conversions for binary operations with a numerics return type
+    //performs conversions for binary operations with a numeric return type
     //(int,double) -> double
     //(int,decimal) -> decimal
     //(decimal,double) -> double
@@ -92,7 +92,7 @@ public abstract class Item implements SerializableItem {
             }
 
         }
-        throw new IteratorFlowException("Cannot call getNumericValue on non numerics", item.getItemMetadata());
+        throw new IteratorFlowException("Cannot call getNumericValue on non numeric", item.getItemMetadata());
     }
 
     //returns an effective boolean value of any item type
@@ -123,7 +123,7 @@ public abstract class Item implements SerializableItem {
 
     public static int compareItems(Item v1, Item v2) {
         int result;
-        //numerics comparison
+        //numeric comparison
         if (Item.isNumeric(v1) && Item.isNumeric(v2)) {
             BigDecimal value1 = Item.getNumericValue(v1, BigDecimal.class);
             BigDecimal value2 = Item.getNumericValue(v2, BigDecimal.class);

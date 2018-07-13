@@ -52,7 +52,7 @@ public class RoundFunctionIterator extends LocalFunctionCallIterator {
                             ItemMetadata.fromIteratorMetadata(getMetadata()));
                 }
                 else {
-                    throw new UnexpectedTypeException("Round expression has non numerics args " +
+                    throw new UnexpectedTypeException("Round expression has non numeric args " +
                             value.serialize() + ", " + precision.serialize(), getMetadata());
                 }
             }

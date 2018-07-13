@@ -57,7 +57,7 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
         Item right = _rightIterator.next();
 
         if(!Item.isNumeric(left) || !Item.isNumeric(right))
-            throw new UnexpectedTypeException("Additive expression has non numerics args " +
+            throw new UnexpectedTypeException("Additive expression has non numeric args " +
                     left.serialize() + ", " + right.serialize(), getMetadata());
 
         this._hasNext = false;
@@ -90,6 +90,6 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
                     new DecimalItem(l.subtract(r),
                             ItemMetadata.fromIteratorMetadata(getMetadata()));
         }
-        throw new IteratorFlowException("Additive expression has non numerics args", getMetadata());
+        throw new IteratorFlowException("Additive expression has non numeric args", getMetadata());
     }
 }

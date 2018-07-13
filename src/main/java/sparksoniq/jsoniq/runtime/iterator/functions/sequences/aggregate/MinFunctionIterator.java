@@ -21,7 +21,7 @@ public class MinFunctionIterator extends AggregateFunctionIterator {
             this._hasNext = false;
             results.forEach(r -> {
                 if (!Item.isNumeric(r))
-                    throw new IllegalArgumentException("Aggregate function argument is non numerics");
+                    throw new IllegalArgumentException("Aggregate function argument is non numeric");
             });
             //TODO refactor empty items
             if (results.size() == 0)

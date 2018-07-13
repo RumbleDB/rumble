@@ -34,7 +34,7 @@ public class SqrtFunctionIterator extends LocalFunctionCallIterator {
                             ItemMetadata.fromIteratorMetadata(getMetadata()));
                 }
                 else {
-                    throw new UnexpectedTypeException("Sqrt expression has non numerics args " +
+                    throw new UnexpectedTypeException("Sqrt expression has non numeric args " +
                             value.serialize(), getMetadata());
                 }
             }

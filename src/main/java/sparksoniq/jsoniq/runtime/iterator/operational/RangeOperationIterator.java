@@ -53,7 +53,7 @@ public class RangeOperationIterator extends BinaryOperationBaseIterator {
             _rightIterator.close();
 
             if (!(left instanceof IntegerItem) || !(right instanceof IntegerItem))
-                throw new UnexpectedTypeException("Range expression has non numerics args " +
+                throw new UnexpectedTypeException("Range expression has non numeric args " +
                         left.serialize() + ", " + right.serialize(), getMetadata());
             _left = Item.getNumericValue(left, Integer.class);
             _right = Item.getNumericValue(right, Integer.class);

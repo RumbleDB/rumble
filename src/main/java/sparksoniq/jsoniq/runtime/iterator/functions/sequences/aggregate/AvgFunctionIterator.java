@@ -23,12 +23,12 @@ public class AvgFunctionIterator extends AggregateFunctionIterator {
             this._hasNext = false;
             results.forEach(r -> {
                 if (!Item.isNumeric(r))
-                    throw new IllegalArgumentException("Aggregate function argument is non numerics");
+                    throw new IllegalArgumentException("Aggregate function argument is non numeric");
             });
             //TODO refactor empty items
             if (results.size() == 0)
                 return null;
-            //TODO check numerics types conversions
+            //TODO check numeric types conversions
             BigDecimal sum = new BigDecimal(0);
             for (Item r : results)
                 sum = sum.add(Item.getNumericValue(r, BigDecimal.class));

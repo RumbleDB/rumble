@@ -34,7 +34,7 @@ public class Exp10FunctionIterator extends LocalFunctionCallIterator {
                             ItemMetadata.fromIteratorMetadata(getMetadata()));
                 }
                 else {
-                    throw new UnexpectedTypeException("Exp10 expression has non numerics args " +
+                    throw new UnexpectedTypeException("Exp10 expression has non numeric args " +
                             exponent.serialize(), getMetadata());
                 }
             }

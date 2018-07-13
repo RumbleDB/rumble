@@ -36,7 +36,7 @@ public class PowFunctionIterator extends LocalFunctionCallIterator {
                             ItemMetadata.fromIteratorMetadata(getMetadata()));
                 }
                 else {
-                    throw new UnexpectedTypeException("Pow expression has non numerics args " +
+                    throw new UnexpectedTypeException("Pow expression has non numeric args " +
                             base.serialize() + ", " + exponent.serialize(), getMetadata());
                 }
             }

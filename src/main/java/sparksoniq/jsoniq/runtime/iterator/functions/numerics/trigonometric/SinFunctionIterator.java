@@ -34,7 +34,7 @@ public class SinFunctionIterator extends LocalFunctionCallIterator {
                             ItemMetadata.fromIteratorMetadata(getMetadata()));
                 }
                 else {
-                    throw new UnexpectedTypeException("Sin expression has non numerics args " +
+                    throw new UnexpectedTypeException("Sin expression has non numeric args " +
                             radians.serialize(), getMetadata());
                 }
             }

@@ -34,7 +34,7 @@ public class ACosFunctionIterator extends LocalFunctionCallIterator {
                             ItemMetadata.fromIteratorMetadata(getMetadata()));
                 }
                 else {
-                    throw new UnexpectedTypeException("ACos expression has non numerics args " +
+                    throw new UnexpectedTypeException("ACos expression has non numeric args " +
                             radians.serialize(), getMetadata());
                 }
             }

@@ -34,7 +34,7 @@ public class AbsFunctionIterator extends LocalFunctionCallIterator {
                             ItemMetadata.fromIteratorMetadata(getMetadata()));
                 }
                 else {
-                    throw new UnexpectedTypeException("Abs expression has non numerics args " +
+                    throw new UnexpectedTypeException("Abs expression has non numeric args " +
                             value.serialize(), getMetadata());
                 }
             }

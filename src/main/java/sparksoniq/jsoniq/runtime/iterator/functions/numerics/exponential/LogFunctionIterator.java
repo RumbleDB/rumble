@@ -34,7 +34,7 @@ public class LogFunctionIterator extends LocalFunctionCallIterator {
                             ItemMetadata.fromIteratorMetadata(getMetadata()));
                 }
                 else {
-                    throw new UnexpectedTypeException("Log expression has non numerics args " +
+                    throw new UnexpectedTypeException("Log expression has non numeric args " +
                             value.serialize(), getMetadata());
                 }
             }

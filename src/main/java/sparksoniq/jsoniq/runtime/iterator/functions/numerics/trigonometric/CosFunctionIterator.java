@@ -35,7 +35,7 @@ public class CosFunctionIterator extends LocalFunctionCallIterator {
                             ItemMetadata.fromIteratorMetadata(getMetadata()));
                 }
                 else {
-                    throw new UnexpectedTypeException("Cos expression has non numerics args " +
+                    throw new UnexpectedTypeException("Cos expression has non numeric args " +
                             radians.serialize(), getMetadata());
                 }
             }

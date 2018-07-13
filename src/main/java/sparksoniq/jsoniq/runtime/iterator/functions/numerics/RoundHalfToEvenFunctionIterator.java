@@ -52,12 +52,12 @@ public class RoundHalfToEvenFunctionIterator extends LocalFunctionCallIterator {
                             ItemMetadata.fromIteratorMetadata(getMetadata()));
                 }
                 else {
-                    throw new UnexpectedTypeException("Roundhalftoeven expression has non numerics args " +
+                    throw new UnexpectedTypeException("Round-half-to-even expression has non numeric args " +
                             value.serialize() + ", " + precision.serialize(), getMetadata());
                 }
             }
         } else
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " roundhalftoeven function", getMetadata());
+            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " round-half-to-even function", getMetadata());
     }
 
 

@@ -34,7 +34,7 @@ public class CeilingFunctionIterator extends LocalFunctionCallIterator {
                             ItemMetadata.fromIteratorMetadata(getMetadata()));
                 }
                 else {
-                    throw new UnexpectedTypeException("Ceiling expression has non numerics args " +
+                    throw new UnexpectedTypeException("Ceiling expression has non numeric args " +
                             value.serialize(), getMetadata());
                 }
             }

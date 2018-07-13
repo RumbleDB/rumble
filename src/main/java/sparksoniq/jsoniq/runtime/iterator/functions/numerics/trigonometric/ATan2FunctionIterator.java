@@ -30,7 +30,7 @@ public class ATan2FunctionIterator extends LocalFunctionCallIterator {
                         ItemMetadata.fromIteratorMetadata(getMetadata()));
             }
             else {
-                throw new UnexpectedTypeException("ATan2 expression has non numerics args " +
+                throw new UnexpectedTypeException("ATan2 expression has non numeric args " +
                         y.serialize() + ", " + x.serialize(), getMetadata());
 
             }
