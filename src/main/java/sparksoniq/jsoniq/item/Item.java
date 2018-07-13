@@ -92,7 +92,7 @@ public abstract class Item implements SerializableItem {
             }
 
         }
-        throw new IteratorFlowException("Cannot call getNumericValue on non numerics", item.getItemMetadata());
+        throw new IteratorFlowException("Cannot call getNumericValue on non numeric", item.getItemMetadata());
     }
 
     //returns an effective boolean value of any item type
