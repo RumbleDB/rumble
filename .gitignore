@@ -1,3 +1,6 @@
 .idea/
 target/
 *.iml
+src/main/java/sparksoniq/jsoniq/compiler/parser/*
+!src/main/java/sparksoniq/jsoniq/compiler/parser/Jsoniq.g4
+
