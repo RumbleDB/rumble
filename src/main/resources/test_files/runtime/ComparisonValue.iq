@@ -1,0 +1,13 @@
+(:JIQS: ShouldRun; Output="( true, false, true, false, true, false, true, false, true, false, true, false)" :)
+2 eq 2,
+2 eq 3,
+2 ne 3,
+2 ne 2,
+2 lt 3,
+3 lt 2,
+3 gt 2,
+2 gt 3,
+2 le 2,
+2 le 1,
+2 ge 2,
+1 ge 2,
