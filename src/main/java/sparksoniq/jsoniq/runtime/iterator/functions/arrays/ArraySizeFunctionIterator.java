@@ -30,11 +30,11 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.List;
 
-public class ArraySizeFunctionIterator extends LocalFunctionCallIterator {
+public class ArraySizeFunctionIterator extends ArrayFunctionIterator {
 
 
     public ArraySizeFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
-        super(arguments, iteratorMetadata);
+        super(arguments, ArrayFunctionOperators.SIZE, iteratorMetadata);
     }
 
     @Override
