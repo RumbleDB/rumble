@@ -22,6 +22,7 @@ package sparksoniq.jsoniq.runtime.iterator.functions.base;
 import sparksoniq.exceptions.UnknownFunctionCallException;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionCall;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayMembersFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArraySizeFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.*;
@@ -88,6 +89,7 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(STRINGJOIN, 2), StringJoinFunction.class);
 
         buildInFunctions.put(new SparksoniqFunctionSignature(SIZE, 1), ArraySizeFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(MEMBERS, 1), ArrayMembersFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(KEYS, 1), ObjectKeysFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(VALUES, 1), ObjectValuesFunctionIterator.class);
     }
@@ -212,18 +214,7 @@ public class Functions {
         public static final String ATAN2 = "atan2";
 
 
-        /**
-         * function that returns the keys of a Json Object
-         */
-        public static final String KEYS = "keys";
-        /**
-         * function that returns the values of a Json Object
-         */
-        public static final String VALUES = "values";
-        /**
-         * function that returns the length of an array
-         */
-        public static final String SIZE = "size";
+
         /**
          * function that returns substrings
          */
@@ -236,6 +227,25 @@ public class Functions {
          * function that returns substrings
          */
         public static final String STRINGJOIN = "string-join";
+
+
+        /**
+         * function that returns the length of an array
+         */
+        public static final String SIZE = "size";
+        /**
+         * function that returns returns all members of all arrays of the supplied sequence
+         */
+        public static final String MEMBERS = "members";
+        /**
+         * function that returns the keys of a Json Object
+         */
+        public static final String KEYS = "keys";
+        /**
+         * function that returns the values of a Json Object
+         */
+        public static final String VALUES = "values";
+
     }
 
 }

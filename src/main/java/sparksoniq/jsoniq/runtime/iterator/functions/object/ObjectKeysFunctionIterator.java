@@ -24,10 +24,10 @@ public class ObjectKeysFunctionIterator extends ObjectFunctionIterator {
             if (results == null) {
                 _currentIndex = 0;
                 results = new ArrayList<>();
-                RuntimeIterator objectIterator = this._children.get(0);
-                List<Item> items = getItemsFromIteratorWithCurrentContext(objectIterator);
+                RuntimeIterator sequenceIterator = this._children.get(0);
+                List<Item> items = getItemsFromIteratorWithCurrentContext(sequenceIterator);
                 for (Item item:items) {
-                    if (item instanceof ObjectItem) {
+                    if (item.isObject()) {
                         try {
                             StringItem result = null;
                             for (String key : item.getKeys()) {
