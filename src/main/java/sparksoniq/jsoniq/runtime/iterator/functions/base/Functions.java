@@ -22,6 +22,7 @@ package sparksoniq.jsoniq.runtime.iterator.functions.base;
 import sparksoniq.exceptions.UnknownFunctionCallException;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionCall;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.NullFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayMembersFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArraySizeFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate.*;
@@ -90,6 +91,7 @@ public class Functions {
 
         buildInFunctions.put(new SparksoniqFunctionSignature(SIZE, 1), ArraySizeFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(MEMBERS, 1), ArrayMembersFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(NULL, 0), NullFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(KEYS, 1), ObjectKeysFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(VALUES, 1), ObjectValuesFunctionIterator.class);
     }
@@ -237,6 +239,10 @@ public class Functions {
          * function that returns returns all members of all arrays of the supplied sequence
          */
         public static final String MEMBERS = "members";
+        /**
+         * function that returns the JSON null
+         */
+        public static final String NULL = "null";
         /**
          * function that returns the keys of a Json Object
          */
