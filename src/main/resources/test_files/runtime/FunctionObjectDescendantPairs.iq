@@ -3,5 +3,5 @@ let $o := ({ "a" : [1, {"b" : 2}], "o" : {"c" : 3} }) return descendant-pairs($o
 
 
 
-canb: 2018-07-15: Although the code executes properly, the test file doesn't run on CI for reasons I couldn't figure out at the time
+
 
