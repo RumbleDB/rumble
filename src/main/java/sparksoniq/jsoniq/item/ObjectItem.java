@@ -35,10 +35,12 @@ import java.util.List;
 
 public class ObjectItem extends JsonItem{
 
+    @Override
     public List<String> getKeys() {
         return _keys;
     }
 
+    @Override
     public Collection<? extends Item> getValues() {
         return _values;
     }
@@ -59,6 +61,11 @@ public class ObjectItem extends JsonItem{
             else
                 frequencies.put(key, 1);
         }
+    }
+
+    @Override
+    public List<Item> getItems() throws OperationNotSupportedException {
+        throw new OperationNotSupportedException("Objects are not arrays");
     }
 
     @Override

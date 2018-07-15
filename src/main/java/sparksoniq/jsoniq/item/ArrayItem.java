@@ -28,6 +28,7 @@ import sparksoniq.semantics.types.ItemTypes;
 
 import javax.naming.OperationNotSupportedException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class ArrayItem extends JsonItem {
@@ -60,6 +61,12 @@ public class ArrayItem extends JsonItem {
     public List<String> getKeys() throws OperationNotSupportedException {
         throw new OperationNotSupportedException("Array items are not objects");
     }
+
+    @Override
+    public Collection<? extends Item> getValues() throws OperationNotSupportedException {
+        throw new OperationNotSupportedException("Array items are not objects");
+    }
+
 
     @Override
     public  boolean isArray(){ return true; }

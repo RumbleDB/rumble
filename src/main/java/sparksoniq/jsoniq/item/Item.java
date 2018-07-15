@@ -30,6 +30,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.List;
 
 //TODO serialize with indentation
@@ -148,13 +149,17 @@ public abstract class Item implements SerializableItem {
         return compareItems(v1, v2) == 0;
     }
 
+    public abstract List<Item> getItems() throws OperationNotSupportedException;
+
+    public abstract List<String> getKeys() throws OperationNotSupportedException;
+
+    public abstract Collection<? extends Item> getValues() throws OperationNotSupportedException;
+
     public abstract Item getItemAt(int i) throws OperationNotSupportedException;
 
     public abstract Item getItemByKey(String s) throws OperationNotSupportedException;
 
     public abstract void putItemByKey(String s, Item value) throws OperationNotSupportedException;
-
-    public abstract List<String> getKeys() throws OperationNotSupportedException;
 
     public abstract int getSize() throws OperationNotSupportedException;
 
