@@ -25,6 +25,7 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.NullFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayMembersFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArraySizeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectDescendantFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential.*;
@@ -89,11 +90,13 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(STRINGJOIN, 1), StringJoinFunction.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(STRINGJOIN, 2), StringJoinFunction.class);
 
-        buildInFunctions.put(new SparksoniqFunctionSignature(SIZE, 1), ArraySizeFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(KEYS, 1), ObjectKeysFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(MEMBERS, 1), ArrayMembersFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(NULL, 0), NullFunctionIterator.class);
-        buildInFunctions.put(new SparksoniqFunctionSignature(KEYS, 1), ObjectKeysFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(SIZE, 1), ArraySizeFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(DESCENDANTOBJECTS, 1), ObjectDescendantFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(VALUES, 1), ObjectValuesFunctionIterator.class);
+
     }
 
     public static Class<? extends RuntimeIterator> getFunctionIteratorClass(FunctionCall expression, List<RuntimeIterator> arguments) {
@@ -232,9 +235,9 @@ public class Functions {
 
 
         /**
-         * function that returns the length of an array
+         * function that returns the keys of a Json Object
          */
-        public static final String SIZE = "size";
+        public static final String KEYS = "keys";
         /**
          * function that returns returns all members of all arrays of the supplied sequence
          */
@@ -244,9 +247,13 @@ public class Functions {
          */
         public static final String NULL = "null";
         /**
-         * function that returns the keys of a Json Object
+         * function that returns the length of an array
          */
-        public static final String KEYS = "keys";
+        public static final String SIZE = "size";
+        /**
+         * function that returns the JSON null
+         */
+        public static final String DESCENDANTOBJECTS = "descendant-objects";
         /**
          * function that returns the values of a Json Object
          */

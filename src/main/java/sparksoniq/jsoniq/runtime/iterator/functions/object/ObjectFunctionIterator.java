@@ -46,6 +46,7 @@ public abstract class ObjectFunctionIterator extends LocalFunctionCallIterator {
 
     public enum ObjectFunctionOperators {
         KEYS,
-        VALUES
+        VALUES,
+        DESCENDANT
     }
 }
