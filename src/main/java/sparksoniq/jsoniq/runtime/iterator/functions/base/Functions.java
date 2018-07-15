@@ -23,6 +23,7 @@ import sparksoniq.exceptions.UnknownFunctionCallException;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionCall;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.NullFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayDescendantFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayMembersFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArraySizeFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectDescendantFunctionIterator;
@@ -94,6 +95,7 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(MEMBERS, 1), ArrayMembersFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(NULL, 0), NullFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(SIZE, 1), ArraySizeFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(DESCENDANTARRAYS, 1), ArrayDescendantFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(DESCENDANTOBJECTS, 1), ObjectDescendantFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(VALUES, 1), ObjectValuesFunctionIterator.class);
 
@@ -251,7 +253,11 @@ public class Functions {
          */
         public static final String SIZE = "size";
         /**
-         * function that returns the JSON null
+         * function that returns all arrays contained within the supplied items, regardless of depth.
+         */
+        public static final String DESCENDANTARRAYS = "descendant-arrays";
+        /**
+         * function that returns all objects contained within the supplied items, regardless of depth
          */
         public static final String DESCENDANTOBJECTS = "descendant-objects";
         /**
