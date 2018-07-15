@@ -24,6 +24,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionCall;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.NullFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayDescendantFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayFlattenFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayMembersFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArraySizeFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectDescendantFunctionIterator;
@@ -99,6 +100,7 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(DESCENDANTARRAYS, 1), ArrayDescendantFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(DESCENDANTOBJECTS, 1), ObjectDescendantFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(DESCENDANTPAIRS, 1), ObjectDescendantPairsFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(FLATTEN, 1), ArrayFlattenFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(VALUES, 1), ObjectValuesFunctionIterator.class);
 
     }
@@ -266,6 +268,10 @@ public class Functions {
          * function that returns all objects contained within the supplied items, regardless of depth
          */
         public static final String DESCENDANTPAIRS = "descendant-pairs";
+        /**
+         * function recursively flattens arrays in the input sequence, leaving non-arrays intact
+         */
+        public static final String FLATTEN = "flatten";
         /**
          * function that returns the values of a Json Object
          */

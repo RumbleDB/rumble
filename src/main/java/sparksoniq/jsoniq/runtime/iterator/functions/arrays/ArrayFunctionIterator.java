@@ -28,6 +28,7 @@ public abstract class ArrayFunctionIterator extends LocalFunctionCallIterator {
     public enum ArrayFunctionOperators {
         SIZE,
         MEMBERS,
-        DESCENDANT
+        DESCENDANT,
+        FLATTEN
     }
 }
