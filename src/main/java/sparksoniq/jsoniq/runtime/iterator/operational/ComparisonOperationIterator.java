@@ -60,9 +60,12 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
         if(_leftIterator instanceof EmptySequenceIterator || _rightIterator instanceof EmptySequenceIterator) {
             if (Arrays.asList(valueComparisonOperators).contains(this._operator)) {
                 // return empty sequence
-                result = new NullItem(ItemMetadata.fromIteratorMetadata(getMetadata()));
+                // result = new NullItem(ItemMetadata.fromIteratorMetadata(getMetadata()));
+                this._hasNext = false;
+                return null;
             }
             else if (Arrays.asList(generalComparisonOperators).contains(this._operator)) {
+                this._hasNext = false;
                 result = new BooleanItem(false, ItemMetadata.fromIteratorMetadata(getMetadata()));
             }
         }
