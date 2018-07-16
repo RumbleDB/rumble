@@ -25,13 +25,12 @@ import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase.Operator;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-import sparksoniq.jsoniq.item.AtomicItem;
-import sparksoniq.jsoniq.item.BooleanItem;
-import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.item.StringItem;
+import sparksoniq.jsoniq.item.*;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
+import sparksoniq.jsoniq.runtime.iterator.EmptySequenceIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
+import sparksoniq.jsoniq.runtime.iterator.primary.NullRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.ObjectConstructorRuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
@@ -57,9 +56,17 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
         _leftIterator.open(_currentDynamicContext);
         _rightIterator.open(_currentDynamicContext);
 
-        BooleanItem result = null;
-
-        if (_leftIterator instanceof ObjectConstructorRuntimeIterator
+        AtomicItem result = null;
+        if(_leftIterator instanceof EmptySequenceIterator || _rightIterator instanceof EmptySequenceIterator) {
+            if (Arrays.asList(valueComparisonOperators).contains(this._operator)) {
+                // return empty sequence
+                result = new NullItem(ItemMetadata.fromIteratorMetadata(getMetadata()));
+            }
+            else if (Arrays.asList(generalComparisonOperators).contains(this._operator)) {
+                result = new BooleanItem(false, ItemMetadata.fromIteratorMetadata(getMetadata()));
+            }
+        }
+        else if (_leftIterator instanceof ObjectConstructorRuntimeIterator
                 || _rightIterator instanceof ObjectConstructorRuntimeIterator)
         {
             throw new NonAtomicKeyException("Invalid args. Comparison can't be performed on object type", getMetadata().getExpressionMetadata());
@@ -119,14 +126,15 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
             return compareNumerics(left, right);
 
         }
-        if (left instanceof StringItem) {
+        else if (left instanceof StringItem) {
             if (!(right instanceof StringItem))
                 throw new UnexpectedTypeException("Invalid args for string comparison " + left.serialize() +
                         ", " + right.serialize(), getMetadata());
             return compareStrings(left, right);
         }
-
-        return null;
+        else {
+            return null;
+        }
     }
 
     public BooleanItem compareNumerics(Item left, Item right)
