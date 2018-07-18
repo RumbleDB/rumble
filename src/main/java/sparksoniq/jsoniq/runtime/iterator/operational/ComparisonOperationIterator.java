@@ -117,6 +117,17 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
 
     public BooleanItem comparePair(Item left, Item right) {
 
+        // if given EMPTY SEQUENCE eg. () or ((),())
+        // return EMPTY SEQUENCE
+        if (left == null || right == null) {
+            return null;
+        }
+        else if (left instanceof ArrayItem || right instanceof ArrayItem) {
+            throw new NonAtomicKeyException("Invalid args. Comparison can't be performed on array type", getMetadata().getExpressionMetadata());
+        }
+        else if (left instanceof ObjectItem || right instanceof ObjectItem) {
+            throw new NonAtomicKeyException("Invalid args. Comparison can't be performed on object type", getMetadata().getExpressionMetadata());
+        }
         if (left instanceof NullItem || right instanceof NullItem) {
             return compareItems(left, right);
         }
@@ -137,16 +148,6 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
                 throw new UnexpectedTypeException("Invalid args for boolean comparison " + left.serialize() +
                         ", " + right.serialize(), getMetadata());
             return compareItems(left, right);
-        }
-        // if given EMPTY SEQUENCE eg. () or ((),())
-        else if (left == null || right == null) {
-            return null;
-        }
-        else if (left instanceof ArrayItem || right instanceof ArrayItem) {
-            throw new NonAtomicKeyException("Invalid args. Comparison can't be performed on array type", getMetadata().getExpressionMetadata());
-        }
-        else if (left instanceof ObjectItem || right instanceof ObjectItem) {
-            throw new NonAtomicKeyException("Invalid args. Comparison can't be performed on object type", getMetadata().getExpressionMetadata());
         }
         else {
             throw new IteratorFlowException("Invalid comparison expression", getMetadata());
