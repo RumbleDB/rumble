@@ -122,80 +122,28 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
     }
 
     public BooleanItem comparePair(Item left, Item right) {
+
         if (left instanceof NullItem || right instanceof NullItem) {
-            return compareNull(left, right);
+            return compareItems(left, right);
         }
         else if (Item.isNumeric(left)) {
-            if (!Item.isNumeric(left) || !Item.isNumeric(right))
+            if (!Item.isNumeric(right))
                 throw new UnexpectedTypeException("Invalid args for numerics comparison " + left.serialize() +
                         ", " + right.serialize(), getMetadata());
-            return compareNumerics(left, right);
-
+            return compareItems(left, right);
         }
         else if (left instanceof StringItem) {
             if (!(right instanceof StringItem))
                 throw new UnexpectedTypeException("Invalid args for string comparison " + left.serialize() +
                         ", " + right.serialize(), getMetadata());
-            return compareStrings(left, right);
+            return compareItems(left, right);
         }
         else {
             return null;
         }
     }
 
-    public BooleanItem compareNumerics(Item left, Item right) {
-        double l = Item.getNumericValue(left, Double.class);
-        double r = Item.getNumericValue(right, Double.class);
-        switch (this._operator) {
-            case VC_EQ:
-            case GC_EQ:
-                return new BooleanItem(l == r, ItemMetadata.fromIteratorMetadata(getMetadata()));
-            case VC_NE:
-            case GC_NE:
-                return new BooleanItem(l != r, ItemMetadata.fromIteratorMetadata(getMetadata()));
-            case VC_LT:
-            case GC_LT:
-                return new BooleanItem(l < r, ItemMetadata.fromIteratorMetadata(getMetadata()));
-            case VC_LE:
-            case GC_LE:
-                return new BooleanItem(l <= r, ItemMetadata.fromIteratorMetadata(getMetadata()));
-            case VC_GT:
-            case GC_GT:
-                return new BooleanItem(l > r, ItemMetadata.fromIteratorMetadata(getMetadata()));
-            case VC_GE:
-            case GC_GE:
-                return new BooleanItem(l >= r, ItemMetadata.fromIteratorMetadata(getMetadata()));
-        }
-        return null;
-    }
-
-    public BooleanItem compareStrings(Item left, Item right) {
-        String l = ((StringItem) left).getStringValue();
-        String r = ((StringItem) right).getStringValue();
-        switch (this._operator) {
-            case VC_EQ:
-            case GC_EQ:
-                return new BooleanItem(l.equals(r), ItemMetadata.fromIteratorMetadata(getMetadata()));
-            case VC_NE:
-            case GC_NE:
-                return new BooleanItem(!l.equals(r), ItemMetadata.fromIteratorMetadata(getMetadata()));
-            case VC_LT:
-            case GC_LT:
-                return new BooleanItem(l.compareTo(r) < 0, ItemMetadata.fromIteratorMetadata(getMetadata()));
-            case VC_LE:
-            case GC_LE:
-                return new BooleanItem(l.compareTo(r) < 0 || l.compareTo(r) == 0, ItemMetadata.fromIteratorMetadata(getMetadata()));
-            case VC_GT:
-            case GC_GT:
-                return new BooleanItem(l.compareTo(r) > 0, ItemMetadata.fromIteratorMetadata(getMetadata()));
-            case VC_GE:
-            case GC_GE:
-                return new BooleanItem(l.compareTo(r) > 0 || l.compareTo(r) == 0, ItemMetadata.fromIteratorMetadata(getMetadata()));
-        }
-        return null;
-    }
-
-    public BooleanItem compareNull(Item left, Item right) {
+    public BooleanItem compareItems (Item left, Item right) {
         int comparison = Item.compareItems(left, right);
         switch (this._operator) {
             case VC_EQ:
@@ -219,4 +167,5 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
         }
         return null;
     }
+
 }
