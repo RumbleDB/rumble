@@ -19,6 +19,7 @@
  */
 package sparksoniq.jsoniq.runtime.iterator.operational;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.exceptions.UnexpectedTypeException;
@@ -135,6 +136,12 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
         else if (left instanceof StringItem) {
             if (!(right instanceof StringItem))
                 throw new UnexpectedTypeException("Invalid args for string comparison " + left.serialize() +
+                        ", " + right.serialize(), getMetadata());
+            return compareItems(left, right);
+        }
+        else if (left instanceof BooleanItem) {
+            if (!(right instanceof BooleanItem))
+                throw new UnexpectedTypeException("Invalid args for boolean comparison " + left.serialize() +
                         ", " + right.serialize(), getMetadata());
             return compareItems(left, right);
         }
