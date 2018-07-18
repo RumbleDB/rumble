@@ -1,2 +1,2 @@
-(:JIQS: ShouldCrash; ErrorCode="XPTY0004"; ErrorMetadata="LINE:1:COLUMN:0:Invalid args for numerics comparison 200.0, abc" :)
+(:JIQS: ShouldCrash; ErrorCode="XPTY0004"; ErrorMetadata="LINE:2:COLUMN:0:Invalid args for numerics comparison 200.0, abc" :)
 2e+2 = "abc"

@@ -1,2 +1,2 @@
-(:JIQS: ShouldCrash; ErrorCode="XPTY0004"; ErrorMetadata="LINE:1:COLUMN:0:Invalid args for string comparison ab, 1" :)
+(:JIQS: ShouldCrash; ErrorCode="XPTY0004"; ErrorMetadata="LINE:2:COLUMN:0:Invalid args for string comparison ab, 1" :)
 (null, "ab") > (1, "ac")
