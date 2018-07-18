@@ -1,0 +1,2 @@
+(:JIQS: ShouldCrash; ErrorCode="XPTY0004"; ErrorMetadata="LINE:1:COLUMN:0:Invalid args for boolean comparison true, 0" :)
+true >= 0
