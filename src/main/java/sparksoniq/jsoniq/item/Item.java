@@ -133,12 +133,18 @@ public abstract class Item implements SerializableItem {
             result = new Boolean(((BooleanItem) v1).getBooleanValue()).
                     compareTo(((BooleanItem) v2).getBooleanValue());
         }
-        //NULL is smaller than anything
+        //NULL comparison
         else if (v1 instanceof NullItem || v2 instanceof NullItem) {
-            if (v1 instanceof NullItem)
+            // if both are null, values are equal
+            if (v1 instanceof NullItem && v2 instanceof NullItem) {
+                result = 0;
+            }
+            else if (v1 instanceof NullItem) {
                 result = -1;
-            else
+            }
+            else{
                 result = 1;
+            }
         } else
             result = v1.serialize().compareTo(v2.serialize());
         return result;
