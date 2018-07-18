@@ -31,6 +31,7 @@ import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.EmptySequenceIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
+import sparksoniq.jsoniq.runtime.iterator.primary.ArrayRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.NullRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.ObjectConstructorRuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -58,26 +59,21 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
         _rightIterator.open(_currentDynamicContext);
 
         AtomicItem result = null;
-        if(_leftIterator instanceof EmptySequenceIterator || _rightIterator instanceof EmptySequenceIterator) {
-            if (Arrays.asList(valueComparisonOperators).contains(this._operator)) {
-                // return empty sequence
-                this._hasNext = false;
-                return null;
-                // result = new NullItem(ItemMetadata.fromIteratorMetadata(getMetadata()));
-            }
-            else if (Arrays.asList(generalComparisonOperators).contains(this._operator)) {
-                this._hasNext = false;
-                result = new BooleanItem(false, ItemMetadata.fromIteratorMetadata(getMetadata()));
-            }
-        }
-        else if (_leftIterator instanceof ObjectConstructorRuntimeIterator
-                || _rightIterator instanceof ObjectConstructorRuntimeIterator)
-        {
-            throw new NonAtomicKeyException("Invalid args. Comparison can't be performed on object type", getMetadata().getExpressionMetadata());
-        }
-        else if (Arrays.asList(valueComparisonOperators).contains(this._operator)){
+
+        if (Arrays.asList(valueComparisonOperators).contains(this._operator)){
             Item left = _leftIterator.next();
             Item right = _rightIterator.next();
+
+            /*
+            // if EMPTY SEQUENCE - () or nested empty sequence - ((),())
+            // return EMPTY SEQUENCE - ()
+            if (left == null || right == null) {
+                _leftIterator.close();
+                _rightIterator.close();
+                this._hasNext = false;
+                return null;
+            }
+            */
 
             // value comparison doesn't support more than 1 items
             if (_leftIterator.hasNext() || _rightIterator.hasNext())
@@ -105,10 +101,7 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
             result = compareAllPairs(left, right);
         }
 
-        if (result == null)
-            throw new IteratorFlowException("Invalid comparison expression", getMetadata());
-        else
-            return result;
+        return result;
     }
 
     public BooleanItem compareAllPairs (ArrayList<Item> left, ArrayList<Item> right) {
@@ -145,8 +138,18 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
                         ", " + right.serialize(), getMetadata());
             return compareItems(left, right);
         }
-        else {
+        // if given EMPTY SEQUENCE eg. () or ((),())
+        else if (left == null || right == null) {
             return null;
+        }
+        else if (left instanceof ArrayItem || right instanceof ArrayItem) {
+            throw new NonAtomicKeyException("Invalid args. Comparison can't be performed on array type", getMetadata().getExpressionMetadata());
+        }
+        else if (left instanceof ObjectItem || right instanceof ObjectItem) {
+            throw new NonAtomicKeyException("Invalid args. Comparison can't be performed on object type", getMetadata().getExpressionMetadata());
+        }
+        else {
+            throw new IteratorFlowException("Invalid comparison expression", getMetadata());
         }
     }
 
