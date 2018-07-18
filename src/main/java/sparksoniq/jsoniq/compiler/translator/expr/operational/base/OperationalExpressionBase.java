@@ -60,9 +60,9 @@ public abstract class OperationalExpressionBase extends Expression {
                 return Operator.GC_NE;
             case "<":
                 return Operator.GC_LT;
-            case ">":
-                return Operator.GC_LE;
             case "<=":
+                return Operator.GC_LE;
+            case ">":
                 return Operator.GC_GT;
             case ">=":
                 return Operator.GC_GE;
