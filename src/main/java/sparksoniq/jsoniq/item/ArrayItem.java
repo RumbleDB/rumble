@@ -53,6 +53,9 @@ public class ArrayItem extends JsonItem {
     }
 
     @Override
+    public void putItem(Item value) { this._arrayItems.add(value); }
+
+    @Override
     public void putItemByKey(String s, Item value) throws OperationNotSupportedException {
         throw new OperationNotSupportedException("Array items are not objects");
     }

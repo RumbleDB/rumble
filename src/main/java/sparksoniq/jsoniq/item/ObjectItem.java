@@ -74,6 +74,11 @@ public class ObjectItem extends JsonItem{
     }
 
     @Override
+    public void putItem(Item value) throws OperationNotSupportedException {
+        throw new OperationNotSupportedException("Objects are not arrays");
+    }
+
+    @Override
     public Item getItemByKey(String s) {
         if(_keys.contains(s))
             return _values.get(_keys.indexOf(s));

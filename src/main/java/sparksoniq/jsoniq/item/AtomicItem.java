@@ -45,6 +45,11 @@ public abstract class AtomicItem extends Item {
     }
 
     @Override
+    public void putItem(Item value) throws OperationNotSupportedException {
+        throw new OperationNotSupportedException("Atomic items are not arrays");
+    }
+
+    @Override
     public Item getItemByKey(String s) throws OperationNotSupportedException {
         throw new OperationNotSupportedException("Atomic items are not objects");
     }

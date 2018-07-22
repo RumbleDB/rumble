@@ -151,11 +151,13 @@ public abstract class Item implements SerializableItem {
 
     public abstract List<Item> getItems() throws OperationNotSupportedException;
 
+    public abstract Item getItemAt(int i) throws OperationNotSupportedException;
+
+    public abstract void putItem(Item value) throws OperationNotSupportedException;
+
     public abstract List<String> getKeys() throws OperationNotSupportedException;
 
     public abstract Collection<? extends Item> getValues() throws OperationNotSupportedException;
-
-    public abstract Item getItemAt(int i) throws OperationNotSupportedException;
 
     public abstract Item getItemByKey(String s) throws OperationNotSupportedException;
 
