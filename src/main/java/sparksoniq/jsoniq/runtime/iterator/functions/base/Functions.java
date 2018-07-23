@@ -100,7 +100,7 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(DESCENDANTPAIRS, 1), ObjectDescendantPairsFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(FLATTEN, 1), ArrayFlattenFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(PROJECT, 2), ObjectProjectFunctionIterator.class);
-        buildInFunctions.put(new SparksoniqFunctionSignature(REMOVEKEYS, 2), ObjectFunctionRemoveKeysIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(REMOVEKEYS, 2), ObjectRemoveKeysFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(VALUES, 1), ObjectValuesFunctionIterator.class);
 
     }

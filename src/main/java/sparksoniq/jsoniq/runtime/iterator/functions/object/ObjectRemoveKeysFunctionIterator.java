@@ -12,8 +12,8 @@ import javax.naming.OperationNotSupportedException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ObjectFunctionRemoveKeysIterator extends ObjectFunctionIterator {
-    public ObjectFunctionRemoveKeysIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
+public class ObjectRemoveKeysFunctionIterator extends ObjectFunctionIterator {
+    public ObjectRemoveKeysFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, ObjectFunctionOperators.REMOVEKEYS, iteratorMetadata);
     }
 
