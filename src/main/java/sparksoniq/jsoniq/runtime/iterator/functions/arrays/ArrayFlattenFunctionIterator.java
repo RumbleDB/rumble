@@ -28,7 +28,7 @@ public class ArrayFlattenFunctionIterator extends ArrayFunctionIterator {
                 this._hasNext = false;
             return results.get(_currentIndex++);
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " KEYS function",
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " FLATTEN function",
                 getMetadata());
     }
 

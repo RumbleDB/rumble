@@ -100,6 +100,7 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(DESCENDANTPAIRS, 1), ObjectDescendantPairsFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(FLATTEN, 1), ArrayFlattenFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(PROJECT, 2), ObjectProjectFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(REMOVEKEYS, 2), ObjectFunctionRemoveKeysIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(VALUES, 1), ObjectValuesFunctionIterator.class);
 
     }
@@ -272,13 +273,17 @@ public class Functions {
          */
         public static final String DESCENDANTPAIRS = "descendant-pairs";
         /**
-         * function recursively flattens arrays in the input sequence, leaving non-arrays intact
+         * function that recursively flattens arrays in the input sequence, leaving non-arrays intact
          */
         public static final String FLATTEN = "flatten";
         /**
-         * function recursively flattens arrays in the input sequence, leaving non-arrays intact
+         * function that projects objects by filtering their pairs and leaves non-objects intact
          */
         public static final String PROJECT = "project";
+        /**
+         * function that removes the pairs with the given keys from all objects and leaves non-objects intact
+         */
+        public static final String REMOVEKEYS = "remove-keys";
         /**
          * function that returns the values of a Json Object
          */

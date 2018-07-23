@@ -70,7 +70,7 @@ public class ObjectAccumulateFunctionIterator extends ObjectFunctionIterator {
             this._hasNext = false;
             return result;
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " KEYS function",
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " ACCUMULATE function",
                 getMetadata());
     }
 }

@@ -12,9 +12,9 @@ import javax.naming.OperationNotSupportedException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ObjectProjectFunctionIterator extends ObjectFunctionIterator {
-    public ObjectProjectFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
-        super(arguments, ObjectFunctionOperators.PROJECT, iteratorMetadata);
+public class ObjectFunctionRemoveKeysIterator extends ObjectFunctionIterator {
+    public ObjectFunctionRemoveKeysIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
+        super(arguments, ObjectFunctionOperators.REMOVEKEYS, iteratorMetadata);
     }
 
     @Override
@@ -27,38 +27,49 @@ public class ObjectProjectFunctionIterator extends ObjectFunctionIterator {
                 RuntimeIterator keysIterator = this._children.get(1);
                 List<Item> items = getItemsFromIteratorWithCurrentContext(sequenceIterator);
                 List<Item> keys = getItemsFromIteratorWithCurrentContext(keysIterator);
-                getProjection(items, keys);
+                removeKeys(items, keys);
             }
             if (_currentIndex == results.size() - 1)
                 this._hasNext = false;
             return results.get(_currentIndex++);
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " PROJECT function",
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " REMOVE-KEYS function",
                 getMetadata());
     }
 
-    public void getProjection(List<Item> items, List<Item> keys) {
+    public void removeKeys(List<Item> items, List<Item> keysRemoveItems) {
         for (Item item:items) {
             if (item.isObject()) {
                 ArrayList<String> finalKeylist = new ArrayList<>();
                 ArrayList<Item> finalValueList = new ArrayList<>();
-                for (Item keyItem:keys) {
+                ArrayList<String> keysToRemove = new ArrayList<>();
+
+                for (Item keyRemoveItem:keysRemoveItems) {
                     try {
-                        String key = keyItem.getStringValue();
-                        Item value = item.getItemByKey(key);
-                        if (value != null) {
-                            finalKeylist.add(key);
-                            finalValueList.add(value);
-                        }
+                        String keyToRemove = keyRemoveItem.getStringValue();
+                        keysToRemove.add(keyToRemove);
                     } catch (OperationNotSupportedException e) {
                         throw new UnexpectedTypeException("Project function has non-string key args.", getMetadata());
                     }
                 }
+
+                try {
+                    for (String objectKey:item.getKeys()) {
+                        if (!keysToRemove.contains(objectKey)) {
+                            finalKeylist.add(objectKey);
+                            finalValueList.add(item.getItemByKey(objectKey));
+                        }
+                    }
+                } catch (OperationNotSupportedException e) {
+                    e.printStackTrace();
+                }
+
                 results.add(new ObjectItem(finalKeylist, finalValueList, ItemMetadata.fromIteratorMetadata(getMetadata())));
             }
             else {
                 results.add(item);
             }
         }
+
     }
 }
