@@ -27,14 +27,11 @@ import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayDescendantFuncti
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayFlattenFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayMembersFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArraySizeFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectDescendantFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectDescendantPairsFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.object.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.trigonometric.*;
-import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectKeysFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectValuesFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.ConcatFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.StringJoinFunction;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.SubstringFunctionIterator;
@@ -97,6 +94,7 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(MEMBERS, 1), ArrayMembersFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(NULL, 0), NullFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(SIZE, 1), ArraySizeFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(ACCUMULATE, 1), ObjectAccumulateFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(DESCENDANTARRAYS, 1), ArrayDescendantFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(DESCENDANTOBJECTS, 1), ObjectDescendantFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(DESCENDANTPAIRS, 1), ObjectDescendantPairsFunctionIterator.class);
@@ -256,6 +254,10 @@ public class Functions {
          * function that returns the length of an array
          */
         public static final String SIZE = "size";
+        /**
+         * function that dynamically creates an object that merges the values of key collisions into arrays
+         */
+        public static final String ACCUMULATE = "accumulate";
         /**
          * function that returns all arrays contained within the supplied items, regardless of depth.
          */
