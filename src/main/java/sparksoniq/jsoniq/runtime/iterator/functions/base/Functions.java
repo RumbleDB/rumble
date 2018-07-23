@@ -99,6 +99,7 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(DESCENDANTOBJECTS, 1), ObjectDescendantFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(DESCENDANTPAIRS, 1), ObjectDescendantPairsFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(FLATTEN, 1), ArrayFlattenFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(PROJECT, 2), ObjectProjectFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(VALUES, 1), ObjectValuesFunctionIterator.class);
 
     }
@@ -274,6 +275,10 @@ public class Functions {
          * function recursively flattens arrays in the input sequence, leaving non-arrays intact
          */
         public static final String FLATTEN = "flatten";
+        /**
+         * function recursively flattens arrays in the input sequence, leaving non-arrays intact
+         */
+        public static final String PROJECT = "project";
         /**
          * function that returns the values of a Json Object
          */
