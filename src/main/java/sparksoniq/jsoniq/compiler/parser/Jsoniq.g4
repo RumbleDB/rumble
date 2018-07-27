@@ -86,7 +86,8 @@ orExpr   : mainExpr=andExpr ( Kor rhs+=andExpr )*;
 andExpr  : mainExpr=notExpr ( Kand rhs+=notExpr )*;
 notExpr  : op+=Knot ? mainExpr=comparisonExpr;
 comparisonExpr
-         : mainExpr=stringConcatExpr ( op+=('eq' | 'ne' | 'lt' | 'le' | 'gt' | 'ge') rhs+=stringConcatExpr )?;
+         : mainExpr=stringConcatExpr ( op+=('eq' | 'ne' | 'lt' | 'le' | 'gt' | 'ge'
+                                            | '=' | '!=' | '<' | '<=' | '>' | '>=') rhs+=stringConcatExpr )?;
 stringConcatExpr
          : mainExpr=rangeExpr ( '||' rhs+=rangeExpr )* ;
 rangeExpr

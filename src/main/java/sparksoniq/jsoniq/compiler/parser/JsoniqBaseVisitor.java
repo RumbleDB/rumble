@@ -1,4 +1,4 @@
-// Generated from /home/stefan/Work/sparksoniq/sparksoniq/src/main/java/sparksoniq/jsoniq/compiler/parser/Jsoniq.g4 by ANTLR 4.6
+// Generated from /home/can/Project/sparksoniq/src/main/java/sparksoniq/jsoniq/compiler/parser/Jsoniq.g4 by ANTLR 4.6
 
 	// Java header
 	package sparksoniq.jsoniq.compiler.parser;

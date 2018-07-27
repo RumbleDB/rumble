@@ -28,8 +28,9 @@ import java.util.Arrays;
 
 public class ComparisonExpression extends BinaryExpressionBase {
 
-    public static final Operator[] operators = new Operator[] {Operator.GE, Operator.GT,
-    Operator.EQ, Operator.NE, Operator.LE, Operator.LT};
+    public static final Operator[] operators = new Operator[] {
+            Operator.VC_GE, Operator.VC_GT, Operator.VC_EQ, Operator.VC_NE, Operator.VC_LE, Operator.VC_LT
+            , Operator.GC_GE, Operator.GC_GT, Operator.GC_EQ, Operator.GC_NE, Operator.GC_LE, Operator.GC_LT};
 
 
     public ComparisonExpression(Expression _mainExpression, ExpressionMetadata metadata) {
