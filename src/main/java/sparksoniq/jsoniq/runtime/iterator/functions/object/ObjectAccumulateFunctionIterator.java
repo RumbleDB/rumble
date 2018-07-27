@@ -40,33 +40,39 @@ public class ObjectAccumulateFunctionIterator extends ObjectFunctionIterator {
                                 keyValuePairs.get(key).add(value);
                             }
                         }
-                        ArrayList<String> keyList = new ArrayList<>();
-                        ArrayList<Item> valueList = new ArrayList<>();
-                        // keySet on LinkedHashMap preserves order
-                        for (String key:keyValuePairs.keySet()) {
-                            // add all keys to the keyList
-                            keyList.add(key);
-                            ArrayList<Item> values = keyValuePairs.get(key);
-                            // convert values of keys with collisions into arrayItems
-                            if (values.size() > 1) {
-                                ArrayItem valuesArray = new ArrayItem(values
-                                        , ItemMetadata.fromIteratorMetadata(getMetadata()));
-                                valueList.add(valuesArray);
-                            }
-                            else if (values.size() == 1) {
-                                Item value = values.get(0);
-                                valueList.add(value);
-                            }
-                            else {
-                                throw new OperationNotSupportedException("Unexpected list size found");
-                            }
-                        }
-                        result = new ObjectItem(keyList, valueList, ItemMetadata.fromIteratorMetadata(getMetadata()));
                     } catch (OperationNotSupportedException e) {
                         e.printStackTrace();
                     }
                 }
             }
+
+            ArrayList<String> finalKeyList = new ArrayList<>();
+            ArrayList<Item> finalValueList = new ArrayList<>();
+            // keySet on LinkedHashMap preserves order
+            for (String key:keyValuePairs.keySet()) {
+                // add all keys to the keyList
+                finalKeyList.add(key);
+                ArrayList<Item> values = keyValuePairs.get(key);
+                // convert values of keys with collisions into arrayItems
+                if (values.size() > 1) {
+                    ArrayItem valuesArray = new ArrayItem(values
+                            , ItemMetadata.fromIteratorMetadata(getMetadata()));
+                    finalValueList.add(valuesArray);
+                }
+                else if (values.size() == 1) {
+                    Item value = values.get(0);
+                    finalValueList.add(value);
+                }
+                else {
+                    try {
+                        throw new OperationNotSupportedException("Unexpected list size found");
+                    } catch (OperationNotSupportedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            result = new ObjectItem(finalKeyList, finalValueList, ItemMetadata.fromIteratorMetadata(getMetadata()));
+
             this._hasNext = false;
             return result;
         }
