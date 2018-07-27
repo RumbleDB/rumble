@@ -50,6 +50,7 @@ public abstract class ObjectFunctionIterator extends LocalFunctionCallIterator {
         ACCUMULATE,
         DESCENDANT,
         DESCENDANTPAIRS,
+        INTERSECT,
         PROJECT,
         REMOVEKEYS
     }

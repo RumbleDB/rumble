@@ -99,6 +99,7 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(DESCENDANTOBJECTS, 1), ObjectDescendantFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(DESCENDANTPAIRS, 1), ObjectDescendantPairsFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(FLATTEN, 1), ArrayFlattenFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(INTERSECT, 1), ObjectIntersectFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(PROJECT, 2), ObjectProjectFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(REMOVEKEYS, 2), ObjectRemoveKeysFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(VALUES, 1), ObjectValuesFunctionIterator.class);
@@ -276,6 +277,10 @@ public class Functions {
          * function that recursively flattens arrays in the input sequence, leaving non-arrays intact
          */
         public static final String FLATTEN = "flatten";
+        /**
+         * function that returns the intersection of the supplied objects, and aggregates values corresponding to the same name into an array
+         */
+        public static final String INTERSECT = "intersect";
         /**
          * function that projects objects by filtering their pairs and leaves non-objects intact
          */
