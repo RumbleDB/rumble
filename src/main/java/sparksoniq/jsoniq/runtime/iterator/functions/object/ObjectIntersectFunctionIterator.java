@@ -22,7 +22,7 @@ public class ObjectIntersectFunctionIterator extends ObjectFunctionIterator {
             ObjectItem result = null;
             RuntimeIterator sequenceIterator = this._children.get(0);
             List<Item> items = getItemsFromIteratorWithCurrentContext(sequenceIterator);
-            Map<String, ArrayList<Item>> keyValuePairs = new LinkedHashMap<>();
+            LinkedHashMap<String, List<Item>> keyValuePairs = new LinkedHashMap<>();
             boolean firstItem = true;
             for (Item item : items) {
                 // ignore non-object items
@@ -61,32 +61,7 @@ public class ObjectIntersectFunctionIterator extends ObjectFunctionIterator {
                 }
             }
 
-            ArrayList<String> finalKeyList = new ArrayList<>();
-            ArrayList<Item> finalValueList = new ArrayList<>();
-            // keySet on LinkedHashMap preserves order
-            for (String key:keyValuePairs.keySet()) {
-                // add all keys to the keyList
-                finalKeyList.add(key);
-                ArrayList<Item> values = keyValuePairs.get(key);
-                // convert values of keys with collisions into arrayItems
-                if (values.size() > 1) {
-                    ArrayItem valuesArray = new ArrayItem(values
-                            , ItemMetadata.fromIteratorMetadata(getMetadata()));
-                    finalValueList.add(valuesArray);
-                }
-                else if (values.size() == 1) {
-                    Item value = values.get(0);
-                    finalValueList.add(value);
-                }
-                else {
-                    try {
-                        throw new OperationNotSupportedException("Unexpected list size found");
-                    } catch (OperationNotSupportedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-            result = new ObjectItem(finalKeyList, finalValueList, ItemMetadata.fromIteratorMetadata(getMetadata()));
+            result = new ObjectItem(keyValuePairs, ItemMetadata.fromIteratorMetadata(getMetadata()));
 
             this._hasNext = false;
             return result;
