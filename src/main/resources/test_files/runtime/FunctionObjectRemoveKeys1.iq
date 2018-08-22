@@ -1,0 +1,5 @@
+(:JIQS: ShouldRun; Output="( { "Engineer" : "Scott" } )" :)
+let $o := {"Captain" : "Kirk", "First Officer" : "Spock", "Engineer" : "Scott"} return remove-keys($o, ("Captain", "First Officer"))
+
+
+(: General functionality :)

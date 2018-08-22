@@ -17,9 +17,8 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.jsoniq.runtime.iterator.functions;
+package sparksoniq.jsoniq.runtime.iterator.functions.arrays;
 
-import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.IntegerItem;
@@ -31,35 +30,23 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.List;
 
-public class ArrayFunctionIterator extends LocalFunctionCallIterator {
+public class ArraySizeFunctionIterator extends ArrayFunctionIterator {
 
-    public enum ArrayFunctionOperators{
-        SIZE
-    }
 
-    public ArrayFunctionIterator(List<RuntimeIterator> arguments, ArrayFunctionOperators op,
-                                 IteratorMetadata iteratorMetadata) {
-        super(arguments, iteratorMetadata);
-        this._operator = op;
+    public ArraySizeFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
+        super(arguments, ArrayFunctionOperators.SIZE, iteratorMetadata);
     }
 
     @Override
     public Item next() {
-        if(this._hasNext) {
+        if (this._hasNext) {
             this._hasNext = false;
             RuntimeIterator arrayIterator = this._children.get(0);
-            arrayIterator.open(_currentDynamicContext);
-            Item iteratorResult = arrayIterator.next();
-            if(!(iteratorResult instanceof ArrayItem))
-                throw new SparksoniqRuntimeException("Invalid argument to "
-                        + _operator.toString() + " function, array expected");
-            ArrayItem array = (ArrayItem) iteratorResult;
-            arrayIterator.close();
+            ArrayItem array = getSingleItemOfTypeFromIterator(arrayIterator, ArrayItem.class);
             return new IntegerItem(array.getSize(), ItemMetadata.fromIteratorMetadata(getMetadata()));
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + _operator.toString() + " function",
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "SIZE function",
                 getMetadata());
     }
 
-    private final ArrayFunctionOperators _operator;
 }

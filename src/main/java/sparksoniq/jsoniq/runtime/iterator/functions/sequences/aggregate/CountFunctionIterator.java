@@ -17,42 +17,35 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.jsoniq.runtime.iterator.functions;
+package sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate;
 
-import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate.AggregateFunctionIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public class CountFunctionIterator extends LocalFunctionCallIterator {
+public class CountFunctionIterator extends AggregateFunctionIterator {
+    public CountFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
+        super(arguments, AggregateFunctionIterator.AggregateFunctionOperator.COUNT, iteratorMetadata);
+    }
+
     @Override
     public Item next() {
-        if(this._hasNext) {
-            List<Item> results = new ArrayList<>();
+        if (this._hasNext) {
             RuntimeIterator sequenceIterator = this._children.get(0);
-            sequenceIterator.open(_currentDynamicContext);
-            while (sequenceIterator.hasNext())
-                results.add(sequenceIterator.next());
-            sequenceIterator.close();
+            List<Item> results = getItemsFromIteratorWithCurrentContext(sequenceIterator);
             this._hasNext = false;
             return new IntegerItem(results.size(),
                     ItemMetadata.fromIteratorMetadata(getMetadata()));
         } else
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " count function", getMetadata());
-    }
-
-    public CountFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
-        super(arguments, iteratorMetadata);
-        if(arguments.size() != 1)
-            throw new SparksoniqRuntimeException("Incorrect number of arguments for count function; " +
-                    "Only one sequence argument is allowed");
+            throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + " count function",
+                    getMetadata());
     }
 
 

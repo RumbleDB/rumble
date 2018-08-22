@@ -12,13 +12,18 @@ import java.util.Map;
 
 public class SwitchRuntimeIterator extends LocalRuntimeIterator {
 
+    private final RuntimeIterator testField;
+    private final Map<RuntimeIterator, RuntimeIterator> cases;
+    private final RuntimeIterator defaultReturn;
+    private RuntimeIterator matchingIterator = null;
+
     public SwitchRuntimeIterator(RuntimeIterator test, Map<RuntimeIterator, RuntimeIterator> cases,
                                  RuntimeIterator defaultReturn, IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
         this._children.add(test);
-        for(RuntimeIterator key : cases.keySet())
+        for (RuntimeIterator key : cases.keySet())
             this._children.add(key);
-        for(RuntimeIterator value : cases.values())
+        for (RuntimeIterator value : cases.values())
             this._children.add(value);
         this._children.add(defaultReturn);
         this.testField = test;
@@ -27,11 +32,10 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public void open(DynamicContext context){
+    public void open(DynamicContext context) {
         super.open(context);
         initializeIterator(testField, cases, defaultReturn);
     }
-
 
     @Override
     public Item next() {
@@ -44,7 +48,7 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public void reset(DynamicContext context){
+    public void reset(DynamicContext context) {
         super.reset(context);
         this.matchingIterator = null;
         initializeIterator(testField, cases, defaultReturn);
@@ -52,29 +56,20 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
 
     private void initializeIterator(RuntimeIterator test, Map<RuntimeIterator, RuntimeIterator> cases,
                                     RuntimeIterator defaultReturn) {
-        test.open(_currentDynamicContext);
-        Item testValue = test.next();
-        if(test.hasNext())
-            throw new NonAtomicKeyException("Switch test must be atomic", getMetadata().getExpressionMetadata());
-        test.close();
-        for(RuntimeIterator caseKey : cases.keySet()){
-            caseKey.open(_currentDynamicContext);
-            Item caseValue = caseKey.next();
-            if(caseKey.hasNext())
-                throw new NonAtomicKeyException("Switch case test must be atomic", getMetadata().getExpressionMetadata());
+        Item testValue = getSingleItemOfTypeFromIterator(test, Item.class,
+                new NonAtomicKeyException("Switch test must be atomic", getMetadata().getExpressionMetadata()));
+        for (RuntimeIterator caseKey : cases.keySet()) {
+
+            Item caseValue = getSingleItemOfTypeFromIterator(caseKey, Item.class,
+                    new NonAtomicKeyException("Switch case test must be atomic", getMetadata().getExpressionMetadata()));
             caseKey.close();
-            if(Item.checkEquality(testValue, caseValue)) {
+            if (Item.checkEquality(testValue, caseValue)) {
                 matchingIterator = cases.get(caseKey);
                 break;
             }
         }
 
-        if(matchingIterator == null)
+        if (matchingIterator == null)
             matchingIterator = defaultReturn;
     }
-
-    private RuntimeIterator matchingIterator = null;
-    private final RuntimeIterator testField;
-    private final Map<RuntimeIterator, RuntimeIterator> cases;
-    private final RuntimeIterator defaultReturn;
 }

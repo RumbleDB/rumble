@@ -17,7 +17,7 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.spark;
+package sparksoniq.spark;
 
 
 import sparksoniq.jsoniq.item.*;
@@ -35,40 +35,44 @@ import org.apache.spark.api.java.JavaSparkContext;
 
 public class SparkContextManager {
 
-    public static final String APP_NAME = "jsoniq-on-spark";
-    public static Level LOG_LEVEL = Level.FATAL;
+    public static String DEFAULT_MASTER_CONFIG = "local[*]";
     public static int COLLECT_ITEM_LIMIT = 0;
+    private static Level LOG_LEVEL = Level.FATAL;
+    private static final String APP_NAME = "jsoniq-on-spark";
 
-    public static boolean LIMIT_COLLECT(){return  COLLECT_ITEM_LIMIT > 0;}
+    public static boolean LIMIT_COLLECT() {
+        return COLLECT_ITEM_LIMIT > 0;
+    }
 
     public static SparkContextManager getInstance() {
 
-        if(_instance ==null)
+        if (_instance == null)
             _instance = new SparkContextManager();
         return _instance;
     }
 
     private static SparkContextManager _instance;
-    private SparkContextManager(){}
+
+    private SparkContextManager() {
+    }
 
     public void initializeConfigurationAndContext(String masterConfig) {
-        configuration =  new SparkConf().setAppName(APP_NAME).setMaster(masterConfig);
+        configuration = new SparkConf().setAppName(APP_NAME).setMaster(masterConfig);
         initialize();
     }
 
     public void initializeConfigurationAndContext(SparkConf conf, boolean setAppName) {
-        if(setAppName)
+        if (setAppName)
             conf.setAppName(APP_NAME);
-        configuration =  conf;
+        configuration = conf;
         initialize();
     }
 
     public JavaSparkContext getContext() {
-        if(context == null) {
+        if (context == null) {
             if (this.configuration == null)
-                return null;
-            else
-                initialize();
+                initializeConfigurationAndContext(DEFAULT_MASTER_CONFIG);
+            initialize();
         }
         return context;
     }
@@ -77,11 +81,11 @@ public class SparkContextManager {
         initializeKryoSerialization();
         Logger.getLogger("org").setLevel(LOG_LEVEL);
         Logger.getLogger("akka").setLevel(LOG_LEVEL);
-        if(context == null)
+        if (context == null)
             context = new JavaSparkContext(this.configuration);
     }
 
-    private void initializeKryoSerialization(){
+    private void initializeKryoSerialization() {
         configuration.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
         Class[] serializedClasses = new Class[]{Item.class, ArrayItem.class, ObjectItem.class,
                 StringItem.class, IntegerItem.class, DoubleItem.class, DecimalItem.class, NullItem.class,

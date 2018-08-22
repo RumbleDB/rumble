@@ -30,6 +30,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
+import java.util.Collection;
 import java.util.List;
 
 //TODO serialize with indentation
@@ -92,7 +93,7 @@ public abstract class Item implements SerializableItem {
             }
 
         }
-        throw new IteratorFlowException("Cannot call getNumericValue on non numerics", item.getItemMetadata());
+        throw new IteratorFlowException("Cannot call getNumericValue on non numeric", item.getItemMetadata());
     }
 
     //returns an effective boolean value of any item type
@@ -121,24 +122,38 @@ public abstract class Item implements SerializableItem {
         return true;
     }
 
+    /**
+     * Function that compares 2 items.
+     * Non-atomics can't be compared.
+     * Items have to be of the same type or one them has to be null.
+     * @return -1 if v1 < v2; 0 if v1 == v2; 1 if v1 > v2;
+     */
     public static int compareItems(Item v1, Item v2) {
         int result;
-        //numeric comparison
         if (Item.isNumeric(v1) && Item.isNumeric(v2)) {
             BigDecimal value1 = Item.getNumericValue(v1, BigDecimal.class);
             BigDecimal value2 = Item.getNumericValue(v2, BigDecimal.class);
             result = value1.compareTo(value2);
-            //Non atomics cannot be compared
         } else if (v1 instanceof BooleanItem && v2 instanceof BooleanItem) {
-            result = new Boolean(((BooleanItem) v1).getBooleanValue()).
-                    compareTo(((BooleanItem) v2).getBooleanValue());
+            Boolean value1 = new Boolean(((BooleanItem) v1).getBooleanValue());
+            Boolean value2 = new Boolean(((BooleanItem) v2).getBooleanValue());
+            result = value1.compareTo(value2);
+        } else if (v1 instanceof StringItem&& v2 instanceof StringItem) {
+            String value1 = ((StringItem) v1).getStringValue();
+            String value2 = ((StringItem) v2).getStringValue();
+            result = value1.compareTo(value2);
         }
-        //NULL is smaller than anything
         else if (v1 instanceof NullItem || v2 instanceof NullItem) {
-            if (v1 instanceof NullItem)
+            // null equals null
+            if (v1 instanceof NullItem && v2 instanceof NullItem) {
+                result = 0;
+            }
+            else if (v1 instanceof NullItem) {
                 result = -1;
-            else
+            }
+            else{
                 result = 1;
+            }
         } else
             result = v1.serialize().compareTo(v2.serialize());
         return result;
@@ -148,13 +163,19 @@ public abstract class Item implements SerializableItem {
         return compareItems(v1, v2) == 0;
     }
 
+    public abstract List<Item> getItems() throws OperationNotSupportedException;
+
     public abstract Item getItemAt(int i) throws OperationNotSupportedException;
+
+    public abstract void putItem(Item value) throws OperationNotSupportedException;
+
+    public abstract List<String> getKeys() throws OperationNotSupportedException;
+
+    public abstract Collection<? extends Item> getValues() throws OperationNotSupportedException;
 
     public abstract Item getItemByKey(String s) throws OperationNotSupportedException;
 
     public abstract void putItemByKey(String s, Item value) throws OperationNotSupportedException;
-
-    public abstract List<String> getKeys() throws OperationNotSupportedException;
 
     public abstract int getSize() throws OperationNotSupportedException;
 

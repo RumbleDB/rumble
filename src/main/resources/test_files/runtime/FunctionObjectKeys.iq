@@ -1,0 +1,2 @@
+(:JIQS: ShouldRun; Output="(a, b, c)" :)
+let $o := ("foo", [ 1, 2, 3 ], { "a" : 1, "b" : 2 }, { "a" : 3, "c" : 4 }) return keys($o)
