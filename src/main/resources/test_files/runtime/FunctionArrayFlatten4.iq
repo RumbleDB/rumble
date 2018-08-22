@@ -1,0 +1,4 @@
+(:JIQS: ShouldRun; Output="( 0, x, { "a" : 2 } )" :)
+let $o := (0, "x", { "a" : 2 } ) return flatten($o)
+
+(: sequence with non-array items :)
