@@ -1,2 +1,5 @@
 (:JIQS: ShouldRun; Output="( { "Captain" : "Kirk", "First Officer" : "Spock" } )" :)
 let $o := {"Captain" : "Kirk", "First Officer" : "Spock", "Engineer" : "Scott"} return project($o, ("Captain", "First Officer"))
+
+
+(: General functionality :)

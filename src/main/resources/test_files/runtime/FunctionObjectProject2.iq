@@ -1,2 +1,4 @@
 (:JIQS: ShouldRun; Output="( { } )" :)
 let $o := {"Captain" : "Kirk", "First Officer" : "Spock", "Engineer" : "Scott"} return project($o, "XQuery Evangelist")
+
+(: Non-existing key :)

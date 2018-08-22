@@ -1,0 +1,6 @@
+(:JIQS: ShouldRun; Output="( { } )" :)
+let $o := ([]) return descendant-objects($o)
+
+(: to-be-implemented empty array :)
+
+
