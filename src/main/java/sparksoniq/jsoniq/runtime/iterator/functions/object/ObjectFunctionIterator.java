@@ -44,6 +44,17 @@ public abstract class ObjectFunctionIterator extends LocalFunctionCallIterator {
         this.results = null;
     }
 
+    public Item getResult() {
+        // if no results return empty sequence
+        if (results == null || results.size() == 0) {
+            _hasNext = false;
+            return null;
+        }
+        if (_currentIndex == results.size() - 1)
+            _hasNext = false;
+        return results.get(_currentIndex++);
+    }
+
     public enum ObjectFunctionOperators {
         KEYS,
         VALUES,

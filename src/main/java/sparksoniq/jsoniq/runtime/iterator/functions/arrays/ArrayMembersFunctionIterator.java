@@ -41,9 +41,7 @@ public class ArrayMembersFunctionIterator extends ArrayFunctionIterator {
                     }
                 }
             }
-            if (_currentIndex == results.size() - 1)
-                this._hasNext = false;
-            return results.get(_currentIndex++);
+            return getResult();
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "MEMBERS function",
                 getMetadata());

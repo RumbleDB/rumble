@@ -27,9 +27,7 @@ public class ObjectDescendantPairsFunctionIterator extends ObjectFunctionIterato
                 List<Item> items = getItemsFromIteratorWithCurrentContext(sequenceIterator);
                 getDescendantPairs(items);
             }
-            if (_currentIndex == results.size() - 1)
-                this._hasNext = false;
-            return results.get(_currentIndex++);
+            return getResult();
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " DESCENDANT-PAIRS function",
                 getMetadata());

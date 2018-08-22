@@ -24,9 +24,7 @@ public class ArrayDescendantFunctionIterator extends ArrayFunctionIterator {
                 List<Item> items = getItemsFromIteratorWithCurrentContext(sequenceIterator);
                 getDescendantArrays(items);
             }
-            if (_currentIndex == results.size() - 1)
-                this._hasNext = false;
-            return results.get(_currentIndex++);
+            return getResult();
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " DESCENDANT-ARRAYS function",
                 getMetadata());

@@ -29,9 +29,7 @@ public class ObjectRemoveKeysFunctionIterator extends ObjectFunctionIterator {
                 List<Item> keys = getItemsFromIteratorWithCurrentContext(keysIterator);
                 removeKeys(items, keys);
             }
-            if (_currentIndex == results.size() - 1)
-                this._hasNext = false;
-            return results.get(_currentIndex++);
+            return getResult();
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " REMOVE-KEYS function",
                 getMetadata());
