@@ -28,17 +28,16 @@ import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
 import javax.naming.OperationNotSupportedException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class ObjectItem extends JsonItem{
 
+    @Override
     public List<String> getKeys() {
         return _keys;
     }
 
+    @Override
     public Collection<? extends Item> getValues() {
         return _values;
     }
@@ -48,6 +47,44 @@ public class ObjectItem extends JsonItem{
         checkForDuplicateKeys(keys);
         this._keys = keys;
         this._values = values;
+    }
+
+    /**
+     * ObjectItem constructor from the given map data structure.
+     * For each key, the corresponding values list is turned into an ArrayItem if it contains more than a single element.
+     * @param keyValuePairs LinkedHashMap -- this map implementation preserves order of the keys -- essential for functionality
+     * @param itemMetadata
+     */
+    public ObjectItem(LinkedHashMap<String, List<Item>> keyValuePairs, ItemMetadata itemMetadata) {
+        super(itemMetadata);
+
+        List<String> keyList = new ArrayList<>();
+        List<Item> valueList = new ArrayList<>();
+        for (String key:keyValuePairs.keySet()) {
+            // add all keys to the keyList
+            keyList.add(key);
+            List<Item> values = keyValuePairs.get(key);
+            // for each key, convert the lists of values into arrayItems
+            if (values.size() > 1) {
+                ArrayItem valuesArray = new ArrayItem(values
+                        , itemMetadata);
+                valueList.add(valuesArray);
+            }
+            else if (values.size() == 1) {
+                Item value = values.get(0);
+                valueList.add(value);
+            }
+            else {
+                try {
+                    throw new OperationNotSupportedException("Unexpected list size found");
+                } catch (OperationNotSupportedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        this._keys = keyList;
+        this._values = valueList;
     }
 
     private void checkForDuplicateKeys(List<String> keys) {
@@ -62,7 +99,17 @@ public class ObjectItem extends JsonItem{
     }
 
     @Override
+    public List<Item> getItems() throws OperationNotSupportedException {
+        throw new OperationNotSupportedException("Objects are not arrays");
+    }
+
+    @Override
     public Item getItemAt(int i) throws OperationNotSupportedException {
+        throw new OperationNotSupportedException("Objects are not arrays");
+    }
+
+    @Override
+    public void putItem(Item value) throws OperationNotSupportedException {
         throw new OperationNotSupportedException("Objects are not arrays");
     }
 

@@ -1,0 +1,4 @@
+(:JIQS: ShouldRun; Output="( 0, x, { "a" : [ 1, { "b" : 2 } ] }, 3, c, d )" :)
+let $o := ([0, "x", { "a" : [1, {"b" : 2}] }, [3, ["c", "d"]]]) return flatten($o)
+
+(: general functionality :)

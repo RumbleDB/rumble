@@ -1,0 +1,4 @@
+(:JIQS: ShouldRun; Output="( { "Captain" : "Kirk" } )" :)
+let $o := {"Captain" : "Kirk", "First Officer" : "Spock", "Engineer" : "Scott"} return project($o, ("Captain", "non-existing-key"))
+
+(: Mix of existing and non-existing keys :)
