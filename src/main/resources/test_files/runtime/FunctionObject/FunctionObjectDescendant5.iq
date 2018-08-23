@@ -1,0 +1,6 @@
+(:JIQS: ShouldRun; Output="( )" :)
+let $o := (1, 2, "a", 5e+3) return descendant-objects($o) return descendant-objects($o)
+
+(: list of atomics :)
+
+
