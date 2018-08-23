@@ -29,6 +29,7 @@ import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.StringRuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +39,16 @@ public class ObjectLookupIterator extends LocalRuntimeIterator {
         super(null, iteratorMetadata);
         this._children.add(object);
         this._children.add(stringRuntimeIterator);
+    }
+
+    @Override
+    public void open(DynamicContext context) {
+        if(this.isOpen())
+            throw new IteratorFlowException("Variable reference iterator already open", getMetadata());
+        this._currentDynamicContext = context;
+        this._currentIndex = 0;
+        this.results = null;
+        this._hasNext = true;
     }
 
     @Override
@@ -81,7 +92,9 @@ public class ObjectLookupIterator extends LocalRuntimeIterator {
         return results.get(_currentIndex++);
     }
 
-    protected List<Item> results = null;
+    protected List<Item> results;
     protected int _currentIndex;
+
+
 
 }
