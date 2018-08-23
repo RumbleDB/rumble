@@ -43,6 +43,9 @@ public class ArraySizeFunctionIterator extends ArrayFunctionIterator {
             this._hasNext = false;
             RuntimeIterator arrayIterator = this._children.get(0);
             ArrayItem array = getSingleItemOfTypeFromIterator(arrayIterator, ArrayItem.class);
+            if (array == null) {
+                return null;
+            }
             return new IntegerItem(array.getSize(), ItemMetadata.fromIteratorMetadata(getMetadata()));
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "SIZE function",
