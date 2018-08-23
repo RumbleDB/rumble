@@ -44,10 +44,14 @@ public class VariableReferenceIterator extends LocalRuntimeIterator {
         if(items == null){
             items = this._currentDynamicContext.getVariableValue(this._variableName);
         }
-        Item item = items.get(currentIndex);
-        currentIndex++;
+        Item item = null;
+        if(items.size() != 0) {
+            item = items.get(currentIndex);
+            currentIndex++;
+        }
         if(currentIndex == items.size())
             this._hasNext = false;
+
         return item;
     }
 
