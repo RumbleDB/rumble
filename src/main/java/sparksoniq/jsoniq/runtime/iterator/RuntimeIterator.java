@@ -27,9 +27,12 @@ import org.apache.spark.api.java.JavaRDD;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnexpectedTypeException;
+import sparksoniq.jsoniq.item.EmptySequenceItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.semantics.types.ItemType;
+import sparksoniq.semantics.types.ItemTypes;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -136,7 +139,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         if (iterator.hasNext())
             throw nonAtomicException;
         iterator.close();
-        if (!(type.isInstance(result)))
+        if (!(type.isInstance(result)) && !(result instanceof EmptySequenceItem))
             throw new UnexpectedTypeException("Invalid item type returned by iterator", iterator.getMetadata());
         return (T) result;
     }

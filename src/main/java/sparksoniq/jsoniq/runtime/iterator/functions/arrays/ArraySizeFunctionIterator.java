@@ -21,6 +21,7 @@ package sparksoniq.jsoniq.runtime.iterator.functions.arrays;
 
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.ArrayItem;
+import sparksoniq.jsoniq.item.EmptySequenceItem;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
@@ -28,6 +29,7 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
+import java.lang.reflect.Array;
 import java.util.List;
 
 public class ArraySizeFunctionIterator extends ArrayFunctionIterator {
@@ -42,8 +44,14 @@ public class ArraySizeFunctionIterator extends ArrayFunctionIterator {
         if (this._hasNext) {
             this._hasNext = false;
             RuntimeIterator arrayIterator = this._children.get(0);
-            ArrayItem array = getSingleItemOfTypeFromIterator(arrayIterator, ArrayItem.class);
-            return new IntegerItem(array.getSize(), ItemMetadata.fromIteratorMetadata(getMetadata()));
+            Item item = getSingleItemOfTypeFromIterator(arrayIterator, ArrayItem.class);
+            if (item instanceof EmptySequenceItem) {
+                return new EmptySequenceItem(ItemMetadata.fromIteratorMetadata(getMetadata()));
+            }
+            else if (item instanceof ArrayItem) {
+                ArrayItem array = (ArrayItem) item;
+                return new IntegerItem(array.getSize(), ItemMetadata.fromIteratorMetadata(getMetadata()));
+            }
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "SIZE function",
                 getMetadata());
