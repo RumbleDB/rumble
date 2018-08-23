@@ -19,6 +19,9 @@
  */
  package sparksoniq.jsoniq.runtime.iterator.primary;
 
+import sparksoniq.jsoniq.item.EmptySequenceItem;
+import sparksoniq.jsoniq.item.NullItem;
+import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.SequenceType;
@@ -44,7 +47,7 @@ public class VariableReferenceIterator extends LocalRuntimeIterator {
         if(items == null){
             items = this._currentDynamicContext.getVariableValue(this._variableName);
         }
-        Item item = null;
+        Item item = new EmptySequenceItem(ItemMetadata.fromIteratorMetadata(getMetadata()));
         if(items.size() != 0) {
             item = items.get(currentIndex);
             currentIndex++;
