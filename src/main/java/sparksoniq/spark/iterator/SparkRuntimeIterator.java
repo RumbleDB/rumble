@@ -70,6 +70,10 @@ public abstract class SparkRuntimeIterator extends RuntimeIterator {
                 result = _rdd.collect();
         }
 
+        if(result.size() == 0){
+            this._hasNext = false;
+            return null;
+        }
         if(!(currentResultIndex <= result.size() - 1))
              throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.getClass().getSimpleName(),
                      getMetadata());

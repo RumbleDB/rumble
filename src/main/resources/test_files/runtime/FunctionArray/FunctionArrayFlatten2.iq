@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(  )" :)
+(:JIQS: ShouldRun; Output="" :)
 let $o := ([]) return flatten($o)
 
 (: to-be-implemented empty array :)
