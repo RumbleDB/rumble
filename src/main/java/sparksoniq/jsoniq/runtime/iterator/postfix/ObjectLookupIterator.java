@@ -46,41 +46,47 @@ public class ObjectLookupIterator extends LocalRuntimeIterator {
         if(this.isOpen())
             throw new IteratorFlowException("Variable reference iterator already open", getMetadata());
         this._currentDynamicContext = context;
-        this.results = new ArrayList<>();
         this._currentIndex = 0;
-        this.items = getItemsFromIteratorWithCurrentContext(this._children.get(0));
-        if(this.items.size() == 0) {
-            this._hasNext = false;
-        }
-        else {
-            this._hasNext = true;
-        }
-        this._children.get(1).open(_currentDynamicContext);
-        this._lookupKey = this._children.get(1).next();
-        if(this._children.get(1).hasNext() || _lookupKey.isObject() || _lookupKey.isArray())
-            throw new InvalidSelectorException("Type error; There is not exactly one supplied parameter for an array selector: "
-                    + _lookupKey.serialize(), getMetadata());
-        if(!_lookupKey.isString())
-            throw new UnexpectedTypeException("Non numeric array lookup for " + _lookupKey.serialize(), getMetadata());
-        this._children.get(1).close();
-
-        for (Item i:items) {
-            if (i instanceof ObjectItem) {
-                ObjectItem objItem = (ObjectItem)i;
-                results.add(objItem.getItemByKey(((StringItem)_lookupKey).getStringValue()));
-            }
-        }
+        this.results = null;
+        this._hasNext = true;
     }
 
     @Override
     public Item next() {
         if(_hasNext == true){
+            if(results == null){
+                RuntimeIterator iterator = this._children.get(0);
+                List<Item> items = getItemsFromIteratorWithCurrentContext(iterator);
+                results = new ArrayList<>();
+                _currentIndex = 0;
+
+                this._children.get(1).open(_currentDynamicContext);
+                Item _lookupKey = this._children.get(1).next();
+                if(this._children.get(1).hasNext() || _lookupKey.isObject() || _lookupKey.isArray())
+                    throw new InvalidSelectorException("Type error; There is not exactly one supplied parameter for an array selector: "
+                            + _lookupKey.serialize(), getMetadata());
+                if(!_lookupKey.isString())
+                    throw new UnexpectedTypeException("Non numeric array lookup for " + _lookupKey.serialize(), getMetadata());
+                this._children.get(1).close();
+
+                for (Item i:items) {
+                    if (i instanceof ObjectItem) {
+                        ObjectItem objItem = (ObjectItem)i;
+                        results.add(objItem.getItemByKey(((StringItem)_lookupKey).getStringValue()));
+                    }
+                }
+            }
             return getResult();
         }
         throw new IteratorFlowException("Invalid next call in Object Lookup", getMetadata());
     }
 
     protected Item getResult() {
+        // if no results return empty sequence
+        if (results == null || results.size() == 0) {
+            _hasNext = false;
+            return null;
+        }
         if (_currentIndex == results.size() - 1)
             _hasNext = false;
         return results.get(_currentIndex++);
@@ -88,8 +94,7 @@ public class ObjectLookupIterator extends LocalRuntimeIterator {
 
     protected List<Item> results;
     protected int _currentIndex;
-    protected List<Item> items;
-    protected Item _lookupKey;
+
 
 
 }
