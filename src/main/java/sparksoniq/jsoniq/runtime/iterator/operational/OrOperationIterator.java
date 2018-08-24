@@ -19,29 +19,46 @@
  */
  package sparksoniq.jsoniq.runtime.iterator.operational;
 
+import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.*;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
 
 public class OrOperationIterator extends BinaryOperationBaseIterator {
+
+    BooleanItem result;
 
     public OrOperationIterator(RuntimeIterator left, RuntimeIterator right, IteratorMetadata iteratorMetadata) {
         super(left,right, OperationalExpressionBase.Operator.OR, iteratorMetadata);
     }
 
     @Override
-    public AtomicItem next() {
+    public void open(DynamicContext context) {
+        if (this._isOpen)
+            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
+        this._isOpen = true;
+        this._currentDynamicContext = context;
         _leftIterator.open(_currentDynamicContext);
         _rightIterator.open(_currentDynamicContext);
         Item left = _leftIterator.next();
         Item right = _rightIterator.next();
         _leftIterator.close();
         _rightIterator.close();
-        this._hasNext = false;
-        return new BooleanItem(Item.getEffectiveBooleanValue(left) || Item.getEffectiveBooleanValue(right)
+        this.result = new BooleanItem(Item.getEffectiveBooleanValue(left) || Item.getEffectiveBooleanValue(right)
                 , ItemMetadata.fromIteratorMetadata(getMetadata()));
+        this._hasNext = true;
+    }
+
+    @Override
+    public AtomicItem next() {
+        if(this.hasNext()) {
+            this._hasNext = false;
+            return this.result;
+        }
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
     }
 }
