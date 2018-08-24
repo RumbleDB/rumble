@@ -44,7 +44,7 @@ import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 import sparksoniq.jsoniq.runtime.iterator.operational.*;
 import sparksoniq.jsoniq.runtime.iterator.postfix.ArrayLookupIterator;
 import sparksoniq.jsoniq.runtime.iterator.postfix.ArrayUnboxingItertor;
-import sparksoniq.jsoniq.runtime.iterator.postfix.ObjectLookupItertor;
+import sparksoniq.jsoniq.runtime.iterator.postfix.ObjectLookupIterator;
 import sparksoniq.jsoniq.runtime.iterator.postfix.PredicateIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.*;
 import sparksoniq.jsoniq.runtime.iterator.quantifiers.QuantifiedExpressionIterator;
@@ -166,7 +166,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                     if (extension instanceof ObjectLookupExtension) {
                         StringRuntimeIterator iterator = (StringRuntimeIterator)
                                 this.visit(((ObjectLookupExtension) extension).getField(), argument);
-                        previous = new ObjectLookupItertor(previous, iterator, createIteratorMetadata(expression));
+                        previous = new ObjectLookupIterator(previous, iterator, createIteratorMetadata(expression));
                     }
                     if (extension instanceof ArrayUnboxingExtension) {
                         previous = new ArrayUnboxingItertor(previous, createIteratorMetadata(expression));
