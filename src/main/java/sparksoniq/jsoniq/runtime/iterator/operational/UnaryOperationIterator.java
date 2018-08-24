@@ -28,10 +28,13 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.UnaryOperationBaseIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
 
 import java.math.BigDecimal;
 
 public class UnaryOperationIterator extends UnaryOperationBaseIterator {
+
+    Item result;
 
     public UnaryOperationIterator(RuntimeIterator child, OperationalExpressionBase.Operator operator,
                                   IteratorMetadata iteratorMetadata) {
@@ -39,35 +42,49 @@ public class UnaryOperationIterator extends UnaryOperationBaseIterator {
     }
 
     @Override
-    public Item next() {
+    public void open(DynamicContext context) {
+        if (this._isOpen)
+            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
+        this._isOpen = true;
+        this._currentDynamicContext = context;
 
-        if(!this._hasNext)
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
         if(_child instanceof EmptySequenceIterator){
             this._hasNext = false;
-            return null;
         }
 
         _child.open(_currentDynamicContext);
         Item child = _child.next();
         _child.close();
-        this._hasNext = false;
         if(this._operator== OperationalExpressionBase.Operator.MINUS)
         {
             if(Item.isNumeric(child)){
                 if(child instanceof IntegerItem)
-                    return new IntegerItem(-1 * ((IntegerItem)child).getIntegerValue(),
+                    this.result = new IntegerItem(-1 * ((IntegerItem)child).getIntegerValue(),
                             ItemMetadata.fromIteratorMetadata(getMetadata()));
                 if(child instanceof DoubleItem)
-                    return new DoubleItem(-1 * ((DoubleItem)child).getDoubleValue(),
+                    this.result =  new DoubleItem(-1 * ((DoubleItem)child).getDoubleValue(),
                             ItemMetadata.fromIteratorMetadata(getMetadata()));
                 if(child instanceof DecimalItem)
-                    return new DecimalItem(((DecimalItem)child).getDecimalValue().multiply(new BigDecimal(-1)),
+                    this.result =  new DecimalItem(((DecimalItem)child).getDecimalValue().multiply(new BigDecimal(-1)),
                             ItemMetadata.fromIteratorMetadata(getMetadata()));
             }
-            throw new UnexpectedTypeException("Unary expression has non numeric args " +
-                    child.serialize(), getMetadata());
-        } else return child;
+            else {
+                throw new UnexpectedTypeException("Unary expression has non numeric args " +
+                        child.serialize(), getMetadata());
+            }
 
+        } else {
+            result = child;
+        }
+        this._hasNext = true;
+    }
+
+    @Override
+    public Item next() {
+        if(this.hasNext()){
+            this._hasNext = false;
+            return result;
+        }
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
     }
 }
