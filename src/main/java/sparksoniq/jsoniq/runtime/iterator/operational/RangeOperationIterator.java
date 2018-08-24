@@ -37,54 +37,44 @@ public class RangeOperationIterator extends BinaryOperationBaseIterator {
         super(left, right, OperationalExpressionBase.Operator.TO, iteratorMetadata);
     }
 
-    public boolean hasNext() {
-        return this._hasNext;
-    }
-
     @Override
     public AtomicItem next() {
-        if (!isInitialized) {
-            _index = 0;
-            _leftIterator.open(_currentDynamicContext);
-            _rightIterator.open(_currentDynamicContext);
-            Item left = _leftIterator.next();
-            Item right = _rightIterator.next();
-            _leftIterator.close();
-            _rightIterator.close();
-
-            if (!(left instanceof IntegerItem) || !(right instanceof IntegerItem))
-                throw new UnexpectedTypeException("Range expression has non numeric args " +
-                        left.serialize() + ", " + right.serialize(), getMetadata());
-            _left = Item.getNumericValue(left, Integer.class);
-            _right = Item.getNumericValue(right, Integer.class);
-            if (_right < _left) {
-                this._hasNext = false;
-                return null;
-            }
-
-
-            isInitialized = true;
-            _index = _left;
-            if (_index == _right)
-                this._hasNext = false;
-            return new IntegerItem(_index++, ItemMetadata.fromIteratorMetadata(getMetadata()));
-
-        } else {
-            if (_index > _right)
-                throw new IteratorFlowException("Range Operation invalid next() call", getMetadata());
+        if(_hasNext == true){
             if (_index == _right)
                 this._hasNext = false;
             return new IntegerItem(_index++, ItemMetadata.fromIteratorMetadata(getMetadata()));
         }
+        throw new IteratorFlowException("Invalid next call in Object Lookup", getMetadata());
     }
 
     @Override
     public void open(DynamicContext context) {
-        super.open(context);
-        this.isInitialized = false;
+        if (this._isOpen)
+            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
+        this._isOpen = true;
+        this._currentDynamicContext = context;
+
+        _index = 0;
+        _leftIterator.open(_currentDynamicContext);
+        _rightIterator.open(_currentDynamicContext);
+        Item left = _leftIterator.next();
+        Item right = _rightIterator.next();
+        _leftIterator.close();
+        _rightIterator.close();
+
+        if (!(left instanceof IntegerItem) || !(right instanceof IntegerItem))
+            throw new UnexpectedTypeException("Range expression has non numeric args " +
+                    left.serialize() + ", " + right.serialize(), getMetadata());
+        _left = Item.getNumericValue(left, Integer.class);
+        _right = Item.getNumericValue(right, Integer.class);
+        if (_right < _left) {
+            this._hasNext = false;
+        } else {
+            _index = _left;
+            this._hasNext = true;
+        }
     }
 
-    private boolean isInitialized = false;
     private int _left;
     private int _right;
     private int _index;
