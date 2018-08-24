@@ -35,17 +35,19 @@ import sparksoniq.jsoniq.runtime.iterator.primary.ArrayRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.NullRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.ObjectConstructorRuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
 
 public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
-
     public static final Operator[] valueComparisonOperators = new Operator[] {
             Operator.VC_GE, Operator.VC_GT, Operator.VC_EQ, Operator.VC_NE, Operator.VC_LE, Operator.VC_LT};
     public static final Operator[] generalComparisonOperators = new Operator[] {
             Operator.GC_GE, Operator.GC_GT, Operator.GC_EQ, Operator.GC_NE, Operator.GC_LE, Operator.GC_LT};
+
+    protected AtomicItem result;
 
 
     public ComparisonOperationIterator(RuntimeIterator left, RuntimeIterator right,
@@ -55,36 +57,44 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
 
     @Override
     public AtomicItem next() {
+        if(this.hasNext()){
+            this._hasNext = false;
+            return result;
+        }
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
+    }
+
+    @Override
+    public void open(DynamicContext context) {
+        if (this._isOpen)
+            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
+        this._isOpen = true;
+        this._currentDynamicContext = context;
+
         _leftIterator.open(_currentDynamicContext);
         _rightIterator.open(_currentDynamicContext);
 
-        AtomicItem result = null;
-
         if (Arrays.asList(valueComparisonOperators).contains(this._operator)){
-            Item left = _leftIterator.next();
-            Item right = _rightIterator.next();
 
-            /*
-            // if EMPTY SEQUENCE - () or nested empty sequence - ((),())
-            // return EMPTY SEQUENCE - ()
-            if (left == null || right == null) {
-                _leftIterator.close();
-                _rightIterator.close();
-                this._hasNext = false;
-                return null;
-            }
-            */
+            // if EMPTY SEQUENCE - eg. () or ((),())
+            // this check is added here to provide lazy evaluation: eg. () eq (2,3) = () instead of exception
+            if (!(_leftIterator.hasNext() && _rightIterator.hasNext())) {
+                result = null;
+            } else {
+                Item left = _leftIterator.next();
+                Item right = _rightIterator.next();
 
-            // value comparison doesn't support more than 1 items
-            if (_leftIterator.hasNext() || _rightIterator.hasNext())
-            {
-                throw new UnexpectedTypeException("Invalid args. Value comparison can't be performed on sequences with more than 1 items", getMetadata());
+                // value comparison doesn't support more than 1 items
+                if (_leftIterator.hasNext() || _rightIterator.hasNext())
+                {
+                    throw new UnexpectedTypeException("Invalid args. Value comparison can't be performed on sequences with more than 1 items", getMetadata());
+                }
+                else {
+                    result = comparePair(left, right);
+                }
             }
             _leftIterator.close();
             _rightIterator.close();
-            this._hasNext = false;
-
-            result = comparePair(left, right);
         }
         else if (Arrays.asList(generalComparisonOperators).contains(this._operator)) {
             ArrayList<Item> left = new ArrayList<>();
@@ -96,19 +106,28 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
 
             _leftIterator.close();
             _rightIterator.close();
-            this._hasNext = false;
 
             result = compareAllPairs(left, right);
         }
 
-        return result;
+        if(result == null) {
+            this._hasNext = false;
+        } else {
+            this._hasNext = true;
+        }
     }
 
+    /**
+     * Function to compare two lists of items one by one with each other.
+     * @param left  item list of left iterator
+     * @param right item list of right iterator
+     * @return true if a single match is found, false if no matches. Given an empty sequence, false is returned.
+     */
     public BooleanItem compareAllPairs (ArrayList<Item> left, ArrayList<Item> right) {
         for (Item l:left) {
             for (Item r:right) {
                 BooleanItem result = comparePair(l, r);
-                if (result != null && result.getBooleanValue() == true)
+                if (result.getBooleanValue() == true)
                     return result;
             }
         }
@@ -117,12 +136,7 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
 
     public BooleanItem comparePair(Item left, Item right) {
 
-        // if given EMPTY SEQUENCE eg. () or ((),())
-        // return EMPTY SEQUENCE
-        if (left == null || right == null) {
-            return null;
-        }
-        else if (left instanceof ArrayItem || right instanceof ArrayItem) {
+        if (left instanceof ArrayItem || right instanceof ArrayItem) {
             throw new NonAtomicKeyException("Invalid args. Comparison can't be performed on array type", getMetadata().getExpressionMetadata());
         }
         else if (left instanceof ObjectItem || right instanceof ObjectItem) {
@@ -176,7 +190,7 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
             case GC_GE:
                 return new BooleanItem(comparison > 0 || comparison == 0, ItemMetadata.fromIteratorMetadata(getMetadata()));
         }
-        return null;
+        throw new IteratorFlowException("Unrecognized operator found", getMetadata());
     }
 
 }
