@@ -28,7 +28,6 @@ import sparksoniq.spark.tuple.FlworTuple;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Objects;
 
 public class ReturnFlatMapClosure implements FlatMapFunction<FlworTuple, Item> {
     private final RuntimeIterator _expression;
@@ -44,7 +43,6 @@ public class ReturnFlatMapClosure implements FlatMapFunction<FlworTuple, Item> {
         while (_expression.hasNext())
             result.add(_expression.next());
         _expression.close();
-        result.removeIf(Objects::isNull);
         return result.iterator();
     }
 }
