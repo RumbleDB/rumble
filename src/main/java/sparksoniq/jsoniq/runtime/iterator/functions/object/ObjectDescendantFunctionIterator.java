@@ -20,6 +20,7 @@ public class ObjectDescendantFunctionIterator extends ObjectFunctionIterator {
     public Item next() {
         if (this._hasNext) {
             if (results == null) {
+                _currentIndex = 0;
                 results = new ArrayList<>();
                 RuntimeIterator sequenceIterator = this._children.get(0);
                 List<Item> items = getItemsFromIteratorWithCurrentContext(sequenceIterator);

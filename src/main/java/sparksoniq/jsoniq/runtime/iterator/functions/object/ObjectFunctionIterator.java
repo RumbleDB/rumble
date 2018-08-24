@@ -19,7 +19,6 @@
  */
 package sparksoniq.jsoniq.runtime.iterator.functions.object;
 
-import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
@@ -43,17 +42,6 @@ public abstract class ObjectFunctionIterator extends LocalFunctionCallIterator {
     public void reset(DynamicContext context) {
         super.reset(context);
         this.results = null;
-    }
-
-    @Override
-    public void open(DynamicContext context) {
-        if (this._isOpen)
-            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
-        this._isOpen = true;
-        this._hasNext = true;
-        this._currentDynamicContext = context;
-        this.results = null;
-        this._currentIndex = 0;
     }
 
     public Item getResult() {
