@@ -28,6 +28,7 @@ import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
 
 public class AndOperationIterator extends BinaryOperationBaseIterator {
 
@@ -36,19 +37,31 @@ public class AndOperationIterator extends BinaryOperationBaseIterator {
     }
 
     @Override
+    public void open(DynamicContext context) {
+        if (this._isOpen)
+            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
+        this._isOpen = true;
+        this._hasNext = true;
+        this._currentDynamicContext = context;
+
+        _leftIterator.open(_currentDynamicContext);
+        _rightIterator.open(_currentDynamicContext);
+        Item left = _leftIterator.next();
+        Item right = _rightIterator.next();
+        _leftIterator.close();
+        _rightIterator.close();
+        this.result = new BooleanItem(Item.getEffectiveBooleanValue(left) && Item.getEffectiveBooleanValue(right)
+                , ItemMetadata.fromIteratorMetadata(getMetadata()));
+    }
+
+    @Override
     public AtomicItem next() {
         if (this._hasNext) {
-            _leftIterator.open(_currentDynamicContext);
-            _rightIterator.open(_currentDynamicContext);
-            Item left = _leftIterator.next();
-            Item right = _rightIterator.next();
-            _leftIterator.close();
-            _rightIterator.close();
             this._hasNext = false;
-            return new BooleanItem(Item.getEffectiveBooleanValue(left) && Item.getEffectiveBooleanValue(right)
-                    , ItemMetadata.fromIteratorMetadata(getMetadata()));
+            return result;
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-
     }
+
+    BooleanItem result;
 }
