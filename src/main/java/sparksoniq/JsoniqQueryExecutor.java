@@ -201,9 +201,13 @@ public class JsoniqQueryExecutor {
 
     private String getIteratorOutput(RuntimeIterator iterator, boolean indent) {
         iterator.open(new DynamicContext());
-        Item result = iterator.next();
-        if (result == null)
+        Item result = null;
+        if(iterator.hasNext()) {
+            result = iterator.next();
+        }
+        if (result == null) {
             return "";
+        }
         String singleOutput = result.serialize();
         if (!iterator.hasNext())
             return singleOutput;
