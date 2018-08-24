@@ -27,6 +27,7 @@ import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.SequenceType;
 
 import java.util.ArrayList;
@@ -35,6 +36,7 @@ import java.util.List;
 public class InstanceOfIterator extends UnaryOperationIterator {
 
     private final SequenceType _sequenceType;
+    protected AtomicItem result;
 
     public InstanceOfIterator(RuntimeIterator child, SequenceType sequenceType, IteratorMetadata iteratorMetadata) {
         super(child, OperationalExpressionBase.Operator.INSTANCE_OF, iteratorMetadata);
@@ -42,26 +44,42 @@ public class InstanceOfIterator extends UnaryOperationIterator {
     }
 
     @Override
+    public void open(DynamicContext context) {
+        if (this._isOpen)
+            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
+        this._isOpen = true;
+        this._currentDynamicContext = context;
+
+        List<Item> items = new ArrayList<>();
+        _child.open(_currentDynamicContext);
+        while (_child.hasNext())
+            items.add(_child.next());
+        _child.close();
+        //Empty sequence, more items
+        if (items.isEmpty() && _sequenceType.getArity() != SequenceType.Arity.OneOrZero
+                && _sequenceType.getArity() != SequenceType.Arity.ZeroOrMore)
+            this.result = new BooleanItem(false, ItemMetadata.fromIteratorMetadata(getMetadata()));
+        if (items.size() == 1 && _sequenceType.getArity() != SequenceType.Arity.OneOrZero
+                && _sequenceType.getArity() != SequenceType.Arity.OneOrMore &&
+                _sequenceType.getArity() != SequenceType.Arity.One)
+            this.result = new BooleanItem(false, ItemMetadata.fromIteratorMetadata(getMetadata()));
+        for (Item item : items) {
+            if (!item.isTypeOf(_sequenceType.getItemType())) {
+                this.result = new BooleanItem(false, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                break;
+            }
+        }
+        if (this.result == null) {
+            this.result = new BooleanItem(true, ItemMetadata.fromIteratorMetadata(getMetadata()));
+        }
+        this._hasNext = true;
+    }
+
+    @Override
     public AtomicItem next() {
-        if (this._hasNext) {
-            List<Item> items = new ArrayList<>();
-            _child.open(_currentDynamicContext);
-            while (_child.hasNext())
-                items.add(_child.next());
-            _child.close();
+        if (this.hasNext()) {
             this._hasNext = false;
-            //Empty sequence, more items
-            if (items.isEmpty() && _sequenceType.getArity() != SequenceType.Arity.OneOrZero
-                    && _sequenceType.getArity() != SequenceType.Arity.ZeroOrMore)
-                return new BooleanItem(false, ItemMetadata.fromIteratorMetadata(getMetadata()));
-            if (items.size() == 1 && _sequenceType.getArity() != SequenceType.Arity.OneOrZero
-                    && _sequenceType.getArity() != SequenceType.Arity.OneOrMore &&
-                    _sequenceType.getArity() != SequenceType.Arity.One)
-                return new BooleanItem(false, ItemMetadata.fromIteratorMetadata(getMetadata()));
-            for (Item item : items)
-                if (!item.isTypeOf(_sequenceType.getItemType()))
-                    return new BooleanItem(false, ItemMetadata.fromIteratorMetadata(getMetadata()));
-            return new BooleanItem(true, ItemMetadata.fromIteratorMetadata(getMetadata()));
+            return result;
         } else
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
     }
