@@ -8,6 +8,7 @@ import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
 
 import javax.naming.OperationNotSupportedException;
 import java.util.*;
@@ -18,40 +19,50 @@ public class ObjectAccumulateFunctionIterator extends ObjectFunctionIterator {
     }
 
     @Override
-    public Item next() {
-        if (this._hasNext) {
-            ObjectItem result = null;
-            RuntimeIterator sequenceIterator = this._children.get(0);
-            List<Item> items = getItemsFromIteratorWithCurrentContext(sequenceIterator);
-            LinkedHashMap<String, List<Item>> keyValuePairs = new LinkedHashMap<>();
-            for (Item item : items) {
-                // ignore non-object items
-                if (item.isObject()) {
-                    try {
-                        for (String key:item.getKeys()) {
-                            Item value = item.getItemByKey(key);
-                            if (!keyValuePairs.containsKey(key)) {
-                                List<Item> valueList = new ArrayList<>();
-                                valueList.add(value);
-                                keyValuePairs.put(key, valueList);
-                            }
-                            // store values for key collisions in a list
-                            else {
-                                keyValuePairs.get(key).add(value);
-                            }
+    public void open(DynamicContext context) {
+        if (this._isOpen)
+            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
+        this._isOpen = true;
+        this._currentDynamicContext = context;
+
+        RuntimeIterator sequenceIterator = this._children.get(0);
+        List<Item> items = getItemsFromIteratorWithCurrentContext(sequenceIterator);
+        LinkedHashMap<String, List<Item>> keyValuePairs = new LinkedHashMap<>();
+        for (Item item : items) {
+            // ignore non-object items
+            if (item.isObject()) {
+                try {
+                    for (String key:item.getKeys()) {
+                        Item value = item.getItemByKey(key);
+                        if (!keyValuePairs.containsKey(key)) {
+                            List<Item> valueList = new ArrayList<>();
+                            valueList.add(value);
+                            keyValuePairs.put(key, valueList);
                         }
-                    } catch (OperationNotSupportedException e) {
-                        e.printStackTrace();
+                        // store values for key collisions in a list
+                        else {
+                            keyValuePairs.get(key).add(value);
+                        }
                     }
+                } catch (OperationNotSupportedException e) {
+                    e.printStackTrace();
                 }
             }
+        }
 
-            result = new ObjectItem(keyValuePairs, ItemMetadata.fromIteratorMetadata(getMetadata()));
+        this.result = new ObjectItem(keyValuePairs, ItemMetadata.fromIteratorMetadata(getMetadata()));
+        this._hasNext = true;
+    }
 
+    @Override
+    public Item next() {
+        if (this._hasNext) {
             this._hasNext = false;
             return result;
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " ACCUMULATE function",
                 getMetadata());
     }
+
+    ObjectItem result;
 }
