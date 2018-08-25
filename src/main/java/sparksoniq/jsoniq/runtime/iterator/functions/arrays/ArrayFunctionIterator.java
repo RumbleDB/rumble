@@ -1,5 +1,6 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.arrays;
 
+import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
@@ -26,10 +27,8 @@ public abstract class ArrayFunctionIterator extends LocalFunctionCallIterator {
     }
 
     public Item getResult() {
-        // if no results return empty sequence
         if (results == null || results.size() == 0) {
-            _hasNext = false;
-            return null;
+            throw new IteratorFlowException("getResult called on an empty list of results", getMetadata());
         }
         if (_currentIndex == results.size() - 1)
             _hasNext = false;
