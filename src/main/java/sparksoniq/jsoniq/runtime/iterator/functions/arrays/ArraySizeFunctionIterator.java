@@ -27,7 +27,10 @@ import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
 
+import javax.naming.OperationNotSupportedException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ArraySizeFunctionIterator extends ArrayFunctionIterator {
@@ -40,16 +43,29 @@ public class ArraySizeFunctionIterator extends ArrayFunctionIterator {
     @Override
     public Item next() {
         if (this._hasNext) {
-            this._hasNext = false;
-            RuntimeIterator arrayIterator = this._children.get(0);
-            ArrayItem array = getSingleItemOfTypeFromIterator(arrayIterator, ArrayItem.class);
-            if (array == null) {
-                return null;
-            }
-            return new IntegerItem(array.getSize(), ItemMetadata.fromIteratorMetadata(getMetadata()));
+            return getResult();
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "SIZE function",
                 getMetadata());
+    }
+
+    @Override
+    public void open(DynamicContext context) {
+        if (this._isOpen)
+            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
+        this._isOpen = true;
+        this._currentDynamicContext = context;
+
+        _currentIndex = 0;
+        results = new ArrayList<>();
+        RuntimeIterator arrayIterator = this._children.get(0);
+        ArrayItem array = getSingleItemOfTypeFromIterator(arrayIterator, ArrayItem.class);
+        if (array == null) {
+            this._hasNext = false;
+        } else {
+            results.add(new IntegerItem(array.getSize(), ItemMetadata.fromIteratorMetadata(getMetadata())));
+            this._hasNext = true;
+        }
     }
 
 }
