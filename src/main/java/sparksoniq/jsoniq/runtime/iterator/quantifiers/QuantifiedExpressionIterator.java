@@ -91,7 +91,6 @@ public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
         List<DynamicContext> results = new ArrayList<>();
         for (DynamicContext currentContext : previousContexts) {
             var.open(currentContext);
-            var.reset(currentContext);
             while (var.hasNext()) {
                 DynamicContext context = new DynamicContext(currentContext);
                 List<Item> contents = new ArrayList<>();

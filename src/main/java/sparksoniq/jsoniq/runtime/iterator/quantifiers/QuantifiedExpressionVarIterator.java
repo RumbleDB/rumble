@@ -48,32 +48,47 @@ public class QuantifiedExpressionVarIterator extends LocalRuntimeIterator {
     @Override
     public void reset(DynamicContext context){
         super.reset(context);
-        this.result = null;
+        this.results = null;
     }
 
     @Override
     public Item next() {
-        if(result == null){
-            RuntimeIterator expression = this._children.get(0);
-            result = new ArrayList<>();
-            expression.open(_currentDynamicContext);
-            while (expression.hasNext())
-                result.add(expression.next());
-            expression.close();
-            currentResultIndex = 0;
+        if (this.hasNext()) {
+            return getResult();
         }
-
-        if(currentResultIndex > result.size() -1)
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " Quantified Expr Var", getMetadata());
-
-        if(currentResultIndex == result.size() -1)
-            this._hasNext = false;
-
-        return result.get(currentResultIndex++);
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " Quantified Expr Var", getMetadata());
     }
 
-    private List<Item> result = null;
-    private int currentResultIndex;
+    protected Item getResult() {
+        if (_currentIndex == results.size() - 1)
+            _hasNext = false;
+        return results.get(_currentIndex++);
+    }
+
+    @Override
+    public void open(DynamicContext context) {
+        if (this._isOpen)
+            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
+        this._isOpen = true;
+        this._currentDynamicContext = context;
+
+        RuntimeIterator expression = this._children.get(0);
+        results = new ArrayList<>();
+        expression.open(_currentDynamicContext);
+        while (expression.hasNext())
+            results.add(expression.next());
+        expression.close();
+        _currentIndex = 0;
+
+        if (results.size() == 0) {
+            this._hasNext = false;
+        } else {
+            this._hasNext = true;
+        }
+    }
+
+    private List<Item> results;
+    private int _currentIndex;
     private final String _variableReference;
     private final SequenceType _sequenceType;
 
