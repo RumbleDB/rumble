@@ -24,26 +24,38 @@ import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
 
 import java.math.BigDecimal;
 
 public class DecimalRuntimeIterator extends AtomicRuntimeIterator {
+    public DecimalRuntimeIterator(BigDecimal value, IteratorMetadata iteratorMetadata) {
+        super(null, iteratorMetadata);
+        this._value = value;
+    }
 
     @Override
     public DecimalItem next() {
-        if (this._hasNext) {
+        if (this.hasNext()) {
             this._hasNext = false;
-            return new DecimalItem(_item, ItemMetadata.fromIteratorMetadata(getMetadata()));
+            return result;
         }
-
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item, getMetadata());
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._value, getMetadata());
     }
 
-    public DecimalRuntimeIterator(BigDecimal value, IteratorMetadata iteratorMetadata) {
-        super(null, iteratorMetadata);
-        this._item = value;
 
+
+    @Override
+    public void open(DynamicContext context) {
+        if (this._isOpen)
+            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
+        this._isOpen = true;
+        this._currentDynamicContext = context;
+
+        this.result = new DecimalItem(_value, ItemMetadata.fromIteratorMetadata(getMetadata()));
+        this._hasNext = true;
     }
 
-    private BigDecimal _item;
+    private DecimalItem result;
+    private BigDecimal _value;
 }
