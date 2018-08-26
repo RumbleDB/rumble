@@ -4,6 +4,7 @@ import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -15,17 +16,31 @@ public class MaxFunctionIterator extends AggregateFunctionIterator {
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            RuntimeIterator sequenceIterator = this._children.get(0);
-            List<Item> results = getItemsFromIteratorWithCurrentContext(sequenceIterator);
+        if (this.hasNext()) {
             this._hasNext = false;
-            results.forEach(r -> {
-                if (!Item.isNumeric(r))
-                    throw new IllegalArgumentException("Aggregate function argument is non numeric");
-            });
-            //TODO refactor empty items
-            if (results.size() == 0)
-                return null;
+            return result;
+        } else
+            throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "MAX function",
+                    getMetadata());
+    }
+
+    @Override
+    public void open(DynamicContext context) {
+        if (this._isOpen)
+            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
+        this._isOpen = true;
+        this._currentDynamicContext = context;
+
+        RuntimeIterator sequenceIterator = this._children.get(0);
+        List<Item> results = getItemsFromIteratorWithCurrentContext(sequenceIterator);
+        results.forEach(r -> {
+            if (!Item.isNumeric(r))
+                throw new IllegalArgumentException("Aggregate function argument is non numeric");
+        });
+        if (results.size() == 0) {
+            this._hasNext = false;
+        }
+        else {
             Item itemResult = results.get(0);
             BigDecimal max  = Item.getNumericValue(results.get(0), BigDecimal.class);
             for(Item r: results) {
@@ -35,9 +50,10 @@ public class MaxFunctionIterator extends AggregateFunctionIterator {
                     itemResult = r;
                 }
             }
-            return itemResult;
-        } else
-            throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "MAX function",
-                    getMetadata());
+            this.result = itemResult;
+            this._hasNext = true;
+        }
     }
+
+    Item result;
 }
