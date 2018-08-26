@@ -39,7 +39,7 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
     private List<RuntimeIterator> _keys;
     private List<RuntimeIterator> _values;
     private boolean _isMergedObject = false;
-    
+
     public ObjectConstructorRuntimeIterator(List<RuntimeIterator> keys, List<RuntimeIterator> values,
                                             IteratorMetadata iteratorMetadata) {
         super(keys, iteratorMetadata);
@@ -66,10 +66,7 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
 
     @Override
     public void open(DynamicContext context) {
-        if (this._isOpen)
-            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
-        this._isOpen = true;
-        this._currentDynamicContext = context;
+        super.open(context);
 
         List<Item> values = new ArrayList<>();
         List<String> keys = new ArrayList<>();

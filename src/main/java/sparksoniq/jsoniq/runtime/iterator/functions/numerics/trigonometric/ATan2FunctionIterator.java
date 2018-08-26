@@ -32,10 +32,7 @@ public class ATan2FunctionIterator extends LocalFunctionCallIterator {
 
     @Override
     public void open(DynamicContext context) {
-        if (this._isOpen)
-            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
-        this._isOpen = true;
-        this._currentDynamicContext = context;
+        super.open(context);
 
         Item y = this.getSingleItemOfTypeFromIterator(this._children.get(0), Item.class);
         Item x = this.getSingleItemOfTypeFromIterator(this._children.get(1), Item.class);

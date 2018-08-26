@@ -47,10 +47,7 @@ public class ContextExpressionIterator extends LocalRuntimeIterator {
 
     @Override
     public void open(DynamicContext context) {
-        if (this._isOpen)
-            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
-        this._isOpen = true;
-        this._currentDynamicContext = context;
+        super.open(context);
 
         this.result = _currentDynamicContext.getVariableValue("$$").get(0);
         this._hasNext = true;

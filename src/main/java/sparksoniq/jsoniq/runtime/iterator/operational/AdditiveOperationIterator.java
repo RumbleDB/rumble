@@ -37,7 +37,7 @@ import java.math.BigDecimal;
 public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
 
     private AtomicItem result;
-    
+
     public AdditiveOperationIterator(RuntimeIterator left, RuntimeIterator right,
                                      OperationalExpressionBase.Operator operator, IteratorMetadata iteratorMetadata) {
         super(left, right, operator, iteratorMetadata);
@@ -45,10 +45,7 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
 
     @Override
     public void open(DynamicContext context) {
-        if (this._isOpen)
-            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
-        this._isOpen = true;
-        this._currentDynamicContext = context;
+        super.open(context);
 
         if (_leftIterator instanceof EmptySequenceIterator || _rightIterator instanceof EmptySequenceIterator) {
             this._hasNext = false;

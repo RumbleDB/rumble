@@ -21,6 +21,7 @@
 
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.iterator.SparkRuntimeIterator;
 
 import java.util.List;
@@ -28,5 +29,11 @@ import java.util.List;
 public abstract class SparkFunctionCallIterator extends SparkRuntimeIterator {
     protected SparkFunctionCallIterator(List<RuntimeIterator> parameters, IteratorMetadata iteratorMetadata) {
         super(parameters, iteratorMetadata);
+    }
+
+    @Override
+    public void open(DynamicContext context) {
+        super.open(context);
+        this._hasNext = true;
     }
 }

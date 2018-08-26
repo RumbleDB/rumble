@@ -29,12 +29,10 @@ public class ObjectRemoveKeysFunctionIterator extends ObjectFunctionIterator {
 
     @Override
     public void open(DynamicContext context) {
-        if (this._isOpen)
-            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
-        this._isOpen = true;
-        this._currentDynamicContext = context;
+        super.open(context);
         _currentIndex = 0;
         results = new ArrayList<>();
+
         RuntimeIterator sequenceIterator = this._children.get(0);
         RuntimeIterator keysIterator = this._children.get(1);
         List<Item> items = getItemsFromIteratorWithCurrentContext(sequenceIterator);

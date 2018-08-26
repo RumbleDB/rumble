@@ -47,10 +47,7 @@ public class DoubleRuntimeIterator extends AtomicRuntimeIterator {
 
     @Override
     public void open(DynamicContext context) {
-        if (this._isOpen)
-            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
-        this._isOpen = true;
-        this._currentDynamicContext = context;
+        super.open(context);
 
         this.result = new DoubleItem(_value, ItemMetadata.fromIteratorMetadata(getMetadata()));
         this._hasNext = true;

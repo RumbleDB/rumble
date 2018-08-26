@@ -15,7 +15,7 @@ import java.util.List;
 public class SubstringFunctionIterator extends LocalFunctionCallIterator {
 
     private Item result;
-    
+
     public SubstringFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
     }
@@ -31,10 +31,7 @@ public class SubstringFunctionIterator extends LocalFunctionCallIterator {
 
     @Override
     public void open(DynamicContext context) {
-        if (this._isOpen)
-            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
-        this._isOpen = true;
-        this._currentDynamicContext = context;
+        super.open(context);
 
         String result;
         StringItem stringItem = this.getSingleItemOfTypeFromIterator(this._children.get(0), StringItem.class);

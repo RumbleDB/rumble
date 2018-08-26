@@ -19,10 +19,7 @@ public class ObjectIntersectFunctionIterator extends ObjectFunctionIterator {
 
     @Override
     public void open(DynamicContext context) {
-        if (this._isOpen)
-            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
-        this._isOpen = true;
-        this._currentDynamicContext = context;
+        super.open(context);
 
         RuntimeIterator sequenceIterator = this._children.get(0);
         List<Item> items = getItemsFromIteratorWithCurrentContext(sequenceIterator);

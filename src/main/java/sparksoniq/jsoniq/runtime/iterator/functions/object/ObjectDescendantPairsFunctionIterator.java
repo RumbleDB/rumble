@@ -29,10 +29,7 @@ public class ObjectDescendantPairsFunctionIterator extends ObjectFunctionIterato
 
     @Override
     public void open(DynamicContext context) {
-        if (this._isOpen)
-            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
-        this._isOpen = true;
-        this._currentDynamicContext = context;
+        super.open(context);
         _currentIndex = 0;
         results = new ArrayList<>();
 

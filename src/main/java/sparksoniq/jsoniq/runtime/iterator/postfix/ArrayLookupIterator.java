@@ -34,7 +34,7 @@ public class ArrayLookupIterator extends LocalRuntimeIterator {
     private Item result;
     private ArrayItem _array;
     private int _lookup;
-    
+
     public ArrayLookupIterator(RuntimeIterator array, RuntimeIterator iterator, IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
         this._children.add(array);
@@ -52,10 +52,7 @@ public class ArrayLookupIterator extends LocalRuntimeIterator {
 
     @Override
     public void open(DynamicContext context) {
-        if (this._isOpen)
-            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
-        this._isOpen = true;
-        this._currentDynamicContext = context;
+        super.open(context);
 
         this._children.get(0).open(_currentDynamicContext);
         this._children.get(1).open(_currentDynamicContext);

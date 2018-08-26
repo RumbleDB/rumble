@@ -26,12 +26,10 @@ public class ObjectValuesFunctionIterator extends ObjectFunctionIterator {
 
     @Override
     public void open(DynamicContext context) {
-        if (this._isOpen)
-            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
-        this._isOpen = true;
-        this._currentDynamicContext = context;
+        super.open(context);
         _currentIndex = 0;
         results = new ArrayList<>();
+        
         RuntimeIterator objectIterator = this._children.get(0);
         ObjectItem object = getSingleItemOfTypeFromIterator(objectIterator, ObjectItem.class);
         for (Item item : object.getValues())

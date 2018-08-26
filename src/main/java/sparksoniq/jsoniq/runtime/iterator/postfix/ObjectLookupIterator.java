@@ -49,17 +49,12 @@ public class ObjectLookupIterator extends LocalRuntimeIterator {
 
     @Override
     public void open(DynamicContext context) {
-        if (this.isOpen())
-            throw new IteratorFlowException("Variable reference iterator already open", getMetadata());
-        this._currentDynamicContext = context;
+        super.open(context);
         this.results = new ArrayList<>();
         this._currentIndex = 0;
+
         this.items = getItemsFromIteratorWithCurrentContext(this._children.get(0));
-        if (this.items.size() == 0) {
-            this._hasNext = false;
-        } else {
-            this._hasNext = true;
-        }
+
         this._children.get(1).open(_currentDynamicContext);
         this._lookupKey = this._children.get(1).next();
         if (this._children.get(1).hasNext() || _lookupKey.isObject() || _lookupKey.isArray())
@@ -74,6 +69,12 @@ public class ObjectLookupIterator extends LocalRuntimeIterator {
                 ObjectItem objItem = (ObjectItem) i;
                 results.add(objItem.getItemByKey(((StringItem) _lookupKey).getStringValue()));
             }
+        }
+
+        if (results.size() == 0) {
+            this._hasNext = false;
+        } else {
+            this._hasNext = true;
         }
     }
 

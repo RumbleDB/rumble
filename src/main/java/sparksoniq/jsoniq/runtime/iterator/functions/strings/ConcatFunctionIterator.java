@@ -30,10 +30,7 @@ public class ConcatFunctionIterator extends LocalFunctionCallIterator {
 
     @Override
     public void open(DynamicContext context) {
-        if (this._isOpen)
-            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
-        this._isOpen = true;
-        this._currentDynamicContext = context;
+        super.open(context);
 
         StringBuilder builder = new StringBuilder("");
         for (RuntimeIterator iterator : this._children) {

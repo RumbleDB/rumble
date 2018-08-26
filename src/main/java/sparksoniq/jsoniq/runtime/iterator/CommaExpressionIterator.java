@@ -46,10 +46,7 @@ public class CommaExpressionIterator extends LocalRuntimeIterator {
 
     @Override
     public void open(DynamicContext context) {
-        if (this._isOpen)
-            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
-        this._isOpen = true;
-        this._currentDynamicContext = context;
+        super.open(context);
         this._currentIndex = 0;
         this.results = new ArrayList<>();
 

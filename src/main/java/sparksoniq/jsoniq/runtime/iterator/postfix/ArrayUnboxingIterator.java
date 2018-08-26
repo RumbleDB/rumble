@@ -35,7 +35,7 @@ public class ArrayUnboxingIterator extends LocalRuntimeIterator {
     private List<Item> results;
     private ArrayItem _array = null;
     private int _currentIndex = 0;
-    
+
     public ArrayUnboxingIterator(RuntimeIterator arrayIterator, IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
         this._children.add(arrayIterator);
@@ -65,10 +65,7 @@ public class ArrayUnboxingIterator extends LocalRuntimeIterator {
 
     @Override
     public void open(DynamicContext context) {
-        if (this._isOpen)
-            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
-        this._isOpen = true;
-        this._currentDynamicContext = context;
+        super.open(context);
         this.results = new ArrayList<>();
 
         this._children.get(0).open(_currentDynamicContext);

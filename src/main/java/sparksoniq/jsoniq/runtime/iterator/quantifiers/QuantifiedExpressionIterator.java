@@ -59,10 +59,7 @@ public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
 
     @Override
     public void open(DynamicContext context) {
-        if (this._isOpen)
-            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
-        this._isOpen = true;
-        this._currentDynamicContext = context;
+        super.open(context);
 
         List<DynamicContext> contexts = new ArrayList<>();
         contexts.add(new DynamicContext(_currentDynamicContext));

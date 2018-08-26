@@ -44,10 +44,7 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
 
     @Override
     public void open(DynamicContext context) {
-        if (this._isOpen)
-            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
-        this._isOpen = true;
-        this._currentDynamicContext = context;
+        super.open(context);
 
         if (_leftIterator instanceof EmptySequenceIterator || _rightIterator instanceof EmptySequenceIterator) {
             this._hasNext = false;

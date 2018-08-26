@@ -40,11 +40,7 @@ public class AndOperationIterator extends BinaryOperationBaseIterator {
 
     @Override
     public void open(DynamicContext context) {
-        if (this._isOpen)
-            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
-        this._isOpen = true;
-        this._hasNext = true;
-        this._currentDynamicContext = context;
+        super.open(context);
 
         _leftIterator.open(_currentDynamicContext);
         _rightIterator.open(_currentDynamicContext);
@@ -54,11 +50,12 @@ public class AndOperationIterator extends BinaryOperationBaseIterator {
         _rightIterator.close();
         this.result = new BooleanItem(Item.getEffectiveBooleanValue(left) && Item.getEffectiveBooleanValue(right)
                 , ItemMetadata.fromIteratorMetadata(getMetadata()));
+        this._hasNext = true;
     }
 
     @Override
     public AtomicItem next() {
-        if (this._hasNext) {
+        if (this.hasNext()) {
             this._hasNext = false;
             return result;
         }
