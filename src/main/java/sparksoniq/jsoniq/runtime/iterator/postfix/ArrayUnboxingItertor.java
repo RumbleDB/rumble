@@ -27,6 +27,9 @@ import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ArrayUnboxingItertor extends LocalRuntimeIterator {
     public ArrayUnboxingItertor(RuntimeIterator arrayIterator, IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
@@ -34,30 +37,51 @@ public class ArrayUnboxingItertor extends LocalRuntimeIterator {
     }
 
     @Override
-    public Item next() {
-        if(_array == null) {
-            this._children.get(0).open(_currentDynamicContext);
-            this._array = (ArrayItem) this._children.get(0).next();
-            this._children.get(0).close();
-        }
-
-        if(currentIndex == _array.getSize() - 1)
-            this._hasNext = false;
-        if(currentIndex < _array.getSize()) {
-            return _array.getItemAt(currentIndex++);
-        }
-
-        else
-            throw new IteratorFlowException("Illegal next() call in Array Unboxing!", getMetadata());
-    }
-
-    @Override
     public void reset(DynamicContext dc) {
         this._array = null;
-        this.currentIndex = 0;
+        this._currentIndex = 0;
         super.reset(dc);
     }
 
+    @Override
+    public Item next() {
+        if (this.hasNext()) {
+            return getResult();
+        }
+        else {
+            throw new IteratorFlowException("Illegal next() call in Array Unboxing!", getMetadata());
+        }
+    }
+
+    protected Item getResult() {
+        if (_currentIndex == results.size() - 1)
+            _hasNext = false;
+        return results.get(_currentIndex++);
+    }
+
+    @Override
+    public void open(DynamicContext context) {
+        if (this._isOpen)
+            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
+        this._isOpen = true;
+        this._currentDynamicContext = context;
+        this.results = new ArrayList<>();
+
+        this._children.get(0).open(_currentDynamicContext);
+        this._array = (ArrayItem) this._children.get(0).next();
+        this._children.get(0).close();
+
+        for (int i = 0; i < _array.getSize(); i++) {
+            results.add(_array.getItemAt(i));
+        }
+        if (results.size() == 0) {
+            this._hasNext = false;
+        } else {
+            this._hasNext = true;
+        }
+    }
+
+    private List<Item> results;
     private ArrayItem _array = null;
-    private int currentIndex = 0;
+    private int _currentIndex = 0;
 }
