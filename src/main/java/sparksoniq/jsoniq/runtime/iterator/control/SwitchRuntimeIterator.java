@@ -44,7 +44,13 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
 
     @Override
     public boolean hasNext() {
-        return matchingIterator == null || matchingIterator.hasNext();
+        matchingIterator.open(_currentDynamicContext);
+        boolean returnValue = false;
+        if (matchingIterator.hasNext()) {
+            returnValue = true;
+        }
+        matchingIterator.close();
+        return returnValue;
     }
 
     @Override
