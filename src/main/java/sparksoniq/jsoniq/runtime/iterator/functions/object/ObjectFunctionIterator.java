@@ -19,7 +19,9 @@
  */
 package sparksoniq.jsoniq.runtime.iterator.functions.object;
 
+import sparksoniq.jsoniq.item.EmptySequenceItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -48,7 +50,7 @@ public abstract class ObjectFunctionIterator extends LocalFunctionCallIterator {
         // if no results return empty sequence
         if (results == null || results.size() == 0) {
             _hasNext = false;
-            return null;
+            return new EmptySequenceItem(ItemMetadata.fromIteratorMetadata(getMetadata()));
         }
         if (_currentIndex == results.size() - 1)
             _hasNext = false;

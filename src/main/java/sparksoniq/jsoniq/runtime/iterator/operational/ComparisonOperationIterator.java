@@ -64,16 +64,14 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
             Item left = _leftIterator.next();
             Item right = _rightIterator.next();
 
-            /*
-            // if EMPTY SEQUENCE - () or nested empty sequence - ((),())
-            // return EMPTY SEQUENCE - ()
+
+            // if given EMPTY SEQUENCE eg. () or ((),())
             if (left == null || right == null) {
                 _leftIterator.close();
                 _rightIterator.close();
                 this._hasNext = false;
-                return null;
+                return new EmptySequenceItem(ItemMetadata.fromIteratorMetadata(getMetadata()));
             }
-            */
 
             // value comparison doesn't support more than 1 items
             if (_leftIterator.hasNext() || _rightIterator.hasNext())
@@ -101,6 +99,9 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
             result = compareAllPairs(left, right);
         }
 
+        if (result == null) {
+            result = new EmptySequenceItem(ItemMetadata.fromIteratorMetadata(getMetadata()));
+        }
         return result;
     }
 
@@ -117,8 +118,7 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
 
     public BooleanItem comparePair(Item left, Item right) {
 
-        // if given EMPTY SEQUENCE eg. () or ((),())
-        // return EMPTY SEQUENCE
+        // if given EMPTY SEQUENCE eg. () or ((),()) handle with Java null
         if (left == null || right == null) {
             return null;
         }

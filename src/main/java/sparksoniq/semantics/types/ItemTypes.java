@@ -34,5 +34,6 @@ public enum ItemTypes {
     DoubleItem,
     BooleanItem,
 
-    NullItem
+    NullItem,
+    EmptySequenceItem
 }
