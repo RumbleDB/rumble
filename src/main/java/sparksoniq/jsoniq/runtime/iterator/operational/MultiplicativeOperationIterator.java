@@ -68,7 +68,10 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
                         this.result = new IntegerItem(l * r, ItemMetadata.fromIteratorMetadata(getMetadata()));
                         break;
                     case DIV:
-                        this.result = new IntegerItem(l / r, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                        BigDecimal decLeft = Item.<BigDecimal>getNumericValue(left, BigDecimal.class);
+                        BigDecimal decRight = Item.<BigDecimal>getNumericValue(right, BigDecimal.class);
+                        this.result = new DecimalItem(decLeft.divide(decRight, 10, BigDecimal.ROUND_HALF_UP),
+                                ItemMetadata.fromIteratorMetadata(getMetadata()));
                         break;
                     case MOD:
                         this.result = new IntegerItem(l % r, ItemMetadata.fromIteratorMetadata(getMetadata()));
