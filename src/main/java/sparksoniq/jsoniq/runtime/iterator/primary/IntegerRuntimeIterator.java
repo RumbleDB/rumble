@@ -17,31 +17,42 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.jsoniq.runtime.iterator.primary;
+package sparksoniq.jsoniq.runtime.iterator.primary;
 
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
 
 public class IntegerRuntimeIterator extends AtomicRuntimeIterator {
-
-    @Override
-    public IntegerItem next() {
-        if (this._hasNext) {
-            this._hasNext = false;
-            return new IntegerItem(_item, ItemMetadata.fromIteratorMetadata(getMetadata()));
-        }
-
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item, getMetadata());
-    }
-
     public IntegerRuntimeIterator(int value, IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
         this._item = value;
 
     }
 
+    @Override
+    public IntegerItem next() {
+        if (this.hasNext()) {
+            this._hasNext = false;
+            return result;
+        }
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item, getMetadata());
+    }
+
+    @Override
+    public void open(DynamicContext context) {
+        if (this._isOpen)
+            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
+        this._isOpen = true;
+        this._currentDynamicContext = context;
+
+        this.result = new IntegerItem(_item, ItemMetadata.fromIteratorMetadata(getMetadata()));
+        this._hasNext = true;
+    }
+
+    private IntegerItem result;
     private int _item;
 }
