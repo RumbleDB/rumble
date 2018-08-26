@@ -46,33 +46,45 @@ public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
 
     @Override
     public Item next() {
-        if (this._hasNext) {
+        if (this.hasNext()) {
             this._hasNext = false;
-            List<DynamicContext> contexts = new ArrayList<>();
-            contexts.add(new DynamicContext(_currentDynamicContext));
-            for (RuntimeIterator iterator : _children) {
-                if (iterator instanceof QuantifiedExpressionVarIterator) {
-                    QuantifiedExpressionVarIterator var = (QuantifiedExpressionVarIterator) iterator;
-                    contexts = generateContexts(contexts, var);
-                }
-            }
-
-            List<BooleanItem> results = new ArrayList<>();
-            for (DynamicContext context : contexts) {
-                _evaluationExpression.open(context);
-                _evaluationExpression.reset(context);
-                BooleanItem result = (BooleanItem) _evaluationExpression.next();
-                _evaluationExpression.close();
-                results.add(result);
-            }
-
-            boolean result = this._operator == QuantifiedExpression.QuantifiedOperators.EVERY;
-            for (BooleanItem res : results)
-                result = this._operator == QuantifiedExpression.QuantifiedOperators.EVERY ?
-                        result && res.getBooleanValue() : result || res.getBooleanValue();
-            return new BooleanItem(result, ItemMetadata.fromIteratorMetadata(getMetadata()));
+            return result;
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "Quantified Expr", getMetadata());
+    }
+
+    @Override
+    public void open(DynamicContext context) {
+        if (this._isOpen)
+            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
+        this._isOpen = true;
+        this._currentDynamicContext = context;
+
+        List<DynamicContext> contexts = new ArrayList<>();
+        contexts.add(new DynamicContext(_currentDynamicContext));
+        for (RuntimeIterator iterator : _children) {
+            if (iterator instanceof QuantifiedExpressionVarIterator) {
+                QuantifiedExpressionVarIterator var = (QuantifiedExpressionVarIterator) iterator;
+                contexts = generateContexts(contexts, var);
+            }
+        }
+
+        List<BooleanItem> results = new ArrayList<>();
+        for (DynamicContext cont : contexts) {
+            _evaluationExpression.open(cont);
+            _evaluationExpression.reset(cont);
+            BooleanItem result = (BooleanItem) _evaluationExpression.next();
+            _evaluationExpression.close();
+            results.add(result);
+        }
+
+        boolean result = this._operator == QuantifiedExpression.QuantifiedOperators.EVERY;
+        for (BooleanItem res : results) {
+            result = this._operator == QuantifiedExpression.QuantifiedOperators.EVERY ?
+                    result && res.getBooleanValue() : result || res.getBooleanValue();
+        }
+        this.result = new BooleanItem(result, ItemMetadata.fromIteratorMetadata(getMetadata()));
+        this._hasNext = true;
     }
 
     public List<DynamicContext> generateContexts(List<DynamicContext> previousContexts, QuantifiedExpressionVarIterator var) {
@@ -95,6 +107,7 @@ public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
         return results;
     }
 
+    private Item result;
     private final QuantifiedExpression.QuantifiedOperators _operator;
     private final RuntimeIterator _evaluationExpression;
 
