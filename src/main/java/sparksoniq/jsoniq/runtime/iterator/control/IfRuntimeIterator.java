@@ -32,8 +32,8 @@ import java.util.List;
 
 public class IfRuntimeIterator extends LocalRuntimeIterator {
 
-    private List<Item> result = null;
-    private int currentIndex;
+    private List<Item> results = null;
+    private int _currentIndex;
 
     public IfRuntimeIterator(RuntimeIterator condition, RuntimeIterator branch, RuntimeIterator elseBranch,
                              IteratorMetadata iteratorMetadata) {
@@ -46,36 +46,49 @@ public class IfRuntimeIterator extends LocalRuntimeIterator {
     @Override
     public void reset(DynamicContext context) {
         super.reset(context);
-        this.result = null;
+        this.results = null;
     }
 
     @Override
     public void open(DynamicContext context) {
-        super.open(context);
-        this.result = null;
+        if (this._isOpen)
+            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
+        this._isOpen = true;
+        this._currentDynamicContext = context;
+        _currentIndex = 0;
+
+        RuntimeIterator condition = this._children.get(0);
+        RuntimeIterator branch = this._children.get(1);
+        RuntimeIterator elseBranch = null;
+        if (this._children.size() > 2)
+            elseBranch = this._children.get(2);
+        Item conditionResult = getSingleItemOfTypeFromIterator(condition, Item.class);
+        results = new ArrayList<>();
+        if (Item.getEffectiveBooleanValue(conditionResult)) {
+            results = getItemsFromIteratorWithCurrentContext(branch);
+        } else {
+            results = getItemsFromIteratorWithCurrentContext(elseBranch);
+        }
+
+        if (results.size() == 0) {
+            this._hasNext = false;
+        } else {
+            this._hasNext = true;
+        }
     }
 
     @Override
     public Item next() {
-        if (result == null) {
-            currentIndex = 0;
-            RuntimeIterator condition = this._children.get(0);
-            RuntimeIterator branch = this._children.get(1);
-            RuntimeIterator elseBranch = null;
-            if (this._children.size() > 2)
-                elseBranch = this._children.get(2);
-            Item conditionResult = getSingleItemOfTypeFromIterator(condition, Item.class);
-            result = new ArrayList<>();
-            if (Item.getEffectiveBooleanValue(conditionResult)) {
-                result = getItemsFromIteratorWithCurrentContext(branch);
-            } else {
-                result = getItemsFromIteratorWithCurrentContext(elseBranch);
-            }
+        if (this.hasNext()) {
+            return getResult();
         }
-        if (currentIndex > result.size() - 1)
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "If expr", getMetadata());
-        if (currentIndex == result.size() - 1)
-            this._hasNext = false;
-        return result.get(currentIndex++);
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in IfRunTimeIterator",
+                getMetadata());
+    }
+
+    protected Item getResult() {
+        if (_currentIndex == results.size() - 1)
+            _hasNext = false;
+        return results.get(_currentIndex++);
     }
 }
