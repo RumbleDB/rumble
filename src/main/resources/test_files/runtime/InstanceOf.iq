@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="( true, true, true, false, true, true, true, true, false)" :)
+(:JIQS: ShouldRun; Output="( true, true, true, false, true, true, true, true, false, false)" :)
 1 instance of integer,
 2.14 instance of decimal,
 1 instance of decimal,
@@ -8,4 +8,5 @@
 {"a": "b"} instance of object,
 
 (1,2,3) instance of integer *,
-("aa", 1) instance of string *
+("aa", 1) instance of string *,
+(4 + 2.3e5) instance of decimal
