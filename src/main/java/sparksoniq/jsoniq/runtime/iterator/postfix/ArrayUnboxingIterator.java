@@ -17,7 +17,7 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.jsoniq.runtime.iterator.postfix;
+package sparksoniq.jsoniq.runtime.iterator.postfix;
 
 import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.Item;
@@ -30,8 +30,13 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ArrayUnboxingItertor extends LocalRuntimeIterator {
-    public ArrayUnboxingItertor(RuntimeIterator arrayIterator, IteratorMetadata iteratorMetadata) {
+public class ArrayUnboxingIterator extends LocalRuntimeIterator {
+
+    private List<Item> results;
+    private ArrayItem _array = null;
+    private int _currentIndex = 0;
+    
+    public ArrayUnboxingIterator(RuntimeIterator arrayIterator, IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
         this._children.add(arrayIterator);
     }
@@ -47,8 +52,7 @@ public class ArrayUnboxingItertor extends LocalRuntimeIterator {
     public Item next() {
         if (this.hasNext()) {
             return getResult();
-        }
-        else {
+        } else {
             throw new IteratorFlowException("Illegal next() call in Array Unboxing!", getMetadata());
         }
     }
@@ -80,8 +84,4 @@ public class ArrayUnboxingItertor extends LocalRuntimeIterator {
             this._hasNext = true;
         }
     }
-
-    private List<Item> results;
-    private ArrayItem _array = null;
-    private int _currentIndex = 0;
 }

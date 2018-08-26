@@ -17,7 +17,7 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.jsoniq.runtime.iterator.primary;
+package sparksoniq.jsoniq.runtime.iterator.primary;
 
 import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;

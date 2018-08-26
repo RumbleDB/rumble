@@ -42,12 +42,12 @@ import java.util.Arrays;
 
 
 public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
-    public static final Operator[] valueComparisonOperators = new Operator[] {
+    public static final Operator[] valueComparisonOperators = new Operator[]{
             Operator.VC_GE, Operator.VC_GT, Operator.VC_EQ, Operator.VC_NE, Operator.VC_LE, Operator.VC_LT};
-    public static final Operator[] generalComparisonOperators = new Operator[] {
+    public static final Operator[] generalComparisonOperators = new Operator[]{
             Operator.GC_GE, Operator.GC_GT, Operator.GC_EQ, Operator.GC_NE, Operator.GC_LE, Operator.GC_LT};
 
-    protected AtomicItem result;
+    private AtomicItem result;
 
 
     public ComparisonOperationIterator(RuntimeIterator left, RuntimeIterator right,
@@ -57,7 +57,7 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
 
     @Override
     public AtomicItem next() {
-        if(this.hasNext()){
+        if (this.hasNext()) {
             this._hasNext = false;
             return result;
         }
@@ -74,7 +74,7 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
         _leftIterator.open(_currentDynamicContext);
         _rightIterator.open(_currentDynamicContext);
 
-        if (Arrays.asList(valueComparisonOperators).contains(this._operator)){
+        if (Arrays.asList(valueComparisonOperators).contains(this._operator)) {
 
             // if EMPTY SEQUENCE - eg. () or ((),())
             // this check is added here to provide lazy evaluation: eg. () eq (2,3) = () instead of exception
@@ -85,18 +85,15 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
                 Item right = _rightIterator.next();
 
                 // value comparison doesn't support more than 1 items
-                if (_leftIterator.hasNext() || _rightIterator.hasNext())
-                {
+                if (_leftIterator.hasNext() || _rightIterator.hasNext()) {
                     throw new UnexpectedTypeException("Invalid args. Value comparison can't be performed on sequences with more than 1 items", getMetadata());
-                }
-                else {
+                } else {
                     result = comparePair(left, right);
                 }
             }
             _leftIterator.close();
             _rightIterator.close();
-        }
-        else if (Arrays.asList(generalComparisonOperators).contains(this._operator)) {
+        } else if (Arrays.asList(generalComparisonOperators).contains(this._operator)) {
             ArrayList<Item> left = new ArrayList<>();
             ArrayList<Item> right = new ArrayList<>();
             while (_leftIterator.hasNext())
@@ -110,7 +107,7 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
             result = compareAllPairs(left, right);
         }
 
-        if(result == null) {
+        if (result == null) {
             this._hasNext = false;
         } else {
             this._hasNext = true;
@@ -119,13 +116,14 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
 
     /**
      * Function to compare two lists of items one by one with each other.
+     *
      * @param left  item list of left iterator
      * @param right item list of right iterator
      * @return true if a single match is found, false if no matches. Given an empty sequence, false is returned.
      */
-    public BooleanItem compareAllPairs (ArrayList<Item> left, ArrayList<Item> right) {
-        for (Item l:left) {
-            for (Item r:right) {
+    public BooleanItem compareAllPairs(ArrayList<Item> left, ArrayList<Item> right) {
+        for (Item l : left) {
+            for (Item r : right) {
                 BooleanItem result = comparePair(l, r);
                 if (result.getBooleanValue() == true)
                     return result;
@@ -138,37 +136,32 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
 
         if (left instanceof ArrayItem || right instanceof ArrayItem) {
             throw new NonAtomicKeyException("Invalid args. Comparison can't be performed on array type", getMetadata().getExpressionMetadata());
-        }
-        else if (left instanceof ObjectItem || right instanceof ObjectItem) {
+        } else if (left instanceof ObjectItem || right instanceof ObjectItem) {
             throw new NonAtomicKeyException("Invalid args. Comparison can't be performed on object type", getMetadata().getExpressionMetadata());
         }
         if (left instanceof NullItem || right instanceof NullItem) {
             return compareItems(left, right);
-        }
-        else if (Item.isNumeric(left)) {
+        } else if (Item.isNumeric(left)) {
             if (!Item.isNumeric(right))
                 throw new UnexpectedTypeException("Invalid args for numerics comparison " + left.serialize() +
                         ", " + right.serialize(), getMetadata());
             return compareItems(left, right);
-        }
-        else if (left instanceof StringItem) {
+        } else if (left instanceof StringItem) {
             if (!(right instanceof StringItem))
                 throw new UnexpectedTypeException("Invalid args for string comparison " + left.serialize() +
                         ", " + right.serialize(), getMetadata());
             return compareItems(left, right);
-        }
-        else if (left instanceof BooleanItem) {
+        } else if (left instanceof BooleanItem) {
             if (!(right instanceof BooleanItem))
                 throw new UnexpectedTypeException("Invalid args for boolean comparison " + left.serialize() +
                         ", " + right.serialize(), getMetadata());
             return compareItems(left, right);
-        }
-        else {
+        } else {
             throw new IteratorFlowException("Invalid comparison expression", getMetadata());
         }
     }
 
-    public BooleanItem compareItems (Item left, Item right) {
+    public BooleanItem compareItems(Item left, Item right) {
         int comparison = Item.compareItems(left, right);
         switch (this._operator) {
             case VC_EQ:
@@ -192,5 +185,4 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
         }
         throw new IteratorFlowException("Unrecognized operator found", getMetadata());
     }
-
 }

@@ -84,7 +84,7 @@ public class Functions {
 
         buildInFunctions.put(new SparksoniqFunctionSignature(SUBSTRING, 2), SubstringFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(SUBSTRING, 3), SubstringFunctionIterator.class);
-        for(int i = 0; i <= 100; i++)
+        for (int i = 0; i <= 100; i++)
             buildInFunctions.put(new SparksoniqFunctionSignature(CONCAT, i), ConcatFunctionIterator.class);
 
         buildInFunctions.put(new SparksoniqFunctionSignature(STRINGJOIN, 1), StringJoinFunction.class);
@@ -108,7 +108,7 @@ public class Functions {
 
     public static Class<? extends RuntimeIterator> getFunctionIteratorClass(FunctionCall expression, List<RuntimeIterator> arguments) {
         SparksoniqFunctionSignature functionSignature = new SparksoniqFunctionSignature(expression.getFunctionName(), arguments.size());
-        if(buildInFunctions.containsKey(functionSignature))
+        if (buildInFunctions.containsKey(functionSignature))
             return buildInFunctions.get(functionSignature);
         throw new UnknownFunctionCallException(new IteratorMetadata(expression.getMetadata()));
     }
@@ -224,7 +224,6 @@ public class Functions {
          * function that returns the the angle in radians subtended at the origin by the point on a plane with coordinates (x, y) and the positive x-axis.
          */
         public static final String ATAN2 = "atan2";
-
 
 
         /**

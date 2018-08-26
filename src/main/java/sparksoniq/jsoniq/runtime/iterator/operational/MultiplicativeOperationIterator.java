@@ -35,6 +35,8 @@ import java.math.BigDecimal;
 
 public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator {
 
+    private AtomicItem result;
+
     public MultiplicativeOperationIterator(RuntimeIterator left, RuntimeIterator right,
                                            OperationalExpressionBase.Operator operator, IteratorMetadata iteratorMetadata) {
         super(left, right, operator, iteratorMetadata);
@@ -131,6 +133,4 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
     }
-
-    AtomicItem result;
 }

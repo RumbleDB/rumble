@@ -48,18 +48,17 @@ public class ObjectDescendantPairsFunctionIterator extends ObjectFunctionIterato
     }
 
     public void getDescendantPairs(List<Item> items) {
-        for (Item item:items) {
+        for (Item item : items) {
             if (item.isArray()) {
                 try {
                     getDescendantPairs(item.getItems());
                 } catch (OperationNotSupportedException e) {
                     e.printStackTrace();
                 }
-            }
-            else if (item.isObject()) {
+            } else if (item.isObject()) {
                 try {
                     List<String> keys = item.getKeys();
-                    for (String key:keys) {
+                    for (String key : keys) {
                         Item value = item.getItemByKey(key);
 
                         List<String> keyList = Collections.singletonList(key);
@@ -72,8 +71,7 @@ public class ObjectDescendantPairsFunctionIterator extends ObjectFunctionIterato
                 } catch (OperationNotSupportedException e) {
                     e.printStackTrace();
                 }
-            }
-            else {
+            } else {
                 // do nothing
             }
         }

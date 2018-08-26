@@ -17,7 +17,7 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.jsoniq.runtime.iterator;
+package sparksoniq.jsoniq.runtime.iterator;
 
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -29,20 +29,23 @@ import java.util.List;
 
 public class CommaExpressionIterator extends LocalRuntimeIterator {
 
+    private int _currentIndex;
+    private List<Item> results;
+
     public CommaExpressionIterator(List<RuntimeIterator> childIterators, IteratorMetadata iteratorMetadata) {
         super(childIterators, iteratorMetadata);
     }
 
     @Override
     public Item next() {
-        if(this._hasNext) {
+        if (this._hasNext) {
             return getResult();
         }
         throw new IteratorFlowException("Invalid next() call in Comma expression", getMetadata());
     }
 
     @Override
-    public void open(DynamicContext context){
+    public void open(DynamicContext context) {
         if (this._isOpen)
             throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
         this._isOpen = true;
@@ -51,7 +54,7 @@ public class CommaExpressionIterator extends LocalRuntimeIterator {
         this.results = new ArrayList<>();
 
         // this._children.forEach(c -> c.reset(this._currentDynamicContext));
-        for (RuntimeIterator child:this._children) {
+        for (RuntimeIterator child : this._children) {
             child.open(_currentDynamicContext);
             if (child.hasNext()) {
                 results.add(child.next());
@@ -70,7 +73,4 @@ public class CommaExpressionIterator extends LocalRuntimeIterator {
             _hasNext = false;
         return results.get(_currentIndex++);
     }
-
-    private int _currentIndex;
-    private List<Item> results;
 }

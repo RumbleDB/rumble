@@ -17,6 +17,9 @@ import java.math.RoundingMode;
 import java.util.List;
 
 public class RoundHalfToEvenFunctionIterator extends LocalFunctionCallIterator {
+
+    private Item result;
+
     public RoundHalfToEvenFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
     }
@@ -26,8 +29,8 @@ public class RoundHalfToEvenFunctionIterator extends LocalFunctionCallIterator {
         if (this.hasNext()) {
             this._hasNext = false;
             return result;
-        } else
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " round-half-to-even function", getMetadata());
+        }
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " round-half-to-even function", getMetadata());
     }
 
     @Override
@@ -40,8 +43,7 @@ public class RoundHalfToEvenFunctionIterator extends LocalFunctionCallIterator {
         RuntimeIterator iterator = this._children.get(0);
         if (iterator.getClass() == EmptySequenceIterator.class) {
             this._hasNext = true;
-        }
-        else {
+        } else {
             Item value = this.getSingleItemOfTypeFromIterator(iterator, Item.class);
             Item precision;
             if (this._children.size() > 1) {
@@ -63,15 +65,10 @@ public class RoundHalfToEvenFunctionIterator extends LocalFunctionCallIterator {
                 this._hasNext = true;
                 this.result = new DoubleItem(result,
                         ItemMetadata.fromIteratorMetadata(getMetadata()));
-            }
-            else {
+            } else {
                 throw new UnexpectedTypeException("Round-half-to-even expression has non numeric args " +
                         value.serialize() + ", " + precision.serialize(), getMetadata());
             }
         }
     }
-
-    Item result;
-
-
 }

@@ -14,6 +14,9 @@ import javax.naming.OperationNotSupportedException;
 import java.util.*;
 
 public class ObjectAccumulateFunctionIterator extends ObjectFunctionIterator {
+
+    private ObjectItem result;
+
     public ObjectAccumulateFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, ObjectFunctionOperators.ACCUMULATE, iteratorMetadata);
     }
@@ -32,7 +35,7 @@ public class ObjectAccumulateFunctionIterator extends ObjectFunctionIterator {
             // ignore non-object items
             if (item.isObject()) {
                 try {
-                    for (String key:item.getKeys()) {
+                    for (String key : item.getKeys()) {
                         Item value = item.getItemByKey(key);
                         if (!keyValuePairs.containsKey(key)) {
                             List<Item> valueList = new ArrayList<>();
@@ -63,6 +66,4 @@ public class ObjectAccumulateFunctionIterator extends ObjectFunctionIterator {
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " ACCUMULATE function",
                 getMetadata());
     }
-
-    ObjectItem result;
 }

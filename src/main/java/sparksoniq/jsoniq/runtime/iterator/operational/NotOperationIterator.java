@@ -17,7 +17,7 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.jsoniq.runtime.iterator.operational;
+package sparksoniq.jsoniq.runtime.iterator.operational;
 
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.AtomicItem;
@@ -32,7 +32,7 @@ import sparksoniq.semantics.DynamicContext;
 
 public class NotOperationIterator extends UnaryOperationBaseIterator {
 
-    BooleanItem result;
+    private BooleanItem result;
 
     public NotOperationIterator(RuntimeIterator child, IteratorMetadata iteratorMetadata) {
         super(child, OperationalExpressionBase.Operator.NOT, iteratorMetadata);
@@ -53,7 +53,7 @@ public class NotOperationIterator extends UnaryOperationBaseIterator {
 
     @Override
     public AtomicItem next() {
-        if(this.hasNext()){
+        if (this.hasNext()) {
             this._hasNext = false;
             return this.result;
         }

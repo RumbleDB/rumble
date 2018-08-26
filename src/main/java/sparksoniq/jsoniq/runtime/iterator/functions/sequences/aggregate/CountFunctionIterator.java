@@ -32,6 +32,9 @@ import sparksoniq.semantics.DynamicContext;
 import java.util.List;
 
 public class CountFunctionIterator extends AggregateFunctionIterator {
+
+    private Item result;
+
     public CountFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, AggregateFunctionIterator.AggregateFunctionOperator.COUNT, iteratorMetadata);
     }
@@ -41,9 +44,9 @@ public class CountFunctionIterator extends AggregateFunctionIterator {
         if (this.hasNext()) {
             this._hasNext = false;
             return result;
-        } else
-            throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + " count function",
-                    getMetadata());
+        } else {
+            throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + " count function", getMetadata());
+        }
     }
 
     @Override
@@ -59,7 +62,4 @@ public class CountFunctionIterator extends AggregateFunctionIterator {
         this.result = new IntegerItem(results.size(),
                 ItemMetadata.fromIteratorMetadata(getMetadata()));
     }
-
-    Item result;
-
 }

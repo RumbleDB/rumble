@@ -17,7 +17,7 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.jsoniq.runtime.iterator.primary;
+package sparksoniq.jsoniq.runtime.iterator.primary;
 
 import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.Item;
@@ -34,9 +34,11 @@ import java.util.List;
 
 public class ArrayRuntimeIterator extends LocalRuntimeIterator {
 
+    private ArrayItem result;
+
     public ArrayRuntimeIterator(RuntimeIterator arrayItems, IteratorMetadata iteratorMetadata) {
         super(new ArrayList<>(), iteratorMetadata);
-        if(arrayItems!=null)
+        if (arrayItems != null)
             this._children.add(arrayItems);
     }
 
@@ -45,8 +47,7 @@ public class ArrayRuntimeIterator extends LocalRuntimeIterator {
         if (this.hasNext()) {
             this._hasNext = false;
             return result;
-        }
-        else throw new IteratorFlowException("Invalid next() call on array iterator", getMetadata());
+        } else throw new IteratorFlowException("Invalid next() call on array iterator", getMetadata());
     }
 
     @Override
@@ -60,6 +61,4 @@ public class ArrayRuntimeIterator extends LocalRuntimeIterator {
         this.result = new ArrayItem(result, ItemMetadata.fromIteratorMetadata(getMetadata()));
         this._hasNext = true;
     }
-
-    private ArrayItem result;
 }

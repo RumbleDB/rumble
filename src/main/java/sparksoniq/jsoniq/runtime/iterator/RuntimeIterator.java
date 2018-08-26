@@ -133,7 +133,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                                                                                                        Class<T> type, E nonAtomicException) {
         iterator.open(_currentDynamicContext);
         Item result = null;
-        if(iterator.hasNext()) {
+        if (iterator.hasNext()) {
             result = iterator.next();
             if (iterator.hasNext()) {
                 throw nonAtomicException;

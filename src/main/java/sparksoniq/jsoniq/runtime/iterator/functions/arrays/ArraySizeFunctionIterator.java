@@ -34,8 +34,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ArraySizeFunctionIterator extends ArrayFunctionIterator {
-
-
     public ArraySizeFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, ArrayFunctionOperators.SIZE, iteratorMetadata);
     }

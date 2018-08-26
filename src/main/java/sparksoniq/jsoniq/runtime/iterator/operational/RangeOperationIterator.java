@@ -33,13 +33,17 @@ import sparksoniq.semantics.DynamicContext;
 
 public class RangeOperationIterator extends BinaryOperationBaseIterator {
 
+    private int _left;
+    private int _right;
+    private int _index;
+
     public RangeOperationIterator(RuntimeIterator left, RuntimeIterator right, IteratorMetadata iteratorMetadata) {
         super(left, right, OperationalExpressionBase.Operator.TO, iteratorMetadata);
     }
 
     @Override
     public AtomicItem next() {
-        if(_hasNext == true){
+        if (_hasNext == true) {
             if (_index == _right)
                 this._hasNext = false;
             return new IntegerItem(_index++, ItemMetadata.fromIteratorMetadata(getMetadata()));
@@ -74,8 +78,4 @@ public class RangeOperationIterator extends BinaryOperationBaseIterator {
             this._hasNext = true;
         }
     }
-
-    private int _left;
-    private int _right;
-    private int _index;
 }

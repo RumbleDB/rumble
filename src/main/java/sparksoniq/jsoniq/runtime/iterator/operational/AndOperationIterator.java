@@ -32,6 +32,8 @@ import sparksoniq.semantics.DynamicContext;
 
 public class AndOperationIterator extends BinaryOperationBaseIterator {
 
+    private BooleanItem result;
+
     public AndOperationIterator(RuntimeIterator left, RuntimeIterator right, IteratorMetadata iteratorMetadata) {
         super(left, right, OperationalExpressionBase.Operator.AND, iteratorMetadata);
     }
@@ -62,6 +64,4 @@ public class AndOperationIterator extends BinaryOperationBaseIterator {
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
     }
-
-    BooleanItem result;
 }

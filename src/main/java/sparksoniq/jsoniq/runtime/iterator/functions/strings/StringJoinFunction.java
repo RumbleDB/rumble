@@ -13,6 +13,9 @@ import sparksoniq.semantics.DynamicContext;
 import java.util.List;
 
 public class StringJoinFunction extends LocalFunctionCallIterator {
+
+    private Item result;
+
     public StringJoinFunction(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
     }
@@ -47,7 +50,4 @@ public class StringJoinFunction extends LocalFunctionCallIterator {
         this.result = new StringItem(stringBuilder.toString(), ItemMetadata.fromIteratorMetadata(getMetadata()));
         this._hasNext = true;
     }
-
-    private Item result;
-
 }

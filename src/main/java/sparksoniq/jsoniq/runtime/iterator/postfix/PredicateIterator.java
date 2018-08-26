@@ -17,7 +17,7 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.jsoniq.runtime.iterator.postfix;
+package sparksoniq.jsoniq.runtime.iterator.postfix;
 
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -31,6 +31,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PredicateIterator extends LocalRuntimeIterator {
+
+    private List<Item> unfilteredSequence = null;
+    private List<Item> results = null;
+    private int _currentIndex = 0;
 
     public PredicateIterator(RuntimeIterator sequence, RuntimeIterator filterExpression, IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
@@ -66,7 +70,7 @@ public class PredicateIterator extends LocalRuntimeIterator {
         this._isOpen = true;
         this._currentDynamicContext = context;
 
-        if(this._children.size() < 2) {
+        if (this._children.size() < 2) {
             throw new SparksoniqRuntimeException("Invalid Predicate! Must initialize filter before calling next");
         }
 
@@ -80,7 +84,7 @@ public class PredicateIterator extends LocalRuntimeIterator {
         // get filtered list
         results = new ArrayList<>();
         RuntimeIterator filter = this._children.get(1);
-        for(Item item : unfilteredSequence){
+        for (Item item : unfilteredSequence) {
             //set the current item for the $$ children
             List<Item> currentItems = new ArrayList<>();
             currentItems.add(item);
@@ -99,9 +103,4 @@ public class PredicateIterator extends LocalRuntimeIterator {
             this._hasNext = true;
         }
     }
-
-    private List<Item> unfilteredSequence = null;
-    private List<Item> results = null;
-    private int _currentIndex = 0;
-
 }

@@ -31,14 +31,13 @@ public class ObjectKeysFunctionIterator extends ObjectFunctionIterator {
         results = new ArrayList<>();
         RuntimeIterator sequenceIterator = this._children.get(0);
         List<Item> items = getItemsFromIteratorWithCurrentContext(sequenceIterator);
-        for (Item item:items) {
+        for (Item item : items) {
             if (item.isObject()) {
                 try {
                     StringItem result = null;
                     for (String key : item.getKeys()) {
                         result = new StringItem(key, ItemMetadata.fromIteratorMetadata(getMetadata()));
-                        if (!listHasDuplicateString(results, result))
-                        {
+                        if (!listHasDuplicateString(results, result)) {
                             results.add(result);
                         }
                     }

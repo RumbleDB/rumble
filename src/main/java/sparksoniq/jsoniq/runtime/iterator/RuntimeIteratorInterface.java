@@ -17,7 +17,7 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.jsoniq.runtime.iterator;
+package sparksoniq.jsoniq.runtime.iterator;
 
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.semantics.DynamicContext;
@@ -26,8 +26,12 @@ import java.io.Serializable;
 
 public interface RuntimeIteratorInterface extends Serializable {
     void open(DynamicContext context);
+
     void close();
+
     void reset(DynamicContext context);
+
     boolean hasNext();
+
     Item next();
 }

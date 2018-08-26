@@ -35,6 +35,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ObjectLookupIterator extends LocalRuntimeIterator {
+
+    private List<Item> results;
+    private int _currentIndex;
+    private List<Item> items;
+    private Item _lookupKey;
+
     public ObjectLookupIterator(RuntimeIterator object, StringRuntimeIterator stringRuntimeIterator, IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
         this._children.add(object);
@@ -43,38 +49,37 @@ public class ObjectLookupIterator extends LocalRuntimeIterator {
 
     @Override
     public void open(DynamicContext context) {
-        if(this.isOpen())
+        if (this.isOpen())
             throw new IteratorFlowException("Variable reference iterator already open", getMetadata());
         this._currentDynamicContext = context;
         this.results = new ArrayList<>();
         this._currentIndex = 0;
         this.items = getItemsFromIteratorWithCurrentContext(this._children.get(0));
-        if(this.items.size() == 0) {
+        if (this.items.size() == 0) {
             this._hasNext = false;
-        }
-        else {
+        } else {
             this._hasNext = true;
         }
         this._children.get(1).open(_currentDynamicContext);
         this._lookupKey = this._children.get(1).next();
-        if(this._children.get(1).hasNext() || _lookupKey.isObject() || _lookupKey.isArray())
+        if (this._children.get(1).hasNext() || _lookupKey.isObject() || _lookupKey.isArray())
             throw new InvalidSelectorException("Type error; There is not exactly one supplied parameter for an array selector: "
                     + _lookupKey.serialize(), getMetadata());
-        if(!_lookupKey.isString())
+        if (!_lookupKey.isString())
             throw new UnexpectedTypeException("Non numeric array lookup for " + _lookupKey.serialize(), getMetadata());
         this._children.get(1).close();
 
-        for (Item i:items) {
+        for (Item i : items) {
             if (i instanceof ObjectItem) {
-                ObjectItem objItem = (ObjectItem)i;
-                results.add(objItem.getItemByKey(((StringItem)_lookupKey).getStringValue()));
+                ObjectItem objItem = (ObjectItem) i;
+                results.add(objItem.getItemByKey(((StringItem) _lookupKey).getStringValue()));
             }
         }
     }
 
     @Override
     public Item next() {
-        if(_hasNext == true){
+        if (_hasNext == true) {
             return getResult();
         }
         throw new IteratorFlowException("Invalid next call in Object Lookup", getMetadata());
@@ -85,12 +90,4 @@ public class ObjectLookupIterator extends LocalRuntimeIterator {
             _hasNext = false;
         return results.get(_currentIndex++);
     }
-
-    protected List<Item> results;
-    protected int _currentIndex;
-    protected List<Item> items;
-    protected Item _lookupKey;
-
-
-
 }

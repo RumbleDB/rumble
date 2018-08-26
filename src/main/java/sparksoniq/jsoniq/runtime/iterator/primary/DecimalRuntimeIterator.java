@@ -17,7 +17,7 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.jsoniq.runtime.iterator.primary;
+package sparksoniq.jsoniq.runtime.iterator.primary;
 
 import sparksoniq.jsoniq.item.DecimalItem;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
@@ -29,6 +29,10 @@ import sparksoniq.semantics.DynamicContext;
 import java.math.BigDecimal;
 
 public class DecimalRuntimeIterator extends AtomicRuntimeIterator {
+
+    private DecimalItem result;
+    private BigDecimal _value;
+
     public DecimalRuntimeIterator(BigDecimal value, IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
         this._value = value;
@@ -43,8 +47,6 @@ public class DecimalRuntimeIterator extends AtomicRuntimeIterator {
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._value, getMetadata());
     }
 
-
-
     @Override
     public void open(DynamicContext context) {
         if (this._isOpen)
@@ -55,7 +57,4 @@ public class DecimalRuntimeIterator extends AtomicRuntimeIterator {
         this.result = new DecimalItem(_value, ItemMetadata.fromIteratorMetadata(getMetadata()));
         this._hasNext = true;
     }
-
-    private DecimalItem result;
-    private BigDecimal _value;
 }

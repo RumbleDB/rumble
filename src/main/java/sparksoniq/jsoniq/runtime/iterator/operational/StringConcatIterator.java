@@ -33,7 +33,7 @@ import sparksoniq.semantics.DynamicContext;
 
 public class StringConcatIterator extends BinaryOperationBaseIterator {
 
-    StringItem result;
+    private StringItem result;
 
     public StringConcatIterator(RuntimeIterator left, RuntimeIterator right, IteratorMetadata iteratorMetadata) {
         super(left, right, OperationalExpressionBase.Operator.CONCAT, iteratorMetadata);

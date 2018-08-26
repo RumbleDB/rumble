@@ -34,6 +34,10 @@ import java.util.List;
 
 public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
 
+    private Item result;
+    private final QuantifiedExpression.QuantifiedOperators _operator;
+    private final RuntimeIterator _evaluationExpression;
+
     public QuantifiedExpressionIterator(QuantifiedExpression.QuantifiedOperators operator,
                                         List<QuantifiedExpressionVarIterator> children,
                                         RuntimeIterator evaluationExpression, IteratorMetadata iteratorMetadata) {
@@ -105,9 +109,4 @@ public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
         }
         return results;
     }
-
-    private Item result;
-    private final QuantifiedExpression.QuantifiedOperators _operator;
-    private final RuntimeIterator _evaluationExpression;
-
 }

@@ -27,10 +27,13 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 public class IntegerRuntimeIterator extends AtomicRuntimeIterator {
+
+    private IntegerItem result;
+    private int _item;
+
     public IntegerRuntimeIterator(int value, IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
         this._item = value;
-
     }
 
     @Override
@@ -52,7 +55,4 @@ public class IntegerRuntimeIterator extends AtomicRuntimeIterator {
         this.result = new IntegerItem(_item, ItemMetadata.fromIteratorMetadata(getMetadata()));
         this._hasNext = true;
     }
-
-    private IntegerItem result;
-    private int _item;
 }

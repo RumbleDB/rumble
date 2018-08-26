@@ -27,6 +27,10 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 public class BooleanRuntimeIterator extends AtomicRuntimeIterator {
+
+    private BooleanItem result;
+    private boolean _value;
+
     public BooleanRuntimeIterator(boolean value, IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
         this._value = value;
@@ -51,8 +55,5 @@ public class BooleanRuntimeIterator extends AtomicRuntimeIterator {
         this.result = new BooleanItem(_value, ItemMetadata.fromIteratorMetadata(getMetadata()));
         this._hasNext = true;
     }
-
-    private BooleanItem result;
-    private boolean _value;
 }
 

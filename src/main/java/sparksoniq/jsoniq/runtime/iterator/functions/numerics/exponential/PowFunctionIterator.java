@@ -14,6 +14,9 @@ import sparksoniq.semantics.DynamicContext;
 import java.util.List;
 
 public class PowFunctionIterator extends LocalFunctionCallIterator {
+
+    private Item result;
+
     public PowFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
     }
@@ -23,8 +26,8 @@ public class PowFunctionIterator extends LocalFunctionCallIterator {
         if (this.hasNext()) {
             this._hasNext = false;
             return result;
-        } else
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " pow function", getMetadata());
+        }
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " pow function", getMetadata());
     }
 
     @Override
@@ -37,8 +40,7 @@ public class PowFunctionIterator extends LocalFunctionCallIterator {
         RuntimeIterator iterator = this._children.get(0);
         if (iterator.getClass() == EmptySequenceIterator.class) {
             this._hasNext = false;
-        }
-        else {
+        } else {
             Item base = this.getSingleItemOfTypeFromIterator(iterator, Item.class);
             Item exponent = this.getSingleItemOfTypeFromIterator(this._children.get(1), Item.class);
             if (Item.isNumeric(base) && Item.isNumeric(exponent)) {
@@ -47,13 +49,10 @@ public class PowFunctionIterator extends LocalFunctionCallIterator {
                 this._hasNext = true;
                 this.result = new DoubleItem(result,
                         ItemMetadata.fromIteratorMetadata(getMetadata()));
-            }
-            else {
+            } else {
                 throw new UnexpectedTypeException("Pow expression has non numeric args " +
                         base.serialize() + ", " + exponent.serialize(), getMetadata());
             }
         }
     }
-
-    Item result;
 }

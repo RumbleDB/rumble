@@ -10,6 +10,9 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public class MaxFunctionIterator extends AggregateFunctionIterator {
+
+    private Item result;
+
     public MaxFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, AggregateFunctionOperator.MAX, iteratorMetadata);
     }
@@ -19,9 +22,9 @@ public class MaxFunctionIterator extends AggregateFunctionIterator {
         if (this.hasNext()) {
             this._hasNext = false;
             return result;
-        } else
-            throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "MAX function",
-                    getMetadata());
+        } else {
+            throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "MAX function", getMetadata());
+        }
     }
 
     @Override
@@ -54,6 +57,4 @@ public class MaxFunctionIterator extends AggregateFunctionIterator {
             this._hasNext = true;
         }
     }
-
-    Item result;
 }

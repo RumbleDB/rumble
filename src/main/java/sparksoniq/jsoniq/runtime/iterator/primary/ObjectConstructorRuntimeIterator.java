@@ -34,6 +34,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
+
+    private ObjectItem result;
+    private List<RuntimeIterator> _keys;
+    private List<RuntimeIterator> _values;
+    private boolean _isMergedObject = false;
+    
     public ObjectConstructorRuntimeIterator(List<RuntimeIterator> keys, List<RuntimeIterator> values,
                                             IteratorMetadata iteratorMetadata) {
         super(keys, iteratorMetadata);
@@ -109,9 +115,4 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
         }
         this._hasNext = true;
     }
-
-    private ObjectItem result;
-    private List<RuntimeIterator> _keys;
-    private List<RuntimeIterator> _values;
-    private boolean _isMergedObject = false;
 }

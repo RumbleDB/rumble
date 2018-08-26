@@ -17,7 +17,7 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.jsoniq.runtime.iterator.primary;
+package sparksoniq.jsoniq.runtime.iterator.primary;
 
 import sparksoniq.jsoniq.item.DoubleItem;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
@@ -26,11 +26,14 @@ import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
-public class DoubleRuntimeIterator extends AtomicRuntimeIterator{
+public class DoubleRuntimeIterator extends AtomicRuntimeIterator {
+
+    private DoubleItem result;
+    private double _value;
+
     public DoubleRuntimeIterator(Double value, IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
         this._value = value;
-
     }
 
     @Override
@@ -42,7 +45,6 @@ public class DoubleRuntimeIterator extends AtomicRuntimeIterator{
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._value, getMetadata());
     }
 
-
     @Override
     public void open(DynamicContext context) {
         if (this._isOpen)
@@ -53,7 +55,4 @@ public class DoubleRuntimeIterator extends AtomicRuntimeIterator{
         this.result = new DoubleItem(_value, ItemMetadata.fromIteratorMetadata(getMetadata()));
         this._hasNext = true;
     }
-
-    private DoubleItem result;
-    private double _value;
 }

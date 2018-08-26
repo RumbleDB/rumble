@@ -15,8 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ArrayMembersFunctionIterator extends ArrayFunctionIterator {
-
-
     public ArrayMembersFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, ArrayFunctionOperators.MEMBERS, iteratorMetadata);
     }
@@ -40,8 +38,8 @@ public class ArrayMembersFunctionIterator extends ArrayFunctionIterator {
         _currentIndex = 0;
         results = new ArrayList<>();
         RuntimeIterator sequenceIterator = this._children.get(0);
-        List<Item> items= getItemsFromIteratorWithCurrentContext(sequenceIterator);
-        for (Item item:items) {
+        List<Item> items = getItemsFromIteratorWithCurrentContext(sequenceIterator);
+        for (Item item : items) {
             if (item.isArray()) {
                 try {
                     int size = item.getSize();
@@ -53,7 +51,7 @@ public class ArrayMembersFunctionIterator extends ArrayFunctionIterator {
                 }
             }
         }
-        if(results.size() == 0) {
+        if (results.size() == 0) {
             this._hasNext = false;
         } else {
             this._hasNext = true;

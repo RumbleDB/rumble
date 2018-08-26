@@ -8,8 +8,8 @@ import java.util.List;
 
 public class ObjectFunctionUtilities {
 
-    public static boolean listHasDuplicateString (List<Item> list, StringItem newItem) {
-        for (Item i:list) {
+    public static boolean listHasDuplicateString(List<Item> list, StringItem newItem) {
+        for (Item i : list) {
             try {
                 if (i.getStringValue().equals(newItem.getStringValue())) {
                     return true;

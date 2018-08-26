@@ -10,6 +10,9 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public class MinFunctionIterator extends AggregateFunctionIterator {
+
+    private Item result;
+
     public MinFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, AggregateFunctionOperator.MIN, iteratorMetadata);
     }
@@ -19,9 +22,9 @@ public class MinFunctionIterator extends AggregateFunctionIterator {
         if (this.hasNext()) {
             this._hasNext = false;
             return result;
-        } else
-            throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "MIN function",
-                    getMetadata());
+        } else {
+            throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "MIN function", getMetadata());
+        }
     }
 
     @Override
@@ -53,7 +56,4 @@ public class MinFunctionIterator extends AggregateFunctionIterator {
             this._hasNext = true;
         }
     }
-
-    Item result;
-
 }

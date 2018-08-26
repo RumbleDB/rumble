@@ -49,13 +49,13 @@ public class ObjectRemoveKeysFunctionIterator extends ObjectFunctionIterator {
     }
 
     public void removeKeys(List<Item> items, List<Item> keysRemoveItems) {
-        for (Item item:items) {
+        for (Item item : items) {
             if (item.isObject()) {
                 ArrayList<String> finalKeylist = new ArrayList<>();
                 ArrayList<Item> finalValueList = new ArrayList<>();
                 ArrayList<String> keysToRemove = new ArrayList<>();
 
-                for (Item keyRemoveItem:keysRemoveItems) {
+                for (Item keyRemoveItem : keysRemoveItems) {
                     try {
                         String keyToRemove = keyRemoveItem.getStringValue();
                         keysToRemove.add(keyToRemove);
@@ -65,7 +65,7 @@ public class ObjectRemoveKeysFunctionIterator extends ObjectFunctionIterator {
                 }
 
                 try {
-                    for (String objectKey:item.getKeys()) {
+                    for (String objectKey : item.getKeys()) {
                         if (!keysToRemove.contains(objectKey)) {
                             finalKeylist.add(objectKey);
                             finalValueList.add(item.getItemByKey(objectKey));
@@ -76,8 +76,7 @@ public class ObjectRemoveKeysFunctionIterator extends ObjectFunctionIterator {
                 }
 
                 results.add(new ObjectItem(finalKeylist, finalValueList, ItemMetadata.fromIteratorMetadata(getMetadata())));
-            }
-            else {
+            } else {
                 results.add(item);
             }
         }

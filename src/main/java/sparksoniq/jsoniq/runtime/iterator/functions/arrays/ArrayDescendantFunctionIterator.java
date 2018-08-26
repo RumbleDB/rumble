@@ -36,7 +36,7 @@ public class ArrayDescendantFunctionIterator extends ArrayFunctionIterator {
         RuntimeIterator sequenceIterator = this._children.get(0);
         List<Item> items = getItemsFromIteratorWithCurrentContext(sequenceIterator);
         getDescendantArrays(items);
-        if(results.size() == 0) {
+        if (results.size() == 0) {
             this._hasNext = false;
         } else {
             this._hasNext = true;
@@ -44,7 +44,7 @@ public class ArrayDescendantFunctionIterator extends ArrayFunctionIterator {
     }
 
     public void getDescendantArrays(List<Item> items) {
-        for (Item item:items) {
+        for (Item item : items) {
             if (item.isArray()) {
                 results.add(item);
                 try {
@@ -52,15 +52,13 @@ public class ArrayDescendantFunctionIterator extends ArrayFunctionIterator {
                 } catch (OperationNotSupportedException e) {
                     e.printStackTrace();
                 }
-            }
-            else if (item.isObject()) {
+            } else if (item.isObject()) {
                 try {
                     getDescendantArrays((List<Item>) item.getValues());
                 } catch (OperationNotSupportedException e) {
                     e.printStackTrace();
                 }
-            }
-            else {
+            } else {
                 // do nothing
             }
         }

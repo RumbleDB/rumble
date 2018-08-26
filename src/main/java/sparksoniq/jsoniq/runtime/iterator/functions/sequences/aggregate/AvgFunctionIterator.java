@@ -12,6 +12,9 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public class AvgFunctionIterator extends AggregateFunctionIterator {
+
+    private Item result;
+
     public AvgFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, AggregateFunctionOperator.AVG, iteratorMetadata);
     }
@@ -21,9 +24,9 @@ public class AvgFunctionIterator extends AggregateFunctionIterator {
         if (this.hasNext()) {
             this._hasNext = false;
             return result;
-        } else
-            throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "AVG function",
-                    getMetadata());
+        } else {
+            throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "AVG function", getMetadata());
+        }
     }
 
     @Override
@@ -41,8 +44,7 @@ public class AvgFunctionIterator extends AggregateFunctionIterator {
         });
         if (results.size() == 0) {
             this._hasNext = false;
-        }
-        else {
+        } else {
             this._hasNext = true;
         }
         //TODO check numeric types conversions
@@ -52,6 +54,4 @@ public class AvgFunctionIterator extends AggregateFunctionIterator {
         this.result = new DecimalItem(sum.divide(new BigDecimal(results.size())),
                 ItemMetadata.fromIteratorMetadata(getMetadata()));
     }
-
-    Item result;
 }

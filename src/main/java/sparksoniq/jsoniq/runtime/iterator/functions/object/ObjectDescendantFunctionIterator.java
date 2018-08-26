@@ -47,23 +47,21 @@ public class ObjectDescendantFunctionIterator extends ObjectFunctionIterator {
     }
 
     public void getDescendantObjects(List<Item> items) {
-        for (Item item:items) {
+        for (Item item : items) {
             if (item.isArray()) {
                 try {
                     getDescendantObjects(item.getItems());
                 } catch (OperationNotSupportedException e) {
                     e.printStackTrace();
                 }
-            }
-            else if (item.isObject()) {
+            } else if (item.isObject()) {
                 results.add(item);
                 try {
                     getDescendantObjects((List<Item>) item.getValues());
                 } catch (OperationNotSupportedException e) {
                     e.printStackTrace();
                 }
-            }
-            else {
+            } else {
                 // do nothing
             }
         }

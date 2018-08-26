@@ -17,7 +17,7 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.jsoniq.runtime.iterator;
+package sparksoniq.jsoniq.runtime.iterator;
 
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -29,7 +29,7 @@ public class EmptySequenceIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public boolean hasNext(){
+    public boolean hasNext() {
         return false;
     }
 

@@ -12,6 +12,9 @@ import sparksoniq.semantics.DynamicContext;
 import java.util.List;
 
 public class ConcatFunctionIterator extends LocalFunctionCallIterator {
+
+    private Item result;
+
     public ConcatFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
     }
@@ -40,6 +43,4 @@ public class ConcatFunctionIterator extends LocalFunctionCallIterator {
         this.result = new StringItem(builder.toString(), ItemMetadata.fromIteratorMetadata(getMetadata()));
         this._hasNext = true;
     }
-
-    private Item result;
 }

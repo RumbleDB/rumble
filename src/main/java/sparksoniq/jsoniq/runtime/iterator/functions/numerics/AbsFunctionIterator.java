@@ -14,6 +14,9 @@ import sparksoniq.semantics.DynamicContext;
 import java.util.List;
 
 public class AbsFunctionIterator extends LocalFunctionCallIterator {
+
+    private Item result;
+
     public AbsFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
     }
@@ -23,8 +26,8 @@ public class AbsFunctionIterator extends LocalFunctionCallIterator {
         if (this.hasNext()) {
             this._hasNext = false;
             return result;
-        } else
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " abs function", getMetadata());
+        }
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " abs function", getMetadata());
     }
 
     @Override
@@ -37,22 +40,17 @@ public class AbsFunctionIterator extends LocalFunctionCallIterator {
         RuntimeIterator iterator = this._children.get(0);
         if (iterator.getClass() == EmptySequenceIterator.class) {
             this._hasNext = false;
-        }
-        else {
+        } else {
             Item value = this.getSingleItemOfTypeFromIterator(iterator, Item.class);
             if (Item.isNumeric(value)) {
                 Double result = Math.abs(Item.getNumericValue(value, Double.class));
                 this._hasNext = true;
-                this.result =  new DoubleItem(result,
+                this.result = new DoubleItem(result,
                         ItemMetadata.fromIteratorMetadata(getMetadata()));
-            }
-            else {
+            } else {
                 throw new UnexpectedTypeException("Abs expression has non numeric args " +
                         value.serialize(), getMetadata());
             }
         }
     }
-
-    Item result;
-
 }

@@ -15,6 +15,9 @@ import java.util.List;
 import java.lang.Math;
 
 public class CosFunctionIterator extends LocalFunctionCallIterator {
+
+    private Item result;
+
     public CosFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
     }
@@ -24,8 +27,8 @@ public class CosFunctionIterator extends LocalFunctionCallIterator {
         if (this.hasNext()) {
             this._hasNext = false;
             return result;
-        } else
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " cos function", getMetadata());
+        }
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " cos function", getMetadata());
     }
 
     @Override
@@ -38,21 +41,17 @@ public class CosFunctionIterator extends LocalFunctionCallIterator {
         RuntimeIterator iterator = this._children.get(0);
         if (iterator.getClass() == EmptySequenceIterator.class) {
             this._hasNext = false;
-        }
-        else {
+        } else {
             Item radians = this.getSingleItemOfTypeFromIterator(iterator, Item.class);
             if (Item.isNumeric(radians)) {
                 Double result = Math.cos(Item.getNumericValue(radians, Double.class));
                 this._hasNext = true;
                 this.result = new DoubleItem(result,
                         ItemMetadata.fromIteratorMetadata(getMetadata()));
-            }
-            else {
+            } else {
                 throw new UnexpectedTypeException("Cos expression has non numeric args " +
                         radians.serialize(), getMetadata());
             }
         }
     }
-
-    Item result;
 }

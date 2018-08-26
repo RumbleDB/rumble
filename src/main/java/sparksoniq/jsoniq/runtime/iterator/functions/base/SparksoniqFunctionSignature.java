@@ -1,6 +1,7 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.base;
 
 public class SparksoniqFunctionSignature {
+
     private final int arity;
     private final String functionName;
 

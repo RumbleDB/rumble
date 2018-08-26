@@ -17,7 +17,7 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.jsoniq.runtime.iterator.primary;
+package sparksoniq.jsoniq.runtime.iterator.primary;
 
 import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
@@ -27,6 +27,10 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 public class StringRuntimeIterator extends AtomicRuntimeIterator {
+
+    private StringItem result;
+    private String _value;
+
     public StringRuntimeIterator(String value, IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
         this._value = value;
@@ -51,7 +55,4 @@ public class StringRuntimeIterator extends AtomicRuntimeIterator {
         this.result = new StringItem(_value, ItemMetadata.fromIteratorMetadata(getMetadata()));
         this._hasNext = true;
     }
-
-    private StringItem result;
-    private String _value;
 }

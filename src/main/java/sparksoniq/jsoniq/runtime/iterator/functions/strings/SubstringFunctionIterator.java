@@ -13,6 +13,9 @@ import sparksoniq.semantics.DynamicContext;
 import java.util.List;
 
 public class SubstringFunctionIterator extends LocalFunctionCallIterator {
+
+    private Item result;
+    
     public SubstringFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
     }
@@ -58,6 +61,4 @@ public class SubstringFunctionIterator extends LocalFunctionCallIterator {
         //char indexing starts from 1 in JSONiq
         return indexItem.getIntegerValue() - 1 > 0 ? indexItem.getIntegerValue() - 1 : 0;
     }
-
-    private Item result;
 }

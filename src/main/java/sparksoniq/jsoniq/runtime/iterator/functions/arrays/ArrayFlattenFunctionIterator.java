@@ -36,7 +36,7 @@ public class ArrayFlattenFunctionIterator extends ArrayFunctionIterator {
         RuntimeIterator sequenceIterator = this._children.get(0);
         List<Item> items = getItemsFromIteratorWithCurrentContext(sequenceIterator);
         flatten(items);
-        if(results.size() == 0) {
+        if (results.size() == 0) {
             this._hasNext = false;
         } else {
             this._hasNext = true;
@@ -44,15 +44,14 @@ public class ArrayFlattenFunctionIterator extends ArrayFunctionIterator {
     }
 
     public void flatten(List<Item> items) {
-        for (Item item:items) {
+        for (Item item : items) {
             if (item.isArray()) {
                 try {
                     flatten(item.getItems());
                 } catch (OperationNotSupportedException e) {
                     e.printStackTrace();
                 }
-            }
-            else {
+            } else {
                 results.add(item);
             }
         }

@@ -29,6 +29,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ContextExpressionIterator extends LocalRuntimeIterator {
+
+    private Item result;
+
     public ContextExpressionIterator(IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
     }
@@ -52,6 +55,4 @@ public class ContextExpressionIterator extends LocalRuntimeIterator {
         this.result = _currentDynamicContext.getVariableValue("$$").get(0);
         this._hasNext = true;
     }
-
-    private Item result;
 }

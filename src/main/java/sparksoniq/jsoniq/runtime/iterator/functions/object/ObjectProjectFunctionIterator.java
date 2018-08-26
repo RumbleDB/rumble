@@ -49,11 +49,11 @@ public class ObjectProjectFunctionIterator extends ObjectFunctionIterator {
     }
 
     public void getProjection(List<Item> items, List<Item> keys) {
-        for (Item item:items) {
+        for (Item item : items) {
             if (item.isObject()) {
                 ArrayList<String> finalKeylist = new ArrayList<>();
                 ArrayList<Item> finalValueList = new ArrayList<>();
-                for (Item keyItem:keys) {
+                for (Item keyItem : keys) {
                     try {
                         String key = keyItem.getStringValue();
                         Item value = item.getItemByKey(key);
@@ -66,8 +66,7 @@ public class ObjectProjectFunctionIterator extends ObjectFunctionIterator {
                     }
                 }
                 results.add(new ObjectItem(finalKeylist, finalValueList, ItemMetadata.fromIteratorMetadata(getMetadata())));
-            }
-            else {
+            } else {
                 results.add(item);
             }
         }

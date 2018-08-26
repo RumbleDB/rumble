@@ -14,6 +14,9 @@ import sparksoniq.semantics.DynamicContext;
 import java.util.List;
 
 public class ATan2FunctionIterator extends LocalFunctionCallIterator {
+
+    private Item result;
+
     public ATan2FunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
     }
@@ -23,8 +26,8 @@ public class ATan2FunctionIterator extends LocalFunctionCallIterator {
         if (this.hasNext()) {
             this._hasNext = false;
             return result;
-        } else
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " atan2 function", getMetadata());
+        }
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " atan2 function", getMetadata());
     }
 
     @Override
@@ -42,13 +45,10 @@ public class ATan2FunctionIterator extends LocalFunctionCallIterator {
             this._hasNext = true;
             this.result = new DoubleItem(result,
                     ItemMetadata.fromIteratorMetadata(getMetadata()));
-        }
-        else {
+        } else {
             throw new UnexpectedTypeException("ATan2 expression has non numeric args " +
                     y.serialize() + ", " + x.serialize(), getMetadata());
 
         }
     }
-
-    Item result;
 }

@@ -12,6 +12,9 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public class SumFunctionIterator extends AggregateFunctionIterator {
+
+    private Item result;
+
     public SumFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, AggregateFunctionOperator.SUM, iteratorMetadata);
     }
@@ -21,9 +24,9 @@ public class SumFunctionIterator extends AggregateFunctionIterator {
         if (this.hasNext()) {
             this._hasNext = false;
             return result;
-        } else
-            throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "SUM function",
-                    getMetadata());
+        } else {
+            throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "SUM function", getMetadata());
+        }
     }
 
     @Override
@@ -49,7 +52,4 @@ public class SumFunctionIterator extends AggregateFunctionIterator {
         this.result = new DecimalItem(sumResult, ItemMetadata.fromIteratorMetadata(getMetadata()));
         this._hasNext = true;
     }
-
-    Item result;
-
 }

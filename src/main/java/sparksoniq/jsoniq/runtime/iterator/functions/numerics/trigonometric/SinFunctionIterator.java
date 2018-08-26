@@ -14,6 +14,9 @@ import sparksoniq.semantics.DynamicContext;
 import java.util.List;
 
 public class SinFunctionIterator extends LocalFunctionCallIterator {
+
+    private Item result;
+
     public SinFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
     }
@@ -23,8 +26,8 @@ public class SinFunctionIterator extends LocalFunctionCallIterator {
         if (this.hasNext()) {
             this._hasNext = false;
             return result;
-        } else
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " sin function", getMetadata());
+        }
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " sin function", getMetadata());
     }
 
     @Override
@@ -37,21 +40,17 @@ public class SinFunctionIterator extends LocalFunctionCallIterator {
         RuntimeIterator iterator = this._children.get(0);
         if (iterator.getClass() == EmptySequenceIterator.class) {
             this._hasNext = false;
-        }
-        else {
+        } else {
             Item radians = this.getSingleItemOfTypeFromIterator(iterator, Item.class);
             if (Item.isNumeric(radians)) {
                 Double result = Math.sin(Item.getNumericValue(radians, Double.class));
                 this._hasNext = true;
                 this.result = new DoubleItem(result,
                         ItemMetadata.fromIteratorMetadata(getMetadata()));
-            }
-            else {
+            } else {
                 throw new UnexpectedTypeException("Sin expression has non numeric args " +
                         radians.serialize(), getMetadata());
             }
         }
     }
-
-    Item result;
 }

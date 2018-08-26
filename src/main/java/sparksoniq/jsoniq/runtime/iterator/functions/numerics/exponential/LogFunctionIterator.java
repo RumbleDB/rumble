@@ -14,6 +14,9 @@ import sparksoniq.semantics.DynamicContext;
 import java.util.List;
 
 public class LogFunctionIterator extends LocalFunctionCallIterator {
+
+    private Item result;
+
     public LogFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
     }
@@ -23,8 +26,8 @@ public class LogFunctionIterator extends LocalFunctionCallIterator {
         if (this.hasNext()) {
             this._hasNext = false;
             return result;
-        } else
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " log function", getMetadata());
+        }
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " log function", getMetadata());
     }
 
     @Override
@@ -37,21 +40,17 @@ public class LogFunctionIterator extends LocalFunctionCallIterator {
         RuntimeIterator iterator = this._children.get(0);
         if (iterator.getClass() == EmptySequenceIterator.class) {
             this._hasNext = false;
-        }
-        else {
+        } else {
             Item value = this.getSingleItemOfTypeFromIterator(iterator, Item.class);
             if (Item.isNumeric(value)) {
                 Double result = Math.log(Item.getNumericValue(value, Double.class));
                 this._hasNext = true;
                 this.result = new DoubleItem(result,
                         ItemMetadata.fromIteratorMetadata(getMetadata()));
-            }
-            else {
+            } else {
                 throw new UnexpectedTypeException("Log expression has non numeric args " +
                         value.serialize(), getMetadata());
             }
         }
     }
-
-    Item result;
 }

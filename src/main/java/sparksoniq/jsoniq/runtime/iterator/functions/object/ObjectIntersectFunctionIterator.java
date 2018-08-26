@@ -34,25 +34,23 @@ public class ObjectIntersectFunctionIterator extends ObjectFunctionIterator {
                 try {
                     if (firstItem) {
                         // add all key-value pairs of the first item
-                        for (String key:item.getKeys()) {
+                        for (String key : item.getKeys()) {
                             Item value = item.getItemByKey(key);
                             ArrayList<Item> valueList = new ArrayList<>();
                             valueList.add(value);
                             keyValuePairs.put(key, valueList);
                         }
                         firstItem = false;
-                    }
-                    else {
+                    } else {
                         // iterate over existing keys in the map of results
-                        Iterator<String> keyIterator= keyValuePairs.keySet().iterator();
+                        Iterator<String> keyIterator = keyValuePairs.keySet().iterator();
                         while (keyIterator.hasNext()) {
                             String key = keyIterator.next();
                             // if the new item doesn't contain the same keys
-                            if (!item.getKeys().contains(key)){
+                            if (!item.getKeys().contains(key)) {
                                 // remove the key from the map
                                 keyIterator.remove();
-                            }
-                            else {
+                            } else {
                                 // add the matching key's value to the list
                                 Item value = item.getItemByKey(key);
                                 keyValuePairs.get(key).add(value);

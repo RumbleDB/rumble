@@ -14,6 +14,9 @@ import sparksoniq.semantics.DynamicContext;
 import java.util.List;
 
 public class PiFunctionIterator extends LocalFunctionCallIterator {
+
+    private Item result;
+
     public PiFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
     }
@@ -23,8 +26,8 @@ public class PiFunctionIterator extends LocalFunctionCallIterator {
         if (this.hasNext()) {
             this._hasNext = false;
             return result;
-        } else
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " pi function", getMetadata());
+        }
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " pi function", getMetadata());
     }
 
     @Override
@@ -37,6 +40,4 @@ public class PiFunctionIterator extends LocalFunctionCallIterator {
         this.result = new DoubleItem(Math.PI,
                 ItemMetadata.fromIteratorMetadata(getMetadata()));
     }
-
-    Item result;
 }
