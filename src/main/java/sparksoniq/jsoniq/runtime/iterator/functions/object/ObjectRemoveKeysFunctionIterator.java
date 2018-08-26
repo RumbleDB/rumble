@@ -7,6 +7,7 @@ import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
 
 import javax.naming.OperationNotSupportedException;
 import java.util.ArrayList;
@@ -20,19 +21,31 @@ public class ObjectRemoveKeysFunctionIterator extends ObjectFunctionIterator {
     @Override
     public Item next() {
         if (this._hasNext) {
-            if (results == null) {
-                _currentIndex = 0;
-                results = new ArrayList<>();
-                RuntimeIterator sequenceIterator = this._children.get(0);
-                RuntimeIterator keysIterator = this._children.get(1);
-                List<Item> items = getItemsFromIteratorWithCurrentContext(sequenceIterator);
-                List<Item> keys = getItemsFromIteratorWithCurrentContext(keysIterator);
-                removeKeys(items, keys);
-            }
             return getResult();
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " REMOVE-KEYS function",
                 getMetadata());
+    }
+
+    @Override
+    public void open(DynamicContext context) {
+        if (this._isOpen)
+            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
+        this._isOpen = true;
+        this._currentDynamicContext = context;
+        _currentIndex = 0;
+        results = new ArrayList<>();
+        RuntimeIterator sequenceIterator = this._children.get(0);
+        RuntimeIterator keysIterator = this._children.get(1);
+        List<Item> items = getItemsFromIteratorWithCurrentContext(sequenceIterator);
+        List<Item> keys = getItemsFromIteratorWithCurrentContext(keysIterator);
+        removeKeys(items, keys);
+
+        if (results.size() == 0) {
+            this._hasNext = false;
+        } else {
+            this._hasNext = true;
+        }
     }
 
     public void removeKeys(List<Item> items, List<Item> keysRemoveItems) {
