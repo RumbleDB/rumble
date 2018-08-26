@@ -35,7 +35,7 @@ public class CommaExpressionIterator extends LocalRuntimeIterator {
 
     @Override
     public Item next() {
-        if(currentChild == null) {
+        if(this._hasNext) {
             return getResult();
         }
         throw new IteratorFlowException("Invalid next() call in Comma expression", getMetadata());
@@ -50,8 +50,9 @@ public class CommaExpressionIterator extends LocalRuntimeIterator {
         this._currentIndex = 0;
         this.results = new ArrayList<>();
 
-        this._children.forEach(c -> c.reset(this._currentDynamicContext));
+        // this._children.forEach(c -> c.reset(this._currentDynamicContext));
         for (RuntimeIterator child:this._children) {
+            child.open(_currentDynamicContext);
             if (child.hasNext()) {
                 results.add(child.next());
             }
@@ -64,26 +65,12 @@ public class CommaExpressionIterator extends LocalRuntimeIterator {
         }
     }
 
-    @Override
-    public void reset(DynamicContext context){
-        super.reset(context);
-        currentChild = null;
-    }
-
-    @Override
-    public boolean hasNext(){
-        return currentChild == null ||
-                this._children.indexOf(currentChild) < this._children.size() - 1 ||
-                currentChild.hasNext();
-    }
-
     protected Item getResult() {
         if (_currentIndex == results.size() - 1)
             _hasNext = false;
         return results.get(_currentIndex++);
     }
 
-    private RuntimeIterator currentChild = null;
     private int _currentIndex;
     private List<Item> results;
 }
