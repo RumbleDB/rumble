@@ -27,6 +27,7 @@ import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
 
 public class ArrayLookupIterator extends LocalRuntimeIterator {
     public ArrayLookupIterator(RuntimeIterator array, RuntimeIterator iterator, IteratorMetadata iteratorMetadata) {
@@ -37,26 +38,38 @@ public class ArrayLookupIterator extends LocalRuntimeIterator {
 
     @Override
     public Item next() {
-        if(this._hasNext) {
-            this._children.get(0).open(_currentDynamicContext);
-            this._children.get(1).open(_currentDynamicContext);
-            this._array = (ArrayItem) this._children.get(0).next();
-            Item lookup = this._children.get(1).next();
-            if(this._children.get(1).hasNext() || lookup.isObject() || lookup.isArray())
-                throw new InvalidSelectorException("Type error; There is not exactly one supplied parameter for an array selector: "
-                        + lookup.serialize(), getMetadata());
-            if(!Item.isNumeric(lookup))
-                throw new UnexpectedTypeException("Non numeric array lookup for " + lookup.serialize(), getMetadata());
-            this._lookup = Item.getNumericValue(lookup, Integer.class);
-            this._children.get(0).close();
-            this._children.get(1).close();
+        if (this.hasNext()) {
             this._hasNext = false;
-            //-1 for Jsoniq convetion, arrays start from 1
-            return _array.getItemAt(_lookup - 1);
+            return result;
         }
         throw new IteratorFlowException("Invalid next call in Array Lookup", getMetadata());
     }
 
+    @Override
+    public void open(DynamicContext context) {
+        if (this._isOpen)
+            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
+        this._isOpen = true;
+        this._currentDynamicContext = context;
+
+        this._children.get(0).open(_currentDynamicContext);
+        this._children.get(1).open(_currentDynamicContext);
+        this._array = (ArrayItem) this._children.get(0).next();
+        Item lookup = this._children.get(1).next();
+        if(this._children.get(1).hasNext() || lookup.isObject() || lookup.isArray())
+            throw new InvalidSelectorException("Type error; There is not exactly one supplied parameter for an array selector: "
+                    + lookup.serialize(), getMetadata());
+        if(!Item.isNumeric(lookup))
+            throw new UnexpectedTypeException("Non numeric array lookup for " + lookup.serialize(), getMetadata());
+        this._lookup = Item.getNumericValue(lookup, Integer.class);
+        this._children.get(0).close();
+        this._children.get(1).close();
+        //-1 for Jsoniq convetion, arrays start from 1
+        this.result =_array.getItemAt(_lookup - 1);
+        this._hasNext = true;
+    }
+
+    private Item result;
     private ArrayItem _array;
     private int _lookup;
 }
