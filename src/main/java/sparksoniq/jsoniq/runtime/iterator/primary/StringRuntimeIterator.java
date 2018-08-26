@@ -24,24 +24,34 @@ import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
 
 public class StringRuntimeIterator extends AtomicRuntimeIterator {
+    public StringRuntimeIterator(String value, IteratorMetadata iteratorMetadata) {
+        super(null, iteratorMetadata);
+        this._value = value;
+    }
 
     @Override
     public StringItem next() {
-        if (this._hasNext) {
+        if (this.hasNext()) {
             this._hasNext = false;
-            return new StringItem(_item, ItemMetadata.fromIteratorMetadata(getMetadata()));
+            return result;
         }
-
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item, getMetadata());
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._value, getMetadata());
     }
 
-    public StringRuntimeIterator(String value, IteratorMetadata iteratorMetadata) {
-        super(null, iteratorMetadata);
-        this._item = value;
+    @Override
+    public void open(DynamicContext context) {
+        if (this._isOpen)
+            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
+        this._isOpen = true;
+        this._currentDynamicContext = context;
 
+        this.result = new StringItem(_value, ItemMetadata.fromIteratorMetadata(getMetadata()));
+        this._hasNext = true;
     }
 
-    private String _item;
+    private StringItem result;
+    private String _value;
 }
