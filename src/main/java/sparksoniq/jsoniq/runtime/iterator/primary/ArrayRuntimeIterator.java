@@ -26,7 +26,9 @@ import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,14 +42,24 @@ public class ArrayRuntimeIterator extends LocalRuntimeIterator {
 
     @Override
     public ArrayItem next() {
-        if(this._hasNext) {
-            List<Item> result = this.runChildrenIterators(this._currentDynamicContext);
-            this._item = new ArrayItem(result, ItemMetadata.fromIteratorMetadata(getMetadata()));
+        if (this.hasNext()) {
             this._hasNext = false;
-            return _item;
+            return result;
         }
         else throw new IteratorFlowException("Invalid next() call on array iterator", getMetadata());
     }
 
-    private ArrayItem _item = null;
+    @Override
+    public void open(DynamicContext context) {
+        if (this._isOpen)
+            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
+        this._isOpen = true;
+        this._currentDynamicContext = context;
+
+        List<Item> result = this.runChildrenIterators(this._currentDynamicContext);
+        this.result = new ArrayItem(result, ItemMetadata.fromIteratorMetadata(getMetadata()));
+        this._hasNext = true;
+    }
+
+    private ArrayItem result;
 }
