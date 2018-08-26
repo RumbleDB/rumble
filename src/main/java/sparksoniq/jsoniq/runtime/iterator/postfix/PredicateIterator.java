@@ -38,55 +38,70 @@ public class PredicateIterator extends LocalRuntimeIterator {
         this._children.add(filterExpression);
     }
 
-
-    @Override
-    public Item next() {
-        if(this._children.size() < 2)
-            throw new SparksoniqRuntimeException("Invalid Predicate! Must initialize filter before calling next");
-
-        if(result == null) {
-            unfilteredSequence = new ArrayList<>();
-            RuntimeIterator sequence = this._children.get(0);
-            //get unfiltered sequence
-            sequence.open(_currentDynamicContext);
-            while (sequence.hasNext())
-                unfilteredSequence.add(sequence.next());
-            sequence.close();
-            // get filtered list
-            result = new ArrayList<>();
-            RuntimeIterator filter = this._children.get(1);
-            for(Item item : unfilteredSequence){
-                //set the current item for the $$ children
-                List<Item> currentItems = new ArrayList<>();
-                currentItems.add(item);
-                _currentDynamicContext.addVariableValue("$$", currentItems);
-                filter.open(_currentDynamicContext);
-                if (Item.getEffectiveBooleanValue(filter.next()))
-                    result.add(item);
-                filter.close();
-                filter.reset(_currentDynamicContext);
-            }
-            _currentDynamicContext.removeVariable("$$");
-
-        }
-
-        if(currentIndex <= result.size() - 1){
-            if(currentIndex + 1 == result.size())
-                this._hasNext =false;
-            return result.get(currentIndex++);
-        }
-
-        throw new IteratorFlowException("Invalid next() call in Predicate!", getMetadata());
-    }
-
     @Override
     public void reset(DynamicContext dc) {
         super.reset(dc);
-        this.result = null;
+        this.results = null;
+    }
+
+    @Override
+    public Item next() {
+        if (this.hasNext()) {
+            return getResult();
+        }
+        throw new IteratorFlowException("Invalid next() call in Predicate!", getMetadata());
+    }
+
+    protected Item getResult() {
+        if (_currentIndex == results.size() - 1)
+            _hasNext = false;
+        return results.get(_currentIndex++);
+    }
+
+
+    @Override
+    public void open(DynamicContext context) {
+        if (this._isOpen)
+            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
+        this._isOpen = true;
+        this._currentDynamicContext = context;
+
+        if(this._children.size() < 2) {
+            throw new SparksoniqRuntimeException("Invalid Predicate! Must initialize filter before calling next");
+        }
+
+        unfilteredSequence = new ArrayList<>();
+        RuntimeIterator sequence = this._children.get(0);
+        //get unfiltered sequence
+        sequence.open(_currentDynamicContext);
+        while (sequence.hasNext())
+            unfilteredSequence.add(sequence.next());
+        sequence.close();
+        // get filtered list
+        results = new ArrayList<>();
+        RuntimeIterator filter = this._children.get(1);
+        for(Item item : unfilteredSequence){
+            //set the current item for the $$ children
+            List<Item> currentItems = new ArrayList<>();
+            currentItems.add(item);
+            _currentDynamicContext.addVariableValue("$$", currentItems);
+            filter.open(_currentDynamicContext);
+            if (Item.getEffectiveBooleanValue(filter.next()))
+                results.add(item);
+            filter.close();
+            filter.reset(_currentDynamicContext);
+        }
+        _currentDynamicContext.removeVariable("$$");
+
+        if (results.size() == 0) {
+            this._hasNext = false;
+        } else {
+            this._hasNext = true;
+        }
     }
 
     private List<Item> unfilteredSequence = null;
-    private List<Item> result = null;
-    private int currentIndex = 0;
+    private List<Item> results = null;
+    private int _currentIndex = 0;
 
 }
