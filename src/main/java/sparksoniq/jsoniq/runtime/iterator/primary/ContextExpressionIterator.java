@@ -17,12 +17,13 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.jsoniq.runtime.iterator.primary;
+package sparksoniq.jsoniq.runtime.iterator.primary;
 
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,16 +35,23 @@ public class ContextExpressionIterator extends LocalRuntimeIterator {
 
     @Override
     public Item next() {
-        if(hasNext()){
+        if (this.hasNext()) {
             this._hasNext = false;
-            List<Item> results = new ArrayList<>();
-            if(results.size() > 1)
-                throw new IteratorFlowException("Invalid context item expression", getMetadata());
-            return _currentDynamicContext.getVariableValue("$$").get(0);
+            return result;
         }
-            throw new IteratorFlowException("Invalid next() call in Context Expression!", getMetadata());
+        throw new IteratorFlowException("Invalid next() call in Context Expression!", getMetadata());
     }
 
+    @Override
+    public void open(DynamicContext context) {
+        if (this._isOpen)
+            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
+        this._isOpen = true;
+        this._currentDynamicContext = context;
 
+        this.result = _currentDynamicContext.getVariableValue("$$").get(0);
+        this._hasNext = true;
+    }
 
+    private Item result;
 }
