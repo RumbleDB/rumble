@@ -27,6 +27,7 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate.AggregateFunctionIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
 
@@ -37,16 +38,28 @@ public class CountFunctionIterator extends AggregateFunctionIterator {
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            RuntimeIterator sequenceIterator = this._children.get(0);
-            List<Item> results = getItemsFromIteratorWithCurrentContext(sequenceIterator);
+        if (this.hasNext()) {
             this._hasNext = false;
-            return new IntegerItem(results.size(),
-                    ItemMetadata.fromIteratorMetadata(getMetadata()));
+            return result;
         } else
             throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + " count function",
                     getMetadata());
     }
 
+    @Override
+    public void open(DynamicContext context) {
+        if (this._isOpen)
+            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
+        this._isOpen = true;
+        this._currentDynamicContext = context;
+
+        RuntimeIterator sequenceIterator = this._children.get(0);
+        List<Item> results = getItemsFromIteratorWithCurrentContext(sequenceIterator);
+        this._hasNext = true;
+        this.result = new IntegerItem(results.size(),
+                ItemMetadata.fromIteratorMetadata(getMetadata()));
+    }
+
+    Item result;
 
 }
