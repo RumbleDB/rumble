@@ -25,6 +25,7 @@ import sparksoniq.jsoniq.item.NullItem;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
 
 public class NullRuntimeIterator extends AtomicRuntimeIterator {
 
@@ -34,10 +35,23 @@ public class NullRuntimeIterator extends AtomicRuntimeIterator {
 
     @Override
     public AtomicItem next() {
-        if (this._hasNext) {
+        if (this.hasNext()) {
             this._hasNext = false;
-            return new NullItem(ItemMetadata.fromIteratorMetadata(getMetadata()));
+            return result;
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "\"null\"", getMetadata());
     }
+
+    @Override
+    public void open(DynamicContext context) {
+        if (this._isOpen)
+            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
+        this._isOpen = true;
+        this._currentDynamicContext = context;
+
+        this.result =  new NullItem(ItemMetadata.fromIteratorMetadata(getMetadata()));
+        this._hasNext = true;
+    }
+
+    private AtomicItem result;
 }
