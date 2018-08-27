@@ -41,10 +41,10 @@ public class ObjectLookupIterator extends LocalRuntimeIterator {
     private List<Item> items;
     private Item _lookupKey;
 
-    public ObjectLookupIterator(RuntimeIterator object, StringRuntimeIterator stringRuntimeIterator, IteratorMetadata iteratorMetadata) {
+    public ObjectLookupIterator(RuntimeIterator object, RuntimeIterator lookupIterator, IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
         this._children.add(object);
-        this._children.add(stringRuntimeIterator);
+        this._children.add(lookupIterator);
     }
 
     @Override
