@@ -19,13 +19,17 @@
  */
 package sparksoniq.jsoniq.runtime.iterator.postfix;
 
+import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.runtime.iterator.primary.IntegerRuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.semantics.types.ItemType;
+import sparksoniq.semantics.types.ItemTypes;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -80,6 +84,7 @@ public class PredicateIterator extends LocalRuntimeIterator {
         sequence.close();
         // get filtered list
         results = new ArrayList<>();
+
         RuntimeIterator filter = this._children.get(1);
         for (Item item : unfilteredSequence) {
             //set the current item for the $$ children
@@ -87,12 +92,26 @@ public class PredicateIterator extends LocalRuntimeIterator {
             currentItems.add(item);
             _currentDynamicContext.addVariableValue("$$", currentItems);
             filter.open(_currentDynamicContext);
-            if (Item.getEffectiveBooleanValue(filter.next()))
-                results.add(item);
+            if (filter.hasNext()) {
+                Item fil = filter.next();
+                // if filter evaluates to integer, it is matched against the item position
+                if (fil instanceof IntegerItem) {
+                    int index = ((IntegerItem)fil).getIntegerValue();
+                    // less than or equal to size -> b/c of -1
+                    if (index >= 1 && index <= unfilteredSequence.size()) {
+                        //-1 for Jsoniq convention, arrays start from 1
+                        results.add(unfilteredSequence.get(index - 1));
+                    }
+                    break;
+                } else if (Item.getEffectiveBooleanValue(fil)) {
+                    results.add(item);
+                }
+            }
             filter.close();
             filter.reset(_currentDynamicContext);
         }
         _currentDynamicContext.removeVariable("$$");
+
 
         if (results.size() == 0) {
             this._hasNext = false;
