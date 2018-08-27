@@ -66,7 +66,7 @@ public class ArrayLookupIterator extends LocalRuntimeIterator {
         this._lookup = Item.getNumericValue(lookup, Integer.class);
         this._children.get(0).close();
         this._children.get(1).close();
-        //-1 for Jsoniq convetion, arrays start from 1
+        //-1 for Jsoniq convention, arrays start from 1
         this.result = _array.getItemAt(_lookup - 1);
         this._hasNext = true;
     }

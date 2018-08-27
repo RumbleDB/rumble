@@ -19,6 +19,7 @@
  */
 package sparksoniq.jsoniq.runtime.iterator;
 
+import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
@@ -36,5 +37,6 @@ public class EmptySequenceIterator extends LocalRuntimeIterator {
     @Override
     public Item next() {
         return null;
+        //throw new IteratorFlowException("Invalid next() call on Empty Sequence", getMetadata());
     }
 }
