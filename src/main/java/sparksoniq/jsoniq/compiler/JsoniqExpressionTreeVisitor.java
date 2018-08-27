@@ -575,6 +575,9 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         } else if(ctx.vr != null) {
             this.visitVarRef(ctx.vr);
             expr = this.currentPrimaryExpression;
+        } else if(ctx.ci != null) {
+            this.visitContextItemExpr(ctx.ci);
+            expr = this.currentPrimaryExpression;
         }
 
         node = new ObjectLookupExtension(expr, createMetadataFromContext(ctx));

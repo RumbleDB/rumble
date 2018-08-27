@@ -21,11 +21,13 @@ package sparksoniq.jsoniq.runtime.iterator.postfix;
 
 import sparksoniq.exceptions.InvalidSelectorException;
 import sparksoniq.exceptions.UnexpectedTypeException;
+import sparksoniq.exceptions.UnsupportedFeatureException;
 import sparksoniq.jsoniq.item.*;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.primary.ContextExpressionIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.StringRuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
@@ -40,6 +42,7 @@ public class ObjectLookupIterator extends LocalRuntimeIterator {
     private int _currentIndex;
     private List<Item> items;
     private Item _lookupKey;
+    private boolean _contextLookup;
 
     public ObjectLookupIterator(RuntimeIterator object, RuntimeIterator lookupIterator, IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
@@ -55,43 +58,54 @@ public class ObjectLookupIterator extends LocalRuntimeIterator {
 
         this.items = getItemsFromIteratorWithCurrentContext(this._children.get(0));
 
-        this._children.get(1).open(_currentDynamicContext);
-        this._lookupKey = this._children.get(1).next();
-        if (this._children.get(1).hasNext())
-            throw new InvalidSelectorException("Type error; There is not exactly one supplied parameter for an object selector: "
-                    + _lookupKey.serialize(), getMetadata());
-        if (_lookupKey.isNull() || _lookupKey.isObject() || _lookupKey.isArray()) {
-            throw new InvalidSelectorException("Type error; Object selector can't be converted to a string: "
-                    + _lookupKey.serialize(), getMetadata());
+        if (this._children.get(1) instanceof ContextExpressionIterator) {
+            _contextLookup = true;
         } else {
-            // convert to string
-            if (_lookupKey.isBoolean()) {
-                Boolean value = ((BooleanItem)_lookupKey).getValue();
-                _lookupKey = new StringItem(value.toString(), ItemMetadata.fromIteratorMetadata(getMetadata()));
-            } else if (_lookupKey.isDecimal()) {
-                BigDecimal value = ((DecimalItem)_lookupKey).getValue();
-                _lookupKey = new StringItem(value.toString(), ItemMetadata.fromIteratorMetadata(getMetadata()));
-            } else if (_lookupKey.isDouble()) {
-                Double value = ((DoubleItem)_lookupKey).getValue();
-                _lookupKey = new StringItem(value.toString(), ItemMetadata.fromIteratorMetadata(getMetadata()));
-            } else if (_lookupKey.isInteger()) {
-                Integer value = ((IntegerItem)_lookupKey).getValue();
-                _lookupKey = new StringItem(value.toString(), ItemMetadata.fromIteratorMetadata(getMetadata()));
-            } else if (_lookupKey.isString()) {
-                // do nothing
-            }
+            _contextLookup = false;
         }
 
-        if (!_lookupKey.isString())
-            throw new UnexpectedTypeException("Non numeric object lookup for " + _lookupKey.serialize(), getMetadata());
-        this._children.get(1).close();
+        if (!_contextLookup) {
+            this._children.get(1).open(_currentDynamicContext);
+            this._lookupKey = this._children.get(1).next();
+            if (this._children.get(1).hasNext())
+                throw new InvalidSelectorException("Type error; There is not exactly one supplied parameter for an object selector: "
+                        + _lookupKey.serialize(), getMetadata());
+            if (_lookupKey.isNull() || _lookupKey.isObject() || _lookupKey.isArray()) {
+                throw new InvalidSelectorException("Type error; Object selector can't be converted to a string: "
+                        + _lookupKey.serialize(), getMetadata());
+            } else {
+                // convert to string
+                if (_lookupKey.isBoolean()) {
+                    Boolean value = ((BooleanItem)_lookupKey).getValue();
+                    _lookupKey = new StringItem(value.toString(), ItemMetadata.fromIteratorMetadata(getMetadata()));
+                } else if (_lookupKey.isDecimal()) {
+                    BigDecimal value = ((DecimalItem)_lookupKey).getValue();
+                    _lookupKey = new StringItem(value.toString(), ItemMetadata.fromIteratorMetadata(getMetadata()));
+                } else if (_lookupKey.isDouble()) {
+                    Double value = ((DoubleItem)_lookupKey).getValue();
+                    _lookupKey = new StringItem(value.toString(), ItemMetadata.fromIteratorMetadata(getMetadata()));
+                } else if (_lookupKey.isInteger()) {
+                    Integer value = ((IntegerItem)_lookupKey).getValue();
+                    _lookupKey = new StringItem(value.toString(), ItemMetadata.fromIteratorMetadata(getMetadata()));
+                } else if (_lookupKey.isString()) {
+                    // do nothing
+                }
+            }
+            if (!_lookupKey.isString())
+                throw new UnexpectedTypeException("Non numeric object lookup for " + _lookupKey.serialize(), getMetadata());
+            this._children.get(1).close();
+        }
 
         for (Item i : items) {
             if (i instanceof ObjectItem) {
                 ObjectItem objItem = (ObjectItem) i;
-                Item result = objItem.getItemByKey(((StringItem) _lookupKey).getStringValue());
-                if (result != null)
-                    results.add(result);
+                if (!_contextLookup) {
+                    Item result = objItem.getItemByKey(((StringItem) _lookupKey).getStringValue());
+                    if (result != null)
+                        results.add(result);
+                } else {
+                    // TODO: handle the context expression similar to the case in PredicateIterator.java
+                }
             }
         }
 
