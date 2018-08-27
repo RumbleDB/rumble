@@ -21,16 +21,16 @@ package sparksoniq.jsoniq.runtime.iterator.postfix;
 
 import sparksoniq.exceptions.InvalidSelectorException;
 import sparksoniq.exceptions.UnexpectedTypeException;
-import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.item.ObjectItem;
-import sparksoniq.jsoniq.item.StringItem;
+import sparksoniq.jsoniq.item.*;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.StringRuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -58,9 +58,31 @@ public class ObjectLookupIterator extends LocalRuntimeIterator {
 
         this._children.get(1).open(_currentDynamicContext);
         this._lookupKey = this._children.get(1).next();
-        if (this._children.get(1).hasNext() || _lookupKey.isObject() || _lookupKey.isArray())
-            throw new InvalidSelectorException("Type error; There is not exactly one supplied parameter for an array selector: "
+        if (this._children.get(1).hasNext())
+            throw new InvalidSelectorException("Type error; There is not exactly one supplied parameter for an object selector: "
                     + _lookupKey.serialize(), getMetadata());
+        if (_lookupKey.isNull() || _lookupKey.isObject() || _lookupKey.isArray()) {
+            throw new InvalidSelectorException("Type error; Object selector can't be converted to a string: "
+                    + _lookupKey.serialize(), getMetadata());
+        } else {
+            // convert to string
+            if (_lookupKey.isBoolean()) {
+                Boolean value = ((BooleanItem)_lookupKey).getValue();
+                _lookupKey = new StringItem(value.toString(), ItemMetadata.fromIteratorMetadata(getMetadata()));
+            } else if (_lookupKey.isDecimal()) {
+                BigDecimal value = ((DecimalItem)_lookupKey).getValue();
+                _lookupKey = new StringItem(value.toString(), ItemMetadata.fromIteratorMetadata(getMetadata()));
+            } else if (_lookupKey.isDouble()) {
+                Double value = ((DoubleItem)_lookupKey).getValue();
+                _lookupKey = new StringItem(value.toString(), ItemMetadata.fromIteratorMetadata(getMetadata()));
+            } else if (_lookupKey.isInteger()) {
+                Integer value = ((IntegerItem)_lookupKey).getValue();
+                _lookupKey = new StringItem(value.toString(), ItemMetadata.fromIteratorMetadata(getMetadata()));
+            } else if (_lookupKey.isString()) {
+                // do nothing
+            }
+        }
+
         if (!_lookupKey.isString())
             throw new UnexpectedTypeException("Non numeric object lookup for " + _lookupKey.serialize(), getMetadata());
         this._children.get(1).close();
@@ -70,7 +92,7 @@ public class ObjectLookupIterator extends LocalRuntimeIterator {
                 ObjectItem objItem = (ObjectItem) i;
                 Item result = objItem.getItemByKey(((StringItem) _lookupKey).getStringValue());
                 if (result != null)
-                results.add(result);
+                    results.add(result);
             }
         }
 
