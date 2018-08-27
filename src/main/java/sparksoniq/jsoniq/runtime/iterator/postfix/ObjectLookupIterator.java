@@ -35,10 +35,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ObjectLookupIterator extends LocalRuntimeIterator {
-    public ObjectLookupIterator(RuntimeIterator object, StringRuntimeIterator stringRuntimeIterator, IteratorMetadata iteratorMetadata) {
+
+    private List<Item> results;
+    private int _currentIndex;
+    private List<Item> items;
+    private Item _lookupKey;
+
+    public ObjectLookupIterator(RuntimeIterator object, RuntimeIterator lookupIterator, IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
         this._children.add(object);
-        this._children.add(stringRuntimeIterator);
+        this._children.add(lookupIterator);
     }
 
     @Override
@@ -91,10 +97,4 @@ public class ObjectLookupIterator extends LocalRuntimeIterator {
             _hasNext = false;
         return results.get(_currentIndex++);
     }
-
-    protected List<Item> results;
-    protected int _currentIndex;
-
-
-
 }

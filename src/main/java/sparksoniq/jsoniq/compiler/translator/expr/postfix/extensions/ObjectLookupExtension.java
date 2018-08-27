@@ -19,6 +19,7 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions;
 
+import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.StringLiteral;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
@@ -27,28 +28,29 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ObjectLookupExtension extends PostfixExtension {
-    public StringLiteral getField() {
-        return field;
+
+    Expression _expression;
+
+    public Expression getExpression() {
+        return _expression;
     }
 
-    private StringLiteral field;
-
-    public ObjectLookupExtension(StringLiteral _field, ExpressionMetadata metadata) {
+    public ObjectLookupExtension(Expression expr, ExpressionMetadata metadata) {
         super(metadata);
-        this.field = _field;
+        this._expression = expr;
     }
 
     @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
         List<ExpressionOrClause> result =  new ArrayList<>();
-        if(this.field !=null)
-            result.add(this.field);
+        if(this._expression !=null)       //field
+            result.add(this._expression); //field
         return getDescendantsFromChildren(result,depthSearch);
     }
 
     @Override
     public String serializationString(boolean prefix){
-        String result = "(objectLookup . " + field.serializationString(false) + ")";
+        String result = "(objectLookup . " + _expression.serializationString(false) + ")";
         return result;
     }
 }
