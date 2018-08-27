@@ -53,8 +53,32 @@ public class ObjectLookupIterator extends LocalRuntimeIterator {
             throw new IteratorFlowException("Variable reference iterator already open", getMetadata());
         this._currentDynamicContext = context;
         this._currentIndex = 0;
-        this.results = null;
-        this._hasNext = true;
+
+        this.items = getItemsFromIteratorWithCurrentContext(this._children.get(0));
+
+        this._children.get(1).open(_currentDynamicContext);
+        this._lookupKey = this._children.get(1).next();
+        if (this._children.get(1).hasNext() || _lookupKey.isObject() || _lookupKey.isArray())
+            throw new InvalidSelectorException("Type error; There is not exactly one supplied parameter for an array selector: "
+                    + _lookupKey.serialize(), getMetadata());
+        if (!_lookupKey.isString())
+            throw new UnexpectedTypeException("Non numeric object lookup for " + _lookupKey.serialize(), getMetadata());
+        this._children.get(1).close();
+
+        for (Item i : items) {
+            if (i instanceof ObjectItem) {
+                ObjectItem objItem = (ObjectItem) i;
+                Item result = objItem.getItemByKey(((StringItem) _lookupKey).getStringValue());
+                if (result != null)
+                results.add(result);
+            }
+        }
+
+        if (results.size() == 0) {
+            this._hasNext = false;
+        } else {
+            this._hasNext = true;
+        }
     }
 
     @Override

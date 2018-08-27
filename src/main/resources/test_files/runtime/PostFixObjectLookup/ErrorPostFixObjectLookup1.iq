@@ -1,2 +1,4 @@
 (:JIQS: ShouldCrash; ErrorCode="JNTY0018"; ErrorMetadata="LINE:2:COLUMN:0:" :)
-{"foo":1}.("foo", "bar")
+{ "foobar" : "bar" }.("foo", "bar")
+
+(: multiple lookup keys :)
