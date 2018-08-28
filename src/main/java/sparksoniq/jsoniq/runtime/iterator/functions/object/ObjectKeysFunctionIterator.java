@@ -2,6 +2,7 @@ package sparksoniq.jsoniq.runtime.iterator.functions.object;
 
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ItemUtil;
 import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
@@ -9,11 +10,7 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
-import static sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectFunctionUtilities.listHasDuplicateString;
-
-import javax.naming.OperationNotSupportedException;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 public class ObjectKeysFunctionIterator extends ObjectFunctionIterator {
@@ -57,7 +54,7 @@ public class ObjectKeysFunctionIterator extends ObjectFunctionIterator {
                 StringItem result;
                 for (String key : objItem.getKeys()) {
                     result = new StringItem(key, ItemMetadata.fromIteratorMetadata(getMetadata()));
-                    if (!listHasDuplicateString(_prevResults, result))
+                    if (!ItemUtil.listContainsItem(_prevResults, result))
                     {
                         _prevResults.add(result);
                         _nextResult = result;
