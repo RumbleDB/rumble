@@ -32,6 +32,7 @@ import sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.trigonometric.*;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.cardinality.OneOrMoreIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.cardinality.ZeroOrOneIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.ConcatFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.StringJoinFunction;
@@ -61,6 +62,7 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(AVG, 1), AvgFunctionIterator.class);
 
         buildInFunctions.put(new SparksoniqFunctionSignature(ZEROORONE, 1), ZeroOrOneIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(ONEORMORE, 1), OneOrMoreIterator.class);
 
 
         buildInFunctions.put(new SparksoniqFunctionSignature(ABS, 1), AbsFunctionIterator.class);
@@ -154,6 +156,10 @@ public class Functions {
          * function that returns $arg if it contains zero or one items. Otherwise, raises an error.
          */
         public static final String ZEROORONE = "zero-or-one";
+        /**
+         * function that returns $arg if it contains one or more items. Otherwise, raises an error.
+         */
+        public static final String ONEORMORE = "one-or-more";
 
 
         /**
