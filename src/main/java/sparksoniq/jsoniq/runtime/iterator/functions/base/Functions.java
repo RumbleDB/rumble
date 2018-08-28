@@ -32,6 +32,7 @@ import sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.trigonometric.*;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.cardinality.ZeroOrOneIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.ConcatFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.StringJoinFunction;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.SubstringFunctionIterator;
@@ -58,6 +59,9 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(MAX, 1), MaxFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(SUM, 1), SumFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(AVG, 1), AvgFunctionIterator.class);
+
+        buildInFunctions.put(new SparksoniqFunctionSignature(ZEROORONE, 1), ZeroOrOneIterator.class);
+
 
         buildInFunctions.put(new SparksoniqFunctionSignature(ABS, 1), AbsFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(CEILING, 1), CeilingFunctionIterator.class);
@@ -144,6 +148,12 @@ public class Functions {
          * function that returns the sum of a sequence
          */
         public static final String SUM = "sum";
+
+
+        /**
+         * function that returns $arg if it contains zero or one items. Otherwise, raises an error.
+         */
+        public static final String ZEROORONE = "zero-or-one";
 
 
         /**
