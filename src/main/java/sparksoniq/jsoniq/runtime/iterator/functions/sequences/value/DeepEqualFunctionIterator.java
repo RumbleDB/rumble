@@ -1,0 +1,99 @@
+package sparksoniq.jsoniq.runtime.iterator.functions.sequences.value;
+
+import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.item.ArrayItem;
+import sparksoniq.jsoniq.item.BooleanItem;
+import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ObjectItem;
+import sparksoniq.jsoniq.item.metadata.ItemMetadata;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
+
+import java.lang.reflect.Array;
+import java.util.List;
+
+public class DeepEqualFunctionIterator extends LocalFunctionCallIterator {
+
+    private BooleanItem result;
+
+    public DeepEqualFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
+        super(arguments, iteratorMetadata);
+    }
+
+    @Override
+    public Item next() {
+        if (this.hasNext()) {
+            this._hasNext = false;
+            return result;
+        } else {
+            throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "index-of function", getMetadata());
+        }
+    }
+
+    @Override
+    public void open(DynamicContext context) {
+        super.open(context);
+
+        RuntimeIterator sequenceIterator1 = this._children.get(0);
+        RuntimeIterator sequenceIterator2 = this._children.get(1);
+
+        List<Item> items1 = getItemsFromIteratorWithCurrentContext(sequenceIterator1);
+        List<Item> items2 = getItemsFromIteratorWithCurrentContext(sequenceIterator2);
+
+
+        boolean res = checkDeepEqual(items1, items2);
+        result = new BooleanItem(res, ItemMetadata.fromIteratorMetadata(getMetadata()));
+        this._hasNext = true;
+    }
+
+    public boolean checkDeepEqual(List<Item> items1, List<Item> items2) {
+        if (items1.size() != items2.size()) {
+            return false;
+        } else {
+            for (int i = 0; i < items1.size(); i++){
+                Item item1 = items1.get(i);
+                Item item2 = items2.get(i);
+
+                if (item1 instanceof ArrayItem) {
+                    // if item types don't match
+                    if (!(item2 instanceof ArrayItem)) {
+                        return false;
+                    } else {
+                        // if types match, recursively check if array is deep-equal
+                        ArrayItem arrItem1 = (ArrayItem)item1;
+                        ArrayItem arrItem2 = (ArrayItem)item2;
+
+                        if (!checkDeepEqual(arrItem1.getItems(), arrItem2.getItems())) {
+                            return false;
+                        }
+                    }
+                } else if (item1 instanceof ObjectItem) {
+                    // if item types don't match
+                    if (!(item2 instanceof ObjectItem)) {
+                        return false;
+                    } else {
+                        // if types match, recursively check if object is deep-equal
+                        ObjectItem objItem1 = (ObjectItem)item1;
+                        ObjectItem objItem2 = (ObjectItem)item2;
+
+                        if (objItem1.getKeys().equals(objItem2.getKeys())) {
+                            if (!checkDeepEqual((List<Item>)objItem1.getValues(), (List<Item>)objItem2.getValues())) {
+                                return false;
+                            }
+                        } else {
+                            return false;
+                        }
+                    }
+                } else if (Item.compareItems(item1, item2) != 0){
+                    // if atomic items' values are not equal
+                    return false;
+                } else {
+                    // do nothing
+                }
+            }
+            return true;
+        }
+    }
+}
