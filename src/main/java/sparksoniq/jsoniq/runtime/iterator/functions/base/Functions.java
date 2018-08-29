@@ -29,6 +29,7 @@ import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayMembersFunctionI
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArraySizeFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.object.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.EmptyFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.ExistsFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential.*;
@@ -67,6 +68,7 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(AVG, 1), AvgFunctionIterator.class);
 
         buildInFunctions.put(new SparksoniqFunctionSignature(EMPTY, 1), EmptyFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(EXISTS, 1), ExistsFunctionIterator.class);
 
         buildInFunctions.put(new SparksoniqFunctionSignature(ZEROORONE, 1), ZeroOrOneIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(ONEORMORE, 1), OneOrMoreIterator.class);
@@ -167,6 +169,10 @@ public class Functions {
          * function that returns true if the argument is the empty sequence
          */
         public static final String EMPTY = "empty";
+        /**
+         * function that returns true if the argument is a non-empty sequence
+         */
+        public static final String EXISTS = "exists";
 
 
         /**
