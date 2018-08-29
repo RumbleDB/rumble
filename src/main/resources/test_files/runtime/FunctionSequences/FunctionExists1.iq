@@ -1,0 +1,4 @@
+(:JIQS: ShouldRun; Output="(false, true)" :)
+exists(()),
+exists((1))
+
