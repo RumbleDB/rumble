@@ -1,0 +1,5 @@
+(:JIQS: ShouldRun; Output="(1, a)" :)
+head(()),
+head(1 to 5),
+head(("a", "b", "c"))
+
