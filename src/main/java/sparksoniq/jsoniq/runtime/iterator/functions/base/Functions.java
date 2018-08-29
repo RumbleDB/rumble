@@ -28,6 +28,7 @@ import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayFlattenFunctionI
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayMembersFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArraySizeFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.object.*;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.EmptyFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential.*;
@@ -64,6 +65,8 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(MAX, 1), MaxFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(SUM, 1), SumFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(AVG, 1), AvgFunctionIterator.class);
+
+        buildInFunctions.put(new SparksoniqFunctionSignature(EMPTY, 1), EmptyFunctionIterator.class);
 
         buildInFunctions.put(new SparksoniqFunctionSignature(ZEROORONE, 1), ZeroOrOneIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(ONEORMORE, 1), OneOrMoreIterator.class);
@@ -158,6 +161,12 @@ public class Functions {
          * function that returns the sum of a sequence
          */
         public static final String SUM = "sum";
+
+
+        /**
+         * function that returns true if the argument is the empty sequence
+         */
+        public static final String EMPTY = "empty";
 
 
         /**
