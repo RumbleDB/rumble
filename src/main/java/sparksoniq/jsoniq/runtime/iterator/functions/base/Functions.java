@@ -72,6 +72,7 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(TAIL, 1), TailFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(INSERTBEFORE, 3), InsertBeforeFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(REMOVE, 2), RemoveFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(REVERSE, 1), ReverseFunctionIterator.class);
 
         buildInFunctions.put(new SparksoniqFunctionSignature(ZEROORONE, 1), ZeroOrOneIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(ONEORMORE, 1), OneOrMoreIterator.class);
@@ -192,6 +193,10 @@ public class Functions {
          * function that returns a new sequence containing all the items of $target except the item at position $position.
          */
         public static final String REMOVE = "remove";
+        /**
+         * function that reverses the order of items in a sequence.
+         */
+        public static final String REVERSE = "reverse";
 
 
 
