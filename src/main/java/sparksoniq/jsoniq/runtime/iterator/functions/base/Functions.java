@@ -71,6 +71,7 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(HEAD, 1), HeadFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(TAIL, 1), TailFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(INSERTBEFORE, 3), InsertBeforeFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(REMOVE, 2), RemoveFunctionIterator.class);
 
         buildInFunctions.put(new SparksoniqFunctionSignature(ZEROORONE, 1), ZeroOrOneIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(ONEORMORE, 1), OneOrMoreIterator.class);
@@ -187,6 +188,12 @@ public class Functions {
          * function that returns a sequence constructed by inserting an item or a sequence of items at a given position within an existing sequence
          */
         public static final String INSERTBEFORE = "insert-before";
+        /**
+         * function that returns a new sequence containing all the items of $target except the item at position $position.
+         */
+        public static final String REMOVE = "remove";
+
+
 
         /**
          * function that returns $arg if it contains zero or one items. Otherwise, raises an error.
