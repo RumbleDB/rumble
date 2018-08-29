@@ -73,6 +73,8 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(INSERTBEFORE, 3), InsertBeforeFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(REMOVE, 2), RemoveFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(REVERSE, 1), ReverseFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(SUBSEQUENCE, 2), SubsequenceFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(SUBSEQUENCE, 3), SubsequenceFunctionIterator.class);
 
         buildInFunctions.put(new SparksoniqFunctionSignature(ZEROORONE, 1), ZeroOrOneIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(ONEORMORE, 1), OneOrMoreIterator.class);
@@ -197,6 +199,10 @@ public class Functions {
          * function that reverses the order of items in a sequence.
          */
         public static final String REVERSE = "reverse";
+        /**
+         * function that applies a subsequence operation to the given sequence with the given start index and length parameters
+         */
+        public static final String SUBSEQUENCE = "subsequence";
 
 
 
