@@ -28,10 +28,7 @@ import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayFlattenFunctionI
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayMembersFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArraySizeFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.object.*;
-import sparksoniq.jsoniq.runtime.iterator.functions.sequences.EmptyFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.sequences.ExistsFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.sequences.HeadFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.sequences.TailFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential.*;
@@ -73,6 +70,7 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(EXISTS, 1), ExistsFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(HEAD, 1), HeadFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(TAIL, 1), TailFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(INSERTBEFORE, 3), InsertBeforeFunctionIterator.class);
 
         buildInFunctions.put(new SparksoniqFunctionSignature(ZEROORONE, 1), ZeroOrOneIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(ONEORMORE, 1), OneOrMoreIterator.class);
@@ -185,6 +183,10 @@ public class Functions {
          * function that returns all but the first item in a sequence
          */
         public static final String TAIL = "tail";
+        /**
+         * function that returns a sequence constructed by inserting an item or a sequence of items at a given position within an existing sequence
+         */
+        public static final String INSERTBEFORE = "insert-before";
 
         /**
          * function that returns $arg if it contains zero or one items. Otherwise, raises an error.
