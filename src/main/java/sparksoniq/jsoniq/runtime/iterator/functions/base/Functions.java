@@ -30,6 +30,7 @@ import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArraySizeFunctionIter
 import sparksoniq.jsoniq.runtime.iterator.functions.object.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.EmptyFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.ExistsFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.HeadFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential.*;
@@ -69,6 +70,7 @@ public class Functions {
 
         buildInFunctions.put(new SparksoniqFunctionSignature(EMPTY, 1), EmptyFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(EXISTS, 1), ExistsFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(HEAD, 1), HeadFunctionIterator.class);
 
         buildInFunctions.put(new SparksoniqFunctionSignature(ZEROORONE, 1), ZeroOrOneIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(ONEORMORE, 1), OneOrMoreIterator.class);
@@ -173,7 +175,10 @@ public class Functions {
          * function that returns true if the argument is a non-empty sequence
          */
         public static final String EXISTS = "exists";
-
+        /**
+         * function that returns the first item in a sequence
+         */
+        public static final String HEAD = "head";
 
         /**
          * function that returns $arg if it contains zero or one items. Otherwise, raises an error.
