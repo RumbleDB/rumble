@@ -83,6 +83,6 @@ public abstract class SparkRuntimeIterator extends RuntimeIterator {
 
     protected JiqsItemParser parser;
     protected JavaRDD<Item> _rdd;
-    private List<Item> result = null;
-    private int currentResultIndex = 0;
+    protected List<Item> result = null;
+    protected int currentResultIndex = 0;
 }
