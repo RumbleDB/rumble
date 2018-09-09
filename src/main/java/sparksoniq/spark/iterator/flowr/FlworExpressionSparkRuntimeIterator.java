@@ -23,8 +23,10 @@ import sparksoniq.jsoniq.compiler.translator.expr.flowr.FLWOR_CLAUSES;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.spark.SparkContextManager;
 import sparksoniq.spark.iterator.SparkRuntimeIterator;
 import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
 import org.apache.spark.api.java.JavaRDD;
@@ -67,6 +69,39 @@ public class FlworExpressionSparkRuntimeIterator extends SparkRuntimeIterator {
         this._clauses.forEach(clause -> {
                 clause.setDynamicContext(_currentDynamicContext);
         });
+
+        currentResultIndex = 0;
+        this._rdd = this.getRDD();
+        if(SparkContextManager.LIMIT_COLLECT()) {
+            result = _rdd.take(SparkContextManager.COLLECT_ITEM_LIMIT);
+        }
+        else {
+            result = _rdd.collect();
+        }
+
+        if (result.size() == 0) {
+            this._hasNext = false;
+        } else {
+            this._hasNext = true;
+        }
+    }
+
+    @Override
+    public Item next(){
+        if(!this._isOpen) {
+            throw new IteratorFlowException("Runtime iterator is not open", getMetadata());
+        }
+
+        if (this.hasNext()) {
+            if(currentResultIndex == result.size() - 1)
+                this._hasNext = false;
+
+            Item item = result.get(currentResultIndex);
+            currentResultIndex++;
+            return item;
+        }
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.getClass().getSimpleName(),
+                getMetadata());
     }
 
     @Override public void reset(DynamicContext context){
