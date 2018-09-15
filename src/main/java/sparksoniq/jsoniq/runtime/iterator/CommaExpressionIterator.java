@@ -45,7 +45,10 @@ public class CommaExpressionIterator extends LocalRuntimeIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        this._nextIndex = 0;
+        this._childIndex = 0;
+
+        _currentChild = this._children.get(_childIndex);
+        _currentChild.open(_currentDynamicContext);
 
         setNextResult();
     }
@@ -53,16 +56,17 @@ public class CommaExpressionIterator extends LocalRuntimeIterator {
     public void setNextResult() {
         _nextResult = null;
 
-        for (int i = _nextIndex; i < this._children.size(); i++) {
-            RuntimeIterator childIterator = this._children.get(i);
-            childIterator.open(_currentDynamicContext);
-            if (childIterator.hasNext()) {
-                _nextResult = childIterator.next();
-                _nextIndex = i + 1;
-                childIterator.close();
-                break;
+        while (_nextResult == null) {
+            if (_currentChild.hasNext()) {
+                _nextResult = _currentChild.next();
+            } else {
+                _currentChild.close();
+                if (++_childIndex == this._children.size()) {
+                    break;
+                }
+                _currentChild = this._children.get(_childIndex);
+                _currentChild.open(_currentDynamicContext);
             }
-            childIterator.close();
         }
 
         if (_nextResult == null) {
@@ -72,6 +76,7 @@ public class CommaExpressionIterator extends LocalRuntimeIterator {
         }
     }
 
+    private RuntimeIterator _currentChild;
     private Item _nextResult;
-    private int _nextIndex; // index to start checking from if next item is requested
+    private int _childIndex;
 }
