@@ -17,8 +17,9 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.jsoniq.runtime.iterator.postfix;
+package sparksoniq.jsoniq.runtime.iterator.postfix;
 
+import sparksoniq.exceptions.InvalidSelectorException;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.primary.IntegerRuntimeIterator;
@@ -36,9 +37,10 @@ import java.util.List;
 
 public class PredicateIterator extends LocalRuntimeIterator {
 
-    private List<Item> unfilteredSequence = null;
-    private List<Item> results = null;
-    private int _currentIndex = 0;
+    private RuntimeIterator _iterator;
+    private RuntimeIterator _filter;
+    private Item _nextResult;
+
 
     public PredicateIterator(RuntimeIterator sequence, RuntimeIterator filterExpression, IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
@@ -47,25 +49,14 @@ public class PredicateIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public void reset(DynamicContext dc) {
-        super.reset(dc);
-        this.results = null;
-    }
-
-    @Override
     public Item next() {
-        if (this.hasNext()) {
-            return getResult();
+        if (_hasNext == true) {
+            Item result = _nextResult;  // save the result to be returned
+            setNextResult();            // calculate and store the next result
+            return result;
         }
         throw new IteratorFlowException("Invalid next() call in Predicate!", getMetadata());
     }
-
-    protected Item getResult() {
-        if (_currentIndex == results.size() - 1)
-            _hasNext = false;
-        return results.get(_currentIndex++);
-    }
-
 
     @Override
     public void open(DynamicContext context) {
@@ -75,46 +66,49 @@ public class PredicateIterator extends LocalRuntimeIterator {
             throw new SparksoniqRuntimeException("Invalid Predicate! Must initialize filter before calling next");
         }
 
-        unfilteredSequence = new ArrayList<>();
-        RuntimeIterator sequence = this._children.get(0);
-        //get unfiltered sequence
-        sequence.open(_currentDynamicContext);
-        while (sequence.hasNext())
-            unfilteredSequence.add(sequence.next());
-        sequence.close();
-        // get filtered list
-        results = new ArrayList<>();
+        _iterator = this._children.get(0);
+        _iterator.open(_currentDynamicContext);
+        _filter = this._children.get(1);
 
-        RuntimeIterator filter = this._children.get(1);
-        for (Item item : unfilteredSequence) {
-            //set the current item for the $$ children
+        setNextResult();
+    }
+
+    public void setNextResult() {
+        _nextResult = null;
+
+        while (_iterator.hasNext()) {
+            Item item = _iterator.next();
             List<Item> currentItems = new ArrayList<>();
             currentItems.add(item);
             _currentDynamicContext.addVariableValue("$$", currentItems);
-            filter.open(_currentDynamicContext);
-            if (filter.hasNext()) {
-                Item fil = filter.next();
-                // if filter evaluates to integer, it is matched against the item position
-                if (fil instanceof IntegerItem) {
-                    int index = ((IntegerItem)fil).getIntegerValue();
-                    // less than or equal to size -> b/c of -1
-                    if (index >= 1 && index <= unfilteredSequence.size()) {
-                        //-1 for Jsoniq convention, arrays start from 1
-                        results.add(unfilteredSequence.get(index - 1));
-                    }
-                    break;
-                } else if (Item.getEffectiveBooleanValue(fil)) {
-                    results.add(item);
-                }
+
+            _filter.open(_currentDynamicContext);
+            Item fil = null;
+            if (_filter.hasNext()) {
+                fil = _filter.next();
             }
-            filter.close();
-            filter.reset(_currentDynamicContext);
+            _filter.close();
+            // if filter is an integer, it is used to return the element with the index equal to the given integer
+            if (fil instanceof IntegerItem) {
+                _iterator.close();
+                List<Item> sequence = getItemsFromIteratorWithCurrentContext(_iterator);
+                int index = ((IntegerItem) fil).getIntegerValue();
+                // less than or equal to size -> b/c of -1
+                if (index >= 1 && index <= sequence.size()) {
+                    //-1 for Jsoniq convention, arrays start from 1
+                    _nextResult = sequence.get(index - 1);
+                }
+                break;
+            } else if (Item.getEffectiveBooleanValue(fil)) {
+                _nextResult = item;
+            }
+            _filter.close();
         }
         _currentDynamicContext.removeVariable("$$");
 
-
-        if (results.size() == 0) {
+        if (_nextResult == null) {
             this._hasNext = false;
+            _iterator.close();
         } else {
             this._hasNext = true;
         }
