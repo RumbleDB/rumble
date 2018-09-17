@@ -1,2 +1,0 @@
-(:JIQS: ShouldRun; Output="abcdef" :)
-concat("a", "b", "c", "", "def")
