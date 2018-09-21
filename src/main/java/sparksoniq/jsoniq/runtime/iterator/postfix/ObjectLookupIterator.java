@@ -128,7 +128,8 @@ public class ObjectLookupIterator extends LocalRuntimeIterator {
                         break;
                     }
                 } else {
-                    // TODO: handle the context expression similar to the case in PredicateIterator.java
+                    Item contextItem = _currentDynamicContext.getVariableValue("$$").get(0);
+                    _nextResult = objItem.getItemByKey(((StringItem)contextItem).getStringValue());
                 }
             }
         }
