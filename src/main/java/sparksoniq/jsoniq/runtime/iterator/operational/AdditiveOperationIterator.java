@@ -46,7 +46,7 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
 
     @Override
     public AtomicItem next() {
-        if(this.hasNext()){
+        if(this._hasNext){
             this._hasNext = false;
 
             Type returnType = Item.getNumericResultType(_left, _right);
