@@ -9,3 +9,5 @@
 
 (1,2,3) instance of integer *,
 ("aa", 1) instance of string *
+
+(: general tests :)
