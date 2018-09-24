@@ -51,16 +51,18 @@ public class InstanceOfIterator extends UnaryOperationIterator {
             _child.close();
             this._hasNext = false;
             //Empty sequence, more items
-            if (items.isEmpty() && _sequenceType.getArity() != SequenceType.Arity.OneOrZero
-                    && _sequenceType.getArity() != SequenceType.Arity.ZeroOrMore)
+            if (items.isEmpty() && (_sequenceType.getArity() == SequenceType.Arity.One ||
+                    _sequenceType.getArity() == SequenceType.Arity.OneOrMore)) {
                 return new BooleanItem(false, ItemMetadata.fromIteratorMetadata(getMetadata()));
-            if (items.size() == 1 && _sequenceType.getArity() != SequenceType.Arity.OneOrZero
-                    && _sequenceType.getArity() != SequenceType.Arity.OneOrMore &&
-                    _sequenceType.getArity() != SequenceType.Arity.One)
+            }
+            if (items.size() == 1 && _sequenceType.getArity() == SequenceType.Arity.ZeroOrMore) {
                 return new BooleanItem(false, ItemMetadata.fromIteratorMetadata(getMetadata()));
-            for (Item item : items)
-                if (!item.isTypeOf(_sequenceType.getItemType()))
+            }
+            for (Item item : items) {
+                if (!item.isTypeOf(_sequenceType.getItemType())) {
                     return new BooleanItem(false, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                }
+            }
             return new BooleanItem(true, ItemMetadata.fromIteratorMetadata(getMetadata()));
         } else
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
