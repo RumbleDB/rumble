@@ -32,6 +32,13 @@ import java.util.List;
 
 public class QuantifiedExpressionVarIterator extends LocalRuntimeIterator {
 
+    private final String _variableReference;
+    private final SequenceType _sequenceType;
+    private RuntimeIterator _iterator;
+    private Item _nextResult;
+
+    /*private List<Item> result = null;
+    private int currentResultIndex;*/
 
     public String getVariableReference() {
         return _variableReference;
@@ -46,35 +53,39 @@ public class QuantifiedExpressionVarIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public void reset(DynamicContext context){
-        super.reset(context);
-        this.result = null;
+    public void open(DynamicContext context) {
+        super.open(context);
+
+        _iterator = this._children.get(0);
+        _iterator.open(_currentDynamicContext);
+
+        setNextResult();
     }
 
     @Override
     public Item next() {
-        if(result == null){
-            RuntimeIterator expression = this._children.get(0);
-            result = new ArrayList<>();
-            expression.open(_currentDynamicContext);
-            while (expression.hasNext())
-                result.add(expression.next());
-            expression.close();
-            currentResultIndex = 0;
+        if(_hasNext == true){
+            Item result = _nextResult;  // save the result to be returned
+            setNextResult();            // calculate and store the next result
+            return result;
         }
-
-        if(currentResultIndex > result.size() -1)
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " Quantified Expr Var", getMetadata());
-
-        if(currentResultIndex == result.size() -1)
-            this._hasNext = false;
-
-        return result.get(currentResultIndex++);
+        throw new IteratorFlowException("Invalid next() call in QuantifiedExpressionVar", getMetadata());
     }
 
-    private List<Item> result = null;
-    private int currentResultIndex;
-    private final String _variableReference;
-    private final SequenceType _sequenceType;
+    public void setNextResult() {
+        _nextResult = null;
 
+        while (_iterator.hasNext()) {
+            _nextResult = _iterator.next();
+            break;
+        }
+
+
+        if (_nextResult == null) {
+            this._hasNext = false;
+            _iterator.close();
+        } else {
+            this._hasNext = true;
+        }
+    }
 }

@@ -69,8 +69,7 @@ public class DoubleItem extends AtomicItem {
     public  boolean isDouble(){ return true; }
 
     @Override public boolean isTypeOf(ItemType type) {
-        if(type.getType().equals(ItemTypes.DoubleItem) ||type.getType().equals(ItemTypes.DecimalItem)
-                || super.isTypeOf(type))
+        if(type.getType().equals(ItemTypes.DoubleItem) || super.isTypeOf(type))
             return true;
         return false;
     }

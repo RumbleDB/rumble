@@ -1,3 +1,4 @@
 (:JIQS: ShouldRun; Output="" :)
-2 + 3 - (),
 let $o := () return $o()
+
+(: empty sequence variable assignment and return :)

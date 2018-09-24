@@ -28,11 +28,15 @@ import sparksoniq.jsoniq.runtime.iterator.EmptySequenceIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
 
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 
 public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator {
+
+    Item _left;
+    Item _right;
 
     public MultiplicativeOperationIterator(RuntimeIterator left, RuntimeIterator right,
                                            OperationalExpressionBase.Operator operator, IteratorMetadata iteratorMetadata) {
@@ -40,73 +44,92 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
     }
 
     @Override
-    public AtomicItem next() {
-
-        if (!this._hasNext)
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        if (_leftIterator instanceof EmptySequenceIterator || _rightIterator instanceof EmptySequenceIterator) {
-            this._hasNext = false;
-            return null;
-        }
+    public void open(DynamicContext context) {
+        super.open(context);
 
         _leftIterator.open(_currentDynamicContext);
         _rightIterator.open(_currentDynamicContext);
-        Item left = _leftIterator.next();
-        Item right = _rightIterator.next();
-        if (!Item.isNumeric(left) || !Item.isNumeric(right))
-            throw new UnexpectedTypeException("Multiplicative expression has non numeric args " +
-                    left.serialize() + ", " + right.serialize(), getMetadata());
 
+        // if left or right equals empty sequence, return empty sequence
+        if (!_leftIterator.hasNext() || !_rightIterator.hasNext()) {
+            this._hasNext = false;
+        } else {
+            _left = _leftIterator.next();
+            _right = _rightIterator.next();
+            if (_leftIterator.hasNext() || _rightIterator.hasNext() || !Item.isNumeric(_left) || !Item.isNumeric(_right))
+                throw new UnexpectedTypeException("Multiplicative expression has non numeric args " +
+                        _left.serialize() + ", " + _right.serialize(), getMetadata());
+
+            this._hasNext = true;
+        }
         _leftIterator.close();
         _rightIterator.close();
-        this._hasNext = false;
+    }
 
-        Type returnType = Item.getNumericResultType(left, right);
-        if (returnType.equals(IntegerItem.class)) {
-            int l = Item.<Integer>getNumericValue(left, Integer.class);
-            int r = Item.<Integer>getNumericValue(right, Integer.class);
-            switch (this._operator) {
-                case MUL:
-                    return new IntegerItem(l * r, ItemMetadata.fromIteratorMetadata(getMetadata()));
-                case DIV:
-                    return new IntegerItem(l / r, ItemMetadata.fromIteratorMetadata(getMetadata()));
-                case MOD:
-                    return new IntegerItem(l % r, ItemMetadata.fromIteratorMetadata(getMetadata()));
-                case IDIV:
-                    return new IntegerItem(l / r, ItemMetadata.fromIteratorMetadata(getMetadata()));
+    @Override
+    public AtomicItem next() {
+        if (this._hasNext) {
+            this._hasNext = false;
+
+            Type returnType = Item.getNumericResultType(_left, _right);
+            if (returnType.equals(IntegerItem.class)) {
+                int l = Item.<Integer>getNumericValue(_left, Integer.class);
+                int r = Item.<Integer>getNumericValue(_right, Integer.class);
+                switch (this._operator) {
+                    case MUL:
+                        return new IntegerItem(l * r, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                    case DIV:
+                        BigDecimal decLeft = Item.<BigDecimal>getNumericValue(_left, BigDecimal.class);
+                        BigDecimal decRight = Item.<BigDecimal>getNumericValue(_right, BigDecimal.class);
+                        BigDecimal bdResult = decLeft.divide(decRight, 10, BigDecimal.ROUND_HALF_UP);
+                        // if the result contains no decimal part, convert to integer
+                        if (bdResult.stripTrailingZeros().scale() <= 0) {
+                            try {
+                                // exception is thrown if information is lost during conversion to integer
+                                // this happens if the bigdecimal has a decimal part, or if it can't be fit to an integer
+                                return new IntegerItem(bdResult.intValueExact(), ItemMetadata.fromIteratorMetadata(getMetadata()));
+                            } catch (ArithmeticException e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            return new DecimalItem(bdResult,
+                                    ItemMetadata.fromIteratorMetadata(getMetadata()));
+                        }
+                    case MOD:
+                        return new IntegerItem(l % r, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                    case IDIV:
+                        return new IntegerItem(l / r, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                }
+            } else if (returnType.equals(DoubleItem.class)) {
+                double l = Item.<Double>getNumericValue(_left, Double.class);
+                double r = Item.<Double>getNumericValue(_right, Double.class);
+                switch (this._operator) {
+                    case MUL:
+                        return new DoubleItem(l * r, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                    case DIV:
+                        return new DoubleItem(l / r, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                    case MOD:
+                        return new DoubleItem(l % r, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                    case IDIV:
+                        return new DoubleItem((int) (l / r), ItemMetadata.fromIteratorMetadata(getMetadata()));
+                }
+            } else if (returnType.equals(DecimalItem.class)) {
+                BigDecimal l = Item.<BigDecimal>getNumericValue(_left, BigDecimal.class);
+                BigDecimal r = Item.<BigDecimal>getNumericValue(_right, BigDecimal.class);
+                switch (this._operator) {
+                    case MUL:
+                        return new DecimalItem(l.multiply(r), ItemMetadata.fromIteratorMetadata(getMetadata()));
+                    case DIV:
+                        return new DecimalItem(l.divide(r, 10, BigDecimal.ROUND_HALF_UP),
+                                ItemMetadata.fromIteratorMetadata(getMetadata()));
+                    case MOD:
+                        return new DecimalItem(l.remainder(r), ItemMetadata.fromIteratorMetadata(getMetadata()));
+                    case IDIV:
+                        return new DecimalItem(l.divideToIntegralValue(r), ItemMetadata.fromIteratorMetadata(getMetadata()));
+                }
             }
-
-        } else if (returnType.equals(DoubleItem.class)) {
-            double l = Item.<Double>getNumericValue(left, Double.class);
-            double r = Item.<Double>getNumericValue(right, Double.class);
-            switch (this._operator) {
-                case MUL:
-                    return new DoubleItem(l * r, ItemMetadata.fromIteratorMetadata(getMetadata()));
-                case DIV:
-                    return new DoubleItem(l / r, ItemMetadata.fromIteratorMetadata(getMetadata()));
-                case MOD:
-                    return new DoubleItem(l % r, ItemMetadata.fromIteratorMetadata(getMetadata()));
-                case IDIV:
-                    return new DoubleItem((int) (l / r), ItemMetadata.fromIteratorMetadata(getMetadata()));
-            }
-
-        } else if (returnType.equals(DecimalItem.class)) {
-            BigDecimal l = Item.<BigDecimal>getNumericValue(left, BigDecimal.class);
-            BigDecimal r = Item.<BigDecimal>getNumericValue(right, BigDecimal.class);
-            switch (this._operator) {
-                case MUL:
-                    return new DecimalItem(l.multiply(r), ItemMetadata.fromIteratorMetadata(getMetadata()));
-                case DIV:
-                    return new DecimalItem(l.divide(r, 10, BigDecimal.ROUND_HALF_UP),
-                            ItemMetadata.fromIteratorMetadata(getMetadata()));
-                case MOD:
-                    return new DecimalItem(l.remainder(r), ItemMetadata.fromIteratorMetadata(getMetadata()));
-                case IDIV:
-                    return new DecimalItem(l.divideToIntegralValue(r), ItemMetadata.fromIteratorMetadata(getMetadata()));
-            }
-
         }
-        throw new IteratorFlowException("Additive expression has non numeric args", getMetadata());
+        throw new IteratorFlowException("Multiplicative expression has non numeric args", getMetadata());
     }
 
 }

@@ -1,7 +1,11 @@
 package sparksoniq.jsoniq.runtime.iterator.control;
 
+import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
+import sparksoniq.jsoniq.item.ArrayItem;
+import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -39,12 +43,15 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
 
     @Override
     public Item next() {
-        return matchingIterator.next();
-    }
-
-    @Override
-    public boolean hasNext() {
-        return matchingIterator == null || matchingIterator.hasNext();
+        if (this._hasNext) {
+            matchingIterator.open(_currentDynamicContext);
+            Item nextItem = matchingIterator.next();
+            matchingIterator.close();
+            this._hasNext = false;
+            return nextItem;
+        }
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in switch statement",
+                getMetadata());
     }
 
     @Override
@@ -58,12 +65,35 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
                                     RuntimeIterator defaultReturn) {
         Item testValue = getSingleItemOfTypeFromIterator(test, Item.class,
                 new NonAtomicKeyException("Switch test must be atomic", getMetadata().getExpressionMetadata()));
-        for (RuntimeIterator caseKey : cases.keySet()) {
 
+        if (testValue instanceof ArrayItem) {
+            throw new NonAtomicKeyException("Invalid args. Switch condition can't be an array type", getMetadata().getExpressionMetadata());
+        }
+        else if (testValue instanceof ObjectItem) {
+            throw new NonAtomicKeyException("Invalid args. Switch condition  can't be an object type", getMetadata().getExpressionMetadata());
+        }
+
+        for (RuntimeIterator caseKey : cases.keySet()) {
             Item caseValue = getSingleItemOfTypeFromIterator(caseKey, Item.class,
                     new NonAtomicKeyException("Switch case test must be atomic", getMetadata().getExpressionMetadata()));
-            caseKey.close();
-            if (Item.checkEquality(testValue, caseValue)) {
+
+            if (caseValue instanceof ArrayItem) {
+                throw new NonAtomicKeyException("Invalid args. Switch case can't be an array type", getMetadata().getExpressionMetadata());
+            }
+            else if (caseValue instanceof ObjectItem) {
+                throw new NonAtomicKeyException("Invalid args. Switch case  can't be an object type", getMetadata().getExpressionMetadata());
+            }
+
+            // both are empty sequences
+            if (testValue == null) {
+                if (caseValue == null) {
+                    matchingIterator = cases.get(caseKey);
+                    break;
+                } else {
+                    // no match, do nothing
+                }
+            }
+            else if (caseValue != null && Item.checkEquality(testValue, caseValue)) {
                 matchingIterator = cases.get(caseKey);
                 break;
             }
@@ -71,5 +101,9 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
 
         if (matchingIterator == null)
             matchingIterator = defaultReturn;
+
+        matchingIterator.open(_currentDynamicContext);
+        this._hasNext = matchingIterator.hasNext();
+        matchingIterator.close();
     }
 }
