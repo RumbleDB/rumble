@@ -1,0 +1,5 @@
+(:JIQS: ShouldRun; Output="( Captain Kirk, CaptainKirk, abcdef)" :)
+"Captain" || " " || "Kirk",
+"Captain" || () || "Kirk",
+concat("a", "b", "c", "", "def")
+

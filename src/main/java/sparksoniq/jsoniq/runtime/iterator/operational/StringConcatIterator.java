@@ -40,8 +40,19 @@ public class StringConcatIterator extends BinaryOperationBaseIterator {
         if (this.hasNext()) {
             _leftIterator.open(_currentDynamicContext);
             _rightIterator.open(_currentDynamicContext);
-            Item left = _leftIterator.next();
-            Item right = _rightIterator.next();
+            Item left;
+            Item right;
+            // empty sequences are treated as empty strings in concatenation
+            if (_leftIterator.hasNext()) {
+                left = _leftIterator.next();
+            } else {
+                left = new StringItem("", ItemMetadata.fromIteratorMetadata(getMetadata()));
+            }
+            if (_rightIterator.hasNext()) {
+                right = _rightIterator.next();
+            } else {
+                right = new StringItem("", ItemMetadata.fromIteratorMetadata(getMetadata()));
+            }
             if (!(left instanceof StringItem) || !(right instanceof StringItem))
                 throw new UnexpectedTypeException("String concat expression has non strings args " +
                         left.serialize() + ", " + right.serialize(), getMetadata());
