@@ -60,7 +60,6 @@ public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
             List<BooleanItem> results = new ArrayList<>();
             for (DynamicContext context : contexts) {
                 _evaluationExpression.open(context);
-                _evaluationExpression.reset(context);
                 BooleanItem result = (BooleanItem) _evaluationExpression.next();
                 _evaluationExpression.close();
                 results.add(result);
@@ -79,7 +78,6 @@ public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
         List<DynamicContext> results = new ArrayList<>();
         for (DynamicContext currentContext : previousContexts) {
             var.open(currentContext);
-            var.reset(currentContext);
             while (var.hasNext()) {
                 DynamicContext context = new DynamicContext(currentContext);
                 List<Item> contents = new ArrayList<>();

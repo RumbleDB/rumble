@@ -9,9 +9,11 @@ When the alpha release is done, many steps here will become unnecessary as the .
 The following software is required:
 
 - [Java SE](http://www.oracle.com/technetwork/java/javase/downloads/index.html) 8 (last tested on 1.8.0_121). The JDK is needed here, but the JRE will be enough when the packaged JAR is available.
-- [Spark](https://spark.apache.org/) 2.1.* (last tested on 2.1.1)
-- [ANTLRv4](http://www.antlr.org/), version 4.6
+- [Spark](https://spark.apache.org/), version 2.0.0 (for example)
+- [ANTLRv4](http://www.antlr.org/), version 4.5.3
 - [Maven](https://maven.apache.org/) 3.5.0
+
+Important: the ANTLR version varies with the Spark version, because Spark is also shipped with an ANTLR runtime (example: Spark 2.2.0 is with ANTLR 4.5.3, Spark 2.3.0 with ANTLR 4.7). The ANTLR runtime MUST match the ANTLR generator used to generate the Sparksoniq jar file.
 
 ### Checking the requirements
 
@@ -51,9 +53,9 @@ From the root directory of the sparksoniq local checkout, you first need to buil
 
     $ ant -buildfile build_antlr_parser.xml generate-parser
     
-If an error is displayed that antlr-4.6-complete.jar cannot be find, you can specify its location manually like so:
+If an error is displayed that antlr-4.5.3-complete.jar cannot be found, you can specify its location manually like so:
     
-    $ ant -buildfile build_antlr_parser.xml generate-parser ---Dantlr.jar=/some/location/antlr-4.6-complete.jar
+    $ ant -buildfile build_antlr_parser.xml generate-parser -Dantlr.jar=/some/location/antlr-4.5.3-complete.jar
     
 ### Sparksoniq
 
@@ -61,13 +63,13 @@ Once the ANTLR sources have been generated, you can compile the entire project l
 
     $ mvn clean compile assembly:single
     
-After successful completion, you can check the target directory, which should contain the compiled classes as well as the JAR file `jsoniq-spark-app-1.0-jar-with-dependencies.jar`.
+After successful completion, you can check the `target` directory, which should contain the compiled classes as well as the JAR file `jsoniq-spark-app-0.9.2-jar-with-dependencies.jar`.
     
 ## Running locally
 
 The most straightforward to test if the above steps were successful is to run the Sparksoniq shell locally, like so:
 
-    $ spark-submit --class sparksoniq.ShellStart --master local[2] --deploy-mode client target/jsoniq-spark-app-1.0-jar-with-dependencies.jar --master local[2] --result-size 1000
+    $ spark-submit --class sparksoniq.ShellStart --master local[2] --deploy-mode client target/jsoniq-spark-app-0.9.2-jar-with-dependencies.jar --master local[2] --result-size 1000
 
 The Sparksoniq shell should start:
 
@@ -114,4 +116,4 @@ This is it. Sparksoniq is step and ready to go locally. You can now move on to a
 
 You can also try to run the Sparksoniq shell on a cluster if you have one available and configured -- this is done in the same way as any other `spark-submit` command:
 
-    $ spark-submit --class sparksoniq.ShellStart --master yarn-client --deploy-mode client --num-executors 40 jsoniq-spark-app-1.0-jar-with-dependencies.jar --master yarn-client --result-size 1000
+    $ spark-submit --class sparksoniq.ShellStart --master yarn-client --deploy-mode client --num-executors 40 jsoniq-spark-app-0.9.2-jar-with-dependencies.jar --master yarn-client --result-size 1000

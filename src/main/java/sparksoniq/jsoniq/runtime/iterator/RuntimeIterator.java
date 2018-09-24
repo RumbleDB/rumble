@@ -132,11 +132,15 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     protected <T extends Item, E extends SparksoniqRuntimeException> T getSingleItemOfTypeFromIterator(RuntimeIterator iterator,
                                                                                                        Class<T> type, E nonAtomicException) {
         iterator.open(_currentDynamicContext);
-        Item result = iterator.next();
-        if (iterator.hasNext())
-            throw nonAtomicException;
+        Item result = null;
+        if(iterator.hasNext()) {
+            result = iterator.next();
+            if (iterator.hasNext()) {
+                throw nonAtomicException;
+            }
+        }
         iterator.close();
-        if (!(type.isInstance(result)))
+        if (result != null && !(type.isInstance(result)))
             throw new UnexpectedTypeException("Invalid item type returned by iterator", iterator.getMetadata());
         return (T) result;
     }
