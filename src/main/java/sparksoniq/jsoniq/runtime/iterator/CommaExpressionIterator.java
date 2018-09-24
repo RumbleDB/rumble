@@ -19,6 +19,7 @@
  */
  package sparksoniq.jsoniq.runtime.iterator;
 
+import org.omg.SendingContext.RunTime;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
@@ -27,49 +28,55 @@ import sparksoniq.exceptions.IteratorFlowException;
 import java.util.List;
 
 public class CommaExpressionIterator extends LocalRuntimeIterator {
-
     public CommaExpressionIterator(List<RuntimeIterator> childIterators, IteratorMetadata iteratorMetadata) {
         super(childIterators, iteratorMetadata);
     }
 
     @Override
     public Item next() {
-        if(currentChild == null) {
-            currentChild = this._children.get(0);
-            this._children.forEach(c -> c.reset(this._currentDynamicContext));
-            currentChild.open(_currentDynamicContext);
+        if(_hasNext == true){
+            Item result = _nextResult;  // save the result to be returned
+            setNextResult();            // calculate and store the next result
+            return result;
         }
-        if(currentChild.hasNext())
-            return currentChild.next();
-        else
-        {
-            currentChild.close();
-            if(this._children.indexOf(currentChild) == this._children.size() - 1)
-                throw new IteratorFlowException("Invalid next() call in Comma expression", getMetadata());
-            currentChild = this._children.get(_children.indexOf(currentChild) + 1);
-            currentChild.open(_currentDynamicContext);
-            return currentChild.next();
-        }
+        throw new IteratorFlowException("Invalid next() call in Comma expression", getMetadata());
     }
 
     @Override
-    public void open(DynamicContext context){
+    public void open(DynamicContext context) {
         super.open(context);
-        currentChild = null;
+        this._childIndex = 0;
+
+        _currentChild = this._children.get(_childIndex);
+        _currentChild.open(_currentDynamicContext);
+
+        setNextResult();
     }
 
-    @Override
-    public void reset(DynamicContext context){
-        super.reset(context);
-        currentChild = null;
+    public void setNextResult() {
+        _nextResult = null;
+
+        while (_nextResult == null) {
+            if (_currentChild.hasNext()) {
+                _nextResult = _currentChild.next();
+            } else {
+                _currentChild.close();
+                if (++_childIndex == this._children.size()) {
+                    break;
+                }
+                _currentChild = this._children.get(_childIndex);
+                _currentChild.open(_currentDynamicContext);
+            }
+        }
+
+        if (_nextResult == null) {
+            this._hasNext = false;
+        } else {
+            this._hasNext = true;
+        }
     }
 
-    @Override
-    public boolean hasNext(){
-        return currentChild == null ||
-                this._children.indexOf(currentChild) < this._children.size() - 1 ||
-                currentChild.hasNext();
-    }
-
-    private RuntimeIterator currentChild = null;
+    private RuntimeIterator _currentChild;
+    private Item _nextResult;
+    private int _childIndex;
 }
