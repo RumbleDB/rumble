@@ -559,15 +559,28 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
     @Override public Void visitObjectLookup(JsoniqParser.ObjectLookupContext ctx) {
         //TODO [EXPRVISITOR] support for ParenthesizedExpr | varRef | contextItemexpr in object lookup
         ObjectLookupExtension node;
-        StringLiteral literal = null;
-        if(ctx.lt != null)
-            literal = new StringLiteral(ValueTypeHandler.
-                getStringValue(ctx.lt), createMetadataFromContext(ctx));
-        else if(ctx.nc != null)
-            literal = new StringLiteral(ctx.nc.getText(), createMetadataFromContext(ctx));
-        else if(ctx.kw != null)
-            literal = new StringLiteral(ctx.kw.getText(), createMetadataFromContext(ctx));
-        node = new ObjectLookupExtension(literal, createMetadataFromContext(ctx));
+        Expression expr = null;
+        if(ctx.lt != null) {
+            expr = new StringLiteral(ValueTypeHandler.getStringValue(ctx.lt), createMetadataFromContext(ctx));
+        }
+        else if(ctx.nc != null) {
+            expr = new StringLiteral(ctx.nc.getText(), createMetadataFromContext(ctx));
+        }
+        else if(ctx.kw != null) {
+            expr = new StringLiteral(ctx.kw.getText(), createMetadataFromContext(ctx));
+        }
+        else if(ctx.pe != null) {
+            this.visitParenthesizedExpr(ctx.pe);
+            expr = this.currentPrimaryExpression;
+        } else if(ctx.vr != null) {
+            this.visitVarRef(ctx.vr);
+            expr = this.currentPrimaryExpression;
+        } else if(ctx.ci != null) {
+            this.visitContextItemExpr(ctx.ci);
+            expr = this.currentPrimaryExpression;
+        }
+
+        node = new ObjectLookupExtension(expr, createMetadataFromContext(ctx));
         this.currentPostFixExtension = node;
         return null;
     }

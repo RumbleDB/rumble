@@ -22,13 +22,22 @@
 import sparksoniq.exceptions.InvalidSelectorException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.ArrayItem;
+import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
+
+import java.lang.reflect.Array;
 
 public class ArrayLookupIterator extends LocalRuntimeIterator {
+
+    private RuntimeIterator _iterator;
+    private Integer _lookup;
+    private Item _nextResult;
+
     public ArrayLookupIterator(RuntimeIterator array, RuntimeIterator iterator, IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
         this._children.add(array);
@@ -37,26 +46,65 @@ public class ArrayLookupIterator extends LocalRuntimeIterator {
 
     @Override
     public Item next() {
-        if(this._hasNext) {
-            this._children.get(0).open(_currentDynamicContext);
-            this._children.get(1).open(_currentDynamicContext);
-            this._array = (ArrayItem) this._children.get(0).next();
-            Item lookup = this._children.get(1).next();
-            if(this._children.get(1).hasNext() || lookup.isObject() || lookup.isArray())
-                throw new InvalidSelectorException("Type error; There is not exactly one supplied parameter for an array selector: "
-                        + lookup.serialize(), getMetadata());
-            if(!Item.isNumeric(lookup))
-                throw new UnexpectedTypeException("Non numeric array lookup for " + lookup.serialize(), getMetadata());
-            this._lookup = Item.getNumericValue(lookup, Integer.class);
-            this._children.get(0).close();
-            this._children.get(1).close();
-            this._hasNext = false;
-            //-1 for Jsoniq convetion, arrays start from 1
-            return _array.getItemAt(_lookup - 1);
+        if(_hasNext == true){
+            Item result = _nextResult;  // save the result to be returned
+            setNextResult();            // calculate and store the next result
+            return result;
         }
         throw new IteratorFlowException("Invalid next call in Array Lookup", getMetadata());
     }
 
-    private ArrayItem _array;
-    private int _lookup;
+    @Override
+    public void open(DynamicContext context) {
+        super.open(context);
+        this._currentDynamicContext = context;
+
+        _iterator = this._children.get(0);
+        RuntimeIterator lookupIterator = this._children.get(1);
+
+        lookupIterator.open(_currentDynamicContext);
+        Item lookupExpression = null;
+        if (lookupIterator.hasNext()) {
+            lookupExpression = lookupIterator.next();
+        }
+        if (lookupIterator.hasNext())
+            throw new InvalidSelectorException("\"Invalid Lookup Key; Object lookup can't be performed with multiple keys: "
+                    + lookupExpression.serialize(), getMetadata());
+        if (!Item.isNumeric(lookupExpression)) {
+            throw new UnexpectedTypeException("Type error; Non numeric array lookup for : "
+                    + lookupExpression.serialize(), getMetadata());
+        }
+        lookupIterator.close();
+
+        _lookup = Item.getNumericValue(lookupExpression, Integer.class);
+
+        _iterator.open(_currentDynamicContext);
+        setNextResult();
+    }
+
+    public void setNextResult() {
+        _nextResult = null;
+
+        while (_iterator.hasNext()) {
+            Item item = _iterator.next();
+            if (item instanceof ArrayItem) {
+                ArrayItem arrItem = (ArrayItem) item;
+                if (_lookup > 0 && _lookup <= arrItem.getSize()) {
+                    //-1 for Jsoniq convention, arrays start from 1
+                    Item result = arrItem.getItemAt(_lookup - 1);
+                    _nextResult = result;
+                    break;
+                }
+            }
+        }
+
+        if (_nextResult == null) {
+            this._hasNext = false;
+            _iterator.close();
+        } else {
+            this._hasNext = true;
+        }
+    }
+
+
 }

@@ -164,8 +164,8 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                         previous = new ArrayLookupIterator(previous, iterator, createIteratorMetadata(expression));
                     }
                     if (extension instanceof ObjectLookupExtension) {
-                        StringRuntimeIterator iterator = (StringRuntimeIterator)
-                                this.visit(((ObjectLookupExtension) extension).getField(), argument);
+                        RuntimeIterator iterator =
+                                this.visit(((ObjectLookupExtension) extension).getExpression(), argument);
                         previous = new ObjectLookupIterator(previous, iterator, createIteratorMetadata(expression));
                     }
                     if (extension instanceof ArrayUnboxingExtension) {
@@ -177,7 +177,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                         previous = new PredicateIterator(previous, filterExpression, createIteratorMetadata(expression));
                     }
                 } catch (Exception ex) {
-//                    ex.printStackTrace();
+                    ex.printStackTrace();
                     throw new UnsupportedFeatureException("Invalid Postfix extension", expression.getMetadata());
                 }
             }

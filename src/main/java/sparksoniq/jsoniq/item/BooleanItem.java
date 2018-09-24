@@ -31,7 +31,7 @@ import java.math.BigDecimal;
 
 public class BooleanItem extends AtomicItem {
 
-    public boolean isValue() {
+    public boolean getValue() {
         return _value;
     }
 

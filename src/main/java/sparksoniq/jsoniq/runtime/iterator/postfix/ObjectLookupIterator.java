@@ -21,80 +21,124 @@ package sparksoniq.jsoniq.runtime.iterator.postfix;
 
 import sparksoniq.exceptions.InvalidSelectorException;
 import sparksoniq.exceptions.UnexpectedTypeException;
-import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.item.ObjectItem;
-import sparksoniq.jsoniq.item.StringItem;
+import sparksoniq.exceptions.UnsupportedFeatureException;
+import sparksoniq.jsoniq.item.*;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.primary.ContextExpressionIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.StringRuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ObjectLookupIterator extends LocalRuntimeIterator {
-    public ObjectLookupIterator(RuntimeIterator object, StringRuntimeIterator stringRuntimeIterator, IteratorMetadata iteratorMetadata) {
+
+    private RuntimeIterator _iterator;
+    private Item _lookupKey;
+    private boolean _contextLookup;
+    private Item _nextResult;
+
+    public ObjectLookupIterator(RuntimeIterator object, RuntimeIterator lookupIterator, IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
         this._children.add(object);
-        this._children.add(stringRuntimeIterator);
+        this._children.add(lookupIterator);
     }
 
     @Override
     public void open(DynamicContext context) {
-        if(this.isOpen())
-            throw new IteratorFlowException("Variable reference iterator already open", getMetadata());
+        super.open(context);
         this._currentDynamicContext = context;
-        this._currentIndex = 0;
-        this.results = null;
-        this._hasNext = true;
+
+        _iterator = this._children.get(0);
+        RuntimeIterator lookupIterator = this._children.get(1);
+
+        if (lookupIterator instanceof ContextExpressionIterator) {
+            _contextLookup = true;
+        } else {
+            _contextLookup = false;
+        }
+
+        if (!_contextLookup) {
+            lookupIterator.open(_currentDynamicContext);
+            if (lookupIterator.hasNext()) {
+                this._lookupKey = lookupIterator.next();
+            } else {
+                throw new InvalidSelectorException("Invalid Lookup Key; Object lookup can't be performed with zero keys: "
+                        , getMetadata());
+            }
+            if (lookupIterator.hasNext())
+                throw new InvalidSelectorException("\"Invalid Lookup Key; Object lookup can't be performed with multiple keys: "
+                        + _lookupKey.serialize(), getMetadata());
+            if (_lookupKey.isNull() || _lookupKey.isObject() || _lookupKey.isArray()) {
+                throw new UnexpectedTypeException("Type error; Object selector can't be converted to a string: "
+                        + _lookupKey.serialize(), getMetadata());
+            } else {
+                // convert to string
+                if (_lookupKey.isBoolean()) {
+                    Boolean value = ((BooleanItem)_lookupKey).getValue();
+                    _lookupKey = new StringItem(value.toString(), ItemMetadata.fromIteratorMetadata(getMetadata()));
+                } else if (_lookupKey.isDecimal()) {
+                    BigDecimal value = ((DecimalItem)_lookupKey).getValue();
+                    _lookupKey = new StringItem(value.toString(), ItemMetadata.fromIteratorMetadata(getMetadata()));
+                } else if (_lookupKey.isDouble()) {
+                    Double value = ((DoubleItem)_lookupKey).getValue();
+                    _lookupKey = new StringItem(value.toString(), ItemMetadata.fromIteratorMetadata(getMetadata()));
+                } else if (_lookupKey.isInteger()) {
+                    Integer value = ((IntegerItem)_lookupKey).getValue();
+                    _lookupKey = new StringItem(value.toString(), ItemMetadata.fromIteratorMetadata(getMetadata()));
+                } else if (_lookupKey.isString()) {
+                    // do nothing
+                }
+            }
+            if (!_lookupKey.isString())
+                throw new UnexpectedTypeException("Non string object lookup for " + _lookupKey.serialize(), getMetadata());
+            lookupIterator.close();
+        }
+
+        _iterator.open(_currentDynamicContext);
+        setNextResult();
     }
 
     @Override
     public Item next() {
         if(_hasNext == true){
-            if(results == null){
-                RuntimeIterator iterator = this._children.get(0);
-                List<Item> items = getItemsFromIteratorWithCurrentContext(iterator);
-                results = new ArrayList<>();
-                _currentIndex = 0;
+            Item result = _nextResult;  // save the result to be returned
+            setNextResult();            // calculate and store the next result
+            return result;
+        }
+        throw new IteratorFlowException("Invalid next() call in Object Lookup", getMetadata());
+    }
 
-                this._children.get(1).open(_currentDynamicContext);
-                Item _lookupKey = this._children.get(1).next();
-                if(this._children.get(1).hasNext() || _lookupKey.isObject() || _lookupKey.isArray())
-                    throw new InvalidSelectorException("Type error; There is not exactly one supplied parameter for an array selector: "
-                            + _lookupKey.serialize(), getMetadata());
-                if(!_lookupKey.isString())
-                    throw new UnexpectedTypeException("Non numeric array lookup for " + _lookupKey.serialize(), getMetadata());
-                this._children.get(1).close();
+    public void setNextResult() {
+        _nextResult = null;
 
-                for (Item i:items) {
-                    if (i instanceof ObjectItem) {
-                        ObjectItem objItem = (ObjectItem)i;
-                        results.add(objItem.getItemByKey(((StringItem)_lookupKey).getStringValue()));
+        while (_iterator.hasNext()) {
+            Item item = _iterator.next();
+            if (item instanceof ObjectItem) {
+                ObjectItem objItem = (ObjectItem) item;
+                if (!_contextLookup) {
+                    Item result = objItem.getItemByKey(((StringItem) _lookupKey).getStringValue());
+                    if (result != null) {
+                        _nextResult = result;
+                        break;
                     }
+                } else {
+                    Item contextItem = _currentDynamicContext.getVariableValue("$$").get(0);
+                    _nextResult = objItem.getItemByKey(((StringItem)contextItem).getStringValue());
                 }
             }
-            return getResult();
         }
-        throw new IteratorFlowException("Invalid next call in Object Lookup", getMetadata());
-    }
 
-    protected Item getResult() {
-        // if no results return empty sequence
-        if (results == null || results.size() == 0) {
-            _hasNext = false;
-            return null;
+        if (_nextResult == null) {
+            this._hasNext = false;
+            _iterator.close();
+        } else {
+            this._hasNext = true;
         }
-        if (_currentIndex == results.size() - 1)
-            _hasNext = false;
-        return results.get(_currentIndex++);
     }
-
-    protected List<Item> results;
-    protected int _currentIndex;
-
-
-
 }
