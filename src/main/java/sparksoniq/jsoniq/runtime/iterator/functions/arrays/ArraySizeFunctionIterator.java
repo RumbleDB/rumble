@@ -24,9 +24,11 @@ import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
+import sparksoniq.jsoniq.runtime.iterator.EmptySequenceIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
 
@@ -38,10 +40,24 @@ public class ArraySizeFunctionIterator extends ArrayFunctionIterator {
     }
 
     @Override
+    public void open(DynamicContext context) {
+        super.open(context);
+
+        arrayIterator = this._children.get(0);
+        arrayIterator.open(context);
+        if (arrayIterator.hasNext() == false) {
+            this._hasNext = false;
+        } else {
+            this._hasNext = true;
+        }
+        arrayIterator.close();
+    }
+
+    @Override
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            RuntimeIterator arrayIterator = this._children.get(0);
+
             ArrayItem array = getSingleItemOfTypeFromIterator(arrayIterator, ArrayItem.class);
             return new IntegerItem(array.getSize(), ItemMetadata.fromIteratorMetadata(getMetadata()));
         }
@@ -49,4 +65,5 @@ public class ArraySizeFunctionIterator extends ArrayFunctionIterator {
                 getMetadata());
     }
 
+    private RuntimeIterator arrayIterator;
 }
