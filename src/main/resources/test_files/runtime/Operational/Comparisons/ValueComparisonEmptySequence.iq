@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="( , , , , , , , )" :)
+(:JIQS: ShouldRun; Output="" :)
 () eq (),
 () ne 3,
 () lt (2,3),
