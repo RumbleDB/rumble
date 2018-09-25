@@ -21,7 +21,9 @@ public class ConcatFunctionIterator extends LocalFunctionCallIterator {
             StringBuilder builder = new StringBuilder("");
             for (RuntimeIterator iterator : this._children) {
                 StringItem stringItem = this.getSingleItemOfTypeFromIterator(iterator, StringItem.class);
-                builder.append(stringItem.getStringValue());
+                if (stringItem != null) {
+                    builder.append(stringItem.getStringValue());
+                }
             }
             this._hasNext = false;
             return new StringItem(builder.toString(), ItemMetadata.fromIteratorMetadata(getMetadata()));
