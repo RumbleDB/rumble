@@ -9,38 +9,45 @@ import sparksoniq.jsoniq.runtime.iterator.EmptySequenceIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
 
 public class LogFunctionIterator extends LocalFunctionCallIterator {
+
+    private RuntimeIterator _iterator;
+
     public LogFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
     }
 
     @Override
-    public Item next() {
-        if (this._hasNext) {
-            RuntimeIterator iterator = this._children.get(0);
-            //TODO refactor empty items
-            if (iterator.getClass() == EmptySequenceIterator.class) {
-                return null;
-            }
-            else {
-                Item value = this.getSingleItemOfTypeFromIterator(iterator, Item.class);
-                if (Item.isNumeric(value)) {
-                    Double result = Math.log(Item.getNumericValue(value, Double.class));
-                    this._hasNext = false;
-                    return new DoubleItem(result,
-                            ItemMetadata.fromIteratorMetadata(getMetadata()));
-                }
-                else {
-                    throw new UnexpectedTypeException("Log expression has non numeric args " +
-                            value.serialize(), getMetadata());
-                }
-            }
-        } else
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " log function", getMetadata());
+    public void open(DynamicContext context) {
+        super.open(context);
+        _iterator = this._children.get(0);
+        _iterator.open(_currentDynamicContext);
+        if (_iterator.hasNext()) {
+            this._hasNext = true;
+        } else {
+            this._hasNext = false;
+        }
+        _iterator.close();
     }
 
-
+    @Override
+    public Item next() {
+        if (this._hasNext) {
+            this._hasNext = false;
+            Item value = this.getSingleItemOfTypeFromIterator(_iterator, Item.class);
+            if (Item.isNumeric(value)) {
+                Double result = Math.log(Item.getNumericValue(value, Double.class));
+                return new DoubleItem(result,
+                        ItemMetadata.fromIteratorMetadata(getMetadata()));
+            } else {
+                throw new UnexpectedTypeException("Log expression has non numeric args " +
+                        value.serialize(), getMetadata());
+            }
+        }
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " log function", getMetadata());
+    }
 }
