@@ -1,6 +1,7 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.strings;
 
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.StringItem;
@@ -19,19 +20,28 @@ public class SubstringFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public Item next() {
         if (this._hasNext) {
+            this._hasNext = false;
             String result;
             StringItem stringItem = this.getSingleItemOfTypeFromIterator(this._children.get(0), StringItem.class);
+            if (stringItem == null) {
+                return new StringItem("", ItemMetadata.fromIteratorMetadata(getMetadata()));
+            }
             IntegerItem indexItem = this.getSingleItemOfTypeFromIterator(this._children.get(1), IntegerItem.class);
+            if (indexItem == null) {
+                throw new UnexpectedTypeException("Type error; Start index parameter can't be empty sequence ", getMetadata());
+            }
             int index = sanitizeIndexItem(indexItem);
             if (this._children.size() > 2) {
                 IntegerItem endIndexItem = this.getSingleItemOfTypeFromIterator(this._children.get(2), IntegerItem.class);
+                if (endIndexItem == null) {
+                    throw new UnexpectedTypeException("Type error; End index parameter can't be empty sequence ", getMetadata());
+                }
                 int endIndex = sanitizeEndIndex(stringItem, endIndexItem, index);
                 result = stringItem.getStringValue().substring(index, endIndex);
             } else {
                 result = stringItem.getStringValue().substring(index);
             }
 
-            this._hasNext = false;
             return new StringItem(result, ItemMetadata.fromIteratorMetadata(getMetadata()));
         } else
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " substring function", getMetadata());
