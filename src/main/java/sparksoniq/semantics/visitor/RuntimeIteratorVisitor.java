@@ -43,7 +43,7 @@ import sparksoniq.jsoniq.runtime.iterator.control.SwitchRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 import sparksoniq.jsoniq.runtime.iterator.operational.*;
 import sparksoniq.jsoniq.runtime.iterator.postfix.ArrayLookupIterator;
-import sparksoniq.jsoniq.runtime.iterator.postfix.ArrayUnboxingItertor;
+import sparksoniq.jsoniq.runtime.iterator.postfix.ArrayUnboxingIterator;
 import sparksoniq.jsoniq.runtime.iterator.postfix.ObjectLookupIterator;
 import sparksoniq.jsoniq.runtime.iterator.postfix.PredicateIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.*;
@@ -169,7 +169,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                         previous = new ObjectLookupIterator(previous, iterator, createIteratorMetadata(expression));
                     }
                     if (extension instanceof ArrayUnboxingExtension) {
-                        previous = new ArrayUnboxingItertor(previous, createIteratorMetadata(expression));
+                        previous = new ArrayUnboxingIterator(previous, createIteratorMetadata(expression));
                     }
                     if (extension instanceof PredicateExtension) {
                         RuntimeIterator filterExpression = //pass the predicate as argument for $$ expresions
