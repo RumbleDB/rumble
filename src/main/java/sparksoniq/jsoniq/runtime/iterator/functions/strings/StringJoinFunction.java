@@ -21,8 +21,15 @@ public class StringJoinFunction extends LocalFunctionCallIterator {
         if (this._hasNext) {
             StringItem joinString = new StringItem("", new ItemMetadata(getMetadata().getExpressionMetadata()));
             List<Item> strings = getItemsFromIteratorWithCurrentContext(this._children.get(0));
-            if (this._children.size() > 1)
-                joinString = getSingleItemOfTypeFromIterator(this._children.get(1), StringItem.class);
+            if (this._children.size() > 1) {
+                RuntimeIterator joinStringIterator = this._children.get(1);
+                joinStringIterator.open(_currentDynamicContext);
+                if (joinStringIterator.hasNext()) {
+                    Item item = joinStringIterator.next();
+                    joinString = (StringItem) item;
+                }
+            }
+
             StringBuilder stringBuilder = new StringBuilder("");
             for (Item item : strings) {
                 if (!(item instanceof StringItem))
