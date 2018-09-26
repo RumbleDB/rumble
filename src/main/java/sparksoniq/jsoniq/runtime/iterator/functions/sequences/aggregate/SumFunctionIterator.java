@@ -14,30 +14,16 @@ import java.util.List;
 
 public class SumFunctionIterator extends AggregateFunctionIterator {
 
-    private RuntimeIterator _iterator;
 
     public SumFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, AggregateFunctionOperator.SUM, iteratorMetadata);
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-
-        _iterator = this._children.get(0);
-        _iterator.open(_currentDynamicContext);
-        if (_iterator.hasNext()) {
-            this._hasNext = true;
-        } else {
-            this._hasNext = false;
-        }
-        _iterator.close();
-    }
-
-    @Override
     public Item next() {
         if (this._hasNext) {
-            List<Item> results = getItemsFromIteratorWithCurrentContext(_iterator);
+            RuntimeIterator sequenceIterator = this._children.get(0);
+            List<Item> results = getItemsFromIteratorWithCurrentContext(sequenceIterator);
             this._hasNext = false;
             results.forEach(r -> {
                 if (!Item.isNumeric(r))
