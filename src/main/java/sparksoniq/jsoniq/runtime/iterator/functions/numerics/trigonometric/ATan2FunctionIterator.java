@@ -20,23 +20,35 @@ public class ATan2FunctionIterator extends LocalFunctionCallIterator {
     @Override
     public Item next() {
         if (this._hasNext) {
-            Item y = this.getSingleItemOfTypeFromIterator(this._children.get(0), Item.class);
-            Item x = this.getSingleItemOfTypeFromIterator(this._children.get(1), Item.class);
+            Item y;
+            RuntimeIterator yIterator = this._children.get(0);
+            yIterator.open(_currentDynamicContext);
+            if (yIterator.hasNext()) {
+                y = yIterator.next();
+            } else {
+                throw new UnexpectedTypeException("Type error; y parameter can't be empty sequence ", getMetadata());
+            }
+
+            Item x;
+            RuntimeIterator xIterator = this._children.get(1);
+            xIterator.open(_currentDynamicContext);
+            if (xIterator.hasNext()) {
+                x = xIterator.next();
+            } else {
+                throw new UnexpectedTypeException("Type error; x parameter can't be empty sequence ", getMetadata());
+            }
+
             if (Item.isNumeric(y) && Item.isNumeric(x)) {
                 Double result = Math.atan2(Item.getNumericValue(y, Double.class)
                         , Item.getNumericValue(x, Double.class));
                 this._hasNext = false;
                 return new DoubleItem(result,
                         ItemMetadata.fromIteratorMetadata(getMetadata()));
-            }
-            else {
+            } else {
                 throw new UnexpectedTypeException("ATan2 expression has non numeric args " +
                         y.serialize() + ", " + x.serialize(), getMetadata());
-
             }
         } else
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " atan2 function", getMetadata());
     }
-
-
 }
