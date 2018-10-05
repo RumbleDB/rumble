@@ -1,41 +1,57 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate;
 
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.DecimalItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 public class AvgFunctionIterator extends AggregateFunctionIterator {
+
+    private RuntimeIterator _iterator;
+
     public AvgFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, AggregateFunctionOperator.AVG, iteratorMetadata);
     }
 
     @Override
+    public void open(DynamicContext context) {
+        super.open(context);
+
+        _iterator = this._children.get(0);
+        _iterator.open(_currentDynamicContext);
+        if (_iterator.hasNext()) {
+            this._hasNext = true;
+        } else {
+            this._hasNext = false;
+        }
+        _iterator.close();
+    }
+
+    @Override
     public Item next() {
         if (this._hasNext) {
-            RuntimeIterator sequenceIterator = this._children.get(0);
-            List<Item> results = getItemsFromIteratorWithCurrentContext(sequenceIterator);
+            List<Item> results = getItemsFromIteratorWithCurrentContext(_iterator);
             this._hasNext = false;
             results.forEach(r -> {
                 if (!Item.isNumeric(r))
-                    throw new IllegalArgumentException("Aggregate function argument is non numeric");
+                    throw new UnexpectedTypeException("Average expression has non numeric args " +
+                            r.serialize(), getMetadata());
             });
-            //TODO refactor empty items
-            if (results.size() == 0)
-                return null;
             //TODO check numeric types conversions
             BigDecimal sum = new BigDecimal(0);
             for (Item r : results)
                 sum = sum.add(Item.getNumericValue(r, BigDecimal.class));
             return new DecimalItem(sum.divide(new BigDecimal(results.size())),
                     ItemMetadata.fromIteratorMetadata(getMetadata()));
-        } else
-            throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "AVG function",
+        }
+        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "AVG function",
                     getMetadata());
     }
 }

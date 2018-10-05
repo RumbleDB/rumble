@@ -1,16 +1,20 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate;
 
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.DecimalItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 public class SumFunctionIterator extends AggregateFunctionIterator {
+
+
     public SumFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, AggregateFunctionOperator.SUM, iteratorMetadata);
     }
@@ -23,11 +27,10 @@ public class SumFunctionIterator extends AggregateFunctionIterator {
             this._hasNext = false;
             results.forEach(r -> {
                 if (!Item.isNumeric(r))
-                    throw new IllegalArgumentException("Aggregate function argument is non numeric");
+                    throw new UnexpectedTypeException("Sum expression has non numeric args " +
+                            r.serialize(), getMetadata());
             });
-            //TODO refactor empty items
-            if (results.size() == 0)
-                return null;
+
             BigDecimal sumResult = new BigDecimal(0);
             for (Item r : results) {
                 BigDecimal current = Item.getNumericValue(r, BigDecimal.class);
