@@ -1,5 +1,5 @@
 (:JIQS: ShouldRun; Output="( { "b" : 2, "c" : 3 } )" :)
-let $o := ({ "b" : 2 }, { "c" : 3 }) return accumulate($o)
+accumulate(({ "b" : 2 }, { "c" : 3 }))
 
 (: no matching keys :)
 
