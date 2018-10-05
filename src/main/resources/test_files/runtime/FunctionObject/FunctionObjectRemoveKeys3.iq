@@ -1,5 +1,5 @@
 (:JIQS: ShouldRun; Output="( { "First Officer" : "Spock", "Engineer" : "Scott" } )" :)
-let $o := {"Captain" : "Kirk", "First Officer" : "Spock", "Engineer" : "Scott"} return remove-keys($o, ("Captain", "non-existing-key"))
+remove-keys({"Captain" : "Kirk", "First Officer" : "Spock", "Engineer" : "Scott"}, ("Captain", "non-existing-key"))
 
 
 (: Mix of existing and non-existing keys :)
