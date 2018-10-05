@@ -68,7 +68,7 @@ public class ArrayLookupIterator extends LocalRuntimeIterator {
             lookupExpression = lookupIterator.next();
         }
         if (lookupIterator.hasNext())
-            throw new InvalidSelectorException("\"Invalid Lookup Key; Object lookup can't be performed with multiple keys: "
+            throw new InvalidSelectorException("\"Invalid Lookup Key; Array lookup can't be performed with multiple keys: "
                     + lookupExpression.serialize(), getMetadata());
         if (!Item.isNumeric(lookupExpression)) {
             throw new UnexpectedTypeException("Type error; Non numeric array lookup for : "

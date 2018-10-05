@@ -33,7 +33,7 @@ public class ObjectRemoveKeysFunctionIterator extends ObjectFunctionIterator {
 
         List<Item> removalKeys = getItemsFromIteratorWithCurrentContext(this._children.get(1));
         if (removalKeys.isEmpty()) {
-            throw new InvalidSelectorException("Invalid Projection Key; Object key removal can't be performed with zero keys: "
+            throw new InvalidSelectorException("Invalid Key Removal Parameter; Object key removal can't be performed with zero keys: "
                     , getMetadata());
         }
         _removalKeys = new ArrayList<>();
@@ -42,7 +42,7 @@ public class ObjectRemoveKeysFunctionIterator extends ObjectFunctionIterator {
                 String removalKey = removalKeyItem.getStringValue();
                 _removalKeys.add(removalKey);
             } catch (OperationNotSupportedException e) {
-                throw new UnexpectedTypeException("Project function has non-string key args.", getMetadata());
+                throw new UnexpectedTypeException("Remove-keys function has non-string key args.", getMetadata());
             }
         }
 
