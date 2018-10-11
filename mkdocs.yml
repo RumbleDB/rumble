@@ -7,3 +7,4 @@ pages:
 - '5. Function library': 'Function library.md'
 - '6. Compile from GitHub': 'install.md'
 - '7. Licenses': 'Licenses.md'
+theme: readthedocs
