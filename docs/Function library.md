@@ -1,5 +1,7 @@
 # Function library
 
+We introduce functions by means of examples. Highly detailed specifications can be found in the [underlying W3C standard](https://www.w3.org/TR/xpath-functions-30/#func-floor), unless the function is marked as specific to JSON or Sparksoniq.
+
 ## Aggregation functions
 
 ### sum
@@ -65,7 +67,7 @@ returns 2.0
 ### ceiling
 
 ```
-ceiling(2)
+ceiling(2.3)
 ```
 
 returns 3.0
@@ -80,7 +82,7 @@ returns 3.0
 ### floor
 
 ```
-floor(2)
+floor(2.3)
 ```
 
 returns 2.0
@@ -92,7 +94,7 @@ returns 2.0
 ### pow
 
 ```
-round(10, 2)
+pow(10, 2)
 ```
 
 returns 100.0
@@ -100,7 +102,7 @@ returns 100.0
 ### round
 
 ```
-round(2)
+round(2.3)
 ```
 
 returns 2.0
@@ -159,7 +161,7 @@ returns "ba"
 
 We support two more functions to read a JSON file from HDFS or send a large sequence to the cluster:
 
-### json-file
+### json-file (Sparksoniq specific)
 
 Exists in unary and binary. The first parameter specifies the JSON file (or set of JSON files) to read.
 The second, optional parameter specifies the number of partitions. This is also similar to Sparks textFile().
@@ -195,7 +197,7 @@ where $my-json.property eq "some value"
 return $my-json
 ```
 
-### parallelize
+### parallelize (Sparksoniq specific)
 
 This function behaves like the Spark parallelize() you are familiar with and sends a large sequence to the cluster.
 The rest of the FLWOR expression is then evaluated with Spark transformations on the cluster.
