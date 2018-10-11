@@ -1,8 +1,6 @@
 # Function library
 
-## JSONiq functions
-
-At the moment, Sparksoniq only implements a few JSONiq functions: the ones needed for aggregation on sequences.
+## Aggregation functions
 
 ### sum
 
@@ -49,7 +47,113 @@ return avg($x)
 
 returns 2.5
 
-Many more will follow in subsequent versions.
+## Mathematic functions
+
+### abs
+
+```
+abs(-2)
+```
+
+returns 2.0
+
+### acos
+### asin
+### atan
+### atan2
+
+### ceiling
+
+```
+ceiling(2)
+```
+
+returns 3.0
+
+### cos
+
+### exp
+
+### exp10
+
+
+### floor
+
+```
+floor(2)
+```
+
+returns 2.0
+
+### log
+
+### log10
+
+### pow
+
+```
+round(10, 2)
+```
+
+returns 100.0
+
+### round
+
+```
+round(2)
+```
+
+returns 2.0
+
+```
+round(2.2345, 2)
+```
+
+returns 2.23
+
+### round-half-to-even
+
+### sin
+
+### tan
+
+## String functions
+
+### concat
+
+```
+concat("foo", "bar", "foobar")
+```
+
+returns "foobarfoobar"
+
+### string-join
+
+```
+string-join(("foo", "bar", "foobar"))
+```
+
+returns "foobarfoobar"
+
+```
+string-join(("foo", "bar", "foobar"), "-")
+```
+
+returns "foo-bar-foobar"
+
+### substring
+
+```
+substring("foobar", 4)
+```
+
+returns "bar"
+
+```
+substring("foobar", 4, 2)
+```
+
+returns "ba"
 
 ## Integration with HDFS and Spark
 
