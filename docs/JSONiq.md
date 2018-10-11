@@ -8,11 +8,17 @@ The complete specification can be found [here](http://www.jsoniq.org/docs/JSONiq
 
 ## JSONiq tutorial
 
-A tutorial can be found [here](https://github.com/ghislainfourny/jsoniq-tutorial). Most queries in this tutorial will work with Sparksoniq, except those that:
+A tutorial can be found [here](https://github.com/ghislainfourny/jsoniq-tutorial). Most queries in this tutorial will work with Sparksoniq, except that:
 
-- use functions like concat, string-join or substring.
-- use general comparison operators: you should replace = with eq and < with lt, etc.
 - the complex FLWOR query does not work (yet), because of unsupported nesting.
+- there are two known bugs being investigated
+
+    { concat("Integer ", 2) : 2 * 2 }
+    
+    {|
+     for $i in 1 to 10
+     return { concat("Square of ", $i) : $i * $i }
+   |}
 
 ## Unsupported/Unimplemented features (alpha release)
 
@@ -27,5 +33,5 @@ Many core features of JSONiq are in place, but please be aware that the function
 
 - The type system is not complete yet: we have objects, arrays, strings, numbers, booleans and null, but not yet: dates, durations, binaries and so on.
 - FLWOR expressions may sometimes raise errors, especially if nested. We are also working on generalized FLWOR supported, also local.
-- Only basic JSONiq functions are supported (max/min/count/sum/avg).
+- Not all JSONiq functions are supported (see function documentation).
 
