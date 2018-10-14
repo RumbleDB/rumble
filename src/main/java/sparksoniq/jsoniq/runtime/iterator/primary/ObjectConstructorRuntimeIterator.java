@@ -43,7 +43,7 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
     }
 
 
-    public ObjectConstructorRuntimeIterator(List<ObjectConstructorRuntimeIterator> childExpressions,
+    public ObjectConstructorRuntimeIterator(List<RuntimeIterator> childExpressions,
                                             IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
         childExpressions.forEach(c -> this._children.add(c));
@@ -58,10 +58,12 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
             if (_isMergedObject) {
                 for (RuntimeIterator iterator : this._children) {
                     iterator.open(_currentDynamicContext);
-                    ObjectItem item = (ObjectItem) iterator.next();
+                    while (iterator.hasNext()) {
+                        ObjectItem item = (ObjectItem) iterator.next();
+                        keys.addAll(item.getKeys());
+                        values.addAll(item.getValues());
+                    }
                     iterator.close();
-                    keys.addAll(item.getKeys());
-                    values.addAll(item.getValues());
                 }
                 this._hasNext = false;
                 return new ObjectItem(keys, values, ItemMetadata.fromIteratorMetadata(getMetadata()));

@@ -196,9 +196,9 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
     @Override
     public RuntimeIterator visitObjectConstructor(ObjectConstructor expression, RuntimeIterator argument) {
         if (expression.isMergedConstructor()) {
-            List<ObjectConstructorRuntimeIterator> childExpressions = new ArrayList<>();
+            List<RuntimeIterator> childExpressions = new ArrayList<>();
             for (Expression child : expression.getChildExpression().getExpressions())
-                childExpressions.add(((ObjectConstructorRuntimeIterator) this.visit(child, argument)));
+                childExpressions.add((this.visit(child, argument)));
             return new ObjectConstructorRuntimeIterator(childExpressions, createIteratorMetadata(expression));
         } else {
             List<RuntimeIterator> keys = new ArrayList<>();
