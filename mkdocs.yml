@@ -5,6 +5,7 @@ pages:
 - '3. Run on a cluster': 'Run on a cluster.md'
 - '4. The JSONiq language': 'JSONiq.md'
 - '5. Function library': 'Function library.md'
-- '6. Compile from GitHub': 'install.md'
-- '7. Licenses': 'Licenses.md'
+- '6. Error codes': 'Error codes.md'
+- '7. Compile from GitHub': 'install.md'
+- '8. Licenses': 'Licenses.md'
 theme: readthedocs
