@@ -54,7 +54,7 @@ public class JSONObjectItem extends JsonItem{
         List<Item> values = new LinkedList<Item>();
     	Iterator<String> i = _JSONObject.keys();
         while(i.hasNext())
-        	values.add(parser.getItemFromObject(_JSONObject.get(i.next()), null));
+        	values.add(parser.getItemFromObject(_JSONObject.get(i.next()), itemMetadata));
         return values;
     }
 
@@ -81,7 +81,7 @@ public class JSONObjectItem extends JsonItem{
     @Override
     public Item getItemByKey(String s) {
         if(_JSONObject.has(s))
-            return parser.getItemFromObject(_JSONObject.get(s), null);
+            return parser.getItemFromObject(_JSONObject.get(s), itemMetadata);
         else
             return null;
     }
