@@ -28,7 +28,6 @@ public enum FLWOR_CLAUSES
     ORDER_BY,
     ORDER_BY_EXPR,
     COUNT,
-    COUNT_VAR,
     RETURN,
     FOR_VAR,
     LET_VAR,
