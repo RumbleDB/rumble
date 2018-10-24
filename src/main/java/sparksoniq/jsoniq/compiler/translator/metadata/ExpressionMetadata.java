@@ -20,12 +20,9 @@
 
 package sparksoniq.jsoniq.compiler.translator.metadata;
 
-import org.antlr.v4.runtime.ParserRuleContext;
-import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
-
 import java.io.Serializable;
 
-public class ExpressionMetadata implements Serializable{
+public class ExpressionMetadata implements Serializable {
 
 
     public int getTokenLineNumber() {

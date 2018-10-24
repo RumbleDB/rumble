@@ -336,15 +336,17 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         return null;
     }
 
-    @Override public Void visitCountClause(JsoniqParser.CountClauseContext ctx) {
+    @Override
+    public Void visitCountClause(JsoniqParser.CountClauseContext ctx) {
         CountClause node;
         VariableReference child;
         this.visitVarRef(ctx.varRef());
-        child = (VariableReference)this.currentExpression;
+        child = (VariableReference) this.currentPrimaryExpression;
         node = new CountClause(child, createMetadataFromContext(ctx));
         this.currentFlworClause = node;
         return null;
     }
+
     //endregion
 
     //region operational

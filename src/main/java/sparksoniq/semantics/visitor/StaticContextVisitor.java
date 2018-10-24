@@ -128,7 +128,13 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
 
     @Override
     public StaticContext visitCountClause(CountClause expression, StaticContext argument) {
-        return this.visitVariableReference(expression.getVariableReference(), argument);
+        StaticContext result = new StaticContext(argument);
+        result.addVariable(
+                expression.getCountVariable().getVariableName(),
+                new SequenceType(new ItemType(ItemTypes.IntegerItem), SequenceType.Arity.One),
+                expression.getMetadata()
+        );
+        return result;
     }
 
     private StaticContext visitFlowrVarDeclaration(FlworVarDecl expression, StaticContext argument) {

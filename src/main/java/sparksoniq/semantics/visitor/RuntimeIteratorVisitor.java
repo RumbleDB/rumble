@@ -134,7 +134,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
             result.add(new WhereClauseSparkIterator(this.visit(((WhereClause) clause).getWhereExpression(), argument),
                     createIteratorMetadata(clause)));
         } else if (clause instanceof CountClause) {
-            result.add(new CountClauseSparkIterator(this.visit(((CountClause) clause).getVariableReference(), argument),
+            result.add(new CountClauseSparkIterator(this.visit(((CountClause) clause).getCountVariable(), argument),
                     createIteratorMetadata(clause)));
         }
         return result;

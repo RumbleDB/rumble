@@ -9,19 +9,16 @@ import java.util.Collections;
 import java.util.List;
 
 public class CountClause extends FlworClause {
-    public VariableReference getVariableReference() {
-        return variableReference;
-    }
+    private VariableReference countClauseVar;
 
-    public CountClause(VariableReference variableReference, ExpressionMetadata metadata) {
+    public CountClause(VariableReference countClauseVar, ExpressionMetadata metadata) {
         super(FLWOR_CLAUSES.COUNT, metadata);
-        this.variableReference = variableReference;
+        this.countClauseVar = countClauseVar;
     }
 
     @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result = Collections.singletonList(variableReference);
-        return getDescendantsFromChildren(result,depthSearch);
+        return getDescendantsFromChildren(Collections.singletonList(countClauseVar), depthSearch);
     }
 
     @Override
@@ -31,8 +28,11 @@ public class CountClause extends FlworClause {
 
     @Override
     public String serializationString(boolean prefix){
-        return "(countClause count " + variableReference.serializationString(true) + ")";
+        return "(countClause count " + countClauseVar.serializationString(true) + ")";
     }
 
-    private final VariableReference variableReference;
+    public VariableReference getCountVariable() {
+        return countClauseVar;
+    }
+
 }
