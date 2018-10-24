@@ -106,7 +106,9 @@ public class JiqsJLineShell {
 
     private void initialize() throws IOException {
         welcomeMessage = IOUtils.toString(Main.class.getResourceAsStream("/assets/banner.txt"), "UTF-8");
-        Terminal terminal = TerminalBuilder.builder().system(true).build();
+        Terminal terminal = TerminalBuilder.builder()
+                .system(true)
+                .build();
         lineReader = LineReaderBuilder.builder()
                 .terminal(terminal)
 //                .completer(new MyCompleter())
