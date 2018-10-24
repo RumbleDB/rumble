@@ -57,13 +57,7 @@ public class JiqsItemParser extends OrgJsonParser {
             }
             if (object instanceof JSONObject) {
                 JSONObject currentObject = (JSONObject) object;
-                List<String> keys = new ArrayList<>();
-                List<Item> values = new ArrayList<>();
-                Iterator<String> keyIterator = currentObject.keys();
-                while (keyIterator.hasNext())
-                    keys.add(keyIterator.next());
-                keys.forEach(_key -> values.add(this.getItemFromObject(currentObject.get(_key), metadata)));
-                return new ObjectItem(keys, values, ItemMetadata.fromIteratorMetadata(metadata));
+                return new JSONObjectItem(currentObject, ItemMetadata.fromIteratorMetadata(metadata));
             }
 
         }
