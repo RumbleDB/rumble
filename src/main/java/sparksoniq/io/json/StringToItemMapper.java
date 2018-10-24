@@ -22,6 +22,8 @@ package sparksoniq.io.json;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.json.JSONObject;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.JSONObjectItem;
+import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.ArrayList;
@@ -40,7 +42,7 @@ public class StringToItemMapper implements FlatMapFunction<Iterator<String>, Ite
         JiqsItemParser parser = new JiqsItemParser();
         List<JSONObject> objects = parser.parseJsonLinesFromIterator(stringIterator);
         List<Item> items = new ArrayList<>();
-        objects.forEach(obj -> items.add(parser.getItemFromObject(obj, metadata)));
+        objects.forEach(obj -> items.add(new JSONObjectItem(obj, ItemMetadata.fromIteratorMetadata(metadata))));
         return items.iterator();
     }
 }
