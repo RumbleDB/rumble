@@ -244,7 +244,7 @@ public abstract class Item implements SerializableItem {
         aInputStream.defaultReadObject();
     }
 
-    final ItemMetadata itemMetadata;
+    private final ItemMetadata itemMetadata;
 
 
     private void writeObject(ObjectOutputStream aOutputStream)
