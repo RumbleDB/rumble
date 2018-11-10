@@ -20,12 +20,11 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate;
 
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate.AggregateFunctionIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.List;
@@ -38,15 +37,24 @@ public class CountFunctionIterator extends AggregateFunctionIterator {
     @Override
     public Item next() {
         if (this._hasNext) {
-            RuntimeIterator sequenceIterator = this._children.get(0);
-            List<Item> results = getItemsFromIteratorWithCurrentContext(sequenceIterator);
-            this._hasNext = false;
-            return new IntegerItem(results.size(),
-                    ItemMetadata.fromIteratorMetadata(getMetadata()));
+            RuntimeIterator iterator = this._children.get(0);
+            if (!iterator.isRDD()) {
+                List<Item> results = getItemsFromIteratorWithCurrentContext(iterator);
+                this._hasNext = false;
+                return new IntegerItem(results.size(),
+                        ItemMetadata.fromIteratorMetadata(getMetadata()));
+            } else {
+                Long count = iterator.getRDD().count();
+                this._hasNext = false;
+                if (count > (long) Integer.MAX_VALUE) {
+                    // TODO: handle too big x values
+                    throw new SparksoniqRuntimeException("The count value is too big to convert to integer type.");
+                } else {
+                    return new IntegerItem(count.intValue(), ItemMetadata.fromIteratorMetadata(getMetadata()));
+                }
+            }
         } else
             throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + " count function",
                     getMetadata());
     }
-
-
 }
