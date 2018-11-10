@@ -20,6 +20,7 @@
 package sparksoniq.io.shell;
 
 import org.apache.commons.io.IOUtils;
+import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.UserInterruptException;
@@ -108,6 +109,7 @@ public class JiqsJLineShell {
         welcomeMessage = IOUtils.toString(Main.class.getResourceAsStream("/assets/banner.txt"), "UTF-8");
         Terminal terminal = TerminalBuilder.builder().system(true).build();
         lineReader = LineReaderBuilder.builder()
+
                 .terminal(terminal)
 //                .completer(new MyCompleter())
                 .highlighter(new DefaultHighlighter())
@@ -118,8 +120,13 @@ public class JiqsJLineShell {
     }
 
     private void handleException(Exception ex) {
-        if (ex != null && !(ex instanceof UserInterruptException))
-            output(ERROR_MESSAGE_PROMPT + ex.getMessage().split("\n")[0]);
+        if (ex != null) {
+            if (ex instanceof EndOfFileException) {
+                this.currentLine = this.EXIT_COMMAND;
+            } else if (!(ex instanceof UserInterruptException)) {
+                output(ERROR_MESSAGE_PROMPT + ex.getMessage().split("\n")[0]);
+            }
+        }
     }
 
     private void output(String message) {
