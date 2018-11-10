@@ -26,13 +26,7 @@ public class ConcatFunctionIterator extends LocalFunctionCallIterator {
                 // if not empty sequence
                 if (item != null) {
                     String stringValue = "";
-                    if (item.isString()) {
-                        try {
-                            stringValue = item.getStringValue();
-                        } catch (OperationNotSupportedException e) {
-                            e.printStackTrace();
-                        }
-                    } else if (item.isAtomic()) {
+                    if (item.isAtomic()) {
                         stringValue = item.serialize();       // for atomic items (not array or object) returns the equivalent string value
                     } else {
                         throw new UnexpectedTypeException("String concat function has arguments that can't be converted to a string " +

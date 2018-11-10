@@ -58,24 +58,10 @@ public class StringConcatIterator extends BinaryOperationBaseIterator {
             if (!(left.isAtomic()) || !(right.isAtomic()))
                 throw new UnexpectedTypeException("String concat expression has arguments that can't be converted to a string " +
                         left.serialize() + ", " + right.serialize(), getMetadata());
-            String leftStringValue = "";
-            String rightStringValue = "";
-            try {
-                if (left.isString()) {
-                    leftStringValue = left.getStringValue();
-                } else {
-                    // non-string atomic
-                    leftStringValue = left.serialize();
-                }
-                if (right.isString()) {
-                    rightStringValue = right.getStringValue();
-                } else {
-                    // non-string atomic
-                    rightStringValue = right.serialize();
-                }
-            } catch (OperationNotSupportedException e) {
-                e.printStackTrace();
-            }
+
+            String leftStringValue = left.serialize();
+            String rightStringValue = right.serialize();
+
             _leftIterator.close();
             _rightIterator.close();
             this._hasNext = false;
