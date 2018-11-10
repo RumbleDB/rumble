@@ -20,7 +20,6 @@ public class ObjectAccumulateFunctionIterator extends ObjectFunctionIterator {
     @Override
     public Item next() {
         if (this._hasNext) {
-            ObjectItem result = null;
             RuntimeIterator sequenceIterator = this._children.get(0);
             List<Item> items = getItemsFromIteratorWithCurrentContext(sequenceIterator);
             LinkedHashMap<String, List<Item>> keyValuePairs = new LinkedHashMap<>();
@@ -46,7 +45,7 @@ public class ObjectAccumulateFunctionIterator extends ObjectFunctionIterator {
                 }
             }
 
-            result = new ObjectItem(keyValuePairs, ItemMetadata.fromIteratorMetadata(getMetadata()));
+            ObjectItem result = new ObjectItem(keyValuePairs, ItemMetadata.fromIteratorMetadata(getMetadata()));
 
             this._hasNext = false;
             return result;
