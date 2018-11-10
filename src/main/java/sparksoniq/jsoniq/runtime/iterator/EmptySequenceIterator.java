@@ -36,7 +36,6 @@ public class EmptySequenceIterator extends LocalRuntimeIterator {
 
     @Override
     public Item next() {
-        return null;
-        //throw new IteratorFlowException("Invalid next() call on Empty Sequence", getMetadata());
+        throw new IteratorFlowException("Invalid next() call on Empty Sequence", getMetadata());
     }
 }
