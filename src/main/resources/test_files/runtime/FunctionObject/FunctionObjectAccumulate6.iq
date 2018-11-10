@@ -1,5 +1,5 @@
 (:JIQS: ShouldRun; Output="{ }" :)
-accumulate(({}))
+accumulate(())
 
-(: empty object :)
+(: empty sequence :)
 

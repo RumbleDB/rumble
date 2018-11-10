@@ -7,52 +7,71 @@ import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
+
 import static sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectFunctionUtilities.listHasDuplicateString;
 
 import javax.naming.OperationNotSupportedException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public class ObjectKeysFunctionIterator extends ObjectFunctionIterator {
+
+    private RuntimeIterator _iterator;
+    private Item _nextResult;
+    private List<Item> _prevResults;
+
     public ObjectKeysFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, ObjectFunctionOperators.KEYS, iteratorMetadata);
     }
 
     @Override
+    public void open(DynamicContext context) {
+        super.open(context);
+
+        _iterator = this._children.get(0);
+        _iterator.open(context);
+        _prevResults = new ArrayList<>();
+
+        setNextResult();
+    }
+
+    @Override
     public Item next() {
         if (this._hasNext) {
-            if (results == null) {
-                _currentIndex = 0;
-                results = new ArrayList<>();
-                RuntimeIterator sequenceIterator = this._children.get(0);
-                List<Item> items = getItemsFromIteratorWithCurrentContext(sequenceIterator);
-                for (Item item:items) {
-                    if (item.isObject()) {
-                        try {
-                            StringItem result = null;
-                            for (String key : item.getKeys()) {
-                                result = new StringItem(key, ItemMetadata.fromIteratorMetadata(getMetadata()));
-                                if (!listHasDuplicateString(results, result))
-                                {
-                                    results.add(result);
-                                }
-                            }
-                        } catch (OperationNotSupportedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-
-                // single item algorithm doesn't work for sequences
-                /*
-                ObjectItem object = getSingleItemOfTypeFromIterator(objectIterator, ObjectItem.class);
-                for (String key : object.getKeys())
-                    results.add(new StringItem(key, ItemMetadata.fromIteratorMetadata(getMetadata())));
-                */
-            }
-            return getResult();
+            Item result = _nextResult;  // save the result to be returned
+            setNextResult();            // calculate and store the next result
+            return result;
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " KEYS function",
                 getMetadata());
+    }
+
+    public void setNextResult() {
+        _nextResult = null;
+        while(_iterator.hasNext()) {
+            Item item = _iterator.next();
+            if (item instanceof ObjectItem) {
+                ObjectItem objItem = (ObjectItem)item;
+                StringItem result;
+                for (String key : objItem.getKeys()) {
+                    result = new StringItem(key, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                    if (!listHasDuplicateString(_prevResults, result))
+                    {
+                        _prevResults.add(result);
+                        _nextResult = result;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (_nextResult == null) {
+            this._hasNext = false;
+            _iterator.close();
+        } else {
+            this._hasNext = true;
+        }
     }
 }

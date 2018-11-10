@@ -1,5 +1,6 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.object;
 
+import sparksoniq.exceptions.InvalidSelectorException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.Item;
@@ -7,67 +8,89 @@ import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
 
 import javax.naming.OperationNotSupportedException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ObjectRemoveKeysFunctionIterator extends ObjectFunctionIterator {
+
+    private RuntimeIterator _iterator;
+    private Item _nextResult;
+    private List<String> _removalKeys;
+
     public ObjectRemoveKeysFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, ObjectFunctionOperators.REMOVEKEYS, iteratorMetadata);
     }
 
     @Override
+    public void open(DynamicContext context) {
+        super.open(context);
+
+        _iterator = this._children.get(0);
+        _iterator.open(context);
+
+        List<Item> removalKeys = getItemsFromIteratorWithCurrentContext(this._children.get(1));
+        if (removalKeys.isEmpty()) {
+            throw new InvalidSelectorException("Invalid Projection Key; Object key removal can't be performed with zero keys: "
+                    , getMetadata());
+        }
+        _removalKeys = new ArrayList<>();
+        for (Item removalKeyItem : removalKeys) {
+            try {
+                String removalKey = removalKeyItem.getStringValue();
+                _removalKeys.add(removalKey);
+            } catch (OperationNotSupportedException e) {
+                throw new UnexpectedTypeException("Project function has non-string key args.", getMetadata());
+            }
+        }
+
+        setNextResult();
+    }
+
+    @Override
     public Item next() {
         if (this._hasNext) {
-            if (results == null) {
-                _currentIndex = 0;
-                results = new ArrayList<>();
-                RuntimeIterator sequenceIterator = this._children.get(0);
-                RuntimeIterator keysIterator = this._children.get(1);
-                List<Item> items = getItemsFromIteratorWithCurrentContext(sequenceIterator);
-                List<Item> keys = getItemsFromIteratorWithCurrentContext(keysIterator);
-                removeKeys(items, keys);
-            }
-            return getResult();
+            Item result = _nextResult;  // save the result to be returned
+            setNextResult();            // calculate and store the next result
+            return result;
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " REMOVE-KEYS function",
                 getMetadata());
     }
 
-    public void removeKeys(List<Item> items, List<Item> keysRemoveItems) {
-        for (Item item:items) {
-            if (item.isObject()) {
-                ArrayList<String> finalKeylist = new ArrayList<>();
-                ArrayList<Item> finalValueList = new ArrayList<>();
-                ArrayList<String> keysToRemove = new ArrayList<>();
+    public void setNextResult() {
+        _nextResult = null;
 
-                for (Item keyRemoveItem:keysRemoveItems) {
-                    try {
-                        String keyToRemove = keyRemoveItem.getStringValue();
-                        keysToRemove.add(keyToRemove);
-                    } catch (OperationNotSupportedException e) {
-                        throw new UnexpectedTypeException("Project function has non-string key args.", getMetadata());
-                    }
-                }
-
-                try {
-                    for (String objectKey:item.getKeys()) {
-                        if (!keysToRemove.contains(objectKey)) {
-                            finalKeylist.add(objectKey);
-                            finalValueList.add(item.getItemByKey(objectKey));
-                        }
-                    }
-                } catch (OperationNotSupportedException e) {
-                    e.printStackTrace();
-                }
-
-                results.add(new ObjectItem(finalKeylist, finalValueList, ItemMetadata.fromIteratorMetadata(getMetadata())));
-            }
-            else {
-                results.add(item);
+        if (_iterator.hasNext()) {
+            Item item = _iterator.next();
+            if (item instanceof ObjectItem) {
+                ObjectItem objItem = (ObjectItem) item;
+                _nextResult = removeKeys(objItem, _removalKeys);
+            } else {
+                _nextResult = item;
             }
         }
 
+        if (_nextResult == null) {
+            this._hasNext = false;
+            _iterator.close();
+        } else {
+            this._hasNext = true;
+        }
+    }
+
+    public ObjectItem removeKeys(ObjectItem objItem, List<String> removalKeys) {
+        ArrayList<String> finalKeylist = new ArrayList<>();
+        ArrayList<Item> finalValueList = new ArrayList<>();
+
+        for (String objectKey : objItem.getKeys()) {
+            if (!removalKeys.contains(objectKey)) {
+                finalKeylist.add(objectKey);
+                finalValueList.add(objItem.getItemByKey(objectKey));
+            }
+        }
+        return new ObjectItem(finalKeylist, finalValueList, ItemMetadata.fromIteratorMetadata(getMetadata()));
     }
 }
