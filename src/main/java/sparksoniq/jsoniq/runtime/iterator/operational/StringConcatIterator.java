@@ -30,6 +30,8 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
+import javax.naming.OperationNotSupportedException;
+
 public class StringConcatIterator extends BinaryOperationBaseIterator {
     public StringConcatIterator(RuntimeIterator left, RuntimeIterator right, IteratorMetadata iteratorMetadata) {
         super(left, right, OperationalExpressionBase.Operator.CONCAT, iteratorMetadata);
@@ -53,15 +55,17 @@ public class StringConcatIterator extends BinaryOperationBaseIterator {
             } else {
                 right = new StringItem("", ItemMetadata.fromIteratorMetadata(getMetadata()));
             }
-            if (!(left instanceof StringItem) || !(right instanceof StringItem))
-                throw new UnexpectedTypeException("String concat expression has non strings args " +
+            if (!(left.isAtomic()) || !(right.isAtomic()))
+                throw new UnexpectedTypeException("String concat expression has arguments that can't be converted to a string " +
                         left.serialize() + ", " + right.serialize(), getMetadata());
-            StringItem leftString = (StringItem) left;
-            StringItem rightString = (StringItem) right;
+
+            String leftStringValue = left.serialize();
+            String rightStringValue = right.serialize();
+
             _leftIterator.close();
             _rightIterator.close();
             this._hasNext = false;
-            return new StringItem(leftString.getStringValue().concat(rightString.getStringValue()),
+            return new StringItem(leftStringValue.concat(rightStringValue),
                     ItemMetadata.fromIteratorMetadata(getMetadata()));
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
