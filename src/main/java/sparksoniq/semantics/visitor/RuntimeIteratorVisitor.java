@@ -423,7 +423,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
             Constructor<? extends RuntimeIterator> ctor = functionClass.getConstructor(List.class, IteratorMetadata.class);
             return ctor.newInstance(arguments, iteratorMetadata);
         } catch (Exception e) {
-            throw new UnknownFunctionCallException(createIteratorMetadata(expression));
+            throw new UnknownFunctionCallException(expression.getFunctionName(), arguments.size(), createIteratorMetadata(expression));
         }
     }
 
