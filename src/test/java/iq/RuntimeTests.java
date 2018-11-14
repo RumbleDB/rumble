@@ -20,6 +20,7 @@
 package iq;
 
 import iq.base.AnnotationsTestsBase;
+import org.apache.spark.SparkConf;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,6 +29,7 @@ import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.spark.SparkContextManager;
 import utils.FileManager;
 
 import java.io.File;
@@ -65,7 +67,15 @@ public class RuntimeTests extends AnnotationsTestsBase {
     }
 
     public RuntimeTests(File testFile) {
+
         this._testFile = testFile;
+        SparkConf sparkConfiguration = new SparkConf();
+        sparkConfiguration.setMaster("local[*]");
+//        sparkConfiguration.set("spark.driver.memory", "2g");
+//        sparkConfiguration.set("spark.executor.memory",   "2g");
+        sparkConfiguration.set("spark.speculation", "true");
+        sparkConfiguration.set("spark.speculation.quantile", "0.5");
+        SparkContextManager.getInstance().initializeConfigurationAndContext(sparkConfiguration, true);
     }
 
     protected String runIterators(RuntimeIterator iterator) {
