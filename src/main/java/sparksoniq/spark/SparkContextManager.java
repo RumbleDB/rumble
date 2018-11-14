@@ -35,7 +35,6 @@ import org.apache.spark.api.java.JavaSparkContext;
 
 public class SparkContextManager {
 
-    public static String DEFAULT_MASTER_CONFIG = "local[*]";
     public static int COLLECT_ITEM_LIMIT = 0;
     private static Level LOG_LEVEL = Level.FATAL;
     private static final String APP_NAME = "jsoniq-on-spark";
@@ -56,8 +55,8 @@ public class SparkContextManager {
     private SparkContextManager() {
     }
 
-    public void initializeConfigurationAndContext(String masterConfig) {
-        configuration = new SparkConf().setAppName(APP_NAME).setMaster(masterConfig);
+    public void initializeConfigurationAndContext() {
+        configuration = new SparkConf().setAppName(APP_NAME);
         initialize();
     }
 
@@ -71,7 +70,7 @@ public class SparkContextManager {
     public JavaSparkContext getContext() {
         if (context == null) {
             if (this.configuration == null)
-                initializeConfigurationAndContext(DEFAULT_MASTER_CONFIG);
+                initializeConfigurationAndContext();
             initialize();
         }
         return context;

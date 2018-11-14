@@ -36,13 +36,12 @@ import java.util.List;
 public class Main {
     public static void main(String[] args) throws IOException {
         HashMap<String, String> arguments;
-        String masterConfig, outputDataFilePath, queryFilePath = "", logFilePath = "";
+        String outputDataFilePath, queryFilePath = "", logFilePath = "";
         int outputItemLimit = 200;
         try {
             arguments = SparksoniqRuntimeConfiguration.processCommandLineArgs(args);
-            masterConfig = arguments.get("master");
             outputDataFilePath = arguments.get("output-path");
-            initializeApplication(masterConfig);
+            initializeApplication();
             if (arguments.containsKey("query-path"))
                 queryFilePath = arguments.get("query-path");
             if (arguments.containsKey("log-path"))
@@ -53,6 +52,8 @@ public class Main {
         } catch (Exception ex) {
             throw new CliException(ex.getMessage());
         }
+
+        String masterConfig = SparkContextManager.getInstance().getContext().getConf().get("spark.master");
 
         if (masterConfig.contains("local")) {
             System.out.println("Running in local mode");
@@ -80,8 +81,8 @@ public class Main {
         }
     }
 
-    private static void initializeApplication(String masterConfig) {
-        SparkContextManager.getInstance().initializeConfigurationAndContext(masterConfig);
+    private static void initializeApplication() {
+        SparkContextManager.getInstance().initializeConfigurationAndContext();
     }
 
 }
