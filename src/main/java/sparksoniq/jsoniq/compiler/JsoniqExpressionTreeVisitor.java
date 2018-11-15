@@ -680,8 +680,12 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         Expression rhs,lhs;
         this.visitExprSingle(ctx.rhs);
         rhs = this.currentExpression;
-        this.visitExprSingle(ctx.lhs);
-        lhs = this.currentExpression;
+        if (ctx.lhs != null) {
+            this.visitExprSingle(ctx.lhs);
+            lhs = this.currentExpression;
+        } else {
+            lhs = new StringLiteral(ctx.name.getText(), createMetadataFromContext(ctx));
+        }
         node = new ObjectConstructor.PairConstructor(lhs, rhs, createMetadataFromContext(ctx));
         this.currentPrimaryExpression = node;
         return null;
