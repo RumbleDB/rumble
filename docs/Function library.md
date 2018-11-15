@@ -49,6 +49,34 @@ return avg($x)
 
 returns 2.5
 
+## Object functions
+
+### keys
+
+```
+keys({"foo" : "bar", "bar" : "foobar"})
+```
+
+returns ("foo", "bar")
+
+## Array functions
+
+### size
+
+```
+size([1 to 100])
+```
+
+returns 100.
+
+### members
+
+```
+members([1 to 100])
+```
+
+Returns the first 100 integers as a sequence.
+
 ## Mathematic functions
 
 ### abs

@@ -11,14 +11,6 @@ The complete specification can be found [here](http://www.jsoniq.org/docs/JSONiq
 A tutorial can be found [here](https://github.com/ghislainfourny/jsoniq-tutorial). Most queries in this tutorial will work with Sparksoniq, except that:
 
 - the complex FLWOR query does not work (yet), because of unsupported nesting.
-- there are two known bugs being investigated
-
-    { concat("Integer ", 2) : 2 * 2 }
-    
-    {|
-     for $i in 1 to 10
-     return { concat("Square of ", $i) : $i * $i }
-   |}
 
 ## Unsupported/Unimplemented features (alpha release)
 
