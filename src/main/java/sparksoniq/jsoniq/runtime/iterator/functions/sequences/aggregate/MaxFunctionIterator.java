@@ -39,23 +39,12 @@ public class MaxFunctionIterator extends AggregateFunctionIterator {
             List<Item> results = getItemsFromIteratorWithCurrentContext(_iterator);
             this._hasNext = false;
             results.forEach(r -> {
-                if (!r.isNumeric())
+                if (!r.isAtomic())
                     throw new UnexpectedTypeException("Max expression has non numeric args " +
                             r.serialize(), getMetadata());
             });
 
-
-            Item itemResult = results.get(0);
-            BigDecimal max  = results.get(0).getNumericValue(BigDecimal.class);
-            for(Item r: results) {
-                BigDecimal current = r.getNumericValue(BigDecimal.class);
-                if(max.compareTo(current) < 0) {
-                    max = current;
-                    itemResult = r;
-                }
-            }
-
-            return itemResult;
+            return Collections.max(results);
         } else
             throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "MAX function",
                     getMetadata());

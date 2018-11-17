@@ -1,0 +1,7 @@
+(:JIQS: ShouldRun; Output="( a, 2, a, 2)" :)
+max((2, "a")),
+max((2, null)),
+max(("a", 2)),
+max((null, 2))
+
+(: mixed types :)
