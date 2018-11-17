@@ -26,14 +26,14 @@ public class SumFunctionIterator extends AggregateFunctionIterator {
             List<Item> results = getItemsFromIteratorWithCurrentContext(sequenceIterator);
             this._hasNext = false;
             results.forEach(r -> {
-                if (!Item.isNumeric(r))
+                if (!r.isNumeric())
                     throw new UnexpectedTypeException("Sum expression has non numeric args " +
                             r.serialize(), getMetadata());
             });
 
             BigDecimal sumResult = new BigDecimal(0);
             for (Item r : results) {
-                BigDecimal current = Item.getNumericValue(r, BigDecimal.class);
+                BigDecimal current = r.getNumericValue(BigDecimal.class);
                 sumResult = sumResult.add(current);
             }
             return new DecimalItem(sumResult, ItemMetadata.fromIteratorMetadata(getMetadata()));

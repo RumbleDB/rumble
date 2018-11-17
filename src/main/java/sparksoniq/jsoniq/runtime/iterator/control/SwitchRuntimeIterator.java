@@ -93,7 +93,7 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
                     // no match, do nothing
                 }
             }
-            else if (caseValue != null && Item.checkEquality(testValue, caseValue)) {
+            else if (caseValue != null && testValue.checkEquality(caseValue)) {
                 matchingIterator = cases.get(caseKey);
                 break;
             }

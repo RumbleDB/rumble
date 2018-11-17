@@ -46,9 +46,9 @@ public class PowFunctionIterator extends LocalFunctionCallIterator {
             } else {
                 throw new UnexpectedTypeException("Type error; Exponent parameter can't be empty sequence ", getMetadata());
             }
-            if (Item.isNumeric(base) && Item.isNumeric(exponent)) {
-                Double result = Math.pow(Item.getNumericValue(base, Double.class)
-                        , Item.getNumericValue(exponent, Double.class));
+            if (base.isNumeric() && exponent.isNumeric()) {
+                Double result = Math.pow(base.getNumericValue(Double.class)
+                        , exponent.getNumericValue(Double.class));
                 this._hasNext = false;
                 return new DoubleItem(result,
                         ItemMetadata.fromIteratorMetadata(getMetadata()));

@@ -51,7 +51,7 @@ public class AndOperationIterator extends BinaryOperationBaseIterator {
             _leftIterator.close();
             _rightIterator.close();
             this._hasNext = false;
-            return new BooleanItem(Item.getEffectiveBooleanValue(left) && Item.getEffectiveBooleanValue(right)
+            return new BooleanItem(left.getEffectiveBooleanValue() && right.getEffectiveBooleanValue()
                     , ItemMetadata.fromIteratorMetadata(getMetadata()));
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());

@@ -151,8 +151,8 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
         if (left instanceof NullItem || right instanceof NullItem) {
             return compareItems(left, right);
         }
-        else if (Item.isNumeric(left)) {
-            if (!Item.isNumeric(right))
+        else if (left.isNumeric()) {
+            if (!right.isNumeric())
                 throw new UnexpectedTypeException("Invalid args for numerics comparison " + left.serialize() +
                         ", " + right.serialize(), getMetadata());
             return compareItems(left, right);
@@ -175,7 +175,7 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
     }
 
     public BooleanItem compareItems (Item left, Item right) {
-        int comparison = Item.compareItems(left, right);
+        int comparison = left.compareTo(right);
         switch (this._operator) {
             case VC_EQ:
             case GC_EQ:

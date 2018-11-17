@@ -99,7 +99,7 @@ public class PredicateIterator extends LocalRuntimeIterator {
                     _nextResult = sequence.get(index - 1);
                 }
                 break;
-            } else if (Item.getEffectiveBooleanValue(fil)) {
+            } else if (fil != null && fil.getEffectiveBooleanValue()) {
                 _nextResult = item;
             }
             _filter.close();

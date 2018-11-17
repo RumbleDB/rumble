@@ -38,8 +38,8 @@ public class SqrtFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this._hasNext) {
             Item value = this.getSingleItemOfTypeFromIterator(_iterator, Item.class);
-            if (Item.isNumeric(value)) {
-                Double result = Math.sqrt(Item.getNumericValue(value, Double.class));
+            if (value.isNumeric()) {
+                Double result = Math.sqrt(value.getNumericValue(Double.class));
                 this._hasNext = false;
                 return new DoubleItem(result,
                         ItemMetadata.fromIteratorMetadata(getMetadata()));

@@ -38,9 +38,9 @@ public class ATan2FunctionIterator extends LocalFunctionCallIterator {
                 throw new UnexpectedTypeException("Type error; x parameter can't be empty sequence ", getMetadata());
             }
 
-            if (Item.isNumeric(y) && Item.isNumeric(x)) {
-                Double result = Math.atan2(Item.getNumericValue(y, Double.class)
-                        , Item.getNumericValue(x, Double.class));
+            if (y.isNumeric() && x.isNumeric()) {
+                Double result = Math.atan2(y.getNumericValue(Double.class)
+                        , x.getNumericValue(Double.class));
                 this._hasNext = false;
                 return new DoubleItem(result,
                         ItemMetadata.fromIteratorMetadata(getMetadata()));

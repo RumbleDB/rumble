@@ -39,8 +39,8 @@ public class ACosFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             this._hasNext = false;
             Item radians = this.getSingleItemOfTypeFromIterator(_iterator, Item.class);
-            if (Item.isNumeric(radians)) {
-                Double result = Math.acos(Item.getNumericValue(radians, Double.class));
+            if (radians.isNumeric()) {
+                Double result = Math.acos(radians.getNumericValue(Double.class));
 
                 return new DoubleItem(result,
                         ItemMetadata.fromIteratorMetadata(getMetadata()));

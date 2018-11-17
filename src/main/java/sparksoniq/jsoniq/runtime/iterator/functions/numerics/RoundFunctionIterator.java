@@ -56,10 +56,10 @@ public class RoundFunctionIterator extends LocalFunctionCallIterator {
             else {
                 precision = new IntegerItem(0, ItemMetadata.fromIteratorMetadata(this.getMetadata()));
             }
-            if (Item.isNumeric(value) && Item.isNumeric(precision)) {
+            if (value.isNumeric() && precision.isNumeric()) {
 
-                Double val = Item.getNumericValue(value, Double.class);
-                Integer prec = Item.getNumericValue(precision, Integer.class);
+                Double val = value.getNumericValue(Double.class);
+                Integer prec = precision.getNumericValue(Integer.class);
 
                 BigDecimal bd = new BigDecimal(val);
                 bd = bd.setScale(prec, RoundingMode.HALF_UP);

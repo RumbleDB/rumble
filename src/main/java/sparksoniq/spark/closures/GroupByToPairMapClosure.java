@@ -53,7 +53,7 @@ public class GroupByToPairMapClosure implements PairFunction<FlworTuple, FlworKe
                 _groupVariable.getExpression().open(new DynamicContext(tuple));
                 while (_groupVariable.getExpression().hasNext()) {
                     Item resultItem = _groupVariable.getExpression().next();
-                    if (!Item.isAtomic(resultItem))
+                    if (!resultItem.isAtomic())
                         throw new NonAtomicKeyException("Group by keys must be atomics",
                                 _groupVariable.getIteratorMetadata().getExpressionMetadata());
                     newVariableResults.add(resultItem);

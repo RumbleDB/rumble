@@ -49,7 +49,7 @@ public class UnaryOperationIterator extends UnaryOperationBaseIterator {
 
             if(this._operator== OperationalExpressionBase.Operator.MINUS)
             {
-                if(Item.isNumeric(child)){
+                if(child.isNumeric()){
                     if(child instanceof IntegerItem)
                         return new IntegerItem(-1 * ((IntegerItem)child).getIntegerValue(),
                                 ItemMetadata.fromIteratorMetadata(getMetadata()));

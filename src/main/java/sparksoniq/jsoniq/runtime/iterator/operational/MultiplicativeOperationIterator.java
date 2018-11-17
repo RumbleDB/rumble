@@ -56,7 +56,7 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
         } else {
             _left = _leftIterator.next();
             _right = _rightIterator.next();
-            if (_leftIterator.hasNext() || _rightIterator.hasNext() || !Item.isNumeric(_left) || !Item.isNumeric(_right))
+            if (_leftIterator.hasNext() || _rightIterator.hasNext() || !_left.isNumeric() || !_right.isNumeric())
                 throw new UnexpectedTypeException("Multiplicative expression has non numeric args " +
                         _left.serialize() + ", " + _right.serialize(), getMetadata());
 
@@ -71,16 +71,16 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
         if (this._hasNext) {
             this._hasNext = false;
 
-            Type returnType = Item.getNumericResultType(_left, _right);
+            Type returnType = _left.getNumericResultType(_right);
             if (returnType.equals(IntegerItem.class)) {
-                int l = Item.<Integer>getNumericValue(_left, Integer.class);
-                int r = Item.<Integer>getNumericValue(_right, Integer.class);
+                int l = _left.getNumericValue(Integer.class);
+                int r = _right.getNumericValue(Integer.class);
                 switch (this._operator) {
                     case MUL:
                         return new IntegerItem(l * r, ItemMetadata.fromIteratorMetadata(getMetadata()));
                     case DIV:
-                        BigDecimal decLeft = Item.<BigDecimal>getNumericValue(_left, BigDecimal.class);
-                        BigDecimal decRight = Item.<BigDecimal>getNumericValue(_right, BigDecimal.class);
+                        BigDecimal decLeft = _left.getNumericValue(BigDecimal.class);
+                        BigDecimal decRight = _right.getNumericValue(BigDecimal.class);
                         BigDecimal bdResult = decLeft.divide(decRight, 10, BigDecimal.ROUND_HALF_UP);
                         // if the result contains no decimal part, convert to integer
                         if (bdResult.stripTrailingZeros().scale() <= 0) {
@@ -101,8 +101,8 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
                         return new IntegerItem(l / r, ItemMetadata.fromIteratorMetadata(getMetadata()));
                 }
             } else if (returnType.equals(DoubleItem.class)) {
-                double l = Item.<Double>getNumericValue(_left, Double.class);
-                double r = Item.<Double>getNumericValue(_right, Double.class);
+                double l = _left.getNumericValue(Double.class);
+                double r = _right.getNumericValue(Double.class);
                 switch (this._operator) {
                     case MUL:
                         return new DoubleItem(l * r, ItemMetadata.fromIteratorMetadata(getMetadata()));
@@ -114,8 +114,8 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
                         return new DoubleItem((int) (l / r), ItemMetadata.fromIteratorMetadata(getMetadata()));
                 }
             } else if (returnType.equals(DecimalItem.class)) {
-                BigDecimal l = Item.<BigDecimal>getNumericValue(_left, BigDecimal.class);
-                BigDecimal r = Item.<BigDecimal>getNumericValue(_right, BigDecimal.class);
+                BigDecimal l = _left.getNumericValue(BigDecimal.class);
+                BigDecimal r = _right.getNumericValue(BigDecimal.class);
                 switch (this._operator) {
                     case MUL:
                         return new DecimalItem(l.multiply(r), ItemMetadata.fromIteratorMetadata(getMetadata()));

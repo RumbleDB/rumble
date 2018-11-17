@@ -66,7 +66,7 @@ public class IfRuntimeIterator extends LocalRuntimeIterator {
                 elseBranch = this._children.get(2);
             Item conditionResult = getSingleItemOfTypeFromIterator(condition, Item.class);
             result = new ArrayList<>();
-            if (Item.getEffectiveBooleanValue(conditionResult)) {
+            if (conditionResult.getEffectiveBooleanValue()) {
                 result = getItemsFromIteratorWithCurrentContext(branch);
             } else {
                 result = getItemsFromIteratorWithCurrentContext(elseBranch);

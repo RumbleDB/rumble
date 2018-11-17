@@ -38,15 +38,15 @@ public class MinFunctionIterator extends AggregateFunctionIterator {
             List<Item> results = getItemsFromIteratorWithCurrentContext(_iterator);
             this._hasNext = false;
             results.forEach(r -> {
-                if (!Item.isNumeric(r))
+                if (!r.isNumeric())
                     throw new UnexpectedTypeException("Min expression has non numeric args " +
                             r.serialize(), getMetadata());
             });
 
             Item itemResult = results.get(0);
-            BigDecimal min = Item.getNumericValue(results.get(0), BigDecimal.class);
+            BigDecimal min = results.get(0).getNumericValue(BigDecimal.class);
             for (Item r : results) {
-                BigDecimal current = Item.getNumericValue(r, BigDecimal.class);
+                BigDecimal current = r.getNumericValue(BigDecimal.class);
                 if (min.compareTo(current) > 0) {
                     min = current;
                     itemResult = r;

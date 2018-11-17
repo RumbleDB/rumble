@@ -94,10 +94,10 @@ public class FlworKey implements KryoSerializable, Comparable<FlworKey> {
                     comparisonItem instanceof ArrayItem || comparisonItem instanceof ObjectItem)
                 throw new SparksoniqRuntimeException("Non atomic key not allowed");
             else if(!currentItem.getClass().getSimpleName().equals(comparisonItem.getClass().getSimpleName())
-                    && (!Item.isNumeric(comparisonItem) || !Item.isNumeric(currentItem)))
+                    && (!comparisonItem.isNumeric() || !currentItem.isNumeric()))
                 throw new SparksoniqRuntimeException("Invalid sort key, different Item types");
             else
-                result = Item.compareItems(currentItem, comparisonItem);
+                result = currentItem.compareTo(comparisonItem);
 
             if(result != 0)
                 return new ResultIndexKeyTuple(result, index);

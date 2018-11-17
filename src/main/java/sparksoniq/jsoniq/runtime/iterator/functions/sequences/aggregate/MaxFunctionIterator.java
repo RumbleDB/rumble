@@ -8,6 +8,7 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 
 public class MaxFunctionIterator extends AggregateFunctionIterator {
@@ -38,20 +39,22 @@ public class MaxFunctionIterator extends AggregateFunctionIterator {
             List<Item> results = getItemsFromIteratorWithCurrentContext(_iterator);
             this._hasNext = false;
             results.forEach(r -> {
-                if (!Item.isNumeric(r))
+                if (!r.isNumeric())
                     throw new UnexpectedTypeException("Max expression has non numeric args " +
                             r.serialize(), getMetadata());
             });
 
+
             Item itemResult = results.get(0);
-            BigDecimal max  = Item.getNumericValue(results.get(0), BigDecimal.class);
+            BigDecimal max  = results.get(0).getNumericValue(BigDecimal.class);
             for(Item r: results) {
-                BigDecimal current = Item.getNumericValue(r, BigDecimal.class);
+                BigDecimal current = r.getNumericValue(BigDecimal.class);
                 if(max.compareTo(current) < 0) {
                     max = current;
                     itemResult = r;
                 }
             }
+
             return itemResult;
         } else
             throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "MAX function",

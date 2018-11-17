@@ -49,7 +49,7 @@ public class OrOperationIterator extends BinaryOperationBaseIterator {
         _leftIterator.close();
         _rightIterator.close();
         this._hasNext = false;
-        return new BooleanItem(Item.getEffectiveBooleanValue(left) || Item.getEffectiveBooleanValue(right)
+        return new BooleanItem(left.getEffectiveBooleanValue() || right.getEffectiveBooleanValue()
                 , ItemMetadata.fromIteratorMetadata(getMetadata()));
     }
 }
