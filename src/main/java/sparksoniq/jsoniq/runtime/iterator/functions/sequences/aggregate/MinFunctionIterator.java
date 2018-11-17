@@ -8,6 +8,7 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 
 public class MinFunctionIterator extends AggregateFunctionIterator {
@@ -38,21 +39,12 @@ public class MinFunctionIterator extends AggregateFunctionIterator {
             List<Item> results = getItemsFromIteratorWithCurrentContext(_iterator);
             this._hasNext = false;
             results.forEach(r -> {
-                if (!r.isNumeric())
+                if (!r.isAtomic())
                     throw new UnexpectedTypeException("Min expression has non numeric args " +
                             r.serialize(), getMetadata());
             });
 
-            Item itemResult = results.get(0);
-            BigDecimal min = results.get(0).getNumericValue(BigDecimal.class);
-            for (Item r : results) {
-                BigDecimal current = r.getNumericValue(BigDecimal.class);
-                if (min.compareTo(current) > 0) {
-                    min = current;
-                    itemResult = r;
-                }
-            }
-            return itemResult;
+            return Collections.min(results);
         } else
             throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "MIN function",
                     getMetadata());
