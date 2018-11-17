@@ -1,5 +1,6 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate;
 
+import org.apache.spark.api.java.JavaRDD;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.Item;
@@ -36,7 +37,12 @@ public class MaxFunctionIterator extends AggregateFunctionIterator {
     @Override
     public Item next() {
         if (this._hasNext) {
-            List<Item> results = getItemsFromIteratorWithCurrentContext(_iterator);
+            List<Item> results;
+            if (!_iterator.isRDD()) {
+                results = getItemsFromIteratorWithCurrentContext(_iterator);
+            } else {
+                results = _iterator.getRDD().collect();
+            }
             this._hasNext = false;
             results.forEach(r -> {
                 if (!r.isAtomic())
