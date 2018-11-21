@@ -23,7 +23,8 @@ public class CountClauseSparkIterator extends FlowrClauseSparkIterator {
 
             this._rdd = _previousClause.getTupleRDD();
             String variableName = variableReference.getVariableName();
-            this._rdd = this._rdd.zipWithIndex().map(new CountClauseClosure(variableName, getMetadata()));
+            // zipWithIndex starts from 0, increment indices by 1 for jsoniq convention
+            this._rdd = this._rdd.zipWithIndex().mapValues(index -> index + 1).map(new CountClauseClosure(variableName, getMetadata()));
         }
         return _rdd;
     }
