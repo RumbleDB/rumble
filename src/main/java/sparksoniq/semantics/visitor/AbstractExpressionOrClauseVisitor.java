@@ -17,7 +17,7 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.semantics.visitor;
+package sparksoniq.semantics.visitor;
 
 import sparksoniq.jsoniq.compiler.translator.expr.CommaExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
@@ -55,101 +55,168 @@ public abstract class AbstractExpressionOrClauseVisitor<T> {
         return defaultAction(expression, argument);
     }
 
-    public T visitVariableReference(VariableReference expression, T argument){
+    public T visitVariableReference(VariableReference expression, T argument) {
         return defaultAction(expression, argument);
     }
 
-    public T visitForClause(ForClause expression, T argument){
+    public T visitForClause(ForClause expression, T argument) {
         return defaultAction(expression, argument);
     }
 
-    public T visitLetClause(LetClause expression, T argument){
+    public T visitLetClause(LetClause expression, T argument) {
         return defaultAction(expression, argument);
     }
 
-    public T visitGroupByClause(GroupByClause expression, T argument){
+    public T visitGroupByClause(GroupByClause expression, T argument) {
         return defaultAction(expression, argument);
     }
 
-    public T visitOrderByClause(OrderByClause expression, T argument){
+    public T visitOrderByClause(OrderByClause expression, T argument) {
         return defaultAction(expression, argument);
     }
 
-    public T visitForClauseVar(ForClauseVar expression, T argument){
+    public T visitForClauseVar(ForClauseVar expression, T argument) {
         return defaultAction(expression, argument);
     }
 
-    public T visitLetClauseVar(LetClauseVar expression, T argument){
+    public T visitLetClauseVar(LetClauseVar expression, T argument) {
         return defaultAction(expression, argument);
     }
 
-    public T visitGroupByClauseVar(GroupByClauseVar expression, T argument){ return defaultAction(expression, argument);}
+    public T visitGroupByClauseVar(GroupByClauseVar expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 
-    public T visitOrderByClauseExpr(OrderByClauseExpr expression, T argument){ return defaultAction(expression, argument);}
+    public T visitOrderByClauseExpr(OrderByClauseExpr expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 
-    public T visitWhereClause(WhereClause expression, T argument){ return defaultAction(expression, argument);}
+    public T visitWhereClause(WhereClause expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 
-    public T visitReturnClause(ReturnClause expression, T argument){ return defaultAction(expression, argument);}
+    public T visitCountClause(CountClause expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitReturnClause(ReturnClause expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 
     //region primary
-    public T visitPostfixExpression(PostFixExpression expression, T argument){ return defaultAction(expression, argument);}
+    public T visitPostfixExpression(PostFixExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 
-    public T visitArrayConstructor(ArrayConstructor expression, T argument){ return defaultAction(expression, argument);}
+    public T visitArrayConstructor(ArrayConstructor expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 
-    public T visitObjectConstructor(ObjectConstructor expression, T argument){ return defaultAction(expression, argument);}
+    public T visitObjectConstructor(ObjectConstructor expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 
     public abstract T visitContextExpr(ContextExpression expression, T argument);
     //endregion
 
     //region literal
-    public T visitInteger(IntegerLiteral expression, T argument){ return defaultAction(expression, argument);}
+    public T visitInteger(IntegerLiteral expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 
-    public T visitString(StringLiteral expression, T argument){ return defaultAction(expression, argument);}
+    public T visitString(StringLiteral expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 
-    public T visitDouble(DoubleLiteral expression, T argument){ return defaultAction(expression, argument);}
+    public T visitDouble(DoubleLiteral expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 
-    public T visitDecimal(DecimalLiteral expression, T argument){ return defaultAction(expression, argument);}
+    public T visitDecimal(DecimalLiteral expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 
-    public T visitNull(NullLiteral expression, T argument){ return defaultAction(expression, argument);}
+    public T visitNull(NullLiteral expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 
-    public T visitBoolean(BooleanLiteral expression, T argument){ return defaultAction(expression, argument);}
+    public T visitBoolean(BooleanLiteral expression, T argument) {
+        return defaultAction(expression, argument);
+    }
     //endregion
 
     //region operational
-    public T visitAdditiveExpr(AdditiveExpression expression, T argument){ return defaultAction(expression, argument);}
+    public T visitAdditiveExpr(AdditiveExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 
-    public T visitMultiplicativeExpr(MultiplicativeExpression expression, T argument){ return defaultAction(expression, argument);}
+    public T visitMultiplicativeExpr(MultiplicativeExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 
-    public T visitAndExpr(AndExpression expression, T argument){ return defaultAction(expression, argument);}
+    public T visitAndExpr(AndExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 
-    public T visitOrExpr(OrExpression expression, T argument){ return defaultAction(expression, argument);}
+    public T visitOrExpr(OrExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 
-    public T visitNotExpr(NotExpression expression, T argument){ return defaultAction(expression, argument);}
+    public T visitNotExpr(NotExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 
-    public T visitUnaryExpr(UnaryExpression expression, T argument){ return defaultAction(expression, argument);}
+    public T visitUnaryExpr(UnaryExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 
-    public T visitRangeExpr(RangeExpression expression, T argument){ return defaultAction(expression, argument);}
+    public T visitRangeExpr(RangeExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 
-    public T visitStringConcatExpr(StringConcatExpression expression, T argument){ return defaultAction(expression, argument);}
+    public T visitStringConcatExpr(StringConcatExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 
-    public T visitComparisonExpr(ComparisonExpression expression, T argument){ return defaultAction(expression, argument);}
+    public T visitComparisonExpr(ComparisonExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
     //endregion
-    public T visitCommaExpression(CommaExpression expression, T argument){ return defaultAction(expression, argument);}
+    public T visitCommaExpression(CommaExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 
-    public T visitParenthesizedExpression(ParenthesizedExpression expression, T argument){ return defaultAction(expression, argument);}
+    public T visitParenthesizedExpression(ParenthesizedExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 
-    public T visitFunctionCall(FunctionCall expression, T argument){ return defaultAction(expression, argument);}
+    public T visitFunctionCall(FunctionCall expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 
-    public T visitInstanceOfExpression(InstanceOfExpression expression, T argument){ return defaultAction(expression, argument);}
+    public T visitInstanceOfExpression(InstanceOfExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 
 
-    public T visitIfExpression(IfExpression expression, T argument){ return defaultAction(expression, argument);}
+    public T visitIfExpression(IfExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 
-    public T visitQuantifiedExpression(QuantifiedExpression expression, T argument){ return defaultAction(expression, argument);}
+    public T visitQuantifiedExpression(QuantifiedExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 
-    public T visitQuantifiedExpressionVar(QuantifiedExpressionVar expression, T argument){ return defaultAction(expression, argument);}
+    public T visitQuantifiedExpressionVar(QuantifiedExpressionVar expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 
-    public T visitSwitchExpression(SwitchExpression expression, T argument){ return defaultAction(expression, argument);}
+    public T visitSwitchExpression(SwitchExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 
-    public T visitSwitchCaseExpression(SwitchCaseExpression expression, T argument){ return defaultAction(expression, argument);}
+    public T visitSwitchCaseExpression(SwitchCaseExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 }

@@ -1,7 +1,6 @@
 package sparksoniq.jsoniq.runtime.metadata;
 
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-import sparksoniq.jsoniq.item.Item;
 
 import java.io.Serializable;
 
