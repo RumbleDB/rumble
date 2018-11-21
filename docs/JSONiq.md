@@ -33,9 +33,10 @@ return count($x)
 
 Do instead:
 
-```count(for $x in json-file("file.json")
-         where $x.field eq "foo"
-         return $x)
+```
+count(for $x in json-file("file.json")
+      where $x.field eq "foo"
+      return $x)
 ```
 
 ### Expressions NOT pushed down to Spark yet
