@@ -5,16 +5,16 @@
 ### Installing Spark
 
 Sparksoniq requires a spark installation on ideally Linux or Mac.
-We recommend installing 2.1.1 from [this page](https://spark.apache.org/downloads.html).
-Download the file and unzip it, which will create a directory called spark-2.2.1-bin-hadoop2.7. 
+We recommend installing 2.3.0 from [this page](https://spark.apache.org/downloads.html).
+Download the file and unzip it, which will create a directory called spark-2.3.0-bin-hadoop2.7. 
 
 Move over this directory to, for example, /usr/local/bin
 
-    mv spark-2.2.1-bin-hadoop2.7 /usr/local/bin
+    mv spark-2.3.0-bin-hadoop2.7 /usr/local/bin
 
-and add /usr/local/bin/spark-2.2.1-bin-hadoop2.7 to the PATH variable
+and add /usr/local/bin/spark-2.3.0-bin-hadoop2.7 to the PATH variable
 
-    export PATH=/usr/local/bin/spark-2.2.1-bin-hadoop2.7/bin:$PATH
+    export PATH=/usr/local/bin/spark-2.3.0-bin-hadoop2.7/bin:$PATH
 
 You can test that this worked with:
 
@@ -23,7 +23,7 @@ You can test that this worked with:
 ### Installing Sparksoniq
 
 In order to run Sparksoniq, you need to download the .jar file from the [download page](https://github.com/Sparksoniq/sparksoniq/releases)
-and put it in a directory of your choice.
+and put it in a directory of your choice. For Spark 2.3.0 we recommend the .jar file with ant 4.7 (not 4.5.3).
 
 ### Creating some data set
 
@@ -44,7 +44,7 @@ Create, in the same directory as Sparksoniq, a file data.json and put the follow
 In a shell, from the directory where the sparksoniq .jar lies, type, all on one line:
 
     spark-submit --class sparksoniq.ShellStart --master local[2] --deploy-mode client
-                 jsoniq-spark-app-0.9.1-jar-with-dependencies.jar --master local[2] --result-size 1000
+                 jsoniq-spark-app.0.9.3-jar-with-dependencies-antlr-4.7.jar --master local[2] --result-size 1000
                  
 The Sparksoniq shell appears:
 
