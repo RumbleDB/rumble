@@ -1,8 +1,6 @@
 # Installing Sparksoniq
 
-We show here how to install Sparksoniq from the github repository.
-
-When the alpha release is done, many steps here will become unnecessary as the .jar will be available for download.
+We show here how to install Sparksoniq from the github repository if you wish to do so (for example, to use the latest master). However, the easiest way to use Sparksoniq is to simply download the already compiled .jar files.
 
 ## Requirements
 
