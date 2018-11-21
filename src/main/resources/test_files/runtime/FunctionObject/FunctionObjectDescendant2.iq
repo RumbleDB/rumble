@@ -1,5 +1,5 @@
 (:JIQS: ShouldRun; Output="( { "b" : 2 } )" :)
-let $o := ([1, {"b" : 2}]) return descendant-objects($o)
+descendant-objects(([1, {"b" : 2}]))
 
 (: top level array :)
 

@@ -1,5 +1,5 @@
 (:JIQS: ShouldRun; Output="" :)
-let $o := ([]) return flatten($o)
+flatten(([]))
 
 (: empty array :)
 
