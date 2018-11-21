@@ -107,10 +107,12 @@ public class Functions {
     }
 
     public static Class<? extends RuntimeIterator> getFunctionIteratorClass(FunctionCall expression, List<RuntimeIterator> arguments) {
-        SparksoniqFunctionSignature functionSignature = new SparksoniqFunctionSignature(expression.getFunctionName(), arguments.size());
+        String fnName = expression.getFunctionName();
+        int arity = arguments.size();
+        SparksoniqFunctionSignature functionSignature = new SparksoniqFunctionSignature(fnName, arity);
         if(buildInFunctions.containsKey(functionSignature))
             return buildInFunctions.get(functionSignature);
-        throw new UnknownFunctionCallException(new IteratorMetadata(expression.getMetadata()));
+        throw new UnknownFunctionCallException(fnName, arity, new IteratorMetadata(expression.getMetadata()));
     }
 
     public static class FunctionNames {

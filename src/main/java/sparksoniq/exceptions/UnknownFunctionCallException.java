@@ -24,8 +24,9 @@ import sparksoniq.exceptions.codes.ErrorCodes;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class UnknownFunctionCallException extends SparksoniqRuntimeException {
-    public UnknownFunctionCallException(IteratorMetadata iteratorMetadata) {
-        super("Static error; The expanded QName and number of arguments in a static function call do not match the name and arity of a function signature in the static context.",
+    public UnknownFunctionCallException(String fnName, int arity, IteratorMetadata iteratorMetadata) {
+        super("Undefined function call; Entered function name and arity doesn't match a defined function signature: \"" +
+                fnName + "\" called with " + arity + " parameters.",
                 ErrorCodes.InvalidFunctionCallErrorCode, iteratorMetadata.getExpressionMetadata());
     }
 }
