@@ -58,5 +58,11 @@ public class ErrorCodes {
 
     public static final String CliErrorCode = "SPRKIQ0001";
 
+    public static final String ZeroOrOneErrorCode  = "FORG0003";
+
+    public static final String OneOrMoreErrorCode  = "FORG0004";
+
+    public static final String ExactlyOneErrorCode  = "FORG0005";
+
 
 }

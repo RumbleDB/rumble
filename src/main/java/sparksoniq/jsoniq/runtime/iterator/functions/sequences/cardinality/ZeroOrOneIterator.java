@@ -1,9 +1,9 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.sequences.cardinality;
 
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.SequenceExceptionZeroOrOne;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
@@ -40,7 +40,7 @@ public class ZeroOrOneIterator extends CardinalityFunctionIterator {
             } else {
                 _nextResult = sequenceIterator.next();
                 if (sequenceIterator.hasNext()) {
-                    throw new IllegalArgumentException("fn:zero-or-one() called with a sequence containing more than one item");
+                    throw new SequenceExceptionZeroOrOne("fn:zero-or-one() called with a sequence containing more than one item", getMetadata());
                 } else {
                     this._hasNext = true;
                 }
@@ -54,7 +54,7 @@ public class ZeroOrOneIterator extends CardinalityFunctionIterator {
                 this._hasNext = true;
                 _nextResult = sequenceIterator.getRDD().collect().get(0);
             } else if (count > 1) {
-                throw new IllegalArgumentException("fn:zero-or-one() called with a sequence containing more than one item");
+                throw new SequenceExceptionZeroOrOne("fn:zero-or-one() called with a sequence containing more than one item", getMetadata());
             }
         }
     }

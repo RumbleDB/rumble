@@ -1,6 +1,7 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.sequences.cardinality;
 
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.SequenceExceptionOneOrMore;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -27,7 +28,7 @@ public class OneOrMoreIterator extends CardinalityFunctionIterator {
         _iterator = this._children.get(0);
         _iterator.open(context);
         if (!_iterator.hasNext()) {
-            throw new IllegalArgumentException("fn:one-or-more() called with a sequence containing less than 1 item");
+            throw new SequenceExceptionOneOrMore("fn:one-or-more() called with a sequence containing less than 1 item", getMetadata());
         } else {
             if (!_iterator.isRDD()) {
                 setNextLocalResult();
