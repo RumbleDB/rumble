@@ -1,0 +1,3 @@
+(:JIQS: ShouldCrash; ErrorCode=""; ErrorMetadata="" :)
+zero-or-one(json-file("./src/main/resources/queries/multiLine.json"))
+

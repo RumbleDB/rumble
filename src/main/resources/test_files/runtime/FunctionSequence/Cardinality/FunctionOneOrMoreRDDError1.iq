@@ -1,0 +1,3 @@
+(:JIQS: ShouldCrash; ErrorCode=""; ErrorMetadata="" :)
+one-or-more(json-file("./src/main/resources/queries/emptyFile.json"))
+

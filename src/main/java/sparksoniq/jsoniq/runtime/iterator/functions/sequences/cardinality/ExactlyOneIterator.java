@@ -31,17 +31,27 @@ public class ExactlyOneIterator extends CardinalityFunctionIterator {
         super.open(context);
 
         RuntimeIterator sequenceIterator = this._children.get(0);
-        sequenceIterator.open(context);
-        if (!sequenceIterator.hasNext()) {
-            throw new IllegalArgumentException("fn:exactly-one() called with a sequence that doesn't contain exactly one item");
-        } else {
-            _nextResult = sequenceIterator.next();
-            if (sequenceIterator.hasNext()) {
+
+        if (!sequenceIterator.isRDD()) {
+            sequenceIterator.open(context);
+            if (!sequenceIterator.hasNext()) {
                 throw new IllegalArgumentException("fn:exactly-one() called with a sequence that doesn't contain exactly one item");
             } else {
+                _nextResult = sequenceIterator.next();
+                if (sequenceIterator.hasNext()) {
+                    throw new IllegalArgumentException("fn:exactly-one() called with a sequence that doesn't contain exactly one item");
+                } else {
+                    this._hasNext = true;
+                }
+            }
+            sequenceIterator.close();
+        } else {
+            if (sequenceIterator.getRDD().count() == 1) {
                 this._hasNext = true;
+                _nextResult = sequenceIterator.getRDD().collect().get(0);
+            } else {
+                throw new IllegalArgumentException("fn:exactly-one() called with a sequence that doesn't contain exactly one item");
             }
         }
-        sequenceIterator.close();
     }
 }

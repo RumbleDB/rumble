@@ -12,7 +12,9 @@ import java.util.List;
 public class OneOrMoreIterator extends CardinalityFunctionIterator {
 
     private RuntimeIterator _iterator;
-    private Item _nextResult;
+    private Item _nextLocalResult;
+    private List<Item> _rddResults;
+    private int _rddResultIndex;
 
     public OneOrMoreIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
@@ -27,29 +29,43 @@ public class OneOrMoreIterator extends CardinalityFunctionIterator {
         if (!_iterator.hasNext()) {
             throw new IllegalArgumentException("fn:one-or-more() called with a sequence containing less than 1 item");
         } else {
-            setNextResult();
+            if (!_iterator.isRDD()) {
+                setNextLocalResult();
+            }
         }
     }
 
     @Override
     public Item next() {
         if (this._hasNext) {
-            Item result = _nextResult;  // save the result to be returned
-            setNextResult();            // calculate and store the next result
-            return result;
+            if (!_iterator.isRDD()) {
+                Item result = _nextLocalResult;  // save the result to be returned
+                setNextLocalResult();            // calculate and store the next result
+                return result;
+            } else {
+                if (_rddResults == null) {
+                    _rddResults = _iterator.getRDD().collect();
+                    _rddResultIndex = 0;
+                }
+                Item result =_rddResults.get(_rddResultIndex++);
+                if (_rddResultIndex == _rddResults.size()) {
+                    this._hasNext = false;
+                }
+                return result;
+            }
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " ONE-OR-MORE function",
                 getMetadata());
     }
 
-    public void setNextResult() {
-        _nextResult = null;
+    public void setNextLocalResult() {
+        _nextLocalResult = null;
 
         if (_iterator.hasNext()) {
-            _nextResult = _iterator.next();
+            _nextLocalResult = _iterator.next();
         }
 
-        if (_nextResult == null) {
+        if (_nextLocalResult == null) {
             this._hasNext = false;
             _iterator.close();
         } else {

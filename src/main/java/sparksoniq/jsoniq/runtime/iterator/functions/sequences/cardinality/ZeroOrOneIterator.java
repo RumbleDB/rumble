@@ -32,17 +32,30 @@ public class ZeroOrOneIterator extends CardinalityFunctionIterator {
         super.open(context);
 
         RuntimeIterator sequenceIterator = this._children.get(0);
-        sequenceIterator.open(context);
-        if (!sequenceIterator.hasNext()) {
-            this._hasNext = false;
-        } else {
-            _nextResult = sequenceIterator.next();
-            if (sequenceIterator.hasNext()) {
-                throw new IllegalArgumentException("fn:zero-or-one() called with a sequence containing more than one item");
+
+        if (!sequenceIterator.isRDD()) {
+            sequenceIterator.open(context);
+            if (!sequenceIterator.hasNext()) {
+                this._hasNext = false;
             } else {
+                _nextResult = sequenceIterator.next();
+                if (sequenceIterator.hasNext()) {
+                    throw new IllegalArgumentException("fn:zero-or-one() called with a sequence containing more than one item");
+                } else {
+                    this._hasNext = true;
+                }
+            }
+            sequenceIterator.close();
+        } else {
+            long count = sequenceIterator.getRDD().count();
+            if (count == 0) {
+                this._hasNext = false;
+            } else if (count == 1) {
                 this._hasNext = true;
+                _nextResult = sequenceIterator.getRDD().collect().get(0);
+            } else if (count > 1) {
+                throw new IllegalArgumentException("fn:zero-or-one() called with a sequence containing more than one item");
             }
         }
-        sequenceIterator.close();
     }
 }
