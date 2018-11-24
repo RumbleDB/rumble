@@ -1,4 +1,4 @@
-package sparksoniq.jsoniq.runtime.iterator.functions.sequences;
+package sparksoniq.jsoniq.runtime.iterator.functions.sequences.general;
 
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.BooleanItem;

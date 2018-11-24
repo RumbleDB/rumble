@@ -1,16 +1,17 @@
-package sparksoniq.jsoniq.runtime.iterator.functions.sequences;
+package sparksoniq.jsoniq.runtime.iterator.functions.sequences.general;
 
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnexpectedTypeException;
-import sparksoniq.jsoniq.item.*;
+import sparksoniq.jsoniq.item.ArrayItem;
+import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class SubsequenceFunctionIterator extends LocalFunctionCallIterator {
@@ -36,7 +37,7 @@ public class SubsequenceFunctionIterator extends LocalFunctionCallIterator {
         RuntimeIterator lengthIterator;
         Item lengthItem = null;
         if (this._children.size() == 3) {
-             lengthIterator = this._children.get(2);
+            lengthIterator = this._children.get(2);
 
             lengthIterator.open(context);
             if (!lengthIterator.hasNext()) {

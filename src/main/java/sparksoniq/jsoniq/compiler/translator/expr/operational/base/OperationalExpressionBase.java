@@ -124,7 +124,7 @@ public abstract class OperationalExpressionBase extends Expression {
         VC_GT,
         VC_GE,
 
-        // General Comparison -- sequences are compared
+        // general Comparison -- sequences are compared
         GC_EQ,
         GC_NE,
         GC_LT,
