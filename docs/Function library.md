@@ -100,6 +100,8 @@ returns 100.
 members([1 to 100])
 ```
 
+This function returns the members as an array, but not recursively, i.e., nested arrays are not unboxed.
+
 Returns the first 100 integers as a sequence.  Also works on an input sequence, in a distributive way.
 
 ### flatten
@@ -107,6 +109,8 @@ Returns the first 100 integers as a sequence.  Also works on an input sequence, 
 ```
 flatten(([1, 2], [[3, 4], [5, 6]], [7, [8, 9]]))
 ```
+
+Unboxes arrays recursively, stopping the recursion when any other item is reached (object or atomic). Also works on an input sequence, in a distributive way.
 
 Returns (1, 2, 3, 4, 5, 6, 7, 8, 9, 10).
 
