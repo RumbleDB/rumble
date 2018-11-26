@@ -31,9 +31,6 @@ public abstract class AggregateFunctionIterator extends LocalFunctionCallIterato
     protected AggregateFunctionIterator(List<RuntimeIterator> arguments,
                                         AggregateFunctionOperator operator, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
-        if (arguments.size() != 1)
-            throw new SparksoniqRuntimeException("Incorrect number of arguments for aggregate function; " +
-                    "Only one sequence argument is allowed");
         AggregateFunctionOperator _operator = operator;
     }
 
