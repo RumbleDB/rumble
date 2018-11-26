@@ -20,7 +20,22 @@ let $x := (1, 2, 3, 4)
 return count($x)
 ```
 
-returns 4
+returns 4.
+
+Count calls are pushed down to Spark, so this works on billions of items as well:
+
+```
+count(json-file("file.json"))
+```
+
+```
+count(
+  for $i in json-file("file.json")
+  where $i.foo eq "bar"
+  return $i
+)
+```
+
 
 ### min
 
