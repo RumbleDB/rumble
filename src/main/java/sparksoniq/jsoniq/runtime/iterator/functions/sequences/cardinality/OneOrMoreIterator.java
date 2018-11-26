@@ -27,6 +27,7 @@ public class OneOrMoreIterator extends CardinalityFunctionIterator {
 
         _iterator = this._children.get(0);
         _iterator.open(context);
+        // for both non-RDD and RDD cases, empty sequence causes an exception
         if (!_iterator.hasNext()) {
             throw new SequenceExceptionOneOrMore("fn:one-or-more() called with a sequence containing less than 1 item", getMetadata());
         } else {

@@ -1,5 +1,7 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.sequences.cardinality;
 
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.storage.StorageLevel;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SequenceExceptionZeroOrOne;
 import sparksoniq.jsoniq.item.Item;
@@ -47,12 +49,14 @@ public class ZeroOrOneIterator extends CardinalityFunctionIterator {
             }
             sequenceIterator.close();
         } else {
-            long count = sequenceIterator.getRDD().count();
+            JavaRDD<Item> rdd = sequenceIterator.getRDD();
+            rdd.persist(StorageLevel.MEMORY_ONLY());
+            long count = rdd.count();
             if (count == 0) {
                 this._hasNext = false;
             } else if (count == 1) {
                 this._hasNext = true;
-                _nextResult = sequenceIterator.getRDD().collect().get(0);
+                _nextResult = rdd.collect().get(0);
             } else if (count > 1) {
                 throw new SequenceExceptionZeroOrOne("fn:zero-or-one() called with a sequence containing more than one item", getMetadata());
             }

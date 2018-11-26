@@ -1,5 +1,7 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.sequences.cardinality;
 
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.storage.StorageLevel;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SequenceExceptionExactlyOne;
 import sparksoniq.jsoniq.item.Item;
@@ -47,9 +49,11 @@ public class ExactlyOneIterator extends CardinalityFunctionIterator {
             }
             sequenceIterator.close();
         } else {
-            if (sequenceIterator.getRDD().count() == 1) {
+            JavaRDD<Item> rdd = sequenceIterator.getRDD();
+            rdd.persist(StorageLevel.MEMORY_ONLY());
+            if (rdd.count() == 1) {
                 this._hasNext = true;
-                _nextResult = sequenceIterator.getRDD().collect().get(0);
+                _nextResult = rdd.collect().get(0);
             } else {
                 throw new SequenceExceptionExactlyOne("fn:exactly-one() called with a sequence that doesn't contain exactly one item", getMetadata());
             }
