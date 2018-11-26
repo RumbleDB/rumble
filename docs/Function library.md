@@ -57,7 +57,32 @@ returns 2.5
 keys({"foo" : "bar", "bar" : "foobar"})
 ```
 
-returns ("foo", "bar")
+returns ("foo", "bar").  Also works on an input sequence, eliminating duplicates
+
+### project
+
+```
+project({"foo" : "bar", "bar" : "foobar", "foobar" : "foo" }, ("foo", "bar"))
+```
+
+returns the object {"foo" : "bar", "bar" : "foobar"}. Also works on an input sequence, in a distributive way.
+
+### remove-keys
+
+```
+remove-keys({"foo" : "bar", "bar" : "foobar", "foobar" : "foo" }, ("foo", "bar"))
+```
+
+returns the object {"foobar" : "foo"}. Also works on an input sequence, in a distributive way.
+
+### values
+
+```
+values({"foo" : "bar", "bar" : "foobar"})
+```
+
+returns ("bar", "foobar").  Also works on an input sequence, in a distributive way.
+
 
 ## Array functions
 
@@ -75,7 +100,23 @@ returns 100.
 members([1 to 100])
 ```
 
-Returns the first 100 integers as a sequence.
+Returns the first 100 integers as a sequence.  Also works on an input sequence, in a distributive way.
+
+### flatten
+
+```
+flatten(([1, 2], [[3, 4], [5, 6]], [7, [8, 9]]))
+```
+
+Returns (1, 2, 3, 4, 5, 6, 7, 8, 9, 10).
+
+## Atomic functions
+
+```
+null()
+```
+
+Returns a JSON null (also available as the literal null).
 
 ## Mathematic functions
 
@@ -88,9 +129,29 @@ abs(-2)
 returns 2.0
 
 ### acos
+
+```
+acos(1)
+```
+
 ### asin
+
+```
+asin(1)
+```
+
 ### atan
+
+```
+atan(1)
+```
+
 ### atan2
+
+```
+atan2(1)
+```
+
 
 ### ceiling
 
@@ -102,9 +163,22 @@ returns 3.0
 
 ### cos
 
+```
+cos(pi())
+```
+
 ### exp
 
+```
+exp(10)
+```
+
 ### exp10
+
+```
+exp10(10)
+```
+
 
 
 ### floor
@@ -117,7 +191,17 @@ returns 2.0
 
 ### log
 
+```
+log(100)
+```
+
+
 ### log10
+
+```
+log10(100)
+```
+
 
 ### pow
 
@@ -143,9 +227,34 @@ returns 2.23
 
 ### round-half-to-even
 
+
+```
+round-half-to-even(2.2345, 2), round-half-to-even(2.2345)
+```
+
+### sqrt
+
+```
+sqrt(4)
+```
+
+returns 100.0
+
+
+
 ### sin
 
+
+```
+sin(pi())
+```
+
 ### tan
+
+
+```
+tan(pi())
+```
 
 ## String functions
 
