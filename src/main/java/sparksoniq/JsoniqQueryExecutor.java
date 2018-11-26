@@ -127,11 +127,12 @@ public class JsoniqQueryExecutor {
             JavaRDD<Item> rdd = result.getRDD();
             JavaRDD<String> output = rdd.map(o -> o.serialize());
             String localOutput = "";
-            if (output.count() == 0) {
+            long resultCount = output.count();
+            if (resultCount == 0) {
                 // do nothing, empty output
-            } else if (output.count() == 1) {
+            } else if (resultCount == 1) {
                 localOutput = output.collect().get(0);
-            } else if (output.count() > 1) {
+            } else if (resultCount > 1) {
                 StringBuilder sb = new StringBuilder();
                 sb.append("(");
                 for (String item : SparkContextManager.LIMIT_COLLECT() ?
