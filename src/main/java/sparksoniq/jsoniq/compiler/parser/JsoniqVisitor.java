@@ -416,6 +416,18 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitAtomicType(JsoniqParser.AtomicTypeContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#keyWordBoolean}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitKeyWordBoolean(JsoniqParser.KeyWordBooleanContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#nCNameOrKeyWordBoolean}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitNCNameOrKeyWordBoolean(JsoniqParser.NCNameOrKeyWordBooleanContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#pairConstructor}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

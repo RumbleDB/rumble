@@ -27,6 +27,7 @@ import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayDescendantFuncti
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayFlattenFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayMembersFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArraySizeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.booleans.BooleanFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.object.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.*;
@@ -53,6 +54,8 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(JSON_FILE, 2), ParseJsonFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(PARALLELIZE, 1), ParallelizeFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(COUNT, 1), CountFunctionIterator.class);
+
+        buildInFunctions.put(new SparksoniqFunctionSignature(BOOLEAN, 1), BooleanFunctionIterator.class);
 
         buildInFunctions.put(new SparksoniqFunctionSignature(MIN, 1), MinFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(MAX, 1), MaxFunctionIterator.class);
@@ -130,6 +133,13 @@ public class Functions {
          * function that returns the length of a sequence
          */
         public static final String COUNT = "count";
+
+
+        /**
+         * function that returns the effective boolean value of the given parameter
+         */
+        public static final String BOOLEAN = "boolean";
+
 
         /**
          * function that returns the minimum of a sequence
