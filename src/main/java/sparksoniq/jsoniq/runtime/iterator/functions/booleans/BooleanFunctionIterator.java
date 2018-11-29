@@ -1,5 +1,6 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.booleans;
 
+import sparksoniq.exceptions.InvalidArgumentTypeException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.BooleanItem;
 import sparksoniq.jsoniq.item.Item;
@@ -24,6 +25,12 @@ public class BooleanFunctionIterator extends LocalFunctionCallIterator {
             Item result;
             if (iterator.hasNext()) {
                 Item item = iterator.next();
+                if (iterator.hasNext()) {
+                    if (item.isAtomic()) {
+                        throw new InvalidArgumentTypeException("Only the sequences with non-atomic first item can be evaluated for effective boolean value.", getMetadata());
+                    }
+                }
+
                 result = new BooleanItem(Item.getEffectiveBooleanValue(item), ItemMetadata.fromIteratorMetadata(getMetadata()));
             } else {
                 result = new BooleanItem(false, ItemMetadata.fromIteratorMetadata(getMetadata()));
