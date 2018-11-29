@@ -27,7 +27,7 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkContextManager;
-import sparksoniq.spark.iterator.SparkRuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.SparkRuntimeIterator;
 import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
 import org.apache.spark.api.java.JavaRDD;
 

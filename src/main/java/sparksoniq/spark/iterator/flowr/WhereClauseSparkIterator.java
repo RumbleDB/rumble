@@ -24,7 +24,7 @@ import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.spark.closures.WhereClauseClosure;
-import sparksoniq.spark.tuple.FlworTuple;
+import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
 import org.apache.spark.api.java.JavaRDD;
 

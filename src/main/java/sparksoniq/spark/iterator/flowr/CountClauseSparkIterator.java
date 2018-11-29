@@ -7,7 +7,7 @@ import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.spark.closures.CountClauseClosure;
 import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
-import sparksoniq.spark.tuple.FlworTuple;
+import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.util.Collections;
 

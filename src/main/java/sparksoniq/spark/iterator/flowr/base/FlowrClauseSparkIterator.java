@@ -24,7 +24,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.flowr.FLWOR_CLAUSES;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.spark.tuple.FlworTuple;
+import sparksoniq.jsoniq.tuple.FlworTuple;
 import org.apache.spark.api.java.JavaRDD;
 
 import java.io.Serializable;

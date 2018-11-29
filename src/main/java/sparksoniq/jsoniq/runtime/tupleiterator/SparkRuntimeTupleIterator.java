@@ -17,22 +17,21 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.spark.iterator;
+ package sparksoniq.jsoniq.runtime.tupleiterator;
 
-import sparksoniq.io.json.JiqsItemParser;
+import org.apache.spark.api.java.JavaRDD;
 import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.io.json.JiqsItemParser;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkContextManager;
-import org.apache.spark.api.java.JavaRDD;
+import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.util.List;
 
-public abstract class SparkRuntimeIterator extends RuntimeIterator {
+public abstract class SparkRuntimeTupleIterator extends RuntimeTupleIterator {
 
-    protected SparkRuntimeIterator(List<RuntimeIterator> children, IteratorMetadata iteratorMetadata) {
+    protected SparkRuntimeTupleIterator(List<RuntimeTupleIterator> children, IteratorMetadata iteratorMetadata) {
         super(children, iteratorMetadata);
         this.parser = new JiqsItemParser();
     }
@@ -56,9 +55,9 @@ public abstract class SparkRuntimeIterator extends RuntimeIterator {
     }
 
     @Override
-    public Item next(){
+    public FlworTuple next(){
         if(!this._isOpen)
-            throw new IteratorFlowException("Runtime iterator is not open", getMetadata());
+            throw new IteratorFlowException("Runtime tuple iterator is not open", getMetadata());
 
         if(result == null){
             currentResultIndex = 0;
@@ -71,18 +70,18 @@ public abstract class SparkRuntimeIterator extends RuntimeIterator {
         }
 
         if(!(currentResultIndex <= result.size() - 1))
-             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.getClass().getSimpleName(),
+             throw new IteratorFlowException(RuntimeTupleIterator.FLOW_EXCEPTION_MESSAGE + this.getClass().getSimpleName(),
                      getMetadata());
         if(currentResultIndex == result.size() - 1)
              this._hasNext = false;
 
-        Item item = result.get(currentResultIndex);
+        FlworTuple tuple = result.get(currentResultIndex);
         currentResultIndex++;
-        return item;
+        return tuple;
     }
 
     protected JiqsItemParser parser;
-    protected JavaRDD<Item> _rdd;
-    protected List<Item> result = null;
+    protected JavaRDD<FlworTuple> _rdd;
+    protected List<FlworTuple> result = null;
     protected int currentResultIndex = 0;
 }

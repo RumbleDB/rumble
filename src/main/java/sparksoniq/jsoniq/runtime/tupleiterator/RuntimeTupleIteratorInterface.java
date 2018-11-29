@@ -17,16 +17,17 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.spark.iterator.function;
+ package sparksoniq.jsoniq.runtime.tupleiterator;
 
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
-import sparksoniq.jsoniq.runtime.iterator.SparkRuntimeIterator;
+import sparksoniq.semantics.DynamicContext;
+import sparksoniq.jsoniq.tuple.FlworTuple;
 
-import java.util.List;
+import java.io.Serializable;
 
-public abstract class SparkFunctionCallIterator extends SparkRuntimeIterator {
-    protected SparkFunctionCallIterator(List<RuntimeIterator> parameters, IteratorMetadata iteratorMetadata) {
-        super(parameters, iteratorMetadata);
-    }
+public interface RuntimeTupleIteratorInterface extends Serializable {
+    void open(DynamicContext context);
+    void close();
+    void reset(DynamicContext context);
+    boolean hasNext();
+    FlworTuple next();
 }

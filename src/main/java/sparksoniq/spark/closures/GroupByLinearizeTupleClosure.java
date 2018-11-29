@@ -20,8 +20,8 @@
  package sparksoniq.spark.closures;
 
 import sparksoniq.jsoniq.item.Item;
-import sparksoniq.spark.tuple.FlworKey;
-import sparksoniq.spark.tuple.FlworTuple;
+import sparksoniq.jsoniq.tuple.FlworKey;
+import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
 import org.apache.spark.api.java.function.Function;
 import scala.Tuple2;

@@ -27,8 +27,8 @@ import sparksoniq.spark.closures.GroupByLinearizeTupleClosure;
 import sparksoniq.spark.closures.GroupByToPairMapClosure;
 import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
 import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
-import sparksoniq.spark.tuple.FlworKey;
-import sparksoniq.spark.tuple.FlworTuple;
+import sparksoniq.jsoniq.tuple.FlworKey;
+import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.util.List;
 

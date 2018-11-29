@@ -21,7 +21,7 @@ package sparksoniq.spark.closures;
 
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
 import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
-import sparksoniq.spark.tuple.FlworKey;
+import sparksoniq.jsoniq.tuple.FlworKey;
 
 import java.io.Serializable;
 import java.util.Comparator;
