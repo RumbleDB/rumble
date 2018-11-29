@@ -1,6 +1,6 @@
 # Function library
 
-We list here the functions supported by Sparksoniq, and introduce them by means of examples. Highly detailed specifications can be found in the [underlying W3C standard](https://www.w3.org/TR/xpath-functions-30/#func-floor), unless the function is marked as specific to JSON or Sparksoniq.
+We list here the functions supported by Sparksoniq, and introduce them by means of examples. Highly detailed specifications can be found in the [underlying W3C standard](https://www.w3.org/TR/xpath-functions-30/#func-floor), unless the function is marked as specific to JSON or Sparksoniq, in which case it can be found [here](http://www.jsoniq.org/docs/JSONiq/html-single/index.html#idm34604304).
 
 ## Aggregation functions
 
@@ -74,6 +74,10 @@ keys({"foo" : "bar", "bar" : "foobar"})
 
 returns ("foo", "bar").  Also works on an input sequence, eliminating duplicates
 
+```
+keys(({"foo" : "bar", "bar" : "foobar"}, {"foo": "bar2"}))
+```
+
 ### project
 
 ```
@@ -81,6 +85,11 @@ project({"foo" : "bar", "bar" : "foobar", "foobar" : "foo" }, ("foo", "bar"))
 ```
 
 returns the object {"foo" : "bar", "bar" : "foobar"}. Also works on an input sequence, in a distributive way.
+
+```
+project(({"foo" : "bar", "bar" : "foobar", "foobar" : "foo" }, {"foo": "bar2"}), ("foo", "bar"))
+```
+
 
 ### remove-keys
 
@@ -90,6 +99,10 @@ remove-keys({"foo" : "bar", "bar" : "foobar", "foobar" : "foo" }, ("foo", "bar")
 
 returns the object {"foobar" : "foo"}. Also works on an input sequence, in a distributive way.
 
+```
+remove-keys(({"foo" : "bar", "bar" : "foobar", "foobar" : "foo" }, {"foo": "bar2"}), ("foo", "bar"))
+```
+
 ### values
 
 ```
@@ -97,6 +110,10 @@ values({"foo" : "bar", "bar" : "foobar"})
 ```
 
 returns ("bar", "foobar").  Also works on an input sequence, in a distributive way.
+
+```
+values(({"foo" : "bar", "bar" : "foobar"}, {"foo" : "bar2"}))
+```
 
 
 ## Array functions
@@ -107,7 +124,11 @@ returns ("bar", "foobar").  Also works on an input sequence, in a distributive w
 size([1 to 100])
 ```
 
-returns 100.
+returns 100. Also works if the empty sequence is supplied, in which case it returns the empty sequence.
+
+```
+size(())
+```
 
 ### members
 
@@ -118,6 +139,11 @@ members([1 to 100])
 This function returns the members as an array, but not recursively, i.e., nested arrays are not unboxed.
 
 Returns the first 100 integers as a sequence.  Also works on an input sequence, in a distributive way.
+
+```
+members(([1 to 100], [ 300 to 1000 ]))
+```
+
 
 ### flatten
 
