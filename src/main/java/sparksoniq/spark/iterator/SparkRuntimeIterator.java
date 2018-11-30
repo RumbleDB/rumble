@@ -64,11 +64,10 @@ public abstract class SparkRuntimeIterator extends RuntimeIterator {
 
         if(result == null){
             currentResultIndex = 0;
-            this._rdd = this.getRDD().persist(StorageLevel.MEMORY_ONLY());
+            this._rdd = this.getRDD();
             if(SparkContextManager.LIMIT_COLLECT()) {
-                long count = _rdd.count();
                 result = _rdd.take(SparkContextManager.COLLECT_ITEM_LIMIT);
-                if (count > SparkContextManager.COLLECT_ITEM_LIMIT) {
+                if (result.size() == SparkContextManager.COLLECT_ITEM_LIMIT) {
                     ShellStart.terminal.output("\nWarning: Results have been truncated to: " + SparkContextManager.COLLECT_ITEM_LIMIT
                             + " items. This value can be configured with the --result-size parameter at startup.\n");
                 }
