@@ -25,6 +25,7 @@ import sparksoniq.io.json.StringToItemMapper;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkContextManager;
 
 import javax.naming.OperationNotSupportedException;
@@ -33,6 +34,18 @@ import java.util.List;
 public class ParseJsonFunctionIterator extends SparkFunctionCallIterator {
     public ParseJsonFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
+    }
+
+    @Override
+    public void open(DynamicContext context) {
+        super.open(context);
+
+        long resultSize = this.getRDD().count();
+        if (resultSize == 0) {
+            this._hasNext = false;
+        } else {
+            this._hasNext = true;
+        }
     }
 
     @Override
