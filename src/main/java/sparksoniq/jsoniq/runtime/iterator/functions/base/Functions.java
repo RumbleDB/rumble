@@ -36,6 +36,9 @@ import sparksoniq.jsoniq.runtime.iterator.functions.numerics.trigonometric.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.cardinality.ExactlyOneIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.cardinality.OneOrMoreIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.cardinality.ZeroOrOneIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.value.DistinctValuesFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.value.IndexOfFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.value.DeepEqualFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.ConcatFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.StringJoinFunction;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.SubstringFunctionIterator;
@@ -70,6 +73,9 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(ONEORMORE, 1), OneOrMoreIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(EXACTLYONE, 1), ExactlyOneIterator.class);
 
+        buildInFunctions.put(new SparksoniqFunctionSignature(DISTINCTVALUES, 1), DistinctValuesFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(INDEXOF, 2), IndexOfFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(DEEPEQUAL, 2), DeepEqualFunctionIterator.class);
 
         buildInFunctions.put(new SparksoniqFunctionSignature(ABS, 1), AbsFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(CEILING, 1), CeilingFunctionIterator.class);
@@ -180,6 +186,19 @@ public class Functions {
          */
         public static final String EXACTLYONE = "exactly-one";
 
+
+        /**
+         * function that returns the values that appear in a sequence, with duplicates eliminated
+         */
+        public static final String DISTINCTVALUES = "distinct-values";
+        /**
+         * function that returns indices of items that are equal to the search parameter
+         */
+        public static final String INDEXOF = "index-of";
+        /**
+         * function that returns whether two sequences are deep-equal to each other
+         */
+        public static final String DEEPEQUAL = "deep-equal";
 
         /**
          * function that returns the absolute value of the arg
