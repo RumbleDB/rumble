@@ -58,5 +58,7 @@ public class ErrorCodes {
 
     public static final String CliErrorCode = "SPRKIQ0001";
 
+    public static final String InvalidArgumentType = "FORG0006";
+
 
 }

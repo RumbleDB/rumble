@@ -1,8 +1,8 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate;
 
+import sparksoniq.exceptions.InvalidArgumentTypeException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
-import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemComparatorForSequences;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -45,13 +45,13 @@ public class MinFunctionIterator extends AggregateFunctionIterator {
                 try {
                     return Collections.min(results, comparator);
                 } catch (SparksoniqRuntimeException e) {
-                    throw new UnexpectedTypeException("Min expression input error. Input has to be non-null atomics of matching types: " + e.getMessage(), getMetadata());
+                    throw new InvalidArgumentTypeException("Min expression input error. Input has to be non-null atomics of matching types: " + e.getMessage(), getMetadata());
                 }
             } else {
                 try {
                     return _iterator.getRDD().min(comparator);
                 } catch (SparksoniqRuntimeException e) {
-                    throw new UnexpectedTypeException("Min expression input error. Input has to be non-null atomics of matching types: " + e.getMessage(), getMetadata());
+                    throw new InvalidArgumentTypeException("Min expression input error. Input has to be non-null atomics of matching types: " + e.getMessage(), getMetadata());
                 }
             }
         } else
