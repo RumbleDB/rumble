@@ -50,10 +50,10 @@ public class ExactlyOneIterator extends CardinalityFunctionIterator {
             sequenceIterator.close();
         } else {
             JavaRDD<Item> rdd = sequenceIterator.getRDD();
-            rdd.persist(StorageLevel.MEMORY_ONLY());
-            if (rdd.count() == 1) {
+            List<Item> results = rdd.take(2);
+            if (results.size() == 1) {
                 this._hasNext = true;
-                _nextResult = rdd.collect().get(0);
+                _nextResult = results.get(0);
             } else {
                 throw new SequenceExceptionExactlyOne("fn:exactly-one() called with a sequence that doesn't contain exactly one item", getMetadata());
             }
