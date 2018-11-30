@@ -1,7 +1,7 @@
-// Generated from /home/can/Project/sparksoniq/src/main/java/sparksoniq/jsoniq/compiler/parser/Jsoniq.g4 by ANTLR 4.6
+// Generated from ./src/main/java/sparksoniq/jsoniq/compiler/parser/Jsoniq.g4 by ANTLR 4.5.3
 
-	// Java header
-	package sparksoniq.jsoniq.compiler.parser;
+// Java header
+package sparksoniq.jsoniq.compiler.parser;
 
 import org.antlr.v4.runtime.atn.*;
 import org.antlr.v4.runtime.dfa.DFA;
@@ -14,7 +14,7 @@ import java.util.ArrayList;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class JsoniqParser extends Parser {
-	static { RuntimeMetaData.checkVersion("4.6", RuntimeMetaData.VERSION); }
+	static { RuntimeMetaData.checkVersion("4.5.3", RuntimeMetaData.VERSION); }
 
 	protected static final DFA[] _decisionToDFA;
 	protected static final PredictionContextCache _sharedContextCache =
@@ -58,7 +58,7 @@ public class JsoniqParser extends Parser {
 		RULE_contextItemExpr = 56, RULE_orderedExpr = 57, RULE_unorderedExpr = 58, 
 		RULE_functionCall = 59, RULE_argumentList = 60, RULE_argument = 61, RULE_sequenceType = 62, 
 		RULE_objectConstructor = 63, RULE_itemType = 64, RULE_jSONItemTest = 65, 
-		RULE_atomicType = 66, RULE_keyWordBoolean = 67, RULE_nCNameOrKeyWordBoolean = 68, 
+		RULE_keyWordBoolean = 66, RULE_atomicType = 67, RULE_nCNameOrKeyWordBoolean = 68, 
 		RULE_pairConstructor = 69, RULE_arrayConstructor = 70, RULE_uriLiteral = 71, 
 		RULE_keyWords = 72, RULE_stringLiteral = 73;
 	public static final String[] ruleNames = {
@@ -75,7 +75,7 @@ public class JsoniqParser extends Parser {
 		"predicate", "objectLookup", "primaryExpr", "varRef", "parenthesizedExpr", 
 		"contextItemExpr", "orderedExpr", "unorderedExpr", "functionCall", "argumentList", 
 		"argument", "sequenceType", "objectConstructor", "itemType", "jSONItemTest", 
-		"atomicType", "keyWordBoolean", "nCNameOrKeyWordBoolean", "pairConstructor", 
+		"keyWordBoolean", "atomicType", "nCNameOrKeyWordBoolean", "pairConstructor", 
 		"arrayConstructor", "uriLiteral", "keyWords", "stringLiteral"
 	};
 
@@ -88,8 +88,8 @@ public class JsoniqParser extends Parser {
 		"'{'", "'}'", "'$'", "'|'", "'*'", "'eq'", "'ne'", "'lt'", "'le'", "'gt'", 
 		"'ge'", "'!='", "'<'", "'<='", "'>'", "'>='", "'||'", "'+'", "'-'", "'div'", 
 		"'idiv'", "'mod'", "'?'", "'!'", "'['", "']'", "'.'", "'$$'", "'{|'", 
-		"'|}'", "'item'", "'object'", "'array'", "'atomic'", "'string'", "'integer'", 
-		"'decimal'", "'double'", "'boolean'", null, null, null, "'null'", "'for'", 
+		"'|}'", "'item'", "'object'", "'array'", "'boolean'", "'atomic'", "'string'", 
+		"'integer'", "'decimal'", "'double'", null, null, null, "'null'", "'for'", 
 		"'let'", "'where'", "'group'", "'by'", "'order'", "'return'", "'if'", 
 		"'in'", "'as'", "'at'", "'allowing'", "'empty'", "'count'", "'stable'", 
 		"'ascending'", "'descending'", "'some'", "'every'", "'satisfies'", "'collation'", 
@@ -211,7 +211,6 @@ public class JsoniqParser extends Parser {
 				break;
 			}
 			setState(157);
-			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case T__1:
 				{
@@ -232,7 +231,7 @@ public class JsoniqParser extends Parser {
 			case T__52:
 			case T__55:
 			case T__56:
-			case T__66:
+			case T__61:
 			case Literal:
 			case Kfor:
 			case Klet:
@@ -619,10 +618,7 @@ public class JsoniqParser extends Parser {
 			_la = _input.LA(1);
 			if ( !(_la==T__6 || _la==T__7) ) {
 			_errHandler.recoverInline(this);
-			}
-			else {
-				if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
-				_errHandler.reportMatch(this);
+			} else {
 				consume();
 			}
 			}
@@ -673,10 +669,7 @@ public class JsoniqParser extends Parser {
 			_la = _input.LA(1);
 			if ( !(_la==Kgreatest || _la==Kleast) ) {
 			_errHandler.recoverInline(this);
-			}
-			else {
-				if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
-				_errHandler.reportMatch(this);
+			} else {
 				consume();
 			}
 			}
@@ -731,7 +724,6 @@ public class JsoniqParser extends Parser {
 			setState(210);
 			match(T__4);
 			setState(219);
-			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case T__8:
 				{
@@ -822,10 +814,7 @@ public class JsoniqParser extends Parser {
 			_la = _input.LA(1);
 			if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__10) | (1L << T__11) | (1L << T__12) | (1L << T__13) | (1L << T__14) | (1L << T__15) | (1L << T__16) | (1L << T__17) | (1L << T__18) | (1L << T__19))) != 0)) ) {
 			_errHandler.recoverInline(this);
-			}
-			else {
-				if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
-				_errHandler.reportMatch(this);
+			} else {
 				consume();
 			}
 			}
@@ -873,7 +862,6 @@ public class JsoniqParser extends Parser {
 			setState(233);
 			match(T__1);
 			setState(237);
-			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==T__2) {
 				{
@@ -889,7 +877,6 @@ public class JsoniqParser extends Parser {
 			setState(239);
 			uriLiteral();
 			setState(249);
-			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==Kat) {
 				{
@@ -965,7 +952,6 @@ public class JsoniqParser extends Parser {
 			setState(253);
 			varRef();
 			setState(256);
-			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==Kas) {
 				{
@@ -977,7 +963,6 @@ public class JsoniqParser extends Parser {
 			}
 
 			setState(265);
-			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case T__23:
 				{
@@ -995,7 +980,6 @@ public class JsoniqParser extends Parser {
 				setState(260);
 				match(T__24);
 				setState(263);
-				_errHandler.sync(this);
 				_la = _input.LA(1);
 				if (_la==T__23) {
 					{
@@ -1079,7 +1063,6 @@ public class JsoniqParser extends Parser {
 			setState(274);
 			match(T__26);
 			setState(276);
-			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==T__30) {
 				{
@@ -1091,7 +1074,6 @@ public class JsoniqParser extends Parser {
 			setState(278);
 			match(T__27);
 			setState(281);
-			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==Kas) {
 				{
@@ -1103,7 +1085,6 @@ public class JsoniqParser extends Parser {
 			}
 
 			setState(288);
-			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case T__28:
 				{
@@ -1175,7 +1156,6 @@ public class JsoniqParser extends Parser {
 			setState(291);
 			match(NCName);
 			setState(294);
-			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==Kas) {
 				{
@@ -1199,7 +1179,6 @@ public class JsoniqParser extends Parser {
 				setState(298);
 				match(NCName);
 				setState(301);
-				_errHandler.sync(this);
 				_la = _input.LA(1);
 				if (_la==Kas) {
 					{
@@ -1450,7 +1429,6 @@ public class JsoniqParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(327);
-			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case Kfor:
 				{
@@ -1473,7 +1451,6 @@ public class JsoniqParser extends Parser {
 			while (((((_la - 72)) & ~0x3f) == 0 && ((1L << (_la - 72)) & ((1L << (Kfor - 72)) | (1L << (Klet - 72)) | (1L << (Kwhere - 72)) | (1L << (Kgroup - 72)) | (1L << (Korder - 72)) | (1L << (Kcount - 72)) | (1L << (Kstable - 72)))) != 0)) {
 				{
 				setState(335);
-				_errHandler.sync(this);
 				switch (_input.LA(1)) {
 				case Kfor:
 					{
@@ -1644,7 +1621,6 @@ public class JsoniqParser extends Parser {
 			setState(352);
 			((ForVarContext)_localctx).var_ref = varRef();
 			setState(355);
-			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==Kas) {
 				{
@@ -1656,7 +1632,6 @@ public class JsoniqParser extends Parser {
 			}
 
 			setState(359);
-			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==Kallowing) {
 				{
@@ -1668,7 +1643,6 @@ public class JsoniqParser extends Parser {
 			}
 
 			setState(363);
-			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==Kat) {
 				{
@@ -1794,7 +1768,6 @@ public class JsoniqParser extends Parser {
 			setState(377);
 			((LetVarContext)_localctx).var_ref = varRef();
 			setState(380);
-			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==Kas) {
 				{
@@ -1968,12 +1941,10 @@ public class JsoniqParser extends Parser {
 			setState(398);
 			((GroupByVarContext)_localctx).var_ref = varRef();
 			setState(405);
-			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==T__23 || _la==Kas) {
 				{
 				setState(401);
-				_errHandler.sync(this);
 				_la = _input.LA(1);
 				if (_la==Kas) {
 					{
@@ -1992,7 +1963,6 @@ public class JsoniqParser extends Parser {
 			}
 
 			setState(409);
-			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==Kcollation) {
 				{
@@ -2046,7 +2016,6 @@ public class JsoniqParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(416);
-			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case Korder:
 				{
@@ -2143,7 +2112,6 @@ public class JsoniqParser extends Parser {
 			setState(426);
 			((OrderByExprContext)_localctx).ex = exprSingle();
 			setState(429);
-			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case Kascending:
 				{
@@ -2173,14 +2141,12 @@ public class JsoniqParser extends Parser {
 				throw new NoViableAltException(this);
 			}
 			setState(436);
-			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==Kempty) {
 				{
 				setState(431);
 				match(Kempty);
 				setState(434);
-				_errHandler.sync(this);
 				switch (_input.LA(1)) {
 				case Kgreatest:
 					{
@@ -2201,7 +2167,6 @@ public class JsoniqParser extends Parser {
 			}
 
 			setState(440);
-			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==Kcollation) {
 				{
@@ -2300,7 +2265,6 @@ public class JsoniqParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(447);
-			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case Ksome:
 				{
@@ -2387,7 +2351,6 @@ public class JsoniqParser extends Parser {
 			setState(460);
 			varRef();
 			setState(463);
-			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==Kas) {
 				{
@@ -2624,7 +2587,6 @@ public class JsoniqParser extends Parser {
 			setState(499);
 			match(Kdefault);
 			setState(501);
-			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==T__30) {
 				{
@@ -2687,7 +2649,6 @@ public class JsoniqParser extends Parser {
 			setState(506);
 			match(Kcase);
 			setState(510);
-			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==T__30) {
 				{
@@ -3080,7 +3041,6 @@ public class JsoniqParser extends Parser {
 			setState(563);
 			((ComparisonExprContext)_localctx).mainExpr = stringConcatExpr();
 			setState(566);
-			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__3) | (1L << T__33) | (1L << T__34) | (1L << T__35) | (1L << T__36) | (1L << T__37) | (1L << T__38) | (1L << T__39) | (1L << T__40) | (1L << T__41) | (1L << T__42) | (1L << T__43))) != 0)) {
 				{
@@ -3089,10 +3049,7 @@ public class JsoniqParser extends Parser {
 				_la = _input.LA(1);
 				if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__3) | (1L << T__33) | (1L << T__34) | (1L << T__35) | (1L << T__36) | (1L << T__37) | (1L << T__38) | (1L << T__39) | (1L << T__40) | (1L << T__41) | (1L << T__42) | (1L << T__43))) != 0)) ) {
 					((ComparisonExprContext)_localctx)._tset1018 = (Token)_errHandler.recoverInline(this);
-				}
-				else {
-					if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
-					_errHandler.reportMatch(this);
+				} else {
 					consume();
 				}
 				((ComparisonExprContext)_localctx).op.add(((ComparisonExprContext)_localctx)._tset1018);
@@ -3278,10 +3235,7 @@ public class JsoniqParser extends Parser {
 					_la = _input.LA(1);
 					if ( !(_la==T__45 || _la==T__46) ) {
 						((AdditiveExprContext)_localctx)._tset1127 = (Token)_errHandler.recoverInline(this);
-					}
-					else {
-						if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
-						_errHandler.reportMatch(this);
+					} else {
 						consume();
 					}
 					((AdditiveExprContext)_localctx).op.add(((AdditiveExprContext)_localctx)._tset1127);
@@ -3355,10 +3309,7 @@ public class JsoniqParser extends Parser {
 				_la = _input.LA(1);
 				if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__32) | (1L << T__47) | (1L << T__48) | (1L << T__49))) != 0)) ) {
 					((MultiplicativeExprContext)_localctx)._tset1155 = (Token)_errHandler.recoverInline(this);
-				}
-				else {
-					if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
-					_errHandler.reportMatch(this);
+				} else {
 					consume();
 				}
 				((MultiplicativeExprContext)_localctx).op.add(((MultiplicativeExprContext)_localctx)._tset1155);
@@ -3667,10 +3618,7 @@ public class JsoniqParser extends Parser {
 				_la = _input.LA(1);
 				if ( !(_la==T__45 || _la==T__46) ) {
 					((UnaryExprContext)_localctx)._tset1271 = (Token)_errHandler.recoverInline(this);
-				}
-				else {
-					if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
-					_errHandler.reportMatch(this);
+				} else {
 					consume();
 				}
 				((UnaryExprContext)_localctx).op.add(((UnaryExprContext)_localctx)._tset1271);
@@ -4020,7 +3968,6 @@ public class JsoniqParser extends Parser {
 			setState(666);
 			match(T__54);
 			setState(673);
-			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case Kfor:
 			case Klet:
@@ -4161,7 +4108,6 @@ public class JsoniqParser extends Parser {
 		enterRule(_localctx, 106, RULE_primaryExpr);
 		try {
 			setState(685);
-			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case Literal:
 				enterOuterAlt(_localctx, 1);
@@ -4207,7 +4153,7 @@ public class JsoniqParser extends Parser {
 				}
 				break;
 			case T__9:
-			case T__66:
+			case T__61:
 			case Kfor:
 			case Klet:
 			case Kwhere:
@@ -4372,9 +4318,8 @@ public class JsoniqParser extends Parser {
 			setState(694);
 			match(T__26);
 			setState(696);
-			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__6) | (1L << T__7) | (1L << T__9) | (1L << T__26) | (1L << T__28) | (1L << T__30) | (1L << T__45) | (1L << T__46) | (1L << T__52) | (1L << T__55) | (1L << T__56))) != 0) || ((((_la - 67)) & ~0x3f) == 0 && ((1L << (_la - 67)) & ((1L << (T__66 - 67)) | (1L << (Literal - 67)) | (1L << (Kfor - 67)) | (1L << (Klet - 67)) | (1L << (Kwhere - 67)) | (1L << (Kgroup - 67)) | (1L << (Kby - 67)) | (1L << (Korder - 67)) | (1L << (Kreturn - 67)) | (1L << (Kif - 67)) | (1L << (Kin - 67)) | (1L << (Kas - 67)) | (1L << (Kat - 67)) | (1L << (Kallowing - 67)) | (1L << (Kempty - 67)) | (1L << (Kcount - 67)) | (1L << (Kstable - 67)) | (1L << (Kascending - 67)) | (1L << (Kdescending - 67)) | (1L << (Ksome - 67)) | (1L << (Kevery - 67)) | (1L << (Ksatisfies - 67)) | (1L << (Kcollation - 67)) | (1L << (Kgreatest - 67)) | (1L << (Kleast - 67)) | (1L << (Kswitch - 67)) | (1L << (Kcase - 67)) | (1L << (Ktry - 67)) | (1L << (Kcatch - 67)) | (1L << (Kdefault - 67)) | (1L << (Kthen - 67)) | (1L << (Kelse - 67)) | (1L << (Ktypeswitch - 67)) | (1L << (Kor - 67)) | (1L << (Kand - 67)) | (1L << (Knot - 67)) | (1L << (Kto - 67)) | (1L << (Kinstance - 67)) | (1L << (Kof - 67)) | (1L << (Ktreat - 67)) | (1L << (Kcast - 67)) | (1L << (Kcastable - 67)) | (1L << (Kversion - 67)) | (1L << (Kjsoniq - 67)) | (1L << (Kjson - 67)) | (1L << (STRING - 67)) | (1L << (NCName - 67)))) != 0)) {
+			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__6) | (1L << T__7) | (1L << T__9) | (1L << T__26) | (1L << T__28) | (1L << T__30) | (1L << T__45) | (1L << T__46) | (1L << T__52) | (1L << T__55) | (1L << T__56) | (1L << T__61))) != 0) || ((((_la - 68)) & ~0x3f) == 0 && ((1L << (_la - 68)) & ((1L << (Literal - 68)) | (1L << (Kfor - 68)) | (1L << (Klet - 68)) | (1L << (Kwhere - 68)) | (1L << (Kgroup - 68)) | (1L << (Kby - 68)) | (1L << (Korder - 68)) | (1L << (Kreturn - 68)) | (1L << (Kif - 68)) | (1L << (Kin - 68)) | (1L << (Kas - 68)) | (1L << (Kat - 68)) | (1L << (Kallowing - 68)) | (1L << (Kempty - 68)) | (1L << (Kcount - 68)) | (1L << (Kstable - 68)) | (1L << (Kascending - 68)) | (1L << (Kdescending - 68)) | (1L << (Ksome - 68)) | (1L << (Kevery - 68)) | (1L << (Ksatisfies - 68)) | (1L << (Kcollation - 68)) | (1L << (Kgreatest - 68)) | (1L << (Kleast - 68)) | (1L << (Kswitch - 68)) | (1L << (Kcase - 68)) | (1L << (Ktry - 68)) | (1L << (Kcatch - 68)) | (1L << (Kdefault - 68)) | (1L << (Kthen - 68)) | (1L << (Kelse - 68)) | (1L << (Ktypeswitch - 68)) | (1L << (Kor - 68)) | (1L << (Kand - 68)) | (1L << (Knot - 68)) | (1L << (Kto - 68)) | (1L << (Kinstance - 68)) | (1L << (Kof - 68)) | (1L << (Ktreat - 68)) | (1L << (Kcast - 68)) | (1L << (Kcastable - 68)) | (1L << (Kversion - 68)) | (1L << (Kjsoniq - 68)) | (1L << (Kjson - 68)) | (1L << (STRING - 68)) | (1L << (NCName - 68)))) != 0)) {
 				{
 				setState(695);
 				expr();
@@ -4553,7 +4498,6 @@ public class JsoniqParser extends Parser {
 			case 1:
 				{
 				setState(715);
-				_errHandler.sync(this);
 				switch (_input.LA(1)) {
 				case NCName:
 					{
@@ -4622,9 +4566,8 @@ public class JsoniqParser extends Parser {
 				break;
 			}
 			setState(722);
-			_errHandler.sync(this);
 			switch (_input.LA(1)) {
-			case T__66:
+			case T__61:
 			case NCName:
 				{
 				setState(720);
@@ -4729,14 +4672,13 @@ public class JsoniqParser extends Parser {
 			setState(733);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__6) | (1L << T__7) | (1L << T__9) | (1L << T__26) | (1L << T__28) | (1L << T__30) | (1L << T__45) | (1L << T__46) | (1L << T__50) | (1L << T__52) | (1L << T__55) | (1L << T__56))) != 0) || ((((_la - 67)) & ~0x3f) == 0 && ((1L << (_la - 67)) & ((1L << (T__66 - 67)) | (1L << (Literal - 67)) | (1L << (Kfor - 67)) | (1L << (Klet - 67)) | (1L << (Kwhere - 67)) | (1L << (Kgroup - 67)) | (1L << (Kby - 67)) | (1L << (Korder - 67)) | (1L << (Kreturn - 67)) | (1L << (Kif - 67)) | (1L << (Kin - 67)) | (1L << (Kas - 67)) | (1L << (Kat - 67)) | (1L << (Kallowing - 67)) | (1L << (Kempty - 67)) | (1L << (Kcount - 67)) | (1L << (Kstable - 67)) | (1L << (Kascending - 67)) | (1L << (Kdescending - 67)) | (1L << (Ksome - 67)) | (1L << (Kevery - 67)) | (1L << (Ksatisfies - 67)) | (1L << (Kcollation - 67)) | (1L << (Kgreatest - 67)) | (1L << (Kleast - 67)) | (1L << (Kswitch - 67)) | (1L << (Kcase - 67)) | (1L << (Ktry - 67)) | (1L << (Kcatch - 67)) | (1L << (Kdefault - 67)) | (1L << (Kthen - 67)) | (1L << (Kelse - 67)) | (1L << (Ktypeswitch - 67)) | (1L << (Kor - 67)) | (1L << (Kand - 67)) | (1L << (Knot - 67)) | (1L << (Kto - 67)) | (1L << (Kinstance - 67)) | (1L << (Kof - 67)) | (1L << (Ktreat - 67)) | (1L << (Kcast - 67)) | (1L << (Kcastable - 67)) | (1L << (Kversion - 67)) | (1L << (Kjsoniq - 67)) | (1L << (Kjson - 67)) | (1L << (STRING - 67)) | (1L << (NCName - 67)))) != 0)) {
+			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__6) | (1L << T__7) | (1L << T__9) | (1L << T__26) | (1L << T__28) | (1L << T__30) | (1L << T__45) | (1L << T__46) | (1L << T__50) | (1L << T__52) | (1L << T__55) | (1L << T__56) | (1L << T__61))) != 0) || ((((_la - 68)) & ~0x3f) == 0 && ((1L << (_la - 68)) & ((1L << (Literal - 68)) | (1L << (Kfor - 68)) | (1L << (Klet - 68)) | (1L << (Kwhere - 68)) | (1L << (Kgroup - 68)) | (1L << (Kby - 68)) | (1L << (Korder - 68)) | (1L << (Kreturn - 68)) | (1L << (Kif - 68)) | (1L << (Kin - 68)) | (1L << (Kas - 68)) | (1L << (Kat - 68)) | (1L << (Kallowing - 68)) | (1L << (Kempty - 68)) | (1L << (Kcount - 68)) | (1L << (Kstable - 68)) | (1L << (Kascending - 68)) | (1L << (Kdescending - 68)) | (1L << (Ksome - 68)) | (1L << (Kevery - 68)) | (1L << (Ksatisfies - 68)) | (1L << (Kcollation - 68)) | (1L << (Kgreatest - 68)) | (1L << (Kleast - 68)) | (1L << (Kswitch - 68)) | (1L << (Kcase - 68)) | (1L << (Ktry - 68)) | (1L << (Kcatch - 68)) | (1L << (Kdefault - 68)) | (1L << (Kthen - 68)) | (1L << (Kelse - 68)) | (1L << (Ktypeswitch - 68)) | (1L << (Kor - 68)) | (1L << (Kand - 68)) | (1L << (Knot - 68)) | (1L << (Kto - 68)) | (1L << (Kinstance - 68)) | (1L << (Kof - 68)) | (1L << (Ktreat - 68)) | (1L << (Kcast - 68)) | (1L << (Kcastable - 68)) | (1L << (Kversion - 68)) | (1L << (Kjsoniq - 68)) | (1L << (Kjson - 68)) | (1L << (STRING - 68)) | (1L << (NCName - 68)))) != 0)) {
 				{
 				{
 				setState(727);
 				((ArgumentListContext)_localctx).argument = argument();
 				((ArgumentListContext)_localctx).args.add(((ArgumentListContext)_localctx).argument);
 				setState(729);
-				_errHandler.sync(this);
 				_la = _input.LA(1);
 				if (_la==T__21) {
 					{
@@ -4786,7 +4728,6 @@ public class JsoniqParser extends Parser {
 		enterRule(_localctx, 122, RULE_argument);
 		try {
 			setState(740);
-			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case T__6:
 			case T__7:
@@ -4799,7 +4740,7 @@ public class JsoniqParser extends Parser {
 			case T__52:
 			case T__55:
 			case T__56:
-			case T__66:
+			case T__61:
 			case Literal:
 			case Kfor:
 			case Klet:
@@ -4901,7 +4842,6 @@ public class JsoniqParser extends Parser {
 		enterRule(_localctx, 124, RULE_sequenceType);
 		try {
 			setState(750);
-			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case T__26:
 				enterOuterAlt(_localctx, 1);
@@ -4998,7 +4938,6 @@ public class JsoniqParser extends Parser {
 		int _la;
 		try {
 			setState(768);
-			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case T__28:
 				enterOuterAlt(_localctx, 1);
@@ -5006,9 +4945,8 @@ public class JsoniqParser extends Parser {
 				setState(752);
 				match(T__28);
 				setState(761);
-				_errHandler.sync(this);
 				_la = _input.LA(1);
-				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__6) | (1L << T__7) | (1L << T__9) | (1L << T__26) | (1L << T__28) | (1L << T__30) | (1L << T__45) | (1L << T__46) | (1L << T__52) | (1L << T__55) | (1L << T__56))) != 0) || ((((_la - 67)) & ~0x3f) == 0 && ((1L << (_la - 67)) & ((1L << (T__66 - 67)) | (1L << (Literal - 67)) | (1L << (Kfor - 67)) | (1L << (Klet - 67)) | (1L << (Kwhere - 67)) | (1L << (Kgroup - 67)) | (1L << (Kby - 67)) | (1L << (Korder - 67)) | (1L << (Kreturn - 67)) | (1L << (Kif - 67)) | (1L << (Kin - 67)) | (1L << (Kas - 67)) | (1L << (Kat - 67)) | (1L << (Kallowing - 67)) | (1L << (Kempty - 67)) | (1L << (Kcount - 67)) | (1L << (Kstable - 67)) | (1L << (Kascending - 67)) | (1L << (Kdescending - 67)) | (1L << (Ksome - 67)) | (1L << (Kevery - 67)) | (1L << (Ksatisfies - 67)) | (1L << (Kcollation - 67)) | (1L << (Kgreatest - 67)) | (1L << (Kleast - 67)) | (1L << (Kswitch - 67)) | (1L << (Kcase - 67)) | (1L << (Ktry - 67)) | (1L << (Kcatch - 67)) | (1L << (Kdefault - 67)) | (1L << (Kthen - 67)) | (1L << (Kelse - 67)) | (1L << (Ktypeswitch - 67)) | (1L << (Kor - 67)) | (1L << (Kand - 67)) | (1L << (Knot - 67)) | (1L << (Kto - 67)) | (1L << (Kinstance - 67)) | (1L << (Kof - 67)) | (1L << (Ktreat - 67)) | (1L << (Kcast - 67)) | (1L << (Kcastable - 67)) | (1L << (Kversion - 67)) | (1L << (Kjsoniq - 67)) | (1L << (Kjson - 67)) | (1L << (STRING - 67)) | (1L << (NCName - 67)))) != 0)) {
+				if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__6) | (1L << T__7) | (1L << T__9) | (1L << T__26) | (1L << T__28) | (1L << T__30) | (1L << T__45) | (1L << T__46) | (1L << T__52) | (1L << T__55) | (1L << T__56) | (1L << T__61))) != 0) || ((((_la - 68)) & ~0x3f) == 0 && ((1L << (_la - 68)) & ((1L << (Literal - 68)) | (1L << (Kfor - 68)) | (1L << (Klet - 68)) | (1L << (Kwhere - 68)) | (1L << (Kgroup - 68)) | (1L << (Kby - 68)) | (1L << (Korder - 68)) | (1L << (Kreturn - 68)) | (1L << (Kif - 68)) | (1L << (Kin - 68)) | (1L << (Kas - 68)) | (1L << (Kat - 68)) | (1L << (Kallowing - 68)) | (1L << (Kempty - 68)) | (1L << (Kcount - 68)) | (1L << (Kstable - 68)) | (1L << (Kascending - 68)) | (1L << (Kdescending - 68)) | (1L << (Ksome - 68)) | (1L << (Kevery - 68)) | (1L << (Ksatisfies - 68)) | (1L << (Kcollation - 68)) | (1L << (Kgreatest - 68)) | (1L << (Kleast - 68)) | (1L << (Kswitch - 68)) | (1L << (Kcase - 68)) | (1L << (Ktry - 68)) | (1L << (Kcatch - 68)) | (1L << (Kdefault - 68)) | (1L << (Kthen - 68)) | (1L << (Kelse - 68)) | (1L << (Ktypeswitch - 68)) | (1L << (Kor - 68)) | (1L << (Kand - 68)) | (1L << (Knot - 68)) | (1L << (Kto - 68)) | (1L << (Kinstance - 68)) | (1L << (Kof - 68)) | (1L << (Ktreat - 68)) | (1L << (Kcast - 68)) | (1L << (Kcastable - 68)) | (1L << (Kversion - 68)) | (1L << (Kjsoniq - 68)) | (1L << (Kjson - 68)) | (1L << (STRING - 68)) | (1L << (NCName - 68)))) != 0)) {
 					{
 					setState(753);
 					pairConstructor();
@@ -5085,7 +5023,6 @@ public class JsoniqParser extends Parser {
 		enterRule(_localctx, 128, RULE_itemType);
 		try {
 			setState(773);
-			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case T__58:
 				enterOuterAlt(_localctx, 1);
@@ -5155,12 +5092,42 @@ public class JsoniqParser extends Parser {
 			_la = _input.LA(1);
 			if ( !(((((_la - 60)) & ~0x3f) == 0 && ((1L << (_la - 60)) & ((1L << (T__59 - 60)) | (1L << (T__60 - 60)) | (1L << (Kjson - 60)))) != 0)) ) {
 			_errHandler.recoverInline(this);
-			}
-			else {
-				if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
-				_errHandler.reportMatch(this);
+			} else {
 				consume();
 			}
+			}
+		}
+		catch (RecognitionException re) {
+			_localctx.exception = re;
+			_errHandler.reportError(this, re);
+			_errHandler.recover(this, re);
+		}
+		finally {
+			exitRule();
+		}
+		return _localctx;
+	}
+
+	public static class KeyWordBooleanContext extends ParserRuleContext {
+		public KeyWordBooleanContext(ParserRuleContext parent, int invokingState) {
+			super(parent, invokingState);
+		}
+		@Override public int getRuleIndex() { return RULE_keyWordBoolean; }
+		@Override
+		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
+			if ( visitor instanceof JsoniqVisitor ) return ((JsoniqVisitor<? extends T>)visitor).visitKeyWordBoolean(this);
+			else return visitor.visitChildren(this);
+		}
+	}
+
+	public final KeyWordBooleanContext keyWordBoolean() throws RecognitionException {
+		KeyWordBooleanContext _localctx = new KeyWordBooleanContext(_ctx, getState());
+		enterRule(_localctx, 132, RULE_keyWordBoolean);
+		try {
+			enterOuterAlt(_localctx, 1);
+			{
+			setState(777);
+			match(T__61);
 			}
 		}
 		catch (RecognitionException re) {
@@ -5191,95 +5158,61 @@ public class JsoniqParser extends Parser {
 
 	public final AtomicTypeContext atomicType() throws RecognitionException {
 		AtomicTypeContext _localctx = new AtomicTypeContext(_ctx, getState());
-		enterRule(_localctx, 132, RULE_atomicType);
+		enterRule(_localctx, 134, RULE_atomicType);
 		try {
-			setState(784);
-			_errHandler.sync(this);
+			setState(786);
 			switch (_input.LA(1)) {
-			case T__61:
+			case T__62:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(777);
-				match(T__61);
-				}
-				break;
-			case T__62:
-				enterOuterAlt(_localctx, 2);
-				{
-				setState(778);
+				setState(779);
 				match(T__62);
 				}
 				break;
 			case T__63:
-				enterOuterAlt(_localctx, 3);
+				enterOuterAlt(_localctx, 2);
 				{
-				setState(779);
+				setState(780);
 				match(T__63);
 				}
 				break;
 			case T__64:
-				enterOuterAlt(_localctx, 4);
+				enterOuterAlt(_localctx, 3);
 				{
-				setState(780);
+				setState(781);
 				match(T__64);
 				}
 				break;
 			case T__65:
-				enterOuterAlt(_localctx, 5);
+				enterOuterAlt(_localctx, 4);
 				{
-				setState(781);
+				setState(782);
 				match(T__65);
 				}
 				break;
 			case T__66:
+				enterOuterAlt(_localctx, 5);
+				{
+				setState(783);
+				match(T__66);
+				}
+				break;
+			case T__61:
 				enterOuterAlt(_localctx, 6);
 				{
-				setState(782);
+				setState(784);
 				keyWordBoolean();
 				}
 				break;
 			case NullLiteral:
 				enterOuterAlt(_localctx, 7);
 				{
-				setState(783);
+				setState(785);
 				match(NullLiteral);
 				}
 				break;
 			default:
 				throw new NoViableAltException(this);
-			}
-		}
-		catch (RecognitionException re) {
-			_localctx.exception = re;
-			_errHandler.reportError(this, re);
-			_errHandler.recover(this, re);
-		}
-		finally {
-			exitRule();
-		}
-		return _localctx;
-	}
-
-	public static class KeyWordBooleanContext extends ParserRuleContext {
-		public KeyWordBooleanContext(ParserRuleContext parent, int invokingState) {
-			super(parent, invokingState);
-		}
-		@Override public int getRuleIndex() { return RULE_keyWordBoolean; }
-		@Override
-		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof JsoniqVisitor ) return ((JsoniqVisitor<? extends T>)visitor).visitKeyWordBoolean(this);
-			else return visitor.visitChildren(this);
-		}
-	}
-
-	public final KeyWordBooleanContext keyWordBoolean() throws RecognitionException {
-		KeyWordBooleanContext _localctx = new KeyWordBooleanContext(_ctx, getState());
-		enterRule(_localctx, 134, RULE_keyWordBoolean);
-		try {
-			enterOuterAlt(_localctx, 1);
-			{
-			setState(786);
-			match(T__66);
 			}
 		}
 		catch (RecognitionException re) {
@@ -5314,7 +5247,6 @@ public class JsoniqParser extends Parser {
 		enterRule(_localctx, 136, RULE_nCNameOrKeyWordBoolean);
 		try {
 			setState(790);
-			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case NCName:
 				enterOuterAlt(_localctx, 1);
@@ -5323,7 +5255,7 @@ public class JsoniqParser extends Parser {
 				match(NCName);
 				}
 				break;
-			case T__66:
+			case T__61:
 				enterOuterAlt(_localctx, 2);
 				{
 				setState(789);
@@ -5394,10 +5326,7 @@ public class JsoniqParser extends Parser {
 			_la = _input.LA(1);
 			if ( !(_la==T__9 || _la==T__50) ) {
 			_errHandler.recoverInline(this);
-			}
-			else {
-				if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
-				_errHandler.reportMatch(this);
+			} else {
 				consume();
 			}
 			setState(797);
@@ -5440,9 +5369,8 @@ public class JsoniqParser extends Parser {
 			setState(799);
 			match(T__52);
 			setState(801);
-			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__6) | (1L << T__7) | (1L << T__9) | (1L << T__26) | (1L << T__28) | (1L << T__30) | (1L << T__45) | (1L << T__46) | (1L << T__52) | (1L << T__55) | (1L << T__56))) != 0) || ((((_la - 67)) & ~0x3f) == 0 && ((1L << (_la - 67)) & ((1L << (T__66 - 67)) | (1L << (Literal - 67)) | (1L << (Kfor - 67)) | (1L << (Klet - 67)) | (1L << (Kwhere - 67)) | (1L << (Kgroup - 67)) | (1L << (Kby - 67)) | (1L << (Korder - 67)) | (1L << (Kreturn - 67)) | (1L << (Kif - 67)) | (1L << (Kin - 67)) | (1L << (Kas - 67)) | (1L << (Kat - 67)) | (1L << (Kallowing - 67)) | (1L << (Kempty - 67)) | (1L << (Kcount - 67)) | (1L << (Kstable - 67)) | (1L << (Kascending - 67)) | (1L << (Kdescending - 67)) | (1L << (Ksome - 67)) | (1L << (Kevery - 67)) | (1L << (Ksatisfies - 67)) | (1L << (Kcollation - 67)) | (1L << (Kgreatest - 67)) | (1L << (Kleast - 67)) | (1L << (Kswitch - 67)) | (1L << (Kcase - 67)) | (1L << (Ktry - 67)) | (1L << (Kcatch - 67)) | (1L << (Kdefault - 67)) | (1L << (Kthen - 67)) | (1L << (Kelse - 67)) | (1L << (Ktypeswitch - 67)) | (1L << (Kor - 67)) | (1L << (Kand - 67)) | (1L << (Knot - 67)) | (1L << (Kto - 67)) | (1L << (Kinstance - 67)) | (1L << (Kof - 67)) | (1L << (Ktreat - 67)) | (1L << (Kcast - 67)) | (1L << (Kcastable - 67)) | (1L << (Kversion - 67)) | (1L << (Kjsoniq - 67)) | (1L << (Kjson - 67)) | (1L << (STRING - 67)) | (1L << (NCName - 67)))) != 0)) {
+			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__6) | (1L << T__7) | (1L << T__9) | (1L << T__26) | (1L << T__28) | (1L << T__30) | (1L << T__45) | (1L << T__46) | (1L << T__52) | (1L << T__55) | (1L << T__56) | (1L << T__61))) != 0) || ((((_la - 68)) & ~0x3f) == 0 && ((1L << (_la - 68)) & ((1L << (Literal - 68)) | (1L << (Kfor - 68)) | (1L << (Klet - 68)) | (1L << (Kwhere - 68)) | (1L << (Kgroup - 68)) | (1L << (Kby - 68)) | (1L << (Korder - 68)) | (1L << (Kreturn - 68)) | (1L << (Kif - 68)) | (1L << (Kin - 68)) | (1L << (Kas - 68)) | (1L << (Kat - 68)) | (1L << (Kallowing - 68)) | (1L << (Kempty - 68)) | (1L << (Kcount - 68)) | (1L << (Kstable - 68)) | (1L << (Kascending - 68)) | (1L << (Kdescending - 68)) | (1L << (Ksome - 68)) | (1L << (Kevery - 68)) | (1L << (Ksatisfies - 68)) | (1L << (Kcollation - 68)) | (1L << (Kgreatest - 68)) | (1L << (Kleast - 68)) | (1L << (Kswitch - 68)) | (1L << (Kcase - 68)) | (1L << (Ktry - 68)) | (1L << (Kcatch - 68)) | (1L << (Kdefault - 68)) | (1L << (Kthen - 68)) | (1L << (Kelse - 68)) | (1L << (Ktypeswitch - 68)) | (1L << (Kor - 68)) | (1L << (Kand - 68)) | (1L << (Knot - 68)) | (1L << (Kto - 68)) | (1L << (Kinstance - 68)) | (1L << (Kof - 68)) | (1L << (Ktreat - 68)) | (1L << (Kcast - 68)) | (1L << (Kcastable - 68)) | (1L << (Kversion - 68)) | (1L << (Kjsoniq - 68)) | (1L << (Kjson - 68)) | (1L << (STRING - 68)) | (1L << (NCName - 68)))) != 0)) {
 				{
 				setState(800);
 				expr();
@@ -5566,10 +5494,7 @@ public class JsoniqParser extends Parser {
 			_la = _input.LA(1);
 			if ( !(((((_la - 72)) & ~0x3f) == 0 && ((1L << (_la - 72)) & ((1L << (Kfor - 72)) | (1L << (Klet - 72)) | (1L << (Kwhere - 72)) | (1L << (Kgroup - 72)) | (1L << (Kby - 72)) | (1L << (Korder - 72)) | (1L << (Kreturn - 72)) | (1L << (Kif - 72)) | (1L << (Kin - 72)) | (1L << (Kas - 72)) | (1L << (Kat - 72)) | (1L << (Kallowing - 72)) | (1L << (Kempty - 72)) | (1L << (Kcount - 72)) | (1L << (Kstable - 72)) | (1L << (Kascending - 72)) | (1L << (Kdescending - 72)) | (1L << (Ksome - 72)) | (1L << (Kevery - 72)) | (1L << (Ksatisfies - 72)) | (1L << (Kcollation - 72)) | (1L << (Kgreatest - 72)) | (1L << (Kleast - 72)) | (1L << (Kswitch - 72)) | (1L << (Kcase - 72)) | (1L << (Ktry - 72)) | (1L << (Kcatch - 72)) | (1L << (Kdefault - 72)) | (1L << (Kthen - 72)) | (1L << (Kelse - 72)) | (1L << (Ktypeswitch - 72)) | (1L << (Kor - 72)) | (1L << (Kand - 72)) | (1L << (Knot - 72)) | (1L << (Kto - 72)) | (1L << (Kinstance - 72)) | (1L << (Kof - 72)) | (1L << (Ktreat - 72)) | (1L << (Kcast - 72)) | (1L << (Kcastable - 72)) | (1L << (Kversion - 72)) | (1L << (Kjsoniq - 72)) | (1L << (Kjson - 72)))) != 0)) ) {
 			_errHandler.recoverInline(this);
-			}
-			else {
-				if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
-				_errHandler.reportMatch(this);
+			} else {
 				consume();
 			}
 			}
@@ -5676,7 +5601,7 @@ public class JsoniqParser extends Parser {
 		"\n=\3=\3=\3>\3>\3>\5>\u02dc\n>\7>\u02de\n>\f>\16>\u02e1\13>\3>\3>\3?\3"+
 		"?\5?\u02e7\n?\3@\3@\3@\3@\3@\3@\5@\u02ef\n@\5@\u02f1\n@\3A\3A\3A\3A\7"+
 		"A\u02f7\nA\fA\16A\u02fa\13A\5A\u02fc\nA\3A\3A\3A\3A\3A\5A\u0303\nA\3B"+
-		"\3B\3B\5B\u0308\nB\3C\3C\3D\3D\3D\3D\3D\3D\3D\5D\u0313\nD\3E\3E\3F\3F"+
+		"\3B\3B\5B\u0308\nB\3C\3C\3D\3D\3E\3E\3E\3E\3E\3E\3E\5E\u0315\nE\3F\3F"+
 		"\5F\u0319\nF\3G\3G\5G\u031d\nG\3G\3G\3G\3H\3H\5H\u0324\nH\3H\3H\3I\3I"+
 		"\3J\3J\3K\3K\3K\2\2L\2\4\6\b\n\f\16\20\22\24\26\30\32\34\36 \"$&(*,.\60"+
 		"\62\64\668:<>@BDFHJLNPRTVXZ\\^`bdfhjlnprtvxz|~\u0080\u0082\u0084\u0086"+
@@ -5696,7 +5621,7 @@ public class JsoniqParser extends Parser {
 		"\2\2f\u0295\3\2\2\2h\u0298\3\2\2\2j\u029c\3\2\2\2l\u02af\3\2\2\2n\u02b1"+
 		"\3\2\2\2p\u02b8\3\2\2\2r\u02be\3\2\2\2t\u02c0\3\2\2\2v\u02c5\3\2\2\2x"+
 		"\u02d0\3\2\2\2z\u02d8\3\2\2\2|\u02e6\3\2\2\2~\u02f0\3\2\2\2\u0080\u0302"+
-		"\3\2\2\2\u0082\u0307\3\2\2\2\u0084\u0309\3\2\2\2\u0086\u0312\3\2\2\2\u0088"+
+		"\3\2\2\2\u0082\u0307\3\2\2\2\u0084\u0309\3\2\2\2\u0086\u030b\3\2\2\2\u0088"+
 		"\u0314\3\2\2\2\u008a\u0318\3\2\2\2\u008c\u031c\3\2\2\2\u008e\u0321\3\2"+
 		"\2\2\u0090\u0327\3\2\2\2\u0092\u0329\3\2\2\2\u0094\u032b\3\2\2\2\u0096"+
 		"\u0097\7s\2\2\u0097\u0098\7r\2\2\u0098\u0099\5\u0094K\2\u0099\u009a\7"+
@@ -5848,10 +5773,10 @@ public class JsoniqParser extends Parser {
 		"\2\u025cW\3\2\2\2\u025d\u0261\5Z.\2\u025e\u025f\7o\2\2\u025f\u0260\7S"+
 		"\2\2\u0260\u0262\5~@\2\u0261\u025e\3\2\2\2\u0261\u0262\3\2\2\2\u0262Y"+
 		"\3\2\2\2\u0263\u026a\5\\/\2\u0264\u0265\7q\2\2\u0265\u0266\7S\2\2\u0266"+
-		"\u0268\5\u0086D\2\u0267\u0269\7\65\2\2\u0268\u0267\3\2\2\2\u0268\u0269"+
+		"\u0268\5\u0088E\2\u0267\u0269\7\65\2\2\u0268\u0267\3\2\2\2\u0268\u0269"+
 		"\3\2\2\2\u0269\u026b\3\2\2\2\u026a\u0264\3\2\2\2\u026a\u026b\3\2\2\2\u026b"+
 		"[\3\2\2\2\u026c\u0273\5^\60\2\u026d\u026e\7p\2\2\u026e\u026f\7S\2\2\u026f"+
-		"\u0271\5\u0086D\2\u0270\u0272\7\65\2\2\u0271\u0270\3\2\2\2\u0271\u0272"+
+		"\u0271\5\u0088E\2\u0270\u0272\7\65\2\2\u0271\u0270\3\2\2\2\u0271\u0272"+
 		"\3\2\2\2\u0272\u0274\3\2\2\2\u0273\u026d\3\2\2\2\u0273\u0274\3\2\2\2\u0274"+
 		"]\3\2\2\2\u0275\u0277\t\6\2\2\u0276\u0275\3\2\2\2\u0277\u027a\3\2\2\2"+
 		"\u0278\u0276\3\2\2\2\u0278\u0279\3\2\2\2\u0279\u027b\3\2\2\2\u027a\u0278"+
@@ -5903,14 +5828,14 @@ public class JsoniqParser extends Parser {
 		"\3\2\2\2\u02fb\u02fc\3\2\2\2\u02fc\u02fd\3\2\2\2\u02fd\u0303\7 \2\2\u02fe"+
 		"\u02ff\7;\2\2\u02ff\u0300\5\34\17\2\u0300\u0301\7<\2\2\u0301\u0303\3\2"+
 		"\2\2\u0302\u02f2\3\2\2\2\u0302\u02fe\3\2\2\2\u0303\u0081\3\2\2\2\u0304"+
-		"\u0308\7=\2\2\u0305\u0308\5\u0084C\2\u0306\u0308\5\u0086D\2\u0307\u0304"+
+		"\u0308\7=\2\2\u0305\u0308\5\u0084C\2\u0306\u0308\5\u0088E\2\u0307\u0304"+
 		"\3\2\2\2\u0307\u0305\3\2\2\2\u0307\u0306\3\2\2\2\u0308\u0083\3\2\2\2\u0309"+
-		"\u030a\t\b\2\2\u030a\u0085\3\2\2\2\u030b\u0313\7@\2\2\u030c\u0313\7A\2"+
-		"\2\u030d\u0313\7B\2\2\u030e\u0313\7C\2\2\u030f\u0313\7D\2\2\u0310\u0313"+
-		"\5\u0088E\2\u0311\u0313\7I\2\2\u0312\u030b\3\2\2\2\u0312\u030c\3\2\2\2"+
-		"\u0312\u030d\3\2\2\2\u0312\u030e\3\2\2\2\u0312\u030f\3\2\2\2\u0312\u0310"+
-		"\3\2\2\2\u0312\u0311\3\2\2\2\u0313\u0087\3\2\2\2\u0314\u0315\7E\2\2\u0315"+
-		"\u0089\3\2\2\2\u0316\u0319\7z\2\2\u0317\u0319\5\u0088E\2\u0318\u0316\3"+
+		"\u030a\t\b\2\2\u030a\u0085\3\2\2\2\u030b\u030c\7@\2\2\u030c\u0087\3\2"+
+		"\2\2\u030d\u0315\7A\2\2\u030e\u0315\7B\2\2\u030f\u0315\7C\2\2\u0310\u0315"+
+		"\7D\2\2\u0311\u0315\7E\2\2\u0312\u0315\5\u0086D\2\u0313\u0315\7I\2\2\u0314"+
+		"\u030d\3\2\2\2\u0314\u030e\3\2\2\2\u0314\u030f\3\2\2\2\u0314\u0310\3\2"+
+		"\2\2\u0314\u0311\3\2\2\2\u0314\u0312\3\2\2\2\u0314\u0313\3\2\2\2\u0315"+
+		"\u0089\3\2\2\2\u0316\u0319\7z\2\2\u0317\u0319\5\u0086D\2\u0318\u0316\3"+
 		"\2\2\2\u0318\u0317\3\2\2\2\u0319\u008b\3\2\2\2\u031a\u031d\5\36\20\2\u031b"+
 		"\u031d\7z\2\2\u031c\u031a\3\2\2\2\u031c\u031b\3\2\2\2\u031d\u031e\3\2"+
 		"\2\2\u031e\u031f\t\t\2\2\u031f\u0320\5\36\20\2\u0320\u008d\3\2\2\2\u0321"+
@@ -5924,7 +5849,7 @@ public class JsoniqParser extends Parser {
 		"\u01b4\u01b6\u01ba\u01c1\u01c8\u01d1\u01dd\u01e7\u01f3\u01f7\u0200\u0207"+
 		"\u0225\u022d\u0231\u0238\u023f\u0245\u024c\u0254\u025b\u0261\u0268\u026a"+
 		"\u0271\u0273\u0278\u0282\u028a\u028c\u02a3\u02af\u02b4\u02ba\u02cd\u02d0"+
-		"\u02d4\u02db\u02df\u02e6\u02ee\u02f0\u02f8\u02fb\u0302\u0307\u0312\u0318"+
+		"\u02d4\u02db\u02df\u02e6\u02ee\u02f0\u02f8\u02fb\u0302\u0307\u0314\u0318"+
 		"\u031c\u0323";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());

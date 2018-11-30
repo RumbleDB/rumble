@@ -44,6 +44,7 @@ import sparksoniq.utils.FileUtils;
 
 import java.io.*;
 import java.net.URI;
+import java.util.List;
 
 
 public class JsoniqQueryExecutor {
@@ -126,9 +127,24 @@ public class JsoniqQueryExecutor {
             JavaRDD<Item> rdd = result.getRDD();
             JavaRDD<String> output = rdd.map(o -> o.serialize());
             String localOutput = "";
-            for (String item : SparkContextManager.LIMIT_COLLECT() ?
-                    output.take(SparkContextManager.COLLECT_ITEM_LIMIT) : output.collect())
-                localOutput += item + "\n";
+            long resultCount = output.count();
+            if (resultCount == 0) {
+                // do nothing, empty output
+            } else if (resultCount == 1) {
+                localOutput = output.collect().get(0);
+            } else if (resultCount > 1) {
+                StringBuilder sb = new StringBuilder();
+                sb.append("(");
+                for (String item : SparkContextManager.LIMIT_COLLECT() ?
+                        output.take(SparkContextManager.COLLECT_ITEM_LIMIT) : output.collect()) {
+                    sb.append(item + ", ");
+                }
+
+                sb.delete(sb.length()-2, sb.length());
+                sb.append(")");
+                localOutput = sb.toString();
+            }
+
             return localOutput;
         }
     }
@@ -199,6 +215,29 @@ public class JsoniqQueryExecutor {
         new StaticContextVisitor().visit(expression, expression.getStaticContext());
     }
 
+    private void writeTimeLog(long totalTime) throws IOException {
+        String result = "[ExecTime]" + totalTime;
+        if (_logFilePath.startsWith("file://") || _logFilePath.startsWith("/")) {
+            String timeLogPath = _logFilePath.substring(0, _logFilePath.lastIndexOf("/"));
+            timeLogPath += Path.SEPARATOR + "time_log_";
+            java.nio.file.Path finalPath = FileUtils.getUniqueFileName(timeLogPath);
+            java.nio.file.Files.write(finalPath, result.getBytes());
+        }
+        if (_logFilePath.startsWith("hdfs://")) {
+            org.apache.hadoop.fs.FileSystem fileSystem = org.apache.hadoop.fs.FileSystem
+                    .get(SparkContextManager.getInstance().getContext().hadoopConfiguration());
+            FSDataOutputStream fsDataOutputStream = fileSystem.create(new Path(_logFilePath));
+            BufferedOutputStream stream = new BufferedOutputStream(fsDataOutputStream);
+            stream.write(result.getBytes());
+            stream.close();
+        }
+    }
+
+    protected String runIterators(RuntimeIterator iterator, boolean indent) {
+        String actualOutput = getIteratorOutput(iterator, indent);
+        return actualOutput;
+    }
+
     private String getIteratorOutput(RuntimeIterator iterator, boolean indent) {
         iterator.open(new DynamicContext());
         Item result = null;
@@ -225,29 +264,6 @@ public class JsoniqQueryExecutor {
             output += ")";
             return output;
         }
-    }
-
-    private void writeTimeLog(long totalTime) throws IOException {
-        String result = "[ExecTime]" + totalTime;
-        if (_logFilePath.startsWith("file://") || _logFilePath.startsWith("/")) {
-            String timeLogPath = _logFilePath.substring(0, _logFilePath.lastIndexOf("/"));
-            timeLogPath += Path.SEPARATOR + "time_log_";
-            java.nio.file.Path finalPath = FileUtils.getUniqueFileName(timeLogPath);
-            java.nio.file.Files.write(finalPath, result.getBytes());
-        }
-        if (_logFilePath.startsWith("hdfs://")) {
-            org.apache.hadoop.fs.FileSystem fileSystem = org.apache.hadoop.fs.FileSystem
-                    .get(SparkContextManager.getInstance().getContext().hadoopConfiguration());
-            FSDataOutputStream fsDataOutputStream = fileSystem.create(new Path(_logFilePath));
-            BufferedOutputStream stream = new BufferedOutputStream(fsDataOutputStream);
-            stream.write(result.getBytes());
-            stream.close();
-        }
-    }
-
-    protected String runIterators(RuntimeIterator iterator, boolean indent) {
-        String actualOutput = getIteratorOutput(iterator, indent);
-        return actualOutput;
     }
 
 

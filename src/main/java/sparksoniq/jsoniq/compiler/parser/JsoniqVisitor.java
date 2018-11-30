@@ -1,7 +1,7 @@
-// Generated from /home/can/Project/sparksoniq/src/main/java/sparksoniq/jsoniq/compiler/parser/Jsoniq.g4 by ANTLR 4.6
+// Generated from ./src/main/java/sparksoniq/jsoniq/compiler/parser/Jsoniq.g4 by ANTLR 4.5.3
 
-	// Java header
-	package sparksoniq.jsoniq.compiler.parser;
+// Java header
+package sparksoniq.jsoniq.compiler.parser;
 
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
@@ -410,17 +410,17 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitJSONItemTest(JsoniqParser.JSONItemTestContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#atomicType}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitAtomicType(JsoniqParser.AtomicTypeContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#keyWordBoolean}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitKeyWordBoolean(JsoniqParser.KeyWordBooleanContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#atomicType}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAtomicType(JsoniqParser.AtomicTypeContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#nCNameOrKeyWordBoolean}.
 	 * @param ctx the parse tree

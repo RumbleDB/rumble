@@ -132,7 +132,7 @@ public class JiqsJLineShell {
         }
     }
 
-    private void output(String message) {
+    public void output(String message) {
         System.out.println(message);
     }
 

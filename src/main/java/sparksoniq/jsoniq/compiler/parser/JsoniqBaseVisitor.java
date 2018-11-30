@@ -1,7 +1,7 @@
-// Generated from /home/can/Project/sparksoniq/src/main/java/sparksoniq/jsoniq/compiler/parser/Jsoniq.g4 by ANTLR 4.6
+// Generated from ./src/main/java/sparksoniq/jsoniq/compiler/parser/Jsoniq.g4 by ANTLR 4.5.3
 
-	// Java header
-	package sparksoniq.jsoniq.compiler.parser;
+// Java header
+package sparksoniq.jsoniq.compiler.parser;
 
 import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
 
@@ -482,14 +482,14 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitAtomicType(JsoniqParser.AtomicTypeContext ctx) { return visitChildren(ctx); }
+	@Override public T visitKeyWordBoolean(JsoniqParser.KeyWordBooleanContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitKeyWordBoolean(JsoniqParser.KeyWordBooleanContext ctx) { return visitChildren(ctx); }
+	@Override public T visitAtomicType(JsoniqParser.AtomicTypeContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *

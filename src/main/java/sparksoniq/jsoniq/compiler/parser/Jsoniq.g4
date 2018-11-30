@@ -1,8 +1,8 @@
 grammar Jsoniq; // parser grammar, parses streams of tokens
 
 @header {
-	// Java header
-	package sparksoniq.jsoniq.compiler.parser;
+// Java header
+package sparksoniq.jsoniq.compiler.parser;
 }
 
 module   : (Kjsoniq Kversion vers=stringLiteral ';')? (libraryModule | main=mainModule);
