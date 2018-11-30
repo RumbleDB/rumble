@@ -1,8 +1,8 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate;
 
-import sparksoniq.exceptions.InvalidArgumentTypeException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
+import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemComparatorForSequences;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -45,13 +45,13 @@ public class MaxFunctionIterator extends AggregateFunctionIterator {
                 try {
                     return Collections.max(results, comparator);
                 } catch (SparksoniqRuntimeException e) {
-                    throw new InvalidArgumentTypeException("Max expression input error. Input has to be non-null atomics of matching types: " + e.getMessage(), getMetadata());
+                    throw new UnexpectedTypeException("Max expression input error. Input has to be non-null atomics of matching types: " + e.getMessage(), getMetadata());
                 }
             } else {
                 try {
                     return _iterator.getRDD().max(comparator);
                 } catch (SparksoniqRuntimeException e) {
-                    throw new InvalidArgumentTypeException("Max expression input error. Input has to be non-null atomics of matching types: " + e.getMessage(), getMetadata());
+                    throw new UnexpectedTypeException("Max expression input error. Input has to be non-null atomics of matching types: " + e.getMessage(), getMetadata());
                 }
             }
         } else

@@ -1,7 +1,7 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate;
 
-import sparksoniq.exceptions.InvalidArgumentTypeException;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.DecimalItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
@@ -41,7 +41,7 @@ public class AvgFunctionIterator extends AggregateFunctionIterator {
             this._hasNext = false;
             results.forEach(r -> {
                 if (!Item.isNumeric(r))
-                    throw new InvalidArgumentTypeException("Average expression has non numeric args " +
+                    throw new UnexpectedTypeException("Average expression has non numeric args " +
                             r.serialize(), getMetadata());
             });
             //TODO check numeric types conversions
