@@ -41,6 +41,7 @@ spark-submit --class sparksoniq.ShellStart  --master local[*]  --deploy-mode cli
  */
 
 public class ShellStart {
+    public static JiqsJLineShell terminal;
     public static void main(String[] args) throws IOException {
         HashMap<String, String> arguments;
         try {
@@ -53,8 +54,10 @@ public class ShellStart {
         SparkContextManager.getInstance().initializeConfigurationAndContext();
         if (arguments.containsKey("result-size")) {
             int itemLimit = Integer.parseInt(arguments.get("result-size"));
-            new JiqsJLineShell(new SparksoniqRuntimeConfiguration(arguments), itemLimit).launch();
+            terminal = new JiqsJLineShell(new SparksoniqRuntimeConfiguration(arguments), itemLimit);
+            terminal.launch();
         } else
-            new JiqsJLineShell(new SparksoniqRuntimeConfiguration(arguments)).launch();
+            terminal = new JiqsJLineShell(new SparksoniqRuntimeConfiguration(arguments));
+        terminal.launch();
     }
 }
