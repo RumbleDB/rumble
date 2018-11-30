@@ -1,8 +1,8 @@
 grammar Jsoniq; // parser grammar, parses streams of tokens
 
 @header {
-	// Java header
-	package sparksoniq.jsoniq.compiler.parser;
+// Java header
+package sparksoniq.jsoniq.compiler.parser;
 }
 
 module   : (Kjsoniq Kversion vers=stringLiteral ';')? (libraryModule | main=mainModule);
@@ -141,7 +141,7 @@ orderedExpr
 unorderedExpr
          : 'unordered' '{' expr '}';
 functionCall
-         : ((ns=NCName | kw=keyWords )':')? (fcnName=NCName | kw = keyWords) argumentList;
+         : ((ns=NCName | kw=keyWords |  )':')? (fcnName=nCNameOrKeyWordBoolean | kw = keyWords) argumentList;
 
 argumentList : '('  (args+=argument ','?)* ')';
 argument : exprSingle | '?';
@@ -162,9 +162,17 @@ jSONItemTest
          : 'object'
            | 'array'
            | Kjson;
+
+keyWordBoolean
+         : 'boolean';
+
 atomicType
          : 'atomic' | 'string' | 'integer'
-         | 'decimal' | 'double' | 'boolean' | 'null';
+         | 'decimal' | 'double' | keyWordBoolean | 'null';
+
+nCNameOrKeyWordBoolean
+         : NCName | keyWordBoolean;
+
 pairConstructor
          :  ( lhs=exprSingle | name=NCName ) (':' | '?') rhs=exprSingle;
 

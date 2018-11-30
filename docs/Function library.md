@@ -1,6 +1,6 @@
 # Function library
 
-We list here the functions supported by Sparksoniq, and introduce them by means of examples. Highly detailed specifications can be found in the [underlying W3C standard](https://www.w3.org/TR/xpath-functions-30/#func-floor), unless the function is marked as specific to JSON or Sparksoniq.
+We list here the functions supported by Sparksoniq, and introduce them by means of examples. Highly detailed specifications can be found in the [underlying W3C standard](https://www.w3.org/TR/xpath-functions-30/#func-floor), unless the function is marked as specific to JSON or Sparksoniq, in which case it can be found [here](http://www.jsoniq.org/docs/JSONiq/html-single/index.html#idm34604304).
 
 ## Aggregation functions
 
@@ -20,7 +20,22 @@ let $x := (1, 2, 3, 4)
 return count($x)
 ```
 
-returns 4
+returns 4.
+
+Count calls are pushed down to Spark, so this works on billions of items as well:
+
+```
+count(json-file("file.json"))
+```
+
+```
+count(
+  for $i in json-file("file.json")
+  where $i.foo eq "bar"
+  return $i
+)
+```
+
 
 ### min
 
@@ -49,6 +64,105 @@ return avg($x)
 
 returns 2.5
 
+## Object functions
+
+### keys
+
+```
+keys({"foo" : "bar", "bar" : "foobar"})
+```
+
+returns ("foo", "bar").  Also works on an input sequence, eliminating duplicates
+
+```
+keys(({"foo" : "bar", "bar" : "foobar"}, {"foo": "bar2"}))
+```
+
+### project
+
+```
+project({"foo" : "bar", "bar" : "foobar", "foobar" : "foo" }, ("foo", "bar"))
+```
+
+returns the object {"foo" : "bar", "bar" : "foobar"}. Also works on an input sequence, in a distributive way.
+
+```
+project(({"foo" : "bar", "bar" : "foobar", "foobar" : "foo" }, {"foo": "bar2"}), ("foo", "bar"))
+```
+
+
+### remove-keys
+
+```
+remove-keys({"foo" : "bar", "bar" : "foobar", "foobar" : "foo" }, ("foo", "bar"))
+```
+
+returns the object {"foobar" : "foo"}. Also works on an input sequence, in a distributive way.
+
+```
+remove-keys(({"foo" : "bar", "bar" : "foobar", "foobar" : "foo" }, {"foo": "bar2"}), ("foo", "bar"))
+```
+
+### values
+
+```
+values({"foo" : "bar", "bar" : "foobar"})
+```
+
+returns ("bar", "foobar").  Also works on an input sequence, in a distributive way.
+
+```
+values(({"foo" : "bar", "bar" : "foobar"}, {"foo" : "bar2"}))
+```
+
+
+## Array functions
+
+### size
+
+```
+size([1 to 100])
+```
+
+returns 100. Also works if the empty sequence is supplied, in which case it returns the empty sequence.
+
+```
+size(())
+```
+
+### members
+
+```
+members([1 to 100])
+```
+
+This function returns the members as an array, but not recursively, i.e., nested arrays are not unboxed.
+
+Returns the first 100 integers as a sequence.  Also works on an input sequence, in a distributive way.
+
+```
+members(([1 to 100], [ 300 to 1000 ]))
+```
+
+
+### flatten
+
+```
+flatten(([1, 2], [[3, 4], [5, 6]], [7, [8, 9]]))
+```
+
+Unboxes arrays recursively, stopping the recursion when any other item is reached (object or atomic). Also works on an input sequence, in a distributive way.
+
+Returns (1, 2, 3, 4, 5, 6, 7, 8, 9, 10).
+
+## Atomic functions
+
+```
+null()
+```
+
+Returns a JSON null (also available as the literal null).
+
 ## Mathematic functions
 
 ### abs
@@ -60,9 +174,29 @@ abs(-2)
 returns 2.0
 
 ### acos
+
+```
+acos(1)
+```
+
 ### asin
+
+```
+asin(1)
+```
+
 ### atan
+
+```
+atan(1)
+```
+
 ### atan2
+
+```
+atan2(1)
+```
+
 
 ### ceiling
 
@@ -74,9 +208,22 @@ returns 3.0
 
 ### cos
 
+```
+cos(pi())
+```
+
 ### exp
 
+```
+exp(10)
+```
+
 ### exp10
+
+```
+exp10(10)
+```
+
 
 
 ### floor
@@ -89,7 +236,17 @@ returns 2.0
 
 ### log
 
+```
+log(100)
+```
+
+
 ### log10
+
+```
+log10(100)
+```
+
 
 ### pow
 
@@ -115,9 +272,34 @@ returns 2.23
 
 ### round-half-to-even
 
+
+```
+round-half-to-even(2.2345, 2), round-half-to-even(2.2345)
+```
+
+### sqrt
+
+```
+sqrt(4)
+```
+
+returns 100.0
+
+
+
 ### sin
 
+
+```
+sin(pi())
+```
+
 ### tan
+
+
+```
+tan(pi())
+```
 
 ## String functions
 

@@ -64,5 +64,7 @@ public class ErrorCodes {
 
     public static final String ExactlyOneErrorCode  = "FORG0005";
 
+    public static final String InvalidArgumentType = "FORG0006";
 
+    
 }

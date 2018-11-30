@@ -133,6 +133,9 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         } else if (clause instanceof WhereClause) {
             result.add(new WhereClauseSparkIterator(this.visit(((WhereClause) clause).getWhereExpression(), argument),
                     createIteratorMetadata(clause)));
+        } else if (clause instanceof CountClause) {
+            result.add(new CountClauseSparkIterator(this.visit(((CountClause) clause).getCountVariable(), argument),
+                    createIteratorMetadata(clause)));
         }
         return result;
     }
@@ -423,7 +426,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
             Constructor<? extends RuntimeIterator> ctor = functionClass.getConstructor(List.class, IteratorMetadata.class);
             return ctor.newInstance(arguments, iteratorMetadata);
         } catch (Exception e) {
-            throw new UnknownFunctionCallException(createIteratorMetadata(expression));
+            throw new UnknownFunctionCallException(expression.getFunctionName(), arguments.size(), createIteratorMetadata(expression));
         }
     }
 

@@ -27,6 +27,7 @@ import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayDescendantFuncti
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayFlattenFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayMembersFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArraySizeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.booleans.BooleanFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.object.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.*;
@@ -57,9 +58,12 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(PARALLELIZE, 1), ParallelizeFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(COUNT, 1), CountFunctionIterator.class);
 
+        buildInFunctions.put(new SparksoniqFunctionSignature(BOOLEAN, 1), BooleanFunctionIterator.class);
+
         buildInFunctions.put(new SparksoniqFunctionSignature(MIN, 1), MinFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(MAX, 1), MaxFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(SUM, 1), SumFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(SUM, 2), SumFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(AVG, 1), AvgFunctionIterator.class);
 
         buildInFunctions.put(new SparksoniqFunctionSignature(ZEROORONE, 1), ZeroOrOneIterator.class);
@@ -115,10 +119,12 @@ public class Functions {
     }
 
     public static Class<? extends RuntimeIterator> getFunctionIteratorClass(FunctionCall expression, List<RuntimeIterator> arguments) {
-        SparksoniqFunctionSignature functionSignature = new SparksoniqFunctionSignature(expression.getFunctionName(), arguments.size());
+        String fnName = expression.getFunctionName();
+        int arity = arguments.size();
+        SparksoniqFunctionSignature functionSignature = new SparksoniqFunctionSignature(fnName, arity);
         if(buildInFunctions.containsKey(functionSignature))
             return buildInFunctions.get(functionSignature);
-        throw new UnknownFunctionCallException(new IteratorMetadata(expression.getMetadata()));
+        throw new UnknownFunctionCallException(fnName, arity, new IteratorMetadata(expression.getMetadata()));
     }
 
     public static class FunctionNames {
@@ -135,6 +141,13 @@ public class Functions {
          * function that returns the length of a sequence
          */
         public static final String COUNT = "count";
+
+
+        /**
+         * function that returns the effective boolean value of the given parameter
+         */
+        public static final String BOOLEAN = "boolean";
+
 
         /**
          * function that returns the minimum of a sequence

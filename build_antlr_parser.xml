@@ -1,9 +1,10 @@
-<project name="antlr-parser" default="generate-parser" basedir=".">
+<project name="antlr-parser" default="generate-parser" basedir="."> <!-- "." here is evaluated to full path and set to basedir-->
 
     <!-- Set project properties. -->
-    <property name="src.dir" value="${basedir}/src/main/java/sparksoniq"/>
+    <!-- <property name="src.dir" value="${basedir}/src/main/java/sparksoniq"/> prepends full path as comment-->
+    <property name="src.dir" value="./src/main/java/sparksoniq"/>
     <property name="parser.dir" value="${src.dir}/jsoniq/compiler/parser"/>
-    <property name="antlr.jar" value="${basedir}/lib/antlr-4.6-complete.jar"/>
+    <property name="antlr.jar" value="./lib/antlr-4.5.3-complete.jar"/>
 
 
     <target name="clean-parser">
@@ -17,11 +18,12 @@
 
     <target name="generate-parser">
         <echo message="ANTLR4 ${parser.dir}/Jsoniq.g4" level="info"/>
-        <echo>${basedir}</echo>
+        <!-- <echo>${basedir}</echo> prints fullpath to basedir -->
         <java classname="org.antlr.v4.Tool" failonerror="true" classpath="${antlr.jar}">
             <arg value="${parser.dir}/Jsoniq.g4" />
             <arg value="-o" />
-            <arg value="${parser.dir}" />
+            <!-- <arg value="${parser.dir}" /> -->
+            <arg value="." />   <!-- put results in *.g4's directory -->
             <arg value="-no-listener" />
             <arg value="-visitor" />
         </java>

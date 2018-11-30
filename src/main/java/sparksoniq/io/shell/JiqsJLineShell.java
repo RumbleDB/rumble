@@ -30,6 +30,7 @@ import org.jline.terminal.TerminalBuilder;
 import sparksoniq.JsoniqQueryExecutor;
 import sparksoniq.Main;
 import sparksoniq.config.SparksoniqRuntimeConfiguration;
+import sparksoniq.spark.SparkContextManager;
 import sparksoniq.utils.FileUtils;
 
 import java.io.IOException;
@@ -107,7 +108,9 @@ public class JiqsJLineShell {
 
     private void initialize() throws IOException {
         welcomeMessage = IOUtils.toString(Main.class.getResourceAsStream("/assets/banner.txt"), "UTF-8");
-        Terminal terminal = TerminalBuilder.builder().system(true).build();
+        Terminal terminal = TerminalBuilder.builder()
+                .system(true)
+                .build();
         lineReader = LineReaderBuilder.builder()
 
                 .terminal(terminal)
@@ -129,7 +132,7 @@ public class JiqsJLineShell {
         }
     }
 
-    private void output(String message) {
+    public void output(String message) {
         System.out.println(message);
     }
 

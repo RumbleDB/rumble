@@ -1,4 +1,4 @@
 (:JIQS: ShouldRun; Output="( [ ] )" :)
-let $o := ([]) return descendant-arrays($o)
+descendant-arrays(([]))
 
 (: empty array :)

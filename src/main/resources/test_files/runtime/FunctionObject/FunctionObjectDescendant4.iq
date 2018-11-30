@@ -1,5 +1,5 @@
 (:JIQS: ShouldRun; Output="" :)
-let $o := ([]) return descendant-objects($o)
+descendant-objects(([]))
 
 (: to-be-implemented empty array :)
 
