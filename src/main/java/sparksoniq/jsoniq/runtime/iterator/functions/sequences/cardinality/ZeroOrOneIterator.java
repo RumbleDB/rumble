@@ -50,14 +50,13 @@ public class ZeroOrOneIterator extends CardinalityFunctionIterator {
             sequenceIterator.close();
         } else {
             JavaRDD<Item> rdd = sequenceIterator.getRDD();
-            rdd.persist(StorageLevel.MEMORY_ONLY());
-            long count = rdd.count();
-            if (count == 0) {
+            List<Item> results = rdd.take(2);
+            if (results.size() == 0) {
                 this._hasNext = false;
-            } else if (count == 1) {
+            } else if (results.size() == 1) {
                 this._hasNext = true;
-                _nextResult = rdd.collect().get(0);
-            } else if (count > 1) {
+                _nextResult = results.get(0);
+            } else if (results.size() > 1) {
                 throw new SequenceExceptionZeroOrOne("fn:zero-or-one() called with a sequence containing more than one item", getMetadata());
             }
         }
