@@ -3,7 +3,6 @@ package sparksoniq.jsoniq.runtime.iterator.functions.sequences.cardinality;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SequenceExceptionOneOrMore;
 import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
@@ -13,9 +12,7 @@ import java.util.List;
 public class OneOrMoreIterator extends CardinalityFunctionIterator {
 
     private RuntimeIterator _iterator;
-    private Item _nextLocalResult;
-    private List<Item> _rddResults;
-    private int _rddResultIndex;
+    private Item _nextResult;
 
     public OneOrMoreIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
@@ -27,47 +24,31 @@ public class OneOrMoreIterator extends CardinalityFunctionIterator {
 
         _iterator = this._children.get(0);
         _iterator.open(context);
-        // for both non-RDD and RDD cases, empty sequence causes an exception
         if (!_iterator.hasNext()) {
             throw new SequenceExceptionOneOrMore("fn:one-or-more() called with a sequence containing less than 1 item", getMetadata());
-        } else {
-            if (!_iterator.isRDD()) {
-                setNextLocalResult();
-            }
         }
+        setNextResult();
     }
 
     @Override
     public Item next() {
         if (this._hasNext) {
-            if (!_iterator.isRDD()) {
-                Item result = _nextLocalResult;  // save the result to be returned
-                setNextLocalResult();            // calculate and store the next result
-                return result;
-            } else {
-                if (_rddResults == null) {
-                    _rddResults = _iterator.getRDD().collect();
-                    _rddResultIndex = 0;
-                }
-                Item result =_rddResults.get(_rddResultIndex++);
-                if (_rddResultIndex == _rddResults.size()) {
-                    this._hasNext = false;
-                }
-                return result;
-            }
+            Item result = _nextResult;  // save the result to be returned
+            setNextResult();            // calculate and store the next result
+            return result;
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " ONE-OR-MORE function",
                 getMetadata());
     }
 
-    public void setNextLocalResult() {
-        _nextLocalResult = null;
+    public void setNextResult() {
+        _nextResult = null;
 
         if (_iterator.hasNext()) {
-            _nextLocalResult = _iterator.next();
+            _nextResult = _iterator.next();
         }
 
-        if (_nextLocalResult == null) {
+        if (_nextResult == null) {
             this._hasNext = false;
             _iterator.close();
         } else {
