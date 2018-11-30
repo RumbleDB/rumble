@@ -57,6 +57,7 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(MIN, 1), MinFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(MAX, 1), MaxFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(SUM, 1), SumFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(SUM, 2), SumFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(AVG, 1), AvgFunctionIterator.class);
 
         buildInFunctions.put(new SparksoniqFunctionSignature(ABS, 1), AbsFunctionIterator.class);
