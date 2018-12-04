@@ -31,8 +31,8 @@ import java.util.List;
 
 public abstract class SparkRuntimeTupleIterator extends RuntimeTupleIterator {
 
-    protected SparkRuntimeTupleIterator(List<RuntimeTupleIterator> children, IteratorMetadata iteratorMetadata) {
-        super(children, iteratorMetadata);
+    protected SparkRuntimeTupleIterator(RuntimeTupleIterator _child, IteratorMetadata iteratorMetadata) {
+        super(_child, iteratorMetadata);
         this.parser = new JiqsItemParser();
     }
 

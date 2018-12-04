@@ -27,6 +27,7 @@ import org.apache.spark.api.java.JavaRDD;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnexpectedTypeException;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.jsoniq.tuple.FlworTuple;
@@ -39,15 +40,13 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     private final IteratorMetadata metadata;
     protected boolean _hasNext;
     protected boolean _isOpen;
-    protected List<RuntimeTupleIterator> _children;
+    protected RuntimeTupleIterator _child;
     protected DynamicContext _currentDynamicContext;
 
-    protected RuntimeTupleIterator(List<RuntimeTupleIterator> children, IteratorMetadata metadata) {
+    protected RuntimeTupleIterator(RuntimeTupleIterator child, IteratorMetadata metadata) {
         this.metadata = metadata;
         this._isOpen = false;
-        this._children = new ArrayList<>();
-        if (children != null && !children.isEmpty())
-            this._children.addAll(children);
+        this._child = child;
     }
 
     public void open(DynamicContext context) {
@@ -60,13 +59,13 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
 
     public void close() {
         this._isOpen = false;
-        this._children.forEach(c -> c.close());
+        this._child.close();
     }
 
     public void reset(DynamicContext context) {
         this._hasNext = true;
         this._currentDynamicContext = context;
-        this._children.forEach(c -> c.reset(context));
+        this._child.reset(context);
     }
 
     @Override
@@ -74,7 +73,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         output.writeBoolean(_hasNext);
         output.writeBoolean(_isOpen);
         kryo.writeObject(output, this._currentDynamicContext);
-        kryo.writeObject(output, this._children);
+        kryo.writeObject(output, this._child);
     }
 
     @Override
@@ -82,7 +81,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         this._hasNext = input.readBoolean();
         this._isOpen = input.readBoolean();
         this._currentDynamicContext = kryo.readObject(input, DynamicContext.class);
-        this._children = kryo.readObject(input, ArrayList.class);
+        this._child = kryo.readObject(input, RuntimeTupleIterator.class);
     }
 
     public boolean hasNext() {
@@ -103,45 +102,12 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
 
     public abstract FlworTuple next();
 
-    protected List<FlworTuple> runChildrenIterators(DynamicContext context) {
+    protected List<FlworTuple> runChildIterator(DynamicContext context) {
         List<FlworTuple> values = new ArrayList<>();
-        for (RuntimeTupleIterator iterator : this._children) {
-            iterator.open(context);
-            while (iterator.hasNext())
-                values.add(iterator.next());
-            iterator.close();
-        }
+        this._child.open(context);
+        while (this._child.hasNext())
+            values.add(this._child.next());
+        this._child.close();
         return values;
-    }
-
-    protected List<FlworTuple> getTuplesFromIteratorWithCurrentContext(RuntimeTupleIterator iterator) {
-        List<FlworTuple> result = new ArrayList<>();
-        iterator.open(_currentDynamicContext);
-        while (iterator.hasNext())
-            result.add(iterator.next());
-        iterator.close();
-        return result;
-    }
-
-    protected <T extends FlworTuple> T getSingleTupleOfTypeFromIterator(RuntimeTupleIterator iterator, Class<T> type) {
-        return getSingleTupleOfTypeFromIterator(iterator, type,
-                new SparksoniqRuntimeException("Iterator was expected to return a single tuple but returned a sequence",
-                        iterator.getMetadata().getExpressionMetadata()));
-    }
-
-    protected <T extends FlworTuple, E extends SparksoniqRuntimeException> T getSingleTupleOfTypeFromIterator(RuntimeTupleIterator iterator,
-                                                                                                       Class<T> type, E nonAtomicException) {
-        iterator.open(_currentDynamicContext);
-        FlworTuple result = null;
-        if(iterator.hasNext()) {
-            result = iterator.next();
-            if (iterator.hasNext()) {
-                throw nonAtomicException;
-            }
-        }
-        iterator.close();
-        if (result != null && !(type.isInstance(result)))
-            throw new UnexpectedTypeException("Invalid tuple type returned by tuple iterator", iterator.getMetadata());
-        return (T) result;
     }
 }
