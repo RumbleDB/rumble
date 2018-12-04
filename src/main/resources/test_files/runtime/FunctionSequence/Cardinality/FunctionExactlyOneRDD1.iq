@@ -1,0 +1,3 @@
+(:JIQS: ShouldRun; Output="{ "bar" : null, "foobar" : [ test1, test2 ], "foo" : 1 }" :)
+exactly-one(json-file("./src/main/resources/queries/singleLine.json"))
+

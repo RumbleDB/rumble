@@ -27,11 +27,18 @@ import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayDescendantFuncti
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayFlattenFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayMembersFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArraySizeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.booleans.BooleanFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.object.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.trigonometric.*;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.cardinality.ExactlyOneIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.cardinality.OneOrMoreIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.cardinality.ZeroOrOneIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.value.DistinctValuesFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.value.IndexOfFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.value.DeepEqualFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.ConcatFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.StringJoinFunction;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.SubstringFunctionIterator;
@@ -54,10 +61,21 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(PARALLELIZE, 1), ParallelizeFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(COUNT, 1), CountFunctionIterator.class);
 
+        buildInFunctions.put(new SparksoniqFunctionSignature(BOOLEAN, 1), BooleanFunctionIterator.class);
+
         buildInFunctions.put(new SparksoniqFunctionSignature(MIN, 1), MinFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(MAX, 1), MaxFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(SUM, 1), SumFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(SUM, 2), SumFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(AVG, 1), AvgFunctionIterator.class);
+
+        buildInFunctions.put(new SparksoniqFunctionSignature(ZEROORONE, 1), ZeroOrOneIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(ONEORMORE, 1), OneOrMoreIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(EXACTLYONE, 1), ExactlyOneIterator.class);
+
+        buildInFunctions.put(new SparksoniqFunctionSignature(DISTINCTVALUES, 1), DistinctValuesFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(INDEXOF, 2), IndexOfFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(DEEPEQUAL, 2), DeepEqualFunctionIterator.class);
 
         buildInFunctions.put(new SparksoniqFunctionSignature(ABS, 1), AbsFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(CEILING, 1), CeilingFunctionIterator.class);
@@ -130,6 +148,13 @@ public class Functions {
          */
         public static final String COUNT = "count";
 
+
+        /**
+         * function that returns the effective boolean value of the given parameter
+         */
+        public static final String BOOLEAN = "boolean";
+
+
         /**
          * function that returns the minimum of a sequence
          */
@@ -147,6 +172,33 @@ public class Functions {
          */
         public static final String SUM = "sum";
 
+
+        /**
+         * function that returns $arg if it contains zero or one items. Otherwise, raises an error.
+         */
+        public static final String ZEROORONE = "zero-or-one";
+        /**
+         * function that returns $arg if it contains one or more items. Otherwise, raises an error.
+         */
+        public static final String ONEORMORE = "one-or-more";
+        /**
+         * function that returns $arg if it contains exactly one item. Otherwise, raises an error.
+         */
+        public static final String EXACTLYONE = "exactly-one";
+
+
+        /**
+         * function that returns the values that appear in a sequence, with duplicates eliminated
+         */
+        public static final String DISTINCTVALUES = "distinct-values";
+        /**
+         * function that returns indices of items that are equal to the search parameter
+         */
+        public static final String INDEXOF = "index-of";
+        /**
+         * function that returns whether two sequences are deep-equal to each other
+         */
+        public static final String DEEPEQUAL = "deep-equal";
 
         /**
          * function that returns the absolute value of the arg

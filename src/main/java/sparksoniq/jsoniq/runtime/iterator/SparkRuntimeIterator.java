@@ -19,6 +19,8 @@
  */
  package sparksoniq.jsoniq.runtime.iterator;
 
+import org.apache.spark.storage.StorageLevel;
+import sparksoniq.ShellStart;
 import sparksoniq.io.json.JiqsItemParser;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
@@ -65,9 +67,14 @@ public abstract class SparkRuntimeIterator extends RuntimeIterator {
             this._rdd = this.getRDD();
             if(SparkContextManager.LIMIT_COLLECT()) {
                 result = _rdd.take(SparkContextManager.COLLECT_ITEM_LIMIT);
+                if (result.size() == SparkContextManager.COLLECT_ITEM_LIMIT) {
+                    ShellStart.terminal.output("\nWarning: Results have been truncated to: " + SparkContextManager.COLLECT_ITEM_LIMIT
+                            + " items. This value can be configured with the --result-size parameter at startup.\n");
+                }
             }
-            else
+            else {
                 result = _rdd.collect();
+            }
         }
 
         if(!(currentResultIndex <= result.size() - 1))
