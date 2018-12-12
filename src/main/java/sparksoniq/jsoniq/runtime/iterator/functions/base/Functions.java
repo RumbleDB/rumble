@@ -29,6 +29,7 @@ import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayMembersFunctionI
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArraySizeFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.booleans.BooleanFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.object.*;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential.*;
@@ -68,6 +69,16 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(SUM, 1), SumFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(SUM, 2), SumFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(AVG, 1), AvgFunctionIterator.class);
+
+        buildInFunctions.put(new SparksoniqFunctionSignature(EMPTY, 1), EmptyFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(EXISTS, 1), ExistsFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(HEAD, 1), HeadFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(TAIL, 1), TailFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(INSERTBEFORE, 3), InsertBeforeFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(REMOVE, 2), RemoveFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(REVERSE, 1), ReverseFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(SUBSEQUENCE, 2), SubsequenceFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(SUBSEQUENCE, 3), SubsequenceFunctionIterator.class);
 
         buildInFunctions.put(new SparksoniqFunctionSignature(ZEROORONE, 1), ZeroOrOneIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(ONEORMORE, 1), OneOrMoreIterator.class);
@@ -171,6 +182,41 @@ public class Functions {
          * function that returns the sum of a sequence
          */
         public static final String SUM = "sum";
+
+
+        /**
+         * function that returns true if the argument is the empty sequence
+         */
+        public static final String EMPTY = "empty";
+        /**
+         * function that returns true if the argument is a non-empty sequence
+         */
+        public static final String EXISTS = "exists";
+        /**
+         * function that returns the first item in a sequence
+         */
+        public static final String HEAD = "head";
+        /**
+         * function that returns all but the first item in a sequence
+         */
+        public static final String TAIL = "tail";
+        /**
+         * function that returns a sequence constructed by inserting an item or a sequence of items at a given position within an existing sequence
+         */
+        public static final String INSERTBEFORE = "insert-before";
+        /**
+         * function that returns a new sequence containing all the items of $target except the item at position $position.
+         */
+        public static final String REMOVE = "remove";
+        /**
+         * function that reverses the order of items in a sequence.
+         */
+        public static final String REVERSE = "reverse";
+        /**
+         * function that applies a subsequence operation to the given sequence with the given start index and length parameters
+         */
+        public static final String SUBSEQUENCE = "subsequence";
+
 
 
         /**
