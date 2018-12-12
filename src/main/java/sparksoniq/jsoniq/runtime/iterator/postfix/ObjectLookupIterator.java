@@ -40,7 +40,7 @@ import java.util.List;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 
-public class ObjectLookupIterator extends LocalRuntimeIterator {
+public class ObjectLookupIterator extends RuntimeIterator {
 
     private RuntimeIterator _iterator;
     private Item _lookupKey;
