@@ -156,17 +156,17 @@ public class ObjectLookupIterator extends LocalRuntimeIterator {
         _currentDynamicContext = new DynamicContext();
         JavaRDD<Item> childRDD = this._children.get(0).getRDD();
         initLookupKey();
-        Function<Item, Item> transformation = null;
+        String key = null;
         if(_contextLookup)
         {
             // For now this will always be an error. Later on we will pass the dynamic context from the parent iterator.
-            Item contextItem = _currentDynamicContext.getVariableValue("$$").get(0);
-            transformation = new ObjectLookupClosure(((StringItem) contextItem).getStringValue());
+            key = ((StringItem)_currentDynamicContext.getVariableValue("$$").get(0)).getStringValue();
         }
         else
         {
-            transformation = new ObjectLookupClosure(((StringItem) _lookupKey).getStringValue());
+            key = ((StringItem) _lookupKey).getStringValue();
         }
+        Function<Item, Item> transformation = new ObjectLookupClosure(key);
 
         JavaRDD<Item> resultRDD = childRDD.map(transformation);
         return resultRDD;
