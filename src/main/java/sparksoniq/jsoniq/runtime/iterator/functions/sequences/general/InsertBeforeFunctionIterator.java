@@ -109,6 +109,8 @@ public class InsertBeforeFunctionIterator extends LocalFunctionCallIterator {
             if (_sequenceIterator.hasNext()) {
                 _nextResult = _sequenceIterator.next();
                 _currentPosition++;
+            } else if (_insertIterator.hasNext()){
+                _nextResult = _insertIterator.next();
             }
         }
 
