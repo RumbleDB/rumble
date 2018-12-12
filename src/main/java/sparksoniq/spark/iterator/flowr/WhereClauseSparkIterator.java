@@ -23,23 +23,24 @@ import sparksoniq.jsoniq.compiler.translator.expr.flowr.FLWOR_CLAUSES;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
 import sparksoniq.spark.closures.WhereClauseClosure;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
 import org.apache.spark.api.java.JavaRDD;
 
 public class WhereClauseSparkIterator extends FlowrClauseSparkIterator {
-    public WhereClauseSparkIterator(RuntimeIterator whereExpression, IteratorMetadata iteratorMetadata) {
-        super(null, FLWOR_CLAUSES.WHERE, iteratorMetadata);
+    public WhereClauseSparkIterator(RuntimeTupleIterator previousClause, RuntimeIterator whereExpression, IteratorMetadata iteratorMetadata) {
+        super(previousClause, null, FLWOR_CLAUSES.WHERE, iteratorMetadata);
         this._children.add(whereExpression);
     }
 
     @Override
-    public JavaRDD<FlworTuple> getTupleRDD() {
+    public JavaRDD<FlworTuple> getRDD() {
         if (this._rdd == null) {
             RuntimeIterator expression = this._children.get(0);
-            if (this._previousClause != null) {
-                this._rdd = _previousClause.getTupleRDD();
+            if (this._child != null) {
+                this._rdd = _child.getRDD();
                 this._rdd = this._rdd.filter(new WhereClauseClosure(expression));
             } else {
                 throw new SparksoniqRuntimeException("Invalid where clause");

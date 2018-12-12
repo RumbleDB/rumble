@@ -35,9 +35,9 @@ import java.util.List;
 public class GroupByClauseSparkIterator extends FlowrClauseSparkIterator {
     private final List<GroupByClauseSparkIteratorExpression> _variables;
 
-    public GroupByClauseSparkIterator(List<GroupByClauseSparkIteratorExpression> variables,
+    public GroupByClauseSparkIterator(RuntimeTupleIterator previousClause, List<GroupByClauseSparkIteratorExpression> variables,
                                       IteratorMetadata iteratorMetadata) {
-        super(null, FLWOR_CLAUSES.GROUP_BY, iteratorMetadata);
+        super(previousClause, null, FLWOR_CLAUSES.GROUP_BY, iteratorMetadata);
         this._variables = variables;
         _variables.forEach(var -> {
             this._children.add(var.getVariableReference());
@@ -47,9 +47,9 @@ public class GroupByClauseSparkIterator extends FlowrClauseSparkIterator {
     }
 
     @Override
-    public JavaRDD<FlworTuple> getTupleRDD() {
+    public JavaRDD<FlworTuple> getRDD() {
         if (_rdd == null) {
-            _rdd = this._previousClause.getTupleRDD();
+            _rdd = this._child.getRDD();
             //map to pairs - ArrayItem [sort keys] , tuples
             JavaPairRDD<FlworKey, FlworTuple> keyTuplePair = this._rdd
                     .mapToPair(new GroupByToPairMapClosure(_variables));

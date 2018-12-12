@@ -36,27 +36,27 @@ import java.util.List;
 
 public class ForClauseSparkIterator extends FlowrClauseSparkIterator {
 
-    public ForClauseSparkIterator(VariableReferenceIterator variableReference,
+    public ForClauseSparkIterator(RuntimeTupleIterator previousClause, VariableReferenceIterator variableReference,
                                   RuntimeIterator assignmentExpression, IteratorMetadata iteratorMetadata) {
-        super(null, FLWOR_CLAUSES.FOR, iteratorMetadata);
+        super(previousClause, null, FLWOR_CLAUSES.FOR, iteratorMetadata);
         this._children.add(variableReference);
         this._children.add(assignmentExpression);
     }
 
 
     @Override
-    public JavaRDD<FlworTuple> getTupleRDD() {
+    public JavaRDD<FlworTuple> getRDD() {
         if (this._rdd == null) {
             String variableReference = ((VariableReferenceIterator)this._children.get(0)).getVariableName();
             RuntimeIterator assignmentExpression = this._children.get(1);
             JavaRDD<Item> initialRdd = null;
             //if it's a start clause
-            if (this._previousClause == null) {
+            if (this._child == null) {
                 initialRdd = this.getNewRDDFromExpression(assignmentExpression);
                 this._rdd = initialRdd.map(new InitialForClauseClosure(variableReference));
             } else {
             //if it's not a start clause
-                this._rdd = this._previousClause.getTupleRDD();
+                this._rdd = this._child.getRDD();
                 this._rdd = this._rdd.flatMap(new ForClauseClosure(assignmentExpression, variableReference));
             }
         }
