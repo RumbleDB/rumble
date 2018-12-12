@@ -63,8 +63,7 @@ public class ObjectLookupIterator extends LocalRuntimeIterator {
             _contextLookup = false;
         }
 
-        if (!_contextLookup)
-        {
+        if (!_contextLookup) {
             lookupIterator.open(_currentDynamicContext);
             if (lookupIterator.hasNext()) {
                 this._lookupKey = lookupIterator.next();
