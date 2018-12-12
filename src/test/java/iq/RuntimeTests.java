@@ -88,7 +88,7 @@ public class RuntimeTests extends AnnotationsTestsBase {
         String actualOutput = runIterators(runtimeIterator);
         Assert.assertTrue("Expected output: " + expectedOutput + " Actual result: "
                         + actualOutput,
-                unorderedItemSequenceStringsAreEqual(actualOutput, expectedOutput));
+                unorderedItemSequenceStringsAreEqual(expectedOutput, actualOutput));
     }
 
 
