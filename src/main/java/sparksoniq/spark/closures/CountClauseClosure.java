@@ -5,7 +5,7 @@ import scala.Tuple2;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
-import sparksoniq.spark.tuple.FlworTuple;
+import sparksoniq.jsoniq.tuple.FlworTuple;
 
 public class CountClauseClosure implements Function<Tuple2<FlworTuple, Long>, FlworTuple> {
     private String variableName;

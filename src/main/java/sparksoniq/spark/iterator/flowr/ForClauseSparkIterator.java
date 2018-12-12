@@ -27,7 +27,7 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.spark.SparkContextManager;
 import sparksoniq.spark.closures.ForClauseClosure;
 import sparksoniq.spark.closures.InitialForClauseClosure;
-import sparksoniq.spark.tuple.FlworTuple;
+import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
 import org.apache.spark.api.java.JavaRDD;
 

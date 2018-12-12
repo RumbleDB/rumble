@@ -19,11 +19,10 @@
  */
  package sparksoniq.spark.closures;
 
-import sparksoniq.io.json.JiqsItemParser;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.spark.tuple.FlworTuple;
+import sparksoniq.jsoniq.tuple.FlworTuple;
 import org.apache.spark.api.java.function.Function;
 
 public class WhereClauseClosure implements Function<FlworTuple, Boolean> {
