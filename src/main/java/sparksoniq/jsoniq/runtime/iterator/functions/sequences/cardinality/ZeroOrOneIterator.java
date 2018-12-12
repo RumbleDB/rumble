@@ -49,7 +49,7 @@ public class ZeroOrOneIterator extends CardinalityFunctionIterator {
             }
             sequenceIterator.close();
         } else {
-            JavaRDD<Item> rdd = sequenceIterator.getRDD();
+            JavaRDD<Item> rdd = sequenceIterator.getRDD(_currentDynamicContext);
             List<Item> results = rdd.take(2);
             if (results.size() == 0) {
                 this._hasNext = false;

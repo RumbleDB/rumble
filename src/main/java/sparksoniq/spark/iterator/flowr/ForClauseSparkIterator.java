@@ -67,7 +67,7 @@ public class ForClauseSparkIterator extends FlowrClauseSparkIterator {
     protected JavaRDD<Item> getNewRDDFromExpression(RuntimeIterator expression){
         JavaRDD<Item> rdd;
         if(expression.isRDD())
-            rdd = expression.getRDD();
+            rdd = expression.getRDD(_currentDynamicContext);
         else {
             List<Item> contents = new ArrayList<>();
             expression.open(this._currentDynamicContext);

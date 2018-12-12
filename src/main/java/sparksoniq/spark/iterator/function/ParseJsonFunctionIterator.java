@@ -40,7 +40,7 @@ public class ParseJsonFunctionIterator extends SparkFunctionCallIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        long resultSize = this.getRDD().count();
+        long resultSize = this.getRDD(_currentDynamicContext).count();
         if (resultSize == 0) {
             this._hasNext = false;
         } else {
@@ -49,7 +49,7 @@ public class ParseJsonFunctionIterator extends SparkFunctionCallIterator {
     }
 
     @Override
-    public JavaRDD<Item> getRDD() {
+    public JavaRDD<Item> getRDD(DynamicContext dynamicContext) {
         if (this._rdd == null) {
             JavaRDD<String> strings;
             RuntimeIterator urlIterator = this._children.get(0);
