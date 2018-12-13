@@ -32,6 +32,9 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import java.util.LinkedList;
 import java.util.Queue;
 
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.FlatMapFunction;
+
 public class ArrayUnboxingIterator extends LocalRuntimeIterator {
 
     private RuntimeIterator _iterator;
@@ -85,5 +88,20 @@ public class ArrayUnboxingIterator extends LocalRuntimeIterator {
         } else {
             this._hasNext = true;
         }
+    }
+    
+    @Override
+    public JavaRDD<Item> getRDD()
+    {
+        _currentDynamicContext = new DynamicContext();
+        JavaRDD<Item> childRDD = this._children.get(0).getRDD();
+        FlatMapFunction<Item, Item> transformation = new ArrayUnboxingClosure();
+        JavaRDD<Item> resultRDD = childRDD.flatMap(transformation);
+        return resultRDD;
+    }
+     @Override
+    public boolean isRDD()
+    {
+        return this._children.get(0).isRDD();
     }
 }
