@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 
 public class ObjectLookupIterator extends RuntimeIterator {
@@ -166,9 +167,9 @@ public class ObjectLookupIterator extends RuntimeIterator {
         {
             key = ((StringItem) _lookupKey).getStringValue();
         }
-        Function<Item, Item> transformation = new ObjectLookupClosure(key);
+        FlatMapFunction<Item, Item> transformation = new ObjectLookupClosure(key);
 
-        JavaRDD<Item> resultRDD = childRDD.map(transformation);
+        JavaRDD<Item> resultRDD = childRDD.flatMap(transformation);
         return resultRDD;
     }
 
