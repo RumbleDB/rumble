@@ -106,7 +106,7 @@ public class RuntimeTests extends AnnotationsTestsBase {
         if (!iterator.hasNext())
             return singleOutput;
         else {
-            String output = "( " + result.serialize() + ", ";
+            String output = "(" + result.serialize() + ", ";
             while (iterator.hasNext()) {
                 result = iterator.next();
                 if (result != null)

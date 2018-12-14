@@ -252,7 +252,7 @@ public class JsoniqQueryExecutor {
             return singleOutput;
         else {
             int itemCount = 0;
-            String output = "( " + result.serialize() + ", " + (indent ? "\n" : "");
+            String output = "(" + result.serialize() + ", " + (indent ? "\n" : "");
             while (iterator.hasNext() &&
                     ((itemCount < this._itemOutputLimit && _itemOutputLimit > 0) ||
                             _itemOutputLimit == 0)) {
