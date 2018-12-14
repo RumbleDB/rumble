@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="( false, false, false, false, false, false, true, true, true, false, true, true, false, false, false)" :)
+(:JIQS: ShouldRun; Output="( false, false, false, false, false, false, false, false, false, false, false)" :)
 ("ab", 1) = (),
 () = ("ab"),
 () = (),
@@ -7,6 +7,6 @@
 ("ab", "ac") < (),
 () <= ("1", "ce"),
 () >= ("ab", "ac"),
-("1.0", "ce") >= ()
-((),()) < 2
+("1.0", "ce") >= (),
+((),()) < 2,
 2 >= ((),())
