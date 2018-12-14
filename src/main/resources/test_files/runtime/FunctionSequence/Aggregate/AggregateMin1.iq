@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="( 2, 2, 2, 2.0, 2.0, 2, 2, 2)" :)
+(:JIQS: ShouldRun; Output="(2, 2, 2, 2.0, 2.0, 2, 2, 2)" :)
 min((2, 4)),
 min((2, 4.0)),
 min((2, 4e+0)),

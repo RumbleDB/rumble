@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="( foo, 1 + 1 is 2, 1)" :)
+(:JIQS: ShouldRun; Output="(foo, 1 + 1 is 2, 1)" :)
 switch (2)
 case 1 + 1 return "foo"
 case 2 + 2 return "bar"

@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="( true, false, true, false, true, false, true, false, true, false, true, false)" :)
+(:JIQS: ShouldRun; Output="(true, false, true, false, true, false, true, false, true, false, true, false)" :)
 2 eq 2.0,
 2 eq 3,
 2 ne 3,

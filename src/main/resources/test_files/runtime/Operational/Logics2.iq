@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="( true, true)" :)
+(:JIQS: ShouldRun; Output="(true, true)" :)
 ({"a": 1}, 2, 3) or false,
 (["a", "b"], 2, 3) or false
 

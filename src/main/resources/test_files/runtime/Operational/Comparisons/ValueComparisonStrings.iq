@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="( true, false, true, false, true, false, true, false, true, false, true, false)" :)
+(:JIQS: ShouldRun; Output="(true, false, true, false, true, false, true, false, true, false, true, false)" :)
 "ab" eq "ab",
 "ab" eq "de",
 "ab" ne "de",
