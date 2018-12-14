@@ -37,8 +37,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static utils.SequenceStringComparator.unorderedItemSequenceStringsAreEqual;
-
 @RunWith(Parameterized.class)
 public class RuntimeTests extends AnnotationsTestsBase {
 
