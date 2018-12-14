@@ -37,9 +37,9 @@ import java.util.List;
 
 public class ForClauseSparkIterator extends FlowrClauseSparkIterator {
 
-    public ForClauseSparkIterator(RuntimeTupleIterator previousClause, VariableReferenceIterator variableReference,
+    public ForClauseSparkIterator(RuntimeTupleIterator child, VariableReferenceIterator variableReference,
                                   RuntimeIterator assignmentExpression, IteratorMetadata iteratorMetadata) {
-        super(previousClause, null, FLWOR_CLAUSES.FOR, iteratorMetadata);
+        super(child, null, FLWOR_CLAUSES.FOR, iteratorMetadata);
         this._children.add(variableReference);
         this._children.add(assignmentExpression);
     }

@@ -30,8 +30,8 @@ import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
 import org.apache.spark.api.java.JavaRDD;
 
 public class WhereClauseSparkIterator extends FlowrClauseSparkIterator {
-    public WhereClauseSparkIterator(RuntimeTupleIterator previousClause, RuntimeIterator whereExpression, IteratorMetadata iteratorMetadata) {
-        super(previousClause, null, FLWOR_CLAUSES.WHERE, iteratorMetadata);
+    public WhereClauseSparkIterator(RuntimeTupleIterator child, RuntimeIterator whereExpression, IteratorMetadata iteratorMetadata) {
+        super(child, null, FLWOR_CLAUSES.WHERE, iteratorMetadata);
         this._children.add(whereExpression);
     }
 

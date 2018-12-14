@@ -37,9 +37,9 @@ public class OrderByClauseSparkIterator extends FlowrClauseSparkIterator {
     private final boolean _isStable;
     private final List<OrderByClauseSparkIteratorExpression> _expressions;
 
-    public OrderByClauseSparkIterator(RuntimeTupleIterator previousClause, List<OrderByClauseSparkIteratorExpression> expressions,
+    public OrderByClauseSparkIterator(RuntimeTupleIterator child, List<OrderByClauseSparkIteratorExpression> expressions,
                                       boolean stable, IteratorMetadata iteratorMetadata) {
-        super(previousClause, null, FLWOR_CLAUSES.ORDER_BY, iteratorMetadata);
+        super(child, null, FLWOR_CLAUSES.ORDER_BY, iteratorMetadata);
         this._expressions = expressions;
         this._expressions.forEach(e -> this._children.add(e.getExpression()));
         this._isStable = stable;

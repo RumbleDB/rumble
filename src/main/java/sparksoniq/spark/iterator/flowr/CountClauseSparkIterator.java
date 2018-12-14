@@ -13,8 +13,8 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 import java.util.Collections;
 
 public class CountClauseSparkIterator extends FlowrClauseSparkIterator {
-    public CountClauseSparkIterator(RuntimeTupleIterator previousClause, RuntimeIterator child, IteratorMetadata iteratorMetadata) {
-        super(previousClause, Collections.singletonList(child), FLWOR_CLAUSES.COUNT, iteratorMetadata);
+    public CountClauseSparkIterator(RuntimeTupleIterator child, RuntimeIterator variableReference, IteratorMetadata iteratorMetadata) {
+        super(child, Collections.singletonList(variableReference), FLWOR_CLAUSES.COUNT, iteratorMetadata);
     }
 
     @Override

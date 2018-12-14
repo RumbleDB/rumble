@@ -111,7 +111,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 VariableReferenceIterator variableReferenceIterator =
                         (VariableReferenceIterator) this.visit(var.getVariableReference(), argument);
                 previousIterator =new LetClauseSparkIterator(previousIterator, variableReferenceIterator, assignmentExpression,
-                        createIteratorMetadata(clause);
+                        createIteratorMetadata(clause));
             }
         } else if (clause instanceof GroupByClause) {
             List<GroupByClauseSparkIteratorExpression> expressions = new ArrayList<>();

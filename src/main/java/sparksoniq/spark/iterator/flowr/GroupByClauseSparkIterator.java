@@ -36,9 +36,9 @@ import java.util.List;
 public class GroupByClauseSparkIterator extends FlowrClauseSparkIterator {
     private final List<GroupByClauseSparkIteratorExpression> _variables;
 
-    public GroupByClauseSparkIterator(RuntimeTupleIterator previousClause, List<GroupByClauseSparkIteratorExpression> variables,
+    public GroupByClauseSparkIterator(RuntimeTupleIterator child, List<GroupByClauseSparkIteratorExpression> variables,
                                       IteratorMetadata iteratorMetadata) {
-        super(previousClause, null, FLWOR_CLAUSES.GROUP_BY, iteratorMetadata);
+        super(child, null, FLWOR_CLAUSES.GROUP_BY, iteratorMetadata);
         this._variables = variables;
         _variables.forEach(var -> {
             this._children.add(var.getVariableReference());

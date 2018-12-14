@@ -45,11 +45,12 @@ public class FlworExpressionSparkRuntimeIterator extends SparkRuntimeIterator {
                                                IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
         _clauses = new ArrayList<>();
-        if(startClause.getClauseType() != FLWOR_CLAUSES.FOR && startClause.getClauseType() != FLWOR_CLAUSES.LET)
+        if(((FlowrClauseSparkIterator)startClause).getClauseType() != FLWOR_CLAUSES.FOR
+                && ((FlowrClauseSparkIterator)startClause).getClauseType() != FLWOR_CLAUSES.LET)
             throw new SparksoniqRuntimeException("FLOWR clauses must start with a for/let clause");
-        this._returnClause = returnClause;
-        this._clauses.add(startClause);
-        this._clauses.addAll(contentClauses);
+        this._returnClause = (ReturnClauseSparkIterator)returnClause;
+        this._clauses.add((FlowrClauseSparkIterator)startClause);
+        this._clauses.addAll((List<FlowrClauseSparkIterator>)(List<?>)contentClauses);
         this._clauses.add(_returnClause);
 
     }
