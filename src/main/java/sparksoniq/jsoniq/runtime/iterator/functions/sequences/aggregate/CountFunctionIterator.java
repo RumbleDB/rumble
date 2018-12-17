@@ -44,7 +44,7 @@ public class CountFunctionIterator extends AggregateFunctionIterator {
                 return new IntegerItem(results.size(),
                         ItemMetadata.fromIteratorMetadata(getMetadata()));
             } else {
-                Long count = iterator.getRDD().count();
+                Long count = iterator.getRDD(_currentDynamicContext).count();
                 this._hasNext = false;
                 if (count > (long) Integer.MAX_VALUE) {
                     // TODO: handle too big x values

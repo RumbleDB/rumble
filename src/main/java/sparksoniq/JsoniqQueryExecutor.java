@@ -101,7 +101,7 @@ public class JsoniqQueryExecutor {
         } else {
             if (!result.isRDD())
                 throw new SparksoniqRuntimeException("Could not find any RDD iterators in executor");
-            JavaRDD<Item> rdd = result.getRDD();
+            JavaRDD<Item> rdd = result.getRDD(new DynamicContext());
             JavaRDD<String> output = rdd.map(o -> o.serialize());
             output.saveAsTextFile(outputPath);
         }
@@ -124,7 +124,7 @@ public class JsoniqQueryExecutor {
             String localOutput = this.runIterators(result, false);
             return localOutput;
         } else {
-            JavaRDD<Item> rdd = result.getRDD();
+            JavaRDD<Item> rdd = result.getRDD(new DynamicContext());
             JavaRDD<String> output = rdd.map(o -> o.serialize());
             String localOutput = "";
             long resultCount = output.count();
