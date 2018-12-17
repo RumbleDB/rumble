@@ -19,14 +19,11 @@
  */
  package sparksoniq.jsoniq.runtime.iterator.postfix;
 
-import sparksoniq.exceptions.InvalidSelectorException;
-import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 
 import java.util.LinkedList;
@@ -35,7 +32,7 @@ import java.util.Queue;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 
-public class ArrayUnboxingIterator extends LocalRuntimeIterator {
+public class ArrayUnboxingIterator extends RuntimeIterator {
 
     private RuntimeIterator _iterator;
     private Queue<Item> _nextResults;   // queue that holds the results created by the current item in inspection
@@ -91,10 +88,10 @@ public class ArrayUnboxingIterator extends LocalRuntimeIterator {
     }
     
     @Override
-    public JavaRDD<Item> getRDD()
+    public JavaRDD<Item> getRDD(DynamicContext dynamicContext)
     {
-        _currentDynamicContext = new DynamicContext();
-        JavaRDD<Item> childRDD = this._children.get(0).getRDD();
+        _currentDynamicContext = dynamicContext;
+        JavaRDD<Item> childRDD = this._children.get(0).getRDD(dynamicContext);
         FlatMapFunction<Item, Item> transformation = new ArrayUnboxingClosure();
         JavaRDD<Item> resultRDD = childRDD.flatMap(transformation);
         return resultRDD;
