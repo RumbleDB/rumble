@@ -152,10 +152,10 @@ public class ObjectLookupIterator extends RuntimeIterator {
     }
 
     @Override
-    public JavaRDD<Item> getRDD()
+    public JavaRDD<Item> getRDD(DynamicContext dynamicContext)
     {
-        _currentDynamicContext = new DynamicContext();
-        JavaRDD<Item> childRDD = this._children.get(0).getRDD();
+        _currentDynamicContext = dynamicContext;
+        JavaRDD<Item> childRDD = this._children.get(0).getRDD(dynamicContext);
         initLookupKey();
         String key = null;
         if(_contextLookup)
