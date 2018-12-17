@@ -71,7 +71,7 @@ public class FlworExpressionSparkRuntimeIterator extends SparkRuntimeIterator {
         });
 
         currentResultIndex = 0;
-        this._rdd = this.getRDD();
+        this._rdd = this.getRDD(_currentDynamicContext);
         if(SparkContextManager.LIMIT_COLLECT()) {
             result = _rdd.take(SparkContextManager.COLLECT_ITEM_LIMIT);
         }
@@ -114,7 +114,7 @@ public class FlworExpressionSparkRuntimeIterator extends SparkRuntimeIterator {
     }
 
     @Override
-    public JavaRDD<Item> getRDD() {
+    public JavaRDD<Item> getRDD(DynamicContext dynamicContext) {
         return _returnClause.getItemRDD();
     }
 }

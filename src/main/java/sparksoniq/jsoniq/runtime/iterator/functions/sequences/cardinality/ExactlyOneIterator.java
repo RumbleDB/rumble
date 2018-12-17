@@ -49,7 +49,7 @@ public class ExactlyOneIterator extends CardinalityFunctionIterator {
             }
             sequenceIterator.close();
         } else {
-            JavaRDD<Item> rdd = sequenceIterator.getRDD();
+            JavaRDD<Item> rdd = sequenceIterator.getRDD(_currentDynamicContext);
             List<Item> results = rdd.take(2);
             if (results.size() == 1) {
                 this._hasNext = true;

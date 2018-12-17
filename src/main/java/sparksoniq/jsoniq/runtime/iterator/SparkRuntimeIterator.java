@@ -64,7 +64,7 @@ public abstract class SparkRuntimeIterator extends RuntimeIterator {
 
         if(result == null){
             currentResultIndex = 0;
-            this._rdd = this.getRDD();
+            this._rdd = this.getRDD(_currentDynamicContext);
             if(SparkContextManager.LIMIT_COLLECT()) {
                 result = _rdd.take(SparkContextManager.COLLECT_ITEM_LIMIT);
                 if (result.size() == SparkContextManager.COLLECT_ITEM_LIMIT) {
