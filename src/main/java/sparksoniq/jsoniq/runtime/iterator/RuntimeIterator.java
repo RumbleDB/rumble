@@ -99,7 +99,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
 
     public abstract boolean isRDD();
 
-    public abstract JavaRDD<Item> getRDD();
+    public abstract JavaRDD<Item> getRDD(DynamicContext dynamicContext);
 
     public abstract Item next();
 

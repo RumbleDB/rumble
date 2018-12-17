@@ -49,7 +49,7 @@ public class MinFunctionIterator extends AggregateFunctionIterator {
                 }
             } else {
                 try {
-                    return _iterator.getRDD().min(comparator);
+                    return _iterator.getRDD(_currentDynamicContext).min(comparator);
                 } catch (SparksoniqRuntimeException e) {
                     throw new InvalidArgumentTypeException("Min expression input error. Input has to be non-null atomics of matching types: " + e.getMessage(), getMetadata());
                 }

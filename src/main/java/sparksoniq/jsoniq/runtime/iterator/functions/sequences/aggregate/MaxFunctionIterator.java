@@ -49,7 +49,7 @@ public class MaxFunctionIterator extends AggregateFunctionIterator {
                 }
             } else {
                 try {
-                    return _iterator.getRDD().max(comparator);
+                    return _iterator.getRDD(_currentDynamicContext).max(comparator);
                 } catch (SparksoniqRuntimeException e) {
                     throw new InvalidArgumentTypeException("Max expression input error. Input has to be non-null atomics of matching types: " + e.getMessage(), getMetadata());
                 }

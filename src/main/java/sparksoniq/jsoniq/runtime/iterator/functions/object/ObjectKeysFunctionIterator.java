@@ -11,12 +11,14 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 public class ObjectKeysFunctionIterator extends ObjectFunctionIterator {
 
     private RuntimeIterator _iterator;
-    private Item _nextResult;
+    private Queue<Item> _nextResults;   // queue that holds the results created by the current item in inspection
     private List<Item> _prevResults;
 
     public ObjectKeysFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
@@ -30,6 +32,7 @@ public class ObjectKeysFunctionIterator extends ObjectFunctionIterator {
         _iterator = this._children.get(0);
         _iterator.open(context);
         _prevResults = new ArrayList<>();
+        _nextResults = new LinkedList<>();
 
         setNextResult();
     }
@@ -37,8 +40,11 @@ public class ObjectKeysFunctionIterator extends ObjectFunctionIterator {
     @Override
     public Item next() {
         if (this._hasNext) {
-            Item result = _nextResult;  // save the result to be returned
-            setNextResult();            // calculate and store the next result
+            Item result = _nextResults.remove();  // save the result to be returned
+            if (_nextResults.isEmpty()) {
+                // if there are no more results left in the queue, trigger calculation for the next result
+                setNextResult();
+            }
             return result;
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " KEYS function",
@@ -46,25 +52,29 @@ public class ObjectKeysFunctionIterator extends ObjectFunctionIterator {
     }
 
     public void setNextResult() {
-        _nextResult = null;
         while(_iterator.hasNext()) {
             Item item = _iterator.next();
+            // ignore non-object items
             if (item instanceof ObjectItem) {
                 ObjectItem objItem = (ObjectItem)item;
                 StringItem result;
                 for (String key : objItem.getKeys()) {
                     result = new StringItem(key, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                    // check if key was met earlier
                     if (!ItemUtil.listContainsItem(_prevResults, result))
                     {
                         _prevResults.add(result);
-                        _nextResult = result;
-                        break;
+                        _nextResults.add(result);
                     }
+                }
+                // if some results are found from the current item, break out of while loop
+                if (_nextResults.isEmpty()) {
+                    break;
                 }
             }
         }
 
-        if (_nextResult == null) {
+        if (_nextResults.isEmpty()) {
             this._hasNext = false;
             _iterator.close();
         } else {

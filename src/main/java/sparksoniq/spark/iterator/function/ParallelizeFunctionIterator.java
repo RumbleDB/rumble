@@ -23,6 +23,7 @@ import org.apache.spark.api.java.JavaRDD;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkContextManager;
 
 import java.util.ArrayList;
@@ -34,7 +35,7 @@ public class ParallelizeFunctionIterator extends SparkFunctionCallIterator {
     }
 
     @Override
-    public JavaRDD<Item> getRDD() {
+    public JavaRDD<Item> getRDD(DynamicContext dynamicContext) {
 
         if (this._rdd == null) {
             List<Item> contents = new ArrayList<>();
