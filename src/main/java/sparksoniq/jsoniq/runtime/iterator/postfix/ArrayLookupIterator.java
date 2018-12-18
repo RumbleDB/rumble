@@ -32,6 +32,9 @@ import sparksoniq.semantics.DynamicContext;
 
 import java.lang.reflect.Array;
 
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.FlatMapFunction;
+
 public class ArrayLookupIterator extends LocalRuntimeIterator {
 
     private RuntimeIterator _iterator;
@@ -53,12 +56,8 @@ public class ArrayLookupIterator extends LocalRuntimeIterator {
         }
         throw new IteratorFlowException("Invalid next call in Array Lookup", getMetadata());
     }
-
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this._currentDynamicContext = context;
-
+    
+    public void initLookupPosition() {
         _iterator = this._children.get(0);
         RuntimeIterator lookupIterator = this._children.get(1);
 
@@ -77,6 +76,14 @@ public class ArrayLookupIterator extends LocalRuntimeIterator {
         lookupIterator.close();
 
         _lookup = Item.getNumericValue(lookupExpression, Integer.class);
+    }
+
+    @Override
+    public void open(DynamicContext context) {
+        super.open(context);
+        this._currentDynamicContext = context;
+        
+        initLookupPosition();
 
         _iterator.open(_currentDynamicContext);
         setNextResult();
@@ -106,5 +113,22 @@ public class ArrayLookupIterator extends LocalRuntimeIterator {
         }
     }
 
+    @Override
+    public JavaRDD<Item> getRDD(DynamicContext dynamicContext)
+    {
+        _currentDynamicContext = dynamicContext;
+        JavaRDD<Item> childRDD = this._children.get(0).getRDD(dynamicContext);
+        initLookupPosition();
+        FlatMapFunction<Item, Item> transformation = new ArrayLookupClosure(_lookup);
+
+        JavaRDD<Item> resultRDD = childRDD.flatMap(transformation);
+        return resultRDD;
+    }
+
+    @Override
+    public boolean isRDD()
+    {
+        return this._children.get(0).isRDD();
+    }
 
 }
