@@ -35,7 +35,7 @@ import java.lang.reflect.Array;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 
-public class ArrayLookupIterator extends LocalRuntimeIterator {
+public class ArrayLookupIterator extends RuntimeIterator {
 
     private RuntimeIterator _iterator;
     private Integer _lookup;
