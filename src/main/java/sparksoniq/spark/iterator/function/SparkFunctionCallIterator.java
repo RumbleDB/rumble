@@ -19,11 +19,11 @@
  */
  package sparksoniq.spark.iterator.function;
 
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
-import sparksoniq.jsoniq.runtime.iterator.SparkRuntimeIterator;
-
 import java.util.List;
+
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.SparkRuntimeIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public abstract class SparkFunctionCallIterator extends SparkRuntimeIterator {
     protected SparkFunctionCallIterator(List<RuntimeIterator> parameters, IteratorMetadata iteratorMetadata) {

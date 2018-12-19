@@ -19,12 +19,12 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr.operational;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
+import java.util.Arrays;
+
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.BinaryExpressionBase;
-
-import java.util.Arrays;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 public class ComparisonExpression extends BinaryExpressionBase {
 

@@ -19,12 +19,12 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr.operational;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
+import java.util.List;
+
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.NaryExpressionBase;
-
-import java.util.List;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 public class StringConcatExpression extends NaryExpressionBase {
     public StringConcatExpression(Expression mainExpression, List<Expression> rhs, ExpressionMetadata metadata) {

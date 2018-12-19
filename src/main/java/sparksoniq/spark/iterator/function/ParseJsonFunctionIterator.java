@@ -19,17 +19,18 @@
  */
 package sparksoniq.spark.iterator.function;
 
+import java.util.List;
+
+import javax.naming.OperationNotSupportedException;
+
 import org.apache.spark.api.java.JavaRDD;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
+
 import sparksoniq.io.json.StringToItemMapper;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkContextManager;
-
-import javax.naming.OperationNotSupportedException;
-import java.util.List;
 
 public class ParseJsonFunctionIterator extends SparkFunctionCallIterator {
     public ParseJsonFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {

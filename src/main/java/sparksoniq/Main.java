@@ -20,10 +20,6 @@
 package sparksoniq;
 
 
-import sparksoniq.config.SparksoniqRuntimeConfiguration;
-import sparksoniq.exceptions.CliException;
-import sparksoniq.spark.SparkContextManager;
-
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -32,6 +28,10 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+
+import sparksoniq.config.SparksoniqRuntimeConfiguration;
+import sparksoniq.exceptions.CliException;
+import sparksoniq.spark.SparkContextManager;
 
 public class Main {
     public static void main(String[] args) throws IOException {

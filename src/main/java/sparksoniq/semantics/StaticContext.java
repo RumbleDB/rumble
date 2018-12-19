@@ -19,13 +19,13 @@
  */
  package sparksoniq.semantics;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-import sparksoniq.semantics.types.SequenceType;
-import sparksoniq.exceptions.SemanticException;
-import sparksoniq.utils.Tuple;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import sparksoniq.exceptions.SemanticException;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import sparksoniq.semantics.types.SequenceType;
+import sparksoniq.utils.Tuple;
 
 public class StaticContext {
 

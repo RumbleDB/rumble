@@ -19,17 +19,18 @@
  */
  package sparksoniq.semantics;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.tuple.FlworTuple;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class DynamicContext implements KryoSerializable{
 

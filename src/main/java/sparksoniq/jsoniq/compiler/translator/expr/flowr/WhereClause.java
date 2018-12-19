@@ -19,12 +19,12 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
+import java.util.List;
+
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
-
-import java.util.List;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 public class WhereClause extends FlworClause {
 

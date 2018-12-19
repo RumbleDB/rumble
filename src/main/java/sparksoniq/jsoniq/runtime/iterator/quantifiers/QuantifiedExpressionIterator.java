@@ -19,6 +19,9 @@
  */
 package sparksoniq.jsoniq.runtime.iterator.quantifiers;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpression;
 import sparksoniq.jsoniq.item.BooleanItem;
@@ -28,9 +31,6 @@ import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
 

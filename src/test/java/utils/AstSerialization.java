@@ -19,10 +19,10 @@
  */
  package utils;
 
+import java.util.Arrays;
+
 import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
 import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
-
-import java.util.Arrays;
 
 public class AstSerialization {
 

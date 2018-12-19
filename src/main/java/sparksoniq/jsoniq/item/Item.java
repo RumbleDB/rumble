@@ -19,12 +19,6 @@
  */
 package sparksoniq.jsoniq.item;
 
-import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.jsoniq.item.base.SerializableItem;
-import sparksoniq.jsoniq.item.metadata.ItemMetadata;
-import sparksoniq.semantics.types.ItemType;
-
-import javax.naming.OperationNotSupportedException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -32,6 +26,13 @@ import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
+
+import javax.naming.OperationNotSupportedException;
+
+import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.item.base.SerializableItem;
+import sparksoniq.jsoniq.item.metadata.ItemMetadata;
+import sparksoniq.semantics.types.ItemType;
 
 //TODO serialize with indentation
 public abstract class Item implements SerializableItem {

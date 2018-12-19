@@ -19,10 +19,10 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr.primary;
 
+import java.math.BigDecimal;
+
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
-
-import java.math.BigDecimal;
 
 
 public class DecimalLiteral extends PrimaryExpression {

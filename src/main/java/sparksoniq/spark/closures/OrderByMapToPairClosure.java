@@ -19,17 +19,18 @@
  */
  package sparksoniq.spark.closures;
 
-import sparksoniq.exceptions.NonAtomicKeyException;
-import sparksoniq.jsoniq.item.Item;
-import sparksoniq.semantics.DynamicContext;
-import sparksoniq.jsoniq.tuple.FlworKey;
-import sparksoniq.jsoniq.tuple.FlworTuple;
-import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
-import org.apache.spark.api.java.function.PairFunction;
-import scala.Tuple2;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.spark.api.java.function.PairFunction;
+
+import scala.Tuple2;
+import sparksoniq.exceptions.NonAtomicKeyException;
+import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.tuple.FlworKey;
+import sparksoniq.jsoniq.tuple.FlworTuple;
+import sparksoniq.semantics.DynamicContext;
+import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 
 public class OrderByMapToPairClosure implements PairFunction<FlworTuple, FlworKey, FlworTuple> {
 

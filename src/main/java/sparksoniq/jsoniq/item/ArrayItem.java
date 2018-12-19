@@ -19,17 +19,19 @@
  */
  package sparksoniq.jsoniq.item;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-import sparksoniq.jsoniq.item.metadata.ItemMetadata;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
-
-import javax.naming.OperationNotSupportedException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import javax.naming.OperationNotSupportedException;
+
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
+import sparksoniq.jsoniq.item.metadata.ItemMetadata;
+import sparksoniq.semantics.types.ItemType;
+import sparksoniq.semantics.types.ItemTypes;
 
 public class ArrayItem extends JsonItem {
 

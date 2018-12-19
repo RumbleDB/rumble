@@ -1,16 +1,15 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.object;
 
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
-
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
 
 public class ObjectValuesFunctionIterator extends ObjectFunctionIterator {
 

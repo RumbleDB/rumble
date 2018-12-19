@@ -19,8 +19,7 @@
  */
  package sparksoniq.utils;
 
-import sparksoniq.JsoniqQueryExecutor;
-import org.apache.hadoop.fs.Path;
+import static sparksoniq.JsoniqQueryExecutor.TEMP_QUERY_FILE_NAME;
 
 import java.io.IOException;
 import java.net.URLDecoder;
@@ -31,7 +30,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
-import static sparksoniq.JsoniqQueryExecutor.TEMP_QUERY_FILE_NAME;
+import org.apache.hadoop.fs.Path;
+
+import sparksoniq.JsoniqQueryExecutor;
 
 public class FileUtils {
 

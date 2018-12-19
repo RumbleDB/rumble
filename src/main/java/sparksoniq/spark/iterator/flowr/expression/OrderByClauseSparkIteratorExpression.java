@@ -19,11 +19,11 @@
  */
  package sparksoniq.spark.iterator.flowr.expression;
 
+import java.io.Serializable;
+
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
-
-import java.io.Serializable;
 
 public class OrderByClauseSparkIteratorExpression implements Serializable {
     public RuntimeIterator getExpression() {

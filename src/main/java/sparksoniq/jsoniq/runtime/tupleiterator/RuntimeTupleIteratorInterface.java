@@ -19,10 +19,10 @@
  */
  package sparksoniq.jsoniq.runtime.tupleiterator;
 
-import sparksoniq.semantics.DynamicContext;
-import sparksoniq.jsoniq.tuple.FlworTuple;
-
 import java.io.Serializable;
+
+import sparksoniq.jsoniq.tuple.FlworTuple;
+import sparksoniq.semantics.DynamicContext;
 
 public interface RuntimeTupleIteratorInterface extends Serializable {
     void open(DynamicContext context);

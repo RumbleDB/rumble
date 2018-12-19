@@ -19,15 +19,13 @@
  */
 package iq;
 
-import org.apache.spark.SparkConf;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import sparksoniq.spark.SparkContextManager;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
 public class SparkRuntimeTests extends RuntimeTests {

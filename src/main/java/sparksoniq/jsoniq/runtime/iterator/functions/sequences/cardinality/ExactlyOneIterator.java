@@ -1,15 +1,15 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.sequences.cardinality;
 
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.storage.StorageLevel;
+
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SequenceExceptionExactlyOne;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
-
-import java.util.List;
 
 public class ExactlyOneIterator extends CardinalityFunctionIterator {
 

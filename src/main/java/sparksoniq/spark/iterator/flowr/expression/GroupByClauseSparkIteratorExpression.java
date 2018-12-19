@@ -20,11 +20,11 @@
  package sparksoniq.spark.iterator.flowr.expression;
 
 
+import java.io.Serializable;
+
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
-
-import java.io.Serializable;
 
 public class GroupByClauseSparkIteratorExpression implements Serializable {
 

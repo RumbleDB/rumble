@@ -19,18 +19,17 @@
  */
  package sparksoniq.jsoniq.runtime.iterator;
 
-import org.apache.spark.storage.StorageLevel;
+import java.util.List;
+
+import org.apache.spark.api.java.JavaRDD;
+
 import sparksoniq.ShellStart;
-import sparksoniq.io.json.JiqsItemParser;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.io.json.JiqsItemParser;
 import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkContextManager;
-import org.apache.spark.api.java.JavaRDD;
-
-import java.util.List;
 
 public abstract class SparkRuntimeIterator extends RuntimeIterator {
 

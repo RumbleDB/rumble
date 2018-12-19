@@ -1,16 +1,17 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.arrays;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+
+import javax.naming.OperationNotSupportedException;
+
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
-
-import javax.naming.OperationNotSupportedException;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
 
 public class ArrayFlattenFunctionIterator extends ArrayFunctionIterator {
 

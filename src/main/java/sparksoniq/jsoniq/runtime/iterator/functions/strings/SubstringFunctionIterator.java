@@ -1,5 +1,7 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.strings;
 
+import java.util.List;
+
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.IntegerItem;
@@ -9,8 +11,6 @@ import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
-
-import java.util.List;
 
 public class SubstringFunctionIterator extends LocalFunctionCallIterator {
     public SubstringFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {

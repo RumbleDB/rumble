@@ -19,10 +19,10 @@
  */
 package sparksoniq.exceptions;
 
+import java.util.Arrays;
+
 import sparksoniq.exceptions.codes.ErrorCodes;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-
-import java.util.Arrays;
 
 public class SparksoniqRuntimeException extends RuntimeException {
 

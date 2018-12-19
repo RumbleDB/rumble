@@ -1,5 +1,8 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate;
 
+import java.util.Collections;
+import java.util.List;
+
 import sparksoniq.exceptions.InvalidArgumentTypeException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
@@ -8,9 +11,6 @@ import sparksoniq.jsoniq.item.ItemComparatorForSequences;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
-
-import java.util.Collections;
-import java.util.List;
 
 public class MaxFunctionIterator extends AggregateFunctionIterator {
 

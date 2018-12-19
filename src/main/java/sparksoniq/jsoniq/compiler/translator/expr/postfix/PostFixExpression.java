@@ -19,15 +19,15 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr.postfix;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
+import java.util.ArrayList;
+import java.util.List;
+
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.PostfixExtension;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.PrimaryExpression;
-
-import java.util.ArrayList;
-import java.util.List;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 
 public class PostFixExpression extends Expression {

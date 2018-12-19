@@ -19,21 +19,17 @@
  */
 package sparksoniq.jsoniq.runtime.iterator.postfix;
 
-import sparksoniq.exceptions.InvalidSelectorException;
-import sparksoniq.jsoniq.item.IntegerItem;
-import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.runtime.iterator.primary.IntegerRuntimeIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
-import sparksoniq.semantics.DynamicContext;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
-import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.SparksoniqRuntimeException;
+import sparksoniq.jsoniq.item.IntegerItem;
+import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
 
 public class PredicateIterator extends LocalRuntimeIterator {
 

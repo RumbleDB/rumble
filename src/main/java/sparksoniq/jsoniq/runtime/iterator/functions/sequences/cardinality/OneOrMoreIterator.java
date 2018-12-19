@@ -1,13 +1,13 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.sequences.cardinality;
 
+import java.util.List;
+
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SequenceExceptionOneOrMore;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
-
-import java.util.List;
 
 public class OneOrMoreIterator extends CardinalityFunctionIterator {
 

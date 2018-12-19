@@ -19,15 +19,12 @@
  */
  package sparksoniq.io.json;
 
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
+import org.json.JSONObject;
 
 public class OrgJsonParser implements Serializable {
 

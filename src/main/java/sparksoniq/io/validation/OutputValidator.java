@@ -20,9 +20,6 @@
  package sparksoniq.io.validation;
 
 
-import org.apache.commons.io.FileUtils;
-
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -30,6 +27,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+
+import org.apache.commons.io.FileUtils;
 
 public class OutputValidator {
     private static String ZORBA_FILE_PATH = //"/home/stefan/Work/ETH/Thesis/benchmarks/validation/zorba-results/conf1";

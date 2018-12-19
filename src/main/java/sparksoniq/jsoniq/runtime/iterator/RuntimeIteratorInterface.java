@@ -19,10 +19,10 @@
  */
  package sparksoniq.jsoniq.runtime.iterator;
 
+import java.io.Serializable;
+
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.semantics.DynamicContext;
-
-import java.io.Serializable;
 
 public interface RuntimeIteratorInterface extends Serializable {
     void open(DynamicContext context);

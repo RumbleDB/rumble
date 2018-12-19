@@ -19,15 +19,16 @@
  */
 package sparksoniq.spark.iterator.function;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
+
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkContextManager;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class ParallelizeFunctionIterator extends SparkFunctionCallIterator {
     public ParallelizeFunctionIterator(List<RuntimeIterator> parameters, IteratorMetadata iteratorMetadata) {

@@ -1,5 +1,10 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.object;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.naming.OperationNotSupportedException;
+
 import sparksoniq.exceptions.InvalidSelectorException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
@@ -9,10 +14,6 @@ import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
-
-import javax.naming.OperationNotSupportedException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class ObjectRemoveKeysFunctionIterator extends ObjectFunctionIterator {
 

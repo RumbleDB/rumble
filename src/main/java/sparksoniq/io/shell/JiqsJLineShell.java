@@ -19,6 +19,11 @@
  */
 package sparksoniq.io.shell;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import org.apache.commons.io.IOUtils;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
@@ -27,16 +32,11 @@ import org.jline.reader.UserInterruptException;
 import org.jline.reader.impl.DefaultHighlighter;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
+
 import sparksoniq.JsoniqQueryExecutor;
 import sparksoniq.Main;
 import sparksoniq.config.SparksoniqRuntimeConfiguration;
-import sparksoniq.spark.SparkContextManager;
 import sparksoniq.utils.FileUtils;
-
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 public class JiqsJLineShell {
     private static final String EXIT_COMMAND = "exit";

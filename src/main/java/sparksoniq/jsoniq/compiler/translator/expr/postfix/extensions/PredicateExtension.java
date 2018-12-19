@@ -19,12 +19,12 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-
-import java.util.ArrayList;
-import java.util.List;
 
 
 public class PredicateExtension extends  PostfixExtension  {

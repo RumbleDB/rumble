@@ -19,11 +19,16 @@
  */
  package sparksoniq.jsoniq.compiler;
 
-import sparksoniq.jsoniq.compiler.translator.expr.primary.*;
-import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-
 import java.math.BigDecimal;
+
+import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.BooleanLiteral;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.DecimalLiteral;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.DoubleLiteral;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.IntegerLiteral;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.NullLiteral;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.PrimaryExpression;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 
 
 public class ValueTypeHandler {

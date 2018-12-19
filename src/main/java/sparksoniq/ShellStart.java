@@ -19,13 +19,13 @@
  */
 package sparksoniq;
 
+import java.io.IOException;
+import java.util.HashMap;
+
 import sparksoniq.config.SparksoniqRuntimeConfiguration;
 import sparksoniq.exceptions.CliException;
 import sparksoniq.io.shell.JiqsJLineShell;
 import sparksoniq.spark.SparkContextManager;
-
-import java.io.IOException;
-import java.util.HashMap;
 
 /*
 GENERIC LAUNCH COMMAND

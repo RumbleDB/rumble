@@ -20,14 +20,24 @@
 package iq;
 
 
-import iq.base.AnnotationsTestsBase;
+import java.io.File;
+import java.util.Arrays;
+import java.util.List;
+
 import org.junit.Assert;
 import org.junit.Test;
+
+import iq.base.AnnotationsTestsBase;
 import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
 import sparksoniq.jsoniq.compiler.parser.JsoniqBaseVisitor;
 import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
-import sparksoniq.jsoniq.compiler.translator.expr.flowr.*;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.FLWOR_CLAUSES;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.ForClause;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.GroupByClause;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.LetClause;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.WhereClause;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.NotExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.OrExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.RangeExpression;
@@ -39,10 +49,6 @@ import sparksoniq.jsoniq.compiler.translator.expr.primary.ObjectConstructor;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
 import sparksoniq.semantics.types.ItemTypes;
 import utils.AstSerialization;
-
-import java.io.File;
-import java.util.Arrays;
-import java.util.List;
 
 
 public class FrontendTests extends AnnotationsTestsBase {

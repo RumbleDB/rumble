@@ -19,9 +19,9 @@
  */
  package sparksoniq.config;
 
-import sparksoniq.exceptions.CliException;
-
 import java.util.HashMap;
+
+import sparksoniq.exceptions.CliException;
 
 public class SparksoniqRuntimeConfiguration {
 

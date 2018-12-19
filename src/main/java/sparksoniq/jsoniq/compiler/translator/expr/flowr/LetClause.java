@@ -19,13 +19,13 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import sparksoniq.exceptions.SemanticException;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class LetClause extends FlworClause {
 

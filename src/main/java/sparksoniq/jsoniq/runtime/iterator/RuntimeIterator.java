@@ -19,20 +19,22 @@
  */
 package sparksoniq.jsoniq.runtime.iterator;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.spark.api.java.JavaRDD;
+
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import org.apache.spark.api.java.JavaRDD;
+
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoSerializable {
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";

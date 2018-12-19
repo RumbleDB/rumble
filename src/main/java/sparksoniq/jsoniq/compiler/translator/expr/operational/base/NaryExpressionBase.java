@@ -20,12 +20,12 @@
  package sparksoniq.jsoniq.compiler.translator.expr.operational.base;
 
 
+import java.util.ArrayList;
+import java.util.List;
+
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class NaryExpressionBase extends OperationalExpressionBase {
 

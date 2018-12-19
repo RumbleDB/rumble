@@ -1,5 +1,8 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate;
 
+import java.math.BigDecimal;
+import java.util.List;
+
 import sparksoniq.exceptions.InvalidArgumentTypeException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
@@ -9,9 +12,6 @@ import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
-
-import java.math.BigDecimal;
-import java.util.List;
 
 public class SumFunctionIterator extends AggregateFunctionIterator {
 

@@ -19,18 +19,19 @@
  */
  package sparksoniq.spark.iterator.flowr;
 
-import sparksoniq.jsoniq.compiler.translator.expr.flowr.FLWOR_CLAUSES;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
-import sparksoniq.spark.closures.OrderByClauseSortClosure;
-import sparksoniq.spark.closures.OrderByMapToPairClosure;
-import sparksoniq.jsoniq.tuple.FlworKey;
-import sparksoniq.jsoniq.tuple.FlworTuple;
-import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
-import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 
-import java.util.List;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.FLWOR_CLAUSES;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.jsoniq.tuple.FlworKey;
+import sparksoniq.jsoniq.tuple.FlworTuple;
+import sparksoniq.spark.closures.OrderByClauseSortClosure;
+import sparksoniq.spark.closures.OrderByMapToPairClosure;
+import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
+import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 
 public class OrderByClauseSparkIterator extends FlowrClauseSparkIterator {
     private final boolean _isStable;

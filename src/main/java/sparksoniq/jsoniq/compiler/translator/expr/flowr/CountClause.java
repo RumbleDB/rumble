@@ -1,12 +1,12 @@
 package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
+import java.util.Collections;
+import java.util.List;
+
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
-
-import java.util.Collections;
-import java.util.List;
 
 public class CountClause extends FlworClause {
     private VariableReference countClauseVar;

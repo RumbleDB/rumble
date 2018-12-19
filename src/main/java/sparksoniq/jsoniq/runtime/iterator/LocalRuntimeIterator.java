@@ -19,13 +19,14 @@
  */
  package sparksoniq.jsoniq.runtime.iterator;
 
+import java.util.List;
+
+import org.apache.spark.api.java.JavaRDD;
+
 import sparksoniq.exceptions.SparkRuntimeException;
 import sparksoniq.jsoniq.item.Item;
-import org.apache.spark.api.java.JavaRDD;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
-
-import java.util.List;
 
 public abstract class LocalRuntimeIterator extends RuntimeIterator {
     protected LocalRuntimeIterator(List<RuntimeIterator> children, IteratorMetadata iteratorMetadata) {

@@ -19,13 +19,13 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr.control;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class IfExpression extends Expression {
 

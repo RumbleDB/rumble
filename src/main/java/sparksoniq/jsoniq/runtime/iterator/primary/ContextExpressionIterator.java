@@ -19,13 +19,13 @@
  */
  package sparksoniq.jsoniq.runtime.iterator.primary;
 
-import sparksoniq.jsoniq.item.Item;
-import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class ContextExpressionIterator extends LocalRuntimeIterator {
     public ContextExpressionIterator(IteratorMetadata iteratorMetadata) {

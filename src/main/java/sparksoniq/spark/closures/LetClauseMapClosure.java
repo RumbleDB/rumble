@@ -19,14 +19,15 @@
  */
  package sparksoniq.spark.closures;
 
-import sparksoniq.jsoniq.item.Item;
-import sparksoniq.semantics.DynamicContext;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.tuple.FlworTuple;
-import org.apache.spark.api.java.function.Function;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.spark.api.java.function.Function;
+
+import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.tuple.FlworTuple;
+import sparksoniq.semantics.DynamicContext;
 
 public class LetClauseMapClosure implements Function<FlworTuple, FlworTuple> {
     private final String _variableName;

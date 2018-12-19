@@ -19,11 +19,19 @@
  */
 package iq.base;
 
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.Assert;
+
 import sparksoniq.exceptions.ParsingException;
 import sparksoniq.exceptions.SemanticException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
@@ -38,13 +46,6 @@ import sparksoniq.semantics.visitor.StaticContextVisitor;
 import utils.FileManager;
 import utils.annotations.AnnotationParseException;
 import utils.annotations.AnnotationProcessor;
-
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
 
 public class AnnotationsTestsBase {
     protected AnnotationProcessor.TestAnnotation currentAnnotation;

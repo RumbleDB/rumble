@@ -19,15 +19,15 @@
  */
  package sparksoniq.jsoniq.runtime.iterator.primary;
 
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
-import sparksoniq.semantics.DynamicContext;
-import sparksoniq.semantics.types.SequenceType;
+import java.util.List;
+
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-
-import java.util.List;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
+import sparksoniq.semantics.types.SequenceType;
 
 public class VariableReferenceIterator extends LocalRuntimeIterator {
 

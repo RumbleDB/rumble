@@ -19,15 +19,18 @@
  */
  package sparksoniq.jsoniq.tuple;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
-import sparksoniq.jsoniq.item.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import sparksoniq.exceptions.SparksoniqRuntimeException;
+import sparksoniq.jsoniq.item.ArrayItem;
+import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ObjectItem;
 
 public class FlworKey implements KryoSerializable, Comparable<FlworKey> {
 

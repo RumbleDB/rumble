@@ -19,18 +19,19 @@
  */
 package sparksoniq.spark.closures;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.spark.api.java.function.PairFunction;
+
 import scala.Tuple2;
 import sparksoniq.exceptions.InvalidGroupVariableException;
 import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.jsoniq.item.Item;
-import sparksoniq.semantics.DynamicContext;
-import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
-
-import java.util.ArrayList;
-import java.util.List;
+import sparksoniq.semantics.DynamicContext;
+import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
 
 public class GroupByToPairMapClosure implements PairFunction<FlworTuple, FlworKey, FlworTuple> {
 

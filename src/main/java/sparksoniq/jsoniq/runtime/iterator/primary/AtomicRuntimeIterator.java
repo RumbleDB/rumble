@@ -19,12 +19,12 @@
  */
  package sparksoniq.jsoniq.runtime.iterator.primary;
 
+import java.util.List;
+
 import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
-
-import java.util.List;
 
 public abstract class AtomicRuntimeIterator extends LocalRuntimeIterator {
 

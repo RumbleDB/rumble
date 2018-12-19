@@ -19,25 +19,26 @@
  */
 package iq;
 
-import iq.base.AnnotationsTestsBase;
-import org.apache.spark.SparkConf;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
-import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.semantics.DynamicContext;
-import sparksoniq.spark.SparkContextManager;
-import utils.FileManager;
+import static utils.SequenceStringComparator.unorderedItemSequenceStringsAreEqual;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static utils.SequenceStringComparator.unorderedItemSequenceStringsAreEqual;
+import org.apache.spark.SparkConf;
+import org.junit.Assert;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
+import iq.base.AnnotationsTestsBase;
+import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
+import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.semantics.DynamicContext;
+import sparksoniq.spark.SparkContextManager;
+import utils.FileManager;
 
 @RunWith(Parameterized.class)
 public class RuntimeTests extends AnnotationsTestsBase {

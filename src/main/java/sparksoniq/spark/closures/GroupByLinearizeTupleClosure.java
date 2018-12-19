@@ -19,16 +19,17 @@
  */
  package sparksoniq.spark.closures;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import org.apache.spark.api.java.function.Function;
+
+import scala.Tuple2;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
-import org.apache.spark.api.java.function.Function;
-import scala.Tuple2;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 public class GroupByLinearizeTupleClosure implements Function<Tuple2<FlworKey, Iterable<FlworTuple>>, FlworTuple> {
     private final List<GroupByClauseSparkIteratorExpression> _groupVariables;

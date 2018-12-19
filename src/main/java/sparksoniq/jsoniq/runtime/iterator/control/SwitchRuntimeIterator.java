@@ -1,17 +1,16 @@
 package sparksoniq.jsoniq.runtime.iterator.control;
 
+import java.util.Map;
+
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.jsoniq.item.ArrayItem;
-import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
-
-import java.util.Map;
 
 
 public class SwitchRuntimeIterator extends LocalRuntimeIterator {

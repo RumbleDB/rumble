@@ -19,16 +19,25 @@
  */
 package sparksoniq.io.json;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-import sparksoniq.jsoniq.item.*;
-import sparksoniq.jsoniq.item.metadata.ItemMetadata;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
-
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import sparksoniq.jsoniq.item.ArrayItem;
+import sparksoniq.jsoniq.item.BooleanItem;
+import sparksoniq.jsoniq.item.DecimalItem;
+import sparksoniq.jsoniq.item.DoubleItem;
+import sparksoniq.jsoniq.item.IntegerItem;
+import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.NullItem;
+import sparksoniq.jsoniq.item.ObjectItem;
+import sparksoniq.jsoniq.item.StringItem;
+import sparksoniq.jsoniq.item.metadata.ItemMetadata;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class JiqsItemParser extends OrgJsonParser {
 

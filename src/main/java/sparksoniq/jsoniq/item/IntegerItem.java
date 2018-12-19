@@ -19,15 +19,17 @@
  */
  package sparksoniq.jsoniq.item;
 
+import java.math.BigDecimal;
+
+import javax.naming.OperationNotSupportedException;
+
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
-
-import javax.naming.OperationNotSupportedException;
-import java.math.BigDecimal;
 
 public class IntegerItem extends AtomicItem {
 

@@ -20,11 +20,11 @@
  package sparksoniq.jsoniq.compiler.translator.expr.primary;
 
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
-import sparksoniq.semantics.types.SequenceType;
-
 import java.io.Serializable;
+
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import sparksoniq.semantics.types.SequenceType;
+import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 public class VariableReference extends PrimaryExpression implements Serializable {
 

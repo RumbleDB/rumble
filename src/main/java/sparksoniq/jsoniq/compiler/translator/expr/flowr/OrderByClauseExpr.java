@@ -19,9 +19,9 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
+import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
-import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 
 public class OrderByClauseExpr extends FlworClause {
     public Expression getExpression() {

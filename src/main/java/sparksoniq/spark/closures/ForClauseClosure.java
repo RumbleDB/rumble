@@ -19,15 +19,16 @@
  */
  package sparksoniq.spark.closures;
 
-import sparksoniq.jsoniq.item.Item;
-import sparksoniq.semantics.DynamicContext;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.tuple.FlworTuple;
-import org.apache.spark.api.java.function.FlatMapFunction;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
+import org.apache.spark.api.java.function.FlatMapFunction;
+
+import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.tuple.FlworTuple;
+import sparksoniq.semantics.DynamicContext;
 
 public class ForClauseClosure implements FlatMapFunction<FlworTuple, FlworTuple> {
     private final String _variableName;

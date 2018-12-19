@@ -1,10 +1,10 @@
 package sparksoniq.jsoniq.item;
 
-import sparksoniq.exceptions.SparksoniqRuntimeException;
-
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Comparator;
+
+import sparksoniq.exceptions.SparksoniqRuntimeException;
 
 public class ItemComparatorForSequences implements Comparator<Item>, Serializable {
     /**

@@ -20,11 +20,11 @@
  package sparksoniq.jsoniq.compiler.translator.expr;
 
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 public class CommaExpression extends Expression {
 

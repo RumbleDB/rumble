@@ -1,5 +1,7 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.booleans;
 
+import java.util.List;
+
 import sparksoniq.exceptions.InvalidArgumentTypeException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.BooleanItem;
@@ -8,8 +10,6 @@ import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
-
-import java.util.List;
 
 public class BooleanFunctionIterator extends LocalFunctionCallIterator {
     public BooleanFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {

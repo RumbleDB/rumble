@@ -1,9 +1,9 @@
 package sparksoniq.jsoniq.item.metadata;
 
+import java.io.Serializable;
+
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
-
-import java.io.Serializable;
 
 public class ItemMetadata implements Serializable {
     public static ItemMetadata fromIteratorMetadata(IteratorMetadata iteratorMetadata){

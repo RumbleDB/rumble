@@ -1,20 +1,16 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.arrays;
 
-import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.jsoniq.item.ArrayItem;
-import sparksoniq.jsoniq.item.IntegerItem;
-import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.item.metadata.ItemMetadata;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
-import sparksoniq.semantics.DynamicContext;
-
-import javax.naming.OperationNotSupportedException;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+
+import javax.naming.OperationNotSupportedException;
+
+import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
 
 public class ArrayMembersFunctionIterator extends ArrayFunctionIterator {
 

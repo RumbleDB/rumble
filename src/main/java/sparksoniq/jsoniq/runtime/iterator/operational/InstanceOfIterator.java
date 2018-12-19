@@ -19,6 +19,9 @@
  */
 package sparksoniq.jsoniq.runtime.iterator.operational;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.item.AtomicItem;
@@ -28,9 +31,6 @@ import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.types.SequenceType;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class InstanceOfIterator extends UnaryOperationIterator {
 

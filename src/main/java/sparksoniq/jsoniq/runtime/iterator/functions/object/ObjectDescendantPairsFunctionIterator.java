@@ -1,5 +1,13 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.object;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+
+import javax.naming.OperationNotSupportedException;
+
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ObjectItem;
@@ -7,9 +15,6 @@ import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
-
-import javax.naming.OperationNotSupportedException;
-import java.util.*;
 
 public class ObjectDescendantPairsFunctionIterator extends ObjectFunctionIterator {
 
