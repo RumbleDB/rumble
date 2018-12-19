@@ -19,21 +19,20 @@
  */
 package sparksoniq.jsoniq.runtime.iterator.postfix;
 
-import sparksoniq.exceptions.InvalidSelectorException;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.runtime.iterator.primary.IntegerRuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.Function;
 
 public class PredicateIterator extends LocalRuntimeIterator {
 
@@ -113,5 +112,24 @@ public class PredicateIterator extends LocalRuntimeIterator {
         } else {
             this._hasNext = true;
         }
+    }
+    
+    @Override
+    public JavaRDD<Item> getRDD(DynamicContext dynamicContext)
+    {
+        _currentDynamicContext = dynamicContext;
+        RuntimeIterator iterator = this._children.get(0);
+        RuntimeIterator filter = this._children.get(1);
+        JavaRDD<Item> childRDD = iterator.getRDD(dynamicContext);
+        Function<Item, Boolean> transformation = new PredicateClosure(filter, dynamicContext);
+
+        JavaRDD<Item> resultRDD = childRDD.filter(transformation);
+        return resultRDD;
+    }
+
+    @Override
+    public boolean isRDD()
+    {
+        return this._children.get(0).isRDD();
     }
 }
