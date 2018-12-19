@@ -34,7 +34,7 @@ import java.util.List;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 
-public class PredicateIterator extends LocalRuntimeIterator {
+public class PredicateIterator extends RuntimeIterator {
 
     private RuntimeIterator _iterator;
     private RuntimeIterator _filter;
