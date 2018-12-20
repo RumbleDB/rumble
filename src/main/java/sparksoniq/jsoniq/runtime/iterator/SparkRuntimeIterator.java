@@ -58,10 +58,7 @@ public abstract class SparkRuntimeIterator extends RuntimeIterator {
     }
 
     @Override
-    public Item next(){
-        if(!this._isOpen)
-            throw new IteratorFlowException("Runtime iterator is not open", getMetadata());
-
+    public boolean hasNext(){
         if(result == null){
             currentResultIndex = 0;
             this._rdd = this.getRDD(_currentDynamicContext);
@@ -75,7 +72,15 @@ public abstract class SparkRuntimeIterator extends RuntimeIterator {
             else {
                 result = _rdd.collect();
             }
+            _hasNext = !result.isEmpty();
         }
+        return _hasNext;
+    }
+
+    @Override
+    public Item next(){
+        if(!this._isOpen)
+            throw new IteratorFlowException("Runtime iterator is not open", getMetadata());
 
         if(!(currentResultIndex <= result.size() - 1))
              throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.getClass().getSimpleName(),
