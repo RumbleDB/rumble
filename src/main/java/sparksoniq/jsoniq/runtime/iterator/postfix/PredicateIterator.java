@@ -65,10 +65,13 @@ public class PredicateIterator extends HybridRuntimeIterator {
 
     @Override
     protected void resetLocal(DynamicContext context) {
+        _iterator.reset(_currentDynamicContext);
+        setNextResult();
     }
 
     @Override
     protected void closeLocal() {
+        _iterator.close();
     }
 
     @Override
