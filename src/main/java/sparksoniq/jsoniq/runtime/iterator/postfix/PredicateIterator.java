@@ -26,9 +26,7 @@ import sparksoniq.semantics.DynamicContext;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.SparkRuntimeIterator;
 
 import java.util.ArrayList;
 import java.util.List;
