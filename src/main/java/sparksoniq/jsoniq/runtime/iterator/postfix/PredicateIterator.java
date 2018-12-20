@@ -29,6 +29,7 @@ import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
@@ -42,11 +43,9 @@ public class PredicateIterator extends HybridRuntimeIterator {
 
 
     public PredicateIterator(RuntimeIterator sequence, RuntimeIterator filterExpression, IteratorMetadata iteratorMetadata) {
-        super(null, iteratorMetadata);
+        super(Arrays.asList(sequence, filterExpression), iteratorMetadata);
         _iterator = sequence;
         _filter = filterExpression;
-        this._children.add(_iterator);
-        this._children.add(_filter);
     }
 
     @Override
