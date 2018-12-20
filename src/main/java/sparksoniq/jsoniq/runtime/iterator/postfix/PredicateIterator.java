@@ -66,7 +66,7 @@ public class PredicateIterator extends SparkRuntimeIterator {
         if(isRDD())
             return super.hasNext();
 
-        return hasNext();
+        return _hasNext;
     }
 
     @Override
