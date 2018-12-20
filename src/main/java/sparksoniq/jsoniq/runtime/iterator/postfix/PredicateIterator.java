@@ -62,6 +62,14 @@ public class PredicateIterator extends SparkRuntimeIterator {
     }
 
     @Override
+    public boolean hasNext() {
+        if(isRDD())
+            return super.hasNext();
+
+        return hasNext();
+    }
+
+    @Override
     public void open(DynamicContext context) {
         super.open(context);
         if(isRDD())
