@@ -27,11 +27,12 @@ import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class DynamicContext implements KryoSerializable{
+public class DynamicContext implements Serializable, KryoSerializable{
 
     public DynamicContext(FlworTuple tuple) {
         this();

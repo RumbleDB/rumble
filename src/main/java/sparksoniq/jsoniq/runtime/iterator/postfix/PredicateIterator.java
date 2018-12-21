@@ -19,23 +19,23 @@
  */
 package sparksoniq.jsoniq.runtime.iterator.postfix;
 
-import sparksoniq.exceptions.InvalidSelectorException;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.runtime.iterator.primary.IntegerRuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-public class PredicateIterator extends LocalRuntimeIterator {
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.Function;
+
+public class PredicateIterator extends HybridRuntimeIterator {
 
     private RuntimeIterator _iterator;
     private RuntimeIterator _filter;
@@ -43,13 +43,13 @@ public class PredicateIterator extends LocalRuntimeIterator {
 
 
     public PredicateIterator(RuntimeIterator sequence, RuntimeIterator filterExpression, IteratorMetadata iteratorMetadata) {
-        super(null, iteratorMetadata);
-        this._children.add(sequence);
-        this._children.add(filterExpression);
+        super(Arrays.asList(sequence, filterExpression), iteratorMetadata);
+        _iterator = sequence;
+        _filter = filterExpression;
     }
 
     @Override
-    public Item next() {
+    protected Item nextLocal() {
         if (_hasNext == true) {
             Item result = _nextResult;  // save the result to be returned
             setNextResult();            // calculate and store the next result
@@ -59,21 +59,33 @@ public class PredicateIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
+    protected boolean hasNextLocal() {
+        return _hasNext;
+    }
 
+    @Override
+    protected void resetLocal(DynamicContext context) {
+        _iterator.reset(_currentDynamicContext);
+        setNextResult();
+    }
+
+    @Override
+    protected void closeLocal() {
+        _iterator.close();
+    }
+
+    @Override
+    protected void openLocal(DynamicContext context) {
         if (this._children.size() < 2) {
             throw new SparksoniqRuntimeException("Invalid Predicate! Must initialize filter before calling next");
         }
 
-        _iterator = this._children.get(0);
         _iterator.open(_currentDynamicContext);
-        _filter = this._children.get(1);
 
         setNextResult();
     }
 
-    public void setNextResult() {
+    private void setNextResult() {
         _nextResult = null;
 
         while (_iterator.hasNext()) {
@@ -113,5 +125,24 @@ public class PredicateIterator extends LocalRuntimeIterator {
         } else {
             this._hasNext = true;
         }
+    }
+    
+    @Override
+    public JavaRDD<Item> getRDD(DynamicContext dynamicContext)
+    {
+        _currentDynamicContext = dynamicContext;
+        RuntimeIterator iterator = this._children.get(0);
+        RuntimeIterator filter = this._children.get(1);
+        JavaRDD<Item> childRDD = iterator.getRDD(dynamicContext);
+        Function<Item, Boolean> transformation = new PredicateClosure(filter, dynamicContext);
+
+        JavaRDD<Item> resultRDD = childRDD.filter(transformation);
+        return resultRDD;
+    }
+
+    @Override
+    protected boolean initIsRDD()
+    {
+        return this._iterator.isRDD();
     }
 }
