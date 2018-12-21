@@ -46,7 +46,6 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
 
     @Override
     public void openLocal(DynamicContext context) {
-        _iterator = this._children.get(0);
         _iterator.open(context);
         _nextResults = new LinkedList<>();
 
