@@ -24,27 +24,42 @@ import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Queue;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 
-public class ArrayUnboxingIterator extends RuntimeIterator {
+public class ArrayUnboxingIterator extends HybridRuntimeIterator {
 
     private RuntimeIterator _iterator;
     private Queue<Item> _nextResults;   // queue that holds the results created by the current item in inspection
 
     public ArrayUnboxingIterator(RuntimeIterator arrayIterator, IteratorMetadata iteratorMetadata) {
-        super(null, iteratorMetadata);
-        this._children.add(arrayIterator);
+        super(Arrays.asList(arrayIterator), iteratorMetadata);
+        _iterator = arrayIterator;
     }
 
+    @Override
+    public void openLocal(DynamicContext context) {
+        _iterator = this._children.get(0);
+        _iterator.open(context);
+        _nextResults = new LinkedList<>();
+
+        setNextResult();
+    }
 
     @Override
-    public Item next() {
+    protected boolean hasNextLocal() {
+        return _hasNext;
+    }
+
+    @Override
+    public Item nextLocal() {
         if (this._hasNext) {
             Item result = _nextResults.remove();  // save the result to be returned
             if (_nextResults.isEmpty()) {
@@ -57,16 +72,17 @@ public class ArrayUnboxingIterator extends RuntimeIterator {
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        _iterator = this._children.get(0);
-        _iterator.open(context);
-        _nextResults = new LinkedList<>();
-
+    protected void resetLocal(DynamicContext context) {
+        _iterator.reset(_currentDynamicContext);
         setNextResult();
     }
 
-    public void setNextResult() {
+    @Override
+    protected void closeLocal() {
+        _iterator.close();
+    }
+
+    private void setNextResult() {
         while (_iterator.hasNext()) {
             Item item = _iterator.next();
             if (item instanceof ArrayItem) {
@@ -97,8 +113,8 @@ public class ArrayUnboxingIterator extends RuntimeIterator {
         return resultRDD;
     }
      @Override
-    public boolean isRDD()
+    public boolean initIsRDD()
     {
-        return this._children.get(0).isRDD();
+        return _iterator.isRDD();
     }
 }
