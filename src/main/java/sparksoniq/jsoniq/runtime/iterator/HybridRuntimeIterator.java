@@ -56,7 +56,6 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         if(!_isRDD)
         {
             openLocal(context);
-            return;
         }
     }
 
