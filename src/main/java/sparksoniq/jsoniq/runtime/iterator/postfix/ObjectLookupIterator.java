@@ -36,7 +36,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ObjectLookupIterator extends LocalRuntimeIterator {
+public class ObjectLookupIterator extends HybridRuntimeIterator {
 
     private RuntimeIterator _iterator;
     private Item _lookupKey;
@@ -50,7 +50,7 @@ public class ObjectLookupIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public void open(DynamicContext context) {
+    public void openLocal(DynamicContext context) {
         super.open(context);
         this._currentDynamicContext = context;
 
@@ -105,13 +105,29 @@ public class ObjectLookupIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public Item next() {
+    public Item nextLocal() {
         if(_hasNext == true){
             Item result = _nextResult;  // save the result to be returned
             setNextResult();            // calculate and store the next result
             return result;
         }
         throw new IteratorFlowException("Invalid next() call in Object Lookup", getMetadata());
+    }
+
+    @Override
+    protected boolean hasNextLocal() {
+        return _hasNext;
+    }
+
+    @Override
+    protected void resetLocal(DynamicContext context) {
+        _iterator.reset(_currentDynamicContext);
+        setNextResult();
+    }
+
+    @Override
+    protected void closeLocal() {
+        _iterator.close();
     }
 
     public void setNextResult() {
