@@ -26,6 +26,7 @@ import sparksoniq.jsoniq.item.*;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparkRuntimeException;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
+import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.ContextExpressionIterator;
@@ -35,13 +36,14 @@ import sparksoniq.semantics.DynamicContext;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 
-public class ObjectLookupIterator extends RuntimeIterator {
+public class ObjectLookupIterator extends HybridRuntimeIterator {
 
     private RuntimeIterator _iterator;
     private Item _lookupKey;
@@ -49,9 +51,8 @@ public class ObjectLookupIterator extends RuntimeIterator {
     private Item _nextResult;
 
     public ObjectLookupIterator(RuntimeIterator object, RuntimeIterator lookupIterator, IteratorMetadata iteratorMetadata) {
-        super(null, iteratorMetadata);
-        this._children.add(object);
-        this._children.add(lookupIterator);
+        super(Arrays.asList(object, lookupIterator), iteratorMetadata);
+        _iterator = object;
     }
 
     private void initLookupKey() {
@@ -103,18 +104,32 @@ public class ObjectLookupIterator extends RuntimeIterator {
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
+    public void openLocal(DynamicContext context) {
         this._currentDynamicContext = context;
 
-        _iterator = this._children.get(0);
         initLookupKey();
         _iterator.open(_currentDynamicContext);
         setNextResult();
     }
+    
+    @Override
+    protected boolean hasNextLocal() {
+        return _hasNext;
+    }
 
     @Override
-    public Item next() {
+    protected void resetLocal(DynamicContext context) {
+        _iterator.reset(_currentDynamicContext);
+        setNextResult();
+    }
+
+    @Override
+    protected void closeLocal() {
+        _iterator.close();
+    }
+
+    @Override
+    public Item nextLocal() {
         if(_hasNext == true){
             Item result = _nextResult;  // save the result to be returned
             setNextResult();            // calculate and store the next result
@@ -174,8 +189,8 @@ public class ObjectLookupIterator extends RuntimeIterator {
     }
 
     @Override
-    public boolean isRDD()
+    public boolean initIsRDD()
     {
-        return this._children.get(0).isRDD();
+        return _iterator.isRDD();
     }
 }
