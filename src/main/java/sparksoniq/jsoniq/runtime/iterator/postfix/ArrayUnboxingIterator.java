@@ -19,30 +19,46 @@
  */
  package sparksoniq.jsoniq.runtime.iterator.postfix;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Queue;
 
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
-public class ArrayUnboxingIterator extends LocalRuntimeIterator {
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.FlatMapFunction;
+
+public class ArrayUnboxingIterator extends HybridRuntimeIterator {
 
     private RuntimeIterator _iterator;
     private Queue<Item> _nextResults;   // queue that holds the results created by the current item in inspection
 
     public ArrayUnboxingIterator(RuntimeIterator arrayIterator, IteratorMetadata iteratorMetadata) {
-        super(null, iteratorMetadata);
-        this._children.add(arrayIterator);
+        super(Arrays.asList(arrayIterator), iteratorMetadata);
+        _iterator = arrayIterator;
     }
 
+    @Override
+    public void openLocal(DynamicContext context) {
+        _iterator.open(context);
+        _nextResults = new LinkedList<>();
+
+        setNextResult();
+    }
 
     @Override
-    public Item next() {
+    protected boolean hasNextLocal() {
+        return _hasNext;
+    }
+
+    @Override
+    public Item nextLocal() {
         if (this._hasNext) {
             Item result = _nextResults.remove();  // save the result to be returned
             if (_nextResults.isEmpty()) {
@@ -55,16 +71,17 @@ public class ArrayUnboxingIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        _iterator = this._children.get(0);
-        _iterator.open(context);
-        _nextResults = new LinkedList<>();
-
+    protected void resetLocal(DynamicContext context) {
+        _iterator.reset(_currentDynamicContext);
         setNextResult();
     }
 
-    public void setNextResult() {
+    @Override
+    protected void closeLocal() {
+        _iterator.close();
+    }
+
+    private void setNextResult() {
         while (_iterator.hasNext()) {
             Item item = _iterator.next();
             if (item instanceof ArrayItem) {
@@ -83,5 +100,20 @@ public class ArrayUnboxingIterator extends LocalRuntimeIterator {
         } else {
             this._hasNext = true;
         }
+    }
+    
+    @Override
+    public JavaRDD<Item> getRDD(DynamicContext dynamicContext)
+    {
+        _currentDynamicContext = dynamicContext;
+        JavaRDD<Item> childRDD = this._children.get(0).getRDD(dynamicContext);
+        FlatMapFunction<Item, Item> transformation = new ArrayUnboxingClosure();
+        JavaRDD<Item> resultRDD = childRDD.flatMap(transformation);
+        return resultRDD;
+    }
+     @Override
+    public boolean initIsRDD()
+    {
+        return _iterator.isRDD();
     }
 }

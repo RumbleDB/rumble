@@ -32,7 +32,7 @@ import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
-public class DynamicContext implements KryoSerializable{
+public class DynamicContext implements Serializable, KryoSerializable{
 
     public DynamicContext(FlworTuple tuple) {
         this();
