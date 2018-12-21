@@ -32,9 +32,9 @@ import org.apache.spark.api.java.JavaRDD;
 
 import java.util.List;
 
-public abstract class SparkRuntimeIterator extends RuntimeIterator {
+public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
-    protected SparkRuntimeIterator(List<RuntimeIterator> children, IteratorMetadata iteratorMetadata) {
+    protected HybridRuntimeIterator(List<RuntimeIterator> children, IteratorMetadata iteratorMetadata) {
         super(children, iteratorMetadata);
         this.parser = new JiqsItemParser();
     }
@@ -42,23 +42,51 @@ public abstract class SparkRuntimeIterator extends RuntimeIterator {
     @Override
     public boolean isRDD()
     {
-        return true;
+        if(!isRDDInitialized )
+        {
+          _isRDD = initIsRDD();
+          isRDDInitialized = true;
+        }
+        return _isRDD;
+    }
+
+    @Override
+    public void open(DynamicContext context){
+        super.open(context);
+        if(!_isRDD)
+        {
+            openLocal(context);
+        }
     }
 
     @Override
     public void reset(DynamicContext context){
         super.reset(context);
+        if(!_isRDD)
+        {
+            resetLocal(context);
+            return;
+        }
         result = null;
     }
 
     @Override
     public void close(){
         super.close();
+        if(!_isRDD)
+        {
+            closeLocal();
+            return;
+        }
         result = null;
     }
 
     @Override
     public boolean hasNext(){
+        if(!_isRDD)
+        {
+            return hasNextLocal();
+        }
         if(result == null){
             currentResultIndex = 0;
             this._rdd = this.getRDD(_currentDynamicContext);
@@ -79,6 +107,10 @@ public abstract class SparkRuntimeIterator extends RuntimeIterator {
 
     @Override
     public Item next(){
+        if(!_isRDD)
+        {
+            return nextLocal();
+        }
         if(!this._isOpen)
             throw new IteratorFlowException("Runtime iterator is not open", getMetadata());
 
@@ -92,9 +124,19 @@ public abstract class SparkRuntimeIterator extends RuntimeIterator {
         currentResultIndex++;
         return item;
     }
+    
+    protected abstract boolean initIsRDD();
+    protected abstract void openLocal(DynamicContext context);
+    protected abstract void closeLocal();
+    protected abstract void resetLocal(DynamicContext context);
+    protected abstract boolean hasNextLocal();
+    protected abstract Item nextLocal();
+
 
     protected JiqsItemParser parser;
     protected JavaRDD<Item> _rdd;
+    protected boolean isRDDInitialized = false;
+    protected boolean _isRDD;
     protected List<Item> result = null;
     protected int currentResultIndex = 0;
 }
