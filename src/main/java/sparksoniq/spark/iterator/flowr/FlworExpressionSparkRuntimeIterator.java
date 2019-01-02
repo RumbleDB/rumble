@@ -25,6 +25,7 @@ import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkContextManager;
 import sparksoniq.jsoniq.runtime.iterator.SparkRuntimeIterator;
@@ -38,22 +39,19 @@ public class FlworExpressionSparkRuntimeIterator extends SparkRuntimeIterator {
     private final ReturnClauseSparkIterator _returnClause;
     private List<FlowrClauseSparkIterator> _clauses;
 
-    public FlworExpressionSparkRuntimeIterator(FlowrClauseSparkIterator startClause,
-                                               List<FlowrClauseSparkIterator> contentClauses,
-                                               ReturnClauseSparkIterator returnClause,
+    public FlworExpressionSparkRuntimeIterator(RuntimeTupleIterator startClause,
+                                               List<RuntimeTupleIterator> contentClauses,
+                                               RuntimeTupleIterator returnClause,
                                                IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
         _clauses = new ArrayList<>();
-        if(startClause.getClauseType() != FLWOR_CLAUSES.FOR && startClause.getClauseType() != FLWOR_CLAUSES.LET)
+        if(((FlowrClauseSparkIterator)startClause).getClauseType() != FLWOR_CLAUSES.FOR
+                && ((FlowrClauseSparkIterator)startClause).getClauseType() != FLWOR_CLAUSES.LET)
             throw new SparksoniqRuntimeException("FLOWR clauses must start with a for/let clause");
-        this._returnClause = returnClause;
-        this._clauses.add(startClause);
-        this._clauses.addAll(contentClauses);
+        this._returnClause = (ReturnClauseSparkIterator)returnClause;
+        this._clauses.add((FlowrClauseSparkIterator)startClause);
+        this._clauses.addAll((List<FlowrClauseSparkIterator>)(List<?>)contentClauses);
         this._clauses.add(_returnClause);
-        this._clauses.forEach(clause -> {
-            if(_clauses.indexOf(clause) > 0)
-                clause.setPreviousClause(_clauses.get(_clauses.indexOf(clause) -1));
-        });
 
     }
 

@@ -23,14 +23,15 @@ import sparksoniq.jsoniq.compiler.translator.expr.flowr.FLWOR_CLAUSES;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
 import sparksoniq.spark.closures.ReturnFlatMapClosure;
 import org.apache.spark.api.java.JavaRDD;
 
 public class ReturnClauseSparkIterator extends FlowrClauseSparkIterator {
-    public ReturnClauseSparkIterator(RuntimeIterator expression, IteratorMetadata iteratorMetadata) {
-        super(null, FLWOR_CLAUSES.RETURN, iteratorMetadata);
+    public ReturnClauseSparkIterator(RuntimeTupleIterator child, RuntimeIterator expression, IteratorMetadata iteratorMetadata) {
+        super(child, null, FLWOR_CLAUSES.RETURN, iteratorMetadata);
         this._children.add(expression);
     }
 
@@ -38,7 +39,7 @@ public class ReturnClauseSparkIterator extends FlowrClauseSparkIterator {
     public JavaRDD<Item> getItemRDD() {
         if(itemRDD == null) {
             RuntimeIterator expression = this._children.get(0);
-            this._rdd = this._previousClause.getTupleRDD();
+            this._rdd = this._child.getRDD();
             itemRDD = this._rdd.flatMap(new ReturnFlatMapClosure(expression));
         }
         return itemRDD;
@@ -47,7 +48,7 @@ public class ReturnClauseSparkIterator extends FlowrClauseSparkIterator {
     private JavaRDD<Item> itemRDD;
 
     @Override
-    public JavaRDD<FlworTuple> getTupleRDD() {
-        return this._previousClause.getTupleRDD();
+    public JavaRDD<FlworTuple> getRDD() {
+        return null;
     }
 }

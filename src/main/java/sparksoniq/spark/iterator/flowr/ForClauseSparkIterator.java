@@ -24,6 +24,7 @@ import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
 import sparksoniq.spark.SparkContextManager;
 import sparksoniq.spark.closures.ForClauseClosure;
 import sparksoniq.spark.closures.InitialForClauseClosure;
@@ -36,27 +37,27 @@ import java.util.List;
 
 public class ForClauseSparkIterator extends FlowrClauseSparkIterator {
 
-    public ForClauseSparkIterator(VariableReferenceIterator variableReference,
+    public ForClauseSparkIterator(RuntimeTupleIterator child, VariableReferenceIterator variableReference,
                                   RuntimeIterator assignmentExpression, IteratorMetadata iteratorMetadata) {
-        super(null, FLWOR_CLAUSES.FOR, iteratorMetadata);
+        super(child, null, FLWOR_CLAUSES.FOR, iteratorMetadata);
         this._children.add(variableReference);
         this._children.add(assignmentExpression);
     }
 
 
     @Override
-    public JavaRDD<FlworTuple> getTupleRDD() {
+    public JavaRDD<FlworTuple> getRDD() {
         if (this._rdd == null) {
             String variableReference = ((VariableReferenceIterator)this._children.get(0)).getVariableName();
             RuntimeIterator assignmentExpression = this._children.get(1);
             JavaRDD<Item> initialRdd = null;
             //if it's a start clause
-            if (this._previousClause == null) {
+            if (this._child == null) {
                 initialRdd = this.getNewRDDFromExpression(assignmentExpression);
                 this._rdd = initialRdd.map(new InitialForClauseClosure(variableReference));
             } else {
             //if it's not a start clause
-                this._rdd = this._previousClause.getTupleRDD();
+                this._rdd = this._child.getRDD();
                 this._rdd = this._rdd.flatMap(new ForClauseClosure(assignmentExpression, variableReference));
             }
         }
