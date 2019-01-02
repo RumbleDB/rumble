@@ -24,7 +24,9 @@ import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
-import sparksoniq.jsoniq.item.*;
+import sparksoniq.jsoniq.item.ArrayItem;
+import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ObjectItem;
 
 import java.util.ArrayList;
 import java.util.List;

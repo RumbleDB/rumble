@@ -19,11 +19,11 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-import sparksoniq.semantics.types.SequenceType;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import sparksoniq.semantics.types.SequenceType;
 
 import java.util.ArrayList;
 import java.util.List;

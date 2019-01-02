@@ -19,11 +19,11 @@
  */
  package sparksoniq.spark.closures;
 
+import org.apache.spark.api.java.function.FlatMapFunction;
 import sparksoniq.jsoniq.item.Item;
-import sparksoniq.semantics.DynamicContext;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
-import org.apache.spark.api.java.function.FlatMapFunction;
+import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
 import java.util.Iterator;

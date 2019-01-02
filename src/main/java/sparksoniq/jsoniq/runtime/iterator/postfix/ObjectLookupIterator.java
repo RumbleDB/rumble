@@ -20,21 +20,17 @@
 package sparksoniq.jsoniq.runtime.iterator.postfix;
 
 import sparksoniq.exceptions.InvalidSelectorException;
-import sparksoniq.exceptions.UnexpectedTypeException;
-import sparksoniq.exceptions.UnsupportedFeatureException;
-import sparksoniq.jsoniq.item.*;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.UnexpectedTypeException;
+import sparksoniq.jsoniq.item.*;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.ContextExpressionIterator;
-import sparksoniq.jsoniq.runtime.iterator.primary.StringRuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 
 public class ObjectLookupIterator extends LocalRuntimeIterator {
 

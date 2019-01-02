@@ -19,27 +19,20 @@
  */
 package sparksoniq.jsoniq.runtime.iterator.operational;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase.Operator;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.jsoniq.item.*;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
-import sparksoniq.jsoniq.runtime.iterator.EmptySequenceIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
-import sparksoniq.jsoniq.runtime.iterator.primary.ArrayRuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.primary.NullRuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.primary.ObjectConstructorRuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 
 public class ComparisonOperationIterator extends BinaryOperationBaseIterator {

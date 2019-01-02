@@ -19,9 +19,9 @@
  */
  package sparksoniq.spark.closures;
 
+import org.apache.spark.api.java.function.Function;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.tuple.FlworTuple;
-import org.apache.spark.api.java.function.Function;
 
 public class InitialForClauseClosure implements Function<Item, FlworTuple> {
     private final String _variableName;

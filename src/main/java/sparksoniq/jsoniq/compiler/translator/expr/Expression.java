@@ -20,8 +20,8 @@
  package sparksoniq.jsoniq.compiler.translator.expr;
 
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 import sparksoniq.semantics.StaticContext;
+import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 public abstract class Expression extends ExpressionOrClause {
 
