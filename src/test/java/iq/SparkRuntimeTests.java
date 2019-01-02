@@ -20,14 +20,18 @@
 package iq;
 
 import org.apache.spark.SparkConf;
+import org.junit.Assert;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.spark.SparkContextManager;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import static utils.SequenceStringComparator.unorderedItemSequenceStringsAreEqual;
 
 @RunWith(Parameterized.class)
 public class SparkRuntimeTests extends RuntimeTests {
@@ -46,6 +50,14 @@ public class SparkRuntimeTests extends RuntimeTests {
         readFileList(sparkRuntimeTestsDirectory);
         _testFiles.forEach(file -> result.add(new Object[]{file}));
         return result;
+    }
+
+    @Override
+    protected void checkExpectedOutput(String expectedOutput, RuntimeIterator runtimeIterator) {
+        String actualOutput = runIterators(runtimeIterator);
+        Assert.assertTrue("Expected output: " + expectedOutput + " Actual result: "
+                        + actualOutput,
+                        unorderedItemSequenceStringsAreEqual(expectedOutput, actualOutput));
     }
 
 }

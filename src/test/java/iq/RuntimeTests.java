@@ -37,8 +37,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static utils.SequenceStringComparator.unorderedItemSequenceStringsAreEqual;
-
 @RunWith(Parameterized.class)
 public class RuntimeTests extends AnnotationsTestsBase {
 
@@ -88,7 +86,8 @@ public class RuntimeTests extends AnnotationsTestsBase {
         String actualOutput = runIterators(runtimeIterator);
         Assert.assertTrue("Expected output: " + expectedOutput + " Actual result: "
                         + actualOutput,
-                unorderedItemSequenceStringsAreEqual(expectedOutput, actualOutput));
+                expectedOutput.equals(actualOutput));
+                //unorderedItemSequenceStringsAreEqual(expectedOutput, actualOutput));
     }
 
 
@@ -105,7 +104,7 @@ public class RuntimeTests extends AnnotationsTestsBase {
         if (!iterator.hasNext())
             return singleOutput;
         else {
-            String output = "( " + result.serialize() + ", ";
+            String output = "(" + result.serialize() + ", ";
             while (iterator.hasNext()) {
                 result = iterator.next();
                 if (result != null)

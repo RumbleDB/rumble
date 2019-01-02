@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="( { "Captain" : "Kirk", "First Officer" : "Spock" } )" :)
+(:JIQS: ShouldRun; Output="{ "Captain" : "Kirk", "First Officer" : "Spock" }" :)
 project({"Captain" : "Kirk", "First Officer" : "Spock", "Engineer" : "Scott"}, ("Captain", "First Officer"))
 
 

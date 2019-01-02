@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="( , Blow, blow, thou winter wind!)" :)
+(:JIQS: ShouldRun; Output="(, Blow, blow, thou winter wind!)" :)
 string-join((), "separator"),
 string-join(("Blow, ", "blow, ", "thou ", "winter ", "wind!"), ())
 
