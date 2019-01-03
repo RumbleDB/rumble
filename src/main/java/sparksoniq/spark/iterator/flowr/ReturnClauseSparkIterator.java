@@ -19,24 +19,35 @@
  */
  package sparksoniq.spark.iterator.flowr;
 
+import org.apache.spark.api.java.JavaRDD;
+import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.SparkRuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
-import sparksoniq.jsoniq.runtime.tupleiterator.SparkRuntimeTupleIterator;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.closures.ReturnFlatMapClosure;
 import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
 
 import java.util.Arrays;
 
-import org.apache.spark.api.java.JavaRDD;
+public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
-public class ReturnClauseSparkIterator extends SparkRuntimeIterator {
+    private JavaRDD<Item> itemRDD;
+    private RuntimeTupleIterator _child;
+    private RuntimeIterator _iterator;
+    private Item _nextLocalResult;
+
     public ReturnClauseSparkIterator(RuntimeTupleIterator child, RuntimeIterator expression, IteratorMetadata iteratorMetadata) {
         super(Arrays.asList(expression), iteratorMetadata);
         _child = child;
+        _iterator = expression;
+    }
+
+    @Override
+    protected boolean initIsRDD() {
+        return _child.isRDD();
     }
 
     @Override
@@ -49,8 +60,53 @@ public class ReturnClauseSparkIterator extends SparkRuntimeIterator {
         return itemRDD;
     }
 
-    private JavaRDD<Item> itemRDD;
-    
-    private RuntimeTupleIterator _child;
+    @Override
+    protected boolean hasNextLocal() {
+        return _hasNext;
+    }
+
+    @Override
+    protected Item nextLocal() {
+        if(_hasNext == true){
+            Item result = _nextLocalResult;  // save the result to be returned
+            setNextLocalResult();            // calculate and store the next result
+            return result;
+        }
+        throw new IteratorFlowException("Invalid next() call in Object Lookup", getMetadata());
+    }
+
+    @Override
+    protected void openLocal(DynamicContext context) {
+        this._currentDynamicContext = context;
+
+        _iterator.open(context);
+        setNextLocalResult();
+    }
+
+    private void setNextLocalResult() {
+        if (_iterator.hasNext()) {
+            _nextLocalResult = _iterator.next();
+            this._hasNext = true;
+        } else {
+            _iterator.close();
+            this._hasNext = false;
+        }
+    }
+
+    @Override
+    protected void closeLocal() {
+        _iterator.close();
+    }
+
+    @Override
+    protected void resetLocal(DynamicContext context) {
+        _iterator.reset(_currentDynamicContext);
+        setNextLocalResult();
+    }
+
+
+
+
+
 
 }
