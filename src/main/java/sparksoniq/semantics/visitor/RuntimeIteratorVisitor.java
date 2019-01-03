@@ -82,20 +82,15 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
     @Override
     public RuntimeIterator visitFlowrExpression(FlworExpression expression, RuntimeIterator argument) {
         FlworClause startClause = expression.getStartClause();
-        List<RuntimeTupleIterator> iterators = new ArrayList<>();
         RuntimeTupleIterator previous = null;
         previous = this.visitFlowrClause(startClause, argument, previous);
-        iterators.add(previous);
         for (FlworClause clause : expression.get_contentClauses()) {
             previous = this.visitFlowrClause(clause, argument, previous);
-            iterators.add(previous);
         }
-        RuntimeIterator returnClause = new ReturnClauseSparkIterator(
+        return new ReturnClauseSparkIterator(
                 previous,
                 this.visit(((ReturnClause) expression.get_returnClause()).getReturnExpr(),
                 argument),createIteratorMetadata(expression.get_returnClause()));
-        return new FlworExpressionSparkRuntimeIterator(iterators.get(0), iterators.subList(1, iterators.size()),
-                returnClause, createIteratorMetadata(expression));
     }
 
     private RuntimeTupleIterator visitFlowrClause(FlworClause clause,
