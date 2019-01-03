@@ -41,7 +41,7 @@ public class FlworExpressionSparkRuntimeIterator extends SparkRuntimeIterator {
 
     public FlworExpressionSparkRuntimeIterator(RuntimeTupleIterator startClause,
                                                List<RuntimeTupleIterator> contentClauses,
-                                               RuntimeTupleIterator returnClause,
+                                               RuntimeIterator returnClause,
                                                IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
         _clauses = new ArrayList<>();
@@ -51,7 +51,7 @@ public class FlworExpressionSparkRuntimeIterator extends SparkRuntimeIterator {
         this._returnClause = (ReturnClauseSparkIterator)returnClause;
         this._clauses.add((FlowrClauseSparkIterator)startClause);
         this._clauses.addAll((List<FlowrClauseSparkIterator>)(List<?>)contentClauses);
-        this._clauses.add(_returnClause);
+        //this._clauses.add(_returnClause);
 
     }
 
@@ -113,6 +113,6 @@ public class FlworExpressionSparkRuntimeIterator extends SparkRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDD(DynamicContext dynamicContext) {
-        return _returnClause.getItemRDD();
+        return _returnClause.getRDD(dynamicContext);
     }
 }
