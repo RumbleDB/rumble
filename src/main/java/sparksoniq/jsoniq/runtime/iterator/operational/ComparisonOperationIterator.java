@@ -188,6 +188,7 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
             case VC_GE:
             case GC_GE:
                 return new BooleanItem(comparison > 0 || comparison == 0, ItemMetadata.fromIteratorMetadata(getMetadata()));
+            default:
         }
         throw new IteratorFlowException("Unrecognized operator found", getMetadata());
     }
