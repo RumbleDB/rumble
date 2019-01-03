@@ -19,8 +19,8 @@
  */
  package sparksoniq.utils;
 
-import org.apache.hadoop.fs.Path;
 import sparksoniq.JsoniqQueryExecutor;
+import org.apache.hadoop.fs.Path;
 
 import java.io.IOException;
 import java.net.URLDecoder;

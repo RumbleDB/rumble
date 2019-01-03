@@ -24,10 +24,10 @@ import scala.Tuple2;
 import sparksoniq.exceptions.InvalidGroupVariableException;
 import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.tuple.FlworKey;
-import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
+import sparksoniq.jsoniq.tuple.FlworKey;
+import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.util.ArrayList;
 import java.util.List;

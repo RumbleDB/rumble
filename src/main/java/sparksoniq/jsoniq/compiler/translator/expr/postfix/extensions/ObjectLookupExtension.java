@@ -21,6 +21,7 @@
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.StringLiteral;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 
 import java.util.ArrayList;

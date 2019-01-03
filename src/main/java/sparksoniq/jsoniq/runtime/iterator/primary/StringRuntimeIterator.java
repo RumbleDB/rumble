@@ -19,10 +19,10 @@
  */
  package sparksoniq.jsoniq.runtime.iterator.primary;
 
-import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class StringRuntimeIterator extends AtomicRuntimeIterator {

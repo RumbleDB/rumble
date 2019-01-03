@@ -44,6 +44,7 @@ import sparksoniq.utils.FileUtils;
 
 import java.io.*;
 import java.net.URI;
+import java.util.List;
 
 
 public class JsoniqQueryExecutor {

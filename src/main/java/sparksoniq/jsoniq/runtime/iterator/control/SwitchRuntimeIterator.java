@@ -3,6 +3,7 @@ package sparksoniq.jsoniq.runtime.iterator.control;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.jsoniq.item.ArrayItem;
+import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;

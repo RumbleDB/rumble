@@ -24,12 +24,14 @@ import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.expr.control.IfExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.control.SwitchCaseExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.control.SwitchExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.InstanceOfExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.*;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.*;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.PostFixExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.*;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpressionVar;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 
 public abstract class AbstractExpressionOrClauseVisitor<T> {
 

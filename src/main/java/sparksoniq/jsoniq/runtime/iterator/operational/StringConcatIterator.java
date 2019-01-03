@@ -30,6 +30,8 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
+import javax.naming.OperationNotSupportedException;
+
 public class StringConcatIterator extends BinaryOperationBaseIterator {
     public StringConcatIterator(RuntimeIterator left, RuntimeIterator right, IteratorMetadata iteratorMetadata) {
         super(left, right, OperationalExpressionBase.Operator.CONCAT, iteratorMetadata);

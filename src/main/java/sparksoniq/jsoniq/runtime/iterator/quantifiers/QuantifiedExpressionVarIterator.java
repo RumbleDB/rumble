@@ -27,6 +27,9 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.SequenceType;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class QuantifiedExpressionVarIterator extends LocalRuntimeIterator {
 
     private final String _variableReference;

@@ -52,6 +52,7 @@ import sparksoniq.jsoniq.runtime.iterator.quantifiers.QuantifiedExpressionVarIte
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
 import sparksoniq.spark.iterator.flowr.*;
+import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
 import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
 import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 

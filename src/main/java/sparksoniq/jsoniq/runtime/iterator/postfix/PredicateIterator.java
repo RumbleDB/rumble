@@ -19,20 +19,21 @@
  */
 package sparksoniq.jsoniq.runtime.iterator.postfix;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.function.Function;
-import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.exceptions.SparksoniqRuntimeException;
+import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.Function;
 
 public class PredicateIterator extends HybridRuntimeIterator {
 

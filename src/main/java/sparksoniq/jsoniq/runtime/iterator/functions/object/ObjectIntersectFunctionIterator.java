@@ -1,6 +1,7 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.object;
 
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
@@ -8,10 +9,7 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import javax.naming.OperationNotSupportedException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.*;
 
 public class ObjectIntersectFunctionIterator extends ObjectFunctionIterator {
     public ObjectIntersectFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {

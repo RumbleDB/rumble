@@ -19,8 +19,8 @@
  */
  package sparksoniq.jsoniq.compiler;
 
-import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.*;
+import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 
 import java.math.BigDecimal;

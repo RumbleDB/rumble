@@ -19,9 +19,9 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr.operational.base;
 
-import org.antlr.v4.runtime.Token;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
+import org.antlr.v4.runtime.Token;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 
 import java.util.ArrayList;

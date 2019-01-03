@@ -19,19 +19,20 @@
  */
  package sparksoniq.jsoniq.runtime.iterator.postfix;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.function.FlatMapFunction;
-import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Queue;
+
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.FlatMapFunction;
 
 public class ArrayUnboxingIterator extends HybridRuntimeIterator {
 

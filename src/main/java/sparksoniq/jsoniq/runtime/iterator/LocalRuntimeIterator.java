@@ -19,9 +19,9 @@
  */
  package sparksoniq.jsoniq.runtime.iterator;
 
-import org.apache.spark.api.java.JavaRDD;
 import sparksoniq.exceptions.SparkRuntimeException;
 import sparksoniq.jsoniq.item.Item;
+import org.apache.spark.api.java.JavaRDD;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 

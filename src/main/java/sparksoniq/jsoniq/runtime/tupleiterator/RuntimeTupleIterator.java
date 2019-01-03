@@ -25,9 +25,12 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.api.java.JavaRDD;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.SparksoniqRuntimeException;
+import sparksoniq.exceptions.UnexpectedTypeException;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
-import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.util.ArrayList;
 import java.util.List;

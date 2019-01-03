@@ -1,12 +1,14 @@
 package sparksoniq.jsoniq.runtime.iterator.postfix;
 
-import org.apache.spark.api.java.function.FlatMapFunction;
 import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ObjectItem;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
+import org.apache.spark.api.java.function.FlatMapFunction;
 
 public class ArrayLookupClosure implements FlatMapFunction<Item, Item> {
     private final Integer _lookup;

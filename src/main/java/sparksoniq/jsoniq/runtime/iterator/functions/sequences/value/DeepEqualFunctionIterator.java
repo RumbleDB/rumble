@@ -11,6 +11,7 @@ import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterat
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
+import java.lang.reflect.Array;
 import java.util.List;
 
 public class DeepEqualFunctionIterator extends LocalFunctionCallIterator {

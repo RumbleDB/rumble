@@ -20,8 +20,8 @@
  package sparksoniq.spark.iterator.function;
 
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.SparkRuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.jsoniq.runtime.iterator.SparkRuntimeIterator;
 
 import java.util.List;
 

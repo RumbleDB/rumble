@@ -21,8 +21,8 @@
 
 
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-import sparksoniq.semantics.types.SequenceType;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
+import sparksoniq.semantics.types.SequenceType;
 
 import java.io.Serializable;
 

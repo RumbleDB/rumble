@@ -19,17 +19,17 @@
  */
  package sparksoniq.spark.iterator.flowr;
 
-import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaRDD;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FLWOR_CLAUSES;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
-import sparksoniq.jsoniq.tuple.FlworKey;
-import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.closures.OrderByClauseSortClosure;
 import sparksoniq.spark.closures.OrderByMapToPairClosure;
-import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
+import sparksoniq.jsoniq.tuple.FlworKey;
+import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
+import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
+import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaRDD;
 
 import java.util.List;
 
