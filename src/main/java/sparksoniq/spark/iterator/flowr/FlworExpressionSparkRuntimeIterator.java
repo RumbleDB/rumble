@@ -44,71 +44,24 @@ public class FlworExpressionSparkRuntimeIterator extends SparkRuntimeIterator {
                                                RuntimeIterator returnClause,
                                                IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
-        _clauses = new ArrayList<>();
         if(((FlowrClauseSparkIterator)startClause).getClauseType() != FLWOR_CLAUSES.FOR
                 && ((FlowrClauseSparkIterator)startClause).getClauseType() != FLWOR_CLAUSES.LET)
             throw new SparksoniqRuntimeException("FLOWR clauses must start with a for/let clause");
         this._returnClause = (ReturnClauseSparkIterator)returnClause;
-        this._clauses.add((FlowrClauseSparkIterator)startClause);
-        this._clauses.addAll((List<FlowrClauseSparkIterator>)(List<?>)contentClauses);
-        //this._clauses.add(_returnClause);
 
     }
 
     @Override public void open(DynamicContext context){
-        if(this._isOpen)
-            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
-        this._isOpen = true;
-        this._hasNext = true;
-        if(context == null)
-            this._currentDynamicContext = new DynamicContext();
-        else
-            this._currentDynamicContext = new DynamicContext(context);
-        this._clauses.forEach(clause -> {
-                clause.setDynamicContext(_currentDynamicContext);
-        });
-
-        currentResultIndex = 0;
-        this._rdd = this.getRDD(_currentDynamicContext);
-        if(SparkContextManager.LIMIT_COLLECT()) {
-            result = _rdd.take(SparkContextManager.COLLECT_ITEM_LIMIT);
-        }
-        else {
-            result = _rdd.collect();
-        }
-
-        if (result.size() == 0) {
-            this._hasNext = false;
-        } else {
-            this._hasNext = true;
-        }
+        _returnClause.open(context);
     }
 
     @Override
     public Item next(){
-        if(!this._isOpen) {
-            throw new IteratorFlowException("Runtime iterator is not open", getMetadata());
-        }
-
-        if (this._hasNext) {
-            if(currentResultIndex == result.size() - 1)
-                this._hasNext = false;
-
-            Item item = result.get(currentResultIndex);
-            currentResultIndex++;
-            return item;
-        }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.getClass().getSimpleName(),
-                getMetadata());
+        return _returnClause.next();
     }
 
     @Override public void reset(DynamicContext context){
-        this._hasNext = true;
-        this._currentDynamicContext = context;
-        this._children.forEach(c -> c.reset(context));
-        this._clauses.forEach(clause -> {
-            clause.setDynamicContext(_currentDynamicContext);
-        });
+        _returnClause.reset(context);
     }
 
     @Override
