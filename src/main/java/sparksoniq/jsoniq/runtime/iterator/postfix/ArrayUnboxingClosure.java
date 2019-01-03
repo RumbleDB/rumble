@@ -1,11 +1,12 @@
 package sparksoniq.jsoniq.runtime.iterator.postfix;
+
+import org.apache.spark.api.java.function.FlatMapFunction;
 import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.Item;
 
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import org.apache.spark.api.java.function.FlatMapFunction;
 
 public class ArrayUnboxingClosure implements FlatMapFunction<Item, Item> {
 

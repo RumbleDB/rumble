@@ -1,7 +1,6 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.sequences.cardinality;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.storage.StorageLevel;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SequenceExceptionZeroOrOne;
 import sparksoniq.jsoniq.item.Item;

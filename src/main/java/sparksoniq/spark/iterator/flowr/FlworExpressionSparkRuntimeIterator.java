@@ -19,18 +19,18 @@
  */
  package sparksoniq.spark.iterator.flowr;
 
-import sparksoniq.jsoniq.compiler.translator.expr.flowr.FLWOR_CLAUSES;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
+import org.apache.spark.api.java.JavaRDD;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.SparksoniqRuntimeException;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.FLWOR_CLAUSES;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.SparkRuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkContextManager;
-import sparksoniq.jsoniq.runtime.iterator.SparkRuntimeIterator;
 import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
-import org.apache.spark.api.java.JavaRDD;
 
 import java.util.ArrayList;
 import java.util.List;

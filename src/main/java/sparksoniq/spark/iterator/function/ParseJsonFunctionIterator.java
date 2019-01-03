@@ -20,7 +20,6 @@
 package sparksoniq.spark.iterator.function;
 
 import org.apache.spark.api.java.JavaRDD;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.io.json.StringToItemMapper;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;

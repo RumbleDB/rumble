@@ -19,7 +19,6 @@
  */
 package sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate;
 
-import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
