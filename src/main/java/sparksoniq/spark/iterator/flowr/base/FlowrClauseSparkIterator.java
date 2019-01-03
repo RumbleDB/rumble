@@ -46,7 +46,10 @@ public abstract class FlowrClauseSparkIterator extends SparkRuntimeTupleIterator
 
     public void setDynamicContext(DynamicContext context){
         this._currentDynamicContext = context;
-        ((FlowrClauseSparkIterator)_child).setDynamicContext(context);
+        if(_child != null)
+        {
+            ((FlowrClauseSparkIterator)_child).setDynamicContext(context);
+        }
     }
 
     protected FlowrClauseSparkIterator(
