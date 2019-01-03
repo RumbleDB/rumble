@@ -19,15 +19,12 @@
  */
  package sparksoniq.spark.iterator.flowr;
 
-import sparksoniq.jsoniq.compiler.translator.expr.flowr.FLWOR_CLAUSES;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.SparkRuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
-import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
 import sparksoniq.spark.closures.ReturnFlatMapClosure;
 
 import java.util.Arrays;
@@ -37,8 +34,10 @@ import org.apache.spark.api.java.JavaRDD;
 public class ReturnClauseSparkIterator extends SparkRuntimeIterator {
     public ReturnClauseSparkIterator(RuntimeTupleIterator child, RuntimeIterator expression, IteratorMetadata iteratorMetadata) {
         super(Arrays.asList(expression), iteratorMetadata);
+        _child = child;
     }
 
+    @Override
     public JavaRDD<Item> getRDD(DynamicContext context) {
         if(itemRDD == null) {
             RuntimeIterator expression = this._children.get(0);
@@ -49,6 +48,6 @@ public class ReturnClauseSparkIterator extends SparkRuntimeIterator {
 
     private JavaRDD<Item> itemRDD;
     
-    RuntimeTupleIterator _child;
+    private RuntimeTupleIterator _child;
 
 }
