@@ -60,6 +60,11 @@ public class FlworExpressionSparkRuntimeIterator extends SparkRuntimeIterator {
         return _returnClause.next();
     }
 
+    @Override
+    public boolean hasNext(){
+        return _returnClause.hasNext();
+    }
+
     @Override public void reset(DynamicContext context){
         _returnClause.reset(context);
     }
