@@ -90,9 +90,12 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
             previous = this.visitFlowrClause(clause, argument, previous);
             iterators.add(previous);
         }
-        previous = this.visitFlowrClause(expression.get_returnClause(), argument, previous);
+        RuntimeIterator returnClause = new ReturnClauseSparkIterator(
+                previous,
+                this.visit(((ReturnClause) expression.get_returnClause()).getReturnExpr(),
+                argument),createIteratorMetadata(expression.get_returnClause()));
         return new FlworExpressionSparkRuntimeIterator(iterators.get(0), iterators.subList(1, iterators.size()),
-                previous, createIteratorMetadata(expression));
+                returnClause, createIteratorMetadata(expression));
     }
 
     private RuntimeTupleIterator visitFlowrClause(FlworClause clause,
@@ -130,9 +133,6 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                         orderExpr.isAscending(), orderExpr.getUri(), orderExpr.getEmptyOrder(), createIteratorMetadata(orderExpr)));
             }
             previousIterator = new OrderByClauseSparkIterator(previousIterator, expressions, ((OrderByClause) clause).isStable(),
-                    createIteratorMetadata(clause));
-        } else if (clause instanceof ReturnClause) {
-            previousIterator = new ReturnClauseSparkIterator(previousIterator, this.visit(((ReturnClause) clause).getReturnExpr(), argument),
                     createIteratorMetadata(clause));
         } else if (clause instanceof WhereClause) {
             previousIterator = new WhereClauseSparkIterator(previousIterator, this.visit(((WhereClause) clause).getWhereExpression(), argument),
