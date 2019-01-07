@@ -85,7 +85,6 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     }
 
     private void setNextLocalResult() {
-        _nextLocalResult = null;
         if (_expression.hasNext()) {
             _nextLocalResult = _expression.next();
         } else {
@@ -99,22 +98,22 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             } else {
                 _child.close();
                 this._hasNext = false;
+                return;
             }
         }
-
-        if (_nextLocalResult != null) {
-            this._hasNext = true;
-        }
+        this._hasNext = true;
     }
 
     @Override
     protected void closeLocal() {
         _child.close();
+        _expression.close();
     }
 
     @Override
     protected void resetLocal(DynamicContext context) {
         _child.reset(_currentDynamicContext);
+        _expression.close();
         setNextLocalResult();
     }
 
