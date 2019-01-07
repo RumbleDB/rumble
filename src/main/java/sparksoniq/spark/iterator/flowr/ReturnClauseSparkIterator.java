@@ -26,6 +26,7 @@ import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
+import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.closures.ReturnFlatMapClosure;
 import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
@@ -36,13 +37,13 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
     private JavaRDD<Item> itemRDD;
     private RuntimeTupleIterator _child;
-    private RuntimeIterator _iterator;
+    private RuntimeIterator _expression;
     private Item _nextLocalResult;
 
     public ReturnClauseSparkIterator(RuntimeTupleIterator child, RuntimeIterator expression, IteratorMetadata iteratorMetadata) {
         super(Arrays.asList(expression), iteratorMetadata);
         _child = child;
-        _iterator = expression;
+        _expression = expression;
     }
 
     @Override
@@ -79,28 +80,41 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     protected void openLocal(DynamicContext context) {
         this._currentDynamicContext = context;
 
-        _iterator.open(context);
+        _child.open(context);
         setNextLocalResult();
     }
 
     private void setNextLocalResult() {
-        if (_iterator.hasNext()) {
-            _nextLocalResult = _iterator.next();
-            this._hasNext = true;
+        _nextLocalResult = null;
+        if (_expression.hasNext()) {
+            _nextLocalResult = _expression.next();
         } else {
-            _iterator.close();
-            this._hasNext = false;
+            _expression.close();
+
+            if (_child.hasNext()) {
+                FlworTuple tuple = _child.next();
+                DynamicContext dynamicContext = new DynamicContext(tuple);
+                _expression.open(dynamicContext);
+                _nextLocalResult = _expression.next();
+            } else {
+                _child.close();
+                this._hasNext = false;
+            }
+        }
+
+        if (_nextLocalResult != null) {
+            this._hasNext = true;
         }
     }
 
     @Override
     protected void closeLocal() {
-        _iterator.close();
+        _child.close();
     }
 
     @Override
     protected void resetLocal(DynamicContext context) {
-        _iterator.reset(_currentDynamicContext);
+        _child.reset(_currentDynamicContext);
         setNextLocalResult();
     }
 
