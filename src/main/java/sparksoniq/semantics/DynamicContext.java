@@ -34,11 +34,6 @@ import java.util.Map;
 
 public class DynamicContext implements Serializable, KryoSerializable{
 
-    public DynamicContext(FlworTuple tuple) {
-        this();
-        generateDynamicContextFromTupleRdd(tuple);
-    }
-
     public DynamicContext(){
         this._parent = null;
         this._variableValues = new HashMap<>();
@@ -49,6 +44,26 @@ public class DynamicContext implements Serializable, KryoSerializable{
         this._variableValues = new HashMap<>();
     }
 
+    public DynamicContext(FlworTuple tuple) {
+        this();
+        setBındingsFromTuple(tuple);
+    }
+
+    public DynamicContext(DynamicContext parent, FlworTuple tuple){
+        this._parent = parent;
+        this._variableValues = new HashMap<>();
+        setBındingsFromTuple(tuple);
+    }
+
+    public void setBındingsFromTuple(FlworTuple tuple) {
+        for(String key : tuple.getKeys())
+            if(!key.startsWith("."))
+                this.addVariableValue(key,tuple.getValue(key));
+    }
+
+    public void addVariableValue(String varName, List<Item> value){
+        this._variableValues.put(varName, value);
+    }
 
     public List<Item> getVariableValue(String varName) {
         if(_variableValues.containsKey(varName))
@@ -60,19 +75,11 @@ public class DynamicContext implements Serializable, KryoSerializable{
                     "" + varName + " value");
     }
 
-    public void addVariableValue(String varName, List<Item> value){
-        this._variableValues.put(varName, value);
-    }
-
-    private void generateDynamicContextFromTupleRdd(FlworTuple tuple) {
-        for(String key : tuple.getKeys())
-            if(!key.startsWith("."))
-                this.addVariableValue(key,tuple.getValue(key));
-    }
-
     public void removeVariable(String varName) {
         this._variableValues.remove(varName);
     }
+
+    public void removeAllVariables() {this._variableValues.clear();}
 
     @Override
     public void write(Kryo kryo, Output output) {

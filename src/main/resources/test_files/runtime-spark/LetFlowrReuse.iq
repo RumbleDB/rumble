@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="( Latvian, Russian, Czech, Greek, Serbian)" :)
+(:JIQS: ShouldRun; Output="(Latvian, Russian, Czech, Greek, Serbian)" :)
 for $i in json-file("./src/main/resources/queries/conf-ex.json")
 let $target := $i."target"
 let $target := $i."guess"

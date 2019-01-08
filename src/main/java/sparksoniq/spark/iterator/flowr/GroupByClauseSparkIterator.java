@@ -23,6 +23,7 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FLWOR_CLAUSES;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
 import sparksoniq.spark.closures.GroupByLinearizeTupleClosure;
 import sparksoniq.spark.closures.GroupByToPairMapClosure;
 import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
@@ -35,9 +36,9 @@ import java.util.List;
 public class GroupByClauseSparkIterator extends FlowrClauseSparkIterator {
     private final List<GroupByClauseSparkIteratorExpression> _variables;
 
-    public GroupByClauseSparkIterator(List<GroupByClauseSparkIteratorExpression> variables,
+    public GroupByClauseSparkIterator(RuntimeTupleIterator child, List<GroupByClauseSparkIteratorExpression> variables,
                                       IteratorMetadata iteratorMetadata) {
-        super(null, FLWOR_CLAUSES.GROUP_BY, iteratorMetadata);
+        super(child, null, FLWOR_CLAUSES.GROUP_BY, iteratorMetadata);
         this._variables = variables;
         _variables.forEach(var -> {
             this._children.add(var.getVariableReference());
@@ -47,9 +48,9 @@ public class GroupByClauseSparkIterator extends FlowrClauseSparkIterator {
     }
 
     @Override
-    public JavaRDD<FlworTuple> getTupleRDD() {
+    public JavaRDD<FlworTuple> getRDD() {
         if (_rdd == null) {
-            _rdd = this._previousClause.getTupleRDD();
+            _rdd = this._child.getRDD();
             //map to pairs - ArrayItem [sort keys] , tuples
             JavaPairRDD<FlworKey, FlworTuple> keyTuplePair = this._rdd
                     .mapToPair(new GroupByToPairMapClosure(_variables));

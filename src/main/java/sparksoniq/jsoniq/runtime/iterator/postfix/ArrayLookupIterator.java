@@ -25,27 +25,31 @@ import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.lang.reflect.Array;
+import java.util.Arrays;
 
-public class ArrayLookupIterator extends LocalRuntimeIterator {
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.FlatMapFunction;
+
+public class ArrayLookupIterator extends HybridRuntimeIterator {
 
     private RuntimeIterator _iterator;
     private Integer _lookup;
     private Item _nextResult;
 
     public ArrayLookupIterator(RuntimeIterator array, RuntimeIterator iterator, IteratorMetadata iteratorMetadata) {
-        super(null, iteratorMetadata);
-        this._children.add(array);
-        this._children.add(iterator);
+        super(Arrays.asList(array, iterator), iteratorMetadata);
+        _iterator = array;
     }
 
     @Override
-    public Item next() {
+    public Item nextLocal() {
         if(_hasNext == true){
             Item result = _nextResult;  // save the result to be returned
             setNextResult();            // calculate and store the next result
@@ -53,13 +57,25 @@ public class ArrayLookupIterator extends LocalRuntimeIterator {
         }
         throw new IteratorFlowException("Invalid next call in Array Lookup", getMetadata());
     }
+    
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this._currentDynamicContext = context;
+    protected boolean hasNextLocal() {
+        return _hasNext;
+    }
 
-        _iterator = this._children.get(0);
+    @Override
+    protected void resetLocal(DynamicContext context) {
+        _iterator.reset(_currentDynamicContext);
+        setNextResult();
+    }
+
+    @Override
+    protected void closeLocal() {
+        _iterator.close();
+    }
+    
+    private void initLookupPosition() {
         RuntimeIterator lookupIterator = this._children.get(1);
 
         lookupIterator.open(_currentDynamicContext);
@@ -77,6 +93,13 @@ public class ArrayLookupIterator extends LocalRuntimeIterator {
         lookupIterator.close();
 
         _lookup = Item.getNumericValue(lookupExpression, Integer.class);
+    }
+
+    @Override
+    public void openLocal(DynamicContext context) {
+        this._currentDynamicContext = context;
+        
+        initLookupPosition();
 
         _iterator.open(_currentDynamicContext);
         setNextResult();
@@ -106,5 +129,22 @@ public class ArrayLookupIterator extends LocalRuntimeIterator {
         }
     }
 
+    @Override
+    public JavaRDD<Item> getRDD(DynamicContext dynamicContext)
+    {
+        _currentDynamicContext = dynamicContext;
+        JavaRDD<Item> childRDD = this._children.get(0).getRDD(dynamicContext);
+        initLookupPosition();
+        FlatMapFunction<Item, Item> transformation = new ArrayLookupClosure(_lookup);
+
+        JavaRDD<Item> resultRDD = childRDD.flatMap(transformation);
+        return resultRDD;
+    }
+
+    @Override
+    public boolean initIsRDD()
+    {
+        return _iterator.isRDD();
+    }
 
 }

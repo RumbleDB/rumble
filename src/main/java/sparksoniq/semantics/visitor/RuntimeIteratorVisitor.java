@@ -50,6 +50,7 @@ import sparksoniq.jsoniq.runtime.iterator.primary.*;
 import sparksoniq.jsoniq.runtime.iterator.quantifiers.QuantifiedExpressionIterator;
 import sparksoniq.jsoniq.runtime.iterator.quantifiers.QuantifiedExpressionVarIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
 import sparksoniq.spark.iterator.flowr.*;
 import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
 import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
@@ -81,34 +82,35 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
     @Override
     public RuntimeIterator visitFlowrExpression(FlworExpression expression, RuntimeIterator argument) {
         FlworClause startClause = expression.getStartClause();
-        List<FlowrClauseSparkIterator> iterators = new ArrayList<>();
-        iterators.addAll(this.visitFlowrClause(startClause, argument));
-        for (FlworClause clause : expression.get_contentClauses())
-            iterators.addAll(this.visitFlowrClause(clause, argument));
-        ReturnClauseSparkIterator returnIterator =
-                (ReturnClauseSparkIterator) (this.visitFlowrClause(expression.get_returnClause(), argument).get(0));
-        return new FlworExpressionSparkRuntimeIterator(iterators.get(0), iterators.subList(1, iterators.size()),
-                returnIterator, createIteratorMetadata(expression));
+        RuntimeTupleIterator previous = null;
+        previous = this.visitFlowrClause(startClause, argument, previous);
+        for (FlworClause clause : expression.get_contentClauses()) {
+            previous = this.visitFlowrClause(clause, argument, previous);
+        }
+        return new ReturnClauseSparkIterator(
+                previous,
+                this.visit(((ReturnClause) expression.get_returnClause()).getReturnExpr(),
+                argument),createIteratorMetadata(expression.get_returnClause()));
     }
 
-    private List<FlowrClauseSparkIterator> visitFlowrClause(FlworClause clause,
-                                                            RuntimeIterator argument) {
-        List<FlowrClauseSparkIterator> result = new ArrayList<>();
+    private RuntimeTupleIterator visitFlowrClause(FlworClause clause,
+                                                            RuntimeIterator argument,
+                                                            RuntimeTupleIterator previousIterator) {
         if (clause instanceof ForClause) {
             for (ForClauseVar var : ((ForClause) clause).getForVariables()) {
                 RuntimeIterator assignmentExpression = this.visit(var.getExpression(), argument);
                 VariableReferenceIterator variableReferenceIterator =
                         (VariableReferenceIterator) this.visit(var.getVariableReference(), argument);
-                result.add(new ForClauseSparkIterator(variableReferenceIterator, assignmentExpression,
-                        createIteratorMetadata(clause)));
+                previousIterator = new ForClauseSparkIterator(previousIterator, variableReferenceIterator, assignmentExpression,
+                        createIteratorMetadata(clause));
             }
         } else if (clause instanceof LetClause) {
             for (LetClauseVar var : ((LetClause) clause).getLetVariables()) {
                 RuntimeIterator assignmentExpression = this.visit(var.getExpression(), argument);
                 VariableReferenceIterator variableReferenceIterator =
                         (VariableReferenceIterator) this.visit(var.getVariableReference(), argument);
-                result.add(new LetClauseSparkIterator(variableReferenceIterator, assignmentExpression,
-                        createIteratorMetadata(clause)));
+                previousIterator =new LetClauseSparkIterator(previousIterator, variableReferenceIterator, assignmentExpression,
+                        createIteratorMetadata(clause));
             }
         } else if (clause instanceof GroupByClause) {
             List<GroupByClauseSparkIteratorExpression> expressions = new ArrayList<>();
@@ -118,26 +120,23 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                         (VariableReferenceIterator) this.visit(groupExpr.getVariableReference(), argument),
                         createIteratorMetadata(groupExpr)));
             }
-            result.add(new GroupByClauseSparkIterator(expressions, createIteratorMetadata(clause)));
+            previousIterator = new GroupByClauseSparkIterator(previousIterator, expressions, createIteratorMetadata(clause));
         } else if (clause instanceof OrderByClause) {
             List<OrderByClauseSparkIteratorExpression> expressions = new ArrayList<>();
             for (OrderByClauseExpr orderExpr : ((OrderByClause) clause).getExpressions()) {
                 expressions.add(new OrderByClauseSparkIteratorExpression(this.visit(orderExpr.getExpression(), argument),
                         orderExpr.isAscending(), orderExpr.getUri(), orderExpr.getEmptyOrder(), createIteratorMetadata(orderExpr)));
             }
-            result.add(new OrderByClauseSparkIterator(expressions, ((OrderByClause) clause).isStable(),
-                    createIteratorMetadata(clause)));
-        } else if (clause instanceof ReturnClause) {
-            result.add(new ReturnClauseSparkIterator(this.visit(((ReturnClause) clause).getReturnExpr(), argument),
-                    createIteratorMetadata(clause)));
+            previousIterator = new OrderByClauseSparkIterator(previousIterator, expressions, ((OrderByClause) clause).isStable(),
+                    createIteratorMetadata(clause));
         } else if (clause instanceof WhereClause) {
-            result.add(new WhereClauseSparkIterator(this.visit(((WhereClause) clause).getWhereExpression(), argument),
-                    createIteratorMetadata(clause)));
+            previousIterator = new WhereClauseSparkIterator(previousIterator, this.visit(((WhereClause) clause).getWhereExpression(), argument),
+                    createIteratorMetadata(clause));
         } else if (clause instanceof CountClause) {
-            result.add(new CountClauseSparkIterator(this.visit(((CountClause) clause).getCountVariable(), argument),
-                    createIteratorMetadata(clause)));
+            previousIterator = new CountClauseSparkIterator(previousIterator, this.visit(((CountClause) clause).getCountVariable(), argument),
+                    createIteratorMetadata(clause));
         }
-        return result;
+        return previousIterator;
     }
 
     @Override

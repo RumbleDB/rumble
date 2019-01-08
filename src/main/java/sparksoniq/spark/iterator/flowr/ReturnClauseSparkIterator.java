@@ -19,35 +19,117 @@
  */
  package sparksoniq.spark.iterator.flowr;
 
-import sparksoniq.jsoniq.compiler.translator.expr.flowr.FLWOR_CLAUSES;
+import org.apache.spark.api.java.JavaRDD;
+import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
-import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
+import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.closures.ReturnFlatMapClosure;
-import org.apache.spark.api.java.JavaRDD;
+import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
 
-public class ReturnClauseSparkIterator extends FlowrClauseSparkIterator {
-    public ReturnClauseSparkIterator(RuntimeIterator expression, IteratorMetadata iteratorMetadata) {
-        super(null, FLWOR_CLAUSES.RETURN, iteratorMetadata);
-        this._children.add(expression);
+import java.util.Arrays;
+
+public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
+
+    private JavaRDD<Item> itemRDD;
+    private RuntimeTupleIterator _child;
+    private DynamicContext _tupleContext;   // re-use same DynamicContext object for efficiency
+    private RuntimeIterator _expression;
+    private boolean _isExpressionOpen;
+    private Item _nextLocalResult;
+
+    public ReturnClauseSparkIterator(RuntimeTupleIterator child, RuntimeIterator expression, IteratorMetadata iteratorMetadata) {
+        super(Arrays.asList(expression), iteratorMetadata);
+        _child = child;
+        _expression = expression;
     }
 
+    @Override
+    protected boolean initIsRDD() {
+        return _child.isRDD();
+    }
 
-    public JavaRDD<Item> getItemRDD() {
+    @Override
+    public JavaRDD<Item> getRDD(DynamicContext context) {
         if(itemRDD == null) {
+            ((FlowrClauseSparkIterator)_child).setDynamicContext(context);
             RuntimeIterator expression = this._children.get(0);
-            this._rdd = this._previousClause.getTupleRDD();
-            itemRDD = this._rdd.flatMap(new ReturnFlatMapClosure(expression));
+            itemRDD = this._child.getRDD().flatMap(new ReturnFlatMapClosure(expression));
         }
         return itemRDD;
     }
 
-    private JavaRDD<Item> itemRDD;
+    @Override
+    protected boolean hasNextLocal() {
+        return _hasNext;
+    }
 
     @Override
-    public JavaRDD<FlworTuple> getTupleRDD() {
-        return this._previousClause.getTupleRDD();
+    protected Item nextLocal() {
+        if(_hasNext == true){
+            Item result = _nextLocalResult;  // save the result to be returned
+            setNextLocalResult();            // calculate and store the next result
+            return result;
+        }
+        throw new IteratorFlowException("Invalid next() call in Object Lookup", getMetadata());
     }
+
+    @Override
+    protected void openLocal(DynamicContext context) {
+        _child.open(context);
+        _isExpressionOpen = false;
+        _tupleContext = new DynamicContext(_currentDynamicContext);     // assign current context as parent
+        setNextLocalResult();
+    }
+
+    private void setNextLocalResult() {
+        if (_isExpressionOpen) {
+            if (_expression.hasNext()) {
+                _nextLocalResult = _expression.next();
+                this._hasNext = true;
+                return;
+            } else {
+                _expression.close();
+                _isExpressionOpen = false;
+            }
+        }
+
+        if (_child.hasNext()) {
+            FlworTuple tuple = _child.next();
+            _tupleContext.removeAllVariables();             // clear the previous variables
+            _tupleContext.setBındingsFromTuple(tuple);      // assign new variables from new tuple
+            _expression.open(_tupleContext);
+            _isExpressionOpen = true;
+            _nextLocalResult = _expression.next();
+        } else {
+            _child.close();
+            this._hasNext = false;
+            return;
+        }
+        this._hasNext = true;
+
+    }
+
+    @Override
+    protected void closeLocal() {
+        _child.close();
+        _expression.close();
+    }
+
+    @Override
+    protected void resetLocal(DynamicContext context) {
+        _child.reset(_currentDynamicContext);
+        _expression.close();
+        setNextLocalResult();
+    }
+
+
+
+
+
+
 }

@@ -25,6 +25,7 @@ import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
 import sparksoniq.spark.SparkContextManager;
 import sparksoniq.spark.closures.LetClauseMapClosure;
 import sparksoniq.jsoniq.tuple.FlworTuple;
@@ -35,20 +36,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LetClauseSparkIterator extends FlowrClauseSparkIterator {
-    public LetClauseSparkIterator(VariableReferenceIterator variableReference, RuntimeIterator expression, IteratorMetadata iteratorMetadata) {
-        super(null, FLWOR_CLAUSES.LET, iteratorMetadata);
+    public LetClauseSparkIterator(RuntimeTupleIterator child, VariableReferenceIterator variableReference, RuntimeIterator expression, IteratorMetadata iteratorMetadata) {
+        super(child, null, FLWOR_CLAUSES.LET, iteratorMetadata);
         this._children.add(variableReference);
         this._children.add(expression);
     }
     
     @Override
-    public JavaRDD<FlworTuple> getTupleRDD() {
+    public JavaRDD<FlworTuple> getRDD() {
         if (this._rdd == null) {
             VariableReferenceIterator variableReference = (VariableReferenceIterator)this._children.get(0);
             RuntimeIterator expression = this._children.get(1);
             //if it's not a start clause
-            if (this._previousClause != null) {
-                this._rdd = _previousClause.getTupleRDD();
+            if (this._child != null) {
+                this._rdd = _child.getRDD();
                 String variableName = variableReference.getVariableName();
                 this._rdd = this._rdd.map(new LetClauseMapClosure(variableName, expression));
             } else {
@@ -58,7 +59,7 @@ public class LetClauseSparkIterator extends FlowrClauseSparkIterator {
         }
         return _rdd;
     }
-
+    
     private JavaRDD<FlworTuple> getNewRDDFromExpression(RuntimeIterator expression) {
         JavaRDD<FlworTuple> rdd;
         if(expression.isRDD())

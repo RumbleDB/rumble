@@ -99,6 +99,8 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
                         return new IntegerItem(l % r, ItemMetadata.fromIteratorMetadata(getMetadata()));
                     case IDIV:
                         return new IntegerItem(l / r, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                    default:
+                        new IteratorFlowException("Non recognized multicative operator.", getMetadata());
                 }
             } else if (returnType.equals(DoubleItem.class)) {
                 double l = Item.<Double>getNumericValue(_left, Double.class);
@@ -112,6 +114,8 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
                         return new DoubleItem(l % r, ItemMetadata.fromIteratorMetadata(getMetadata()));
                     case IDIV:
                         return new DoubleItem((int) (l / r), ItemMetadata.fromIteratorMetadata(getMetadata()));
+                    default:
+                        new IteratorFlowException("Non recognized multicative operator.", getMetadata());
                 }
             } else if (returnType.equals(DecimalItem.class)) {
                 BigDecimal l = Item.<BigDecimal>getNumericValue(_left, BigDecimal.class);
@@ -126,6 +130,8 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
                         return new DecimalItem(l.remainder(r), ItemMetadata.fromIteratorMetadata(getMetadata()));
                     case IDIV:
                         return new DecimalItem(l.divideToIntegralValue(r), ItemMetadata.fromIteratorMetadata(getMetadata()));
+                    default:
+                        new IteratorFlowException("Non recognized multicative operator.", getMetadata());
                 }
             }
         }
