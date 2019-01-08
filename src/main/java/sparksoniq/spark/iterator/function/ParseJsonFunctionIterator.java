@@ -20,6 +20,10 @@
 package sparksoniq.spark.iterator.function;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
+
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.io.json.StringToItemMapper;
 import sparksoniq.jsoniq.item.Item;
@@ -46,6 +50,27 @@ public class ParseJsonFunctionIterator extends SparkFunctionCallIterator {
         } else {
             this._hasNext = true;
         }
+    }
+    
+    public boolean isDataFrame()
+    {
+        return true;
+    }
+    
+    public Dataset<Row> getDataFrame(DynamicContext dynamicContext)
+    {
+        Dataset<Row> dataFrame;
+        RuntimeIterator urlIterator = this._children.get(0);
+        String url;
+        try {
+            urlIterator.open(this._currentDynamicContext);
+            url = urlIterator.next().getStringValue();
+            urlIterator.close();
+        } catch (OperationNotSupportedException e) {
+            throw new IllegalArgumentException("json-file illegal argument");
+        }
+        dataFrame = SparkSession.getActiveSession().get().read().json(url);
+        return dataFrame;
     }
 
     @Override

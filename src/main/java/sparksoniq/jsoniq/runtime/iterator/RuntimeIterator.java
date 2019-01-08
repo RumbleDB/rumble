@@ -24,6 +24,9 @@ import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnexpectedTypeException;
@@ -100,6 +103,10 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     public abstract boolean isRDD();
 
     public abstract JavaRDD<Item> getRDD(DynamicContext dynamicContext);
+
+    public abstract boolean isDataFrame();
+
+    public abstract Dataset<Row> getDataFrame(DynamicContext dynamicContext);
 
     public abstract Item next();
 
