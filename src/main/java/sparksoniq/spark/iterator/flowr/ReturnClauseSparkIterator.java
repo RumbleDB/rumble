@@ -38,6 +38,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     private JavaRDD<Item> itemRDD;
     private RuntimeTupleIterator _child;
     private RuntimeIterator _expression;
+    private boolean _isExpressionOpen;
     private Item _nextLocalResult;
 
     public ReturnClauseSparkIterator(RuntimeTupleIterator child, RuntimeIterator expression, IteratorMetadata iteratorMetadata) {
@@ -78,22 +79,23 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
     @Override
     protected void openLocal(DynamicContext context) {
-        this._currentDynamicContext = context;
-
         _child.open(context);
+        _isExpressionOpen = false;
         setNextLocalResult();
     }
 
     private void setNextLocalResult() {
-        if (_expression.hasNext()) {
+        if (_isExpressionOpen && _expression.hasNext()) {
             _nextLocalResult = _expression.next();
         } else {
             _expression.close();
+            _isExpressionOpen = false;
 
             if (_child.hasNext()) {
                 FlworTuple tuple = _child.next();
                 DynamicContext dynamicContext = new DynamicContext(tuple);
                 _expression.open(dynamicContext);
+                _isExpressionOpen = true;
                 _nextLocalResult = _expression.next();
             } else {
                 _child.close();
