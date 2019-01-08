@@ -1,13 +1,12 @@
 package sparksoniq.jsoniq.runtime.iterator.postfix;
 
+import org.apache.spark.api.java.function.Function;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.apache.spark.api.java.function.Function;
 
 public class PredicateClosure implements Function<Item, Boolean> {
     private final RuntimeIterator _expression;

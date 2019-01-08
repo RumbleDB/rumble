@@ -19,11 +19,11 @@
  */
  package sparksoniq.jsoniq.runtime.iterator.primary;
 
+import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
-import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 

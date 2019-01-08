@@ -19,11 +19,10 @@
  */
  package sparksoniq.jsoniq.runtime.iterator;
 
-import org.omg.SendingContext.RunTime;
+import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.exceptions.IteratorFlowException;
 
 import java.util.List;
 

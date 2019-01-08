@@ -19,6 +19,7 @@
  */
 package sparksoniq.semantics.visitor;
 
+import sparksoniq.exceptions.UndeclaredVariableException;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.*;
@@ -26,7 +27,6 @@ import sparksoniq.jsoniq.compiler.translator.expr.primary.ContextExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpressionVar;
-import sparksoniq.exceptions.UndeclaredVariableException;
 import sparksoniq.semantics.StaticContext;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
