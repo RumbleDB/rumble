@@ -37,6 +37,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
     private JavaRDD<Item> itemRDD;
     private RuntimeTupleIterator _child;
+    private DynamicContext _tupleContext;   // re-use same DynamicContext object for efficiency
     private RuntimeIterator _expression;
     private boolean _isExpressionOpen;
     private Item _nextLocalResult;
@@ -81,29 +82,36 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     protected void openLocal(DynamicContext context) {
         _child.open(context);
         _isExpressionOpen = false;
+        _tupleContext = new DynamicContext(_currentDynamicContext);     // assign current context as parent
         setNextLocalResult();
     }
 
     private void setNextLocalResult() {
-        if (_isExpressionOpen && _expression.hasNext()) {
-            _nextLocalResult = _expression.next();
-        } else {
-            _expression.close();
-            _isExpressionOpen = false;
-
-            if (_child.hasNext()) {
-                FlworTuple tuple = _child.next();
-                DynamicContext dynamicContext = new DynamicContext(tuple);
-                _expression.open(dynamicContext);
-                _isExpressionOpen = true;
+        if (_isExpressionOpen) {
+            if (_expression.hasNext()) {
                 _nextLocalResult = _expression.next();
-            } else {
-                _child.close();
-                this._hasNext = false;
+                this._hasNext = true;
                 return;
+            } else {
+                _expression.close();
+                _isExpressionOpen = false;
             }
         }
+
+        if (_child.hasNext()) {
+            FlworTuple tuple = _child.next();
+            _tupleContext.removeAllVariables();             // clear the previous variables
+            _tupleContext.setBındingsFromTuple(tuple);      // assign new variables from new tuple
+            _expression.open(_tupleContext);
+            _isExpressionOpen = true;
+            _nextLocalResult = _expression.next();
+        } else {
+            _child.close();
+            this._hasNext = false;
+            return;
+        }
         this._hasNext = true;
+
     }
 
     @Override
