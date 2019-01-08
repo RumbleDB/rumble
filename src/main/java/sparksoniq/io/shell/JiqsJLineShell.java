@@ -30,7 +30,6 @@ import org.jline.terminal.TerminalBuilder;
 import sparksoniq.JsoniqQueryExecutor;
 import sparksoniq.Main;
 import sparksoniq.config.SparksoniqRuntimeConfiguration;
-import sparksoniq.spark.SparkContextManager;
 import sparksoniq.utils.FileUtils;
 
 import java.io.IOException;

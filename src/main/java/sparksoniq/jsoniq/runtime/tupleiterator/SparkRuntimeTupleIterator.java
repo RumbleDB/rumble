@@ -23,9 +23,9 @@ import org.apache.spark.api.java.JavaRDD;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.io.json.JiqsItemParser;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkContextManager;
-import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.util.List;
 

@@ -9,7 +9,6 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
-import javax.naming.OperationNotSupportedException;
 import java.util.List;
 
 public class ConcatFunctionIterator extends LocalFunctionCallIterator {

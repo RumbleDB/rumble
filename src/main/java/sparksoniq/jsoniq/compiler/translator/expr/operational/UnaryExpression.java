@@ -19,10 +19,10 @@
  */
  package sparksoniq.jsoniq.compiler.translator.expr.operational;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.UnaryExpressionBase;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.PostFixExpression;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.Arrays;
 import java.util.List;

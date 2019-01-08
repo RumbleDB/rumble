@@ -19,8 +19,8 @@
  */
  package sparksoniq.jsoniq.runtime.tupleiterator;
 
-import sparksoniq.semantics.DynamicContext;
 import sparksoniq.jsoniq.tuple.FlworTuple;
+import sparksoniq.semantics.DynamicContext;
 
 import java.io.Serializable;
 

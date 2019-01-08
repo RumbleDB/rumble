@@ -20,8 +20,8 @@
 package sparksoniq.spark.closures;
 
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
-import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 import sparksoniq.jsoniq.tuple.FlworKey;
+import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 
 import java.io.Serializable;
 import java.util.Comparator;
