@@ -24,7 +24,9 @@ import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.exceptions.UnsupportedFeatureException;
 import sparksoniq.jsoniq.item.*;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.SparkRuntimeException;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
+import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.ContextExpressionIterator;
@@ -34,9 +36,14 @@ import sparksoniq.semantics.DynamicContext;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-public class ObjectLookupIterator extends LocalRuntimeIterator {
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.api.java.function.Function;
+
+public class ObjectLookupIterator extends HybridRuntimeIterator {
 
     private RuntimeIterator _iterator;
     private Item _lookupKey;
@@ -44,17 +51,12 @@ public class ObjectLookupIterator extends LocalRuntimeIterator {
     private Item _nextResult;
 
     public ObjectLookupIterator(RuntimeIterator object, RuntimeIterator lookupIterator, IteratorMetadata iteratorMetadata) {
-        super(null, iteratorMetadata);
-        this._children.add(object);
-        this._children.add(lookupIterator);
+        super(Arrays.asList(object, lookupIterator), iteratorMetadata);
+        _iterator = object;
     }
 
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this._currentDynamicContext = context;
+    private void initLookupKey() {
 
-        _iterator = this._children.get(0);
         RuntimeIterator lookupIterator = this._children.get(1);
 
         if (lookupIterator instanceof ContextExpressionIterator) {
@@ -99,13 +101,35 @@ public class ObjectLookupIterator extends LocalRuntimeIterator {
                 throw new UnexpectedTypeException("Non string object lookup for " + _lookupKey.serialize(), getMetadata());
             lookupIterator.close();
         }
+    }
 
+    @Override
+    public void openLocal(DynamicContext context) {
+        this._currentDynamicContext = context;
+
+        initLookupKey();
         _iterator.open(_currentDynamicContext);
+        setNextResult();
+    }
+    
+    @Override
+    protected boolean hasNextLocal() {
+        return _hasNext;
+    }
+
+    @Override
+    protected void resetLocal(DynamicContext context) {
+        _iterator.reset(_currentDynamicContext);
         setNextResult();
     }
 
     @Override
-    public Item next() {
+    protected void closeLocal() {
+        _iterator.close();
+    }
+
+    @Override
+    public Item nextLocal() {
         if(_hasNext == true){
             Item result = _nextResult;  // save the result to be returned
             setNextResult();            // calculate and store the next result
@@ -140,5 +164,33 @@ public class ObjectLookupIterator extends LocalRuntimeIterator {
         } else {
             this._hasNext = true;
         }
+    }
+
+    @Override
+    public JavaRDD<Item> getRDD(DynamicContext dynamicContext)
+    {
+        _currentDynamicContext = dynamicContext;
+        JavaRDD<Item> childRDD = this._children.get(0).getRDD(dynamicContext);
+        initLookupKey();
+        String key = null;
+        if(_contextLookup)
+        {
+            // For now this will always be an error. Later on we will pass the dynamic context from the parent iterator.
+            key = ((StringItem)_currentDynamicContext.getVariableValue("$$").get(0)).getStringValue();
+        }
+        else
+        {
+            key = ((StringItem) _lookupKey).getStringValue();
+        }
+        FlatMapFunction<Item, Item> transformation = new ObjectLookupClosure(key);
+
+        JavaRDD<Item> resultRDD = childRDD.flatMap(transformation);
+        return resultRDD;
+    }
+
+    @Override
+    public boolean initIsRDD()
+    {
+        return _iterator.isRDD();
     }
 }
