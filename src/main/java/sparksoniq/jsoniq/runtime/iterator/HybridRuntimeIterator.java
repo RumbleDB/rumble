@@ -53,7 +53,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     @Override
     public void open(DynamicContext context){
         super.open(context);
-        if(!isRDD())
+        if(!_isRDD)
         {
             openLocal(context);
         }
