@@ -22,6 +22,8 @@
 import sparksoniq.exceptions.SparkRuntimeException;
 import sparksoniq.jsoniq.item.Item;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
@@ -40,4 +42,13 @@ public abstract class LocalRuntimeIterator extends RuntimeIterator {
 
     @Override
     public boolean isRDD(){ return false; }
+
+    @Override
+    public Dataset<Row> getDataFrame(DynamicContext dynamicContext)
+    {
+        throw new SparkRuntimeException("Iterator has no data frames", getMetadata());
+    }
+
+    @Override
+    public boolean isDataFrame(){ return false; }
 }
