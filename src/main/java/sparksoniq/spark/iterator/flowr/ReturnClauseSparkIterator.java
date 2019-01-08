@@ -19,38 +19,24 @@
  */
  package sparksoniq.spark.iterator.flowr;
 
-import org.apache.spark.api.java.JavaRDD;
-import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.SparkRuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
-import sparksoniq.jsoniq.tuple.FlworTuple;
+import sparksoniq.jsoniq.runtime.tupleiterator.SparkRuntimeTupleIterator;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.closures.ReturnFlatMapClosure;
 import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
 
 import java.util.Arrays;
 
-public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
+import org.apache.spark.api.java.JavaRDD;
 
-    private JavaRDD<Item> itemRDD;
-    private RuntimeTupleIterator _child;
-    private DynamicContext _tupleContext;   // re-use same DynamicContext object for efficiency
-    private RuntimeIterator _expression;
-    private boolean _isExpressionOpen;
-    private Item _nextLocalResult;
-
+public class ReturnClauseSparkIterator extends SparkRuntimeIterator {
     public ReturnClauseSparkIterator(RuntimeTupleIterator child, RuntimeIterator expression, IteratorMetadata iteratorMetadata) {
         super(Arrays.asList(expression), iteratorMetadata);
         _child = child;
-        _expression = expression;
-    }
-
-    @Override
-    protected boolean initIsRDD() {
-        return _child.isRDD();
     }
 
     @Override
@@ -63,73 +49,8 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         return itemRDD;
     }
 
-    @Override
-    protected boolean hasNextLocal() {
-        return _hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if(_hasNext == true){
-            Item result = _nextLocalResult;  // save the result to be returned
-            setNextLocalResult();            // calculate and store the next result
-            return result;
-        }
-        throw new IteratorFlowException("Invalid next() call in Object Lookup", getMetadata());
-    }
-
-    @Override
-    protected void openLocal(DynamicContext context) {
-        _child.open(context);
-        _isExpressionOpen = false;
-        _tupleContext = new DynamicContext(_currentDynamicContext);     // assign current context as parent
-        setNextLocalResult();
-    }
-
-    private void setNextLocalResult() {
-        if (_isExpressionOpen) {
-            if (_expression.hasNext()) {
-                _nextLocalResult = _expression.next();
-                this._hasNext = true;
-                return;
-            } else {
-                _expression.close();
-                _isExpressionOpen = false;
-            }
-        }
-
-        if (_child.hasNext()) {
-            FlworTuple tuple = _child.next();
-            _tupleContext.removeAllVariables();             // clear the previous variables
-            _tupleContext.setBındingsFromTuple(tuple);      // assign new variables from new tuple
-            _expression.open(_tupleContext);
-            _isExpressionOpen = true;
-            _nextLocalResult = _expression.next();
-        } else {
-            _child.close();
-            this._hasNext = false;
-            return;
-        }
-        this._hasNext = true;
-
-    }
-
-    @Override
-    protected void closeLocal() {
-        _child.close();
-        _expression.close();
-    }
-
-    @Override
-    protected void resetLocal(DynamicContext context) {
-        _child.reset(_currentDynamicContext);
-        _expression.close();
-        setNextLocalResult();
-    }
-
-
-
-
-
+    private JavaRDD<Item> itemRDD;
+    
+    private RuntimeTupleIterator _child;
 
 }
