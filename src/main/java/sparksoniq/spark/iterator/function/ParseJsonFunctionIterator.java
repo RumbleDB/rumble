@@ -27,6 +27,7 @@ import org.apache.spark.sql.SparkSession;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.io.json.StringToItemMapper;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.runtime.iterator.DataFramesRDDOrLocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
@@ -35,24 +36,40 @@ import sparksoniq.spark.SparkContextManager;
 import javax.naming.OperationNotSupportedException;
 import java.util.List;
 
-public class ParseJsonFunctionIterator extends SparkFunctionCallIterator {
+public class ParseJsonFunctionIterator extends DataFramesRDDOrLocalRuntimeIterator {
     public ParseJsonFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-
-        long resultSize = this.getRDD(_currentDynamicContext).count();
-        if (resultSize == 0) {
-            this._hasNext = false;
-        } else {
-            this._hasNext = true;
-        }
+    public void openLocal(DynamicContext context) {
     }
     
-    public boolean isDataFrame()
+    @Override
+    public Item nextLocal() {
+        return null;
+    }
+    
+    @Override
+    public boolean hasNextLocal() {
+        return false;
+    }
+    
+    @Override
+    public void resetLocal(DynamicContext context) {
+    }
+    
+    @Override
+    public void closeLocal() {
+    }
+    
+    @Override
+    public boolean initIsDataFrame()
+    {
+        return true;
+    }
+    @Override
+    public boolean initIsRDD()
     {
         return true;
     }
@@ -74,7 +91,7 @@ public class ParseJsonFunctionIterator extends SparkFunctionCallIterator {
     }
 
     @Override
-    public JavaRDD<Item> getRDD(DynamicContext dynamicContext) {
+    public JavaRDD<Item> getRDDNoDataFrame(DynamicContext dynamicContext) {
         if (this._rdd == null) {
             JavaRDD<String> strings;
             RuntimeIterator urlIterator = this._children.get(0);
