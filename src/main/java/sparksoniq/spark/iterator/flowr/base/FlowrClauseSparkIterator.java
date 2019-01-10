@@ -72,7 +72,6 @@ public abstract class FlowrClauseSparkIterator extends SparkRuntimeTupleIterator
     //protected FlowrClauseSparkIterator _previousClause = null;
     protected JavaRDD<FlworTuple> _rdd;
     protected final JiqsItemParser _parser;
-    protected DynamicContext _currentDynamicContext;
     protected List<RuntimeIterator> _children;
 
 
