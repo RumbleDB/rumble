@@ -42,6 +42,10 @@ public class ObjectItem extends JsonItem{
         return _values;
     }
 
+    public ObjectItem(ItemMetadata itemMetadata){
+        super(itemMetadata);
+    }
+
     public ObjectItem(List<String> keys, List<Item> values, ItemMetadata itemMetadata){
         super(itemMetadata);
         checkForDuplicateKeys(keys);
