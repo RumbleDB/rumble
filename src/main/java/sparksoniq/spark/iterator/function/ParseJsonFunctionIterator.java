@@ -69,7 +69,7 @@ public class ParseJsonFunctionIterator extends SparkFunctionCallIterator {
         } catch (OperationNotSupportedException e) {
             throw new IllegalArgumentException("json-file illegal argument");
         }
-        dataFrame = SparkSession.getActiveSession().get().read().json(url);
+        dataFrame = SparkSession.builder().getOrCreate().read().json(url);
         return dataFrame;
     }
 

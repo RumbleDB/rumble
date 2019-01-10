@@ -43,8 +43,17 @@ public class CountFunctionIterator extends AggregateFunctionIterator {
                 this._hasNext = false;
                 return new IntegerItem(results.size(),
                         ItemMetadata.fromIteratorMetadata(getMetadata()));
-            } else {
+            } else if(!iterator.isDataFrame()) {
                 Long count = iterator.getRDD(_currentDynamicContext).count();
+                this._hasNext = false;
+                if (count > (long) Integer.MAX_VALUE) {
+                    // TODO: handle too big x values
+                    throw new SparksoniqRuntimeException("The count value is too big to convert to integer type.");
+                } else {
+                    return new IntegerItem(count.intValue(), ItemMetadata.fromIteratorMetadata(getMetadata()));
+                }
+            } else {
+                Long count = iterator.getDataFrame(_currentDynamicContext).count();
                 this._hasNext = false;
                 if (count > (long) Integer.MAX_VALUE) {
                     // TODO: handle too big x values

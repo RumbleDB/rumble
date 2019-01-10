@@ -23,12 +23,15 @@ import org.apache.spark.storage.StorageLevel;
 import sparksoniq.ShellStart;
 import sparksoniq.io.json.JiqsItemParser;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.SparkRuntimeException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkContextManager;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 
 import java.util.List;
 
@@ -39,6 +42,19 @@ public abstract class SparkRuntimeIterator extends RuntimeIterator {
         this.parser = new JiqsItemParser();
     }
 
+
+    @Override
+    public boolean isDataFrame()
+    {
+        return false;
+    }
+
+    @Override
+    public Dataset<Row> getDataFrame(DynamicContext dynamicContext)
+    {
+        throw new SparkRuntimeException("Iterator has no data frames", getMetadata());
+    }
+    
     @Override
     public boolean isRDD()
     {
