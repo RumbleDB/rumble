@@ -44,7 +44,7 @@ Create, in the same directory as Sparksoniq, a file data.json and put the follow
 In a shell, from the directory where the sparksoniq .jar lies, type, all on one line:
 
     spark-submit --class sparksoniq.ShellStart --master local[*] --deploy-mode client
-                 jsoniq-spark-app.0.9.5-jar-with-dependencies-antlr-4.7.jar
+                 sparksoniq-0.9.5-with-antlr-4.7.jar
                  
 The Sparksoniq shell appears:
 
