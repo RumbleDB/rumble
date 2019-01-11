@@ -65,6 +65,8 @@ What is pushed down so far is:
 
 More expressions working on sequences will be pushed down in the future, partly depending on the feedback we receive.
 
+When an expression does not support pushdown, it will materialize automaticaly. To avoid issues, the materializion is capped by default at 100 items, but this can be changed on the command line with --result-size. A warning is issued if a materialization happened and the sequence was truncated.
+
 ### Unsupported prologs
 
 Prologs are not supported. This includes user-defined functions, global variables, settings and library modules.
