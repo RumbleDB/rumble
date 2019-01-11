@@ -18,11 +18,9 @@ A tutorial aimed at Python users can be found [here](https://github.com/ghislain
 
 Many core features of JSONiq are in place, but please be aware that the function features are not yet implemented. We are working on them for subsequent releases.
 
-### Unsupported nested FLWOR expressions
+### Nested FLWOR expressions
 
-FLWOR expressions may sometimes raise errors, especially if nested. We are also working on generalized FLWOR supported, also local. Instead of using lets, you need to inline the expressions.
-
-Do NOT do
+FLWOR expressions now supported nestedness, for example like so:
 
 ```
 let $x := for $x in json-file("file.json")
@@ -31,31 +29,41 @@ let $x := for $x in json-file("file.json")
 return count($x)
 ```
 
-Do instead:
+However, keep in mind that parallelization cannot be nested in Spark (there cannot be a job within a job), that is, the following will not work:
 
 ```
-count(for $x in json-file("file.json")
-      where $x.field eq "foo"
-      return $x)
+for $x in json-file("file1.json")
+let $z := for $y in json-file("file2.json")
+          where $y.foo eq $x.fbar
+          return $y
+return count($z)
 ```
 
-### Expressions NOT pushed down to Spark yet
-
-Some expressions are not yet pushed down to Spark (but this will come soon!).
-
-Do NOT do
+This, however, is supported (provided file sizes are reasonable):
 
 ```
-json-file("file.json")[$$.field eq "foo"].bar[]
+for $x in json-file("file1.json")
+for $z in json-file("file2.json")
+where $z.foo eq $x.fbar
+return count($z)
 ```
 
-Do instead use an explicit FLWOR expression:
+
+### Expressions pushed down to Spark
+
+Some expressions are pushed down to Spark out of the box. For example, this will work on a large file leveraging the parallelism of Spark:
 
 ```
-for $x in json-file("file.json")
-where $x.field eq "foo"
-return $x.bar[]
+count(json-file("file.json")[$$.field eq "foo"].bar[].foo[[1]])
 ```
+
+What is pushed down so far is:
+
+- FLWOR expressions (as soon as a for clause is encountered, binding a variable to a sequence generated with json-file() or parallelize())
+- aggregation functions: count, sum, avg, max, min
+- JSON navigation expressions: object lookup, array lookup, array unboxing, filtering predicates
+
+More expressions working on sequences will be pushed down in the future, partly depending on the feedback we receive.
 
 ### Unsupported prologs
 
@@ -72,10 +80,6 @@ Cast/treat-as expressions.
 ### Unsupported nested expressions in object lookups (rhs)
 
 Nested object lookup keys: nested expressions on the rhs of the dot syntax are not supported yet.
-
-### Unsupported count clauses
-
- Count clauses in FLWOR expressions. This feature will arrive very soon, though.
 
 ### Unsupported types
 
