@@ -22,22 +22,21 @@
 import org.apache.spark.api.java.JavaRDD;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
-import sparksoniq.jsoniq.compiler.translator.expr.flowr.FLWOR_CLAUSES;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
+import sparksoniq.jsoniq.runtime.tupleiterator.SparkRuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkContextManager;
 import sparksoniq.spark.closures.LetClauseMapClosure;
-import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class LetClauseSparkIterator extends FlowrClauseSparkIterator {
+public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
 
     private String _variableName;           // for efficient use in local iteration
     private RuntimeIterator _expression;
@@ -46,9 +45,7 @@ public class LetClauseSparkIterator extends FlowrClauseSparkIterator {
     private List<Item> _expressionResults;  // re-use same list object for efficiency
 
     public LetClauseSparkIterator(RuntimeTupleIterator child, VariableReferenceIterator variableReference, RuntimeIterator expression, IteratorMetadata iteratorMetadata) {
-        super(child, null, FLWOR_CLAUSES.LET, iteratorMetadata);
-        this._children.add(variableReference);
-        this._children.add(expression);
+        super(child, iteratorMetadata);
         _variableName = variableReference.getVariableName();
         _expression = expression;
         _expressionResults = new ArrayList<>();

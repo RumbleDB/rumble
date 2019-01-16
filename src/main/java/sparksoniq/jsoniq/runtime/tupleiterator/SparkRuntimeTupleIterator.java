@@ -80,6 +80,14 @@ public abstract class SparkRuntimeTupleIterator extends RuntimeTupleIterator {
         return tuple;
     }
 
+    public void setDynamicContext(DynamicContext context){
+        this._currentDynamicContext = context;
+        if(_child != null)
+        {
+            ((SparkRuntimeTupleIterator)_child).setDynamicContext(context);
+        }
+    }
+
     protected JiqsItemParser parser;
     protected JavaRDD<FlworTuple> _rdd;
     protected List<FlworTuple> result = null;
