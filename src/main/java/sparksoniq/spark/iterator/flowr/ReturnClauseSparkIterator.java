@@ -39,7 +39,6 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     private RuntimeTupleIterator _child;
     private DynamicContext _tupleContext;   // re-use same DynamicContext object for efficiency
     private RuntimeIterator _expression;
-    private boolean _isExpressionOpen;
     private Item _nextLocalResult;
 
     public ReturnClauseSparkIterator(RuntimeTupleIterator child, RuntimeIterator expression, IteratorMetadata iteratorMetadata) {
@@ -81,20 +80,15 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     @Override
     protected void openLocal(DynamicContext context) {
         _child.open(context);
-        _isExpressionOpen = false;
         _tupleContext = new DynamicContext(_currentDynamicContext);     // assign current context as parent
         setNextLocalResult();
     }
 
     private void setNextLocalResult() {
-        if (_isExpressionOpen) {
-            if (_expression.hasNext()) {
-                _nextLocalResult = _expression.next();
-                this._hasNext = true;
+        if (_expression.isOpen()) {
+            boolean isResultSet = setResultFromExpression();
+            if (isResultSet) {
                 return;
-            } else {
-                _expression.close();
-                _isExpressionOpen = false;
             }
         }
 
@@ -102,20 +96,32 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             FlworTuple tuple = _child.next();
             _tupleContext.removeAllVariables();             // clear the previous variables
             _tupleContext.setBindingsFromTuple(tuple);      // assign new variables from new tuple
+
             _expression.open(_tupleContext);
-            if (_expression.hasNext()) {        // if expression returns a value, set it as next
-                _nextLocalResult = _expression.next();
-                this._hasNext = true;
-                _isExpressionOpen = true;
+            boolean isResultSet = setResultFromExpression();
+            if (isResultSet) {
                 return;
-            } else {    // if not, keep iterating
-                _expression.close();
             }
         }
 
         // execution reaches here when there are no more results
         _child.close();
         this._hasNext = false;
+    }
+
+    /**
+     * _expression has to be open prior to call.
+     * @return true if _nextLocalResult is set and _hasNext is true, false otherwise
+     */
+    private boolean setResultFromExpression() {
+        if (_expression.hasNext()) {        // if expression returns a value, set it as next
+            _nextLocalResult = _expression.next();
+            this._hasNext = true;
+            return true;
+        } else {    // if not, keep iterating
+            _expression.close();
+            return false;
+        }
     }
 
     @Override
