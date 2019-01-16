@@ -107,9 +107,9 @@ public class LetClauseSparkIterator extends FlowrClauseSparkIterator {
         // evaluate locally
         if (!isRDD()) {
             if (this._child != null) { //if it's not a start clause
-                _tupleContext = new DynamicContext(_currentDynamicContext);     // assign current context as parent
-                _child.open(_tupleContext);
+                _child.open(_currentDynamicContext);
                 _variableName = _variableReference.getVariableName();
+                _tupleContext = new DynamicContext(_currentDynamicContext);     // assign current context as parent
 
                 setNextLocalTupleResult();
 
@@ -118,9 +118,8 @@ public class LetClauseSparkIterator extends FlowrClauseSparkIterator {
                     throw new SparksoniqRuntimeException("Initial let clauses don't support RDDs");
                     // materialize the initial RDD
                 else {
-                    _tupleContext = new DynamicContext(_currentDynamicContext);
                     List<Item> contents = new ArrayList<>();
-                    _expression.open(_tupleContext);
+                    _expression.open(this._currentDynamicContext);
                     while (_expression.hasNext())
                         contents.add(_expression.next());
                     _expression.close();
