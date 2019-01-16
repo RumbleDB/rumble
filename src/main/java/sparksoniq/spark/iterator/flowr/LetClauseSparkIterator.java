@@ -42,13 +42,11 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
     private RuntimeIterator _expression;
     private DynamicContext _tupleContext;   // re-use same DynamicContext object for efficiency
     private FlworTuple _nextLocalTupleResult;
-    private List<Item> _expressionResults;  // re-use same list object for efficiency
 
     public LetClauseSparkIterator(RuntimeTupleIterator child, VariableReferenceIterator variableReference, RuntimeIterator expression, IteratorMetadata iteratorMetadata) {
         super(child, iteratorMetadata);
         _variableName = variableReference.getVariableName();
         _expression = expression;
-        _expressionResults = new ArrayList<>();
     }
 
     @Override
@@ -82,14 +80,14 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
             _tupleContext.removeAllVariables();             // clear the previous variables
             _tupleContext.setBindingsFromTuple(inputTuple);      // assign new variables from new tuple
 
-            _expressionResults.clear();     // clear the results from previous iteration
+            List<Item> results = new ArrayList<>();
             _expression.open(_tupleContext);
             while (_expression.hasNext())
-                _expressionResults.add(_expression.next());
+                results.add(_expression.next());
             _expression.close();
 
-            inputTuple.putValue(_variableName, _expressionResults, true);
-            _nextLocalTupleResult = inputTuple;
+            FlworTuple newTuple = new FlworTuple(inputTuple, _variableName, results);
+            _nextLocalTupleResult = newTuple;
             this._hasNext = true;
         } else {
             _child.close();
@@ -108,21 +106,18 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
             _tupleContext = new DynamicContext(_currentDynamicContext);     // assign current context as parent
 
             setNextLocalTupleResult();
-
         } else {    //if it's a start clause, it returns only one tuple
             // expression is materialized
-            List<Item> contents = new ArrayList<>();
+            List<Item> results = new ArrayList<>();
             _expression.open(this._currentDynamicContext);
             while (_expression.hasNext())
-                contents.add(_expression.next());
+                results.add(_expression.next());
             _expression.close();
-            FlworTuple tuple  = new FlworTuple();
-            tuple.putValue(_variableName, contents, false);
-            _nextLocalTupleResult = tuple;
+
+            FlworTuple newTuple = new FlworTuple(_variableName, results);
+            _nextLocalTupleResult = newTuple;
         }
     }
-
-
 
     @Override
     public JavaRDD<FlworTuple> getRDD() {
