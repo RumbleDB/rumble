@@ -39,7 +39,6 @@ import java.util.List;
 
 public class LetClauseSparkIterator extends FlowrClauseSparkIterator {
 
-    private VariableReferenceIterator _variableReference;
     private String _variableName;           // for efficient use in local iteration
     private RuntimeIterator _expression;
     private DynamicContext _tupleContext;   // re-use same DynamicContext object for efficiency
@@ -49,7 +48,7 @@ public class LetClauseSparkIterator extends FlowrClauseSparkIterator {
         super(child, null, FLWOR_CLAUSES.LET, iteratorMetadata);
         this._children.add(variableReference);
         this._children.add(expression);
-        _variableReference = variableReference;
+        _variableName = variableReference.getVariableName();
         _expression = expression;
     }
 
@@ -108,7 +107,6 @@ public class LetClauseSparkIterator extends FlowrClauseSparkIterator {
         if (!isRDD()) {
             if (this._child != null) { //if it's not a start clause
                 _child.open(_currentDynamicContext);
-                _variableName = _variableReference.getVariableName();
                 _tupleContext = new DynamicContext(_currentDynamicContext);     // assign current context as parent
 
                 setNextLocalTupleResult();
@@ -124,7 +122,7 @@ public class LetClauseSparkIterator extends FlowrClauseSparkIterator {
                         contents.add(_expression.next());
                     _expression.close();
                     FlworTuple tuple  = new FlworTuple();
-                    tuple.putValue(_variableReference.getVariableName(), contents, false);
+                    tuple.putValue(_variableName, contents, false);
                     _nextLocalTupleResult = tuple;
                 }
             }
@@ -139,8 +137,7 @@ public class LetClauseSparkIterator extends FlowrClauseSparkIterator {
             //if it's not a start clause
             if (this._child != null) {
                 this._rdd = _child.getRDD();
-                String variableName = _variableReference.getVariableName();
-                this._rdd = this._rdd.map(new LetClauseMapClosure(variableName, _expression));
+                this._rdd = this._rdd.map(new LetClauseMapClosure(_variableName, _expression));
             } else {
                 //if it's a start clause
                 _rdd = this.getNewRDDFromExpression(_expression);
@@ -161,7 +158,7 @@ public class LetClauseSparkIterator extends FlowrClauseSparkIterator {
             expression.close();
             List<FlworTuple> tuples = new ArrayList<>();
             FlworTuple tuple  = new FlworTuple();
-            tuple.putValue(_variableReference.getVariableName(), contents, false);
+            tuple.putValue(_variableName, contents, false);
             tuples.add(tuple);
             rdd = SparkContextManager.getInstance().getContext().parallelize(tuples);
         }
