@@ -160,17 +160,6 @@ public class LetClauseSparkIterator extends FlowrClauseSparkIterator {
         return rdd;
     }
 
-
-    @Override
-    public boolean hasNext() {
-        return super.hasNext();
-    }
-
-    @Override
-    public void reset(DynamicContext context) {
-        super.reset(context);
-    }
-
     @Override
     public void close() {
         if (_child != null) {
