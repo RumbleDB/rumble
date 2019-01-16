@@ -26,7 +26,9 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
+import sparksoniq.jsoniq.runtime.tupleiterator.SparkRuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
+import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkContextManager;
 import sparksoniq.spark.closures.ForClauseClosure;
 import sparksoniq.spark.closures.InitialForClauseClosure;
@@ -35,30 +37,31 @@ import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ForClauseSparkIterator extends FlowrClauseSparkIterator {
+public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
+
+    private String _variableName;           // for efficient use in local iteration
+    private RuntimeIterator _expression;
 
     public ForClauseSparkIterator(RuntimeTupleIterator child, VariableReferenceIterator variableReference,
                                   RuntimeIterator assignmentExpression, IteratorMetadata iteratorMetadata) {
-        super(child, null, FLWOR_CLAUSES.FOR, iteratorMetadata);
-        this._children.add(variableReference);
-        this._children.add(assignmentExpression);
+        super(child, iteratorMetadata);
+        _variableName = variableReference.getVariableName();
+        _expression = assignmentExpression;
     }
 
 
     @Override
     public JavaRDD<FlworTuple> getRDD() {
         if (this._rdd == null) {
-            String variableReference = ((VariableReferenceIterator)this._children.get(0)).getVariableName();
-            RuntimeIterator assignmentExpression = this._children.get(1);
             JavaRDD<Item> initialRdd = null;
             //if it's a start clause
             if (this._child == null) {
-                initialRdd = this.getNewRDDFromExpression(assignmentExpression);
-                this._rdd = initialRdd.map(new InitialForClauseClosure(variableReference));
+                initialRdd = this.getNewRDDFromExpression(_expression);
+                this._rdd = initialRdd.map(new InitialForClauseClosure(_variableName));
             } else {
             //if it's not a start clause
                 this._rdd = this._child.getRDD();
-                this._rdd = this._rdd.flatMap(new ForClauseClosure(assignmentExpression, variableReference));
+                this._rdd = this._rdd.flatMap(new ForClauseClosure(_expression, _variableName));
             }
         }
         return _rdd;
