@@ -73,15 +73,9 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
 
     private void setNextLocalTupleResult() {
         if (_expression.isOpen()) {
-            if (_expression.hasNext()) {
-                List<Item> values = new ArrayList<>();
-                values.add(_expression.next());
-                FlworTuple newTuple = new FlworTuple(_inputTuple, _variableName, values);
-                _nextLocalTupleResult = newTuple;
-                this._hasNext = true;
+            boolean isResultSet = setResultFromExpression();
+            if (isResultSet) {
                 return;
-            } else {
-                _expression.close();
             }
         }
 
@@ -91,21 +85,33 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
             _tupleContext.setBindingsFromTuple(_inputTuple);      // assign new variables from new tuple
 
             _expression.open(_tupleContext);
-            if (_expression.hasNext()) {     // if expression returns a value, set it as next
-                List<Item> results = new ArrayList<>();
-                results.add(_expression.next());
-                FlworTuple newTuple = new FlworTuple(_inputTuple, _variableName, results);
-                _nextLocalTupleResult = newTuple;
-                this._hasNext = true;
+            boolean isResultSet = setResultFromExpression();
+            if (isResultSet) {
                 return;
-            } else {
-                _expression.close();
             }
         }
 
         // execution reaches here when there are no more results
         _child.close();
         this._hasNext = false;
+    }
+
+    /**
+     * _expression has to be open prior to call.
+     * @return true if _nextLocalTupleResult is set and _hasNext is true, false otherwise
+     */
+    private boolean setResultFromExpression() {
+        if (_expression.hasNext()) {     // if expression returns a value, set it as next
+            List<Item> results = new ArrayList<>();
+            results.add(_expression.next());
+            FlworTuple newTuple = new FlworTuple(_inputTuple, _variableName, results);
+            _nextLocalTupleResult = newTuple;
+            this._hasNext = true;
+            return true;
+        } else {
+            _expression.close();
+            return false;
+        }
     }
 
     private void initialFor_setNextLocalTupleResult() {
