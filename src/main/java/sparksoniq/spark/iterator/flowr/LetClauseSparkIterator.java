@@ -43,6 +43,7 @@ public class LetClauseSparkIterator extends FlowrClauseSparkIterator {
     private RuntimeIterator _expression;
     private DynamicContext _tupleContext;   // re-use same DynamicContext object for efficiency
     private FlworTuple _nextLocalTupleResult;
+    private List<Item> _expressionResults;  // re-use same list object for efficiency
 
     public LetClauseSparkIterator(RuntimeTupleIterator child, VariableReferenceIterator variableReference, RuntimeIterator expression, IteratorMetadata iteratorMetadata) {
         super(child, null, FLWOR_CLAUSES.LET, iteratorMetadata);
@@ -50,6 +51,7 @@ public class LetClauseSparkIterator extends FlowrClauseSparkIterator {
         this._children.add(expression);
         _variableName = variableReference.getVariableName();
         _expression = expression;
+        _expressionResults = new ArrayList<>();
     }
 
     @Override
@@ -83,14 +85,14 @@ public class LetClauseSparkIterator extends FlowrClauseSparkIterator {
             _tupleContext.removeAllVariables();             // clear the previous variables
             _tupleContext.setBindingsFromTuple(inputTuple);      // assign new variables from new tuple
 
-            List<Item> result = new ArrayList<>();
+            _expressionResults.clear();     // clear the results from previous iteration
             _expression.open(_tupleContext);
             while (_expression.hasNext())
-                result.add(_expression.next());
+                _expressionResults.add(_expression.next());
             _expression.close();
 
             FlworTuple resultTuple = new FlworTuple();
-            resultTuple.putValue(_variableName, result, true);
+            resultTuple.putValue(_variableName, _expressionResults, true);
             _nextLocalTupleResult = resultTuple;
             this._hasNext = true;
         } else {
