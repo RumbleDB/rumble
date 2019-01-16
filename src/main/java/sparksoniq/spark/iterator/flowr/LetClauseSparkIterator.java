@@ -103,29 +103,24 @@ public class LetClauseSparkIterator extends FlowrClauseSparkIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        // evaluate locally
-        if (!isRDD()) {
-            if (this._child != null) { //if it's not a start clause
-                _child.open(_currentDynamicContext);
-                _tupleContext = new DynamicContext(_currentDynamicContext);     // assign current context as parent
+        // isRDD checks omitted, as open is used for non-RDD(local) operations
 
-                setNextLocalTupleResult();
+        if (this._child != null) { //if it's not a start clause
+            _child.open(_currentDynamicContext);
+            _tupleContext = new DynamicContext(_currentDynamicContext);     // assign current context as parent
 
-            } else {    //if it's a start clause, it returns only one tuple
-                if(_expression.isRDD())
-                    throw new SparksoniqRuntimeException("Initial let clauses don't support RDDs");
-                    // materialize the initial RDD
-                else {
-                    List<Item> contents = new ArrayList<>();
-                    _expression.open(this._currentDynamicContext);
-                    while (_expression.hasNext())
-                        contents.add(_expression.next());
-                    _expression.close();
-                    FlworTuple tuple  = new FlworTuple();
-                    tuple.putValue(_variableName, contents, false);
-                    _nextLocalTupleResult = tuple;
-                }
-            }
+            setNextLocalTupleResult();
+
+        } else {    //if it's a start clause, it returns only one tuple
+            // expression is materialized
+            List<Item> contents = new ArrayList<>();
+            _expression.open(this._currentDynamicContext);
+            while (_expression.hasNext())
+                contents.add(_expression.next());
+            _expression.close();
+            FlworTuple tuple  = new FlworTuple();
+            tuple.putValue(_variableName, contents, false);
+            _nextLocalTupleResult = tuple;
         }
     }
 
