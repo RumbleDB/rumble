@@ -91,9 +91,8 @@ public class LetClauseSparkIterator extends FlowrClauseSparkIterator {
                 _expressionResults.add(_expression.next());
             _expression.close();
 
-            FlworTuple resultTuple = new FlworTuple();
-            resultTuple.putValue(_variableName, _expressionResults, true);
-            _nextLocalTupleResult = resultTuple;
+            inputTuple.putValue(_variableName, _expressionResults, true);
+            _nextLocalTupleResult = inputTuple;
             this._hasNext = true;
         } else {
             _child.close();
