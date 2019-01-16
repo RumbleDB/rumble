@@ -26,10 +26,10 @@ import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
+import sparksoniq.jsoniq.runtime.tupleiterator.SparkRuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.closures.ReturnFlatMapClosure;
-import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
 
 import java.util.Arrays;
 
@@ -56,7 +56,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDD(DynamicContext context) {
         if(itemRDD == null) {
-            ((FlowrClauseSparkIterator)_child).setDynamicContext(context);
+            ((SparkRuntimeTupleIterator)_child).setDynamicContext(context);
             RuntimeIterator expression = this._children.get(0);
             itemRDD = this._child.getRDD().flatMap(new ReturnFlatMapClosure(expression));
         }
@@ -98,20 +98,24 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             }
         }
 
-        if (_child.hasNext()) {
+        while (_child.hasNext()) {
             FlworTuple tuple = _child.next();
             _tupleContext.removeAllVariables();             // clear the previous variables
-            _tupleContext.setBındingsFromTuple(tuple);      // assign new variables from new tuple
+            _tupleContext.setBindingsFromTuple(tuple);      // assign new variables from new tuple
             _expression.open(_tupleContext);
-            _isExpressionOpen = true;
-            _nextLocalResult = _expression.next();
-        } else {
-            _child.close();
-            this._hasNext = false;
-            return;
+            if (_expression.hasNext()) {        // if expression returns a value, set it as next
+                _nextLocalResult = _expression.next();
+                this._hasNext = true;
+                _isExpressionOpen = true;
+                return;
+            } else {    // if not, keep iterating
+                _expression.close();
+            }
         }
-        this._hasNext = true;
 
+        // execution reaches here when there are no more results
+        _child.close();
+        this._hasNext = false;
     }
 
     @Override

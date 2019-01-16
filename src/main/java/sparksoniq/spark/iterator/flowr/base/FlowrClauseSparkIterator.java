@@ -27,7 +27,6 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
 import sparksoniq.jsoniq.runtime.tupleiterator.SparkRuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
-import sparksoniq.semantics.DynamicContext;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -43,14 +42,6 @@ public abstract class FlowrClauseSparkIterator extends SparkRuntimeTupleIterator
 //    public void setPreviousClause(FlowrClauseSparkIterator previousClause) {
 //        this._previousClause = previousClause;
 //    }
-
-    public void setDynamicContext(DynamicContext context){
-        this._currentDynamicContext = context;
-        if(_child != null)
-        {
-            ((FlowrClauseSparkIterator)_child).setDynamicContext(context);
-        }
-    }
 
     protected FlowrClauseSparkIterator(
             RuntimeTupleIterator child,
@@ -72,7 +63,6 @@ public abstract class FlowrClauseSparkIterator extends SparkRuntimeTupleIterator
     //protected FlowrClauseSparkIterator _previousClause = null;
     protected JavaRDD<FlworTuple> _rdd;
     protected final JiqsItemParser _parser;
-    protected DynamicContext _currentDynamicContext;
     protected List<RuntimeIterator> _children;
 
 

@@ -46,16 +46,16 @@ public class DynamicContext implements Serializable, KryoSerializable{
 
     public DynamicContext(FlworTuple tuple) {
         this();
-        setBındingsFromTuple(tuple);
+        setBindingsFromTuple(tuple);
     }
 
     public DynamicContext(DynamicContext parent, FlworTuple tuple){
         this._parent = parent;
         this._variableValues = new HashMap<>();
-        setBındingsFromTuple(tuple);
+        setBindingsFromTuple(tuple);
     }
 
-    public void setBındingsFromTuple(FlworTuple tuple) {
+    public void setBindingsFromTuple(FlworTuple tuple) {
         for(String key : tuple.getKeys())
             if(!key.startsWith("."))
                 this.addVariableValue(key,tuple.getValue(key));
