@@ -31,7 +31,7 @@ import sparksoniq.jsoniq.item.ObjectItem;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FlworKey implements KryoSerializable, Comparable<FlworKey> {
+public class FlworKey implements KryoSerializable {
 
     public static class ResultIndexKeyTuple{
         public int getResult() {
@@ -72,16 +72,9 @@ public class FlworKey implements KryoSerializable, Comparable<FlworKey> {
 
     @Override public boolean equals(Object otherKey){
         if(otherKey instanceof FlworKey)
-            return this.compareTo((FlworKey) otherKey) == 0;
+            return this.compareWithFlworKey((FlworKey) otherKey).getResult() == 0;
         else
             return false;
-    }
-
-
-    @Override
-    //TODO handle empty
-    public int compareTo(FlworKey flworKey) {
-        return this.compareWithFlworKey(flworKey).getResult();
     }
 
     public ResultIndexKeyTuple compareWithFlworKey(FlworKey flworKey){
