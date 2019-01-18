@@ -1,0 +1,9 @@
+(:JIQS: ShouldRun; Output="" :)
+for $i in parallelize(1 to 100)
+let $j :=
+for $k in 1 to $i
+return $k
+return $j
+
+(: fully local for clauses :)
+
