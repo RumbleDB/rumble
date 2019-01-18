@@ -57,77 +57,6 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
     }
 
     @Override
-    public FlworTuple next() {
-        if(_hasNext == true){
-            FlworTuple result = _nextLocalTupleResult;      // save the result to be returned
-            // calculate and store the next result
-            if (_child == null) {       // if it's the initial for clause, call the correct function
-                initialFor_setNextLocalTupleResult();
-            } else {
-                setNextLocalTupleResult();
-            }
-            return result;
-        }
-        throw new IteratorFlowException("Invalid next() call in let flwor clause", getMetadata());
-    }
-
-    private void setNextLocalTupleResult() {
-        if (_expression.isOpen()) {
-            boolean isResultSet = setResultFromExpression();
-            if (isResultSet) {
-                return;
-            }
-        }
-
-        while (_child.hasNext()) {
-            _inputTuple = _child.next();
-            _tupleContext.removeAllVariables();             // clear the previous variables
-            _tupleContext.setBindingsFromTuple(_inputTuple);      // assign new variables from new tuple
-
-            _expression.open(_tupleContext);
-            boolean isResultSet = setResultFromExpression();
-            if (isResultSet) {
-                return;
-            }
-        }
-
-        // execution reaches here when there are no more results
-        _child.close();
-        this._hasNext = false;
-    }
-
-    /**
-     * _expression has to be open prior to call.
-     * @return true if _nextLocalTupleResult is set and _hasNext is true, false otherwise
-     */
-    private boolean setResultFromExpression() {
-        if (_expression.hasNext()) {     // if expression returns a value, set it as next
-            List<Item> results = new ArrayList<>();
-            results.add(_expression.next());
-            FlworTuple newTuple = new FlworTuple(_inputTuple, _variableName, results);
-            _nextLocalTupleResult = newTuple;
-            this._hasNext = true;
-            return true;
-        } else {
-            _expression.close();
-            return false;
-        }
-    }
-
-    private void initialFor_setNextLocalTupleResult() {
-        if (_expression.hasNext()) {
-            List<Item> results = new ArrayList<>();
-            results.add(_expression.next());
-            FlworTuple newTuple = new FlworTuple(_variableName, results);
-            _nextLocalTupleResult = newTuple;
-            this._hasNext = true;
-        } else {
-            _expression.close();
-            this._hasNext = false;
-        }
-    }
-
-    @Override
     public void open(DynamicContext context) {
         super.open(context);
 
@@ -139,10 +68,70 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
 
             setNextLocalTupleResult();
 
-        } else {    //if it's a start clause
+        } else {    //if it's a start clause, get results using only the _expression
             _expression.open(this._currentDynamicContext);
+            setResultFromExpression();
+        }
+    }
 
-            initialFor_setNextLocalTupleResult();
+    @Override
+    public FlworTuple next() {
+        if(_hasNext == true){
+            FlworTuple result = _nextLocalTupleResult;      // save the result to be returned
+            // calculate and store the next result
+            if (_child == null) {       // if it's the initial for clause, call the correct function
+                setResultFromExpression();
+            } else {
+                setNextLocalTupleResult();
+            }
+            return result;
+        }
+        throw new IteratorFlowException("Invalid next() call in let flwor clause", getMetadata());
+    }
+
+    private void setNextLocalTupleResult() {
+        if (_expression.isOpen()) {
+            if (setResultFromExpression()) {
+                return;
+            }
+        }
+
+        while (_child.hasNext()) {
+            _inputTuple = _child.next();
+            _tupleContext.removeAllVariables();             // clear the previous variables
+            _tupleContext.setBindingsFromTuple(_inputTuple);      // assign new variables from new tuple
+
+            _expression.open(_tupleContext);
+            if (setResultFromExpression()) {
+                return;
+            }
+        }
+
+        // execution reaches here when there are no more results
+        _child.close();
+    }
+
+    /**
+     * _expression has to be open prior to call.
+     * @return true if _nextLocalTupleResult is set and _hasNext is true, false otherwise
+     */
+    private boolean setResultFromExpression() {
+        if (_expression.hasNext()) {     // if expression returns a value, set it as next
+            List<Item> results = new ArrayList<>();
+            results.add(_expression.next());
+            FlworTuple newTuple;
+            if (_child == null) {   // if initial for clause
+                newTuple = new FlworTuple(_variableName, results);
+            } else {
+                newTuple = new FlworTuple(_inputTuple, _variableName, results);
+            }
+            _nextLocalTupleResult = newTuple;
+            this._hasNext = true;
+            return true;
+        } else {
+            _expression.close();
+            this._hasNext = false;
+            return false;
         }
     }
 
