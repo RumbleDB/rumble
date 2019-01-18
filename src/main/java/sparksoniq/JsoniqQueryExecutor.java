@@ -44,6 +44,7 @@ import sparksoniq.utils.FileUtils;
 
 import java.io.*;
 import java.net.URI;
+import java.util.List;
 
 
 public class JsoniqQueryExecutor {
@@ -132,10 +133,21 @@ public class JsoniqQueryExecutor {
             } else if (resultCount == 1) {
                 localOutput = output.collect().get(0);
             } else if (resultCount > 1) {
+                List<String> collectedOutput;
+                if(SparkContextManager.LIMIT_COLLECT()) {
+                    collectedOutput = output.take(SparkContextManager.COLLECT_ITEM_LIMIT);
+                    if (collectedOutput.size() == SparkContextManager.COLLECT_ITEM_LIMIT) {
+                        ShellStart.terminal.output("\nWarning: Results have been truncated to: " + SparkContextManager.COLLECT_ITEM_LIMIT
+                                + " items. This value can be configured with the --result-size parameter at startup.\n");
+                    }
+                }
+                else {
+                    collectedOutput = output.collect();
+                }
+
                 StringBuilder sb = new StringBuilder();
                 sb.append("(");
-                for (String item : SparkContextManager.LIMIT_COLLECT() ?
-                        output.take(SparkContextManager.COLLECT_ITEM_LIMIT) : output.collect()) {
+                for (String item : collectedOutput) {
                     sb.append(item + ", ");
                 }
 
