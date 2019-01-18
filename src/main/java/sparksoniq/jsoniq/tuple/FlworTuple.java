@@ -26,9 +26,10 @@ import com.esotericsoftware.kryo.io.Output;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.Item;
 
+import java.io.Serializable;
 import java.util.*;
 
-public class FlworTuple implements KryoSerializable{
+public class FlworTuple implements Serializable, KryoSerializable{
 
     public FlworTuple(){
         variables = new LinkedHashMap<>();

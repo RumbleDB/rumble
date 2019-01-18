@@ -48,7 +48,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
 
     public void open(DynamicContext context) {
         if (this._isOpen)
-            throw new IteratorFlowException("Runtime tuple iterator cannot be opened twice", getMetadata());
+            throw new IteratorFlowException("Runtime tuple iterator cannot be opened twice" + ", this: " +this.toString(), getMetadata());
         this._isOpen = true;
         this._hasNext = true;
         this._currentDynamicContext = context;

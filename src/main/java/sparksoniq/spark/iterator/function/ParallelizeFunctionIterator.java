@@ -36,11 +36,10 @@ public class ParallelizeFunctionIterator extends SparkFunctionCallIterator {
 
     @Override
     public JavaRDD<Item> getRDD(DynamicContext dynamicContext) {
-
         if (this._rdd == null) {
             List<Item> contents = new ArrayList<>();
             for (RuntimeIterator iterator : this._children) {
-                iterator.open(this._currentDynamicContext);
+                iterator.open(dynamicContext);
                 while (iterator.hasNext())
                     contents.add(iterator.next()/*.serialize()*/);
                 iterator.close();

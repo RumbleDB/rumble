@@ -1,0 +1,5 @@
+(:JIQS: ShouldRun; Output="(6, 7, 8, 9, 10)" :)
+let $i := 5
+for $j in parallelize(1 to $i)
+return $i + $j
+(: local evaluation switches to RDD evaluation :)

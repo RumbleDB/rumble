@@ -31,6 +31,7 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkContextManager;
 import sparksoniq.spark.closures.ForClauseClosure;
+import sparksoniq.spark.closures.ForClauseLocalToRDDClosure;
 import sparksoniq.spark.closures.InitialForClauseClosure;
 
 import java.util.ArrayList;
@@ -137,8 +138,9 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
 
     @Override
     public void close() {
+        this._isOpen = false;
         if (_child != null) {
-            _child.close();
+            this._child.close();
         }
     }
 
@@ -146,6 +148,7 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
     @Override
     public JavaRDD<FlworTuple> getRDD() {
         JavaRDD<Item> initialRdd = null;
+        this._rdd = SparkContextManager.getInstance().getContext().emptyRDD();
 
         if (this._child == null) {
             initialRdd = this.getNewRDDFromExpression(_expression);
@@ -159,19 +162,17 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
             } else {    // if child is locally evaluated
                 // _expression is definitely an RDD if execution flows here
 
-                // get child tuples
-                List<FlworTuple> localTuples = new ArrayList<>();
                 _child.open(_currentDynamicContext);
+                _tupleContext = new DynamicContext(_currentDynamicContext);     // assign current context as parent
                 while (_child.hasNext()) {
-                    localTuples.add(_child.next());
+                    _inputTuple = _child.next();
+                    _tupleContext.removeAllVariables();             // clear the previous variables
+                    _tupleContext.setBindingsFromTuple(_inputTuple);      // assign new variables from new tuple
+
+                    JavaRDD<Item> expressionRDD = _expression.getRDD(_tupleContext);
+                    this._rdd = this._rdd.union(expressionRDD.map(new ForClauseLocalToRDDClosure(_variableName, _inputTuple)));
                 }
                 _child.close();
-
-                // turn them into an rdd
-                _rdd = SparkContextManager.getInstance().getContext().parallelize(localTuples);
-
-                // apply expression
-                this._rdd = this._rdd.flatMap(new ForClauseClosure(_expression, _variableName));
             }
         }
         return _rdd;
