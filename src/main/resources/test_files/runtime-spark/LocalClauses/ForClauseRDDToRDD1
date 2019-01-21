@@ -7,3 +7,6 @@ let $name := "./src/main/resources/queries/conf-ex.json"
 for $line1 in json-file($name)
 for $line2 in json-file($name)
 return $line2.guess
+
+(: spark doesn't support RDD jobs within closure yet :)
+
