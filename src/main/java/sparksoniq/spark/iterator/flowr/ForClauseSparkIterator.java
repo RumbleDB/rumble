@@ -139,6 +139,7 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
     @Override
     public void close() {
         this._isOpen = false;
+        result = null;
         if (_child != null) {
             this._child.close();
         }
