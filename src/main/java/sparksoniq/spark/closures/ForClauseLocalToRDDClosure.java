@@ -17,13 +17,30 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.jsoniq.item.base;
+ package sparksoniq.spark.closures;
 
-import com.esotericsoftware.kryo.KryoSerializable;
+import org.apache.spark.api.java.function.Function;
+import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.tuple.FlworTuple;
 
-import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
+public class ForClauseLocalToRDDClosure implements Function<Item, FlworTuple> {
+    private final String _variableName;
+    private final FlworTuple _inputTuple;
 
 
-public interface SerializableItem extends Serializable, KryoSerializable {
-    String serialize();
+    public ForClauseLocalToRDDClosure(String variableName, FlworTuple inputTuple) {
+        this._variableName = variableName;
+        this._inputTuple = inputTuple;
+    }
+
+    @Override
+    public FlworTuple call(Item item) throws Exception {
+        FlworTuple result = new FlworTuple(_inputTuple);
+        result.putValue(_variableName, item, true);
+        return result;
+
+    }
 }

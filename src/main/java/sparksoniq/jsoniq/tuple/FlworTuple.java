@@ -26,12 +26,44 @@ import com.esotericsoftware.kryo.io.Output;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.Item;
 
+import java.io.Serializable;
 import java.util.*;
 
-public class FlworTuple implements KryoSerializable{
+public class FlworTuple implements Serializable, KryoSerializable{
 
     public FlworTuple(){
         variables = new LinkedHashMap<>();
+    }
+
+    /**
+     * Create a deep copy
+     * @param toCopy original tuple
+     */
+    public FlworTuple(FlworTuple toCopy){
+        variables = new LinkedHashMap<>();
+        for(String key: toCopy.getKeys())
+            this.putValue(key, toCopy.getValue(key), true);
+    }
+
+    /**
+     * Create a tuple containing only the given key-value pair
+     * @param newKey
+     * @param value
+     */
+    public FlworTuple(String newKey, List<Item> value) {
+        this();
+        this.putValue(newKey, value, false);
+    }
+
+    /**
+     * Create a deep copy containing new key-value pair
+     * @param toCopy original tuple
+     * @param newKey
+     * @param value
+     */
+    public FlworTuple(FlworTuple toCopy, String newKey, List<Item> value){
+        this(toCopy);
+        this.putValue(newKey, value, false);
     }
 
     public boolean contains(String key){

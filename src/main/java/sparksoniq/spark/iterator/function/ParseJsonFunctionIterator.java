@@ -52,7 +52,7 @@ public class ParseJsonFunctionIterator extends SparkFunctionCallIterator {
         if (this._rdd == null) {
             JavaRDD<String> strings;
             RuntimeIterator urlIterator = this._children.get(0);
-            urlIterator.open(this._currentDynamicContext);
+            urlIterator.open(dynamicContext);
             if (this._children.size() == 1)
                 try {
                     strings = SparkContextManager.getInstance().getContext().textFile(urlIterator.next().getStringValue());

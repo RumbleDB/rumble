@@ -1,0 +1,6 @@
+(:JIQS: ShouldRun; Output="" :)
+for $i in parallelize(1 to 100)
+for $j in parallelize(1 to $i)
+return $i + 1
+
+(: spark doesn't support RDD jobs within closure yet :)

@@ -42,27 +42,16 @@ public class ForClauseClosure implements FlatMapFunction<FlworTuple, FlworTuple>
     @Override
     public Iterator<FlworTuple> call(FlworTuple tuple) throws Exception {
         List<FlworTuple> results = new ArrayList<>();
-        List<Item> items = new ArrayList<>();
-        _expression.open(new DynamicContext(tuple));
-        while(_expression.hasNext())
-            items.add(_expression.next());
-        _expression.close();
-        for(Item result : items){
-            List<Item> values = new ArrayList<>();
-            values.add(result);
-            FlworTuple newTuple = createNewTuple(tuple, _variableName, values);
-            results.add(newTuple);
 
+        // create a new tuple for each result from the expression
+        _expression.open(new DynamicContext(tuple));
+        while(_expression.hasNext()) {
+            List<Item> values = new ArrayList<>();
+            values.add(_expression.next());
+            FlworTuple newTuple = new FlworTuple(tuple, _variableName, values);
+            results.add(newTuple);
         }
+        _expression.close();
         return results.iterator();
     }
-
-    private FlworTuple createNewTuple(FlworTuple tuple, String newKey, List<Item> value) {
-        FlworTuple result = new FlworTuple();
-        for(String key: tuple.getKeys())
-                result.putValue(key, tuple.getValue(key), true);
-        result.putValue(newKey, value, false);
-        return result;
-    }
-
 }
