@@ -37,10 +37,20 @@ public class StringToItemMapper implements FlatMapFunction<Iterator<String>, Ite
 
     @Override
     public Iterator<Item> call(Iterator<String> stringIterator) throws Exception {
-        JiqsItemParser parser = new JiqsItemParser();
-        List<JSONObject> objects = parser.parseJsonLinesFromIterator(stringIterator);
-        List<Item> items = new ArrayList<>();
-        objects.forEach(obj -> items.add(parser.getItemFromObject(obj, metadata)));
-        return items.iterator();
+        return new Iterator<Item>() {
+            @Override
+            public boolean hasNext() {
+                return stringIterator.hasNext();
+            }
+            @Override
+            public Item next() {
+                JSONObject object = new JSONObject(stringIterator.next());
+                return JiqsItemParser.getItemFromObject(object, metadata);
+            }
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
     }
 }

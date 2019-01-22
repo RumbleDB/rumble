@@ -30,12 +30,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class JiqsItemParser extends OrgJsonParser {
+public class JiqsItemParser {
 
-    public JiqsItemParser() {
-    }
-
-    public Item getItemFromObject(Object object, IteratorMetadata metadata) {
+    public static Item getItemFromObject(Object object, IteratorMetadata metadata) {
         if (object != null) {
             if (object instanceof String)
                 return new StringItem(object.toString(), ItemMetadata.fromIteratorMetadata(metadata));
@@ -52,7 +49,7 @@ public class JiqsItemParser extends OrgJsonParser {
                 List<Item> values = new ArrayList<>();
                 int index = 0;
                 while (index < curentArray.length())
-                    values.add(this.getItemFromObject(curentArray.get(index++), metadata));
+                    values.add(getItemFromObject(curentArray.get(index++), metadata));
                 return new ArrayItem(values, ItemMetadata.fromIteratorMetadata(metadata));
             }
             if (object instanceof JSONObject) {
@@ -62,7 +59,7 @@ public class JiqsItemParser extends OrgJsonParser {
                 Iterator<String> keyIterator = currentObject.keys();
                 while (keyIterator.hasNext())
                     keys.add(keyIterator.next());
-                keys.forEach(_key -> values.add(this.getItemFromObject(currentObject.get(_key), metadata)));
+                keys.forEach(_key -> values.add(getItemFromObject(currentObject.get(_key), metadata)));
                 return new ObjectItem(keys, values, ItemMetadata.fromIteratorMetadata(metadata));
             }
 
