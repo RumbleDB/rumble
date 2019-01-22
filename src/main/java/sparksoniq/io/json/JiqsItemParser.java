@@ -25,12 +25,13 @@ import sparksoniq.jsoniq.item.*;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class JiqsItemParser {
+public class JiqsItemParser implements Serializable {
 
     public static Item getItemFromObject(Object object, IteratorMetadata metadata) {
         if (object != null) {
