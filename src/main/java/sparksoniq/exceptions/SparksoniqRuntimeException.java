@@ -34,13 +34,14 @@ public class SparksoniqRuntimeException extends RuntimeException {
         return metadata;
     }
 
-    public void setMetadata(ExpressionMetadata expressionMetadata) {
-        metadata = expressionMetadata;
+    public String getMessage() {
+        return message;
     }
 
     public SparksoniqRuntimeException(String message) {
         super("Error [err: " + ErrorCodes.RuntimeExceptionErrorCode + " ] " + message);
         this.errorCode = ErrorCodes.RuntimeExceptionErrorCode;
+        this.message = message;
     }
 
     public SparksoniqRuntimeException(String message, String errorCode) {
@@ -55,6 +56,7 @@ public class SparksoniqRuntimeException extends RuntimeException {
             this.errorCode = ErrorCodes.RuntimeExceptionErrorCode;
         else
             this.errorCode = errorCode;
+        this.message = message;
     }
 
 
@@ -74,6 +76,7 @@ public class SparksoniqRuntimeException extends RuntimeException {
         else
             this.errorCode = errorCode;
         this.metadata = metadata;
+        this.message = message;
     }
 
     public SparksoniqRuntimeException(String message,  ExpressionMetadata metadata) {
@@ -83,8 +86,10 @@ public class SparksoniqRuntimeException extends RuntimeException {
                 + message);
         this.errorCode = ErrorCodes.RuntimeExceptionErrorCode;;
         this.metadata = metadata;
+        this.message = message;
     }
 
     private final String errorCode;
+    private final String message;
     private ExpressionMetadata metadata;
 }

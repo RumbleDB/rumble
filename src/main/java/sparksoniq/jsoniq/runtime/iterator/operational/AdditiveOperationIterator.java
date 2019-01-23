@@ -58,8 +58,8 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
 
                 } catch (IteratorFlowException e)
                 {
-                    e.setMetadata(getMetadata().getExpressionMetadata());
-                    throw e;
+                    throw new IteratorFlowException(e.getMessage(), getMetadata());
+
                 }
             } else if(returnType.equals(DoubleItem.class)){
                 try {
@@ -71,8 +71,8 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
 
                 } catch (IteratorFlowException e)
                 {
-                    e.setMetadata(getMetadata().getExpressionMetadata());
-                    throw e;
+                    throw new IteratorFlowException(e.getMessage(), getMetadata());
+
                 }
             } else if(returnType.equals(DecimalItem.class)){
                 try {
@@ -84,8 +84,8 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
 
                 } catch (IteratorFlowException e)
                 {
-                    e.setMetadata(getMetadata().getExpressionMetadata());
-                    throw e;
+                    throw new IteratorFlowException(e.getMessage(), getMetadata());
+
                 }
             } else {
                 throw new IteratorFlowException("Additive expression has non numeric args", getMetadata());

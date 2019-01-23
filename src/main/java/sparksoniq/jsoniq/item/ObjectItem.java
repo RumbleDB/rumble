@@ -45,15 +45,7 @@ public class ObjectItem extends JsonItem{
 
     public ObjectItem(List<String> keys, List<Item> values, ItemMetadata itemMetadata){
         super();
-        try {
-            checkForDuplicateKeys(keys);
-        } catch (DuplicateObjectKeyException e)
-        {
-            System.out.println("\nThrow!\n"+itemMetadata.getExpressionMetadata().getTokenColumnNumber()+"\n"+itemMetadata.getExpressionMetadata().getTokenLineNumber());
-            
-            e.setMetadata(itemMetadata.getExpressionMetadata());
-            throw e;
-        }
+        checkForDuplicateKeys(keys, itemMetadata);
         this._keys = keys;
         this._values = values;
     }
@@ -95,11 +87,11 @@ public class ObjectItem extends JsonItem{
         this._values = valueList;
     }
 
-    private void checkForDuplicateKeys(List<String> keys) {
+    private void checkForDuplicateKeys(List<String> keys, ItemMetadata metadata) {
         HashMap<String, Integer> frequencies = new HashMap<>();
         for(String key : keys) {
             if(frequencies.containsKey(key))
-                throw new DuplicateObjectKeyException(key);
+                throw new DuplicateObjectKeyException(key, metadata.getExpressionMetadata());
 
             else
                 frequencies.put(key, 1);

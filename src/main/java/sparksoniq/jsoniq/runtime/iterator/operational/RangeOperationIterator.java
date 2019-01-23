@@ -68,8 +68,8 @@ public class RangeOperationIterator extends BinaryOperationBaseIterator {
                 _right = Item.getNumericValue(right, Integer.class);
             } catch (IteratorFlowException e)
             {
-                e.setMetadata(getMetadata().getExpressionMetadata());
-                throw e;
+                throw new IteratorFlowException(e.getMessage(), getMetadata());
+
             }
             if (_right < _left) {
                 this._hasNext = false;

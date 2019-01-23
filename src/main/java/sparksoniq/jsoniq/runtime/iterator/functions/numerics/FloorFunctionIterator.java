@@ -45,8 +45,8 @@ public class FloorFunctionIterator extends LocalFunctionCallIterator {
 
                 } catch (IteratorFlowException e)
                 {
-                    e.setMetadata(getMetadata().getExpressionMetadata());
-                    throw e;
+                    throw new IteratorFlowException(e.getMessage(), getMetadata());
+
                 }
             } else {
                 throw new UnexpectedTypeException("Floor expression has non numeric args " +

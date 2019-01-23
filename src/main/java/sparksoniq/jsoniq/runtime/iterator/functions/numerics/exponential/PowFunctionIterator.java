@@ -53,9 +53,10 @@ public class PowFunctionIterator extends LocalFunctionCallIterator {
                     return new DoubleItem(result);
                 } catch (IteratorFlowException e)
                 {
-                    e.setMetadata(getMetadata().getExpressionMetadata());
-                    throw e;
-                }            } else {
+                    throw new IteratorFlowException(e.getMessage(), getMetadata());
+
+                }
+            } else {
                 throw new UnexpectedTypeException("Pow expression has non numeric args " +
                         base.serialize() + ", " + exponent.serialize(), getMetadata());
             }

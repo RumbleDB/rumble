@@ -46,8 +46,8 @@ public class Log10FunctionIterator extends LocalFunctionCallIterator {
                 
                 } catch (IteratorFlowException e)
                 {
-                    e.setMetadata(getMetadata().getExpressionMetadata());
-                    throw e;
+                    throw new IteratorFlowException(e.getMessage(), getMetadata());
+
                 }
             } else {
                 throw new UnexpectedTypeException("Log10 expression has non numeric args " +

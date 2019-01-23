@@ -66,8 +66,8 @@ public class SubsequenceFunctionIterator extends LocalFunctionCallIterator {
 
             } catch (IteratorFlowException e)
             {
-                e.setMetadata(getMetadata().getExpressionMetadata());
-                throw e;
+                throw new IteratorFlowException(e.getMessage(), getMetadata());
+
             }
         }
 

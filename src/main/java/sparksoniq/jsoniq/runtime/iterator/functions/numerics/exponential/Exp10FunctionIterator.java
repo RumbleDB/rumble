@@ -45,8 +45,8 @@ public class Exp10FunctionIterator extends LocalFunctionCallIterator {
                     return new DoubleItem(result);
                 } catch (IteratorFlowException e)
                 {
-                    e.setMetadata(getMetadata().getExpressionMetadata());
-                    throw e;
+                    throw new IteratorFlowException(e.getMessage(), getMetadata());
+
                 }
             } else {
                 throw new UnexpectedTypeException("Exp10 expression has non numeric args " +

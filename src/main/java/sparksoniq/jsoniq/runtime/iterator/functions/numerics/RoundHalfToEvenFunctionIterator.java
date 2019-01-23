@@ -70,8 +70,8 @@ public class RoundHalfToEvenFunctionIterator extends LocalFunctionCallIterator {
 
                 } catch (IteratorFlowException e)
                 {
-                    e.setMetadata(getMetadata().getExpressionMetadata());
-                    throw e;
+                    throw new IteratorFlowException(e.getMessage(), getMetadata());
+
                 }
             } else {
                 throw new UnexpectedTypeException("Round-half-to-even expression has non numeric args " +
