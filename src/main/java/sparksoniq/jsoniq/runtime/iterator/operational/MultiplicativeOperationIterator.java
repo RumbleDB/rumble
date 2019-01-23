@@ -103,7 +103,7 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
                     }
                 } catch (IteratorFlowException e)
                 {
-                    throw new IteratorFlowException(e.getMessage(), getMetadata());
+                    throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
 
                 }
             } else if (returnType.equals(DoubleItem.class)) {

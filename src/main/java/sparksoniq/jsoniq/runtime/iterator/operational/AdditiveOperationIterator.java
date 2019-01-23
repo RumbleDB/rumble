@@ -58,7 +58,7 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
 
                 } catch (IteratorFlowException e)
                 {
-                    throw new IteratorFlowException(e.getMessage(), getMetadata());
+                    throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
 
                 }
             } else if(returnType.equals(DoubleItem.class)){
@@ -71,7 +71,7 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
 
                 } catch (IteratorFlowException e)
                 {
-                    throw new IteratorFlowException(e.getMessage(), getMetadata());
+                    throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
 
                 }
             } else if(returnType.equals(DecimalItem.class)){
@@ -84,7 +84,7 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
 
                 } catch (IteratorFlowException e)
                 {
-                    throw new IteratorFlowException(e.getMessage(), getMetadata());
+                    throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
 
                 }
             } else {

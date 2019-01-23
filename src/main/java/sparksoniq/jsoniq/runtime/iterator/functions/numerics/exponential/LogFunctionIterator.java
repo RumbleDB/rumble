@@ -45,7 +45,7 @@ public class LogFunctionIterator extends LocalFunctionCallIterator {
 
                 } catch (IteratorFlowException e)
                 {
-                    throw new IteratorFlowException(e.getMessage(), getMetadata());
+                    throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
 
                 }
             } else {

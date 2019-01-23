@@ -68,7 +68,7 @@ public class RangeOperationIterator extends BinaryOperationBaseIterator {
                 _right = Item.getNumericValue(right, Integer.class);
             } catch (IteratorFlowException e)
             {
-                throw new IteratorFlowException(e.getMessage(), getMetadata());
+                throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
 
             }
             if (_right < _left) {
