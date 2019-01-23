@@ -69,7 +69,6 @@ public class RangeOperationIterator extends BinaryOperationBaseIterator {
             } catch (IteratorFlowException e)
             {
                 throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-
             }
             if (_right < _left) {
                 this._hasNext = false;

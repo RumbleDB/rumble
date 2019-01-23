@@ -45,7 +45,6 @@ public class AbsFunctionIterator extends LocalFunctionCallIterator {
                 } catch (IteratorFlowException e)
                 {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-
                 }
             }
             else {

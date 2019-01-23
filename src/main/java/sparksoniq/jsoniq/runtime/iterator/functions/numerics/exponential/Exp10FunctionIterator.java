@@ -46,7 +46,6 @@ public class Exp10FunctionIterator extends LocalFunctionCallIterator {
                 } catch (IteratorFlowException e)
                 {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-
                 }
             } else {
                 throw new UnexpectedTypeException("Exp10 expression has non numeric args " +

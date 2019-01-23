@@ -67,7 +67,6 @@ public class SubsequenceFunctionIterator extends LocalFunctionCallIterator {
             } catch (IteratorFlowException e)
             {
                 throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-
             }
         }
 

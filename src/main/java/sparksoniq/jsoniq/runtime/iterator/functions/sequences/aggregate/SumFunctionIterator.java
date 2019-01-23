@@ -75,7 +75,6 @@ public class SumFunctionIterator extends AggregateFunctionIterator {
             } catch (IteratorFlowException e)
             {
                 throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-
             }
         } else
             throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "SUM function",

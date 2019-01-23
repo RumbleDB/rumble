@@ -54,7 +54,6 @@ public class AvgFunctionIterator extends AggregateFunctionIterator {
             } catch (IteratorFlowException e)
             {
                 throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-
             }
         }
         throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "AVG function",

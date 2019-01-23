@@ -104,7 +104,6 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
                 } catch (IteratorFlowException e)
                 {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-
                 }
             } else if (returnType.equals(DoubleItem.class)) {
                 double l = Item.<Double>getNumericValue(_left, Double.class);

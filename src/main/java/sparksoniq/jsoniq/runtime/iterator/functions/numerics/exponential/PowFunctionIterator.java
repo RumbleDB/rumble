@@ -54,7 +54,6 @@ public class PowFunctionIterator extends LocalFunctionCallIterator {
                 } catch (IteratorFlowException e)
                 {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-
                 }
             } else {
                 throw new UnexpectedTypeException("Pow expression has non numeric args " +

@@ -92,7 +92,6 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
         } catch (IteratorFlowException e)
         {
             throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-
         }
     }
 

@@ -46,7 +46,6 @@ public class SqrtFunctionIterator extends LocalFunctionCallIterator {
                 } catch (IteratorFlowException e)
                 {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-
                 }
             } else {
                 throw new UnexpectedTypeException("Sqrt expression has non numeric args " +
