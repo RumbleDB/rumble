@@ -17,46 +17,49 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.spark.iterator.flowr;
+package sparksoniq.spark.iterator.flowr;
 
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
-import sparksoniq.jsoniq.compiler.translator.expr.flowr.FLWOR_CLAUSES;
+import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
+import sparksoniq.jsoniq.runtime.tupleiterator.SparkRuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.closures.OrderByClauseSortClosure;
 import sparksoniq.spark.closures.OrderByMapToPairClosure;
-import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
 import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 
 import java.util.List;
 
-public class OrderByClauseSparkIterator extends FlowrClauseSparkIterator {
+public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
     private final boolean _isStable;
     private final List<OrderByClauseSparkIteratorExpression> _expressions;
 
     public OrderByClauseSparkIterator(RuntimeTupleIterator child, List<OrderByClauseSparkIteratorExpression> expressions,
                                       boolean stable, IteratorMetadata iteratorMetadata) {
-        super(child, null, FLWOR_CLAUSES.ORDER_BY, iteratorMetadata);
+        super(child, iteratorMetadata);
         this._expressions = expressions;
-        this._expressions.forEach(e -> this._children.add(e.getExpression()));
         this._isStable = stable;
     }
 
     @Override
     public JavaRDD<FlworTuple> getRDD(DynamicContext context) {
-        if(this._rdd == null) {
-            this._rdd = this._child.getRDD(context);
-            //map to pairs - ArrayItem [sort keys] , tuples
-            JavaPairRDD<FlworKey, FlworTuple> keyTuplePair = this._rdd
-                    .mapToPair(new OrderByMapToPairClosure(this._expressions, _isStable));
-            //sort by key
-            keyTuplePair = keyTuplePair.sortByKey(new OrderByClauseSortClosure(this._expressions, _isStable));
-            //map back to tuple RDD
-            this._rdd = keyTuplePair.map(tuple2 -> tuple2._2());
+        if (this._rdd == null) {
+            if (this._child != null) {
+                this._rdd = this._child.getRDD(context);
+                //map to pairs - ArrayItem [sort keys] , tuples
+                JavaPairRDD<FlworKey, FlworTuple> keyTuplePair = this._rdd
+                        .mapToPair(new OrderByMapToPairClosure(this._expressions, _isStable));
+                //sort by key
+                keyTuplePair = keyTuplePair.sortByKey(new OrderByClauseSortClosure(this._expressions, _isStable));
+                //map back to tuple RDD
+                this._rdd = keyTuplePair.map(tuple2 -> tuple2._2());
+            } else {
+                throw new SparksoniqRuntimeException("Invalid orderby clause.");
+            }
         }
         return _rdd;
     }
