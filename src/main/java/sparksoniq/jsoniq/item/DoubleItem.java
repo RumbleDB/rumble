@@ -35,8 +35,8 @@ public class DoubleItem extends AtomicItem {
         return _value;
     }
 
-    public DoubleItem(double value, ItemMetadata itemMetadata){
-        super(itemMetadata);
+    public DoubleItem(double value){
+        super();
         this._value = value;
     }
 

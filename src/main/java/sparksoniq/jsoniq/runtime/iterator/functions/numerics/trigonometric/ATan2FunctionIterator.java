@@ -42,8 +42,7 @@ public class ATan2FunctionIterator extends LocalFunctionCallIterator {
                     Double result = Math.atan2(Item.getNumericValue(y, Double.class)
                             , Item.getNumericValue(x, Double.class));
                     this._hasNext = false;
-                    return new DoubleItem(result,
-                            ItemMetadata.fromIteratorMetadata(getMetadata()));
+                    return new DoubleItem(result);
 
                 } catch (IteratorFlowException e)
                 {

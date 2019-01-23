@@ -42,8 +42,7 @@ public class Log10FunctionIterator extends LocalFunctionCallIterator {
                 try {
                     Double result = Math.log10(Item.getNumericValue(value, Double.class));
     
-                    return new DoubleItem(result,
-                            ItemMetadata.fromIteratorMetadata(getMetadata()));
+                    return new DoubleItem(result);
                 
                 } catch (IteratorFlowException e)
                 {

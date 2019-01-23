@@ -25,10 +25,10 @@ public class ExistsFunctionIterator extends LocalFunctionCallIterator {
             sequenceIterator.open(_currentDynamicContext);
             Item result;
             if (sequenceIterator.hasNext()) {
-                result = new BooleanItem(true, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                result = new BooleanItem(true);
 
             } else {
-                result = new BooleanItem(false, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                result = new BooleanItem(false);
             }
             sequenceIterator.close();
             return result;

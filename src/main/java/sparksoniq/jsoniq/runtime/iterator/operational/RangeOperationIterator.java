@@ -25,7 +25,6 @@ import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalEx
 import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -46,7 +45,7 @@ public class RangeOperationIterator extends BinaryOperationBaseIterator {
         if(_hasNext == true){
             if (_index == _right)
                 this._hasNext = false;
-            return new IntegerItem(_index++, ItemMetadata.fromIteratorMetadata(getMetadata()));
+            return new IntegerItem(_index++);
         }
         throw new IteratorFlowException("Invalid next call in Range Operation", getMetadata());
     }

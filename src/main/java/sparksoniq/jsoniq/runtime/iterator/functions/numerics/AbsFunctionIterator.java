@@ -41,8 +41,7 @@ public class AbsFunctionIterator extends LocalFunctionCallIterator {
             if (Item.isNumeric(value)) {
                 try {
                     Double result = Math.abs(Item.getNumericValue(value, Double.class));
-                    return new DoubleItem(result,
-                            ItemMetadata.fromIteratorMetadata(getMetadata()));
+                    return new DoubleItem(result);
                 } catch (IteratorFlowException e)
                 {
                     e.setMetadata(getMetadata().getExpressionMetadata());

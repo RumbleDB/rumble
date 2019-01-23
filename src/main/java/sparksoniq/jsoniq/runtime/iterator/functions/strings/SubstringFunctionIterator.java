@@ -5,7 +5,6 @@ import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.StringItem;
-import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -24,7 +23,7 @@ public class SubstringFunctionIterator extends LocalFunctionCallIterator {
             String result;
             StringItem stringItem = this.getSingleItemOfTypeFromIterator(this._children.get(0), StringItem.class);
             if (stringItem == null) {
-                return new StringItem("", ItemMetadata.fromIteratorMetadata(getMetadata()));
+                return new StringItem("");
             }
             IntegerItem indexItem = this.getSingleItemOfTypeFromIterator(this._children.get(1), IntegerItem.class);
             if (indexItem == null) {
@@ -42,7 +41,7 @@ public class SubstringFunctionIterator extends LocalFunctionCallIterator {
                 result = stringItem.getStringValue().substring(index);
             }
 
-            return new StringItem(result, ItemMetadata.fromIteratorMetadata(getMetadata()));
+            return new StringItem(result);
         } else
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " substring function", getMetadata());
     }

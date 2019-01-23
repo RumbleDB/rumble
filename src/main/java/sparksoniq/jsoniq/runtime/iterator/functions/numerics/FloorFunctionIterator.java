@@ -41,8 +41,7 @@ public class FloorFunctionIterator extends LocalFunctionCallIterator {
             if (Item.isNumeric(value)) {
                 try {
                     Double result = Math.floor(Item.getNumericValue(value, Double.class));
-                    return new DoubleItem(result,
-                            ItemMetadata.fromIteratorMetadata(getMetadata()));
+                    return new DoubleItem(result);
 
                 } catch (IteratorFlowException e)
                 {

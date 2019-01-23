@@ -77,7 +77,7 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
                     int r = Item.<Integer>getNumericValue(_right, Integer.class);
                     switch (this._operator) {
                         case MUL:
-                            return new IntegerItem(l * r, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                            return new IntegerItem(l * r);
                         case DIV:
                             BigDecimal decLeft = Item.<BigDecimal>getNumericValue(_left, BigDecimal.class);
                             BigDecimal decRight = Item.<BigDecimal>getNumericValue(_right, BigDecimal.class);
@@ -87,18 +87,17 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
                                 try {
                                     // exception is thrown if information is lost during conversion to integer
                                     // this happens if the bigdecimal has a decimal part, or if it can't be fit to an integer
-                                    return new IntegerItem(bdResult.intValueExact(), ItemMetadata.fromIteratorMetadata(getMetadata()));
+                                    return new IntegerItem(bdResult.intValueExact());
                                 } catch (ArithmeticException e) {
                                     e.printStackTrace();
                                 }
                             } else {
-                                return new DecimalItem(bdResult,
-                                        ItemMetadata.fromIteratorMetadata(getMetadata()));
+                                return new DecimalItem(bdResult);
                             }
                         case MOD:
-                            return new IntegerItem(l % r, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                            return new IntegerItem(l % r);
                         case IDIV:
-                            return new IntegerItem(l / r, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                            return new IntegerItem(l / r);
                         default:
                             new IteratorFlowException("Non recognized multicative operator.", getMetadata());
                     }
@@ -112,13 +111,13 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
                 double r = Item.<Double>getNumericValue(_right, Double.class);
                 switch (this._operator) {
                     case MUL:
-                        return new DoubleItem(l * r, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                        return new DoubleItem(l * r);
                     case DIV:
-                        return new DoubleItem(l / r, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                        return new DoubleItem(l / r);
                     case MOD:
-                        return new DoubleItem(l % r, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                        return new DoubleItem(l % r);
                     case IDIV:
-                        return new DoubleItem((int) (l / r), ItemMetadata.fromIteratorMetadata(getMetadata()));
+                        return new DoubleItem((int) (l / r));
                     default:
                         new IteratorFlowException("Non recognized multicative operator.", getMetadata());
                 }
@@ -127,14 +126,13 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
                 BigDecimal r = Item.<BigDecimal>getNumericValue(_right, BigDecimal.class);
                 switch (this._operator) {
                     case MUL:
-                        return new DecimalItem(l.multiply(r), ItemMetadata.fromIteratorMetadata(getMetadata()));
+                        return new DecimalItem(l.multiply(r));
                     case DIV:
-                        return new DecimalItem(l.divide(r, 10, BigDecimal.ROUND_HALF_UP),
-                                ItemMetadata.fromIteratorMetadata(getMetadata()));
+                        return new DecimalItem(l.divide(r, 10, BigDecimal.ROUND_HALF_UP));
                     case MOD:
-                        return new DecimalItem(l.remainder(r), ItemMetadata.fromIteratorMetadata(getMetadata()));
+                        return new DecimalItem(l.remainder(r));
                     case IDIV:
-                        return new DecimalItem(l.divideToIntegralValue(r), ItemMetadata.fromIteratorMetadata(getMetadata()));
+                        return new DecimalItem(l.divideToIntegralValue(r));
                     default:
                         new IteratorFlowException("Non recognized multicative operator.", getMetadata());
                 }

@@ -49,8 +49,7 @@ public class AvgFunctionIterator extends AggregateFunctionIterator {
                 BigDecimal sum = new BigDecimal(0);
                 for (Item r : results)
                     sum = sum.add(Item.getNumericValue(r, BigDecimal.class));
-                return new DecimalItem(sum.divide(new BigDecimal(results.size())),
-                        ItemMetadata.fromIteratorMetadata(getMetadata()));
+                return new DecimalItem(sum.divide(new BigDecimal(results.size())));
 
             } catch (IteratorFlowException e)
             {

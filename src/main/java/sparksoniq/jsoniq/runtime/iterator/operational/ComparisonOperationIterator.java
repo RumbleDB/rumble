@@ -130,7 +130,7 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
                     return result;
             }
         }
-        return new BooleanItem(false, ItemMetadata.fromIteratorMetadata(getMetadata()));
+        return new BooleanItem(false);
     }
 
     public BooleanItem comparePair(Item left, Item right) {
@@ -172,22 +172,22 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
         switch (this._operator) {
             case VC_EQ:
             case GC_EQ:
-                return new BooleanItem(comparison == 0, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                return new BooleanItem(comparison == 0);
             case VC_NE:
             case GC_NE:
-                return new BooleanItem(comparison != 0, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                return new BooleanItem(comparison != 0);
             case VC_LT:
             case GC_LT:
-                return new BooleanItem(comparison < 0, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                return new BooleanItem(comparison < 0);
             case VC_LE:
             case GC_LE:
-                return new BooleanItem(comparison < 0 || comparison == 0, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                return new BooleanItem(comparison < 0 || comparison == 0);
             case VC_GT:
             case GC_GT:
-                return new BooleanItem(comparison > 0, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                return new BooleanItem(comparison > 0);
             case VC_GE:
             case GC_GE:
-                return new BooleanItem(comparison > 0 || comparison == 0, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                return new BooleanItem(comparison > 0 || comparison == 0);
             default:
         }
         throw new IteratorFlowException("Unrecognized operator found", getMetadata());

@@ -19,8 +19,7 @@ public class PiFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            return new DoubleItem(Math.PI,
-                    ItemMetadata.fromIteratorMetadata(getMetadata()));
+            return new DoubleItem(Math.PI);
         } else
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " pi function", getMetadata());
     }

@@ -31,9 +31,9 @@ public class BooleanFunctionIterator extends LocalFunctionCallIterator {
                     }
                 }
 
-                result = new BooleanItem(Item.getEffectiveBooleanValue(item), ItemMetadata.fromIteratorMetadata(getMetadata()));
+                result = new BooleanItem(Item.getEffectiveBooleanValue(item));
             } else {
-                result = new BooleanItem(false, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                result = new BooleanItem(false);
             }
             iterator.close();
             return result;

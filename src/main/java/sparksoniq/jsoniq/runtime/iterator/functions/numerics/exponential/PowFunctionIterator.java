@@ -50,8 +50,7 @@ public class PowFunctionIterator extends LocalFunctionCallIterator {
                     Double result = Math.pow(Item.getNumericValue(base, Double.class)
                             , Item.getNumericValue(exponent, Double.class));
                     this._hasNext = false;
-                    return new DoubleItem(result,
-                            ItemMetadata.fromIteratorMetadata(getMetadata()));
+                    return new DoubleItem(result);
                 } catch (IteratorFlowException e)
                 {
                     e.setMetadata(getMetadata().getExpressionMetadata());

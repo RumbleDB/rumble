@@ -44,11 +44,13 @@ public class ObjectItem extends JsonItem{
     }
 
     public ObjectItem(List<String> keys, List<Item> values, ItemMetadata itemMetadata){
-        super(itemMetadata);
+        super();
         try {
             checkForDuplicateKeys(keys);
         } catch (DuplicateObjectKeyException e)
         {
+            System.out.println("\nThrow!\n"+itemMetadata.getExpressionMetadata().getTokenColumnNumber()+"\n"+itemMetadata.getExpressionMetadata().getTokenLineNumber());
+            
             e.setMetadata(itemMetadata.getExpressionMetadata());
             throw e;
         }
@@ -62,8 +64,8 @@ public class ObjectItem extends JsonItem{
      * @param keyValuePairs LinkedHashMap -- this map implementation preserves order of the keys -- essential for functionality
      * @param itemMetadata
      */
-    public ObjectItem(LinkedHashMap<String, List<Item>> keyValuePairs, ItemMetadata itemMetadata) {
-        super(itemMetadata);
+    public ObjectItem(LinkedHashMap<String, List<Item>> keyValuePairs) {
+        super();
 
         List<String> keyList = new ArrayList<>();
         List<Item> valueList = new ArrayList<>();
@@ -73,8 +75,7 @@ public class ObjectItem extends JsonItem{
             List<Item> values = keyValuePairs.get(key);
             // for each key, convert the lists of values into arrayItems
             if (values.size() > 1) {
-                ArrayItem valuesArray = new ArrayItem(values
-                        , itemMetadata);
+                ArrayItem valuesArray = new ArrayItem(values);
                 valueList.add(valuesArray);
             }
             else if (values.size() == 1) {

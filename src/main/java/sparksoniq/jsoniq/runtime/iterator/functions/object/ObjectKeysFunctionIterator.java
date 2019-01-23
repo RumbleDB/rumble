@@ -5,7 +5,6 @@ import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemUtil;
 import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.item.StringItem;
-import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
@@ -59,7 +58,7 @@ public class ObjectKeysFunctionIterator extends ObjectFunctionIterator {
                 ObjectItem objItem = (ObjectItem)item;
                 StringItem result;
                 for (String key : objItem.getKeys()) {
-                    result = new StringItem(key, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                    result = new StringItem(key);
                     // check if key was met earlier
                     if (!ItemUtil.listContainsItem(_prevResults, result))
                     {

@@ -36,8 +36,8 @@ public class DecimalItem extends AtomicItem {
         return _value;
     }
 
-    public DecimalItem(BigDecimal decimal, ItemMetadata itemMetadata){
-        super(itemMetadata);
+    public DecimalItem(BigDecimal decimal){
+        super();
         this._value = decimal;
     }
 

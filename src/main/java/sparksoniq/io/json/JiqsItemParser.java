@@ -36,22 +36,22 @@ public class JiqsItemParser implements Serializable {
     public static Item getItemFromObject(Object object, IteratorMetadata metadata) {
         if (object != null) {
             if (object instanceof String)
-                return new StringItem(object.toString(), ItemMetadata.fromIteratorMetadata(metadata));
+                return new StringItem(object.toString());
             if (object instanceof Integer)
-                return new IntegerItem((int) object, ItemMetadata.fromIteratorMetadata(metadata));
+                return new IntegerItem((int) object);
             if (object instanceof Double)
-                return new DoubleItem((double) object, ItemMetadata.fromIteratorMetadata(metadata));
+                return new DoubleItem((double) object);
             if (object instanceof BigDecimal)
-                return new DecimalItem(new BigDecimal(object.toString()), ItemMetadata.fromIteratorMetadata(metadata));
+                return new DecimalItem(new BigDecimal(object.toString()));
             if (object instanceof Boolean)
-                return new BooleanItem((boolean) object, ItemMetadata.fromIteratorMetadata(metadata));
+                return new BooleanItem((boolean) object);
             if (object instanceof JSONArray) {
                 JSONArray curentArray = (JSONArray) object;
                 List<Item> values = new ArrayList<>();
                 int index = 0;
                 while (index < curentArray.length())
                     values.add(getItemFromObject(curentArray.get(index++), metadata));
-                return new ArrayItem(values, ItemMetadata.fromIteratorMetadata(metadata));
+                return new ArrayItem(values);
             }
             if (object instanceof JSONObject) {
                 JSONObject currentObject = (JSONObject) object;
@@ -65,7 +65,7 @@ public class JiqsItemParser implements Serializable {
             }
 
         }
-        return new NullItem(ItemMetadata.fromIteratorMetadata(metadata));
+        return new NullItem();
     }
 
 }

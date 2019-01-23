@@ -53,14 +53,11 @@ public class UnaryOperationIterator extends UnaryOperationBaseIterator {
             {
                 if(Item.isNumeric(child)){
                     if(child instanceof IntegerItem)
-                        return new IntegerItem(-1 * ((IntegerItem)child).getIntegerValue(),
-                                ItemMetadata.fromIteratorMetadata(getMetadata()));
+                        return new IntegerItem(-1 * ((IntegerItem)child).getIntegerValue());
                     if(child instanceof DoubleItem)
-                        return new DoubleItem(-1 * ((DoubleItem)child).getDoubleValue(),
-                                ItemMetadata.fromIteratorMetadata(getMetadata()));
+                        return new DoubleItem(-1 * ((DoubleItem)child).getDoubleValue());
                     if(child instanceof DecimalItem)
-                        return new DecimalItem(((DecimalItem)child).getDecimalValue().multiply(new BigDecimal(-1)),
-                                ItemMetadata.fromIteratorMetadata(getMetadata()));
+                        return new DecimalItem(((DecimalItem)child).getDecimalValue().multiply(new BigDecimal(-1)));
                 }
                 throw new UnexpectedTypeException("Unary expression has non numeric args " +
                         child.serialize(), getMetadata());

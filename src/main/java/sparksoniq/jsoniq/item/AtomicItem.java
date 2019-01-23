@@ -80,8 +80,8 @@ public abstract class AtomicItem extends Item {
         return false;
     }
 
-    protected AtomicItem(ItemMetadata itemMetadata) {
-        super(itemMetadata);
+    protected AtomicItem() {
+        super();
     }
 
 }

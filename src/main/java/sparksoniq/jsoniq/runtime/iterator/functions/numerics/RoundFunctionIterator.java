@@ -53,7 +53,7 @@ public class RoundFunctionIterator extends LocalFunctionCallIterator {
             }
             // if second param is not given precision is set as 0 (rounds to a whole number)
             else {
-                precision = new IntegerItem(0, ItemMetadata.fromIteratorMetadata(this.getMetadata()));
+                precision = new IntegerItem(0);
             }
             if (Item.isNumeric(value) && Item.isNumeric(precision)) {
                 try {
@@ -65,8 +65,7 @@ public class RoundFunctionIterator extends LocalFunctionCallIterator {
                     bd = bd.setScale(prec, RoundingMode.HALF_UP);
                     Double result = bd.doubleValue();
     
-                    return new DoubleItem(result,
-                            ItemMetadata.fromIteratorMetadata(getMetadata()));
+                    return new DoubleItem(result);
 
                 } catch (IteratorFlowException e)
                 {

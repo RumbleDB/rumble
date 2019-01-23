@@ -41,8 +41,7 @@ public class CosFunctionIterator extends LocalFunctionCallIterator {
             if (Item.isNumeric(radians)) {
                 try {
                     Double result = Math.cos(Item.getNumericValue(radians, Double.class));
-                    return new DoubleItem(result,
-                            ItemMetadata.fromIteratorMetadata(getMetadata()));
+                    return new DoubleItem(result);
 
                 } catch (IteratorFlowException e)
                 {

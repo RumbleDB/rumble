@@ -69,7 +69,7 @@ public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
             for (BooleanItem res : results)
                 result = this._operator == QuantifiedExpression.QuantifiedOperators.EVERY ?
                         result && res.getBooleanValue() : result || res.getBooleanValue();
-            return new BooleanItem(result, ItemMetadata.fromIteratorMetadata(getMetadata()));
+            return new BooleanItem(result);
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "Quantified Expr", getMetadata());
     }

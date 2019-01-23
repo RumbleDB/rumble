@@ -25,7 +25,6 @@ import sparksoniq.exceptions.InvalidSelectorException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.*;
-import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.ContextExpressionIterator;
@@ -75,16 +74,16 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                 // convert to string
                 if (_lookupKey.isBoolean()) {
                     Boolean value = ((BooleanItem)_lookupKey).getValue();
-                    _lookupKey = new StringItem(value.toString(), ItemMetadata.fromIteratorMetadata(getMetadata()));
+                    _lookupKey = new StringItem(value.toString());
                 } else if (_lookupKey.isDecimal()) {
                     BigDecimal value = ((DecimalItem)_lookupKey).getValue();
-                    _lookupKey = new StringItem(value.toString(), ItemMetadata.fromIteratorMetadata(getMetadata()));
+                    _lookupKey = new StringItem(value.toString());
                 } else if (_lookupKey.isDouble()) {
                     Double value = ((DoubleItem)_lookupKey).getValue();
-                    _lookupKey = new StringItem(value.toString(), ItemMetadata.fromIteratorMetadata(getMetadata()));
+                    _lookupKey = new StringItem(value.toString());
                 } else if (_lookupKey.isInteger()) {
                     Integer value = ((IntegerItem)_lookupKey).getValue();
-                    _lookupKey = new StringItem(value.toString(), ItemMetadata.fromIteratorMetadata(getMetadata()));
+                    _lookupKey = new StringItem(value.toString());
                 } else if (_lookupKey.isString()) {
                     // do nothing
                 }

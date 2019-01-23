@@ -36,7 +36,7 @@ public class DeepEqualFunctionIterator extends LocalFunctionCallIterator {
             List<Item> items2 = getItemsFromIteratorWithCurrentContext(sequenceIterator2);
 
             boolean res = checkDeepEqual(items1, items2);
-            return new BooleanItem(res, ItemMetadata.fromIteratorMetadata(getMetadata()));
+            return new BooleanItem(res);
         } else {
             throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "deep-equal function", getMetadata());
         }

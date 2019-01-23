@@ -35,8 +35,8 @@ public class BooleanItem extends AtomicItem {
         return _value;
     }
 
-    public BooleanItem(boolean value, ItemMetadata itemMetadata){
-        super(itemMetadata);
+    public BooleanItem(boolean value){
+        super();
         this._value = value;
     }
 

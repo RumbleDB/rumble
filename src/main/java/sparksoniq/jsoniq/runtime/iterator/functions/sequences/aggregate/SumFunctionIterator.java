@@ -70,7 +70,7 @@ public class SumFunctionIterator extends AggregateFunctionIterator {
                     BigDecimal current = Item.getNumericValue(r, BigDecimal.class);
                     sumResult = sumResult.add(current);
                 }
-                return new DecimalItem(sumResult, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                return new DecimalItem(sumResult);
 
             } catch (IteratorFlowException e)
             {

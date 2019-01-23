@@ -4,7 +4,6 @@ import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.StringItem;
-import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -37,7 +36,7 @@ public class ConcatFunctionIterator extends LocalFunctionCallIterator {
                 }
             }
             this._hasNext = false;
-            return new StringItem(builder.toString(), ItemMetadata.fromIteratorMetadata(getMetadata()));
+            return new StringItem(builder.toString());
         } else
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " substring function", getMetadata());
     }

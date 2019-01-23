@@ -37,8 +37,8 @@ public class ArrayItem extends JsonItem {
         return _arrayItems;
     }
 
-    public ArrayItem(List<Item> arrayItems, ItemMetadata itemMetadata){
-        super(itemMetadata);
+    public ArrayItem(List<Item> arrayItems){
+        super();
         this._arrayItems = arrayItems;
     }
 

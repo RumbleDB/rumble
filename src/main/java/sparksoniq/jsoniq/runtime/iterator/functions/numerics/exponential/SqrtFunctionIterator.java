@@ -41,8 +41,7 @@ public class SqrtFunctionIterator extends LocalFunctionCallIterator {
                 try {
                     Double result = Math.sqrt(Item.getNumericValue(value, Double.class));
                     this._hasNext = false;
-                    return new DoubleItem(result,
-                            ItemMetadata.fromIteratorMetadata(getMetadata()));
+                    return new DoubleItem(result);
 
                 } catch (IteratorFlowException e)
                 {

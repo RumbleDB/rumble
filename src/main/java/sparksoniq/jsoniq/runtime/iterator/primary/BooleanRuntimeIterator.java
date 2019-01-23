@@ -30,7 +30,7 @@ public class BooleanRuntimeIterator extends AtomicRuntimeIterator {
     public BooleanItem next() {
         if (this._hasNext) {
             this._hasNext = false;
-            return new BooleanItem(_item, ItemMetadata.fromIteratorMetadata(getMetadata()));
+            return new BooleanItem(_item);
         }
 
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item, getMetadata());

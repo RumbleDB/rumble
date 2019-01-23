@@ -69,7 +69,7 @@ public abstract class JsonItem extends Item {
         return false;
     }
 
-    protected JsonItem(ItemMetadata itemMetadata) {
-        super(itemMetadata);
+    protected JsonItem() {
+        super();
     }
 }

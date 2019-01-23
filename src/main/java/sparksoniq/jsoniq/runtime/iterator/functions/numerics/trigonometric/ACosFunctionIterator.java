@@ -42,8 +42,7 @@ public class ACosFunctionIterator extends LocalFunctionCallIterator {
                 try {
                     Double result = Math.acos(Item.getNumericValue(radians, Double.class));
     
-                    return new DoubleItem(result,
-                            ItemMetadata.fromIteratorMetadata(getMetadata()));
+                    return new DoubleItem(result);
 
                 } catch (IteratorFlowException e)
                 {

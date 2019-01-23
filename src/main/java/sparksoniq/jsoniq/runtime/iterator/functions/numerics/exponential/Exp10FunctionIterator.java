@@ -42,8 +42,7 @@ public class Exp10FunctionIterator extends LocalFunctionCallIterator {
                 try {
                     Double result = Math.pow(10.0, Item.getNumericValue(exponent, Double.class));
     
-                    return new DoubleItem(result,
-                            ItemMetadata.fromIteratorMetadata(getMetadata()));
+                    return new DoubleItem(result);
                 } catch (IteratorFlowException e)
                 {
                     e.setMetadata(getMetadata().getExpressionMetadata());
