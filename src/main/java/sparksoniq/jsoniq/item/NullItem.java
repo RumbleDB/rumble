@@ -29,7 +29,7 @@ import java.math.BigDecimal;
 
 public class NullItem extends AtomicItem {
 
-    public NullItem(ItemMetadata itemMetadata){super(itemMetadata);}
+    public NullItem(){super();}
 
     @Override
     public String getStringValue() throws OperationNotSupportedException {

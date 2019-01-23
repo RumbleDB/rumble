@@ -22,7 +22,7 @@
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import sparksoniq.jsoniq.item.metadata.ItemMetadata;
+
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
@@ -35,8 +35,8 @@ public class StringItem extends AtomicItem{
         return _value;
     }
 
-    public StringItem(String value, ItemMetadata itemMetadata){
-        super(itemMetadata);
+    public StringItem(String value){
+        super();
         this._value = value;
     }
 

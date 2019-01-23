@@ -31,7 +31,7 @@ public class DoubleRuntimeIterator extends AtomicRuntimeIterator{
     public DoubleItem next() {
         if (this._hasNext) {
             this._hasNext = false;
-            return new DoubleItem(_item, ItemMetadata.fromIteratorMetadata(getMetadata()));
+            return new DoubleItem(_item);
         }
 
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item, getMetadata());

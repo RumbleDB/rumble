@@ -40,6 +40,6 @@ public class NotOperationIterator extends UnaryOperationBaseIterator {
         Item child = _child.next();
         _child.close();
         this._hasNext = false;
-        return new BooleanItem(!Item.getEffectiveBooleanValue(child), ItemMetadata.fromIteratorMetadata(getMetadata()));
+        return new BooleanItem(!Item.getEffectiveBooleanValue(child));
     }
 }

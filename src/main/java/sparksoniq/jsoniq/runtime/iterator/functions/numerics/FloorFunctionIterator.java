@@ -39,9 +39,14 @@ public class FloorFunctionIterator extends LocalFunctionCallIterator {
             this._hasNext = false;
             Item value = this.getSingleItemOfTypeFromIterator(_iterator, Item.class);
             if (Item.isNumeric(value)) {
-                Double result = Math.floor(Item.getNumericValue(value, Double.class));
-                return new DoubleItem(result,
-                        ItemMetadata.fromIteratorMetadata(getMetadata()));
+                try {
+                    Double result = Math.floor(Item.getNumericValue(value, Double.class));
+                    return new DoubleItem(result);
+
+                } catch (IteratorFlowException e)
+                {
+                    throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
+                }
             } else {
                 throw new UnexpectedTypeException("Floor expression has non numeric args " +
                         value.serialize(), getMetadata());

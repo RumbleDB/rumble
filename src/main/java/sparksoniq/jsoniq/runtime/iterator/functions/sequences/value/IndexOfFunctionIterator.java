@@ -5,7 +5,6 @@ import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -70,7 +69,7 @@ public class IndexOfFunctionIterator extends LocalFunctionCallIterator {
                 throw new NonAtomicKeyException("Invalid args. index-of can't be performed with a non-atomic in the input sequence", getMetadata().getExpressionMetadata());
             } else {
                 if (Item.compareItems(item, _search) == 0) {
-                    _nextResult = new IntegerItem(_currentIndex, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                    _nextResult = new IntegerItem(_currentIndex);
                     break;
                 }
             }

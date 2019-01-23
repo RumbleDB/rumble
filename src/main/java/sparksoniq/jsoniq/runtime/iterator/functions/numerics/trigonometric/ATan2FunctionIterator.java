@@ -38,11 +38,16 @@ public class ATan2FunctionIterator extends LocalFunctionCallIterator {
             }
 
             if (Item.isNumeric(y) && Item.isNumeric(x)) {
-                Double result = Math.atan2(Item.getNumericValue(y, Double.class)
-                        , Item.getNumericValue(x, Double.class));
-                this._hasNext = false;
-                return new DoubleItem(result,
-                        ItemMetadata.fromIteratorMetadata(getMetadata()));
+                try {
+                    Double result = Math.atan2(Item.getNumericValue(y, Double.class)
+                            , Item.getNumericValue(x, Double.class));
+                    this._hasNext = false;
+                    return new DoubleItem(result);
+
+                } catch (IteratorFlowException e)
+                {
+                    throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
+                }
             } else {
                 throw new UnexpectedTypeException("ATan2 expression has non numeric args " +
                         y.serialize() + ", " + x.serialize(), getMetadata());

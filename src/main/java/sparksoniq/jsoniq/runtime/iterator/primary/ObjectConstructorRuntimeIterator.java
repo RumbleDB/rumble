@@ -80,7 +80,7 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
                     valueIterator.close();
                     //SIMILAR TO ZORBA, if value is more than one item, wrap it in an array
                     if (currentResults.size() > 1)
-                        values.add(new ArrayItem(currentResults, ItemMetadata.fromIteratorMetadata(getMetadata())));
+                        values.add(new ArrayItem(currentResults));
                     else
                         values.add(currentResults.get(0));
                 }

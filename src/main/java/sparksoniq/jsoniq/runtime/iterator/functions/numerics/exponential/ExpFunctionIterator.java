@@ -39,9 +39,14 @@ public class ExpFunctionIterator extends LocalFunctionCallIterator {
             this._hasNext = false;
             Item exponent = this.getSingleItemOfTypeFromIterator(_iterator, Item.class);
             if (Item.isNumeric(exponent)) {
-                Double result = Math.exp(Item.getNumericValue(exponent, Double.class));
-                return new DoubleItem(result,
-                        ItemMetadata.fromIteratorMetadata(getMetadata()));
+                try{
+                    Double result = Math.exp(Item.getNumericValue(exponent, Double.class));
+                    return new DoubleItem(result);
+
+                } catch (IteratorFlowException e)
+                {
+                    throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
+                }
             } else {
                 throw new UnexpectedTypeException("Exp expression has non numeric args " +
                         exponent.serialize(), getMetadata());

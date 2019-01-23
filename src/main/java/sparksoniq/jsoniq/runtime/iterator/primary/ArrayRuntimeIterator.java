@@ -42,7 +42,7 @@ public class ArrayRuntimeIterator extends LocalRuntimeIterator {
     public ArrayItem next() {
         if(this._hasNext) {
             List<Item> result = this.runChildrenIterators(this._currentDynamicContext);
-            this._item = new ArrayItem(result, ItemMetadata.fromIteratorMetadata(getMetadata()));
+            this._item = new ArrayItem(result);
             this._hasNext = false;
             return _item;
         }

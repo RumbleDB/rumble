@@ -39,9 +39,13 @@ public class AbsFunctionIterator extends LocalFunctionCallIterator {
             this._hasNext = false;
             Item value = this.getSingleItemOfTypeFromIterator(_iterator, Item.class);
             if (Item.isNumeric(value)) {
-                Double result = Math.abs(Item.getNumericValue(value, Double.class));
-                return new DoubleItem(result,
-                        ItemMetadata.fromIteratorMetadata(getMetadata()));
+                try {
+                    Double result = Math.abs(Item.getNumericValue(value, Double.class));
+                    return new DoubleItem(result);
+                } catch (IteratorFlowException e)
+                {
+                    throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
+                }
             }
             else {
                 throw new UnexpectedTypeException("Abs expression has non numeric args " +

@@ -87,8 +87,12 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
                     + lookupExpression.serialize(), getMetadata());
         }
         lookupIterator.close();
-
-        _lookup = Item.getNumericValue(lookupExpression, Integer.class);
+        try {
+            _lookup = Item.getNumericValue(lookupExpression, Integer.class);
+        } catch (IteratorFlowException e)
+        {
+            throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
+        }
     }
 
     @Override

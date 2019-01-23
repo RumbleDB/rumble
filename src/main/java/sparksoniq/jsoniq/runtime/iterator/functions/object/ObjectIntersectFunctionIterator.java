@@ -62,7 +62,7 @@ public class ObjectIntersectFunctionIterator extends ObjectFunctionIterator {
                 }
             }
 
-            ObjectItem result = new ObjectItem(keyValuePairs, ItemMetadata.fromIteratorMetadata(getMetadata()));
+            ObjectItem result = new ObjectItem(keyValuePairs);
 
             this._hasNext = false;
             return result;

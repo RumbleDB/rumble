@@ -34,9 +34,14 @@ public class SparksoniqRuntimeException extends RuntimeException {
         return metadata;
     }
 
+    public String getJSONiqErrorMessage() {
+        return errorMessage;
+    }
+
     public SparksoniqRuntimeException(String message) {
         super("Error [err: " + ErrorCodes.RuntimeExceptionErrorCode + " ] " + message);
         this.errorCode = ErrorCodes.RuntimeExceptionErrorCode;
+        this.errorMessage = message;
     }
 
     public SparksoniqRuntimeException(String message, String errorCode) {
@@ -51,6 +56,7 @@ public class SparksoniqRuntimeException extends RuntimeException {
             this.errorCode = ErrorCodes.RuntimeExceptionErrorCode;
         else
             this.errorCode = errorCode;
+        this.errorMessage = message;
     }
 
 
@@ -70,6 +76,7 @@ public class SparksoniqRuntimeException extends RuntimeException {
         else
             this.errorCode = errorCode;
         this.metadata = metadata;
+        this.errorMessage = message;
     }
 
     public SparksoniqRuntimeException(String message,  ExpressionMetadata metadata) {
@@ -79,8 +86,10 @@ public class SparksoniqRuntimeException extends RuntimeException {
                 + message);
         this.errorCode = ErrorCodes.RuntimeExceptionErrorCode;;
         this.metadata = metadata;
+        this.errorMessage = message;
     }
 
     private final String errorCode;
+    private final String errorMessage;
     private ExpressionMetadata metadata;
 }

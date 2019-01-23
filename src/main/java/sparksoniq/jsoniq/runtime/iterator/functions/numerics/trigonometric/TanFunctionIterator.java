@@ -39,9 +39,14 @@ public class TanFunctionIterator extends LocalFunctionCallIterator {
             this._hasNext = false;
             Item radians = this.getSingleItemOfTypeFromIterator(_iterator, Item.class);
             if (Item.isNumeric(radians)) {
-                Double result = Math.tan(Item.getNumericValue(radians, Double.class));
-                return new DoubleItem(result,
-                        ItemMetadata.fromIteratorMetadata(getMetadata()));
+                try {
+                    Double result = Math.tan(Item.getNumericValue(radians, Double.class));
+                    return new DoubleItem(result);
+
+                } catch (IteratorFlowException e)
+                {
+                    throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
+                }
             } else {
                 throw new UnexpectedTypeException("Tan expression has non numeric args " +
                         radians.serialize(), getMetadata());

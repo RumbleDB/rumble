@@ -36,7 +36,7 @@ public class NullRuntimeIterator extends AtomicRuntimeIterator {
     public AtomicItem next() {
         if (this._hasNext) {
             this._hasNext = false;
-            return new NullItem(ItemMetadata.fromIteratorMetadata(getMetadata()));
+            return new NullItem();
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "\"null\"", getMetadata());
     }

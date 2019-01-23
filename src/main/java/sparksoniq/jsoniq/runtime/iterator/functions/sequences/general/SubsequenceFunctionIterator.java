@@ -61,7 +61,13 @@ public class SubsequenceFunctionIterator extends LocalFunctionCallIterator {
             }
             lengthIterator.close();
             // round double to nearest int
-            _length = (int) Math.round((Item.getNumericValue(lengthItem, Double.class)));
+            try {
+                _length = (int) Math.round((Item.getNumericValue(lengthItem, Double.class)));
+
+            } catch (IteratorFlowException e)
+            {
+                throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
+            }
         }
 
         // process start position param

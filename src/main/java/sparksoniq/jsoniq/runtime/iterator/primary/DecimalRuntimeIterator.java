@@ -33,7 +33,7 @@ public class DecimalRuntimeIterator extends AtomicRuntimeIterator {
     public DecimalItem next() {
         if (this._hasNext) {
             this._hasNext = false;
-            return new DecimalItem(_item, ItemMetadata.fromIteratorMetadata(getMetadata()));
+            return new DecimalItem(_item);
         }
 
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item, getMetadata());

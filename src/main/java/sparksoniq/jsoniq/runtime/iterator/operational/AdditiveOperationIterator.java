@@ -23,7 +23,6 @@ import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.item.*;
-import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -50,29 +49,41 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
 
             Type returnType = Item.getNumericResultType(_left, _right);
             if(returnType.equals(IntegerItem.class)){
-                int l = Item.<Integer>getNumericValue(_left, Integer.class);
-                int r = Item.<Integer>getNumericValue(_right, Integer.class);
-                return this._operator == OperationalExpressionBase.Operator.PLUS?
-                        new IntegerItem(l + r,
-                                ItemMetadata.fromIteratorMetadata(getMetadata())) :
-                        new IntegerItem(l - r,
-                                ItemMetadata.fromIteratorMetadata(getMetadata()));
+                try {
+                    int l = Item.<Integer>getNumericValue(_left, Integer.class);
+                    int r = Item.<Integer>getNumericValue(_right, Integer.class);
+                    return this._operator == OperationalExpressionBase.Operator.PLUS?
+                            new IntegerItem(l + r) :
+                            new IntegerItem(l - r);
+
+                } catch (IteratorFlowException e)
+                {
+                    throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
+                }
             } else if(returnType.equals(DoubleItem.class)){
-                double l = Item.<Double>getNumericValue(_left, Double.class);
-                double r = Item.<Double>getNumericValue(_right, Double.class);
-                return this._operator == OperationalExpressionBase.Operator.PLUS?
-                        new DoubleItem(l + r,
-                                ItemMetadata.fromIteratorMetadata(getMetadata())) :
-                        new DoubleItem(l - r,
-                                ItemMetadata.fromIteratorMetadata(getMetadata()));
+                try {
+                    double l = Item.<Double>getNumericValue(_left, Double.class);
+                    double r = Item.<Double>getNumericValue(_right, Double.class);
+                    return this._operator == OperationalExpressionBase.Operator.PLUS?
+                            new DoubleItem(l + r) :
+                            new DoubleItem(l - r);
+
+                } catch (IteratorFlowException e)
+                {
+                    throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
+                }
             } else if(returnType.equals(DecimalItem.class)){
-                BigDecimal l = Item.<BigDecimal>getNumericValue(_left, BigDecimal.class);
-                BigDecimal r = Item.<BigDecimal>getNumericValue(_right, BigDecimal.class);
-                return this._operator == OperationalExpressionBase.Operator.PLUS?
-                        new DecimalItem(l.add(r),
-                                ItemMetadata.fromIteratorMetadata(getMetadata())) :
-                        new DecimalItem(l.subtract(r),
-                                ItemMetadata.fromIteratorMetadata(getMetadata()));
+                try {
+                    BigDecimal l = Item.<BigDecimal>getNumericValue(_left, BigDecimal.class);
+                    BigDecimal r = Item.<BigDecimal>getNumericValue(_right, BigDecimal.class);
+                    return this._operator == OperationalExpressionBase.Operator.PLUS?
+                            new DecimalItem(l.add(r)) :
+                            new DecimalItem(l.subtract(r));
+
+                } catch (IteratorFlowException e)
+                {
+                    throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
+                }
             } else {
                 throw new IteratorFlowException("Additive expression has non numeric args", getMetadata());
             }

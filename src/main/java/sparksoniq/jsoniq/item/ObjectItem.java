@@ -23,6 +23,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import sparksoniq.exceptions.DuplicateObjectKeyException;
+import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
@@ -43,8 +44,8 @@ public class ObjectItem extends JsonItem{
     }
 
     public ObjectItem(List<String> keys, List<Item> values, ItemMetadata itemMetadata){
-        super(itemMetadata);
-        checkForDuplicateKeys(keys);
+        super();
+        checkForDuplicateKeys(keys, itemMetadata);
         this._keys = keys;
         this._values = values;
     }
@@ -55,8 +56,8 @@ public class ObjectItem extends JsonItem{
      * @param keyValuePairs LinkedHashMap -- this map implementation preserves order of the keys -- essential for functionality
      * @param itemMetadata
      */
-    public ObjectItem(LinkedHashMap<String, List<Item>> keyValuePairs, ItemMetadata itemMetadata) {
-        super(itemMetadata);
+    public ObjectItem(LinkedHashMap<String, List<Item>> keyValuePairs) {
+        super();
 
         List<String> keyList = new ArrayList<>();
         List<Item> valueList = new ArrayList<>();
@@ -66,8 +67,7 @@ public class ObjectItem extends JsonItem{
             List<Item> values = keyValuePairs.get(key);
             // for each key, convert the lists of values into arrayItems
             if (values.size() > 1) {
-                ArrayItem valuesArray = new ArrayItem(values
-                        , itemMetadata);
+                ArrayItem valuesArray = new ArrayItem(values);
                 valueList.add(valuesArray);
             }
             else if (values.size() == 1) {
@@ -87,11 +87,11 @@ public class ObjectItem extends JsonItem{
         this._values = valueList;
     }
 
-    private void checkForDuplicateKeys(List<String> keys) {
+    private void checkForDuplicateKeys(List<String> keys, ItemMetadata metadata) {
         HashMap<String, Integer> frequencies = new HashMap<>();
         for(String key : keys) {
             if(frequencies.containsKey(key))
-                throw new DuplicateObjectKeyException(key, getItemMetadata().getExpressionMetadata());
+                throw new DuplicateObjectKeyException(key, metadata.getExpressionMetadata());
 
             else
                 frequencies.put(key, 1);

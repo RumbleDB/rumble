@@ -17,6 +17,6 @@ public class NullFunctionIterator extends LocalFunctionCallIterator {
 
     @Override
     public Item next() {
-        return new NullItem(ItemMetadata.fromIteratorMetadata(getMetadata()));
+        return new NullItem();
     }
 }

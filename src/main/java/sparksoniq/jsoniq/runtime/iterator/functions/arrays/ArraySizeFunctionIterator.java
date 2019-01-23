@@ -23,7 +23,6 @@ import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
@@ -57,7 +56,7 @@ public class ArraySizeFunctionIterator extends ArrayFunctionIterator {
             this._hasNext = false;
 
             ArrayItem array = getSingleItemOfTypeFromIterator(arrayIterator, ArrayItem.class);
-            return new IntegerItem(array.getSize(), ItemMetadata.fromIteratorMetadata(getMetadata()));
+            return new IntegerItem(array.getSize());
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "SIZE function",
                 getMetadata());
