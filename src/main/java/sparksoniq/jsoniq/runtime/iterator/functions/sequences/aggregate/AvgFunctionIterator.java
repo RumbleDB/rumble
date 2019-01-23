@@ -44,12 +44,19 @@ public class AvgFunctionIterator extends AggregateFunctionIterator {
                     throw new InvalidArgumentTypeException("Average expression has non numeric args " +
                             r.serialize(), getMetadata());
             });
-            //TODO check numeric types conversions
-            BigDecimal sum = new BigDecimal(0);
-            for (Item r : results)
-                sum = sum.add(Item.getNumericValue(r, BigDecimal.class));
-            return new DecimalItem(sum.divide(new BigDecimal(results.size())),
-                    ItemMetadata.fromIteratorMetadata(getMetadata()));
+            try {
+                //TODO check numeric types conversions
+                BigDecimal sum = new BigDecimal(0);
+                for (Item r : results)
+                    sum = sum.add(Item.getNumericValue(r, BigDecimal.class));
+                return new DecimalItem(sum.divide(new BigDecimal(results.size())),
+                        ItemMetadata.fromIteratorMetadata(getMetadata()));
+
+            } catch (IteratorFlowException e)
+            {
+                e.setMetadata(getMetadata().getExpressionMetadata());
+                throw e;
+            }
         }
         throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "AVG function",
                     getMetadata());

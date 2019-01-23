@@ -39,9 +39,16 @@ public class CosFunctionIterator extends LocalFunctionCallIterator {
             this._hasNext = false;
             Item radians = this.getSingleItemOfTypeFromIterator(_iterator, Item.class);
             if (Item.isNumeric(radians)) {
-                Double result = Math.cos(Item.getNumericValue(radians, Double.class));
-                return new DoubleItem(result,
-                        ItemMetadata.fromIteratorMetadata(getMetadata()));
+                try {
+                    Double result = Math.cos(Item.getNumericValue(radians, Double.class));
+                    return new DoubleItem(result,
+                            ItemMetadata.fromIteratorMetadata(getMetadata()));
+
+                } catch (IteratorFlowException e)
+                {
+                    e.setMetadata(getMetadata().getExpressionMetadata());
+                    throw e;
+                }
             } else {
                 throw new UnexpectedTypeException("Cos expression has non numeric args " +
                         radians.serialize(), getMetadata());

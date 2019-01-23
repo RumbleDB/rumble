@@ -23,6 +23,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import sparksoniq.exceptions.DuplicateObjectKeyException;
+import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
@@ -44,7 +45,13 @@ public class ObjectItem extends JsonItem{
 
     public ObjectItem(List<String> keys, List<Item> values, ItemMetadata itemMetadata){
         super(itemMetadata);
-        checkForDuplicateKeys(keys);
+        try {
+            checkForDuplicateKeys(keys);
+        } catch (DuplicateObjectKeyException e)
+        {
+            e.setMetadata(itemMetadata.getExpressionMetadata());
+            throw e;
+        }
         this._keys = keys;
         this._values = values;
     }
@@ -91,7 +98,7 @@ public class ObjectItem extends JsonItem{
         HashMap<String, Integer> frequencies = new HashMap<>();
         for(String key : keys) {
             if(frequencies.containsKey(key))
-                throw new DuplicateObjectKeyException(key, getItemMetadata().getExpressionMetadata());
+                throw new DuplicateObjectKeyException(key);
 
             else
                 frequencies.put(key, 1);

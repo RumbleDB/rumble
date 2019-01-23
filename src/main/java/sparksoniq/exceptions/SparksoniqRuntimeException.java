@@ -34,6 +34,10 @@ public class SparksoniqRuntimeException extends RuntimeException {
         return metadata;
     }
 
+    public void setMetadata(ExpressionMetadata expressionMetadata) {
+        metadata = expressionMetadata;
+    }
+
     public SparksoniqRuntimeException(String message) {
         super("Error [err: " + ErrorCodes.RuntimeExceptionErrorCode + " ] " + message);
         this.errorCode = ErrorCodes.RuntimeExceptionErrorCode;

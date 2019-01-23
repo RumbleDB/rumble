@@ -63,15 +63,20 @@ public class SumFunctionIterator extends AggregateFunctionIterator {
                     throw new InvalidArgumentTypeException("Sum expression has non numeric args " +
                             r.serialize(), getMetadata());
             });
+            try {
+                // if input is empty sequence and _zeroItem is not given 0 is returned
+                BigDecimal sumResult = new BigDecimal(0);
+                for (Item r : results) {
+                    BigDecimal current = Item.getNumericValue(r, BigDecimal.class);
+                    sumResult = sumResult.add(current);
+                }
+                return new DecimalItem(sumResult, ItemMetadata.fromIteratorMetadata(getMetadata()));
 
-            // if input is empty sequence and _zeroItem is not given 0 is returned
-            BigDecimal sumResult = new BigDecimal(0);
-            for (Item r : results) {
-                BigDecimal current = Item.getNumericValue(r, BigDecimal.class);
-                sumResult = sumResult.add(current);
+            } catch (IteratorFlowException e)
+            {
+                e.setMetadata(getMetadata().getExpressionMetadata());
+                throw e;
             }
-            return new DecimalItem(sumResult, ItemMetadata.fromIteratorMetadata(getMetadata()));
-
         } else
             throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "SUM function",
                     getMetadata());

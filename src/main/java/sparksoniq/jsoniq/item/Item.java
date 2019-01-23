@@ -93,7 +93,7 @@ public abstract class Item implements SerializableItem {
             }
 
         }
-        throw new IteratorFlowException("Cannot call getNumericValue on non numeric", item.getItemMetadata());
+        throw new IteratorFlowException("Cannot call getNumericValue on non numeric");
     }
 
     //returns an effective boolean value of any item type
@@ -231,9 +231,9 @@ public abstract class Item implements SerializableItem {
         return false;
     }
 
-    public ItemMetadata getItemMetadata() {
+    /*public ItemMetadata getItemMetadata() {
         return itemMetadata;
-    }
+    }*/
 
     protected Item(ItemMetadata itemMetadata) {
         this.itemMetadata = itemMetadata;

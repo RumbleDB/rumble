@@ -56,16 +56,23 @@ public class RoundFunctionIterator extends LocalFunctionCallIterator {
                 precision = new IntegerItem(0, ItemMetadata.fromIteratorMetadata(this.getMetadata()));
             }
             if (Item.isNumeric(value) && Item.isNumeric(precision)) {
+                try {
 
-                Double val = Item.getNumericValue(value, Double.class);
-                Integer prec = Item.getNumericValue(precision, Integer.class);
+                    Double val = Item.getNumericValue(value, Double.class);
+                    Integer prec = Item.getNumericValue(precision, Integer.class);
+    
+                    BigDecimal bd = new BigDecimal(val);
+                    bd = bd.setScale(prec, RoundingMode.HALF_UP);
+                    Double result = bd.doubleValue();
+    
+                    return new DoubleItem(result,
+                            ItemMetadata.fromIteratorMetadata(getMetadata()));
 
-                BigDecimal bd = new BigDecimal(val);
-                bd = bd.setScale(prec, RoundingMode.HALF_UP);
-                Double result = bd.doubleValue();
-
-                return new DoubleItem(result,
-                        ItemMetadata.fromIteratorMetadata(getMetadata()));
+                } catch (IteratorFlowException e)
+                {
+                    e.setMetadata(getMetadata().getExpressionMetadata());
+                    throw e;
+                }
             } else {
                 throw new UnexpectedTypeException("Round expression has non numeric args " +
                         value.serialize() + ", " + precision.serialize(), getMetadata());

@@ -28,7 +28,7 @@ public class IteratorFlowException extends SparksoniqRuntimeException {
         super(message, ErrorCodes.RuntimeExceptionErrorCode, metadata.getExpressionMetadata());
     }
 
-    public IteratorFlowException(String message, ItemMetadata metadata) {
-        super(message, ErrorCodes.RuntimeExceptionErrorCode, metadata.getExpressionMetadata());
+    public IteratorFlowException(String message) {
+        super(message, ErrorCodes.RuntimeExceptionErrorCode);
     }
 }

@@ -72,34 +72,40 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
 
             Type returnType = Item.getNumericResultType(_left, _right);
             if (returnType.equals(IntegerItem.class)) {
-                int l = Item.<Integer>getNumericValue(_left, Integer.class);
-                int r = Item.<Integer>getNumericValue(_right, Integer.class);
-                switch (this._operator) {
-                    case MUL:
-                        return new IntegerItem(l * r, ItemMetadata.fromIteratorMetadata(getMetadata()));
-                    case DIV:
-                        BigDecimal decLeft = Item.<BigDecimal>getNumericValue(_left, BigDecimal.class);
-                        BigDecimal decRight = Item.<BigDecimal>getNumericValue(_right, BigDecimal.class);
-                        BigDecimal bdResult = decLeft.divide(decRight, 10, BigDecimal.ROUND_HALF_UP);
-                        // if the result contains no decimal part, convert to integer
-                        if (bdResult.stripTrailingZeros().scale() <= 0) {
-                            try {
-                                // exception is thrown if information is lost during conversion to integer
-                                // this happens if the bigdecimal has a decimal part, or if it can't be fit to an integer
-                                return new IntegerItem(bdResult.intValueExact(), ItemMetadata.fromIteratorMetadata(getMetadata()));
-                            } catch (ArithmeticException e) {
-                                e.printStackTrace();
+                try {
+                    int l = Item.<Integer>getNumericValue(_left, Integer.class);
+                    int r = Item.<Integer>getNumericValue(_right, Integer.class);
+                    switch (this._operator) {
+                        case MUL:
+                            return new IntegerItem(l * r, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                        case DIV:
+                            BigDecimal decLeft = Item.<BigDecimal>getNumericValue(_left, BigDecimal.class);
+                            BigDecimal decRight = Item.<BigDecimal>getNumericValue(_right, BigDecimal.class);
+                            BigDecimal bdResult = decLeft.divide(decRight, 10, BigDecimal.ROUND_HALF_UP);
+                            // if the result contains no decimal part, convert to integer
+                            if (bdResult.stripTrailingZeros().scale() <= 0) {
+                                try {
+                                    // exception is thrown if information is lost during conversion to integer
+                                    // this happens if the bigdecimal has a decimal part, or if it can't be fit to an integer
+                                    return new IntegerItem(bdResult.intValueExact(), ItemMetadata.fromIteratorMetadata(getMetadata()));
+                                } catch (ArithmeticException e) {
+                                    e.printStackTrace();
+                                }
+                            } else {
+                                return new DecimalItem(bdResult,
+                                        ItemMetadata.fromIteratorMetadata(getMetadata()));
                             }
-                        } else {
-                            return new DecimalItem(bdResult,
-                                    ItemMetadata.fromIteratorMetadata(getMetadata()));
-                        }
-                    case MOD:
-                        return new IntegerItem(l % r, ItemMetadata.fromIteratorMetadata(getMetadata()));
-                    case IDIV:
-                        return new IntegerItem(l / r, ItemMetadata.fromIteratorMetadata(getMetadata()));
-                    default:
-                        new IteratorFlowException("Non recognized multicative operator.", getMetadata());
+                        case MOD:
+                            return new IntegerItem(l % r, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                        case IDIV:
+                            return new IntegerItem(l / r, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                        default:
+                            new IteratorFlowException("Non recognized multicative operator.", getMetadata());
+                    }
+                } catch (IteratorFlowException e)
+                {
+                    e.setMetadata(getMetadata().getExpressionMetadata());
+                    throw e;
                 }
             } else if (returnType.equals(DoubleItem.class)) {
                 double l = Item.<Double>getNumericValue(_left, Double.class);
