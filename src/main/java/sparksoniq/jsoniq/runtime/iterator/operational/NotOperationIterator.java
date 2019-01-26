@@ -37,9 +37,9 @@ public class NotOperationIterator extends UnaryOperationBaseIterator {
     @Override
     public AtomicItem next() {
         _child.open(_currentDynamicContext);
-        Item child = _child.next();
+        boolean effectiveBooleanValue = getEffectiveBooleanValue(_child);
         _child.close();
         this._hasNext = false;
-        return new BooleanItem(!Item.getEffectiveBooleanValue(child));
+        return new BooleanItem(!(effectiveBooleanValue));
     }
 }
