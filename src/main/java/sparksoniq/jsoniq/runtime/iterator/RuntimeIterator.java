@@ -186,7 +186,8 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
 
             if (iterator.hasNext()) {
                 throw new InvalidArgumentTypeException(
-                        "Effective boolean value not defined for sequences of more than one atomic item."
+                        "Effective boolean value not defined for sequences of more than one atomic item. "
+                                +  "Sequence containing: " +item.serialize() + " must be a singleton."
                         , iterator.getMetadata());
             }
 
