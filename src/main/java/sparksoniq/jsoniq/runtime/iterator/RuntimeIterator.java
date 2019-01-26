@@ -150,7 +150,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
 
     /**
      * This function calculates the effective boolean value of the sequence given by iterator.
-     * Objects and arrays always return true.
+     * Non-empty objects and arrays always return true.
      * Empty sequence returns false.
      * Singleton atomic values are evaluated to their effective boolean value.
      * Multiple atomic values throw an exception.
@@ -178,8 +178,10 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 result = false;
             else if (item instanceof StringItem)
                 result = !((StringItem) item).getStringValue().isEmpty();
-            else if (item instanceof ObjectItem || item instanceof ArrayItem)
-                return true;
+            else if (item instanceof ObjectItem)
+                return ((ObjectItem) item).getKeys() != null && !((ObjectItem) item).getKeys().isEmpty();
+            else if (item instanceof ArrayItem)
+                return ((ArrayItem) item).getItems() != null && !((ArrayItem) item).getItems().isEmpty();
             else {
                 throw new SparksoniqRuntimeException("Unexpected item type found while calculating effective boolean value.");
             }
