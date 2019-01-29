@@ -20,10 +20,9 @@
 package sparksoniq.jsoniq.runtime.iterator.operational;
 
 import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
-import sparksoniq.jsoniq.item.*;
-import sparksoniq.jsoniq.item.metadata.ItemMetadata;
+import sparksoniq.jsoniq.item.AtomicItem;
+import sparksoniq.jsoniq.item.BooleanItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -39,19 +38,14 @@ public class AndOperationIterator extends BinaryOperationBaseIterator {
         if (this._hasNext) {
             _leftIterator.open(_currentDynamicContext);
             _rightIterator.open(_currentDynamicContext);
-            Item left = _leftIterator.next();
-            Item right = _rightIterator.next();
 
-            if((_leftIterator.hasNext() && (!(left instanceof ArrayItem || left instanceof ObjectItem))) ||
-                    (_rightIterator.hasNext() && (!(right instanceof ArrayItem && right instanceof ObjectItem))))
-                // TODO: Define the correct exception effective boolean value is not defined
-                throw new UnexpectedTypeException("Effective boolean value is not defined for sequence of multiple items if first item is not an array or an object  " +
-                        left.serialize() + ", " + right.serialize(), getMetadata());
+            boolean leftEffectiveBooleanValue = getEffectiveBooleanValue(_leftIterator);
+            boolean rightEffectiveBooleanValue = getEffectiveBooleanValue(_rightIterator);
 
             _leftIterator.close();
             _rightIterator.close();
             this._hasNext = false;
-            return new BooleanItem(Item.getEffectiveBooleanValue(left) && Item.getEffectiveBooleanValue(right));
+            return new BooleanItem((leftEffectiveBooleanValue && rightEffectiveBooleanValue));
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
 

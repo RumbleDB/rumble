@@ -20,6 +20,7 @@
 package sparksoniq.jsoniq.runtime.iterator.control;
 
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.item.BooleanItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -64,9 +65,11 @@ public class IfRuntimeIterator extends LocalRuntimeIterator {
             RuntimeIterator elseBranch = null;
             if (this._children.size() > 2)
                 elseBranch = this._children.get(2);
-            Item conditionResult = getSingleItemOfTypeFromIterator(condition, Item.class);
+            condition.open(_currentDynamicContext);
+            boolean effectiveBooleanValue = getEffectiveBooleanValue(condition);
+            condition.close();
             result = new ArrayList<>();
-            if (Item.getEffectiveBooleanValue(conditionResult)) {
+            if (effectiveBooleanValue) {
                 result = getItemsFromIteratorWithCurrentContext(branch);
             } else {
                 result = getItemsFromIteratorWithCurrentContext(elseBranch);

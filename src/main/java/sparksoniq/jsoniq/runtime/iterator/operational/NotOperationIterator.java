@@ -17,13 +17,11 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.jsoniq.runtime.iterator.operational;
+package sparksoniq.jsoniq.runtime.iterator.operational;
 
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.jsoniq.item.BooleanItem;
-import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.UnaryOperationBaseIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -37,9 +35,9 @@ public class NotOperationIterator extends UnaryOperationBaseIterator {
     @Override
     public AtomicItem next() {
         _child.open(_currentDynamicContext);
-        Item child = _child.next();
+        boolean effectiveBooleanValue = getEffectiveBooleanValue(_child);
         _child.close();
         this._hasNext = false;
-        return new BooleanItem(!Item.getEffectiveBooleanValue(child));
+        return new BooleanItem(!(effectiveBooleanValue));
     }
 }

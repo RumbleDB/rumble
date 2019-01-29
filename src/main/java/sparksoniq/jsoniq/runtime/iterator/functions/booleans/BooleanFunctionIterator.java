@@ -22,21 +22,9 @@ public class BooleanFunctionIterator extends LocalFunctionCallIterator {
             this._hasNext = false;
             RuntimeIterator iterator = this._children.get(0);
             iterator.open(_currentDynamicContext);
-            Item result;
-            if (iterator.hasNext()) {
-                Item item = iterator.next();
-                if (iterator.hasNext()) {
-                    if (item.isAtomic()) {
-                        throw new InvalidArgumentTypeException("Only the sequences with non-atomic first item can be evaluated for effective boolean value.", getMetadata());
-                    }
-                }
-
-                result = new BooleanItem(Item.getEffectiveBooleanValue(item));
-            } else {
-                result = new BooleanItem(false);
-            }
+            boolean effectiveBooleanValue = getEffectiveBooleanValue(iterator);
             iterator.close();
-            return result;
+            return new BooleanItem(effectiveBooleanValue);
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " boolean function", getMetadata());
     }

@@ -24,15 +24,18 @@ import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.api.java.JavaRDD;
+import sparksoniq.exceptions.InvalidArgumentTypeException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnexpectedTypeException;
-import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.*;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static sparksoniq.jsoniq.item.Item.isNumeric;
 
 public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoSerializable {
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
@@ -133,7 +136,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                                                                                                        Class<T> type, E nonAtomicException) {
         iterator.open(_currentDynamicContext);
         Item result = null;
-        if(iterator.hasNext()) {
+        if (iterator.hasNext()) {
             result = iterator.next();
             if (iterator.hasNext()) {
                 throw nonAtomicException;
@@ -143,5 +146,57 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         if (result != null && !(type.isInstance(result)))
             throw new UnexpectedTypeException("Invalid item type returned by iterator", iterator.getMetadata());
         return (T) result;
+    }
+
+    /**
+     * This function calculates the effective boolean value of the sequence given by iterator.
+     * Non-empty objects and arrays always return true.
+     * Empty sequence returns false.
+     * Singleton atomic values are evaluated to their effective boolean value.
+     * Multiple atomic values throw an exception.
+     *
+     * @param iterator has to be opened before calling this function
+     * @return
+     */
+    protected static boolean getEffectiveBooleanValue(RuntimeIterator iterator) {
+        if (iterator.hasNext()) {
+            Item item = iterator.next();
+            boolean result;
+            if (item instanceof BooleanItem)
+                result = ((BooleanItem) item).getBooleanValue();
+            else if (isNumeric(item)) {
+                if (item instanceof IntegerItem)
+                    result = ((IntegerItem) item).getIntegerValue() != 0;
+                else if (item instanceof DoubleItem)
+                    result = ((DoubleItem) item).getDoubleValue() != 0;
+                else if (item instanceof DecimalItem)
+                    result = !((DecimalItem) item).getDecimalValue().equals(0);
+                else {
+                    throw new SparksoniqRuntimeException("Unexpected numeric type found while calculating effective boolean value.");
+                }
+            } else if (item instanceof NullItem)
+                result = false;
+            else if (item instanceof StringItem)
+                result = !((StringItem) item).getStringValue().isEmpty();
+            else if (item instanceof ObjectItem)
+                return true;
+            else if (item instanceof ArrayItem)
+                return true;
+            else {
+                throw new SparksoniqRuntimeException("Unexpected item type found while calculating effective boolean value.");
+            }
+
+            if (iterator.hasNext()) {
+                throw new InvalidArgumentTypeException(
+                        "Effective boolean value not defined for sequences of more than one atomic item. "
+                                +  "Sequence containing: " +item.serialize() + " must be a singleton."
+                        , iterator.getMetadata());
+            }
+
+            return result;
+        } else {
+            return false;
+        }
+
     }
 }
