@@ -17,7 +17,7 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.spark.iterator.flowr;
+package sparksoniq.spark.iterator.flowr;
 
 import org.apache.spark.api.java.JavaRDD;
 import sparksoniq.exceptions.IteratorFlowException;
@@ -54,11 +54,9 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDD(DynamicContext context) {
-        if(itemRDD == null) {
-            ((SparkRuntimeTupleIterator)_child).setDynamicContext(context);
-            RuntimeIterator expression = this._children.get(0);
-            itemRDD = this._child.getRDD().flatMap(new ReturnFlatMapClosure(expression));
-        }
+        ((SparkRuntimeTupleIterator) _child).setDynamicContext(context);
+        RuntimeIterator expression = this._children.get(0);
+        itemRDD = this._child.getRDD().flatMap(new ReturnFlatMapClosure(expression));
         return itemRDD;
     }
 
@@ -69,7 +67,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
     @Override
     protected Item nextLocal() {
-        if(_hasNext == true){
+        if (_hasNext == true) {
             Item result = _nextLocalResult;  // save the result to be returned
             setNextLocalResult();            // calculate and store the next result
             return result;
@@ -111,6 +109,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
     /**
      * _expression has to be open prior to call.
+     *
      * @return true if _nextLocalResult is set and _hasNext is true, false otherwise
      */
     private boolean setResultFromExpression() {
@@ -136,10 +135,6 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         _expression.close();
         setNextLocalResult();
     }
-
-
-
-
 
 
 }
