@@ -143,7 +143,7 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
                 contents.add(expression.next());
             expression.close();
             List<FlworTuple> tuples = new ArrayList<>();
-            FlworTuple tuple  = new FlworTuple();
+            FlworTuple tuple  = new FlworTuple(1);
             tuple.putValue(_variableName, contents, false);
             tuples.add(tuple);
             rdd = SparkContextManager.getInstance().getContext().parallelize(tuples);

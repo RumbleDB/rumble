@@ -31,8 +31,8 @@ import java.util.*;
 
 public class FlworTuple implements Serializable, KryoSerializable{
 
-    public FlworTuple(){
-        variables = new LinkedHashMap<>();
+    public FlworTuple(int nb){
+        variables = new LinkedHashMap<>(nb);
     }
 
     /**
@@ -40,7 +40,7 @@ public class FlworTuple implements Serializable, KryoSerializable{
      * @param toCopy original tuple
      */
     public FlworTuple(FlworTuple toCopy){
-        variables = new LinkedHashMap<>();
+        variables = new LinkedHashMap<>(toCopy.getKeys().size());
         for(String key: toCopy.getKeys())
             this.putValue(key, toCopy.getValue(key), true);
     }
@@ -51,7 +51,7 @@ public class FlworTuple implements Serializable, KryoSerializable{
      * @param value
      */
     public FlworTuple(String newKey, List<Item> value) {
-        this();
+        this(1);
         this.putValue(newKey, value, false);
     }
 
@@ -82,7 +82,7 @@ public class FlworTuple implements Serializable, KryoSerializable{
     }
 
     public void putValue(String key, Item value, boolean overrideExistingValue){
-        List<Item> itemList = new ArrayList<>();
+        List<Item> itemList = new ArrayList<>(1);
         itemList.add(value);
         this.putValue(key, itemList, overrideExistingValue);
     }

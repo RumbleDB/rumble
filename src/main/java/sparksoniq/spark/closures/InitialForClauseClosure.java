@@ -32,7 +32,7 @@ public class InitialForClauseClosure implements Function<Item, FlworTuple> {
 
     @Override
     public FlworTuple call(Item v1) throws Exception {
-        FlworTuple result = new FlworTuple();
+        FlworTuple result = new FlworTuple(1);
         result.putValue(_variableName, v1, true);
         return result;
     }
