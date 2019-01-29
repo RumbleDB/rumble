@@ -158,7 +158,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
      * @param iterator has to be opened before calling this function
      * @return
      */
-    protected static boolean getEffectiveBooleanValue(RuntimeIterator iterator) {
+    public static boolean getEffectiveBooleanValue(RuntimeIterator iterator) {
         if (iterator.hasNext()) {
             Item item = iterator.next();
             boolean result;

@@ -91,16 +91,12 @@ public class WhereClauseSparkIterator extends SparkRuntimeTupleIterator {
             _tupleContext.setBindingsFromTuple(_inputTuple);      // assign new variables from new tuple
 
             _expression.open(_tupleContext);
-            Item result = _expression.next();
+            boolean effectiveBooleanValue = RuntimeIterator.getEffectiveBooleanValue(_expression);
             _expression.close();
-            try {
-                if (result.getBooleanValue()) {
-                    _nextLocalTupleResult = _inputTuple;
-                    this._hasNext = true;
-                    return;
-                }
-            } catch (OperationNotSupportedException e) {
-                e.printStackTrace();
+            if (effectiveBooleanValue) {
+                _nextLocalTupleResult = _inputTuple;
+                this._hasNext = true;
+                return;
             }
         }
 
