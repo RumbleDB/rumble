@@ -100,24 +100,24 @@ public abstract class Item implements SerializableItem {
     public static boolean getEffectiveBooleanValue(Item item) {
         if (item == null)
             return false;
-        if (item instanceof BooleanItem)
+        else if (item instanceof BooleanItem)
             return ((BooleanItem) item).getBooleanValue();
-        if (isNumeric(item)) {
+        else if (isNumeric(item)) {
             if (item instanceof IntegerItem)
                 return ((IntegerItem) item).getIntegerValue() != 0;
-            if (item instanceof DoubleItem)
+            else if (item instanceof DoubleItem)
                 return ((DoubleItem) item).getDoubleValue() != 0;
-            if (item instanceof DecimalItem)
+            else if (item instanceof DecimalItem)
                 return !((DecimalItem) item).getDecimalValue().equals(0);
         }
-        if (item instanceof NullItem)
+        else if (item instanceof NullItem)
             return false;
-        if (item instanceof StringItem)
+        else if (item instanceof StringItem)
             return !((StringItem) item).getStringValue().isEmpty();
-        if (item instanceof ObjectItem)
-            return ((ObjectItem) item).getKeys() != null && !((ObjectItem) item).getKeys().isEmpty();
-        if (item instanceof ArrayItem)
-            return ((ArrayItem) item).getItems() != null && !((ArrayItem) item).getItems().isEmpty();
+        else if (item instanceof ObjectItem)
+            return true;
+        else if (item instanceof ArrayItem)
+            return true;
 
         return true;
     }
@@ -154,8 +154,9 @@ public abstract class Item implements SerializableItem {
             else{
                 result = 1;
             }
-        } else
+        } else {
             result = v1.serialize().compareTo(v2.serialize());
+        }
         return result;
     }
 

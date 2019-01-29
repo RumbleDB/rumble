@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="else branch" :)
+(:JIQS: ShouldRun; Output="first branch" :)
 if(({}))
 then
 "first branch"

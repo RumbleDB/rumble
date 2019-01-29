@@ -179,9 +179,9 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
             else if (item instanceof StringItem)
                 result = !((StringItem) item).getStringValue().isEmpty();
             else if (item instanceof ObjectItem)
-                return ((ObjectItem) item).getKeys() != null && !((ObjectItem) item).getKeys().isEmpty();
+                return true;
             else if (item instanceof ArrayItem)
-                return ((ArrayItem) item).getItems() != null && !((ArrayItem) item).getItems().isEmpty();
+                return true;
             else {
                 throw new SparksoniqRuntimeException("Unexpected item type found while calculating effective boolean value.");
             }
