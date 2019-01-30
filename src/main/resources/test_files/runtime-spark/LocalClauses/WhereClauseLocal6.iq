@@ -1,5 +1,6 @@
 (:JIQS: ShouldRun; Output="" :)
+let $j := 5
 for $i in ()
-where $j := $i + 1
+where $j eq $i + 1
 return $i
 
