@@ -1,5 +1,0 @@
-(:JIQS: ShouldCrash; ErrorCode="XPST0008"; ErrorMetadata="LINE:3:COLUMN:6:" :)
-for $i in ()
-where $j eq $i + 1
-return $i
-
