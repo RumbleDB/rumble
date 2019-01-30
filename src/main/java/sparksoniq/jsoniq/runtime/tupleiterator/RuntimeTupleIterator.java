@@ -95,7 +95,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
 
     public abstract boolean isRDD();
 
-    public abstract JavaRDD<FlworTuple> getRDD();
+    public abstract JavaRDD<FlworTuple> getRDD(DynamicContext context);
 
     public abstract FlworTuple next();
 

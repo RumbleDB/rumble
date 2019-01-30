@@ -61,7 +61,7 @@ public abstract class SparkRuntimeTupleIterator extends RuntimeTupleIterator {
 
         if(result == null){
             currentResultIndex = 0;
-            this._rdd = this.getRDD();
+            this._rdd = this.getRDD(_currentDynamicContext);
             if(SparkContextManager.LIMIT_COLLECT()) {
                 result = _rdd.take(SparkContextManager.COLLECT_ITEM_LIMIT);
             }
@@ -78,14 +78,6 @@ public abstract class SparkRuntimeTupleIterator extends RuntimeTupleIterator {
         FlworTuple tuple = result.get(currentResultIndex);
         currentResultIndex++;
         return tuple;
-    }
-
-    public void setDynamicContext(DynamicContext context){
-        this._currentDynamicContext = context;
-        if(_child != null)
-        {
-            ((SparkRuntimeTupleIterator)_child).setDynamicContext(context);
-        }
     }
 
     protected JiqsItemParser parser;

@@ -26,6 +26,7 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
+import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.closures.GroupByLinearizeTupleClosure;
 import sparksoniq.spark.closures.GroupByToPairMapClosure;
 import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
@@ -48,9 +49,9 @@ public class GroupByClauseSparkIterator extends FlowrClauseSparkIterator {
     }
 
     @Override
-    public JavaRDD<FlworTuple> getRDD() {
+    public JavaRDD<FlworTuple> getRDD(DynamicContext context) {
         if (_rdd == null) {
-            _rdd = this._child.getRDD();
+            _rdd = this._child.getRDD(context);
             //map to pairs - ArrayItem [sort keys] , tuples
             JavaPairRDD<FlworKey, FlworTuple> keyTuplePair = this._rdd
                     .mapToPair(new GroupByToPairMapClosure(_variables));

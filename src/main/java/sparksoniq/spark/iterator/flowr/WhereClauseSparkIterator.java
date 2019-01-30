@@ -106,10 +106,10 @@ public class WhereClauseSparkIterator extends SparkRuntimeTupleIterator {
     }
 
     @Override
-    public JavaRDD<FlworTuple> getRDD() {
+    public JavaRDD<FlworTuple> getRDD(DynamicContext context) {
         if (this._rdd == null) {
             if (this._child != null) {
-                this._rdd = _child.getRDD();
+                this._rdd = _child.getRDD(context);
                 this._rdd = this._rdd.filter(new WhereClauseClosure(_expression));
             } else {
                 throw new SparksoniqRuntimeException("Invalid where clause.");

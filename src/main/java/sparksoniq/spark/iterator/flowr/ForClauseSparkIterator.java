@@ -147,7 +147,7 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
 
 
     @Override
-    public JavaRDD<FlworTuple> getRDD() {
+    public JavaRDD<FlworTuple> getRDD(DynamicContext context) {
         JavaRDD<Item> initialRdd = null;
         this._rdd = SparkContextManager.getInstance().getContext().emptyRDD();
 
@@ -157,7 +157,7 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
         } else {        //if it's not a start clause
 
             if (_child.isRDD()) {
-                this._rdd = this._child.getRDD();
+                this._rdd = this._child.getRDD(context);
                 this._rdd = this._rdd.flatMap(new ForClauseClosure(_expression, _variableName));
 
             } else {    // if child is locally evaluated
