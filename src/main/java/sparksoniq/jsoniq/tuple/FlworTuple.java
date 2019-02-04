@@ -32,7 +32,7 @@ import java.util.*;
 public class FlworTuple implements Serializable, KryoSerializable{
 
     public FlworTuple(int nb){
-        variables = new LinkedHashMap<>(nb);
+        variables = new HashMap<>(nb, 1);
     }
 
     /**
@@ -40,7 +40,7 @@ public class FlworTuple implements Serializable, KryoSerializable{
      * @param toCopy original tuple
      */
     public FlworTuple(FlworTuple toCopy){
-        variables = new LinkedHashMap<>(toCopy.getKeys().size());
+        variables = new HashMap<>(toCopy.getKeys().size(), 1);
         for(String key: toCopy.getKeys())
             this.putValue(key, toCopy.getValue(key), true);
     }
@@ -105,7 +105,7 @@ public class FlworTuple implements Serializable, KryoSerializable{
 
     @Override
     public void read(Kryo kryo, Input input) {
-        variables = kryo.readObject(input, LinkedHashMap.class);
+        variables = kryo.readObject(input, HashMap.class);
     }
 
     private Map<String, List<Item>> variables;
