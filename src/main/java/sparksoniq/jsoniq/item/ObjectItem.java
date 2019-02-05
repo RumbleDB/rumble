@@ -143,11 +143,13 @@ public class ObjectItem extends JsonItem{
     @Override
     public String serialize() {
         String result = "{ ";
-        for (Item value : this._values) {
+        for (int i = 0; i < _keys.size(); ++i) {
+            String key = _keys.get(i);
+            Item value = _values.get(i);
             boolean isStringValue = value instanceof StringItem;
-            result += "\"" + _keys.get(_values.indexOf(value)) + "\"" + " : " +
+            result += "\"" + key + "\"" + " : " +
                     (isStringValue? "\"" :"") +  value.serialize() + (isStringValue? "\"" :"")
-                    + (_values.indexOf(value) < _values.size() -1? ", " : " ");
+                    + (i < _keys.size() -1? ", " : " ");
         }
         result += "}";
         return result;
