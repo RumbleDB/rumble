@@ -9,8 +9,8 @@ public class StringItemSerializer extends Serializer<StringItem> {
 
     @Override
     public StringItem read(Kryo kryo, Input input, Class<StringItem> type) {
-            String s = input.readString();
-            return StringItemPool.getStringItem(s);
+      String s = input.readString();
+      return StringItemPool.getStringItem(s);
     }
 
     @Override
