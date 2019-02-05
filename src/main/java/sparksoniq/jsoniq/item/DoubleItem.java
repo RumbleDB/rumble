@@ -79,15 +79,5 @@ public class DoubleItem extends AtomicItem {
         return String.valueOf(_value);
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeDouble(this._value);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this._value = input.readDouble();
-    }
-
     private double _value;
 }

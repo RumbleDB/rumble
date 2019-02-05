@@ -61,14 +61,4 @@ public class NullItem extends AtomicItem {
         return "null";
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObjectOrNull(output,null, Item.class);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        kryo.readObjectOrNull(input, Item.class);
-
-    }
 }

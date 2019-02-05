@@ -24,6 +24,6 @@ import com.esotericsoftware.kryo.KryoSerializable;
 import java.io.Serializable;
 
 
-public interface SerializableItem extends Serializable, KryoSerializable {
+public interface SerializableItem extends Serializable {
     String serialize();
 }

@@ -94,15 +94,5 @@ public class ArrayItem extends JsonItem {
         return result;
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this._arrayItems);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this._arrayItems = kryo.readObject(input, ArrayList.class);
-    }
-
     private List<Item> _arrayItems;
 }

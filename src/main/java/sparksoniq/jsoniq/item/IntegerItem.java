@@ -80,15 +80,5 @@ public class IntegerItem extends AtomicItem {
         return String.valueOf(_value);
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeInt(this._value);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this._value = input.readInt();
-    }
-
     private int _value;
 }

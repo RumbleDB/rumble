@@ -79,15 +79,5 @@ public class BooleanItem extends AtomicItem {
         return String.valueOf(_value);
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeBoolean(this._value);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this._value = input.readBoolean();
-    }
-
     private boolean _value;
 }

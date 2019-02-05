@@ -50,6 +50,12 @@ public class ObjectItem extends JsonItem{
         this._values = values;
     }
 
+    public ObjectItem(List<String> keys, List<Item> values){
+        super();
+        this._keys = keys;
+        this._values = values;
+    }
+
     /**
      * ObjectItem constructor from the given map data structure.
      * For each key, the corresponding values list is turned into an ArrayItem if it contains more than a single element.
@@ -152,19 +158,6 @@ public class ObjectItem extends JsonItem{
         result += "}";
         return result;
     }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, _keys);
-        kryo.writeObject(output, _values);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this._keys = kryo.readObject(input, ArrayList.class);
-        this._values = kryo.readObject(input, ArrayList.class);
-    }
-
 
     private List<Item> _values;
     private List<String> _keys;

@@ -19,6 +19,7 @@
  */
  package sparksoniq.jsoniq.item;
 
+import com.esotericsoftware.kryo.DefaultSerializer;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -29,7 +30,7 @@ import sparksoniq.semantics.types.ItemTypes;
 import javax.naming.OperationNotSupportedException;
 import java.math.BigDecimal;
 
-public class StringItem extends AtomicItem{
+public class StringItem extends AtomicItem {
 
     public String getValue() {
         return _value;
@@ -37,7 +38,7 @@ public class StringItem extends AtomicItem{
 
     public StringItem(String value){
         super();
-        this._value = value;
+        this._value = value.intern();
     }
 
     @Override
@@ -77,16 +78,6 @@ public class StringItem extends AtomicItem{
     @Override
     public String serialize() {
         return _value;
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeString(this._value);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this._value = input.readString();
     }
 
     private  String _value;

@@ -25,6 +25,9 @@ import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.semantics.types.ItemType;
 
 import javax.naming.OperationNotSupportedException;
+
+import com.esotericsoftware.kryo.DefaultSerializer;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -34,6 +37,7 @@ import java.util.Collection;
 import java.util.List;
 
 //TODO serialize with indentation
+@DefaultSerializer(ItemSerializer.class)
 public abstract class Item implements SerializableItem {
     public static boolean isAtomic(Item resultItem) {
         return resultItem instanceof AtomicItem;
@@ -232,15 +236,5 @@ public abstract class Item implements SerializableItem {
     }
 
     protected Item() {
-    }
-
-    private void readObject(ObjectInputStream aInputStream)
-            throws ClassNotFoundException, IOException {
-        aInputStream.defaultReadObject();
-    }
-
-    private void writeObject(ObjectOutputStream aOutputStream)
-            throws IOException {
-        aOutputStream.defaultWriteObject();
     }
 }

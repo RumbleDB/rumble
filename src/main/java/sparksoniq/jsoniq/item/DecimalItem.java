@@ -80,15 +80,5 @@ public class DecimalItem extends AtomicItem {
         return String.valueOf(_value);
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this._value);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this._value = kryo.readObject(input, BigDecimal.class);
-    }
-
     private BigDecimal _value;
 }
