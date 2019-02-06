@@ -32,8 +32,8 @@ public class DeepEqualFunctionIterator extends LocalFunctionCallIterator {
             RuntimeIterator sequenceIterator1 = this._children.get(0);
             RuntimeIterator sequenceIterator2 = this._children.get(1);
 
-            List<Item> items1 = getItemsFromIteratorWithCurrentContext(sequenceIterator1);
-            List<Item> items2 = getItemsFromIteratorWithCurrentContext(sequenceIterator2);
+            Item[] items1 = getItemsFromIteratorWithCurrentContext(sequenceIterator1);
+            Item[] items2 = getItemsFromIteratorWithCurrentContext(sequenceIterator2);
 
             boolean res = checkDeepEqual(items1, items2);
             return new BooleanItem(res);
@@ -43,13 +43,13 @@ public class DeepEqualFunctionIterator extends LocalFunctionCallIterator {
     }
 
 
-    public boolean checkDeepEqual(List<Item> items1, List<Item> items2) {
-        if (items1.size() != items2.size()) {
+    public boolean checkDeepEqual(Item[] items1, Item[] items2) {
+        if (items1.length != items2.length) {
             return false;
         } else {
-            for (int i = 0; i < items1.size(); i++){
-                Item item1 = items1.get(i);
-                Item item2 = items2.get(i);
+            for (int i = 0; i < items1.length; i++){
+                Item item1 = items1[i];
+                Item item2 = items2[i];
 
                 if (item1 instanceof ArrayItem) {
                     // if item types don't match
@@ -74,7 +74,7 @@ public class DeepEqualFunctionIterator extends LocalFunctionCallIterator {
                         ObjectItem objItem2 = (ObjectItem)item2;
 
                         if (objItem1.getKeys().equals(objItem2.getKeys())) {
-                            if (!checkDeepEqual((List<Item>)objItem1.getValues(), (List<Item>)objItem2.getValues())) {
+                            if (!checkDeepEqual(objItem1.getValues(), objItem2.getValues())) {
                                 return false;
                             }
                         } else {

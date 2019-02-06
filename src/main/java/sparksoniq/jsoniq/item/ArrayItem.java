@@ -33,18 +33,18 @@ import java.util.List;
 
 public class ArrayItem extends JsonItem {
 
-    public List<Item> getItems() {
+    public Item[] getItems() {
         return _arrayItems;
     }
 
-    public ArrayItem(List<Item> arrayItems){
+    public ArrayItem(Item[] arrayItems){
         super();
         this._arrayItems = arrayItems;
     }
 
     @Override
     public Item getItemAt(int i) {
-        return _arrayItems.get(i);
+        return _arrayItems[i];
     }
 
     @Override
@@ -53,15 +53,12 @@ public class ArrayItem extends JsonItem {
     }
 
     @Override
-    public void putItem(Item value) { this._arrayItems.add(value); }
-
-    @Override
     public void putItemByKey(String s, Item value) throws OperationNotSupportedException {
         throw new OperationNotSupportedException("Array items are not objects");
     }
 
     @Override
-    public List<String> getKeys() throws OperationNotSupportedException {
+    public String[] getKeys() throws OperationNotSupportedException {
         throw new OperationNotSupportedException("Array items are not objects");
     }
 
@@ -101,8 +98,8 @@ public class ArrayItem extends JsonItem {
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this._arrayItems = kryo.readObject(input, ArrayList.class);
+        this._arrayItems = kryo.readObject(input, Item[].class);
     }
 
-    private List<Item> _arrayItems;
+    private Item[] _arrayItems;
 }

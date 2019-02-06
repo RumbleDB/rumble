@@ -115,9 +115,9 @@ public abstract class Item implements SerializableItem {
         if (item instanceof StringItem)
             return !((StringItem) item).getStringValue().isEmpty();
         if (item instanceof ObjectItem)
-            return ((ObjectItem) item).getKeys() != null && !((ObjectItem) item).getKeys().isEmpty();
+            return ((ObjectItem)item).getKeys() != null && ((ObjectItem)item).getKeys().length != 0;
         if (item instanceof ArrayItem)
-            return ((ArrayItem) item).getItems() != null && !((ArrayItem) item).getItems().isEmpty();
+            return ((ArrayItem)item).getItems() != null && ((ArrayItem)item).getItems().length != 0;
 
         return true;
     }
@@ -163,13 +163,11 @@ public abstract class Item implements SerializableItem {
         return compareItems(v1, v2) == 0;
     }
 
-    public abstract List<Item> getItems() throws OperationNotSupportedException;
+    public abstract Item[] getItems() throws OperationNotSupportedException;
 
     public abstract Item getItemAt(int i) throws OperationNotSupportedException;
 
-    public abstract void putItem(Item value) throws OperationNotSupportedException;
-
-    public abstract List<String> getKeys() throws OperationNotSupportedException;
+    public abstract String[] getKeys() throws OperationNotSupportedException;
 
     public abstract Collection<? extends Item> getValues() throws OperationNotSupportedException;
 

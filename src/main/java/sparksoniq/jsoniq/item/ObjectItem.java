@@ -35,7 +35,7 @@ public class ObjectItem extends JsonItem{
 
     @Override
     public String[] getKeys() {
-        return _keys;
+        return _keys.;
     }
 
     @Override
