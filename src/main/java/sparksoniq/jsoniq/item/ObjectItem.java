@@ -34,16 +34,16 @@ import java.util.*;
 public class ObjectItem extends JsonItem{
 
     @Override
-    public List<String> getKeys() {
+    public String[] getKeys() {
         return _keys;
     }
 
     @Override
-    public Collection<? extends Item> getValues() {
+    public Item[] getValues() {
         return _values;
     }
 
-    public ObjectItem(List<String> keys, List<Item> values, ItemMetadata itemMetadata){
+    public ObjectItem(String[] keys, Item[] values, ItemMetadata itemMetadata){
         super();
         checkForDuplicateKeys(keys, itemMetadata);
         this._keys = keys;
@@ -59,20 +59,21 @@ public class ObjectItem extends JsonItem{
     public ObjectItem(LinkedHashMap<String, List<Item>> keyValuePairs) {
         super();
 
-        List<String> keyList = new ArrayList<>();
-        List<Item> valueList = new ArrayList<>();
+        _keys = new String[keyValuePairs.size()];
+        _values = new Item[keyValuePairs.size()];
+        int counter = -1;
         for (String key:keyValuePairs.keySet()) {
             // add all keys to the keyList
-            keyList.add(key);
+            _keys[++counter] = key;
             List<Item> values = keyValuePairs.get(key);
             // for each key, convert the lists of values into arrayItems
             if (values.size() > 1) {
                 ArrayItem valuesArray = new ArrayItem(values);
-                valueList.add(valuesArray);
+                _values[counter] = valuesArray;
             }
             else if (values.size() == 1) {
                 Item value = values.get(0);
-                valueList.add(value);
+                _values[counter] = value;
             }
             else {
                 try {
@@ -82,9 +83,6 @@ public class ObjectItem extends JsonItem{
                 }
             }
         }
-
-        this._keys = keyList;
-        this._values = valueList;
     }
 
     private void checkForDuplicateKeys(List<String> keys, ItemMetadata metadata) {
@@ -115,20 +113,24 @@ public class ObjectItem extends JsonItem{
 
     @Override
     public Item getItemByKey(String s) {
-        if(_keys.contains(s))
-            return _values.get(_keys.indexOf(s));
+        int counter = 0;
+        while(counter < _keys.length && !(_keys[counter].equals(s)))
+            ++counter;
+        if(counter < _keys.length)
+            return _values[counter];
         else
             return null;
     }
 
     @Override
     public void putItemByKey(String s, Item value) {
-        _values.replaceAll(item ->{
-            if(_values.indexOf(item) ==_keys.indexOf(s))
-                return value;
-            else
-                return item;
-        });
+        int counter = 0;
+        while(counter < _keys.length && !(_keys[counter].equals(s)))
+            ++counter;
+        if(counter < _keys.length)
+            _values[counter] = value;
+        else
+            return;
     }
 
     @Override
@@ -142,15 +144,27 @@ public class ObjectItem extends JsonItem{
 
     @Override
     public String serialize() {
-        String result = "{ ";
-        for (Item value : this._values) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{ ");
+        for (int i = 0; i < _keys.length; ++i) {
+            String key = _keys[i];
+            Item value = _values[i];
             boolean isStringValue = value instanceof StringItem;
-            result += "\"" + _keys.get(_values.indexOf(value)) + "\"" + " : " +
-                    (isStringValue? "\"" :"") +  value.serialize() + (isStringValue? "\"" :"")
-                    + (_values.indexOf(value) < _values.size() -1? ", " : " ");
+
+            sb.append("\"" + key + "\"" + " : ");
+            if(isStringValue)
+                sb.append("\"");
+            sb.append(value.serialize());
+            if(isStringValue)
+                sb.append("\"");
+
+            if(i < _keys.length -1)
+                sb.append(", ");
+            else
+                sb.append(" ");
         }
-        result += "}";
-        return result;
+        sb.append("}");
+        return sb.toString();
     }
 
     @Override
@@ -161,12 +175,12 @@ public class ObjectItem extends JsonItem{
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this._keys = kryo.readObject(input, ArrayList.class);
-        this._values = kryo.readObject(input, ArrayList.class);
+        this._keys = kryo.readObject(input, String[].class);
+        this._values = kryo.readObject(input, Item[].class);
     }
 
 
-    private List<Item> _values;
-    private List<String> _keys;
+    private Item[] _values;
+    private String[] _keys;
 
 }
