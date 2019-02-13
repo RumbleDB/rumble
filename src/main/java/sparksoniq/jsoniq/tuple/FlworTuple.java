@@ -32,7 +32,11 @@ import java.util.*;
 public class FlworTuple implements Serializable, KryoSerializable{
 
     public FlworTuple(){
-        variables = new LinkedHashMap<>();
+        variables = new HashMap<>(1, 1);
+    }
+
+    public FlworTuple(int nb){
+        variables = new HashMap<>(nb, 1);
     }
 
     /**
@@ -40,7 +44,7 @@ public class FlworTuple implements Serializable, KryoSerializable{
      * @param toCopy original tuple
      */
     public FlworTuple(FlworTuple toCopy){
-        variables = new LinkedHashMap<>();
+        variables = new HashMap<>(toCopy.getKeys().size(), 1);
         for(String key: toCopy.getKeys())
             this.putValue(key, toCopy.getValue(key), true);
     }
@@ -51,7 +55,7 @@ public class FlworTuple implements Serializable, KryoSerializable{
      * @param value
      */
     public FlworTuple(String newKey, List<Item> value) {
-        this();
+        this(1);
         this.putValue(newKey, value, false);
     }
 
@@ -82,7 +86,7 @@ public class FlworTuple implements Serializable, KryoSerializable{
     }
 
     public void putValue(String key, Item value, boolean overrideExistingValue){
-        List<Item> itemList = new ArrayList<>();
+        List<Item> itemList = new ArrayList<>(1);
         itemList.add(value);
         this.putValue(key, itemList, overrideExistingValue);
     }
@@ -105,7 +109,7 @@ public class FlworTuple implements Serializable, KryoSerializable{
 
     @Override
     public void read(Kryo kryo, Input input) {
-        variables = kryo.readObject(input, LinkedHashMap.class);
+        variables = kryo.readObject(input, HashMap.class);
     }
 
     private Map<String, List<Item>> variables;

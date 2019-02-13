@@ -39,9 +39,9 @@ public class GroupByLinearizeTupleClosure implements Function<Tuple2<FlworKey, I
 
     @Override
     public FlworTuple call(Tuple2<FlworKey, Iterable<FlworTuple>> v1) throws Exception {
-        FlworTuple newTuple = new FlworTuple();
         Iterator<FlworTuple> iterator = v1._2().iterator();
         FlworTuple oldFirstTuple = iterator.next();
+        FlworTuple newTuple = new FlworTuple(oldFirstTuple.getKeys().size());
         for(String tupleVariable : oldFirstTuple.getKeys()){
             iterator = v1._2().iterator();
             if(_groupVariables.stream().anyMatch( v -> v.getVariableReference().getVariableName().equals(tupleVariable)))
