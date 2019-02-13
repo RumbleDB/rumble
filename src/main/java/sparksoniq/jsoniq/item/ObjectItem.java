@@ -142,15 +142,27 @@ public class ObjectItem extends JsonItem{
 
     @Override
     public String serialize() {
-        String result = "{ ";
-        for (Item value : this._values) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("{ ");
+        for (int i = 0; i < _keys.size(); ++i) {
+            String key = _keys.get(i);
+            Item value = _values.get(i);
             boolean isStringValue = value instanceof StringItem;
-            result += "\"" + _keys.get(_values.indexOf(value)) + "\"" + " : " +
-                    (isStringValue? "\"" :"") +  value.serialize() + (isStringValue? "\"" :"")
-                    + (_values.indexOf(value) < _values.size() -1? ", " : " ");
+
+            sb.append("\"" + key + "\"" + " : ");
+            if(isStringValue)
+                sb.append("\"");
+            sb.append(value.serialize());
+            if(isStringValue)
+                sb.append("\"");
+
+            if(i < _keys.size() -1)
+                sb.append(", ");
+            else
+                sb.append(" ");
         }
-        result += "}";
-        return result;
+        sb.append("}");
+        return sb.toString();
     }
 
     @Override
