@@ -86,7 +86,7 @@ public class StringItem extends AtomicItem{
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this._value = input.readString().intern();
+        this._value = input.readString();
     }
 
     private  String _value;
