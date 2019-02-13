@@ -31,6 +31,10 @@ import java.util.*;
 
 public class FlworTuple implements Serializable, KryoSerializable{
 
+    public FlworTuple(){
+        variables = new HashMap<>(1, 1);
+    }
+
     public FlworTuple(int nb){
         variables = new HashMap<>(nb, 1);
     }
