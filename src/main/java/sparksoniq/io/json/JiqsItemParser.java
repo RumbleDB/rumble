@@ -36,7 +36,7 @@ public class JiqsItemParser implements Serializable {
     public static Item getItemFromObject(Object object, IteratorMetadata metadata) {
         if (object != null) {
             if (object instanceof String)
-                return new StringItem(object.toString().intern());
+                return new StringItem(object.toString());
             if (object instanceof Integer)
                 return new IntegerItem((int) object);
             if (object instanceof Double)
