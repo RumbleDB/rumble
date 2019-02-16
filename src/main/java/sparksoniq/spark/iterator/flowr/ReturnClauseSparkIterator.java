@@ -54,9 +54,9 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDD(DynamicContext context) {
-        ((SparkRuntimeTupleIterator) _child).setDynamicContext(context);
+
         RuntimeIterator expression = this._children.get(0);
-        itemRDD = this._child.getRDD().flatMap(new ReturnFlatMapClosure(expression));
+        itemRDD = this._child.getRDD(context).flatMap(new ReturnFlatMapClosure(expression));
         return itemRDD;
     }
 

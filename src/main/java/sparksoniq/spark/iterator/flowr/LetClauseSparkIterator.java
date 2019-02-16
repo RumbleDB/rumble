@@ -120,10 +120,10 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
     }
 
     @Override
-    public JavaRDD<FlworTuple> getRDD() {
+    public JavaRDD<FlworTuple> getRDD(DynamicContext context) {
         //if it's not a start clause
         if (this._child != null) {
-            this._rdd = _child.getRDD();
+            this._rdd = _child.getRDD(context);
             this._rdd = this._rdd.map(new LetClauseMapClosure(_variableName, _expression));
         } else {
             //if it's a start clause

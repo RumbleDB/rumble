@@ -7,6 +7,7 @@ import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
+import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.closures.CountClauseClosure;
 import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
 
@@ -18,11 +19,11 @@ public class CountClauseSparkIterator extends FlowrClauseSparkIterator {
     }
 
     @Override
-    public JavaRDD<FlworTuple> getRDD() {
+    public JavaRDD<FlworTuple> getRDD(DynamicContext context) {
         if (this._rdd == null) {
             VariableReferenceIterator variableReference = (VariableReferenceIterator)this._children.get(0);
 
-            this._rdd = _child.getRDD();
+            this._rdd = _child.getRDD(context);
             String variableName = variableReference.getVariableName();
             // zipWithIndex starts from 0, increment indices by 1 for jsoniq convention
             this._rdd = this._rdd.zipWithIndex().mapValues(index -> index + 1).map(new CountClauseClosure(variableName, getMetadata()));
