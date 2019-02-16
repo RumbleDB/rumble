@@ -6,3 +6,5 @@ for $i in (
    { "product" : "toaster2", "store number2" : 2  })
 order by $i."quantity" empty least
 return $i
+
+(: empty field ordering :)

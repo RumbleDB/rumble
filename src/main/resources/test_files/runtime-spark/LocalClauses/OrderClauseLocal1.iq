@@ -11,3 +11,6 @@ for $i in (
    { "product" : "shirt", "store number" : 3, "quantity" : 10 })
 order by $i."quantity" descending  , $i."store number"
 return $i
+
+(: general case ordering :)
+

@@ -90,10 +90,9 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
      * All local results need to be calculated for sorting/ordering to be performed.
      */
     private void setAllLocalResults() {
-        TreeMap<FlworKey, FlworTuple> keyValuePairs = mapExpressionsToOrderedPairs();
+        TreeMap<FlworKey, List<FlworTuple>> keyValuePairs = mapExpressionsToOrderedPairs();
         // get only the values(ordered tuples) and save them in a list for next() calls
-        keyValuePairs.forEach((key, value) -> _localTupleResults.add(value));
-
+        keyValuePairs.forEach((key, valueList) -> valueList.forEach((value) -> _localTupleResults.add(value)));
 
         _child.close();
         if (_localTupleResults.size() == 0) {
@@ -110,10 +109,10 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
      * Requires _child iterator to be opened.
      * @return Sorted TreeMap(ascending). key - atomics from expressions, value - input tuples
      */
-    private TreeMap<FlworKey, FlworTuple> mapExpressionsToOrderedPairs() {
+    private TreeMap<FlworKey,  List<FlworTuple>> mapExpressionsToOrderedPairs() {
         // tree map keeps the natural item order deduced from an implementation of Comparator
         // OrderByClauseSortClosure implements a comparator and provides the exact desired behavior for local execution as well
-        TreeMap<FlworKey, FlworTuple> keyValuePairs = new TreeMap<>(new OrderByClauseSortClosure(_expressions, true));
+        TreeMap<FlworKey, List<FlworTuple>> keyValuePairs = new TreeMap<>(new OrderByClauseSortClosure(_expressions, true));
 
         // assign current context as parent. re-use the same context object for efficiency
         DynamicContext tupleContext = new DynamicContext(_currentDynamicContext);
@@ -137,7 +136,10 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
                 expression.close();
             }
             FlworKey key = new FlworKey(results);
-            keyValuePairs.put(key, inputTuple);
+            if (keyValuePairs.get(key) == null) {
+                keyValuePairs.put(key, new ArrayList<>());
+            }
+            keyValuePairs.get(key).add(inputTuple);
         }
         return keyValuePairs;
     }
