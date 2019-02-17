@@ -21,9 +21,12 @@ package sparksoniq.spark.iterator.flowr;
 
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
+import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FLWOR_CLAUSES;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
+import sparksoniq.jsoniq.runtime.tupleiterator.SparkRuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
@@ -34,18 +37,13 @@ import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpr
 
 import java.util.List;
 
-public class GroupByClauseSparkIterator extends FlowrClauseSparkIterator {
+public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
     private final List<GroupByClauseSparkIteratorExpression> _variables;
 
     public GroupByClauseSparkIterator(RuntimeTupleIterator child, List<GroupByClauseSparkIteratorExpression> variables,
                                       IteratorMetadata iteratorMetadata) {
-        super(child, null, FLWOR_CLAUSES.GROUP_BY, iteratorMetadata);
+        super(child, iteratorMetadata);
         this._variables = variables;
-        _variables.forEach(var -> {
-            this._children.add(var.getVariableReference());
-            if (var.getExpression() != null)
-                this._children.add(var.getExpression());
-        });
     }
 
     @Override
