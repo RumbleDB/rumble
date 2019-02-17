@@ -48,6 +48,7 @@ public class GroupByToPairMapClosure implements PairFunction<FlworTuple, FlworKe
         List<Item> results = new ArrayList<>();
         for (GroupByClauseSparkIteratorExpression _groupVariable : _groupVariables) {
 
+            // if grouping on an expression
             RuntimeIterator groupVariableExpression = _groupVariable.getExpression();
             if (groupVariableExpression != null) {
                 if (tuple.contains(_groupVariable.getVariableReference().getVariableName())) {
@@ -68,7 +69,7 @@ public class GroupByToPairMapClosure implements PairFunction<FlworTuple, FlworKe
                 tuple.putValue(_groupVariable.getVariableReference().getVariableName(), newVariableResults, false);
                 results.addAll(newVariableResults);
 
-            } else {
+            } else { // if grouping on a variable reference
                 VariableReferenceIterator groupVariableReference = _groupVariable.getVariableReference();
                 if (!tuple.contains(groupVariableReference.getVariableName())) {
                     throw new InvalidGroupVariableException("Variable " + groupVariableReference.getVariableName() + " cannot be used in group clause", _groupVariable.getIteratorMetadata());
