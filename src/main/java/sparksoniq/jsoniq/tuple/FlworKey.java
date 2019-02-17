@@ -137,7 +137,8 @@ public class FlworKey implements KryoSerializable {
             // the size of "this" Flworkey is the index of the missing field, which is found in "other" Flworkey
             return new ResultIndexKeyTuple(-1, sizeOfThisFlworKey);
         } else {
-            // the case where other Flworkey has an empty field is should be handled in the while loop above
+            // the case where other Flworkey has an empty field is handled in the while loop above
+            // the execution shouldn't reach here, exception is placed as a safeguard for detection of issues
             throw new SparksoniqRuntimeException("Unexpected behavior found in comparing Flworkeys.");
         }
     }
