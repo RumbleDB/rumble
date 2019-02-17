@@ -7,4 +7,4 @@ order by $i."quantity" descending
 return $i
 
 
-(: equal key ordering - descending :)
+(: equal key ordering - descending (gives same result as ascending) :)

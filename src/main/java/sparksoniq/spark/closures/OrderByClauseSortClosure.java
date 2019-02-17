@@ -40,33 +40,61 @@ public class OrderByClauseSortClosure implements Comparator<FlworKey>, Serializa
     public int compare(FlworKey key1, FlworKey key2) {
 
         FlworKey.ResultIndexKeyTuple result = key1.compareWithFlworKey(key2);
-        if (result.getIndex() != -1) {
+        // if index is -1, two keys are fully equal (result is 0)
+        if (result.getIndex() == -1) {
+            return result.getResult();
+        } else {
+            int resultValue = result.getResult();
+
             //handle empty items
             if (hasEmpty(key1, key2, result)) {
-                return handleEmptyItem(key1, result);
+                resultValue = handleEmptyItem(key1, result);
             }
-            return result.getResult() * getSortOrder(result.getIndex());
-        } else
-            return result.getResult();
-    }
-
-    private int handleEmptyItem(FlworKey key1, FlworKey.ResultIndexKeyTuple result) {
-        int emptyResult;
-        if (key1.getKeyItems().get(result.getIndex()) == null)
-            emptyResult = -1;
-        else
-            emptyResult = 1;
-        if (_expressions.get(result.getIndex()).getEmptyOrder() == OrderByClauseExpr.EMPTY_ORDER.FIRST)
-            emptyResult *= -1;
-        return emptyResult;
+            return resultValue * getSortOrder(result.getIndex());
+        }
     }
 
     private boolean hasEmpty(FlworKey key1, FlworKey key2, FlworKey.ResultIndexKeyTuple result) {
-        if (_expressions.get(result.getIndex()).getEmptyOrder() != OrderByClauseExpr.EMPTY_ORDER.NONE)
-            if (key1.getKeyItems().get(result.getIndex()) == null || key2.getKeyItems().get(result.getIndex()) == null)
+        int expressionIndex = result.getIndex();
+
+        // handle empty items specially, only if an empty item ordering is specified
+        if (_expressions.get(expressionIndex).getEmptyOrder() != OrderByClauseExpr.EMPTY_ORDER.NONE) {
+
+            // if expressionIndex is equal to or larger than the size, an empty ordering expression result is found
+            if ((expressionIndex >= key1.getKeyItems().size()) || expressionIndex >= key2.getKeyItems().size()) {
                 return true;
+            }
+        }
         return false;
     }
+
+    /**
+     * Default value for empty field is smaller (least, -1, EMPTY_ORDER.FIRST). Can be specified for EMPTY_ORDER parameters
+     * @param key1   First FlworKey in comparison
+     * @param result contains (result, index) tuple.
+     * @return
+     */
+    private int handleEmptyItem(FlworKey key1, FlworKey.ResultIndexKeyTuple result) {
+        int emptyResult;
+
+        int expressionIndex = result.getIndex();
+        int expressionCount = key1.getKeyItems().size();
+        // an empty item exists in the 1st FlworKey (index of the expression exceeds the size of key1 -> hence, empty item)
+        if (expressionIndex >= expressionCount) {
+            emptyResult = -1;
+        }
+        else {  // empty item exists in the 2nd FlworKey
+            emptyResult = 1;
+        }
+
+        // if empty_items are specified to have the greater value (greatest, 1, EMPTY_ORDER.LAST).
+        if (_expressions.get(expressionIndex).getEmptyOrder() == OrderByClauseExpr.EMPTY_ORDER.LAST) {
+            emptyResult *= -1;
+        }
+        return emptyResult;
+    }
+
+
 
     private int getSortOrder(int index) {
         return (_expressions.get(index).isAscending() ? 1 : -1);
