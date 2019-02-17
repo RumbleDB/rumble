@@ -101,7 +101,7 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
             this._hasNext = true;
         }
     }
-    
+
 
     /**
      * Evaluates expressions to atomics(error is thrown if not possible) which are used as keys for sorted TreeMap.

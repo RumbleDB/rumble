@@ -40,7 +40,6 @@ public class OrderByClauseSortClosure implements Comparator<FlworKey>, Serializa
     public int compare(FlworKey key1, FlworKey key2) {
 
         FlworKey.ResultIndexKeyTuple result = key1.compareWithFlworKey(key2);
-        // TODO: if result == 0 (keys are identical, just put the latecomer after the first one -> return 1 instead)
         if (result.getIndex() != -1) {
             //handle empty items
             if (hasEmpty(key1, key2, result)) {
