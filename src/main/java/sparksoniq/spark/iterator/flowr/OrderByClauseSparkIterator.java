@@ -101,8 +101,7 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
             this._hasNext = true;
         }
     }
-
-    //TODO Solve issue - Associates the specified value with the specified key in this map. If the map previously contained a mapping for the key, the old value is replaced.
+    
 
     /**
      * Evaluates expressions to atomics(error is thrown if not possible) which are used as keys for sorted TreeMap.
@@ -136,10 +135,12 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
                 expression.close();
             }
             FlworKey key = new FlworKey(results);
-            if (keyValuePairs.get(key) == null) {
-                keyValuePairs.put(key, new ArrayList<>());
+            List<FlworTuple> values = keyValuePairs.get(key);   // all values for a single matching key are held in a list
+            if (values == null) {
+                values = new ArrayList<>();
+                keyValuePairs.put(key, values);
             }
-            keyValuePairs.get(key).add(inputTuple);
+            values.add(inputTuple);
         }
         return keyValuePairs;
     }

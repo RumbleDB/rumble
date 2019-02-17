@@ -82,7 +82,7 @@ public class FlworKey implements KryoSerializable {
         for(Item currentItem: this.keyItems){
             int index = this.keyItems.indexOf(currentItem);
             Item comparisonItem = flworKey.getKeyItems().get(index);
-            if(currentItem == null || comparisonItem == null)
+            if(comparisonItem == null)
                 return new ResultIndexKeyTuple(1, index);
 
             if (currentItem instanceof ArrayItem || currentItem instanceof ObjectItem ||
@@ -94,10 +94,9 @@ public class FlworKey implements KryoSerializable {
             else
                 result = Item.compareItems(currentItem, comparisonItem);
 
-            if(result != 0)
-                return new ResultIndexKeyTuple(result, index);
+            return new ResultIndexKeyTuple(result, index);
         }
-        return new ResultIndexKeyTuple(0, -1);
+        return new ResultIndexKeyTuple(result, -1);
     }
 
     @Override
