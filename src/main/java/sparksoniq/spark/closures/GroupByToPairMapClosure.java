@@ -24,6 +24,8 @@ import scala.Tuple2;
 import sparksoniq.exceptions.InvalidGroupVariableException;
 import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
@@ -45,32 +47,38 @@ public class GroupByToPairMapClosure implements PairFunction<FlworTuple, FlworKe
         //if a new variable is declared inside the group by clause, insert value in tuple
         List<Item> results = new ArrayList<>();
         for (GroupByClauseSparkIteratorExpression _groupVariable : _groupVariables) {
-            if (_groupVariable.getExpression() != null) {
-                if (tuple.contains(_groupVariable.getVariableReference().getVariableName()))
-                    throw new InvalidGroupVariableException("Group by variable redeclaration is illegal",
-                            _groupVariable.getIteratorMetadata());
+
+            RuntimeIterator groupVariableExpression = _groupVariable.getExpression();
+            if (groupVariableExpression != null) {
+                if (tuple.contains(_groupVariable.getVariableReference().getVariableName())) {
+                    throw new InvalidGroupVariableException("Group by variable redeclaration is illegal", _groupVariable.getIteratorMetadata());
+                }
+
                 List<Item> newVariableResults = new ArrayList<>();
-                _groupVariable.getExpression().open(new DynamicContext(tuple));
-                while (_groupVariable.getExpression().hasNext()) {
-                    Item resultItem = _groupVariable.getExpression().next();
-                    if (!Item.isAtomic(resultItem))
-                        throw new NonAtomicKeyException("Group by keys must be atomics",
-                                _groupVariable.getIteratorMetadata().getExpressionMetadata());
+                groupVariableExpression.open(new DynamicContext(tuple));
+                while (groupVariableExpression.hasNext()) {
+                    Item resultItem = groupVariableExpression.next();
+                    if (!Item.isAtomic(resultItem)) {
+                        throw new NonAtomicKeyException("Group by keys must be atomics", _groupVariable.getIteratorMetadata().getExpressionMetadata());
+                    }
                     newVariableResults.add(resultItem);
                 }
-                _groupVariable.getExpression().close();
-                tuple.putValue(_groupVariable.getVariableReference().getVariableName(), newVariableResults,
-                        false);
+                groupVariableExpression.close();
+
+                tuple.putValue(_groupVariable.getVariableReference().getVariableName(), newVariableResults, false);
                 results.addAll(newVariableResults);
+
             } else {
-                if (!tuple.contains(_groupVariable.getVariableReference().getVariableName()))
-                    throw new InvalidGroupVariableException("Variable " +
-                            _groupVariable.getVariableReference().getVariableName() +
-                            " cannot be used in group clause", _groupVariable.getIteratorMetadata());
-                _groupVariable.getVariableReference().open(new DynamicContext(tuple));
-                while (_groupVariable.getVariableReference().hasNext())
-                    results.add(_groupVariable.getVariableReference().next());
-                _groupVariable.getVariableReference().close();
+                VariableReferenceIterator groupVariableReference = _groupVariable.getVariableReference();
+                if (!tuple.contains(groupVariableReference.getVariableName())) {
+                    throw new InvalidGroupVariableException("Variable " + groupVariableReference.getVariableName() + " cannot be used in group clause", _groupVariable.getIteratorMetadata());
+                }
+
+                groupVariableReference.open(new DynamicContext(tuple));
+                while (groupVariableReference.hasNext()) {
+                    results.add(groupVariableReference.next());
+                }
+                groupVariableReference.close();
             }
         }
         return new Tuple2<>(new FlworKey(results), tuple);
