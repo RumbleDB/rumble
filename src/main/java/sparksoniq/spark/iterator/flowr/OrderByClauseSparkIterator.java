@@ -50,7 +50,6 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         super(child, iteratorMetadata);
         this._expressions = expressions;
         this._isStable = stable;
-        _resultIndex = 0;
     }
 
     @Override
@@ -82,6 +81,7 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         if(_hasNext == true){
             if (_localTupleResults == null) {
                 _localTupleResults = new ArrayList<>();
+                _resultIndex = 0;
                 setAllLocalResults();
             }
 
