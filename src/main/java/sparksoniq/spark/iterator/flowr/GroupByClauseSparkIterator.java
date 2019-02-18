@@ -182,17 +182,15 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
 
     @Override
     public JavaRDD<FlworTuple> getRDD(DynamicContext context) {
-        if (_rdd == null) {
-            _rdd = this._child.getRDD(context);
-            //map to pairs - ArrayItem [sort keys] , tuples
-            JavaPairRDD<FlworKey, FlworTuple> keyTuplePair = this._rdd
-                    .mapToPair(new GroupByToPairMapClosure(_variables));
-            //group by key
-            JavaPairRDD<FlworKey, Iterable<FlworTuple>> groupedPair =
-                    keyTuplePair.groupByKey();
-            //linearize iterable tuples into arrays
-            this._rdd = groupedPair.map(new GroupByLinearizeTupleClosure(_variables));
-        }
+        _rdd = this._child.getRDD(context);
+        //map to pairs - ArrayItem [sort keys] , tuples
+        JavaPairRDD<FlworKey, FlworTuple> keyTuplePair = this._rdd
+                .mapToPair(new GroupByToPairMapClosure(_variables));
+        //group by key
+        JavaPairRDD<FlworKey, Iterable<FlworTuple>> groupedPair =
+                keyTuplePair.groupByKey();
+        //linearize iterable tuples into arrays
+        this._rdd = groupedPair.map(new GroupByLinearizeTupleClosure(_variables));
         return _rdd;
     }
 }
