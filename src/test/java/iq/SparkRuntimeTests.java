@@ -29,8 +29,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static utils.SequenceStringComparator.unorderedItemSequenceStringsAreEqual;
-
 @RunWith(Parameterized.class)
 public class SparkRuntimeTests extends RuntimeTests {
 
@@ -55,7 +53,8 @@ public class SparkRuntimeTests extends RuntimeTests {
         String actualOutput = runIterators(runtimeIterator);
         Assert.assertTrue("Expected output: " + expectedOutput + " Actual result: "
                         + actualOutput,
-                        unorderedItemSequenceStringsAreEqual(expectedOutput, actualOutput));
+                expectedOutput.equals(actualOutput));
+                //unorderedItemSequenceStringsAreEqual(expectedOutput, actualOutput));
     }
 
 }
