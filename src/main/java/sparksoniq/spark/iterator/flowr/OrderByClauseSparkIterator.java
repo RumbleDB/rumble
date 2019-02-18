@@ -50,7 +50,6 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         super(child, iteratorMetadata);
         this._expressions = expressions;
         this._isStable = stable;
-        _localTupleResults = new ArrayList<>();
         _resultIndex = 0;
     }
 
@@ -68,7 +67,11 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         if (this._child != null) {
             _child.open(_currentDynamicContext);
 
-            setAllLocalResults();
+            if (_child.hasNext()) {
+                this._hasNext = true;
+            } else {
+                this._hasNext = false;
+            }
         } else {
             throw new SparksoniqRuntimeException("Invalid where clause.");
         }
@@ -77,6 +80,11 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
     @Override
     public FlworTuple next() {
         if(_hasNext == true){
+            if (_localTupleResults == null) {
+                _localTupleResults = new ArrayList<>();
+                setAllLocalResults();
+            }
+
             FlworTuple result = _localTupleResults.get(_resultIndex++);
             if (_resultIndex == _localTupleResults.size()) {
                 this._hasNext = false;
