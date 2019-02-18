@@ -147,19 +147,17 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
 
     @Override
     public JavaRDD<FlworTuple> getRDD(DynamicContext context) {
-        if (this._rdd == null) {
-            if (this._child != null) {
-                this._rdd = this._child.getRDD(context);
-                //map to pairs - ArrayItem [sort keys] , tuples
-                JavaPairRDD<FlworKey, FlworTuple> keyTuplePair = this._rdd
-                        .mapToPair(new OrderByMapToPairClosure(this._expressions, _isStable));
-                //sort by key
-                keyTuplePair = keyTuplePair.sortByKey(new OrderByClauseSortClosure(this._expressions, _isStable));
-                //map back to tuple RDD
-                this._rdd = keyTuplePair.map(tuple2 -> tuple2._2());
-            } else {
-                throw new SparksoniqRuntimeException("Invalid orderby clause.");
-            }
+        if (this._child != null) {
+            this._rdd = this._child.getRDD(context);
+            //map to pairs - ArrayItem [sort keys] , tuples
+            JavaPairRDD<FlworKey, FlworTuple> keyTuplePair = this._rdd
+                    .mapToPair(new OrderByMapToPairClosure(this._expressions, _isStable));
+            //sort by key
+            keyTuplePair = keyTuplePair.sortByKey(new OrderByClauseSortClosure(this._expressions, _isStable));
+            //map back to tuple RDD
+            this._rdd = keyTuplePair.map(tuple2 -> tuple2._2());
+        } else {
+            throw new SparksoniqRuntimeException("Invalid orderby clause.");
         }
         return _rdd;
     }
