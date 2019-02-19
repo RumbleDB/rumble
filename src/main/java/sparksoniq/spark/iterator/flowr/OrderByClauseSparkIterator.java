@@ -131,6 +131,7 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
                 tupleContext.removeAllVariables();                     // clear the previous variables
                 tupleContext.setBindingsFromTuple(inputTuple);        // assign new variables from new tuple
 
+                boolean isFieldEmpty = true;
                 RuntimeIterator expression = orderByExpression.getExpression();
                 expression.open(tupleContext);
                 while (expression.hasNext()) {
@@ -138,7 +139,12 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
                     if (resultItem != null && !Item.isAtomic(resultItem))
                         throw new NonAtomicKeyException("Order by keys must be atomics",
                                 orderByExpression.getIteratorMetadata().getExpressionMetadata());
+                    isFieldEmpty = false;
                     results.add(resultItem);
+                }
+                // if empty ordering field is found, add a Java null as placeholder
+                if (isFieldEmpty) {
+                    results.add(null);
                 }
                 expression.close();
             }
