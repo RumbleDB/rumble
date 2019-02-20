@@ -1,2 +1,2 @@
-(:JIQS: ShouldRun; Output="( )" :)
+(:JIQS: ShouldRun; Output="" :)
 parallelize(())
