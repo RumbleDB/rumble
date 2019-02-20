@@ -36,7 +36,9 @@ import sparksoniq.spark.closures.OrderByClauseSortClosure;
 import sparksoniq.spark.closures.OrderByMapToPairClosure;
 import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.TreeMap;
 
 public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
     private final boolean _isStable;
@@ -78,7 +80,7 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
 
     @Override
     public FlworTuple next() {
-        if(_hasNext == true){
+        if (_hasNext == true) {
             if (_localTupleResults == null) {
                 _localTupleResults = new ArrayList<>();
                 _resultIndex = 0;
@@ -110,13 +112,13 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         }
     }
 
-
     /**
      * Evaluates expressions to atomics(error is thrown if not possible) which are used as keys for sorted TreeMap.
      * Requires _child iterator to be opened.
+     *
      * @return Sorted TreeMap(ascending). key - atomics from expressions, value - input tuples
      */
-    private TreeMap<FlworKey,  List<FlworTuple>> mapExpressionsToOrderedPairs() {
+    private TreeMap<FlworKey, List<FlworTuple>> mapExpressionsToOrderedPairs() {
         // tree map keeps the natural item order deduced from an implementation of Comparator
         // OrderByClauseSortClosure implements a comparator and provides the exact desired behavior for local execution as well
         TreeMap<FlworKey, List<FlworTuple>> keyValuePairs = new TreeMap<>(new OrderByClauseSortClosure(_expressions, true));

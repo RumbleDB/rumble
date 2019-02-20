@@ -64,9 +64,6 @@ public class OrderByClauseSortClosure implements Comparator<FlworKey>, Serializa
         }
     }
 
-
-
-
     private int getSortOrder(int index) {
         return (_expressions.get(index).isAscending() ? 1 : -1);
     }
