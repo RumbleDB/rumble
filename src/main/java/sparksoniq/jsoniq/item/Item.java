@@ -154,17 +154,6 @@ public abstract class Item implements SerializableItem {
             else{
                 result = 1;
             }
-        } else if (v1 == null || v2 == null) {
-            // null equals null
-            if (v1 == null && v2 == null) {
-                result = 0;
-            }
-            else if (v1 == null) {
-                result = -1;
-            }
-            else{
-                result = 1;
-            }
         } else {
             result = v1.serialize().compareTo(v2.serialize());
         }

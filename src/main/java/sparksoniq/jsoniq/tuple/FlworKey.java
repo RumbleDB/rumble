@@ -88,7 +88,21 @@ public class FlworKey implements KryoSerializable {
                     && ((!Item.isNumeric(comparisonItem) || !Item.isNumeric(currentItem)))) {
                 throw new SparksoniqRuntimeException("Invalid sort key: Item types can't be different.");
             } else {
-                result = Item.compareItems(currentItem, comparisonItem);
+                // handle the Java null placeholder used in orderByClauseSparkIterator
+                if (currentItem == null || comparisonItem == null) {
+                    // null equals null
+                    if (currentItem == null && comparisonItem == null) {
+                        result = 0;
+                    }
+                    else if (currentItem == null) {
+                        result = -1;
+                    }
+                    else{
+                        result = 1;
+                    }
+                } else {
+                    result = Item.compareItems(currentItem, comparisonItem);
+                }
             }
             // Simplify comparison result to -1/0/1
             result = (int) Math.signum(result);
