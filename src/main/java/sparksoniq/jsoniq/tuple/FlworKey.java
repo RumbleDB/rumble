@@ -83,37 +83,37 @@ public class FlworKey implements KryoSerializable {
             if (currentItem instanceof ArrayItem || currentItem instanceof ObjectItem ||
                     comparisonItem instanceof ArrayItem || comparisonItem instanceof ObjectItem) {
                 throw new SparksoniqRuntimeException("Non atomic key not allowed");
-            } else if ((currentItem != null && comparisonItem != null)
+            }
+            if ((currentItem != null && comparisonItem != null)
                     && (!currentItem.getClass().getSimpleName().equals(comparisonItem.getClass().getSimpleName()))
                     && ((!Item.isNumeric(comparisonItem) || !Item.isNumeric(currentItem)))) {
                 throw new SparksoniqRuntimeException("Invalid sort key: Item types can't be different.");
-            } else {
-                // handle the Java null placeholder used in orderByClauseSparkIterator
-                if (currentItem == null || comparisonItem == null) {
-                    // null equals null
-                    if (currentItem == null && comparisonItem == null) {
-                        result = 0;
-                    }
-                    else if (currentItem == null) {
-                        result = -1;
-                    }
-                    else{
-                        result = 1;
-                    }
-                } else {
-                    result = Item.compareItems(currentItem, comparisonItem);
-                }
             }
+
+            // handle the Java null placeholder used in orderByClauseSparkIterator
+            if (currentItem == null || comparisonItem == null) {
+                // null equals null
+                if (currentItem == null && comparisonItem == null) {
+                    result = 0;
+                }
+                else if (currentItem == null) {
+                    result = -1;
+                }
+                else{
+                    result = 1;
+                }
+            } else {
+                result = Item.compareItems(currentItem, comparisonItem);
+            }
+
             // Simplify comparison result to -1/0/1
             result = (int) Math.signum(result);
 
-            // increment index prior to multiplication below to prevent multiplication with 0 for the first index
-            index ++;
-
             // if comparison result is not an equality, return it multiplied with the index of the expression compared
             if (result != 0) {
-                return result * index;
+                return result * (index+1); // use index+1 to prevent multiplication w/ 0 for the first index
             }
+            index++;
         }
         // if keys are fully equal, return 0
         return result;

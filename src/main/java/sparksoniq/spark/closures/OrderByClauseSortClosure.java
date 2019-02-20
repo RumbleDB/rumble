@@ -44,7 +44,7 @@ public class OrderByClauseSortClosure implements Comparator<FlworKey>, Serializa
             return 0;
         } else {
             // extract the index from result
-            // subtract 1 to offset the effect of early increment in "compareWithFlworKey" method
+            // subtract 1 to offset the effect of preventing multiplication w/ 0 in "compareWithFlworKey" method
             int expressionIndex = Math.abs(result) - 1;
             result = (int) Math.signum(result);         // sign of the result gives comparison result (1 / -1)
 
