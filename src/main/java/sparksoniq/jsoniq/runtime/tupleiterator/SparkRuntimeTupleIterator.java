@@ -17,7 +17,7 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.jsoniq.runtime.tupleiterator;
+package sparksoniq.jsoniq.runtime.tupleiterator;
 
 import org.apache.spark.api.java.JavaRDD;
 import sparksoniq.exceptions.IteratorFlowException;
@@ -37,43 +37,41 @@ public abstract class SparkRuntimeTupleIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public boolean isRDD()
-    {
+    public boolean isRDD() {
         return true;
     }
 
     @Override
-    public void reset(DynamicContext context){
+    public void reset(DynamicContext context) {
         super.reset(context);
         result = null;
     }
 
     @Override
-    public void close(){
+    public void close() {
         super.close();
         result = null;
     }
 
     @Override
-    public FlworTuple next(){
-        if(!this._isOpen)
+    public FlworTuple next() {
+        if (!this._isOpen)
             throw new IteratorFlowException("Runtime tuple iterator is not open", getMetadata());
 
-        if(result == null){
+        if (result == null) {
             currentResultIndex = 0;
             this._rdd = this.getRDD(_currentDynamicContext);
-            if(SparkContextManager.LIMIT_COLLECT()) {
+            if (SparkContextManager.LIMIT_COLLECT()) {
                 result = _rdd.take(SparkContextManager.COLLECT_ITEM_LIMIT);
-            }
-            else
+            } else
                 result = _rdd.collect();
         }
 
-        if(!(currentResultIndex <= result.size() - 1))
-             throw new IteratorFlowException(RuntimeTupleIterator.FLOW_EXCEPTION_MESSAGE + this.getClass().getSimpleName(),
-                     getMetadata());
-        if(currentResultIndex == result.size() - 1)
-             this._hasNext = false;
+        if (!(currentResultIndex <= result.size() - 1))
+            throw new IteratorFlowException(RuntimeTupleIterator.FLOW_EXCEPTION_MESSAGE + this.getClass().getSimpleName(),
+                    getMetadata());
+        if (currentResultIndex == result.size() - 1)
+            this._hasNext = false;
 
         FlworTuple tuple = result.get(currentResultIndex);
         currentResultIndex++;

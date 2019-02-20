@@ -4,3 +4,5 @@ for $i in (
    { "product" : "toaster", "store number" : 2, "quantity" : "aaaa"  })
 order by $i."quantity"
 return $i
+
+(: mismatch in order types:)

@@ -17,7 +17,7 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.jsoniq.tuple;
+package sparksoniq.jsoniq.tuple;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
@@ -31,27 +31,7 @@ import sparksoniq.jsoniq.item.ObjectItem;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FlworKey implements KryoSerializable, Comparable<FlworKey> {
-
-    public static class ResultIndexKeyTuple{
-        public int getResult() {
-            return _result;
-        }
-
-        private final int _result;
-
-        public int getIndex() {
-            return _index;
-        }
-
-        private final int _index;
-
-        public ResultIndexKeyTuple(int result, int index) {
-            this._result = result;
-            this._index = index;
-        }
-
-    }
+public class FlworKey implements KryoSerializable {
 
     public List<Item> getKeyItems() {
         return keyItems;
@@ -63,48 +43,80 @@ public class FlworKey implements KryoSerializable, Comparable<FlworKey> {
 
     }
 
-    @Override public int hashCode(){
+    @Override
+    public int hashCode() {
         String result = "";
-        for(Item key : this.keyItems)
+        for (Item key : this.keyItems)
             result += key.serialize();
         return result.hashCode();
     }
 
-    @Override public boolean equals(Object otherKey){
-        if(otherKey instanceof FlworKey)
-            return this.compareTo((FlworKey) otherKey) == 0;
+    @Override
+    public boolean equals(Object otherKey) {
+        if (otherKey instanceof FlworKey)
+            return this.compareWithFlworKey((FlworKey) otherKey) == 0;
         else
             return false;
     }
 
 
-    @Override
-    //TODO handle empty
-    public int compareTo(FlworKey flworKey) {
-        return this.compareWithFlworKey(flworKey).getResult();
-    }
-
-    public ResultIndexKeyTuple compareWithFlworKey(FlworKey flworKey){
-        int result = 0;
-        for(Item currentItem: this.keyItems){
-            int index = this.keyItems.indexOf(currentItem);
-            Item comparisonItem = flworKey.getKeyItems().get(index);
-            if(currentItem == null || comparisonItem == null)
-                return new ResultIndexKeyTuple(1, index);
-
-            if (currentItem instanceof ArrayItem || currentItem instanceof ObjectItem ||
-                    comparisonItem instanceof ArrayItem || comparisonItem instanceof ObjectItem)
-                throw new SparksoniqRuntimeException("Non atomic key not allowed");
-            else if(!currentItem.getClass().getSimpleName().equals(comparisonItem.getClass().getSimpleName())
-                    && (!Item.isNumeric(comparisonItem) || !Item.isNumeric(currentItem)))
-                throw new SparksoniqRuntimeException("Invalid sort key, different Item types");
-            else
-                result = Item.compareItems(currentItem, comparisonItem);
-
-            if(result != 0)
-                return new ResultIndexKeyTuple(result, index);
+    /**
+     * Invariant - two Flworkeys have the same length
+     *
+     * @param flworKey "other" FlworKey to be compared against
+     * @return comparison value (-1=smaller, 0=equal, 1=larger) * index (of the expression that determines ordering)
+     */
+    public int compareWithFlworKey(FlworKey flworKey) {
+        if (this.keyItems.size() != flworKey.keyItems.size()) {
+            throw new SparksoniqRuntimeException("Invalid sort key: Key sizes can't be different.");
         }
-        return new ResultIndexKeyTuple(0, -1);
+
+        int result = 0;
+
+        // iterate over every ordering expression of this flworkey
+        int index = 0;
+        while (index < this.keyItems.size()) {
+            Item currentItem = this.keyItems.get(index);
+            Item comparisonItem = flworKey.keyItems.get(index);
+
+            // check for incorrect ordering inputs
+            if (currentItem instanceof ArrayItem || currentItem instanceof ObjectItem ||
+                    comparisonItem instanceof ArrayItem || comparisonItem instanceof ObjectItem) {
+                throw new SparksoniqRuntimeException("Non atomic key not allowed");
+            }
+            if ((currentItem != null && comparisonItem != null)
+                    && (!currentItem.getClass().getSimpleName().equals(comparisonItem.getClass().getSimpleName()))
+                    && ((!Item.isNumeric(comparisonItem) || !Item.isNumeric(currentItem)))) {
+                throw new SparksoniqRuntimeException("Invalid sort key: Item types can't be different.");
+            }
+
+            // handle the Java null placeholder used in orderByClauseSparkIterator
+            if (currentItem == null || comparisonItem == null) {
+                // null equals null
+                if (currentItem == null && comparisonItem == null) {
+                    result = 0;
+                }
+                else if (currentItem == null) {
+                    result = -1;
+                }
+                else{
+                    result = 1;
+                }
+            } else {
+                result = Item.compareItems(currentItem, comparisonItem);
+            }
+
+            // Simplify comparison result to -1/0/1
+            result = (int) Math.signum(result);
+
+            // if comparison result is not an equality, return it multiplied with the index of the expression compared
+            if (result != 0) {
+                return result * (index+1); // use index+1 to prevent multiplication w/ 0 for the first index
+            }
+            index++;
+        }
+        // if keys are fully equal, return 0
+        return result;
     }
 
     @Override

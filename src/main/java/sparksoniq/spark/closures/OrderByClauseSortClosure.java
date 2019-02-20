@@ -39,33 +39,29 @@ public class OrderByClauseSortClosure implements Comparator<FlworKey>, Serializa
     @Override
     public int compare(FlworKey key1, FlworKey key2) {
 
-        FlworKey.ResultIndexKeyTuple result = key1.compareWithFlworKey(key2);
-        if (result.getIndex() != -1) {
-            //handle empty items
-            if (hasEmpty(key1, key2, result)) {
-                return handleEmptyItem(key1, result);
+        int result = key1.compareWithFlworKey(key2);
+        if (result == 0) {
+            return 0;
+        } else {
+            // extract the index from result
+            // subtract 1 to offset the effect of preventing multiplication w/ 0 in "compareWithFlworKey" method
+            int expressionIndex = Math.abs(result) - 1;
+            result = (int) Math.signum(result);         // sign of the result gives comparison result (1 / -1)
+
+            // Java null shows that the ordering expression is empty
+            if (key1.getKeyItems().get(expressionIndex) == null || key2.getKeyItems().get(expressionIndex) == null) {
+                // Default behavior(NONE) for empty ordering expressions is equal to FIRST(empty least)
+                // if LAST is given, empty ordering expressions are the greatest (reverse the comparison)
+                if (_expressions.get(expressionIndex).getEmptyOrder() == OrderByClauseExpr.EMPTY_ORDER.LAST) {
+                    result *= -1;
+                }
             }
-            return result.getResult() * getSortOrder(result.getIndex());
-        } else
-            return result.getResult();
-    }
 
-    private int handleEmptyItem(FlworKey key1, FlworKey.ResultIndexKeyTuple result) {
-        int emptyResult;
-        if (key1.getKeyItems().get(result.getIndex()) == null)
-            emptyResult = -1;
-        else
-            emptyResult = 1;
-        if (_expressions.get(result.getIndex()).getEmptyOrder() == OrderByClauseExpr.EMPTY_ORDER.FIRST)
-            emptyResult *= -1;
-        return emptyResult;
-    }
+            // account for sorting order
+            result *= getSortOrder(expressionIndex);
 
-    private boolean hasEmpty(FlworKey key1, FlworKey key2, FlworKey.ResultIndexKeyTuple result) {
-        if (_expressions.get(result.getIndex()).getEmptyOrder() != OrderByClauseExpr.EMPTY_ORDER.NONE)
-            if (key1.getKeyItems().get(result.getIndex()) == null || key2.getKeyItems().get(result.getIndex()) == null)
-                return true;
-        return false;
+            return result;
+        }
     }
 
     private int getSortOrder(int index) {
