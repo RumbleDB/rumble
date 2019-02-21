@@ -27,10 +27,10 @@ import org.apache.spark.api.java.JavaSparkContext;
 import sparksoniq.jsoniq.item.*;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
+import sparksoniq.jsoniq.runtime.tupleiterator.SparkRuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
 
 public class SparkContextManager {
 
@@ -88,7 +88,7 @@ public class SparkContextManager {
         Class[] serializedClasses = new Class[]{Item.class, ArrayItem.class, ObjectItem.class,
                 StringItem.class, IntegerItem.class, DoubleItem.class, DecimalItem.class, NullItem.class,
                 BooleanItem.class, DynamicContext.class, FlworTuple.class, FlworKey.class,
-                FlowrClauseSparkIterator.class, RuntimeIterator.class, RuntimeTupleIterator.class};
+                SparkRuntimeTupleIterator.class, RuntimeIterator.class, RuntimeTupleIterator.class};
         configuration.registerKryoClasses(serializedClasses);
     }
 

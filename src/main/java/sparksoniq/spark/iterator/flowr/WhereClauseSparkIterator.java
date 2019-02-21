@@ -22,8 +22,6 @@
 import org.apache.spark.api.java.JavaRDD;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
-import sparksoniq.jsoniq.compiler.translator.expr.flowr.FLWOR_CLAUSES;
-import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
@@ -31,11 +29,6 @@ import sparksoniq.jsoniq.runtime.tupleiterator.SparkRuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.closures.WhereClauseClosure;
-import sparksoniq.spark.iterator.flowr.base.FlowrClauseSparkIterator;
-
-import javax.naming.OperationNotSupportedException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class WhereClauseSparkIterator extends SparkRuntimeTupleIterator {
 
