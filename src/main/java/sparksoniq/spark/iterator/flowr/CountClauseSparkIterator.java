@@ -18,13 +18,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
-    private VariableReferenceIterator _variableReference;
+    private String _variableName;
     private FlworTuple _nextLocalTupleResult;
     private int _currentCountIndex;
 
     public CountClauseSparkIterator(RuntimeTupleIterator child, RuntimeIterator variableReference, IteratorMetadata iteratorMetadata) {
         super(child, iteratorMetadata);
-        _variableReference = (VariableReferenceIterator) variableReference;
+        _variableName = ((VariableReferenceIterator) variableReference).getVariableName();
         _currentCountIndex = 1 ;    // indices start at 1 in JSONiq
     }
 
@@ -65,7 +65,7 @@ public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
             List<Item> results = new ArrayList<>();
             results.add(new IntegerItem(_currentCountIndex++));
 
-            FlworTuple newTuple = new FlworTuple(inputTuple, _variableReference.getVariableName(), results);
+            FlworTuple newTuple = new FlworTuple(inputTuple, _variableName, results);
             _nextLocalTupleResult = newTuple;
             this._hasNext = true;
         } else {
@@ -77,7 +77,7 @@ public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
 
     @Override
     public JavaRDD<FlworTuple> getRDD(DynamicContext context) {
-        String variableName = _variableReference.getVariableName();
+        String variableName = _variableName;
         // zipWithIndex starts from 0, increment indices by 1 for jsoniq convention
         return _child.getRDD(context).zipWithIndex()
                 .mapValues(index -> index + 1)
