@@ -21,6 +21,8 @@ package sparksoniq.spark.iterator.flowr;
 
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
@@ -174,5 +176,10 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         keyTuplePair = keyTuplePair.sortByKey(new OrderByClauseSortClosure(this._expressions, _isStable));
         //map back to tuple RDD
         return keyTuplePair.map(tuple2 -> tuple2._2());
+    }
+
+    @Override
+    public Dataset<Row> getDataFrame(DynamicContext context) {
+        return null;
     }
 }

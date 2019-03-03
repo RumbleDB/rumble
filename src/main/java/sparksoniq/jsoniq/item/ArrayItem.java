@@ -17,7 +17,7 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.jsoniq.item;
+package sparksoniq.jsoniq.item;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
@@ -36,7 +36,11 @@ public class ArrayItem extends JsonItem {
         return _arrayItems;
     }
 
-    public ArrayItem(List<Item> arrayItems){
+    protected ArrayItem() {
+        super();
+    }
+
+    public ArrayItem(List<Item> arrayItems) {
         super();
         this._arrayItems = arrayItems;
     }
@@ -52,7 +56,9 @@ public class ArrayItem extends JsonItem {
     }
 
     @Override
-    public void putItem(Item value) { this._arrayItems.add(value); }
+    public void putItem(Item value) {
+        this._arrayItems.add(value);
+    }
 
     @Override
     public void putItemByKey(String s, Item value) throws OperationNotSupportedException {
@@ -71,15 +77,18 @@ public class ArrayItem extends JsonItem {
 
 
     @Override
-    public  boolean isArray(){ return true; }
+    public boolean isArray() {
+        return true;
+    }
 
     @Override
     public int getSize() {
         return this._arrayItems.size();
     }
 
-    @Override public boolean isTypeOf(ItemType type) {
-        if(type.getType().equals(ItemTypes.ArrayItem) || super.isTypeOf(type))
+    @Override
+    public boolean isTypeOf(ItemType type) {
+        if (type.getType().equals(ItemTypes.ArrayItem) || super.isTypeOf(type))
             return true;
         return false;
     }

@@ -17,7 +17,7 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.jsoniq.item;
+package sparksoniq.jsoniq.item;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
@@ -35,7 +35,11 @@ public class DecimalItem extends AtomicItem {
         return _value;
     }
 
-    public DecimalItem(BigDecimal decimal){
+    protected DecimalItem() {
+        super();
+    }
+
+    public DecimalItem(BigDecimal decimal) {
         super();
         this._value = decimal;
     }
@@ -66,10 +70,13 @@ public class DecimalItem extends AtomicItem {
     }
 
     @Override
-    public  boolean isDecimal(){ return true; }
+    public boolean isDecimal() {
+        return true;
+    }
 
-    @Override public boolean isTypeOf(ItemType type) {
-        if(type.getType().equals(ItemTypes.DecimalItem)|| super.isTypeOf(type))
+    @Override
+    public boolean isTypeOf(ItemType type) {
+        if (type.getType().equals(ItemTypes.DecimalItem) || super.isTypeOf(type))
             return true;
         return false;
     }
