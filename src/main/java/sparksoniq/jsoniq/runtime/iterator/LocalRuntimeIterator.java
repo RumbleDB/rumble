@@ -38,7 +38,15 @@ public abstract class LocalRuntimeIterator extends RuntimeIterator {
     }
 
     @Override
-    public boolean isRDD() {
+    public boolean isRDD(){ return false; }
+
+    @Override
+    public boolean isDataFrame() {
         return false;
+    }
+
+    @Override
+    public boolean getDataFrame() {
+        throw new SparkRuntimeException("Iterator has no DataFrames", getMetadata());
     }
 }

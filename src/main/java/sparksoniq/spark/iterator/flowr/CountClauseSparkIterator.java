@@ -21,6 +21,8 @@
 package sparksoniq.spark.iterator.flowr;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.IntegerItem;
@@ -108,5 +110,10 @@ public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
         return _child.getRDD(context).zipWithIndex()
                 .mapValues(index -> index + 1)
                 .map(new CountClauseClosure(variableName, getMetadata()));
+    }
+
+    @Override
+    public Dataset<Row> getDataFrame(DynamicContext context) {
+        return null;
     }
 }

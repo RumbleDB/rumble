@@ -20,6 +20,8 @@
 package sparksoniq.jsoniq.runtime.tupleiterator;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.io.json.JiqsItemParser;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -33,6 +35,7 @@ public abstract class SparkRuntimeTupleIterator extends RuntimeTupleIterator {
 
     protected JiqsItemParser parser;
     protected JavaRDD<FlworTuple> _rdd;
+    protected Dataset<Row> _df;
     protected List<FlworTuple> result = null;
     protected int currentResultIndex = 0;
 

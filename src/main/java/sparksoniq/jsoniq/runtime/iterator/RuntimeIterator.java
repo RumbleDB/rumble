@@ -156,6 +156,10 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
 
     public abstract JavaRDD<Item> getRDD(DynamicContext dynamicContext);
 
+    public abstract boolean isDataFrame();
+
+    public abstract boolean getDataFrame();
+
     public abstract Item next();
 
     protected List<Item> runChildrenIterators(DynamicContext context) {
