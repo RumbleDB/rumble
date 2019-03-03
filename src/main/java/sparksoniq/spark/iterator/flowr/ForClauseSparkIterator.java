@@ -20,6 +20,11 @@
 package sparksoniq.spark.iterator.flowr;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -32,6 +37,7 @@ import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkSessionManager;
 import sparksoniq.spark.closures.ForClauseClosure;
 import sparksoniq.spark.closures.ForClauseLocalToRDDClosure;
+import sparksoniq.spark.closures.ForClauseSerializeClosure;
 import sparksoniq.spark.closures.InitialForClauseClosure;
 
 import java.util.ArrayList;
@@ -178,5 +184,59 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
             }
         }
         return _rdd;
+    }
+
+    @Override
+    public Dataset<Row> getDataFrame(DynamicContext context) {
+        this._df = null;
+
+        if (this._child == null) {
+            // create initial RDD from expression
+            JavaRDD<Item> initialRdd = _expression.getRDD(context);
+
+            // TODO: define a schema
+            String schemaString = _variableName;
+            List<StructField> fields = new ArrayList<>();
+            for (String fieldName : schemaString.split(" ")) {
+                StructField field = DataTypes.createStructField(fieldName, DataTypes.BinaryType, true);
+                fields.add(field);
+            }
+            StructType schema = DataTypes.createStructType(fields);
+
+            // TODO: convert initial RDD to row RDD
+            JavaRDD<Row> rowRDD = initialRdd.map(new ForClauseSerializeClosure());
+
+            // TODO: apply the schema to row RDD
+            this._df = SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
+
+        } else {        //if it's not a start clause
+            if (_child.isDataFrame()) {
+                this._df = this._child.getDataFrame(context);
+
+                // TODO: deserialize the byte array dataframe
+
+                // TODO: Update schema
+
+                // TODO: perform dataframe transformation
+
+                this._rdd = this._rdd.flatMap(new ForClauseClosure(_expression, _variableName));
+
+            } else {    // if child is locally evaluated
+                // _expression is definitely an RDD if execution flows here
+
+                _child.open(_currentDynamicContext);
+                _tupleContext = new DynamicContext(_currentDynamicContext);     // assign current context as parent
+                while (_child.hasNext()) {
+                    _inputTuple = _child.next();
+                    _tupleContext.removeAllVariables();             // clear the previous variables
+                    _tupleContext.setBindingsFromTuple(_inputTuple);      // assign new variables from new tuple
+
+                    JavaRDD<Item> expressionRDD = _expression.getRDD(_tupleContext);
+                    this._rdd = this._rdd.union(expressionRDD.map(new ForClauseLocalToRDDClosure(_variableName, _inputTuple)));
+                }
+                _child.close();
+            }
+        }
+        return _df;
     }
 }

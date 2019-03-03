@@ -20,6 +20,8 @@
 package sparksoniq.spark.iterator.flowr;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -107,5 +109,10 @@ public class WhereClauseSparkIterator extends SparkRuntimeTupleIterator {
             throw new SparksoniqRuntimeException("Invalid where clause.");
         }
         return _rdd;
+    }
+
+    @Override
+    public Dataset<Row> getDataFrame(DynamicContext context) {
+        return null;
     }
 }

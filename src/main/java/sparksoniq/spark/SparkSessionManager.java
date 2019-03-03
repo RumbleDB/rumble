@@ -66,7 +66,7 @@ public class SparkSessionManager {
         return _instance;
     }
 
-    public SparkSession getSession() {
+    public SparkSession getOrCreateSession() {
         if (session == null) {
             if (this.configuration == null) {
                 setDefaultConfiguration();
@@ -117,7 +117,7 @@ public class SparkSessionManager {
 
     public JavaSparkContext getJavaSparkContext() {
         if (javaSparkContext == null) {
-            javaSparkContext = JavaSparkContext.fromSparkContext(this.getSession().sparkContext());
+            javaSparkContext = JavaSparkContext.fromSparkContext(this.getOrCreateSession().sparkContext());
         }
         return javaSparkContext;
     }

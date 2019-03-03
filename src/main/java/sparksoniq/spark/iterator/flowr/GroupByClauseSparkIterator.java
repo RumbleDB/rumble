@@ -21,6 +21,8 @@ package sparksoniq.spark.iterator.flowr;
 
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import sparksoniq.exceptions.InvalidGroupVariableException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
@@ -206,5 +208,10 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
         //linearize iterable tuples into arrays
         this._rdd = groupedPair.map(new GroupByLinearizeTupleClosure(_variables));
         return _rdd;
+    }
+
+    @Override
+    public Dataset<Row> getDataFrame(DynamicContext context) {
+        return null;
     }
 }

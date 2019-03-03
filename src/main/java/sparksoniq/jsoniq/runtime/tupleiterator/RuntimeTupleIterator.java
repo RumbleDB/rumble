@@ -24,6 +24,8 @@ import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.tuple.FlworTuple;
@@ -96,5 +98,8 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
 
     public abstract JavaRDD<FlworTuple> getRDD(DynamicContext context);
 
+    public abstract boolean isDataFrame();
+
+    public abstract Dataset<Row> getDataFrame(DynamicContext context);
 
 }
