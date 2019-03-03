@@ -17,7 +17,7 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.jsoniq.item;
+package sparksoniq.jsoniq.item;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
@@ -28,7 +28,9 @@ import java.math.BigDecimal;
 
 public class NullItem extends AtomicItem {
 
-    public NullItem(){super();}
+    public NullItem() {
+        super();
+    }
 
     @Override
     public String getStringValue() throws OperationNotSupportedException {
@@ -62,7 +64,7 @@ public class NullItem extends AtomicItem {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeObjectOrNull(output,null, Item.class);
+        kryo.writeObjectOrNull(output, null, Item.class);
     }
 
     @Override

@@ -20,6 +20,8 @@
  package sparksoniq.spark.iterator.flowr;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.Item;
@@ -158,6 +160,11 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
         if (_child != null) {
             _child.close();
         }
+    }
+
+    @Override
+    public Dataset<Row> getDataFrame(DynamicContext context) {
+        return null;
     }
 
 }

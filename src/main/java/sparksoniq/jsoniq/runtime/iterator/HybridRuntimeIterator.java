@@ -22,6 +22,7 @@
 import org.apache.spark.api.java.JavaRDD;
 import sparksoniq.ShellStart;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.SparkRuntimeException;
 import sparksoniq.io.json.JiqsItemParser;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -46,6 +47,16 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
           isRDDInitialized = true;
         }
         return _isRDD;
+    }
+
+    @Override
+    public boolean isDataFrame() {
+        return false;
+    }
+
+    @Override
+    public boolean getDataFrame() {
+        throw new SparkRuntimeException("Iterator has no DataFrames", getMetadata());
     }
 
     @Override

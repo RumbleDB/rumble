@@ -17,37 +17,28 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.jsoniq.runtime.iterator;
+package sparksoniq.spark.closures;
 
-import org.apache.spark.api.java.JavaRDD;
-import sparksoniq.exceptions.SparkRuntimeException;
+import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.sql.Row;
 import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
-import sparksoniq.semantics.DynamicContext;
 
+import java.util.Iterator;
 import java.util.List;
 
-public abstract class LocalRuntimeIterator extends RuntimeIterator {
-    protected LocalRuntimeIterator(List<RuntimeIterator> children, IteratorMetadata iteratorMetadata) {
-        super(children, iteratorMetadata);
+public class ReturnClauseDeserializeClosure implements FlatMapFunction<Row, Item> {
+
+    public ReturnClauseDeserializeClosure() {
     }
 
+    /**
+     * @param row
+     * @return List<Item>iterator, deserialized from parametrized Row object containing the List<Item>
+     */
     @Override
-    public JavaRDD<Item> getRDD(DynamicContext dynamicContext)
-    {
-        throw new SparkRuntimeException("Iterator has no RDDs", getMetadata());
-    }
+    public Iterator<Item> call(Row row) {
+        Object deserializedRow = ClosureUtils.deserializeRow(row);
 
-    @Override
-    public boolean isRDD(){ return false; }
-
-    @Override
-    public boolean isDataFrame() {
-        return false;
-    }
-
-    @Override
-    public boolean getDataFrame() {
-        throw new SparkRuntimeException("Iterator has no DataFrames", getMetadata());
+        return ((List<Item>) deserializedRow).iterator();
     }
 }
