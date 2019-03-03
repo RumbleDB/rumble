@@ -17,7 +17,7 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.jsoniq.item;
+package sparksoniq.jsoniq.item;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
@@ -28,13 +28,17 @@ import sparksoniq.semantics.types.ItemTypes;
 import javax.naming.OperationNotSupportedException;
 import java.math.BigDecimal;
 
-public class StringItem extends AtomicItem{
+public class StringItem extends AtomicItem {
 
     public String getValue() {
         return _value;
     }
 
-    public StringItem(String value){
+    protected StringItem() {
+        super();
+    }
+    
+    public StringItem(String value) {
         super();
         this._value = value;
     }
@@ -64,14 +68,17 @@ public class StringItem extends AtomicItem{
         throw new OperationNotSupportedException("String value exception");
     }
 
-    @Override public boolean isTypeOf(ItemType type) {
-        if(type.getType().equals(ItemTypes.StringItem) || super.isTypeOf(type))
+    @Override
+    public boolean isTypeOf(ItemType type) {
+        if (type.getType().equals(ItemTypes.StringItem) || super.isTypeOf(type))
             return true;
         return false;
     }
 
     @Override
-    public  boolean isString(){ return true; }
+    public boolean isString() {
+        return true;
+    }
 
     @Override
     public String serialize() {
@@ -88,5 +95,5 @@ public class StringItem extends AtomicItem{
         this._value = input.readString();
     }
 
-    private  String _value;
+    private String _value;
 }

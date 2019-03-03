@@ -5,7 +5,6 @@ import org.apache.log4j.Logger;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SparkSession;
-import sparksoniq.exceptions.SparkRuntimeException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.*;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -40,7 +39,7 @@ public class SparkSessionManager {
     private SparkSessionManager() {
     }
 
-    public SparkSession getSession() {
+    public SparkSession getOrCreateSession() {
         if (session == null) {
             if (this.configuration == null) {
                 setDefaultConfiguration();
@@ -91,7 +90,7 @@ public class SparkSessionManager {
 
     public JavaSparkContext getJavaSparkContext() {
         if (javaSparkContext == null) {
-            javaSparkContext = JavaSparkContext.fromSparkContext(this.getSession().sparkContext());
+            javaSparkContext = JavaSparkContext.fromSparkContext(this.getOrCreateSession().sparkContext());
         }
         return javaSparkContext;
     }

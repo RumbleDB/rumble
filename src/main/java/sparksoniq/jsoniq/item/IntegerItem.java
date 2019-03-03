@@ -34,6 +34,10 @@ public class IntegerItem extends AtomicItem {
         return _value;
     }
 
+    public IntegerItem() {
+        super();
+    }
+
     public IntegerItem(int value){
         super();
         this._value =value;
