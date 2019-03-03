@@ -23,9 +23,6 @@ import org.apache.spark.api.java.function.Function;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class ForClauseLocalToRDDClosure implements Function<Item, FlworTuple> {
     private final String _variableName;
     private final FlworTuple _inputTuple;

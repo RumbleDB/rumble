@@ -25,7 +25,7 @@ import sparksoniq.io.json.JiqsItemParser;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.spark.SparkContextManager;
+import sparksoniq.spark.SparkSessionManager;
 
 import java.util.List;
 
@@ -61,8 +61,8 @@ public abstract class SparkRuntimeTupleIterator extends RuntimeTupleIterator {
         if (result == null) {
             currentResultIndex = 0;
             this._rdd = this.getRDD(_currentDynamicContext);
-            if (SparkContextManager.LIMIT_COLLECT()) {
-                result = _rdd.take(SparkContextManager.COLLECT_ITEM_LIMIT);
+            if (SparkSessionManager.LIMIT_COLLECT()) {
+                result = _rdd.take(SparkSessionManager.COLLECT_ITEM_LIMIT);
             } else
                 result = _rdd.collect();
         }

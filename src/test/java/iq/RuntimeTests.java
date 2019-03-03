@@ -29,7 +29,7 @@ import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.spark.SparkContextManager;
+import sparksoniq.spark.SparkSessionManager;
 import utils.FileManager;
 
 import java.io.File;
@@ -73,7 +73,7 @@ public class RuntimeTests extends AnnotationsTestsBase {
 //        sparkConfiguration.set("spark.executor.memory",   "2g");
         sparkConfiguration.set("spark.speculation", "true");
         sparkConfiguration.set("spark.speculation.quantile", "0.5");
-        SparkContextManager.getInstance().initializeConfigurationAndContext(sparkConfiguration, true);
+        SparkSessionManager.getInstance().initializeConfigurationAndSession(sparkConfiguration, true);
     }
 
     protected String runIterators(RuntimeIterator iterator) {
