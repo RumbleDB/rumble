@@ -5,6 +5,8 @@ import org.apache.log4j.Logger;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SparkSession;
+import sparksoniq.exceptions.SparkRuntimeException;
+import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.*;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
@@ -53,11 +55,16 @@ public class SparkSessionManager {
     }
 
     private void initialize() {
-        initializeKryoSerialization();
-        Logger.getLogger("org").setLevel(LOG_LEVEL);
-        Logger.getLogger("akka").setLevel(LOG_LEVEL);
-        if (session == null)
+        if (session == null) {
+            initializeKryoSerialization();
+            Logger.getLogger("org").setLevel(LOG_LEVEL);
+            Logger.getLogger("akka").setLevel(LOG_LEVEL);
+
             session= SparkSession.builder().config(this.configuration).getOrCreate();
+        } else {
+            throw new SparksoniqRuntimeException("Session already exists: new session initialization prevented.");
+        }
+
     }
 
     private void initializeKryoSerialization() {
