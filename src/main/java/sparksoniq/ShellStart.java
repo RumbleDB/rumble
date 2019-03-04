@@ -22,7 +22,7 @@ package sparksoniq;
 import sparksoniq.config.SparksoniqRuntimeConfiguration;
 import sparksoniq.exceptions.CliException;
 import sparksoniq.io.shell.JiqsJLineShell;
-import sparksoniq.spark.SparkContextManager;
+import sparksoniq.spark.SparkSessionManager;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -51,7 +51,7 @@ public class ShellStart {
             return;
         }
 
-        SparkContextManager.getInstance().initializeConfigurationAndContext();
+        SparkSessionManager.getInstance().initializeConfigurationAndSession();
         if (arguments.containsKey("result-size")) {
             int itemLimit = Integer.parseInt(arguments.get("result-size"));
             terminal = new JiqsJLineShell(new SparksoniqRuntimeConfiguration(arguments), itemLimit);

@@ -22,7 +22,7 @@ package sparksoniq;
 
 import sparksoniq.config.SparksoniqRuntimeConfiguration;
 import sparksoniq.exceptions.CliException;
-import sparksoniq.spark.SparkContextManager;
+import sparksoniq.spark.SparkSessionManager;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -53,7 +53,7 @@ public class Main {
             throw new CliException(ex.getMessage());
         }
 
-        String masterConfig = SparkContextManager.getInstance().getContext().getConf().get("spark.master");
+        String masterConfig = SparkSessionManager.getInstance().getJavaSparkContext().getConf().get("spark.master");
 
         if (masterConfig.contains("local")) {
             System.out.println("Running in local mode");
@@ -82,7 +82,7 @@ public class Main {
     }
 
     private static void initializeApplication() {
-        SparkContextManager.getInstance().initializeConfigurationAndContext();
+        SparkSessionManager.getInstance().initializeConfigurationAndSession();
     }
 
 }

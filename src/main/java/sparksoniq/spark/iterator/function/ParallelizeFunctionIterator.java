@@ -24,7 +24,7 @@ import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.spark.SparkContextManager;
+import sparksoniq.spark.SparkSessionManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +43,7 @@ public class ParallelizeFunctionIterator extends SparkFunctionCallIterator {
                 contents.add(iterator.next()/*.serialize()*/);
             iterator.close();
         }
-        _rdd = SparkContextManager.getInstance().getContext().parallelize(contents);
+        _rdd = SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents);
         return _rdd;
     }
 }

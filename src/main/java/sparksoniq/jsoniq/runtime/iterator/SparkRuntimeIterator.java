@@ -26,7 +26,7 @@ import sparksoniq.io.json.JiqsItemParser;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.spark.SparkContextManager;
+import sparksoniq.spark.SparkSessionManager;
 
 import java.util.List;
 
@@ -60,10 +60,10 @@ public abstract class SparkRuntimeIterator extends RuntimeIterator {
         if(result == null){
             currentResultIndex = 0;
             this._rdd = this.getRDD(_currentDynamicContext);
-            if(SparkContextManager.LIMIT_COLLECT()) {
-                result = _rdd.take(SparkContextManager.COLLECT_ITEM_LIMIT);
-                if (result.size() == SparkContextManager.COLLECT_ITEM_LIMIT) {
-                    ShellStart.terminal.output("\nWarning: Results have been truncated to: " + SparkContextManager.COLLECT_ITEM_LIMIT
+            if(SparkSessionManager.LIMIT_COLLECT()) {
+                result = _rdd.take(SparkSessionManager.COLLECT_ITEM_LIMIT);
+                if (result.size() == SparkSessionManager.COLLECT_ITEM_LIMIT) {
+                    ShellStart.terminal.output("\nWarning: Results have been truncated to: " + SparkSessionManager.COLLECT_ITEM_LIMIT
                             + " items. This value can be configured with the --result-size parameter at startup.\n");
                 }
             }

@@ -17,7 +17,7 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.spark.iterator.flowr;
+package sparksoniq.spark.iterator.flowr;
 
 import org.apache.spark.api.java.JavaRDD;
 import sparksoniq.exceptions.IteratorFlowException;
@@ -29,7 +29,7 @@ import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
 import sparksoniq.jsoniq.runtime.tupleiterator.SparkRuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.spark.SparkContextManager;
+import sparksoniq.spark.SparkSessionManager;
 import sparksoniq.spark.closures.ForClauseClosure;
 import sparksoniq.spark.closures.ForClauseLocalToRDDClosure;
 import sparksoniq.spark.closures.InitialForClauseClosure;
@@ -77,7 +77,7 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
 
     @Override
     public FlworTuple next() {
-        if(_hasNext == true){
+        if (_hasNext == true) {
             FlworTuple result = _nextLocalTupleResult;      // save the result to be returned
             // calculate and store the next result
             if (_child == null) {       // if it's the initial for clause, call the correct function
@@ -114,6 +114,7 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
 
     /**
      * _expression has to be open prior to call.
+     *
      * @return true if _nextLocalTupleResult is set and _hasNext is true, false otherwise
      */
     private boolean setResultFromExpression() {
@@ -149,7 +150,7 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
     @Override
     public JavaRDD<FlworTuple> getRDD(DynamicContext context) {
         JavaRDD<Item> initialRdd = null;
-        this._rdd = SparkContextManager.getInstance().getContext().emptyRDD();
+        this._rdd = SparkSessionManager.getInstance().getJavaSparkContext().emptyRDD();
 
         if (this._child == null) {
             initialRdd = this.getNewRDDFromExpression(_expression);
@@ -180,9 +181,9 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
     }
 
     //used to generate inital RDD for start LET/FOR
-    protected JavaRDD<Item> getNewRDDFromExpression(RuntimeIterator expression){
+    protected JavaRDD<Item> getNewRDDFromExpression(RuntimeIterator expression) {
         JavaRDD<Item> rdd;
-        if(expression.isRDD())
+        if (expression.isRDD())
             rdd = expression.getRDD(_currentDynamicContext);
         else {
             List<Item> contents = new ArrayList<>();
@@ -190,7 +191,7 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
             while (expression.hasNext())
                 contents.add(expression.next());
             expression.close();
-            rdd = SparkContextManager.getInstance().getContext().parallelize(contents);
+            rdd = SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents);
         }
         return rdd;
     }

@@ -19,7 +19,6 @@
  */
  package sparksoniq.jsoniq.item;
 
-import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 

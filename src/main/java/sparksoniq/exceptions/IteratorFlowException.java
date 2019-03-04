@@ -20,7 +20,6 @@
  package sparksoniq.exceptions;
 
 import sparksoniq.exceptions.codes.ErrorCodes;
-import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class IteratorFlowException extends SparksoniqRuntimeException {

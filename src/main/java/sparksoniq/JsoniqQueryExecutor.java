@@ -39,7 +39,7 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.visitor.RuntimeIteratorVisitor;
 import sparksoniq.semantics.visitor.StaticContextVisitor;
-import sparksoniq.spark.SparkContextManager;
+import sparksoniq.spark.SparkSessionManager;
 import sparksoniq.utils.FileUtils;
 
 import java.io.*;
@@ -58,7 +58,7 @@ public class JsoniqQueryExecutor {
         this._useLocalOutputLog = useLocalOutputLog;
         this._itemOutputLimit = itemLimit;
         this._outputTimeLog = false;
-        SparkContextManager.COLLECT_ITEM_LIMIT = itemLimit;
+        SparkSessionManager.COLLECT_ITEM_LIMIT = itemLimit;
     }
 
     public JsoniqQueryExecutor(boolean useLocalOutputLog, int itemLimit, String logFilePath) {
@@ -66,7 +66,7 @@ public class JsoniqQueryExecutor {
         this._itemOutputLimit = itemLimit;
         this._outputTimeLog = true;
         this._logFilePath = logFilePath;
-        SparkContextManager.COLLECT_ITEM_LIMIT = itemLimit;
+        SparkSessionManager.COLLECT_ITEM_LIMIT = itemLimit;
     }
 
     public String runLocal() throws IOException {
@@ -92,7 +92,7 @@ public class JsoniqQueryExecutor {
         if (_useLocalOutputLog) {
             String output = runIterators(result, true);
             org.apache.hadoop.fs.FileSystem fileSystem = org.apache.hadoop.fs.FileSystem
-                    .get(SparkContextManager.getInstance().getContext().hadoopConfiguration());
+                    .get(SparkSessionManager.getInstance().getJavaSparkContext().hadoopConfiguration());
             FSDataOutputStream fsDataOutputStream = fileSystem.create(new Path(outputPath));
             BufferedOutputStream stream = new BufferedOutputStream(fsDataOutputStream);
             stream.write(output.getBytes());
@@ -134,10 +134,10 @@ public class JsoniqQueryExecutor {
                 localOutput = output.collect().get(0);
             } else if (resultCount > 1) {
                 List<String> collectedOutput;
-                if(SparkContextManager.LIMIT_COLLECT()) {
-                    collectedOutput = output.take(SparkContextManager.COLLECT_ITEM_LIMIT);
-                    if (collectedOutput.size() == SparkContextManager.COLLECT_ITEM_LIMIT) {
-                        ShellStart.terminal.output("\nWarning: Results have been truncated to: " + SparkContextManager.COLLECT_ITEM_LIMIT
+                if(SparkSessionManager.LIMIT_COLLECT()) {
+                    collectedOutput = output.take(SparkSessionManager.COLLECT_ITEM_LIMIT);
+                    if (collectedOutput.size() == SparkSessionManager.COLLECT_ITEM_LIMIT) {
+                        ShellStart.terminal.output("\nWarning: Results have been truncated to: " + SparkSessionManager.COLLECT_ITEM_LIMIT
                                 + " items. This value can be configured with the --result-size parameter at startup.\n");
                     }
                 }
@@ -171,7 +171,7 @@ public class JsoniqQueryExecutor {
         }
         if (arg.startsWith("hdfs://")) {
             org.apache.hadoop.fs.FileSystem fileSystem = org.apache.hadoop.fs.FileSystem
-                    .get(URI.create(arg), SparkContextManager.getInstance().getContext().hadoopConfiguration());
+                    .get(URI.create(arg), SparkSessionManager.getInstance().getJavaSparkContext().hadoopConfiguration());
             FSDataInputStream in;
             try {
                 in = fileSystem.open(new Path(arg));
@@ -236,7 +236,7 @@ public class JsoniqQueryExecutor {
         }
         if (_logFilePath.startsWith("hdfs://")) {
             org.apache.hadoop.fs.FileSystem fileSystem = org.apache.hadoop.fs.FileSystem
-                    .get(SparkContextManager.getInstance().getContext().hadoopConfiguration());
+                    .get(SparkSessionManager.getInstance().getJavaSparkContext().hadoopConfiguration());
             FSDataOutputStream fsDataOutputStream = fileSystem.create(new Path(_logFilePath));
             BufferedOutputStream stream = new BufferedOutputStream(fsDataOutputStream);
             stream.write(result.getBytes());

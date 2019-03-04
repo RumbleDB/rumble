@@ -30,7 +30,7 @@ import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
 import sparksoniq.jsoniq.runtime.tupleiterator.SparkRuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.spark.SparkContextManager;
+import sparksoniq.spark.SparkSessionManager;
 import sparksoniq.spark.closures.LetClauseMapClosure;
 
 import java.util.ArrayList;
@@ -146,7 +146,7 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
             FlworTuple tuple  = new FlworTuple();
             tuple.putValue(_variableName, contents, false);
             tuples.add(tuple);
-            rdd = SparkContextManager.getInstance().getContext().parallelize(tuples);
+            rdd = SparkSessionManager.getInstance().getJavaSparkContext().parallelize(tuples);
         }
         return rdd;
     }

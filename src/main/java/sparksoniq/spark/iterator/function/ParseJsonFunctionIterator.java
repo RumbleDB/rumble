@@ -25,7 +25,7 @@ import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.spark.SparkContextManager;
+import sparksoniq.spark.SparkSessionManager;
 
 import javax.naming.OperationNotSupportedException;
 import java.util.List;
@@ -55,7 +55,7 @@ public class ParseJsonFunctionIterator extends SparkFunctionCallIterator {
             urlIterator.open(context);
             if (this._children.size() == 1)
                 try {
-                    strings = SparkContextManager.getInstance().getContext().textFile(urlIterator.next().getStringValue());
+                    strings = SparkSessionManager.getInstance().getJavaSparkContext().textFile(urlIterator.next().getStringValue());
                 } catch (OperationNotSupportedException e) {
                     throw new IllegalArgumentException("parse-json illegal argument");
                 }
@@ -63,7 +63,7 @@ public class ParseJsonFunctionIterator extends SparkFunctionCallIterator {
                 RuntimeIterator partitionsIterator = this._children.get(1);
                 partitionsIterator.open(_currentDynamicContext);
                 try {
-                    strings = SparkContextManager.getInstance().getContext().textFile(
+                    strings = SparkSessionManager.getInstance().getJavaSparkContext().textFile(
                             urlIterator.next().getStringValue(),
                             partitionsIterator.next().getIntegerValue());
                 } catch (OperationNotSupportedException e) {

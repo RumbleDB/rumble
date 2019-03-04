@@ -21,7 +21,6 @@ package sparksoniq.jsoniq.item;
 
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.base.SerializableItem;
-import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.semantics.types.ItemType;
 
 import javax.naming.OperationNotSupportedException;

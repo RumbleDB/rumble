@@ -29,9 +29,6 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterface, KryoSerializable {
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
     private final IteratorMetadata metadata;
@@ -81,13 +78,15 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         this._child = kryo.readObject(input, RuntimeTupleIterator.class);
     }
 
+    public boolean isOpen() {
+        return _isOpen;
+    }
+
     public boolean hasNext() {
         return this._hasNext;
     }
 
-    public boolean isOpen() {
-        return _isOpen;
-    }
+    public abstract FlworTuple next();
 
     public IteratorMetadata getMetadata() {
         return metadata;
@@ -97,14 +96,5 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
 
     public abstract JavaRDD<FlworTuple> getRDD(DynamicContext context);
 
-    public abstract FlworTuple next();
 
-    protected List<FlworTuple> runChildIterator(DynamicContext context) {
-        List<FlworTuple> values = new ArrayList<>();
-        this._child.open(context);
-        while (this._child.hasNext())
-            values.add(this._child.next());
-        this._child.close();
-        return values;
-    }
 }

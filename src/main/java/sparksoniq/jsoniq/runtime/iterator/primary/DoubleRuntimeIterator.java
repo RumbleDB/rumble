@@ -21,7 +21,6 @@
 
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.DoubleItem;
-import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 

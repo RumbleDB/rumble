@@ -24,9 +24,7 @@ import org.json.JSONObject;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 
 public class StringToItemMapper implements FlatMapFunction<Iterator<String>, Item> {
     private final IteratorMetadata metadata;
