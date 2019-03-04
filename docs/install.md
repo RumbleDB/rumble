@@ -11,6 +11,8 @@ The following software is required:
 - [ANTLRv4](http://www.antlr.org/), version 4.5.3
 - [Maven](https://maven.apache.org/) 3.5.0
 
+Important: Java 9 is not supported by Spark. You specifically need Java 8. 
+
 Important: the ANTLR version varies with the Spark version, because Spark is also shipped with an ANTLR runtime (example: Spark 2.2.0 is with ANTLR 4.5.3, Spark 2.3.0 with ANTLR 4.7). The ANTLR runtime MUST match the ANTLR generator used to generate the Sparksoniq jar file.
 
 ### Checking the requirements
