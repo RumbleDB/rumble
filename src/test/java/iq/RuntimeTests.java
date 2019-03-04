@@ -22,6 +22,7 @@ package iq;
 import iq.base.AnnotationsTestsBase;
 import org.apache.spark.SparkConf;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -64,9 +65,8 @@ public class RuntimeTests extends AnnotationsTestsBase {
         testAnnotations(_testFile.getAbsolutePath(), visitor);
     }
 
-    public RuntimeTests(File testFile) {
-
-        this._testFile = testFile;
+    @BeforeClass
+    public static void setupSparkSession() {
         SparkConf sparkConfiguration = new SparkConf();
         sparkConfiguration.setMaster("local[*]");
 //        sparkConfiguration.set("spark.driver.memory", "2g");
@@ -74,6 +74,11 @@ public class RuntimeTests extends AnnotationsTestsBase {
         sparkConfiguration.set("spark.speculation", "true");
         sparkConfiguration.set("spark.speculation.quantile", "0.5");
         SparkSessionManager.getInstance().initializeConfigurationAndSession(sparkConfiguration, true);
+    }
+
+    public RuntimeTests(File testFile) {
+
+        this._testFile = testFile;
     }
 
     protected String runIterators(RuntimeIterator iterator) {
