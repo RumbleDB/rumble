@@ -346,7 +346,7 @@ We support two more functions to read a JSON file from HDFS or send a large sequ
 ### json-file (Sparksoniq specific)
 
 Exists in unary and binary. The first parameter specifies the JSON file (or set of JSON files) to read.
-The second, optional parameter specifies the number of partitions. This is also similar to Sparks textFile().
+The second, optional parameter specifies the number of partitions. It is recommended to use it, as for now the default is only one partition, which does not fully use the parallelism. This is also similar to Sparks textFile().
 
 Example of usage:
 ```
@@ -390,7 +390,7 @@ where $i mod 1000 eq 0
 return $i
 ```
 
-In the future, it will also have a second, optional parameter that specifies the number of partitions.
+In the future, there will also be a second, optional parameter that specifies the number of partitions.
 
 ```
 for $i in parallelize(1 to 1000000, 100)

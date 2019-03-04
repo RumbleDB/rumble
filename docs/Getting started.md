@@ -43,8 +43,8 @@ Create, in the same directory as Sparksoniq, a file data.json and put the follow
 
 In a shell, from the directory where the sparksoniq .jar lies, type, all on one line:
 
-    spark-submit --class sparksoniq.ShellStart --master local[2] --deploy-mode client
-                 jsoniq-spark-app.0.9.3-jar-with-dependencies-antlr-4.7.jar --master local[2] --result-size 1000
+    spark-submit --class sparksoniq.ShellStart --master local[*] --deploy-mode client
+                 sparksoniq-0.9.5-with-antlr-4.7.jar
                  
 The Sparksoniq shell appears:
 
@@ -55,15 +55,15 @@ The Sparksoniq shell appears:
      ___/ / /_/ / /_/ / /  / ,< (__  ) /_/ / / / // // /_/ /
     /____/ .___/\__,_/_/  /_/|_/____/\____/_/ /_/___/\___\_\
     Master: local[2]
-    Item Display Limit: 1000
+    Item Display Limit: 100
     Output Path: -
     Log Path: -
     Query Path : -
 
     jiqs$
     
-You can now start typing simple queries like the following few examples. Press *three time* the return key to execute a query.
-A warning about the ANTLR version may appear the first time, just ignore it.
+You can now start typing simple queries like the following few examples. Press *three times* the return key to execute a query.
+A warning about the ANTLR version may appear if you didn't pick the right jar file, but often you can just ignore it.
 
     "Hello, World"
  
@@ -76,31 +76,31 @@ The following query should output the file created above:
      json-file("data.json")
      
 The above queries do not actually use Spark. Spark is used when the I/O workload can be parallelized, which is the case with a FLWOR expression.
-The simplest such query goes like so:
+The simplest such query goes like so, here with 10 partitions:
 
-    for $i in json-file("data.json")
+    for $i in json-file("data.json", 10)
     return $i
 
 The above creates a very simple Spark job with only a creation and an action.
 
 Data can be filtered with the where clause. Below the hood, a Spark transformation will be used:
 
-    for $i in json-file("data.json")
+    for $i in json-file("data.json", 10)
     where $i.quantity gt 99
     return $i
     
 Sparksoniq also supports grouping and aggregation, like so:
 
-    for $i in json-file("data.json")
+    for $i in json-file("data.json", 10)
     let $quantity := $i.quantity
     group by $product := $i.product
     return { "product" : $product, "total-quantity" : sum($quantity) }
     
 
 Sparksoniq also supports ordering, like so. Note that clauses (where, let, group by, order by) can appear in any order.
-The only constraint is that the first clause should be a for clause.
+The only constraint is that the first clause should be a for or a let clause.
 
-    for $i in json-file("data.json")
+    for $i in json-file("data.json", 10)
     let $quantity := $i.quantity
     group by $product := $i.product
     let $sum := sum($quantity)
