@@ -20,29 +20,50 @@
 package sparksoniq.spark.closures;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.StructType;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class ReturnFlatMapClosure implements FlatMapFunction<FlworTuple, Item> {
-    private final RuntimeIterator _expression;
+public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
+    RuntimeIterator _expression;
 
     public ReturnFlatMapClosure(RuntimeIterator expression) {
         this._expression = expression;
     }
 
     @Override
-    public Iterator<Item> call(FlworTuple v1) {
-        List<Item> result = new ArrayList<>();
-        _expression.open(new DynamicContext(v1));
-        while (_expression.hasNext())
-            result.add(_expression.next());
+    public Iterator<Item> call(Row row) {
+        StructType schema = row.schema();
+        String[] columnNames = schema.fieldNames();
+
+        // Deserialize row
+        List<Object> deserializedRow = ClosureUtils.deserializeEntireRow(row);
+        List<List<Item>> rowColumns = new ArrayList<>();
+        for (Object columnObject:deserializedRow) {
+            List<Item> column = (List<Item>) columnObject;
+            rowColumns.add(column);
+        }
+
+        // Create dynamic context with deserialized data
+        DynamicContext context = new DynamicContext();
+        for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
+            context.addVariableValue(columnNames[columnIndex], rowColumns.get(columnIndex));
+        }
+
+        // Apply expression to the context
+        List<Item> results = new ArrayList<>();
+        _expression.open(context);
+        while (_expression.hasNext()) {
+            results.add(_expression.next());
+        }
         _expression.close();
-        return result.iterator();
+
+        return results.iterator();
     }
 }
