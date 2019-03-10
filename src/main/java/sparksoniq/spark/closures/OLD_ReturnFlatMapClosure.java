@@ -20,25 +20,29 @@
 package sparksoniq.spark.closures;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
-import org.apache.spark.sql.Row;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.tuple.FlworTuple;
+import sparksoniq.semantics.DynamicContext;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class ReturnClauseDeserializeClosure implements FlatMapFunction<Row, Item> {
+public class OLD_ReturnFlatMapClosure implements FlatMapFunction<FlworTuple, Item> {
+    private final RuntimeIterator _expression;
 
-    public ReturnClauseDeserializeClosure() {
+    public OLD_ReturnFlatMapClosure(RuntimeIterator expression) {
+        this._expression = expression;
     }
 
-    /**
-     * @param row
-     * @return List<Item>iterator, deserialized from parametrized Row object containing the List<Item>
-     */
     @Override
-    public Iterator<Item> call(Row row) {
-        Object deserializedRow = ClosureUtils.deserializeRow(row);
-
-        return ((List<Item>) deserializedRow).iterator();
+    public Iterator<Item> call(FlworTuple v1) {
+        List<Item> result = new ArrayList<>();
+        _expression.open(new DynamicContext(v1));
+        while (_expression.hasNext())
+            result.add(_expression.next());
+        _expression.close();
+        return result.iterator();
     }
 }

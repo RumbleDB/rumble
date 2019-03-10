@@ -30,7 +30,7 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.spark.closures.ReturnClauseDeserializeClosure;
+import sparksoniq.spark.closures.ReturnFlatMapClosure;
 
 import java.util.Arrays;
 
@@ -57,35 +57,9 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     public JavaRDD<Item> getRDD(DynamicContext context) {
         RuntimeIterator expression = this._children.get(0);
         Dataset<Row> df = this._child.getDataFrame(context);
-        JavaRDD<Item> rdd = df.javaRDD().flatMap(new ReturnClauseDeserializeClosure());
-
-
-        // TODO: apply return expression
-        // itemRDD = rdd.flatMap(new ReturnFlatMapClosure(expression));
+        JavaRDD<Item> rdd = df.javaRDD().flatMap(new ReturnFlatMapClosure(expression));
         return rdd;
     }
-    /*
-    public JavaRDD<Item> getDataFrame(DynamicContext context) {
-        RuntimeIterator expression = this._children.get(0);
-        Dataset<Row> df = this._child.getDataFrame(context);
-        JavaRDD<Item> rdd = df.javaRDD().flatMap((FlatMapFunction<Row, Item>) row -> {
-            Input input = new Input(new ByteArrayInputStream((byte[])row.get(0)));
-
-            Kryo kryo = new Kryo();
-            kryo.register(ArrayList.class);
-            kryo.register(Item.class);
-
-            List<Item> seqOfItems = kryo.readObject(input, ArrayList.class);
-            input.close();
-
-            return seqOfItems.iterator();
-        });
-
-        // TODO: apply return expression
-        // itemRDD = rdd.flatMap(new ReturnFlatMapClosure(expression));
-        return itemRDD;
-    }
-    */
 
     @Override
     protected boolean hasNextLocal() {
