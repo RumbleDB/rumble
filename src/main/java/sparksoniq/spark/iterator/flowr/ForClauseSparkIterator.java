@@ -21,6 +21,7 @@ package sparksoniq.spark.iterator.flowr;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
@@ -35,10 +36,7 @@ import sparksoniq.jsoniq.runtime.tupleiterator.SparkRuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkSessionManager;
-import sparksoniq.spark.closures.ForClauseClosure;
-import sparksoniq.spark.closures.ForClauseLocalToRDDClosure;
-import sparksoniq.spark.closures.ForClauseSerializeClosure;
-import sparksoniq.spark.closures.InitialForClauseClosure;
+import sparksoniq.spark.closures.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -211,7 +209,7 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
             // create initial RDD from expression
             JavaRDD<Item> initialRdd = this.getNewRDDFromExpression(_expression);
 
-            // TODO: define a schema
+            // define a schema
             String schemaString = _variableName;
             List<StructField> fields = new ArrayList<>();
             for (String fieldName : schemaString.split(" ")) {
@@ -220,10 +218,10 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
             }
             StructType schema = DataTypes.createStructType(fields);
 
-            // TODO: convert initial RDD to row RDD
+            // convert initial RDD to row RDD
             JavaRDD<Row> rowRDD = initialRdd.map(new ForClauseSerializeClosure());
 
-            // TODO: apply the schema to row RDD
+            // apply the schema to row RDD
             this._df = SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
 
         } else {        //if it's not a start clause
@@ -231,8 +229,14 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
                 this._df = this._child.getDataFrame(context);
 
                 // TODO: deserialize the byte array dataframe
+                // line below and related closure is currently very experimental
+                Dataset<Row> ds = this._df.map(new ForClauseDeserializeClosure(), Encoders.bean(Row.class));
 
-                // TODO: Update schema
+                // TODO: Create new schema with the new for operation
+                StructType previousSchema = _df.schema();
+                String[] columnNames = previousSchema.fieldNames();
+
+
 
                 // TODO: perform dataframe transformation
 
