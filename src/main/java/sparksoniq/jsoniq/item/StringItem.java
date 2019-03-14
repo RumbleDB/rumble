@@ -29,6 +29,10 @@ public class StringItem extends AtomicItem {
 
     private String _value;
 
+    public StringItem() {
+        super();
+    }
+
     public StringItem(String value) {
         super();
         this._value = value;

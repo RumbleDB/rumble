@@ -29,6 +29,10 @@ public class BooleanItem extends AtomicItem {
 
     private boolean _value;
 
+    public BooleanItem() {
+        super();
+    }
+
     public BooleanItem(boolean value) {
         super();
         this._value = value;

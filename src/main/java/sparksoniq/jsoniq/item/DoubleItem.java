@@ -29,6 +29,10 @@ public class DoubleItem extends AtomicItem {
 
     private double _value;
 
+    public DoubleItem() {
+        super();
+    }
+
     public DoubleItem(double value) {
         super();
         this._value = value;
