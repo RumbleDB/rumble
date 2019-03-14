@@ -33,6 +33,10 @@ public class ArrayItem extends JsonItem {
 
     private List<Item> _arrayItems;
 
+    public ArrayItem() {
+        super();
+    }
+
     public ArrayItem(List<Item> arrayItems) {
         super();
         this._arrayItems = arrayItems;

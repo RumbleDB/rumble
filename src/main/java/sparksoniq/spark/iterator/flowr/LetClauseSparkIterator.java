@@ -60,6 +60,17 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
     }
 
     @Override
+    public boolean isDataFrame() {
+        // TODO implement letclause and remove the following return statement
+        return false;
+        /*if (this._child == null) {
+            return false;
+        } else {
+            return _child.isDataFrame();
+        }*/
+    }
+
+    @Override
     public FlworTuple next() {
         if (_hasNext == true) {
             FlworTuple result = _nextLocalTupleResult;      // save the result to be returned

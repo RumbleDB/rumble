@@ -50,6 +50,13 @@ public class WhereClauseSparkIterator extends SparkRuntimeTupleIterator {
     }
 
     @Override
+    public boolean isDataFrame() {
+        // TODO implement letclause and remove the following return statement
+        return false;
+        // return _child.isDataFrame();
+    }
+
+    @Override
     public void open(DynamicContext context) {
         super.open(context);
 

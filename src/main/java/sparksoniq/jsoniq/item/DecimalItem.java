@@ -32,6 +32,10 @@ public class DecimalItem extends AtomicItem {
 
     private BigDecimal _value;
 
+    public DecimalItem() {
+        super();
+    }
+
     public DecimalItem(BigDecimal decimal) {
         super();
         this._value = decimal;
