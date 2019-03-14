@@ -23,12 +23,12 @@ import org.apache.spark.api.java.function.Function;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
-public class ForClauseLocalToRDDClosure implements Function<Item, FlworTuple> {
+public class OLD_ForClauseLocalToRDDClosure implements Function<Item, FlworTuple> {
     private final String _variableName;
     private final FlworTuple _inputTuple;
 
 
-    public ForClauseLocalToRDDClosure(String variableName, FlworTuple inputTuple) {
+    public OLD_ForClauseLocalToRDDClosure(String variableName, FlworTuple inputTuple) {
         this._variableName = variableName;
         this._inputTuple = inputTuple;
     }

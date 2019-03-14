@@ -20,33 +20,36 @@
 package sparksoniq.spark.closures;
 
 import org.apache.spark.api.java.function.Function;
-import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import sparksoniq.jsoniq.item.Item;
-import sparksoniq.spark.SparkSessionManager;
+import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
-public class ForClauseDeserializeClosure implements MapFunction<Row, Row> {
+public class ForClauseLocalToRowClosure implements Function<Item, Row> {
+    private final FlworTuple _inputTuple;
 
-    public ForClauseDeserializeClosure() {
+
+    public ForClauseLocalToRowClosure(FlworTuple inputTuple) {
+        this._inputTuple = inputTuple;
     }
 
-    /**
-     * @param row
-     * @return List<Item>iterator, deserialized from parametrized Row object containing the List<Item>
-     */
     @Override
-    public Row call(Row row) {
-        List<Object> deserializedRow = ClosureUtils.deserializeEntireRow(row);
-        List<List<Item>> allColumns = new ArrayList<>();
-        for (Object columnObject:deserializedRow) {
-            List<Item> column = (List<Item>) columnObject;
-            allColumns.add(column);
+    public Row call(Item item) throws Exception {
+        List<List<Item>> rowColumns = new ArrayList<>();
+        _inputTuple.getKeys().forEach(key -> rowColumns.add(_inputTuple.getValue(key)));
+
+        List<Item> itemList = new ArrayList<>();
+        itemList.add(item);
+        rowColumns.add(itemList);
+
+        List<byte[]> serializedRowColumns = new ArrayList<>();
+        for (List<Item> column : rowColumns) {
+            serializedRowColumns.add(ClosureUtils.serializeItemList(column));
         }
-        return RowFactory.create(allColumns);
+
+        return RowFactory.create(serializedRowColumns.toArray());
     }
 }
