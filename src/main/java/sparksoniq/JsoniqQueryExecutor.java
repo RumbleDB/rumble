@@ -72,9 +72,9 @@ public class JsoniqQueryExecutor {
     public String runLocal() throws IOException {
         JsoniqExpressionTreeVisitor visitor = this.parse(new JsoniqLexer(
                 new ANTLRInputStream(Main.class.getResourceAsStream("/queries/runQuery.iq"))));
-        //generate static context
+        // generate static context
         generateStaticContext(visitor.getQueryExpression());
-        //generate iterators
+        // generate iterators
         RuntimeIterator result = generateRuntimeIterators(visitor.getQueryExpression());
         String output = runIterators(result, true);
         return output;
@@ -84,11 +84,11 @@ public class JsoniqQueryExecutor {
         JsoniqLexer lexer = getInputSource(queryFile);
         long startTime = System.currentTimeMillis();
         JsoniqExpressionTreeVisitor visitor = this.parse(lexer);
-        //generate static context
+        // generate static context
         generateStaticContext(visitor.getQueryExpression());
-        //generate iterators
+        // generate iterators
         RuntimeIterator result = generateRuntimeIterators(visitor.getQueryExpression());
-        //collect output in memory and write to filesystem from java
+        // collect output in memory and write to filesystem from java
         if (_useLocalOutputLog) {
             String output = runIterators(result, true);
             org.apache.hadoop.fs.FileSystem fileSystem = org.apache.hadoop.fs.FileSystem
@@ -97,7 +97,7 @@ public class JsoniqQueryExecutor {
             BufferedOutputStream stream = new BufferedOutputStream(fsDataOutputStream);
             stream.write(output.getBytes());
             stream.close();
-            //else write from Spark RDD
+            // else write from Spark RDD
         } else {
             if (!result.isRDD())
                 throw new SparksoniqRuntimeException("Could not find any RDD iterators in executor");
@@ -109,121 +109,6 @@ public class JsoniqQueryExecutor {
         long totalTime = endTime - startTime;
         if (this._outputTimeLog)
             writeTimeLog(totalTime);
-    }
-
-    public String runInteractive(java.nio.file.Path queryFile) throws IOException {
-        //create temp file
-        JsoniqLexer lexer = getInputSource(queryFile.toString());
-        JsoniqExpressionTreeVisitor visitor = this.parse(lexer);
-        //generate static context
-        generateStaticContext(visitor.getQueryExpression());
-        //generate iterators
-        RuntimeIterator result = generateRuntimeIterators(visitor.getQueryExpression());
-        //execute locally for simple expressions
-        if (!result.isRDD()) {
-            String localOutput = this.runIterators(result, false);
-            return localOutput;
-        } else {
-            JavaRDD<Item> rdd = result.getRDD(new DynamicContext());
-            JavaRDD<String> output = rdd.map(o -> o.serialize());
-            String localOutput = "";
-            long resultCount = output.count();
-            if (resultCount == 0) {
-                // do nothing, empty output
-            } else if (resultCount == 1) {
-                localOutput = output.collect().get(0);
-            } else if (resultCount > 1) {
-                List<String> collectedOutput;
-                if(SparkSessionManager.LIMIT_COLLECT()) {
-                    collectedOutput = output.take(SparkSessionManager.COLLECT_ITEM_LIMIT);
-                    if (collectedOutput.size() == SparkSessionManager.COLLECT_ITEM_LIMIT) {
-                        ShellStart.terminal.output("\nWarning: Results have been truncated to: " + SparkSessionManager.COLLECT_ITEM_LIMIT
-                                + " items. This value can be configured with the --result-size parameter at startup.\n");
-                    }
-                }
-                else {
-                    collectedOutput = output.collect();
-                }
-
-                StringBuilder sb = new StringBuilder();
-                sb.append("(");
-                for (String item : collectedOutput) {
-                    sb.append(item + ", ");
-                }
-
-                sb.delete(sb.length()-2, sb.length());
-                sb.append(")");
-                localOutput = sb.toString();
-            }
-
-            return localOutput;
-        }
-    }
-
-    private JsoniqLexer getInputSource(String arg) throws IOException {
-        arg = arg.trim();
-        //return embedded file
-        if (arg.isEmpty())
-            new JsoniqLexer(new ANTLRInputStream(Main.class.getResourceAsStream("/queries/runQuery.iq")));
-        if (arg.startsWith("file://") || arg.startsWith("/")) {
-            FileReader reader = this.getFileReader(arg);
-            return new JsoniqLexer(new ANTLRInputStream(reader));
-        }
-        if (arg.startsWith("hdfs://")) {
-            org.apache.hadoop.fs.FileSystem fileSystem = org.apache.hadoop.fs.FileSystem
-                    .get(URI.create(arg), SparkSessionManager.getInstance().getJavaSparkContext().hadoopConfiguration());
-            FSDataInputStream in;
-            try {
-                in = fileSystem.open(new Path(arg));
-            } catch (Exception ex) {
-//                ex.printStackTrace();
-                throw ex;
-            }
-            return new JsoniqLexer(new ANTLRInputStream(in));
-        }
-        throw new RuntimeException("Unknown url protocol");
-    }
-
-    private FileReader getFileReader(String arg) throws FileNotFoundException {
-        FileReader reader;
-        try {
-            reader = new FileReader(new File(arg));
-        } catch (FileNotFoundException e) {
-//            e.printStackTrace();
-            throw e;
-        }
-
-        return reader;
-    }
-
-    private JsoniqExpressionTreeVisitor parse(JsoniqLexer lexer) {
-        JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
-        parser.setErrorHandler(new BailErrorStrategy());
-        JsoniqExpressionTreeVisitor visitor = new JsoniqExpressionTreeVisitor();
-        try {
-            //TODO Handle module extras
-            JsoniqParser.ModuleContext module = parser.module();
-            JsoniqParser.MainModuleContext unit = module.main;
-            visitor.visit(unit);
-
-        } catch (ParseCancellationException ex) {
-            ParsingException e = new ParsingException(lexer.getText(), new ExpressionMetadata(lexer.getLine(),
-                    lexer.getCharPositionInLine()));
-            e.initCause(ex);
-            throw e;
-        }
-
-        return visitor;
-
-    }
-
-    private RuntimeIterator generateRuntimeIterators(Expression expression) {
-        RuntimeIterator result = new RuntimeIteratorVisitor().visit(expression, null);
-        return result;
-    }
-
-    private void generateStaticContext(Expression expression) {
-        new StaticContextVisitor().visit(expression, expression.getStaticContext());
     }
 
     private void writeTimeLog(long totalTime) throws IOException {
@@ -244,6 +129,85 @@ public class JsoniqQueryExecutor {
         }
     }
 
+    public String runInteractive(java.nio.file.Path queryFile) throws IOException {
+        // create temp file
+        JsoniqLexer lexer = getInputSource(queryFile.toString());
+        JsoniqExpressionTreeVisitor visitor = this.parse(lexer);
+        // generate static context
+        generateStaticContext(visitor.getQueryExpression());
+        // generate iterators
+        RuntimeIterator runtimeIterator = generateRuntimeIterators(visitor.getQueryExpression());
+        // execute locally for simple expressions
+        if (!runtimeIterator.isRDD()) {
+            String localOutput = this.runIterators(runtimeIterator, false);
+            return localOutput;
+        }
+        String rddOutput = this.getRDDResults(runtimeIterator);
+        return rddOutput;
+    }
+
+    private JsoniqLexer getInputSource(String arg) throws IOException {
+        arg = arg.trim();
+        //return embedded file
+        if (arg.isEmpty())
+            new JsoniqLexer(new ANTLRInputStream(Main.class.getResourceAsStream("/queries/runQuery.iq")));
+        if (arg.startsWith("file://") || arg.startsWith("/")) {
+            FileReader reader = this.getFileReader(arg);
+            return new JsoniqLexer(new ANTLRInputStream(reader));
+        }
+        if (arg.startsWith("hdfs://")) {
+            org.apache.hadoop.fs.FileSystem fileSystem = org.apache.hadoop.fs.FileSystem
+                    .get(URI.create(arg), SparkSessionManager.getInstance().getJavaSparkContext().hadoopConfiguration());
+            FSDataInputStream in;
+            try {
+                in = fileSystem.open(new Path(arg));
+            } catch (Exception ex) {
+                // ex.printStackTrace();
+                throw ex;
+            }
+            return new JsoniqLexer(new ANTLRInputStream(in));
+        }
+        throw new RuntimeException("Unknown url protocol");
+    }
+
+    private FileReader getFileReader(String arg) throws FileNotFoundException {
+        FileReader reader;
+        try {
+            reader = new FileReader(new File(arg));
+        } catch (FileNotFoundException e) {
+            // e.printStackTrace();
+            throw e;
+        }
+        return reader;
+    }
+
+    private JsoniqExpressionTreeVisitor parse(JsoniqLexer lexer) {
+        JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
+        parser.setErrorHandler(new BailErrorStrategy());
+        JsoniqExpressionTreeVisitor visitor = new JsoniqExpressionTreeVisitor();
+        try {
+            // TODO Handle module extras
+            JsoniqParser.ModuleContext module = parser.module();
+            JsoniqParser.MainModuleContext unit = module.main;
+            visitor.visit(unit);
+        } catch (ParseCancellationException ex) {
+            ParsingException e = new ParsingException(lexer.getText(), new ExpressionMetadata(lexer.getLine(),
+                    lexer.getCharPositionInLine()));
+            e.initCause(ex);
+            throw e;
+        }
+        return visitor;
+    }
+
+    private void generateStaticContext(Expression expression) {
+        new StaticContextVisitor().visit(expression, expression.getStaticContext());
+    }
+
+    private RuntimeIterator generateRuntimeIterators(Expression expression) {
+        RuntimeIterator result = new RuntimeIteratorVisitor().visit(expression, null);
+        return result;
+    }
+
     protected String runIterators(RuntimeIterator iterator, boolean indent) {
         String actualOutput = getIteratorOutput(iterator, indent);
         return actualOutput;
@@ -252,7 +216,7 @@ public class JsoniqQueryExecutor {
     private String getIteratorOutput(RuntimeIterator iterator, boolean indent) {
         iterator.open(new DynamicContext());
         Item result = null;
-        if(iterator.hasNext()) {
+        if (iterator.hasNext()) {
             result = iterator.next();
         }
         if (result == null) {
@@ -270,12 +234,45 @@ public class JsoniqQueryExecutor {
                 output += iterator.next().serialize() + ", " + (indent ? "\n" : "");
                 itemCount++;
             }
-            //remove last comma
+            // remove last comma
             output = output.substring(0, output.length() - 2);
             output += ")";
             return output;
         }
     }
 
+    private String getRDDResults(RuntimeIterator result) {
+        JavaRDD<Item> rdd = result.getRDD(new DynamicContext());
+        JavaRDD<String> output = rdd.map(o -> o.serialize());
+        long resultCount = output.count();
+        if (resultCount == 0) {
+            // do nothing, empty output
+        }
+        if (resultCount == 1) {
+            return output.collect().get(0);
+        }
+        if (resultCount > 1) {
+            List<String> collectedOutput;
+            if (SparkSessionManager.LIMIT_COLLECT()) {
+                collectedOutput = output.take(SparkSessionManager.COLLECT_ITEM_LIMIT);
+                if (collectedOutput.size() == SparkSessionManager.COLLECT_ITEM_LIMIT) {
+                    ShellStart.terminal.output("\nWarning: Results have been truncated to: " + SparkSessionManager.COLLECT_ITEM_LIMIT
+                            + " items. This value can be configured with the --result-size parameter at startup.\n");
+                }
+            } else {
+                collectedOutput = output.collect();
+            }
 
+            StringBuilder sb = new StringBuilder();
+            sb.append("(");
+            for (String item : collectedOutput) {
+                sb.append(item + ", ");
+            }
+
+            sb.delete(sb.length() - 2, sb.length());
+            sb.append(")");
+            return sb.toString();
+        }
+        throw new SparksoniqRuntimeException("Unexpected rdd result count in getRDDResults()");
+    }
 }

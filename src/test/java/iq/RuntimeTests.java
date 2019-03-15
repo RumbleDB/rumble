@@ -21,11 +21,13 @@ package iq;
 
 import iq.base.AnnotationsTestsBase;
 import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaRDD;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -69,16 +71,28 @@ public class RuntimeTests extends AnnotationsTestsBase {
     public static void setupSparkSession() {
         SparkConf sparkConfiguration = new SparkConf();
         sparkConfiguration.setMaster("local[*]");
-//        sparkConfiguration.set("spark.driver.memory", "2g");
-//        sparkConfiguration.set("spark.executor.memory",   "2g");
+        // sparkConfiguration.set("spark.driver.memory", "2g");
+        // sparkConfiguration.set("spark.executor.memory",   "2g");
         sparkConfiguration.set("spark.speculation", "true");
         sparkConfiguration.set("spark.speculation.quantile", "0.5");
         SparkSessionManager.getInstance().initializeConfigurationAndSession(sparkConfiguration, true);
     }
 
     public RuntimeTests(File testFile) {
-
         this._testFile = testFile;
+    }
+
+    @Override
+    protected void checkExpectedOutput(String expectedOutput, RuntimeIterator runtimeIterator) {
+        String actualOutput;
+        if (!runtimeIterator.isRDD()) {
+            actualOutput = runIterators(runtimeIterator);
+        } else {
+            actualOutput = getRDDResults(runtimeIterator);
+        }
+        Assert.assertTrue("Expected output: " + expectedOutput + " Actual result: " + actualOutput,
+                expectedOutput.equals(actualOutput));
+        // unorderedItemSequenceStringsAreEqual(expectedOutput, actualOutput));
     }
 
     protected String runIterators(RuntimeIterator iterator) {
@@ -86,20 +100,10 @@ public class RuntimeTests extends AnnotationsTestsBase {
         return actualOutput;
     }
 
-    @Override
-    protected void checkExpectedOutput(String expectedOutput, RuntimeIterator runtimeIterator) {
-        String actualOutput = runIterators(runtimeIterator);
-        Assert.assertTrue("Expected output: " + expectedOutput + " Actual result: "
-                        + actualOutput,
-                expectedOutput.equals(actualOutput));
-                //unorderedItemSequenceStringsAreEqual(expectedOutput, actualOutput));
-    }
-
-
     protected String getIteratorOutput(RuntimeIterator iterator) {
         iterator.open(new DynamicContext());
         Item result = null;
-        if(iterator.hasNext()) {
+        if (iterator.hasNext()) {
             result = iterator.next();
         }
         if (result == null) {
@@ -115,12 +119,45 @@ public class RuntimeTests extends AnnotationsTestsBase {
                 if (result != null)
                     output += result.serialize() + ", ";
             }
-            //remove last comma
+            // remove last comma
             output = output.substring(0, output.length() - 2);
             output += ")";
             return output;
         }
     }
 
+    private String getRDDResults(RuntimeIterator runtimeIterator) {
+        JavaRDD<Item> rdd = runtimeIterator.getRDD(new DynamicContext());
+        JavaRDD<String> output = rdd.map(o -> o.serialize());
+        long resultCount = output.count();
+        if (resultCount == 0) {
+            // do nothing, empty output
+        }
+        if (resultCount == 1) {
+            return output.collect().get(0);
+        }
+        if (resultCount > 1) {
+            List<String> collectedOutput;
+            /*if (SparkSessionManager.LIMIT_COLLECT()) {
+                collectedOutput = output.take(SparkSessionManager.COLLECT_ITEM_LIMIT);
+                if (collectedOutput.size() == SparkSessionManager.COLLECT_ITEM_LIMIT) {
+                    ShellStart.terminal.output("\nWarning: Results have been truncated to: " + SparkSessionManager.COLLECT_ITEM_LIMIT
+                            + " items. This value can be configured with the --result-size parameter at startup.\n");
+                }
+            } else {*/
+            collectedOutput = output.collect();
+            // }
 
+            StringBuilder sb = new StringBuilder();
+            sb.append("(");
+            for (String item : collectedOutput) {
+                sb.append(item + ", ");
+            }
+
+            sb.delete(sb.length() - 2, sb.length());
+            sb.append(")");
+            return sb.toString();
+        }
+        throw new SparksoniqRuntimeException("Unexpected rdd result count in getRDDResults()");
+    }
 }
