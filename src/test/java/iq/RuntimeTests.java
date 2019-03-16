@@ -71,11 +71,16 @@ public class RuntimeTests extends AnnotationsTestsBase {
     public static void setupSparkSession() {
         SparkConf sparkConfiguration = new SparkConf();
         sparkConfiguration.setMaster("local[*]");
+        sparkConfiguration.set("spark.submit.deployMode", "client");
+        sparkConfiguration.set("spark.executor.extraClassPath", "lib/");
+        sparkConfiguration.set("spark.driver.extraClassPath", "lib/");
+
         // sparkConfiguration.set("spark.driver.memory", "2g");
         // sparkConfiguration.set("spark.executor.memory",   "2g");
-        sparkConfiguration.set("spark.speculation", "true");
-        sparkConfiguration.set("spark.speculation.quantile", "0.5");
+        // sparkConfiguration.set("spark.speculation", "true");
+        // sparkConfiguration.set("spark.speculation.quantile", "0.5");
         SparkSessionManager.getInstance().initializeConfigurationAndSession(sparkConfiguration, true);
+
     }
 
     public RuntimeTests(File testFile) {
