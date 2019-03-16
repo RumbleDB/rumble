@@ -188,8 +188,8 @@ public class JsoniqQueryExecutor {
         try {
             // TODO Handle module extras
             JsoniqParser.ModuleContext module = parser.module();
-            JsoniqParser.MainModuleContext unit = module.main;
-            visitor.visit(unit);
+            JsoniqParser.MainModuleContext main = module.main;
+            visitor.visit(main);
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(lexer.getText(), new ExpressionMetadata(lexer.getLine(),
                     lexer.getCharPositionInLine()));

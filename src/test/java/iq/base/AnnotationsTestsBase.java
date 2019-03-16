@@ -173,9 +173,15 @@ public class AnnotationsTestsBase {
         parser.setErrorHandler(new BailErrorStrategy());
 
         try {
-            JsoniqParser.ModuleContext unit = parser.module();
+            // the original
+            /*JsoniqParser.ModuleContext unit = parser.module();
             JsoniqParser.MainModuleContext main = unit.main;
-            visitor.visit(unit);
+            visitor.visit(unit);*/
+
+            JsoniqParser.ModuleContext module = parser.module();
+            JsoniqParser.MainModuleContext main = module.main;
+            visitor.visit(main);
+
             return main;
 
         } catch (ParseCancellationException ex) {
