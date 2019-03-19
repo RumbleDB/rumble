@@ -37,11 +37,6 @@ public abstract class SparkRuntimeTupleIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public boolean isRDD() {
-        return true;
-    }
-
-    @Override
     public void reset(DynamicContext context) {
         super.reset(context);
         result = null;
