@@ -50,7 +50,7 @@ public class SparkSessionManager {
         return session;
     }
 
-    private void setDefaultConfiguration () {
+    private void setDefaultConfiguration() {
         configuration = new SparkConf().setAppName(APP_NAME);
     }
 
@@ -60,11 +60,10 @@ public class SparkSessionManager {
             Logger.getLogger("org").setLevel(LOG_LEVEL);
             Logger.getLogger("akka").setLevel(LOG_LEVEL);
 
-            session= SparkSession.builder().config(this.configuration).getOrCreate();
+            session = SparkSession.builder().config(this.configuration).getOrCreate();
         } else {
             throw new SparksoniqRuntimeException("Session already exists: new session initialization prevented.");
         }
-
     }
 
     private void initializeKryoSerialization() {
@@ -85,10 +84,10 @@ public class SparkSessionManager {
     public void initializeConfigurationAndSession(SparkConf conf, boolean setAppName) {
         if (setAppName)
             conf.setAppName(APP_NAME);
-        configuration = conf;
+        this.configuration = conf;
+        initializeKryoSerialization();
         initialize();
     }
-
 
     public JavaSparkContext getJavaSparkContext() {
         if (javaSparkContext == null) {
@@ -96,5 +95,4 @@ public class SparkSessionManager {
         }
         return javaSparkContext;
     }
-
 }

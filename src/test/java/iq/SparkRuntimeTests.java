@@ -51,10 +51,8 @@ public class SparkRuntimeTests extends RuntimeTests {
     @Override
     protected void checkExpectedOutput(String expectedOutput, RuntimeIterator runtimeIterator) {
         String actualOutput = runIterators(runtimeIterator);
-        Assert.assertTrue("Expected output: " + expectedOutput + " Actual result: "
-                        + actualOutput,
+        Assert.assertTrue("Expected output: " + expectedOutput + " Actual result: " + actualOutput,
                 expectedOutput.equals(actualOutput));
-                //unorderedItemSequenceStringsAreEqual(expectedOutput, actualOutput));
+        // unorderedItemSequenceStringsAreEqual(expectedOutput, actualOutput));
     }
-
 }

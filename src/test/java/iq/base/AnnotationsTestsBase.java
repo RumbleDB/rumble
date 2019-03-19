@@ -73,15 +73,15 @@ public class AnnotationsTestsBase {
         try {
             context = this.parse(new FileReader(path), visitor);
 
-            //generate static context and runtime iterators
+            // generate static context and runtime iterators
             if (visitor instanceof JsoniqExpressionTreeVisitor) {
                 JsoniqExpressionTreeVisitor completeVisitor = ((JsoniqExpressionTreeVisitor) visitor);
-                //generate static context
+                // generate static context
                 new StaticContextVisitor().visit(completeVisitor.getQueryExpression(), completeVisitor.getQueryExpression().getStaticContext());
-                //generate iterators
+                // generate iterators
                 runtimeIterator = new RuntimeIteratorVisitor().visit(completeVisitor.getQueryExpression(), null);
             }
-            //PARSING
+            // PARSING
         } catch (ParsingException exception) {
             String errorOutput = exception.getMessage();
             checkErrorCode(errorOutput, currentAnnotation.getErrorCode(), currentAnnotation.getErrorMetadata());
@@ -94,7 +94,7 @@ public class AnnotationsTestsBase {
                 return context;
             }
 
-            //SEMANTIC
+            // SEMANTIC
         } catch (SemanticException exception) {
             String errorOutput = exception.getMessage();
             checkErrorCode(errorOutput, currentAnnotation.getErrorCode(), currentAnnotation.getErrorMetadata());
@@ -110,7 +110,7 @@ public class AnnotationsTestsBase {
             } catch (Exception ex) {
             }
 
-            //RUNTIME
+            // RUNTIME
         } catch (SparksoniqRuntimeException exception) {
             String errorOutput = exception.getMessage();
             checkErrorCode(errorOutput, currentAnnotation.getErrorCode(), currentAnnotation.getErrorMetadata());
@@ -125,7 +125,6 @@ public class AnnotationsTestsBase {
                 }
             } catch (Exception ex) {
             }
-
         }
 
         try {
@@ -141,7 +140,7 @@ public class AnnotationsTestsBase {
             return context;
         }
 
-        //PROGRAM SHOULD RUN
+        // PROGRAM SHOULD RUN
         if (currentAnnotation instanceof AnnotationProcessor.RunnableTestAnnotation &&
                 currentAnnotation.shouldRun()) {
             try {
@@ -165,8 +164,36 @@ public class AnnotationsTestsBase {
                 Assert.fail("Program executed when not expected to");
             }
         }
-
         return context;
+    }
+
+    private JsoniqParser.MainModuleContext parse(FileReader reader, JsoniqBaseVisitor visitor) throws IOException {
+        JsoniqLexer lexer = new JsoniqLexer(new ANTLRInputStream(reader));
+        JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
+        parser.setErrorHandler(new BailErrorStrategy());
+
+        try {
+            // the original
+            /*JsoniqParser.ModuleContext unit = parser.module();
+            JsoniqParser.MainModuleContext main = unit.main;
+            visitor.visit(unit);*/
+
+            JsoniqParser.ModuleContext module = parser.module();
+            JsoniqParser.MainModuleContext main = module.main;
+            visitor.visit(main);
+
+            return main;
+
+        } catch (ParseCancellationException ex) {
+            ParsingException e = new ParsingException(lexer.getText(), new ExpressionMetadata(lexer.getLine(),
+                    lexer.getCharPositionInLine()));
+            e.initCause(ex);
+            throw e;
+        }
+    }
+
+    protected void checkExpectedOutput(String expectedOutput, RuntimeIterator runtimeIterator) {
+        Assert.assertTrue(true);
     }
 
     protected void checkErrorCode(String errorOutput, String expectedErrorCode, String errorMetadata) {
@@ -177,30 +204,4 @@ public class AnnotationsTestsBase {
             Assert.assertTrue("Unexpected metadata returned; Expected: " + errorMetadata +
                     "; Error: " + errorOutput, errorOutput.contains(errorMetadata));
     }
-
-    protected void checkExpectedOutput(String expectedOutput, RuntimeIterator runtimeIterator) {
-        Assert.assertTrue(true);
-    }
-
-    private JsoniqParser.MainModuleContext parse(FileReader reader, JsoniqBaseVisitor visitor) throws IOException {
-        JsoniqLexer lexer = new JsoniqLexer(new ANTLRInputStream(reader));
-        JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
-        parser.setErrorHandler(new BailErrorStrategy());
-
-        try {
-            JsoniqParser.ModuleContext unit = parser.module();
-            JsoniqParser.MainModuleContext main = unit.main;
-            visitor.visit(unit);
-            return main;
-
-        } catch (ParseCancellationException ex) {
-            ParsingException e = new ParsingException(lexer.getText(), new ExpressionMetadata(lexer.getLine(),
-                    lexer.getCharPositionInLine()));
-            e.initCause(ex);
-            throw e;
-        }
-
-    }
-
-
 }
