@@ -21,7 +21,11 @@ package sparksoniq.spark.iterator.flowr;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.catalyst.encoders.RowEncoder;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructType;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.Item;
@@ -33,8 +37,10 @@ import sparksoniq.jsoniq.runtime.tupleiterator.SparkRuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.closures.LetClauseMapClosure;
+import sparksoniq.spark.closures.OLD_LetClauseMapClosure;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
@@ -61,13 +67,11 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
 
     @Override
     public boolean isDataFrame() {
-        // TODO implement letclause and remove the following return statement
-        return false;
-        /*if (this._child == null) {
+        if (this._child == null) {
             return false;
         } else {
             return _child.isDataFrame();
-        }*/
+        }
     }
 
     @Override
@@ -144,7 +148,7 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
     public JavaRDD<FlworTuple> getRDD(DynamicContext context) {
         if (this._child != null) {
             this._rdd = _child.getRDD(context);
-            this._rdd = this._rdd.map(new LetClauseMapClosure(_variableName, _expression));
+            this._rdd = this._rdd.map(new OLD_LetClauseMapClosure(_variableName, _expression));
             return _rdd;
         }
         throw new SparksoniqRuntimeException("Initial letClauses don't support RDDs");
@@ -152,7 +156,20 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
 
     @Override
     public Dataset<Row> getDataFrame(DynamicContext context) {
-        return null;
+        //if it's not a start clause
+        if (this._child != null) {
+            Dataset<Row> df = _child.getDataFrame(context);
+
+            StructType inputSchema = df.schema();
+            StructType outputSchema = inputSchema;
+            int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(_variableName);
+            if (duplicateVariableIndex == -1) {
+                outputSchema = inputSchema.add(_variableName, DataTypes.BinaryType);
+            }
+
+            return df.map(new LetClauseMapClosure(_expression, inputSchema, duplicateVariableIndex), RowEncoder.apply(outputSchema));
+        }
+        throw new SparksoniqRuntimeException("Initial letClauses don't support DataFrames");
     }
     
 }
