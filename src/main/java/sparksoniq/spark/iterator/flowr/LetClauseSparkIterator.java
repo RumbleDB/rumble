@@ -17,7 +17,7 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.spark.iterator.flowr;
+package sparksoniq.spark.iterator.flowr;
 
 import org.apache.spark.api.java.JavaRDD;
 import sparksoniq.exceptions.IteratorFlowException;
@@ -60,7 +60,7 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
 
     @Override
     public FlworTuple next() {
-        if(_hasNext == true){
+        if (_hasNext == true) {
             FlworTuple result = _nextLocalTupleResult;      // save the result to be returned
             setNextLocalTupleResult();              // calculate and store the next result
             return result;
@@ -120,38 +120,6 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
     }
 
     @Override
-    public JavaRDD<FlworTuple> getRDD(DynamicContext context) {
-        //if it's not a start clause
-        if (this._child != null) {
-            this._rdd = _child.getRDD(context);
-            this._rdd = this._rdd.map(new LetClauseMapClosure(_variableName, _expression));
-        } else {
-            //if it's a start clause
-            _rdd = this.getNewRDDFromExpression(_expression);
-        }
-        return _rdd;
-    }
-    
-    private JavaRDD<FlworTuple> getNewRDDFromExpression(RuntimeIterator expression) {
-        JavaRDD<FlworTuple> rdd;
-        if(expression.isRDD())
-            throw new SparksoniqRuntimeException("Initial let clauses don't support RDDs");
-        else {
-            List<Item> contents = new ArrayList<>();
-            expression.open(this._currentDynamicContext);
-            while (expression.hasNext())
-                contents.add(expression.next());
-            expression.close();
-            List<FlworTuple> tuples = new ArrayList<>();
-            FlworTuple tuple  = new FlworTuple();
-            tuple.putValue(_variableName, contents, false);
-            tuples.add(tuple);
-            rdd = SparkSessionManager.getInstance().getJavaSparkContext().parallelize(tuples);
-        }
-        return rdd;
-    }
-
-    @Override
     public void close() {
         this._isOpen = false;
         result = null;
@@ -160,4 +128,35 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
         }
     }
 
+    @Override
+    public JavaRDD<FlworTuple> getRDD(DynamicContext context) {
+        //if it's not a start clause
+        if (this._child != null) {
+            this._rdd = _child.getRDD(context);
+            this._rdd = this._rdd.map(new LetClauseMapClosure(_variableName, _expression));
+        } else {
+            //if it's a start clause
+            _rdd = this.getNewRDDFromExpression(_expression, context);
+        }
+        return _rdd;
+    }
+
+    private JavaRDD<FlworTuple> getNewRDDFromExpression(RuntimeIterator expression, DynamicContext context) {
+        JavaRDD<FlworTuple> rdd;
+        if (expression.isRDD())
+            throw new SparksoniqRuntimeException("Initial let clauses don't support RDDs");
+        else {
+            List<Item> contents = new ArrayList<>();
+            expression.open(context);
+            while (expression.hasNext())
+                contents.add(expression.next());
+            expression.close();
+            List<FlworTuple> tuples = new ArrayList<>();
+            FlworTuple tuple = new FlworTuple();
+            tuple.putValue(_variableName, contents, false);
+            tuples.add(tuple);
+            rdd = SparkSessionManager.getInstance().getJavaSparkContext().parallelize(tuples);
+        }
+        return rdd;
+    }
 }
