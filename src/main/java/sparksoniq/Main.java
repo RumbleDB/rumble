@@ -73,7 +73,6 @@ public class Main {
             translator = new JsoniqQueryExecutor(local, 200, logFilePath);
         if (local) {
             String result = translator.runLocal(queryFile);
-            System.out.println(result);
             List<String> lines = Arrays.asList(result);
             Path file = Paths.get(outputDataFilePath);
             Files.write(file, lines, Charset.forName("UTF-8"));
