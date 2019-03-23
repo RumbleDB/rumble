@@ -69,9 +69,10 @@ public class JsoniqQueryExecutor {
         SparkSessionManager.COLLECT_ITEM_LIMIT = itemLimit;
     }
 
-    public String runLocal() throws IOException {
+    public String runLocal(String queryFile) throws IOException {
+        FileInputStream fis = new FileInputStream(queryFile);
         JsoniqExpressionTreeVisitor visitor = this.parse(new JsoniqLexer(
-                new ANTLRInputStream(Main.class.getResourceAsStream("/queries/runQuery.iq"))));
+                new ANTLRInputStream(fis)));
         // generate static context
         generateStaticContext(visitor.getQueryExpression());
         // generate iterators
