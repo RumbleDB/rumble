@@ -44,6 +44,10 @@ import sparksoniq.utils.FileUtils;
 
 import java.io.*;
 import java.net.URI;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -71,6 +75,7 @@ public class JsoniqQueryExecutor {
 
     public String runLocal(String queryFile) throws IOException {
         FileInputStream fis = new FileInputStream(queryFile);
+        long startTime = System.currentTimeMillis();
         JsoniqExpressionTreeVisitor visitor = this.parse(new JsoniqLexer(
                 new ANTLRInputStream(fis)));
         // generate static context
@@ -78,6 +83,11 @@ public class JsoniqQueryExecutor {
         // generate iterators
         RuntimeIterator result = generateRuntimeIterators(visitor.getQueryExpression());
         String output = runIterators(result, true);
+        long endTime = System.currentTimeMillis();
+        long totalTime = endTime - startTime;
+        if (this._outputTimeLog) {
+            writeTimeLog(totalTime);
+        }
         return output;
     }
 
@@ -108,8 +118,9 @@ public class JsoniqQueryExecutor {
         }
         long endTime = System.currentTimeMillis();
         long totalTime = endTime - startTime;
-        if (this._outputTimeLog)
+        if (this._outputTimeLog) {
             writeTimeLog(totalTime);
+        }
     }
 
     private void writeTimeLog(long totalTime) throws IOException {
@@ -127,6 +138,11 @@ public class JsoniqQueryExecutor {
             BufferedOutputStream stream = new BufferedOutputStream(fsDataOutputStream);
             stream.write(result.getBytes());
             stream.close();
+        }
+        if (_logFilePath.startsWith("./")) {
+            List<String> lines = Arrays.asList(result);
+            java.nio.file.Path file = Paths.get(_logFilePath);
+            Files.write(file, lines, Charset.forName("UTF-8"));
         }
     }
 
@@ -257,8 +273,13 @@ public class JsoniqQueryExecutor {
             if (SparkSessionManager.LIMIT_COLLECT()) {
                 collectedOutput = output.take(SparkSessionManager.COLLECT_ITEM_LIMIT);
                 if (collectedOutput.size() == SparkSessionManager.COLLECT_ITEM_LIMIT) {
-                    ShellStart.terminal.output("\nWarning: Results have been truncated to: " + SparkSessionManager.COLLECT_ITEM_LIMIT
-                            + " items. This value can be configured with the --result-size parameter at startup.\n");
+                    if (ShellStart.terminal == null) {
+                        System.out.println("Results have been truncated to:" + SparkSessionManager.COLLECT_ITEM_LIMIT
+                                + " items. This value can be configured with the --result-size parameter at startup.\n");
+                    } else {
+                        ShellStart.terminal.output("\nWarning: Results have been truncated to: " + SparkSessionManager.COLLECT_ITEM_LIMIT
+                                + " items. This value can be configured with the --result-size parameter at startup.\n");
+                    }
                 }
             } else {
                 collectedOutput = output.collect();
