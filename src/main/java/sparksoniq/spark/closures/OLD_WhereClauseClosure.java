@@ -25,10 +25,10 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 
-public class WhereClauseClosure implements Function<FlworTuple, Boolean> {
+public class OLD_WhereClauseClosure implements Function<FlworTuple, Boolean> {
     private final RuntimeIterator _expression;
 
-    public WhereClauseClosure(RuntimeIterator expression) {
+    public OLD_WhereClauseClosure(RuntimeIterator expression) {
         this._expression = expression;
     }
 
