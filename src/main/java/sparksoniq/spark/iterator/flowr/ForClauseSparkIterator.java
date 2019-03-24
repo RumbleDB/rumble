@@ -23,6 +23,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.catalyst.encoders.RowEncoder;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
@@ -215,13 +216,10 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
             if (_child.isDataFrame()) {
                 this._df = this._child.getDataFrame(context);
 
-                // Add new column name to existing schema
-                String[] columnNamesPrimitive = this._df.schema().fieldNames();
-                ArrayList<String> columnNames = new ArrayList<>(Arrays.asList(columnNamesPrimitive));
-                columnNames.add(_variableName);
+                StructType oldSchema = this._df.schema();
+                StructType newSchema = oldSchema.add(_variableName, DataTypes.BinaryType);
 
-                Dataset<Row> ds = this._df.flatMap(new ForClauseFlatMapClosure(_expression), Encoders.bean(Row.class));
-                this._df = ds.toDF(columnNames.toArray(new String[0]));
+                this._df = this._df.flatMap(new ForClauseFlatMapClosure(_expression, oldSchema), RowEncoder.apply(newSchema));
 
             } else {    // if child is locally evaluated
                 // _expression is definitely an RDD if execution flows here
@@ -233,7 +231,6 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
                     _tupleContext.removeAllVariables();             // clear the previous variables
                     _tupleContext.setBindingsFromTuple(_inputTuple);      // assign new variables from new tuple
 
-                    // Goal: Take every item and turn them into a row
                     JavaRDD<Item> expressionRDD = _expression.getRDD(_tupleContext);
 
                     // TODO - Optimization: Iterate schema creation only once

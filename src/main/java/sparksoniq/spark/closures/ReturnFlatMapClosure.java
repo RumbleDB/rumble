@@ -32,15 +32,16 @@ import java.util.List;
 
 public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
     RuntimeIterator _expression;
+    StructType _oldSchema;
 
-    public ReturnFlatMapClosure(RuntimeIterator expression) {
+    public ReturnFlatMapClosure(RuntimeIterator expression, StructType oldSchema) {
         this._expression = expression;
+        this._oldSchema = oldSchema;
     }
 
     @Override
     public Iterator<Item> call(Row row) {
-        StructType schema = row.schema();
-        String[] columnNames = schema.fieldNames();
+        String[] columnNames = _oldSchema.fieldNames();
 
         // Deserialize row
         List<Object> deserializedRow = ClosureUtils.deserializeEntireRow(row);
