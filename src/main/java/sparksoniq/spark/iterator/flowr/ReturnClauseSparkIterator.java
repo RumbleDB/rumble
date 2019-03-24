@@ -22,6 +22,7 @@ package sparksoniq.spark.iterator.flowr;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.StructType;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
@@ -59,7 +60,8 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         RuntimeIterator expression = this._children.get(0);
         if (_child.isDataFrame()) {
             Dataset<Row> df = this._child.getDataFrame(context);
-            return df.javaRDD().flatMap(new ReturnFlatMapClosure(expression));
+            StructType oldSchema = df.schema();
+            return df.javaRDD().flatMap(new ReturnFlatMapClosure(expression, oldSchema));
         }
         return this._child.getRDD(context).flatMap(new OLD_ReturnFlatMapClosure(expression));
     }
