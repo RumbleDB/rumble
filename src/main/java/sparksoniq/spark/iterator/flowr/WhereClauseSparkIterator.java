@@ -22,6 +22,8 @@
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.catalyst.encoders.RowEncoder;
+import org.apache.spark.sql.types.StructType;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -30,7 +32,8 @@ import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
 import sparksoniq.jsoniq.runtime.tupleiterator.SparkRuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.spark.closures.WhereClauseClosure;
+import sparksoniq.spark.closures.OLD_WhereClauseClosure;
+import sparksoniq.spark.closures.WhereClauseMapClosure;
 
 public class WhereClauseSparkIterator extends SparkRuntimeTupleIterator {
 
@@ -51,9 +54,7 @@ public class WhereClauseSparkIterator extends SparkRuntimeTupleIterator {
 
     @Override
     public boolean isDataFrame() {
-        // TODO implement letclause and remove the following return statement
-        return false;
-        // return _child.isDataFrame();
+        return _child.isDataFrame();
     }
 
     @Override
@@ -109,17 +110,23 @@ public class WhereClauseSparkIterator extends SparkRuntimeTupleIterator {
 
     @Override
     public JavaRDD<FlworTuple> getRDD(DynamicContext context) {
-        if (this._child != null) {
-            this._rdd = _child.getRDD(context);
-            this._rdd = this._rdd.filter(new WhereClauseClosure(_expression));
-        } else {
+        if (this._child == null) {
             throw new SparksoniqRuntimeException("Invalid where clause.");
         }
+        this._rdd = _child.getRDD(context);
+        this._rdd = this._rdd.filter(new OLD_WhereClauseClosure(_expression));
         return _rdd;
+
     }
 
     @Override
     public Dataset<Row> getDataFrame(DynamicContext context) {
-        return null;
+        if (this._child == null) {
+            throw new SparksoniqRuntimeException("Invalid where clause.");
+        }
+        Dataset<Row> df = _child.getDataFrame(context);
+        StructType inputSchema = df.schema();
+        return df.filter(new WhereClauseMapClosure(_expression, inputSchema));
+
     }
 }
