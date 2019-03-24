@@ -35,7 +35,6 @@ public abstract class SparkRuntimeTupleIterator extends RuntimeTupleIterator {
 
     protected JiqsItemParser parser;
     protected JavaRDD<FlworTuple> _rdd;
-    protected Dataset<Row> _df;
     protected List<FlworTuple> result = null;
     protected int currentResultIndex = 0;
 
