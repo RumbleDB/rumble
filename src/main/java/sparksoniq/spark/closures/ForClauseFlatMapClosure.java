@@ -20,15 +20,12 @@
 package sparksoniq.spark.closures;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
-import org.apache.spark.api.java.function.Function;
-import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.types.StructType;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.spark.SparkSessionManager;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -36,20 +33,21 @@ import java.util.List;
 
 public class ForClauseFlatMapClosure implements FlatMapFunction<Row, Row> {
     RuntimeIterator _expression;
+    StructType _oldSchema;
 
-    public ForClauseFlatMapClosure(RuntimeIterator expression) {
+    public ForClauseFlatMapClosure(RuntimeIterator expression, StructType oldSchema) {
         this._expression = expression;
+        this._oldSchema = oldSchema;
     }
 
     @Override
     public Iterator<Row> call(Row row) {
-        StructType schema = row.schema();
-        String[] columnNames = schema.fieldNames();
+        String[] columnNames = _oldSchema.fieldNames();
 
         // Deserialize row
         List<Object> deserializedRow = ClosureUtils.deserializeEntireRow(row);
         List<List<Item>> rowColumns = new ArrayList<>();
-        for (Object columnObject:deserializedRow) {
+        for (Object columnObject : deserializedRow) {
             List<Item> column = (List<Item>) columnObject;
             rowColumns.add(column);
         }
@@ -69,7 +67,7 @@ public class ForClauseFlatMapClosure implements FlatMapFunction<Row, Row> {
             newColumn.add(nextItem);
 
             List<byte[]> newRowColumns = new ArrayList<>();
-            for (List<Item> column:rowColumns) {
+            for (List<Item> column : rowColumns) {
                 newRowColumns.add(ClosureUtils.serializeItemList(column));
             }
             newRowColumns.add(ClosureUtils.serializeItemList(newColumn));
