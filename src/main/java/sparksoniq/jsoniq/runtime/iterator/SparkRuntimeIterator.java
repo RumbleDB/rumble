@@ -63,8 +63,13 @@ public abstract class SparkRuntimeIterator extends RuntimeIterator {
             if(SparkSessionManager.LIMIT_COLLECT()) {
                 result = _rdd.take(SparkSessionManager.COLLECT_ITEM_LIMIT);
                 if (result.size() == SparkSessionManager.COLLECT_ITEM_LIMIT) {
-                    ShellStart.terminal.output("\nWarning: Results have been truncated to: " + SparkSessionManager.COLLECT_ITEM_LIMIT
-                            + " items. This value can be configured with the --result-size parameter at startup.\n");
+                    if (ShellStart.terminal == null) {
+                        System.out.println("Results have been truncated to:" + SparkSessionManager.COLLECT_ITEM_LIMIT
+                                + " items. This value can be configured with the --result-size parameter at startup.\n");
+                    } else {
+                        ShellStart.terminal.output("\nWarning: Results have been truncated to: " + SparkSessionManager.COLLECT_ITEM_LIMIT
+                                + " items. This value can be configured with the --result-size parameter at startup.\n");
+                    }
                 }
             }
             else {

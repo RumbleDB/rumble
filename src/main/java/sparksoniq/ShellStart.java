@@ -41,7 +41,7 @@ spark-submit --class sparksoniq.ShellStart  --master local[*]  --deploy-mode cli
  */
 
 public class ShellStart {
-    public static JiqsJLineShell terminal;
+    public static JiqsJLineShell terminal = null;
     public static void main(String[] args) throws IOException {
         HashMap<String, String> arguments;
         try {

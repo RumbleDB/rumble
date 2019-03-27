@@ -70,7 +70,7 @@ public class Main {
         if (logFilePath.isEmpty())
             translator = new JsoniqQueryExecutor(local, outputItemLimit);
         else
-            translator = new JsoniqQueryExecutor(local, 200, logFilePath);
+            translator = new JsoniqQueryExecutor(local, outputItemLimit, logFilePath);
         if (local) {
             String result = translator.runLocal(queryFile);
             List<String> lines = Arrays.asList(result);
