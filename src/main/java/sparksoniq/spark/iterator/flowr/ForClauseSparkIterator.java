@@ -153,7 +153,7 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
         this._rdd = SparkSessionManager.getInstance().getJavaSparkContext().emptyRDD();
 
         if (this._child == null) {
-            initialRdd = this.getNewRDDFromExpression(_expression, context);
+            initialRdd = _expression.getRDD(context);
             this._rdd = initialRdd.map(new InitialForClauseClosure(_variableName));
         } else {        //if it's not a start clause
 
@@ -178,21 +178,5 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
             }
         }
         return _rdd;
-    }
-
-    //used to generate inital RDD for start LET/FOR
-    protected JavaRDD<Item> getNewRDDFromExpression(RuntimeIterator expression, DynamicContext context) {
-        JavaRDD<Item> rdd;
-        if (expression.isRDD())
-            rdd = expression.getRDD(context);
-        else {
-            List<Item> contents = new ArrayList<>();
-            expression.open(context);
-            while (expression.hasNext())
-                contents.add(expression.next());
-            expression.close();
-            rdd = SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents);
-        }
-        return rdd;
     }
 }
