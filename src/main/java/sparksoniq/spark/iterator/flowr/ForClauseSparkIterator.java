@@ -216,9 +216,13 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
             Dataset<Row> df = this._child.getDataFrame(context);
 
             StructType oldSchema = df.schema();
-            StructType newSchema = oldSchema.add(_variableName, DataTypes.BinaryType);
+            StructType newSchema = oldSchema;
+            int duplicateVariableIndex = Arrays.asList(oldSchema.fieldNames()).indexOf(_variableName);
+            if (duplicateVariableIndex == -1) {
+                newSchema = oldSchema.add(_variableName, DataTypes.BinaryType);
+            }
 
-            return df.flatMap(new ForClauseFlatMapClosure(_expression, oldSchema), RowEncoder.apply(newSchema));
+            return df.flatMap(new ForClauseFlatMapClosure(_expression, oldSchema, duplicateVariableIndex), RowEncoder.apply(newSchema));
         }
 
         // if child is locally evaluated
