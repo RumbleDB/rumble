@@ -21,7 +21,6 @@ package sparksoniq.spark.closures;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.types.StructType;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -32,12 +31,14 @@ import java.util.Iterator;
 import java.util.List;
 
 public class ForClauseFlatMapClosure implements FlatMapFunction<Row, Row> {
-    RuntimeIterator _expression;
-    StructType _oldSchema;
+    private RuntimeIterator _expression;
+    private StructType _oldSchema;
+    private int _duplicateColumnIndex;
 
-    public ForClauseFlatMapClosure(RuntimeIterator expression, StructType oldSchema) {
+    public ForClauseFlatMapClosure(RuntimeIterator expression, StructType oldSchema, int duplicateVariableIndex) {
         this._expression = expression;
         this._oldSchema = oldSchema;
+        this._duplicateColumnIndex = duplicateVariableIndex;
     }
 
     @Override
@@ -66,13 +67,9 @@ public class ForClauseFlatMapClosure implements FlatMapFunction<Row, Row> {
             List<Item> newColumn = new ArrayList<>();
             newColumn.add(nextItem);
 
-            List<byte[]> newRowColumns = new ArrayList<>();
-            for (List<Item> column : rowColumns) {
-                newRowColumns.add(ClosureUtils.serializeItemList(column));
-            }
-            newRowColumns.add(ClosureUtils.serializeItemList(newColumn));
+            Row newRow = ClosureUtils.reserializeRowWithNewData(row, newColumn, _duplicateColumnIndex);
 
-            results.add(RowFactory.create(newRowColumns.toArray()));
+            results.add(newRow);
         }
         _expression.close();
 

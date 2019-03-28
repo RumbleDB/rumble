@@ -4,6 +4,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.RowFactory;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.KryoManager;
 
@@ -28,6 +29,21 @@ public class ClosureUtils {
         KM.releaseKryoInstance(kryo);
 
         return byteArray;
+    }
+
+    public static Row reserializeRowWithNewData(Row prevRow, List<Item> newColumn, int duplicateColumnIndex) {
+        List<byte[]> newRowColumns = new ArrayList<>();
+        for (int columnIndex = 0; columnIndex < prevRow.length(); columnIndex++) {
+            if (duplicateColumnIndex == columnIndex) {
+                newRowColumns.add(serializeItemList(newColumn));
+            } else {
+                newRowColumns.add((byte[]) prevRow.get(columnIndex));
+            }
+        }
+        if (duplicateColumnIndex == -1) {
+            newRowColumns.add(serializeItemList(newColumn));
+        }
+        return RowFactory.create(newRowColumns.toArray());
     }
 
     public static Object deserializeRowColumn(Row row, int columnIndex) {
@@ -58,5 +74,4 @@ public class ClosureUtils {
         KM.releaseKryoInstance(kryo);
         return deserializedColumnObjects;
     }
-
 }
