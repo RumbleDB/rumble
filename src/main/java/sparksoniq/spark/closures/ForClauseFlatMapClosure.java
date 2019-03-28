@@ -32,62 +32,62 @@ import java.util.List;
 
 public class ForClauseFlatMapClosure implements FlatMapFunction<Row, Row> {
     private RuntimeIterator _expression;
-    private StructType _oldSchema;
+    private StructType _inputSchema;
     private int _duplicateColumnIndex;
 
-    private List<List<Item>> rowColumns;
-    private DynamicContext context;
-    private List<Row> results;
-    private List<Item> newColumn;
+    private List<List<Item>> _rowColumns;
+    private DynamicContext _context;
+    private List<Row> _results;
+    private List<Item> _newColumn;
 
 
     public ForClauseFlatMapClosure(
             RuntimeIterator expression,
-            StructType oldSchema,
+            StructType inputSchema,
             int duplicateVariableIndex) {
         _expression = expression;
-        _oldSchema = oldSchema;
+        _inputSchema = inputSchema;
         _duplicateColumnIndex = duplicateVariableIndex;
 
-        rowColumns = new ArrayList<>();
-        context = new DynamicContext();
-        results = new ArrayList<>();
-        newColumn = new ArrayList<>();
+        _rowColumns = new ArrayList<>();
+        _context = new DynamicContext();
+        _results = new ArrayList<>();
+        _newColumn = new ArrayList<>();
     }
 
     @Override
     public Iterator<Row> call(Row row) {
-        rowColumns.clear();
-        context.removeAllVariables();
-        results.clear();
+        _rowColumns.clear();
+        _context.removeAllVariables();
+        _results.clear();
 
-        String[] columnNames = _oldSchema.fieldNames();
+        String[] columnNames = _inputSchema.fieldNames();
 
         // Deserialize row
         List<Object> deserializedRow = ClosureUtils.deserializeEntireRow(row);
         for (Object columnObject : deserializedRow) {
             List<Item> column = (List<Item>) columnObject;
-            rowColumns.add(column);
+            _rowColumns.add(column);
         }
 
         // prepare dynamic context
         for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
-            context.addVariableValue(columnNames[columnIndex], rowColumns.get(columnIndex));
+            _context.addVariableValue(columnNames[columnIndex], _rowColumns.get(columnIndex));
         }
 
         // apply expression in the dynamic context
-        _expression.open(context);
+        _expression.open(_context);
         while (_expression.hasNext()) {
-            newColumn.clear();
+            _newColumn.clear();
             Item nextItem = _expression.next();
-            newColumn.add(nextItem);
+            _newColumn.add(nextItem);
 
-            Row newRow = ClosureUtils.reserializeRowWithNewData(row, newColumn, _duplicateColumnIndex);
+            Row newRow = ClosureUtils.reserializeRowWithNewData(row, _newColumn, _duplicateColumnIndex);
 
-            results.add(newRow);
+            _results.add(newRow);
         }
         _expression.close();
 
-        return results.iterator();
+        return _results.iterator();
     }
 }
