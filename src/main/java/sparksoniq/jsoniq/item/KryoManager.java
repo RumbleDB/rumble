@@ -68,7 +68,7 @@ public class KryoManager {
             outputPool = new Pool<Output>(true, false) {
                 @Override
                 protected Output create() {
-                    return new Output(1024, -1);
+                    return new ByteBufferOutput(128, -1);
                 }
             };
         }
@@ -86,7 +86,7 @@ public class KryoManager {
             inputPool = new Pool<Input>(true, false) {
                 @Override
                 protected Input create() {
-                    return new Input();
+                    return new ByteBufferInput();
                 }
             };
         }
