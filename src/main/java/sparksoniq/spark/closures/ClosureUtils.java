@@ -1,6 +1,8 @@
 package sparksoniq.spark.closures;
 
 import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.ByteBufferInput;
+import com.esotericsoftware.kryo.io.ByteBufferOutput;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.sql.Row;
@@ -9,7 +11,6 @@ import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.KryoManager;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,11 +21,11 @@ public class ClosureUtils {
     public static byte[] serializeItemList(List<Item> toSerialize) {
         Kryo kryo = KM.getOrCreateKryo();
 
-        Output output = new Output(new ByteArrayOutputStream());
+        Output output = new ByteBufferOutput(128, -1);
         kryo.writeClassAndObject(output, toSerialize);
         output.close();
 
-        byte[] byteArray = output.getBuffer();
+        byte[] byteArray = output.toBytes();
 
         KM.releaseKryoInstance(kryo);
 
@@ -65,7 +66,8 @@ public class ClosureUtils {
 
         ArrayList<Object> deserializedColumnObjects = new ArrayList<>();
         for (int columnIndex = 0; columnIndex < row.length(); columnIndex++) {
-            Input input = new Input(new ByteArrayInputStream((byte[])row.get(columnIndex)));
+            Input input = new ByteBufferInput();
+            input.setBuffer((byte[])row.get(columnIndex));
             Object deserializedColumnObject = kryo.readClassAndObject(input);
             deserializedColumnObjects.add(deserializedColumnObject);
             input.close();
