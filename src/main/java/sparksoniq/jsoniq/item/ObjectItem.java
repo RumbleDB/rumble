@@ -150,10 +150,13 @@ public class ObjectItem extends JsonItem{
 
             sb.append("\"" + key + "\"" + " : ");
             if(isStringValue)
+            {
                 sb.append("\"");
-            sb.append(value.serialize());
-            if(isStringValue)
+                sb.append(value.serialize().replace("\"", "\\\""));
                 sb.append("\"");
+            } else {
+                sb.append(value.serialize());
+            }
 
             if(i < _keys.size() -1)
                 sb.append(", ");
