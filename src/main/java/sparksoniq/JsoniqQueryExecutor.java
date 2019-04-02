@@ -284,13 +284,11 @@ public class JsoniqQueryExecutor {
             }
 
             StringBuilder sb = new StringBuilder();
-            sb.append("(");
             for (String item : collectedOutput) {
-                sb.append(item + ", ");
+                sb.append(item);
+                sb.append("\n");
             }
 
-            sb.delete(sb.length() - 2, sb.length());
-            sb.append(")");
             return sb.toString();
         }
         throw new SparksoniqRuntimeException("Unexpected rdd result count in getRDDResults()");
