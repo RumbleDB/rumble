@@ -22,6 +22,7 @@ package sparksoniq.spark.iterator.function;
 import org.apache.spark.api.java.JavaRDD;
 
 import sparksoniq.exceptions.SparksoniqRuntimeException;
+import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -51,10 +52,10 @@ public class ParallelizeFunctionIterator extends SparkFunctionCallIterator {
             RuntimeIterator partitionsIterator = this._children.get(1);
             partitionsIterator.open(_currentDynamicContext);
             if(!partitionsIterator.hasNext())
-                throw new SparksoniqRuntimeException("The second parameter of parallelize must be an integer, but an empty sequence is supplied.");
+                throw new UnexpectedTypeException("The second parameter of parallelize must be an integer, but an empty sequence is supplied.", getMetadata());
             Item partitions = partitionsIterator.next();
             if(!partitions.isInteger()) {
-                throw new SparksoniqRuntimeException("The second parameter of parallelize must be an integer, but a non-integer is supplied.");
+                throw new UnexpectedTypeException("The second parameter of parallelize must be an integer, but a non-integer is supplied.", getMetadata());
             }
             try {
                 _rdd = SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents, partitions.getIntegerValue());
