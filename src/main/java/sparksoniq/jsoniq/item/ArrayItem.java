@@ -86,11 +86,26 @@ public class ArrayItem extends JsonItem {
 
     @Override
     public String serialize() {
-        String result = "[ ";
-        for (Item item : this._arrayItems)
-            result += item.serialize() + (_arrayItems.indexOf(item) < _arrayItems.size() -1 ? ", " : " ");
-        result += "]";
-        return result;
+        StringBuilder sb = new StringBuilder();
+        sb.append("[ ");
+        for (Item item : this._arrayItems) {
+            boolean isStringValue = item instanceof StringItem;
+            if(isStringValue) {
+                sb.append("\"");
+                sb.append(item.serialize().replace("\"", "\\\"").replace("\n", "\\n"));
+                sb.append("\"");
+            } else {
+              sb.append(item.serialize());
+            }
+            if(_arrayItems.indexOf(item) < _arrayItems.size() -1)
+            {
+              sb.append(", ");
+            } else {
+              sb.append(" ");
+            }
+        }
+        sb.append("]");
+        return sb.toString();
     }
 
     @Override
