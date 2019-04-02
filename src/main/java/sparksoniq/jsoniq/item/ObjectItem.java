@@ -152,7 +152,7 @@ public class ObjectItem extends JsonItem{
             if(isStringValue)
             {
                 sb.append("\"");
-                sb.append(value.serialize().replace("\"", "\\\""));
+                sb.append(value.serialize().replace("\"", "\\\"").replace("\n", "\\n"));
                 sb.append("\"");
             } else {
                 sb.append(value.serialize());
