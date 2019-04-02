@@ -148,7 +148,7 @@ public class ObjectItem extends JsonItem{
             Item value = _values.get(i);
             boolean isStringValue = value instanceof StringItem;
 
-            sb.append("\"" + key + "\"" + " : ");
+            sb.append("\"" + key.replace("\"", "\\\"").replace("\n", "\\n") + "\"" + " : ");
             if(isStringValue)
             {
                 sb.append("\"");
