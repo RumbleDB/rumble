@@ -82,7 +82,7 @@ public class JsoniqQueryExecutor {
         generateStaticContext(visitor.getQueryExpression());
         // generate iterators
         RuntimeIterator result = generateRuntimeIterators(visitor.getQueryExpression());
-        String output = runIterators(result, true);
+        String output = runIterators(result);
         long endTime = System.currentTimeMillis();
         long totalTime = endTime - startTime;
         if (this._outputTimeLog) {
@@ -101,7 +101,7 @@ public class JsoniqQueryExecutor {
         RuntimeIterator result = generateRuntimeIterators(visitor.getQueryExpression());
         // collect output in memory and write to filesystem from java
         if (_useLocalOutputLog) {
-            String output = runIterators(result, true);
+            String output = runIterators(result);
             org.apache.hadoop.fs.FileSystem fileSystem = org.apache.hadoop.fs.FileSystem
                     .get(SparkSessionManager.getInstance().getJavaSparkContext().hadoopConfiguration());
             FSDataOutputStream fsDataOutputStream = fileSystem.create(new Path(outputPath));
@@ -156,7 +156,7 @@ public class JsoniqQueryExecutor {
         RuntimeIterator runtimeIterator = generateRuntimeIterators(visitor.getQueryExpression());
         // execute locally for simple expressions
         if (!runtimeIterator.isRDD()) {
-            String localOutput = this.runIterators(runtimeIterator, false);
+            String localOutput = this.runIterators(runtimeIterator);
             return localOutput;
         }
         String rddOutput = this.getRDDResults(runtimeIterator);
@@ -225,36 +225,34 @@ public class JsoniqQueryExecutor {
         return result;
     }
 
-    protected String runIterators(RuntimeIterator iterator, boolean indent) {
-        String actualOutput = getIteratorOutput(iterator, indent);
+    protected String runIterators(RuntimeIterator iterator) {
+        String actualOutput = getIteratorOutput(iterator);
         return actualOutput;
     }
 
-    private String getIteratorOutput(RuntimeIterator iterator, boolean indent) {
+    private String getIteratorOutput(RuntimeIterator iterator) {
         iterator.open(new DynamicContext());
         Item result = null;
         if (iterator.hasNext()) {
             result = iterator.next();
-        }
-        if (result == null) {
-            return "";
         }
         String singleOutput = result.serialize();
         if (!iterator.hasNext())
             return singleOutput;
         else {
             int itemCount = 0;
-            String output = "(" + result.serialize() + ", " + (indent ? "\n" : "");
+            StringBuilder sb = new StringBuilder();
+            sb.append(result.serialize());
+            sb.append("\n");
             while (iterator.hasNext() &&
                     ((itemCount < this._itemOutputLimit && _itemOutputLimit > 0) ||
                             _itemOutputLimit == 0)) {
-                output += iterator.next().serialize() + ", " + (indent ? "\n" : "");
+                sb.append(iterator.next().serialize());
+                sb.append("\n");
                 itemCount++;
             }
             // remove last comma
-            output = output.substring(0, output.length() - 2);
-            output += ")";
-            return output;
+            return sb.toString();
         }
     }
 
