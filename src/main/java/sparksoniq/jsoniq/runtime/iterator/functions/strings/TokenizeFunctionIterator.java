@@ -57,6 +57,23 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
             throw new UnexpectedTypeException("First parameter of tokenize must be a string or the empty sequence.", getMetadata());
         }
       }
+      char c = 0;
+      if(_position2 < _input.length())
+      {
+          c = _input.charAt(_position2);
+      }
+      while(_position2 < _input.length() && (c == ' ' || c == '\t' || c == '\n' || c == '\r'))
+      {
+        ++_position2;
+        if(_position2 < _input.length())
+        {
+            c = _input.charAt(_position2);
+        }
+      }
+      // here we know that _position2 is either a non-whitespace or EOB
+      _position1 = _position2;
+      // here we know that _position1 == _position1 and is either a non-whitespace or EOB
+
       // here we know that _position1 == _position2
       // here we know that they are either a non-whitespace or EOB
       if(_position1 == _input.length())
@@ -67,7 +84,6 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
       }
       // here we know that _position1 and _position2 point to a char
 
-      char c = _input.charAt(_position2);
       while(_position2 < _input.length() && !(c == ' ' || c == '\t' || c == '\n' || c == '\r'))
       {
         ++_position2;
@@ -88,17 +104,6 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
       }
       _hasNext = true;
 
-      while(_position2 < _input.length() && (c == ' ' || c == '\t' || c == '\n' || c == '\r'))
-      {
-        ++_position2;
-        if(_position2 < _input.length())
-        {
-            c = _input.charAt(_position2);
-        }
-      }
-      // here we know that _position2 is either a non-whitespace or EOB
-      _position1 = _position2;
-      // here we know that _position1 == _position1 and is either a non-whitespace or EOB
     }
     
     private String _input;
