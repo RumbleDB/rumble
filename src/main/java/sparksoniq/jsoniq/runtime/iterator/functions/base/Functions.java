@@ -60,6 +60,7 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(JSON_FILE, 1), ParseJsonFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(JSON_FILE, 2), ParseJsonFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(PARALLELIZE, 1), ParallelizeFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(PARALLELIZE, 2), ParallelizeFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(COUNT, 1), CountFunctionIterator.class);
 
         buildInFunctions.put(new SparksoniqFunctionSignature(BOOLEAN, 1), BooleanFunctionIterator.class);
