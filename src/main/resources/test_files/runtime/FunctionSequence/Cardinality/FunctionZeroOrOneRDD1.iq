@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="{ "bar" : null, "foobar" : [ test1, test2 ], "foo" : 1 }" :)
+(:JIQS: ShouldRun; Output="{ "bar" : null, "foobar" : [ "test1", "test2" ], "foo" : 1 }" :)
 zero-or-one(json-file("./src/main/resources/queries/emptyFile.json")),
 zero-or-one(json-file("./src/main/resources/queries/singleLine.json"))
 
