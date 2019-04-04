@@ -46,6 +46,7 @@ import sparksoniq.jsoniq.runtime.iterator.functions.strings.SubstringFunctionIte
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.spark.iterator.function.ParallelizeFunctionIterator;
 import sparksoniq.spark.iterator.function.ParseJsonFunctionIterator;
+import sparksoniq.spark.iterator.function.ParseTextFunctionIterator;
 
 import java.util.HashMap;
 import java.util.List;
@@ -59,6 +60,8 @@ public class Functions {
         buildInFunctions = new HashMap<>();
         buildInFunctions.put(new SparksoniqFunctionSignature(JSON_FILE, 1), ParseJsonFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(JSON_FILE, 2), ParseJsonFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(TEXT_FILE, 1), ParseTextFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(TEXT_FILE, 2), ParseTextFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(PARALLELIZE, 1), ParallelizeFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(PARALLELIZE, 2), ParallelizeFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(COUNT, 1), CountFunctionIterator.class);
@@ -148,9 +151,13 @@ public class Functions {
     public static class FunctionNames {
 
         /**
-         * function that parses a text file
+         * function that parses a JSON lines file
          */
         public static final String JSON_FILE = "json-file";
+        /**
+         * function that parses a text file
+         */
+        public static final String TEXT_FILE = "text-file";
         /**
          * function that parallelizes item collections into a Spark RDD
          */
