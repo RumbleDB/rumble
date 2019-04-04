@@ -43,6 +43,7 @@ import sparksoniq.jsoniq.runtime.iterator.functions.sequences.value.IndexOfFunct
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.ConcatFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.StringJoinFunction;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.SubstringFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.strings.TokenizeFunctionIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.spark.iterator.function.ParallelizeFunctionIterator;
 import sparksoniq.spark.iterator.function.ParseJsonFunctionIterator;
@@ -118,6 +119,7 @@ public class Functions {
 
         buildInFunctions.put(new SparksoniqFunctionSignature(STRINGJOIN, 1), StringJoinFunction.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(STRINGJOIN, 2), StringJoinFunction.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(TOKENIZE, 1), TokenizeFunctionIterator.class);
 
         buildInFunctions.put(new SparksoniqFunctionSignature(KEYS, 1), ObjectKeysFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(MEMBERS, 1), ArrayMembersFunctionIterator.class);
@@ -339,6 +341,10 @@ public class Functions {
          * function that returns substrings
          */
         public static final String STRINGJOIN = "string-join";
+        /**
+         * function that returns tokens
+         */
+        public static final String TOKENIZE = "tokenize";
 
 
         /**
