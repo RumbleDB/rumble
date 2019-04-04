@@ -236,6 +236,9 @@ public class JsoniqQueryExecutor {
         if (iterator.hasNext()) {
             result = iterator.next();
         }
+        if (result == null) {	
+            return "";	
+        }
         String singleOutput = result.serialize();
         if (!iterator.hasNext())
             return singleOutput;
