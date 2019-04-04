@@ -73,7 +73,7 @@ public class JsoniqQueryExecutor {
         SparkSessionManager.COLLECT_ITEM_LIMIT = itemLimit;
     }
 
-    public String runLocal(String queryFile) throws IOException {
+    public void runLocal(String queryFile, String outputPath) throws IOException {
         FileInputStream fis = new FileInputStream(queryFile);
         long startTime = System.currentTimeMillis();
         JsoniqExpressionTreeVisitor visitor = this.parse(new JsoniqLexer(
@@ -82,13 +82,23 @@ public class JsoniqQueryExecutor {
         generateStaticContext(visitor.getQueryExpression());
         // generate iterators
         RuntimeIterator result = generateRuntimeIterators(visitor.getQueryExpression());
-        String output = runIterators(result, true);
+        if(result.isRDD())
+        {
+            JavaRDD<Item> rdd = result.getRDD(new DynamicContext());
+            JavaRDD<String> output = rdd.map(o -> o.serialize());
+            output.saveAsTextFile(outputPath);
+        }
+        else {
+            String output = runIterators(result, true);
+            List<String> lines = Arrays.asList(output);
+            java.nio.file.Path file = Paths.get(outputPath);
+            Files.write(file, lines, Charset.forName("UTF-8"));
+        }
         long endTime = System.currentTimeMillis();
         long totalTime = endTime - startTime;
         if (this._outputTimeLog) {
             writeTimeLog(totalTime);
         }
-        return output;
     }
 
     public void run(String queryFile, String outputPath) throws IOException {
