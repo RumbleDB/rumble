@@ -247,7 +247,7 @@ public class AnnotationProcessor {
             if (value.startsWith("\"")) {
                 value = value.substring(1, value.length() - 1);
             }
-            value = value.replace("\\n", String.format("%n"));
+            value = value.replaceAll("([^\\\\])\\\\n", "$1\n").replaceAll("\\\\\\\\n", "\\\\n");
             parameters.put(key, value);
         }
         }

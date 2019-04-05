@@ -148,12 +148,15 @@ public class ObjectItem extends JsonItem{
             Item value = _values.get(i);
             boolean isStringValue = value instanceof StringItem;
 
-            sb.append("\"" + key + "\"" + " : ");
+            sb.append("\"" + key.replace("\"", "\\\"").replace("\n", "\\n") + "\"" + " : ");
             if(isStringValue)
+            {
                 sb.append("\"");
-            sb.append(value.serialize());
-            if(isStringValue)
+                sb.append(value.serialize().replace("\"", "\\\"").replace("\n", "\\n"));
                 sb.append("\"");
+            } else {
+                sb.append(value.serialize());
+            }
 
             if(i < _keys.size() -1)
                 sb.append(", ");
