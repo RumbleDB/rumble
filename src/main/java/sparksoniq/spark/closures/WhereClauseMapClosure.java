@@ -20,14 +20,10 @@
  package sparksoniq.spark.closures;
 
 import org.apache.spark.api.java.function.FilterFunction;
-import org.apache.spark.api.java.function.Function;
-import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.types.StructType;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
