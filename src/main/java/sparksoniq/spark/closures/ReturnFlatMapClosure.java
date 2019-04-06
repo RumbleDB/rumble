@@ -25,6 +25,7 @@ import org.apache.spark.sql.types.StructType;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.spark.DataFrameUtils;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -44,7 +45,7 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
         String[] columnNames = _oldSchema.fieldNames();
 
         // Deserialize row
-        List<Object> deserializedRow = ClosureUtils.deserializeEntireRow(row);
+        List<Object> deserializedRow = DataFrameUtils.deserializeEntireRow(row);
         List<List<Item>> rowColumns = new ArrayList<>();
         for (Object columnObject:deserializedRow) {
             List<Item> column = (List<Item>) columnObject;
