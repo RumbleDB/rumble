@@ -25,7 +25,7 @@ import scala.collection.mutable.WrappedArray;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.spark.closures.ClosureUtils;
+import sparksoniq.spark.DataFrameUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,7 +58,7 @@ public class ForClauseUDF implements UDF1<WrappedArray, List> {
         _context.removeAllVariables();
         _results.clear();
 
-        _deserializedParams = ClosureUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams);
+        _deserializedParams = DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams);
 
         String[] columnNames = _inputSchema.fieldNames();
 
@@ -73,7 +73,7 @@ public class ForClauseUDF implements UDF1<WrappedArray, List> {
             _nextResult.clear();
             Item nextItem = _expression.next();
             _nextResult.add(nextItem);
-            _results.add(ClosureUtils.serializeItemList(_nextResult));
+            _results.add(DataFrameUtils.serializeItemList(_nextResult));
         }
         _expression.close();
 

@@ -24,6 +24,7 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.tuple.FlworTuple;
+import sparksoniq.spark.DataFrameUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +48,7 @@ public class ForClauseLocalToRowClosure implements Function<Item, Row> {
 
         List<byte[]> serializedRowColumns = new ArrayList<>();
         for (List<Item> column : rowColumns) {
-            serializedRowColumns.add(ClosureUtils.serializeItemList(column));
+            serializedRowColumns.add(DataFrameUtils.serializeItemList(column));
         }
 
         return RowFactory.create(serializedRowColumns.toArray());
