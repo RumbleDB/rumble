@@ -17,69 +17,66 @@
  * Author: Stefan Irimescu
  *
  */
-package sparksoniq.spark.closures;
+package sparksoniq.spark.udf;
 
-import org.apache.spark.api.java.function.MapFunction;
-import org.apache.spark.sql.Row;
+import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.types.StructType;
+import scala.collection.mutable.WrappedArray;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.spark.closures.ClosureUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class LetClauseMapClosure implements MapFunction<Row, Row> {
-    private final RuntimeIterator _expression;
-    StructType _inputSchema;
-    private int _duplicateColumnIndex;
+public class ForClauseUDF implements UDF1<WrappedArray, List> {
+    private RuntimeIterator _expression;
+    private StructType _inputSchema;
 
-    private List<List<Item>> _rowColumns;
+    private List<List<Item>> _deserializedParams;
     private DynamicContext _context;
-    private List<Item> _newColumn;
+    private List<Item> _nextResult;
+    private List<byte[]> _results;
 
-    public LetClauseMapClosure(
+    public ForClauseUDF(
             RuntimeIterator expression,
-            StructType oldSchema,
-            int duplicateColumnIndex) {
-        this._expression = expression;
-        this._inputSchema = oldSchema;
-        this._duplicateColumnIndex = duplicateColumnIndex;
+            StructType inputSchema) {
+        _expression = expression;
+        _inputSchema = inputSchema;
 
-        _rowColumns = new ArrayList<>();
+        _deserializedParams = new ArrayList<>();
         _context = new DynamicContext();
-        _newColumn = new ArrayList<>();
-
+        _nextResult = new ArrayList<>();
+        _results = new ArrayList<>();
     }
 
+
     @Override
-    public Row call(Row row) throws Exception {
-        _rowColumns.clear();
+    public List call(WrappedArray wrappedParameters) {
+        _deserializedParams.clear();
         _context.removeAllVariables();
-        _newColumn.clear();
+        _results.clear();
+
+        _deserializedParams = ClosureUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams);
 
         String[] columnNames = _inputSchema.fieldNames();
 
-        // Deserialize row
-        List<Object> deserializedRow = ClosureUtils.deserializeEntireRow(row);
-        for (Object columnObject : deserializedRow) {
-            List<Item> column = (List<Item>) columnObject;
-            _rowColumns.add(column);
-        }
-
-        // Create dynamic context with deserialized data
+        // prepare dynamic context
         for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
-            _context.addVariableValue(columnNames[columnIndex], _rowColumns.get(columnIndex));
+            _context.addVariableValue(columnNames[columnIndex], _deserializedParams.get(columnIndex));
         }
 
-        // Apply expression to the context
+        // apply expression in the dynamic context
         _expression.open(_context);
         while (_expression.hasNext()) {
+            _nextResult.clear();
             Item nextItem = _expression.next();
-            _newColumn.add(nextItem);
+            _nextResult.add(nextItem);
+            _results.add(ClosureUtils.serializeItemList(_nextResult));
         }
         _expression.close();
 
-        return ClosureUtils.reserializeRowWithNewData(row, _newColumn, _duplicateColumnIndex);
+        return _results;
     }
 }
