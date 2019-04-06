@@ -23,6 +23,7 @@ import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.spark.DataFrameUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +42,6 @@ public class ForClauseSerializeClosure implements Function<Item, Row> {
         List<Item> itemList = new ArrayList<>();
         itemList.add(item);
 
-        return RowFactory.create(ClosureUtils.serializeItemList(itemList));
+        return RowFactory.create(DataFrameUtils.serializeItemList(itemList));
     }
 }

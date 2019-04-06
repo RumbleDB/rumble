@@ -37,7 +37,7 @@ import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkSessionManager;
 import sparksoniq.spark.closures.*;
 import sparksoniq.spark.udf.ForClauseUDF;
-import sparksoniq.spark.closures.ClosureUtils;
+import sparksoniq.spark.DataFrameUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -221,8 +221,8 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
                     new ForClauseUDF(_expression, inputSchema), DataTypes.createArrayType(DataTypes.BinaryType));
 
             int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(_variableName);
-            String selectSQL = ClosureUtils.getSelectSQL(inputSchema, duplicateVariableIndex);
-            String udfSQL = ClosureUtils.getUdfSQL(inputSchema);
+            String selectSQL = DataFrameUtils.getSelectSQL(inputSchema, duplicateVariableIndex);
+            String udfSQL = DataFrameUtils.getUdfSQL(inputSchema);
 
             df.createOrReplaceTempView("input");
             df = df.sparkSession().sql(

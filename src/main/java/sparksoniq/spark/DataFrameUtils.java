@@ -1,4 +1,4 @@
-package sparksoniq.spark.closures;
+package sparksoniq.spark;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.ByteBufferInput;
@@ -16,7 +16,7 @@ import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ClosureUtils {
+public class DataFrameUtils {
 
     private static KryoManager KM = KryoManager.getInstance();
 
