@@ -21,9 +21,7 @@ package sparksoniq.spark.iterator.flowr;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.catalyst.encoders.RowEncoder;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import sparksoniq.exceptions.IteratorFlowException;
@@ -36,8 +34,9 @@ import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
 import sparksoniq.jsoniq.runtime.tupleiterator.SparkRuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.spark.closures.LetClauseMapClosure;
+import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.closures.OLD_LetClauseMapClosure;
+import sparksoniq.spark.udf.LetClauseUDF;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -161,15 +160,22 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
             Dataset<Row> df = _child.getDataFrame(context);
 
             StructType inputSchema = df.schema();
-            StructType outputSchema = inputSchema;
-            int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(_variableName);
-            if (duplicateVariableIndex == -1) {
-                outputSchema = inputSchema.add(_variableName, DataTypes.BinaryType);
-            }
 
-            return df.map(new LetClauseMapClosure(_expression, inputSchema, duplicateVariableIndex), RowEncoder.apply(outputSchema));
+            df.sparkSession().udf().register("letClauseUDF",
+                    new LetClauseUDF(_expression, inputSchema), DataTypes.BinaryType);
+
+            int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(_variableName);
+            String selectSQL = DataFrameUtils.getSelectSQL(inputSchema, duplicateVariableIndex);
+            String udfSQL = DataFrameUtils.getUdfSQL(inputSchema);
+
+            df.createOrReplaceTempView("input");
+            df = df.sparkSession().sql(
+                    String.format("select %s letClauseUDF(array(%s)) as `%s` from input",
+                            selectSQL, udfSQL, _variableName)
+            );
+            return df;
         }
         throw new SparksoniqRuntimeException("Initial letClauses don't support DataFrames");
     }
-    
+
 }
