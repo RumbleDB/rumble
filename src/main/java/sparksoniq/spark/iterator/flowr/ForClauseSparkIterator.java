@@ -21,9 +21,7 @@ package sparksoniq.spark.iterator.flowr;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.catalyst.encoders.RowEncoder;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
@@ -38,6 +36,8 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkSessionManager;
 import sparksoniq.spark.closures.*;
+import sparksoniq.spark.udf.ForClauseUDF;
+import sparksoniq.spark.closures.ClosureUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -216,13 +216,20 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
             Dataset<Row> df = this._child.getDataFrame(context);
 
             StructType inputSchema = df.schema();
-            StructType outputSchema = inputSchema;
-            int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(_variableName);
-            if (duplicateVariableIndex == -1) {
-                outputSchema = inputSchema.add(_variableName, DataTypes.BinaryType);
-            }
 
-            return df.flatMap(new ForClauseFlatMapClosure(_expression, inputSchema, duplicateVariableIndex), RowEncoder.apply(outputSchema));
+            df.sparkSession().udf().register("forClauseUDF",
+                    new ForClauseUDF(_expression, inputSchema), DataTypes.createArrayType(DataTypes.BinaryType));
+
+            int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(_variableName);
+            String selectSQL = ClosureUtils.getSelectSQL(inputSchema, duplicateVariableIndex);
+            String udfSQL = ClosureUtils.getUdfSQL(inputSchema);
+
+            df.createOrReplaceTempView("input");
+            df = df.sparkSession().sql(
+                    String.format("select %s explode(forClauseUDF(array(%s))) as `%s` from input",
+                            selectSQL, udfSQL, _variableName)
+            );
+            return df;
         }
 
         // if child is locally evaluated
