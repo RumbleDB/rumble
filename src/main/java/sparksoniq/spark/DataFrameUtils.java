@@ -5,8 +5,12 @@ import com.esotericsoftware.kryo.io.ByteBufferInput;
 import com.esotericsoftware.kryo.io.ByteBufferOutput;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
+import org.apache.spark.sql.expressions.UserDefinedFunction;
+import org.apache.spark.sql.expressions.Window;
+import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.jsoniq.item.Item;
@@ -15,6 +19,15 @@ import sparksoniq.jsoniq.item.KryoManager;
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.apache.spark.sql.functions.col;
+import static org.apache.spark.sql.functions.count;
+import static org.apache.spark.sql.functions.first;
+import static org.apache.spark.sql.functions.lit;
+import static org.apache.spark.sql.functions.monotonically_increasing_id;
+import static org.apache.spark.sql.functions.spark_partition_id;
+import static org.apache.spark.sql.functions.sum;
+import static org.apache.spark.sql.functions.udf;
 
 public class DataFrameUtils {
 
@@ -48,19 +61,6 @@ public class DataFrameUtils {
         return byteArray;
     }
 
-    public static Object deserializeByteArray(byte[] toDeserialize) {
-        Kryo kryo = KM.getOrCreateKryo();
-
-        Input input = new Input(new ByteArrayInputStream(toDeserialize));
-
-        Object obj = kryo.readClassAndObject(input);
-        input.close();
-
-        KM.releaseKryoInstance(kryo);
-
-        return obj;
-    }
-
     public static String getUdfSQL(StructType inputSchema) {
         String[] columnNames = inputSchema.fieldNames();
         StringBuilder queryColumnString = new StringBuilder();
@@ -91,16 +91,27 @@ public class DataFrameUtils {
         return queryColumnString.toString();
     }
 
+    public static Object deserializeByteArray(byte[] toDeserialize) {
+        Kryo kryo = KM.getOrCreateKryo();
 
-    public static void deserializeWrappedParameters (WrappedArray wrappedParameters, List<List<Item>> deserializedParams) {
+        Input input = new Input(new ByteArrayInputStream(toDeserialize));
+
+        Object obj = kryo.readClassAndObject(input);
+        input.close();
+
+        KM.releaseKryoInstance(kryo);
+
+        return obj;
+    }
+
+    public static void deserializeWrappedParameters(WrappedArray wrappedParameters, List<List<Item>> deserializedParams) {
         Object[] serializedParams = (Object[]) wrappedParameters.array();
         for (int paramIndex = 0; paramIndex < serializedParams.length; paramIndex++) {
             Object serializedParam = serializedParams[paramIndex];
-            Object deserializedParam = deserializeByteArray((byte[])serializedParam);
+            Object deserializedParam = deserializeByteArray((byte[]) serializedParam);
             deserializedParams.add((List<Item>) deserializedParam);
         }
     }
-
 
     public static Row reserializeRowWithNewData(Row prevRow, List<Item> newColumn, int duplicateColumnIndex) {
         List<byte[]> newRowColumns = new ArrayList<>();
@@ -120,7 +131,7 @@ public class DataFrameUtils {
     public static Object deserializeRowColumn(Row row, int columnIndex) {
         Kryo kryo = KM.getOrCreateKryo();
 
-        Input input = new Input(new ByteArrayInputStream((byte[])row.get(columnIndex)));
+        Input input = new Input(new ByteArrayInputStream((byte[]) row.get(columnIndex)));
 
         Object obj = kryo.readClassAndObject(input);
         input.close();
@@ -130,14 +141,13 @@ public class DataFrameUtils {
         return obj;
     }
 
-
     public static List<Object> deserializeEntireRow(Row row) {
         Kryo kryo = KM.getOrCreateKryo();
 
         ArrayList<Object> deserializedColumnObjects = new ArrayList<>();
         for (int columnIndex = 0; columnIndex < row.length(); columnIndex++) {
             Input input = new ByteBufferInput();
-            input.setBuffer((byte[])row.get(columnIndex));
+            input.setBuffer((byte[]) row.get(columnIndex));
             Object deserializedColumnObject = kryo.readClassAndObject(input);
             deserializedColumnObjects.add(deserializedColumnObject);
             input.close();
@@ -145,5 +155,32 @@ public class DataFrameUtils {
 
         KM.releaseKryoInstance(kryo);
         return deserializedColumnObjects;
+    }
+
+    public static Dataset<Row> zipWithIndex(Dataset<Row> df, Long offset, String indexName) {
+        Dataset<Row> dfWithPartitionId = df
+                .withColumn("partition_id", spark_partition_id())
+                .withColumn("inc_id", monotonically_increasing_id());
+
+        Object partitionOffsetsObject = dfWithPartitionId
+                .groupBy("partition_id")
+                .agg(count(lit(1)).alias("cnt"), first("inc_id").alias("inc_id"))
+                .orderBy("partition_id")
+                .select(sum("cnt").over(Window.orderBy("partition_id")).minus(col("cnt")).minus(col("inc_id")).plus(lit(offset).alias("cnt")))
+                .collect();
+        Row[] partitionOffsetsArray = ((Row[]) partitionOffsetsObject);
+        List<Long> partitionOffsets = new ArrayList<>();
+        for (int i = 0; i < partitionOffsetsArray.length; i++) {
+            partitionOffsets.add(partitionOffsetsArray[i].getLong(0));
+        }
+
+        UserDefinedFunction getPartitionOffset = udf(
+                (partitionId) -> partitionOffsets.get((Integer) partitionId), DataTypes.LongType
+        );
+
+        return dfWithPartitionId
+                .withColumn("partition_offset", getPartitionOffset.apply(col("partition_id")))
+                .withColumn(indexName, col("partition_offset").plus(col("inc_id")))
+                .drop("partition_id", "partition_offset", "inc_id");
     }
 }
