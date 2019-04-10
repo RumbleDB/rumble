@@ -124,6 +124,7 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(STRINGJOIN, 1), StringJoinFunction.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(STRINGJOIN, 2), StringJoinFunction.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(TOKENIZE, 1), TokenizeFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(TOKENIZE, 2), TokenizeFunctionIterator.class);
 
         buildInFunctions.put(new SparksoniqFunctionSignature(KEYS, 1), ObjectKeysFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(MEMBERS, 1), ArrayMembersFunctionIterator.class);
