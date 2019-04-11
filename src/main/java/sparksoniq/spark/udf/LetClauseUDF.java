@@ -57,7 +57,7 @@ public class LetClauseUDF implements UDF1<WrappedArray, byte[]> {
         _context.removeAllVariables();
         _nextResult.clear();
 
-        _deserializedParams = DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams);
+        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams);
 
         String[] columnNames = _inputSchema.fieldNames();
 
