@@ -54,7 +54,7 @@ public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
         _deserializedParams.clear();
         _context.removeAllVariables();
 
-        _deserializedParams = DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams);
+        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams);
 
         String[] columnNames = _inputSchema.fieldNames();
 

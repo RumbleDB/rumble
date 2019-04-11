@@ -92,14 +92,13 @@ public class DataFrameUtils {
     }
 
 
-    public static List<List<Item>> deserializeWrappedParameters (WrappedArray wrappedParameters, List<List<Item>> deserializedParams) {
+    public static void deserializeWrappedParameters (WrappedArray wrappedParameters, List<List<Item>> deserializedParams) {
         Object[] serializedParams = (Object[]) wrappedParameters.array();
         for (int paramIndex = 0; paramIndex < serializedParams.length; paramIndex++) {
             Object serializedParam = serializedParams[paramIndex];
             Object deserializedParam = deserializeByteArray((byte[])serializedParam);
             deserializedParams.add((List<Item>) deserializedParam);
         }
-        return deserializedParams;
     }
 
 
