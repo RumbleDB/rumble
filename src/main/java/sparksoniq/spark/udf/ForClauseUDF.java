@@ -58,7 +58,7 @@ public class ForClauseUDF implements UDF1<WrappedArray, List> {
         _context.removeAllVariables();
         _results.clear();
 
-        _deserializedParams = DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams);
+        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams);
 
         String[] columnNames = _inputSchema.fieldNames();
 
