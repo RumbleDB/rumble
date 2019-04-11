@@ -35,8 +35,8 @@ public class WhereClauseClosure implements Function<FlworTuple, Boolean> {
     @Override
     public Boolean call(FlworTuple v1) throws Exception {
         _expression.open(new DynamicContext(v1));
-        Item result = _expression.next();
+        boolean effectiveBooleanValue = RuntimeIterator.getEffectiveBooleanValue(_expression);
         _expression.close();
-        return result.getBooleanValue();
+        return effectiveBooleanValue;
     }
 }
