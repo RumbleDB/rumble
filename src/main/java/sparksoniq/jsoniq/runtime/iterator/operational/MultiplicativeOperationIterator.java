@@ -115,7 +115,7 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
                     case MOD:
                         return new DoubleItem(l % r);
                     case IDIV:
-                        return new DoubleItem((int) (l / r));
+                        return new IntegerItem((int) (l / r));
                     default:
                         new IteratorFlowException("Non recognized multicative operator.", getMetadata());
                 }
@@ -130,7 +130,7 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
                     case MOD:
                         return new DecimalItem(l.remainder(r));
                     case IDIV:
-                        return new DecimalItem(l.divideToIntegralValue(r));
+                        return new IntegerItem(l.divideToIntegralValue(r).intValueExact());
                     default:
                         new IteratorFlowException("Non recognized multicative operator.", getMetadata());
                 }
