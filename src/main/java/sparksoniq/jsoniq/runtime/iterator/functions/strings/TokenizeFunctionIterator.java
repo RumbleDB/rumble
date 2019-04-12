@@ -30,84 +30,90 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        _input = null;
+        _results = null;
+        _currentPosition = -1;
         setNextResult();
     }
 
     public void setNextResult() {
-      if(_input == null)
+      if(_results == null)
       {
-        RuntimeIterator stringIterator = _children.get(0);
-        stringIterator.open(_currentDynamicContext);
-        if(!stringIterator.hasNext())
-        {
-            _nextResult= null;
-            _hasNext = false;
-            stringIterator.close();
-            return;
-        }
-        Item stringItem = stringIterator.next();
-        if(!stringItem.isString())
-            throw new UnexpectedTypeException("First parameter of tokenize must be a string or the empty sequence.", getMetadata());
-        try {
-            _input = stringItem.getStringValue();
-            _position1 = 0;
-            _position2 = 0;
-        } catch (Exception e) {
-            throw new UnexpectedTypeException("First parameter of tokenize must be a string or the empty sequence.", getMetadata());
-        }
-      }
-      char c = 0;
-      if(_position2 < _input.length())
-      {
-          c = _input.charAt(_position2);
-      }
-      while(_position2 < _input.length() && (c == ' ' || c == '\t' || c == '\n' || c == '\r'))
-      {
-        ++_position2;
-        if(_position2 < _input.length())
-        {
-            c = _input.charAt(_position2);
-        }
-      }
-      // here we know that _position2 is either a non-whitespace or EOB
-      _position1 = _position2;
-      // here we know that _position1 == _position1 and is either a non-whitespace or EOB
+          // Getting first parameter
+          RuntimeIterator stringIterator = _children.get(0);
+          stringIterator.open(_currentDynamicContext);
+          if(!stringIterator.hasNext())
+          {
+              _hasNext = false;
+              stringIterator.close();
+              return;
+          }
+          String input = null;
+          String separator = null;
+          Item stringItem = stringIterator.next();
+          if(stringIterator.hasNext())
+              throw new UnexpectedTypeException("First parameter of tokenize must be a string or the empty sequence.", getMetadata());
+          stringIterator.close();
+          if(!stringItem.isString())
+              throw new UnexpectedTypeException("First parameter of tokenize must be a string or the empty sequence.", getMetadata());
+          try {
+              input = stringItem.getStringValue();
+              stringIterator.close();
+          } catch (Exception e) {
+              throw new UnexpectedTypeException("First parameter of tokenize must be a string or the empty sequence.", getMetadata());
+          }
 
-      // here we know that _position1 == _position2
-      // here we know that they are either a non-whitespace or EOB
-      if(_position1 == _input.length())
+          // Getting second parameter
+          if(_children.size() == 1)
+          {
+              separator = "\\s+";
+          } else {
+              RuntimeIterator separatorIterator = _children.get(1);
+              separatorIterator.open(_currentDynamicContext);
+              if(!separatorIterator.hasNext())
+              {
+                  throw new UnexpectedTypeException("Second parameter of tokenize must be a string.", getMetadata());
+              }
+              stringItem = separatorIterator.next();
+              if(separatorIterator.hasNext())
+                  throw new UnexpectedTypeException("Second parameter of tokenize must be a string.", getMetadata());
+              separatorIterator.close();
+              if(!stringItem.isString())
+                  throw new UnexpectedTypeException("Second parameter of tokenize must be a string.", getMetadata());
+              try {
+                  separator = stringItem.getStringValue();
+              } catch (Exception e) {
+                  throw new UnexpectedTypeException("Second parameter of tokenize must be a string.", getMetadata());
+              }
+          }
+          _results = input.split(separator);
+          _currentPosition = 0;
+          if(_children.size() == 1 && _results[0].equals(""))
+          {
+              _currentPosition++;
+          }
+          if(_children.size() == 2 && input.matches(".*"+separator+"$"))
+          {
+              _lastEmptyString = true;
+          } else {
+              _lastEmptyString = false;
+          }
+      }
+    if(_currentPosition < _results.length)
       {
-          _nextResult = null;
+          _nextResult = new StringItem(_results[_currentPosition]);
+          _currentPosition++;
+          _hasNext = true;
+      } else if (_lastEmptyString) {
+          _nextResult = new StringItem(new String(""));
+          _hasNext = true;
+          _lastEmptyString = false;
+      } else {
           _hasNext = false;
-          return;
       }
-      // here we know that _position1 and _position2 point to a char
-
-      while(_position2 < _input.length() && !(c == ' ' || c == '\t' || c == '\n' || c == '\r'))
-      {
-        ++_position2;
-        if(_position2 < _input.length())
-        {
-            c = _input.charAt(_position2);
-        }
-      }
-      // here we know that _position2 is either a whitespace or EOB
-      if(_position2 < _input.length())
-      {
-         // if _position2 is EOB
-        _nextResult = new StringItem(_input.substring(_position1, _position2));
-      } else
-      {
-        // if _position2 is a whitespace
-        _nextResult = new StringItem(_input.substring(_position1));
-      }
-      _hasNext = true;
-
     }
     
-    private String _input;
+    private String[] _results;
     private Item _nextResult;
-    private int _position1;           // current position
-    private int _position2;           // current position
+    private int _currentPosition;
+    private boolean _lastEmptyString;
 }
