@@ -18,12 +18,15 @@ import sparksoniq.jsoniq.item.KryoManager;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.count;
 import static org.apache.spark.sql.functions.first;
 import static org.apache.spark.sql.functions.lit;
+import static org.apache.spark.sql.functions.min;
 import static org.apache.spark.sql.functions.monotonically_increasing_id;
 import static org.apache.spark.sql.functions.spark_partition_id;
 import static org.apache.spark.sql.functions.sum;
@@ -166,12 +169,12 @@ public class DataFrameUtils {
                 .groupBy("partition_id")
                 .agg(count(lit(1)).alias("cnt"), first("inc_id").alias("inc_id"))
                 .orderBy("partition_id")
-                .select(sum("cnt").over(Window.orderBy("partition_id")).minus(col("cnt")).minus(col("inc_id")).plus(lit(offset).alias("cnt")))
+                .select(col("partition_id"), sum("cnt").over(Window.orderBy("partition_id")).minus(col("cnt")).minus(col("inc_id")).plus(lit(offset).alias("cnt")))
                 .collect();
         Row[] partitionOffsetsArray = ((Row[]) partitionOffsetsObject);
-        List<Long> partitionOffsets = new ArrayList<>();
+        Map<Integer, Long> partitionOffsets = new HashMap<>();
         for (int i = 0; i < partitionOffsetsArray.length; i++) {
-            partitionOffsets.add(partitionOffsetsArray[i].getLong(0));
+            partitionOffsets.put(partitionOffsetsArray[i].getInt(0), partitionOffsetsArray[i].getLong(1));
         }
 
         UserDefinedFunction getPartitionOffset = udf(
