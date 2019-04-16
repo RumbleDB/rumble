@@ -124,7 +124,7 @@ public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
     @Override
     public Dataset<Row> getDataFrame(DynamicContext context) {
         if (this._child == null) {
-            throw new SparksoniqRuntimeException("Invalid where clause.");
+            throw new SparksoniqRuntimeException("Invalid count clause.");
         }
         Dataset<Row> df = _child.getDataFrame(context);
         StructType inputSchema = df.schema();
