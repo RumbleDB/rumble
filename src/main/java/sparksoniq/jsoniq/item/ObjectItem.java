@@ -150,11 +150,11 @@ public class ObjectItem extends JsonItem{
             String key = _keys.get(i);
             Item value = _values.get(i);
             boolean isStringValue = value instanceof StringItem;
-            sb.append(StringEscapeUtils.escapeJson(key));
+            sb.append("\"" + StringEscapeUtils.escapeJson(key) + "\"" + " : ");
             if(isStringValue)
             {
                 sb.append("\"");
-                sb.append(StringEscapeUtils.escapeJson(value.serialize()));
+                sb.append(value.serialize().replace("\"", "\\\"").replace("\n", "\\n"));
                 sb.append("\"");
             } else {
                 sb.append(value.serialize());
