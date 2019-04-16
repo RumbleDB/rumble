@@ -26,6 +26,9 @@ import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
 import javax.naming.OperationNotSupportedException;
+
+import org.apache.commons.lang3.StringEscapeUtils;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -92,7 +95,7 @@ public class ArrayItem extends JsonItem {
             boolean isStringValue = item instanceof StringItem;
             if(isStringValue) {
                 sb.append("\"");
-                sb.append(item.serialize().replace("\"", "\\\"").replace("\n", "\\n"));
+                sb.append(StringEscapeUtils.escapeJson(item.serialize()));
                 sb.append("\"");
             } else {
               sb.append(item.serialize());
