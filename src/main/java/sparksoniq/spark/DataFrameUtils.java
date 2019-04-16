@@ -26,7 +26,6 @@ import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.count;
 import static org.apache.spark.sql.functions.first;
 import static org.apache.spark.sql.functions.lit;
-import static org.apache.spark.sql.functions.min;
 import static org.apache.spark.sql.functions.monotonically_increasing_id;
 import static org.apache.spark.sql.functions.spark_partition_id;
 import static org.apache.spark.sql.functions.sum;
@@ -160,6 +159,15 @@ public class DataFrameUtils {
         return deserializedColumnObjects;
     }
 
+    /**
+     * Algorithm taken from following link and adapted to Java with minor improvements.
+     * https://stackoverflow.com/a/48454000/10707488
+     *
+     * @param df        - df to perform the operation on
+     * @param offset    - starting offset for the first index
+     * @param indexName - name of the index column
+     * @return returns Dataset<Row> with the added 'indexName' column containing indices
+     */
     public static Dataset<Row> zipWithIndex(Dataset<Row> df, Long offset, String indexName) {
         Dataset<Row> dfWithPartitionId = df
                 .withColumn("partition_id", spark_partition_id())
@@ -169,7 +177,11 @@ public class DataFrameUtils {
                 .groupBy("partition_id")
                 .agg(count(lit(1)).alias("cnt"), first("inc_id").alias("inc_id"))
                 .orderBy("partition_id")
-                .select(col("partition_id"), sum("cnt").over(Window.orderBy("partition_id")).minus(col("cnt")).minus(col("inc_id")).plus(lit(offset).alias("cnt")))
+                .select(col("partition_id"),
+                        sum("cnt").over(Window.orderBy("partition_id"))
+                                .minus(col("cnt"))
+                                .minus(col("inc_id"))
+                                .plus(lit(offset).alias("cnt")))
                 .collect();
         Row[] partitionOffsetsArray = ((Row[]) partitionOffsetsObject);
         Map<Integer, Long> partitionOffsets = new HashMap<>();
