@@ -25,6 +25,7 @@ import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.UserInterruptException;
 import org.jline.reader.impl.DefaultHighlighter;
+import org.jline.reader.impl.DefaultParser;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 import sparksoniq.JsoniqQueryExecutor;
@@ -110,8 +111,10 @@ public class JiqsJLineShell {
         Terminal terminal = TerminalBuilder.builder()
                 .system(true)
                 .build();
+        DefaultParser parser = new DefaultParser();
+        parser.setEscapeChars(null);
         lineReader = LineReaderBuilder.builder()
-
+                .parser(parser)
                 .terminal(terminal)
 //                .completer(new MyCompleter())
                 .highlighter(new DefaultHighlighter())

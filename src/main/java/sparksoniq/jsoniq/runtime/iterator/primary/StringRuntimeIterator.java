@@ -19,6 +19,8 @@
  */
  package sparksoniq.jsoniq.runtime.iterator.primary;
 
+import org.apache.commons.lang3.StringEscapeUtils;
+
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -39,7 +41,7 @@ public class StringRuntimeIterator extends AtomicRuntimeIterator {
     public StringRuntimeIterator(String value, IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
         this._item = value;
-
+        _item = StringEscapeUtils.unescapeJson(_item);
     }
 
     private String _item;
