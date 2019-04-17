@@ -166,8 +166,8 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
                     new LetClauseUDF(_expression, inputSchema), DataTypes.BinaryType);
 
             int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(_variableName);
-            String selectSQL = DataFrameUtils.getSelectSQL(inputSchema, duplicateVariableIndex);
-            String udfSQL = DataFrameUtils.getUdfSQL(inputSchema);
+            String selectSQL = DataFrameUtils.getSQL(inputSchema, duplicateVariableIndex, true);
+            String udfSQL = DataFrameUtils.getSQL(inputSchema, -1, false);
 
             df.createOrReplaceTempView("input");
             df = df.sparkSession().sql(
@@ -178,5 +178,4 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
         }
         throw new SparksoniqRuntimeException("Initial letClauses don't support DataFrames");
     }
-
 }
