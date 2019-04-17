@@ -24,9 +24,14 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.DataType;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
+import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -35,12 +40,17 @@ import sparksoniq.jsoniq.runtime.tupleiterator.SparkRuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.closures.OrderByClauseSortClosure;
 import sparksoniq.spark.closures.OrderByMapToPairClosure;
 import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
+import sparksoniq.spark.udf.OrderClauseCreateColumnsUDF;
+import sparksoniq.spark.udf.OrderClauseDetermineTypeUDF;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 
 public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
@@ -64,9 +74,7 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
 
     @Override
     public boolean isDataFrame() {
-        // TODO implement letclause and remove the following return statement
-        return false;
-        // return _child.isDataFrame();
+        return _child.isDataFrame();
     }
 
     @Override
@@ -188,6 +196,132 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
 
     @Override
     public Dataset<Row> getDataFrame(DynamicContext context) {
-        return null;
+        if (this._child == null) {
+            throw new SparksoniqRuntimeException("Invalid orderby clause.");
+        }
+        Dataset<Row> df = _child.getDataFrame(context);
+        StructType inputSchema = df.schema();
+
+        df.sparkSession().udf().register("determineOrderingDataType",
+                new OrderClauseDetermineTypeUDF(_expressions, inputSchema),
+                DataTypes.createArrayType(DataTypes.StringType));
+
+        String udfSQL = DataFrameUtils.getSQL(inputSchema, -1, false);
+
+        df.createOrReplaceTempView("input");
+        Dataset<Row> columnTypesDf = df.sparkSession().sql(
+                String.format("select distinct(determineOrderingDataType(array(%s))) as `distinct-types` from input",
+                        udfSQL)
+        );
+        Object columnTypesObject = columnTypesDf.collect();
+        Row[] columnTypesOfRows = ((Row[]) columnTypesObject);
+
+        // Every column represents an order by expression
+        // Check that every column contains a matching atomic type in all rows (nulls and empty-sequences are allowed)
+        Map<Integer, String> typesForAllColumns = new LinkedHashMap<>();
+        for (Row columnTypesOfRow : columnTypesOfRows) {
+            List columnsTypesOfRowAsList = columnTypesOfRow.getList(0);
+            for (int columnIndex = 0; columnIndex < columnsTypesOfRowAsList.size(); columnIndex++) {
+                String columnType = (String) columnsTypesOfRowAsList.get(columnIndex);
+
+                if (!columnType.equals("empty-sequence") && !columnType.equals("null")) {
+                    String currentColumnType = typesForAllColumns.get(columnIndex);
+                    if (currentColumnType == null) {
+                        typesForAllColumns.put(columnIndex, columnType);
+                    } else if ((currentColumnType.equals("integer") || currentColumnType.equals("double") || currentColumnType.equals("decimal"))
+                            && (columnType.equals("integer") || columnType.equals("double") || columnType.equals("decimal"))) {
+                        // the numeric type calculation is identical to Item::getNumericResultType()
+                        if (currentColumnType.equals("double") || columnType.equals("double")) {
+                            typesForAllColumns.put(columnIndex, "double");
+                        } else if (currentColumnType.equals("decimal") || columnType.equals("decimal")) {
+                            typesForAllColumns.put(columnIndex, "decimal");
+                        } else {
+                            // do nothing, type is already set to integer
+                        }
+                    } else if (!currentColumnType.equals(columnType)) {
+                        throw new UnexpectedTypeException("Order by column must contain values of a single type.", getMetadata());
+                    }
+                }
+            }
+        }
+
+
+        List<StructField> typedFields = new ArrayList<>();  // Determine the return type for ordering UDF
+        StringBuilder orderingSQL = new StringBuilder();    // Prepare the SQL statement for the order by query
+        String appendedOrderingColumnsName = "ordering_columns";
+        for (int columnIndex = 0; columnIndex < typesForAllColumns.size(); columnIndex++) {
+            String columnTypeString = typesForAllColumns.get(columnIndex);
+            String columnName;
+            DataType columnType;
+
+            // every expression contains an int column for null/empty check
+            columnName = columnIndex + "-nullEmptyCheckField";
+            typedFields.add(DataTypes.createStructField(columnName, DataTypes.IntegerType, false));
+
+            // create fields for the given value types
+            columnName = columnIndex + "-valueField";
+            if (columnTypeString.equals("bool")) {
+                columnType = DataTypes.BooleanType;
+            } else if (columnTypeString.equals("string")) {
+                columnType = DataTypes.StringType;
+            } else if (columnTypeString.equals("integer")) {
+                columnType = DataTypes.IntegerType;
+            } else if (columnTypeString.equals("double")) {
+                columnType = DataTypes.DoubleType;
+            } else if (columnTypeString.equals("decimal")) {
+                columnType = DataTypes.createDecimalType();
+            } else {
+                throw new SparksoniqRuntimeException("Unexpected ordering type found while determining UDF return type.");
+            }
+            typedFields.add(DataTypes.createStructField(columnName, columnType, true));
+
+            OrderByClauseSparkIteratorExpression expression = _expressions.get(columnIndex);
+            // accessing the created ordering row as "`ordering_columns`.`0-nullEmptyCheckField` (desc)"
+            // prepare sql for expression's 1st column
+            orderingSQL.append("`");
+            orderingSQL.append(appendedOrderingColumnsName);
+            orderingSQL.append("`.`");
+            orderingSQL.append(columnIndex);
+            orderingSQL.append("-nullEmptyCheckField`");
+            if (expression.isAscending()) {
+                orderingSQL.append(", ");
+            } else {
+                orderingSQL.append(" desc, ");
+            }
+
+            // prepare sql for expression's 2nd column
+            orderingSQL.append("`");
+            orderingSQL.append(appendedOrderingColumnsName);
+            orderingSQL.append("`.`");
+            orderingSQL.append(columnIndex);
+            orderingSQL.append("-valueField`");
+            if (columnIndex != typesForAllColumns.size() - 1) {
+                if (expression.isAscending()) {
+                    orderingSQL.append(", ");
+                } else {
+                    orderingSQL.append(" desc, ");
+                }
+            } else {
+                if (!expression.isAscending()) {
+                    orderingSQL.append(" desc");
+                }
+            }
+        }
+
+        df.sparkSession().udf().register("createOrderingColumns",
+                new OrderClauseCreateColumnsUDF(_expressions, inputSchema, typesForAllColumns),
+                DataTypes.createStructType(typedFields));
+
+        String selectSQL = DataFrameUtils.getSQL(inputSchema, -1, true);
+        String projectSQL = selectSQL.substring(0, selectSQL.length() - 1);   // remove trailing comma
+        udfSQL = projectSQL;
+
+        df.createOrReplaceTempView("input");
+        return df.sparkSession().sql(
+                String.format(
+                        "select %s from (select %s createOrderingColumns(array(%s)) as `%s` from input order by %s)",
+                        projectSQL, selectSQL, udfSQL, appendedOrderingColumnsName, orderingSQL
+                )
+        );
     }
 }

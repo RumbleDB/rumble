@@ -35,10 +35,14 @@ import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
 import sparksoniq.jsoniq.runtime.tupleiterator.SparkRuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.spark.SparkSessionManager;
-import sparksoniq.spark.closures.*;
-import sparksoniq.spark.udf.ForClauseUDF;
 import sparksoniq.spark.DataFrameUtils;
+import sparksoniq.spark.SparkSessionManager;
+import sparksoniq.spark.closures.ForClauseClosure;
+import sparksoniq.spark.closures.ForClauseLocalToRowClosure;
+import sparksoniq.spark.closures.ForClauseSerializeClosure;
+import sparksoniq.spark.closures.InitialForClauseClosure;
+import sparksoniq.spark.closures.OLD_ForClauseLocalToRDDClosure;
+import sparksoniq.spark.udf.ForClauseUDF;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -222,8 +226,8 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
                     new ForClauseUDF(_expression, inputSchema), DataTypes.createArrayType(DataTypes.BinaryType));
 
             int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(_variableName);
-            String selectSQL = DataFrameUtils.getSelectSQL(inputSchema, duplicateVariableIndex);
-            String udfSQL = DataFrameUtils.getUdfSQL(inputSchema);
+            String selectSQL = DataFrameUtils.getSQL(inputSchema, duplicateVariableIndex, true);
+            String udfSQL = DataFrameUtils.getSQL(inputSchema, -1, false);
 
             df.createOrReplaceTempView("input");
             df = df.sparkSession().sql(

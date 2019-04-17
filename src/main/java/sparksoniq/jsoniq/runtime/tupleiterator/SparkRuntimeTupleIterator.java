@@ -21,8 +21,6 @@
 package sparksoniq.jsoniq.runtime.tupleiterator;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.io.json.JiqsItemParser;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;

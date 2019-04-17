@@ -46,21 +46,13 @@ public abstract class Item implements SerializableItem {
     //(int,decimal) -> decimal
     //(decimal,double) -> double
     public static Type getNumericResultType(Item left, Item right) {
-        if (left.isDecimal())
-            return DecimalItem.class;
-        if (left.isDouble()) {
-            if (right.isDecimal())
-                return DecimalItem.class;
+        if (left.isDouble() || right.isDouble()) {
             return DoubleItem.class;
         }
-        if (left.isInteger()) {
-            if (right.isDouble())
-                return DoubleItem.class;
-            if (right.isDecimal())
-                return DecimalItem.class;
-            return IntegerItem.class;
+        if (left.isDecimal() || right.isDecimal()) {
+            return DecimalItem.class;
         }
-        return DecimalItem.class;
+        return IntegerItem.class;
     }
 
     public static <T> T getNumericValue(Item item, Class<T> type) {

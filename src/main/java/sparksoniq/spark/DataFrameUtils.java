@@ -63,21 +63,7 @@ public class DataFrameUtils {
         return byteArray;
     }
 
-    public static String getUdfSQL(StructType inputSchema) {
-        String[] columnNames = inputSchema.fieldNames();
-        StringBuilder queryColumnString = new StringBuilder();
-        for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
-            queryColumnString.append("`");
-            queryColumnString.append(columnNames[columnIndex]);
-            queryColumnString.append("`");
-            if (columnIndex != (columnNames.length - 1)) {
-                queryColumnString.append(",");
-            }
-        }
-        return queryColumnString.toString();
-    }
-
-    public static String getSelectSQL(StructType inputSchema, int duplicateVariableIndex) {
+    public static String getSQL(StructType inputSchema, int duplicateVariableIndex, boolean trailingComma) {
         String[] columnNames = inputSchema.fieldNames();
         StringBuilder queryColumnString = new StringBuilder();
         for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
@@ -87,7 +73,9 @@ public class DataFrameUtils {
             queryColumnString.append("`");
             queryColumnString.append(columnNames[columnIndex]);
             queryColumnString.append("`");
-            queryColumnString.append(",");
+            if (trailingComma || columnIndex != (columnNames.length - 1)) {
+                queryColumnString.append(",");
+            }
         }
 
         return queryColumnString.toString();
