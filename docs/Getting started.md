@@ -5,16 +5,16 @@
 ### Installing Spark
 
 Sparksoniq requires a spark installation on ideally Linux or Mac.
-We recommend installing 2.3.0 from [this page](https://spark.apache.org/downloads.html).
-Download the file and unzip it, which will create a directory called spark-2.3.0-bin-hadoop2.7. 
+We recommend installing 2.4.1 from [this page](https://spark.apache.org/downloads.html).
+Download the file and unzip it, which will create a directory called spark-2.4.1-bin-hadoop2.7. 
 
 Move over this directory to, for example, /usr/local/bin
 
-    mv spark-2.3.0-bin-hadoop2.7 /usr/local/bin
+    mv spark-2.4.1-bin-hadoop2.7 /usr/local/bin
 
-and add /usr/local/bin/spark-2.3.0-bin-hadoop2.7 to the PATH variable
+and add /usr/local/bin/spark-2.4.1-bin-hadoop2.7 to the PATH variable
 
-    export PATH=/usr/local/bin/spark-2.3.0-bin-hadoop2.7/bin:$PATH
+    export PATH=/usr/local/bin/spark-2.4.1-bin-hadoop2.7/bin:$PATH
 
 You can test that this worked with:
 
@@ -23,7 +23,7 @@ You can test that this worked with:
 ### Installing Sparksoniq
 
 In order to run Sparksoniq, you need to download the .jar file from the [download page](https://github.com/Sparksoniq/sparksoniq/releases)
-and put it in a directory of your choice. For Spark 2.3.0 we recommend the .jar file with ant 4.7 (not 4.5.3).
+and put it in a directory of your choice. For Spark 2.4.1 we recommend the .jar file with ant 4.7 (not 4.5.3).
 
 ### Creating some data set
 
@@ -44,7 +44,7 @@ Create, in the same directory as Sparksoniq, a file data.json and put the follow
 In a shell, from the directory where the sparksoniq .jar lies, type, all on one line:
 
     spark-submit --class sparksoniq.ShellStart --master local[*] --deploy-mode client
-                 sparksoniq-0.9.5-with-antlr-4.7.jar
+                 sparksoniq-0.9.6-with-antlr-4.7.jar
                  
 The Sparksoniq shell appears:
 
@@ -107,7 +107,7 @@ The only constraint is that the first clause should be a for or a let clause.
     order by $sum descending
     return { "product" : $product, "total-quantity" : $sum }
 
-Finally, Sparksoniq can also send local data to the cluster, exactly like Sparks' parallelize() creation:
+Finally, Sparksoniq can also parallelize local data, exactly like Sparks' parallelize() creation:
 
     for $i in parallelize((
      { "product" : "broiler", "store number" : 1, "quantity" : 20  },
@@ -119,7 +119,7 @@ Finally, Sparksoniq can also send local data to the cluster, exactly like Sparks
      { "product" : "socks", "store number" : 1, "quantity" : 500 },
      { "product" : "socks", "store number" : 2, "quantity" : 10 },
      { "product" : "shirt", "store number" : 3, "quantity" : 10 }
-    ))
+    ), 10)
     let $quantity := $i.quantity
     group by $product := $i.product
     let $sum := sum($quantity)

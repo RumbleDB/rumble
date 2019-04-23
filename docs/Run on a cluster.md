@@ -6,32 +6,30 @@ simply by modifying the command line parameters as documented [here for spark-su
 If the Spark cluster is running on yarn, then the --master option must be changed from local[\*] to yarn compared to the getting started guide.
 
     spark-submit --class sparksoniq.ShellStart --master yarn --deploy-mode client
-                 sparksoniq-0.9.5-with-antlr-4.7.jar
+                 sparksoniq-0.9.6-with-antlr-4.7.jar
                  
 You can also adapt the number of executors, etc.
 
     spark-submit --class sparksoniq.ShellStart --master yarn --deploy-mode client
                  --num-executors 30 --executor-cores 3 --executor-memory 10g
-                 sparksoniq-0.9.5-with-antlr-4.7.jar
+                 sparksoniq-0.9.6-with-antlr-4.7.jar
 
 The size limit for materialization can also be made higher with --result-size (the default is 100). This affects the number of items displayed on the shells as an answer to a query, as well as any materializations happening within the query with push-down is not supported. Warnings are issued if the cap is reached.
 
     spark-submit --class sparksoniq.ShellStart --master yarn --deploy-mode client
                  --num-executors 30 --executor-cores 3 --executor-memory 10g
-                 sparksoniq-0.9.5-with-antlr-4.7.jar
+                 sparksoniq-0.9.6-with-antlr-4.7.jar
                  --result-size 10000
 
 ## Creation functions
 
-json-file() then takes an HDFS path and the host and port are optional if Spark is configured properly. A second parameter controls the number of splits.
+json-file() then takes an HDFS path and the host and port are optional if Spark is configured properly. A second parameter controls the minimum number of splits. By default, each HDFS block is a split if executed on a clustter. In a local execution, there is only one split by default.
 
 The same goes for parallelize().
 
 ## Bigger data sets
 
 If you need a bigger data set out of the box, we recommend the [great language game](http://lars.yencken.org/datasets/languagegame/), which has 16 million objects.
-
-It is important to remember to specify a number of partitions, otherwise there is only one partition and parallelism is not fully utilized.
 
 We tested it successfully and suggest the following queries to start with:
 
