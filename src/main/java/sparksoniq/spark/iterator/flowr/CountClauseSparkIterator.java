@@ -49,6 +49,12 @@ public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
     }
 
     @Override
+    public void close() {
+        super.close();
+        _currentCountIndex = 1;
+    }
+
+    @Override
     public FlworTuple next() {
         if(_hasNext == true){
             FlworTuple result = _nextLocalTupleResult;      // save the result to be returned
