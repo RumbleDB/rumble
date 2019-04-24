@@ -339,6 +339,20 @@ substring("foobar", 4, 2)
 
 returns "ba"
 
+### tokenize
+
+```
+tokenize("aa bb cc dd")
+```
+
+returns ("aa", "bb", "cc", "dd")
+
+```
+tokenize("aa;bb;cc;dd", ";")
+```
+
+returns ("aa", "bb", "cc", "dd")
+
 ## Integration with HDFS and Spark
 
 We support two more functions to read a JSON file from HDFS or send a large sequence to the cluster:
@@ -346,7 +360,7 @@ We support two more functions to read a JSON file from HDFS or send a large sequ
 ### json-file (Sparksoniq specific)
 
 Exists in unary and binary. The first parameter specifies the JSON file (or set of JSON files) to read.
-The second, optional parameter specifies the number of partitions. It is recommended to use it, as for now the default is only one partition, which does not fully use the parallelism. This is also similar to Sparks textFile().
+The second, optional parameter specifies the minimum number of partitions. It is recommended to use it in a local setup, as the default is only one partition, which does not fully use the parallelism. If the input is on HDFS, then blocks are taken as splits by default. This is also similar to Sparks textFile().
 
 Example of usage:
 ```
@@ -379,6 +393,23 @@ where $my-json.property eq "some value"
 return $my-json
 ```
 
+### text-file (Sparksoniq specific)
+
+Exists in unary and binary. The first parameter specifies the text file (or set of text files) to read and return as a sequence of strings.
+The second, optional parameter specifies the minimum number of partitions. It is recommended to use it in a local setup, as the default is only one partition, which does not fully use the parallelism. If the input is on HDFS, then blocks are taken as splits by default. This is also similar to Sparks textFile().
+
+Example of usage:
+```
+count(
+  for $my-string in text-file("hdfs://host:port/directory/file.txt")
+  for $token in tokenize($my-string, ";")
+  where $token eq "some value"
+  return $token
+)
+```
+
+(Also see examples for json-file for host and port, sets of files and working directory).
+
 ### parallelize (Sparksoniq specific)
 
 This function behaves like the Spark parallelize() you are familiar with and sends a large sequence to the cluster.
@@ -390,7 +421,7 @@ where $i mod 1000 eq 0
 return $i
 ```
 
-In the future, there will also be a second, optional parameter that specifies the number of partitions.
+There is also be a second, optional parameter that specifies the minimum number of partitions.
 
 ```
 for $i in parallelize(1 to 1000000, 100)

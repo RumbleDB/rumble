@@ -39,15 +39,6 @@ let $z := for $y in json-file("file2.json")
 return count($z)
 ```
 
-This, however, is supported (provided file sizes are reasonable):
-
-```
-for $x in json-file("file1.json")
-for $z in json-file("file2.json")
-where $z.foo eq $x.fbar
-return count($z)
-```
-
 
 ### Expressions pushed down to Spark
 
