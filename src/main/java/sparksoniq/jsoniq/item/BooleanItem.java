@@ -40,28 +40,8 @@ public class BooleanItem extends AtomicItem {
     }
 
     @Override
-    public String getStringValue() throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Boolean value exception");
-    }
-
-    @Override
     public boolean getBooleanValue() {
         return _value;
-    }
-
-    @Override
-    public double getDoubleValue() throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Boolean value exception");
-    }
-
-    @Override
-    public int getIntegerValue() throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Boolean value exception");
-    }
-
-    @Override
-    public BigDecimal getDecimalValue() throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Boolean value exception");
     }
 
     @Override

@@ -163,31 +163,57 @@ public abstract class Item implements SerializableItem {
         return compareItems(v1, v2) == 0;
     }
 
-    public abstract List<Item> getItems() throws OperationNotSupportedException;
+    public List<Item> getItems() {
+        throw new RuntimeException("Item is not an array or object.");
+    };
 
-    public abstract Item getItemAt(int i) throws OperationNotSupportedException;
+    public Item getItemAt(int i) {
+        throw new RuntimeException("Item is not an array.");
+    };
 
-    public abstract void putItem(Item value) throws OperationNotSupportedException;
+    public void putItem(Item value) {
+        throw new RuntimeException("Item is not an array.");
+    };
 
-    public abstract List<String> getKeys() throws OperationNotSupportedException;
+    public List<String> getKeys() {
+        throw new RuntimeException("Item is not an object.");
+    };
 
-    public abstract Collection<? extends Item> getValues() throws OperationNotSupportedException;
+    public Collection<? extends Item> getValues() {
+        throw new RuntimeException("Item is not an array or object.");
+    };
 
-    public abstract Item getItemByKey(String s) throws OperationNotSupportedException;
+    public Item getItemByKey(String s) {
+        throw new RuntimeException("Item is not an object.");
+    };
 
-    public abstract void putItemByKey(String s, Item value) throws OperationNotSupportedException;
+    public void putItemByKey(String s, Item value) {
+        throw new RuntimeException("Item is not an object.");
+    };
 
-    public abstract int getSize() throws OperationNotSupportedException;
+    public int getSize() {
+        throw new RuntimeException("Item is not an array.");
+    };
 
-    public abstract String getStringValue() throws OperationNotSupportedException;
+    public String getStringValue() {
+        throw new RuntimeException("Item is not a string.");
+    };
 
-    public abstract boolean getBooleanValue() throws OperationNotSupportedException;
+    public boolean getBooleanValue() {
+        throw new RuntimeException("Item is not a boolean.");
+    };
 
-    public abstract double getDoubleValue() throws OperationNotSupportedException;
+    public double getDoubleValue() {
+        throw new RuntimeException("Item is not a double.");
+    };
 
-    public abstract int getIntegerValue() throws OperationNotSupportedException;
+    public int getIntegerValue() {
+        throw new RuntimeException("Item is not an integer.");
+    };
 
-    public abstract BigDecimal getDecimalValue() throws OperationNotSupportedException;
+    public BigDecimal getDecimalValue() {
+        throw new RuntimeException("Item is not a big decimal.");
+    };
 
     public abstract boolean isTypeOf(ItemType type);
 

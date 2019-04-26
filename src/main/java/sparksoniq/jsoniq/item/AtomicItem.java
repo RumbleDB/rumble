@@ -22,7 +22,6 @@
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
-import javax.naming.OperationNotSupportedException;
 import java.util.Collection;
 import java.util.List;
 
@@ -31,46 +30,6 @@ public abstract class AtomicItem extends Item {
     public boolean isAtomic()
     {
         return true;
-    }
-
-    @Override
-    public List<Item> getItems() throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Atomic items are not arrays");
-    }
-
-    @Override
-    public Item getItemAt(int i) throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Atomic items are not arrays");
-    }
-
-    @Override
-    public void putItem(Item value) throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Atomic items are not arrays");
-    }
-
-    @Override
-    public Item getItemByKey(String s) throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Atomic items are not objects");
-    }
-
-    @Override
-    public void putItemByKey(String s, Item value) throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Atomic items are not objects");
-    }
-
-    @Override
-    public List<String> getKeys() throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Atomic items are not objects");
-    }
-
-    @Override
-    public Collection<? extends Item> getValues() throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Atomic items are not objects");
-    }
-
-    @Override
-    public int getSize() throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Atomic items are not arrays");
     }
 
     @Override public boolean isTypeOf(ItemType type) {

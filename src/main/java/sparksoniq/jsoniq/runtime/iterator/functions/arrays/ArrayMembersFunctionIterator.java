@@ -49,11 +49,7 @@ public class ArrayMembersFunctionIterator extends ArrayFunctionIterator {
         while (_iterator.hasNext()) {
             Item item = _iterator.next();
             if (item.isArray()) {
-                try {
-                    _nextResults.addAll(item.getItems());
-                } catch (OperationNotSupportedException e) {
-                    e.printStackTrace();
-                }
+                _nextResults.addAll(item.getItems());
             }
         }
 

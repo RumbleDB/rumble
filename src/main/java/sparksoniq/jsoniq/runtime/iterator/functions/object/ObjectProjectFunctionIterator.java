@@ -76,15 +76,11 @@ public class ObjectProjectFunctionIterator extends ObjectFunctionIterator {
         ArrayList<String> finalKeylist = new ArrayList<>();
         ArrayList<Item> finalValueList = new ArrayList<>();
         for (Item keyItem : keys) {
-            try {
-                String key = keyItem.getStringValue();
-                Item value = objItem.getItemByKey(key);
-                if (value != null) {
-                    finalKeylist.add(key);
-                    finalValueList.add(value);
-                }
-            } catch (OperationNotSupportedException e) {
-                throw new UnexpectedTypeException("Project function has non-string key args.", getMetadata());
+            String key = keyItem.getStringValue();
+            Item value = objItem.getItemByKey(key);
+            if (value != null) {
+                finalKeylist.add(key);
+                finalValueList.add(value);
             }
         }
         return new ObjectItem(finalKeylist, finalValueList, ItemMetadata.fromIteratorMetadata(getMetadata()));

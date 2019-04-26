@@ -31,28 +31,9 @@ public class NullItem extends AtomicItem {
     public NullItem(){super();}
 
     @Override
-    public String getStringValue() throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Null value exception");
-    }
-
-    @Override
-    public boolean getBooleanValue() throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Null value exception");
-    }
-
-    @Override
-    public double getDoubleValue() throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Null value exception");
-    }
-
-    @Override
-    public int getIntegerValue() throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Null value exception");
-    }
-
-    @Override
-    public BigDecimal getDecimalValue() throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Null value exception");
+    public boolean isNull()
+    {
+        return true;
     }
 
     @Override

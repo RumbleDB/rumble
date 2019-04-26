@@ -32,36 +32,6 @@ public abstract class JsonItem extends Item {
         return false;
     }
 
-    @Override
-    public String getStringValue() throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("JSON items are not strings");
-    }
-
-    @Override
-    public boolean getBooleanValue() throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("JSON items are not booleans");
-    }
-
-    @Override
-    public double getDoubleValue() throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("JSON items are not doubles");
-    }
-
-    @Override
-    public int getIntegerValue() throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("JSON items are not integers");
-    }
-
-    @Override
-    public BigDecimal getDecimalValue() throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("JSON items are not decimals");
-    }
-
-    @Override
-    public int getSize() throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Can not call getSize on non-array item");
-    }
-
     @Override public boolean isTypeOf(ItemType type) {
         if(type.getType().equals(ItemTypes.JSONItem) || type.getType().equals(ItemTypes.Item))
             return true;

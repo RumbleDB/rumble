@@ -44,26 +44,6 @@ public class StringItem extends AtomicItem{
         return _value;
     }
 
-    @Override
-    public boolean getBooleanValue() throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("String value exception");
-    }
-
-    @Override
-    public double getDoubleValue() throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("String value exception");
-    }
-
-    @Override
-    public int getIntegerValue() throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("String value exception");
-    }
-
-    @Override
-    public BigDecimal getDecimalValue() throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("String value exception");
-    }
-
     @Override public boolean isTypeOf(ItemType type) {
         if(type.getType().equals(ItemTypes.StringItem) || super.isTypeOf(type))
             return true;

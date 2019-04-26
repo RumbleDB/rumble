@@ -40,28 +40,8 @@ public class IntegerItem extends AtomicItem {
     }
 
     @Override
-    public String getStringValue() throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Integer value exception");
-    }
-
-    @Override
-    public boolean getBooleanValue() throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Integer value exception");
-    }
-
-    @Override
-    public double getDoubleValue() throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Integer value exception");
-    }
-
-    @Override
     public int getIntegerValue()  {
         return _value;
-    }
-
-    @Override
-    public BigDecimal getDecimalValue() throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Integer value exception");
     }
 
     @Override

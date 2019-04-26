@@ -77,11 +77,7 @@ public class ObjectItem extends JsonItem{
                 valueList.add(value);
             }
             else {
-                try {
-                    throw new OperationNotSupportedException("Unexpected list size found");
-                } catch (OperationNotSupportedException e) {
-                    e.printStackTrace();
-                }
+                throw new RuntimeException("Unexpected list size found");
             }
         }
 
@@ -98,21 +94,6 @@ public class ObjectItem extends JsonItem{
             else
                 frequencies.put(key, 1);
         }
-    }
-
-    @Override
-    public List<Item> getItems() throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Objects are not arrays");
-    }
-
-    @Override
-    public Item getItemAt(int i) throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Objects are not arrays");
-    }
-
-    @Override
-    public void putItem(Item value) throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Objects are not arrays");
     }
 
     @Override
