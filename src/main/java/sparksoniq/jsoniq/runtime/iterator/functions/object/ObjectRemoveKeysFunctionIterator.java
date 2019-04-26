@@ -38,6 +38,10 @@ public class ObjectRemoveKeysFunctionIterator extends ObjectFunctionIterator {
         }
         _removalKeys = new ArrayList<>();
         for (Item removalKeyItem : removalKeys) {
+            if(!removalKeyItem.isString())
+            {
+                throw new UnexpectedTypeException("Remove-keys function has non-string key args.", getMetadata());
+            }
             String removalKey = removalKeyItem.getStringValue();
             _removalKeys.add(removalKey);
         }
