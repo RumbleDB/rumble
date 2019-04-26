@@ -82,7 +82,7 @@ public class JsoniqQueryExecutor {
         generateStaticContext(visitor.getQueryExpression());
         // generate iterators
         RuntimeIterator result = generateRuntimeIterators(visitor.getQueryExpression());
-        if(result.isRDD())
+        if(result.isRDD() && outputPath != null)
         {
             JavaRDD<Item> rdd = result.getRDD(new DynamicContext());
             JavaRDD<String> output = rdd.map(o -> o.serialize());
@@ -90,9 +90,13 @@ public class JsoniqQueryExecutor {
         }
         else {
             String output = runIterators(result);
-            List<String> lines = Arrays.asList(output);
-            java.nio.file.Path file = Paths.get(outputPath);
-            Files.write(file, lines, Charset.forName("UTF-8"));
+            if(outputPath != null) {
+                List<String> lines = Arrays.asList(output);
+                java.nio.file.Path file = Paths.get(outputPath);
+                Files.write(file, lines, Charset.forName("UTF-8"));
+            } else {
+                System.out.println(output);
+            }
         }
         long endTime = System.currentTimeMillis();
         long totalTime = endTime - startTime;
