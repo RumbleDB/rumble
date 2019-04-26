@@ -54,10 +54,9 @@ public class ObjectKeysFunctionIterator extends ObjectFunctionIterator {
         while(_iterator.hasNext()) {
             Item item = _iterator.next();
             // ignore non-object items
-            if (item instanceof ObjectItem) {
-                ObjectItem objItem = (ObjectItem)item;
+            if (item.isObject()) {
                 StringItem result;
-                for (String key : objItem.getKeys()) {
+                for (String key : item.getKeys()) {
                     result = new StringItem(key);
                     // check if key was met earlier
                     if (!ItemUtil.listContainsItem(_prevResults, result))

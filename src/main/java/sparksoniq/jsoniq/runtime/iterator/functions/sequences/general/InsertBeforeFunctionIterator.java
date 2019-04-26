@@ -54,15 +54,15 @@ public class InsertBeforeFunctionIterator extends LocalFunctionCallIterator {
                     getMetadata());
         }
         Item positionItem = positionIterator.next();
-        if (positionItem instanceof ArrayItem) {
+        if (positionItem.isArray()) {
             throw new NonAtomicKeyException(
                     "Invalid args. insert-before can't be performed with an array parameter as the position",
                     getMetadata().getExpressionMetadata());
-        } else if (positionItem instanceof ObjectItem) {
+        } else if (positionItem.isObject()) {
             throw new NonAtomicKeyException(
                     "Invalid args. insert-before can't be performed with an object parameter as the position",
                     getMetadata().getExpressionMetadata());
-        } else if (!(positionItem instanceof IntegerItem)) {
+        } else if (!(positionItem.isInteger())) {
             throw new UnexpectedTypeException(
                     "Invalid args. Position parameter should be an integer",
                     getMetadata());

@@ -51,12 +51,12 @@ public class UnaryOperationIterator extends UnaryOperationBaseIterator {
             if(this._operator== OperationalExpressionBase.Operator.MINUS)
             {
                 if(Item.isNumeric(child)){
-                    if(child instanceof IntegerItem)
-                        return new IntegerItem(-1 * ((IntegerItem)child).getIntegerValue());
-                    if(child instanceof DoubleItem)
-                        return new DoubleItem(-1 * ((DoubleItem)child).getDoubleValue());
-                    if(child instanceof DecimalItem)
-                        return new DecimalItem(((DecimalItem)child).getDecimalValue().multiply(new BigDecimal(-1)));
+                    if(child.isInteger())
+                        return new IntegerItem(-1 * child.getIntegerValue());
+                    if(child.isDouble())
+                        return new DoubleItem(-1 * child.getDoubleValue());
+                    if(child.isDecimal())
+                        return new DecimalItem(child.getDecimalValue().multiply(new BigDecimal(-1)));
                 }
                 throw new UnexpectedTypeException("Unary expression has non numeric args " +
                         child.serialize(), getMetadata());

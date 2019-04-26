@@ -134,17 +134,16 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
 
         while (_iterator.hasNext()) {
             Item item = _iterator.next();
-            if (item instanceof ObjectItem) {
-                ObjectItem objItem = (ObjectItem) item;
+            if (item.isObject()) {
                 if (!_contextLookup) {
-                    Item result = objItem.getItemByKey(((StringItem) _lookupKey).getStringValue());
+                    Item result = item.getItemByKey(_lookupKey.getStringValue());
                     if (result != null) {
                         _nextResult = result;
                         break;
                     }
                 } else {
                     Item contextItem = _currentDynamicContext.getVariableValue("$$").get(0);
-                    _nextResult = objItem.getItemByKey(((StringItem)contextItem).getStringValue());
+                    _nextResult = item.getItemByKey(contextItem.getStringValue());
                 }
             }
         }

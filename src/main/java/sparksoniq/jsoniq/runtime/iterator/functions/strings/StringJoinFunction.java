@@ -31,7 +31,7 @@ public class StringJoinFunction extends LocalFunctionCallIterator {
 
             StringBuilder stringBuilder = new StringBuilder("");
             for (Item item : strings) {
-                if (!(item instanceof StringItem))
+                if (!(item.isString()))
                     throw new UnexpectedTypeException("String item expected", this._children.get(0).getMetadata());
                 stringBuilder = !stringBuilder.toString().isEmpty() ? stringBuilder.append(joinString.getStringValue()) : stringBuilder;
                 stringBuilder = stringBuilder.append(((StringItem) item).getStringValue());

@@ -162,25 +162,25 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         if (iterator.hasNext()) {
             Item item = iterator.next();
             boolean result;
-            if (item instanceof BooleanItem)
-                result = ((BooleanItem) item).getBooleanValue();
+            if (item.isBoolean())
+                result = item.getBooleanValue();
             else if (isNumeric(item)) {
-                if (item instanceof IntegerItem)
-                    result = ((IntegerItem) item).getIntegerValue() != 0;
-                else if (item instanceof DoubleItem)
-                    result = ((DoubleItem) item).getDoubleValue() != 0;
-                else if (item instanceof DecimalItem)
-                    result = !((DecimalItem) item).getDecimalValue().equals(0);
+                if (item.isInteger())
+                    result = item.getIntegerValue() != 0;
+                else if (item.isDouble())
+                    result = item.getDoubleValue() != 0;
+                else if (item.isDecimal())
+                    result = !item.getDecimalValue().equals(0);
                 else {
                     throw new SparksoniqRuntimeException("Unexpected numeric type found while calculating effective boolean value.");
                 }
-            } else if (item instanceof NullItem)
+            } else if (item.isNull())
                 result = false;
-            else if (item instanceof StringItem)
-                result = !((StringItem) item).getStringValue().isEmpty();
-            else if (item instanceof ObjectItem)
+            else if (item.isString())
+                result = !item.getStringValue().isEmpty();
+            else if (item.isObject())
                 return true;
-            else if (item instanceof ArrayItem)
+            else if (item.isArray())
                 return true;
             else {
                 throw new SparksoniqRuntimeException("Unexpected item type found while calculating effective boolean value.");

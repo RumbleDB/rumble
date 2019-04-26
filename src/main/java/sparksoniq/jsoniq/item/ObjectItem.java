@@ -130,7 +130,7 @@ public class ObjectItem extends JsonItem{
         for (int i = 0; i < _keys.size(); ++i) {
             String key = _keys.get(i);
             Item value = _values.get(i);
-            boolean isStringValue = value instanceof StringItem;
+            boolean isStringValue = value.isString();
             sb.append("\"" + StringEscapeUtils.escapeJson(key) + "\"" + " : ");
             if(isStringValue)
             {

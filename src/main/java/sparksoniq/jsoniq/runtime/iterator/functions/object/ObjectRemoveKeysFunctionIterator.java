@@ -61,9 +61,8 @@ public class ObjectRemoveKeysFunctionIterator extends ObjectFunctionIterator {
 
         if (_iterator.hasNext()) {
             Item item = _iterator.next();
-            if (item instanceof ObjectItem) {
-                ObjectItem objItem = (ObjectItem) item;
-                _nextResult = removeKeys(objItem, _removalKeys);
+            if (item.isObject()) {
+                _nextResult = removeKeys(item, _removalKeys);
             } else {
                 _nextResult = item;
             }
@@ -77,7 +76,7 @@ public class ObjectRemoveKeysFunctionIterator extends ObjectFunctionIterator {
         }
     }
 
-    public ObjectItem removeKeys(ObjectItem objItem, List<String> removalKeys) {
+    public Item removeKeys(Item objItem, List<String> removalKeys) {
         ArrayList<String> finalKeylist = new ArrayList<>();
         ArrayList<Item> finalValueList = new ArrayList<>();
 

@@ -69,7 +69,7 @@ public class ArrayItem extends JsonItem {
         StringBuilder sb = new StringBuilder();
         sb.append("[ ");
         for (Item item : this._arrayItems) {
-            boolean isStringValue = item instanceof StringItem;
+            boolean isStringValue = item.isString();
             if(isStringValue) {
                 sb.append("\"");
                 sb.append(StringEscapeUtils.escapeJson(item.serialize()));

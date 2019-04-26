@@ -80,8 +80,8 @@ public class FlworKey implements KryoSerializable {
             Item comparisonItem = flworKey.keyItems.get(index);
 
             // check for incorrect ordering inputs
-            if (currentItem instanceof ArrayItem || currentItem instanceof ObjectItem ||
-                    comparisonItem instanceof ArrayItem || comparisonItem instanceof ObjectItem) {
+            if (currentItem.isArray() || currentItem.isObject()||
+                    comparisonItem.isArray() || comparisonItem.isObject()) {
                 throw new SparksoniqRuntimeException("Non atomic key not allowed");
             }
             if ((currentItem != null && comparisonItem != null)

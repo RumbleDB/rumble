@@ -56,9 +56,8 @@ public class ObjectProjectFunctionIterator extends ObjectFunctionIterator {
 
         if (_iterator.hasNext()) {
             Item item = _iterator.next();
-            if (item instanceof ObjectItem) {
-                ObjectItem objItem = (ObjectItem) item;
-                _nextResult = getProjection(objItem, _projKeys);
+            if (item.isObject()) {
+                _nextResult = getProjection(item, _projKeys);
             } else {
                 _nextResult = item;
             }
@@ -72,7 +71,7 @@ public class ObjectProjectFunctionIterator extends ObjectFunctionIterator {
         }
     }
 
-    public ObjectItem getProjection(ObjectItem objItem, List<Item> keys) {
+    public Item getProjection(Item objItem, List<Item> keys) {
         ArrayList<String> finalKeylist = new ArrayList<>();
         ArrayList<Item> finalValueList = new ArrayList<>();
         for (Item keyItem : keys) {

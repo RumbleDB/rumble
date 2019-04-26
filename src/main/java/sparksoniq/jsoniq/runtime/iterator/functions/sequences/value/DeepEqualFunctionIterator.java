@@ -50,9 +50,9 @@ public class DeepEqualFunctionIterator extends LocalFunctionCallIterator {
                 Item item1 = items1.get(i);
                 Item item2 = items2.get(i);
 
-                if (item1 instanceof ArrayItem) {
+                if (item1.isArray()) {
                     // if item types don't match
-                    if (!(item2 instanceof ArrayItem)) {
+                    if (!(item2.isArray())) {
                         return false;
                     } else {
                         // if types match, recursively check if array is deep-equal
@@ -63,17 +63,14 @@ public class DeepEqualFunctionIterator extends LocalFunctionCallIterator {
                             return false;
                         }
                     }
-                } else if (item1 instanceof ObjectItem) {
+                } else if (item1.isObject()) {
                     // if item types don't match
-                    if (!(item2 instanceof ObjectItem)) {
+                    if (!(item2.isObject())) {
                         return false;
                     } else {
                         // if types match, recursively check if object is deep-equal
-                        ObjectItem objItem1 = (ObjectItem)item1;
-                        ObjectItem objItem2 = (ObjectItem)item2;
-
-                        if (objItem1.getKeys().equals(objItem2.getKeys())) {
-                            if (!checkDeepEqual((List<Item>)objItem1.getValues(), (List<Item>)objItem2.getValues())) {
+                        if (item1.getKeys().equals(item2.getKeys())) {
+                            if (!checkDeepEqual((List<Item>)item1.getValues(), (List<Item>)item2.getValues())) {
                                 return false;
                             }
                         } else {

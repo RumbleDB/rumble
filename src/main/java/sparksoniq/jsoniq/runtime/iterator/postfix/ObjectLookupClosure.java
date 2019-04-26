@@ -18,7 +18,7 @@ public class ObjectLookupClosure implements FlatMapFunction<Item, Item> {
     public Iterator<Item> call(Item arg0) throws Exception {
         List<Item> results = new ArrayList<Item>();
 
-        if (!(arg0 instanceof ObjectItem))
+        if (!(arg0.isObject()))
             return results.iterator();
 
         Item item = arg0.getItemByKey(_key);

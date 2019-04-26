@@ -138,7 +138,7 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
                 expression.open(tupleContext);
                 while (expression.hasNext()) {
                     Item resultItem = expression.next();
-                    if (resultItem != null && !Item.isAtomic(resultItem))
+                    if (resultItem != null && !resultItem.isAtomic())
                         throw new NonAtomicKeyException("Order by keys must be atomics",
                                 orderByExpression.getIteratorMetadata().getExpressionMetadata());
                     isFieldEmpty = false;

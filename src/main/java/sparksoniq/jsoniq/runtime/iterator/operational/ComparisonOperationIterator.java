@@ -134,13 +134,13 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
 
     public BooleanItem comparePair(Item left, Item right) {
 
-        if (left instanceof ArrayItem || right instanceof ArrayItem) {
+        if (left.isArray() || right.isArray()) {
             throw new NonAtomicKeyException("Invalid args. Comparison can't be performed on array type", getMetadata().getExpressionMetadata());
         }
-        else if (left instanceof ObjectItem || right instanceof ObjectItem) {
+        else if (left.isObject() || right.isObject()) {
             throw new NonAtomicKeyException("Invalid args. Comparison can't be performed on object type", getMetadata().getExpressionMetadata());
         }
-        if (left instanceof NullItem || right instanceof NullItem) {
+        if (left.isNull() || right.isNull()) {
             return compareItems(left, right);
         }
         else if (Item.isNumeric(left)) {
@@ -149,14 +149,14 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
                         ", " + right.serialize(), getMetadata());
             return compareItems(left, right);
         }
-        else if (left instanceof StringItem) {
-            if (!(right instanceof StringItem))
+        else if (left.isString()) {
+            if (!(right.isString()))
                 throw new UnexpectedTypeException("Invalid args for string comparison " + left.serialize() +
                         ", " + right.serialize(), getMetadata());
             return compareItems(left, right);
         }
-        else if (left instanceof BooleanItem) {
-            if (!(right instanceof BooleanItem))
+        else if (left.isBoolean()) {
+            if (!right.isBoolean())
                 throw new UnexpectedTypeException("Invalid args for boolean comparison " + left.serialize() +
                         ", " + right.serialize(), getMetadata());
             return compareItems(left, right);

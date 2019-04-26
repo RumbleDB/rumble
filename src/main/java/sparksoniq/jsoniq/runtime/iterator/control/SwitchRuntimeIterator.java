@@ -65,10 +65,10 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
         Item testValue = getSingleItemOfTypeFromIterator(test, Item.class,
                 new NonAtomicKeyException("Switch test must be atomic", getMetadata().getExpressionMetadata()));
 
-        if (testValue instanceof ArrayItem) {
+        if (testValue != null && testValue.isArray()) {
             throw new NonAtomicKeyException("Invalid args. Switch condition can't be an array type", getMetadata().getExpressionMetadata());
         }
-        else if (testValue instanceof ObjectItem) {
+        else if (testValue != null && testValue.isObject()) {
             throw new NonAtomicKeyException("Invalid args. Switch condition  can't be an object type", getMetadata().getExpressionMetadata());
         }
 
@@ -76,10 +76,10 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
             Item caseValue = getSingleItemOfTypeFromIterator(caseKey, Item.class,
                     new NonAtomicKeyException("Switch case test must be atomic", getMetadata().getExpressionMetadata()));
 
-            if (caseValue instanceof ArrayItem) {
+            if (caseValue != null && caseValue.isArray()) {
                 throw new NonAtomicKeyException("Invalid args. Switch case can't be an array type", getMetadata().getExpressionMetadata());
             }
-            else if (caseValue instanceof ObjectItem) {
+            else if (caseValue != null && caseValue.isObject()) {
                 throw new NonAtomicKeyException("Invalid args. Switch case  can't be an object type", getMetadata().getExpressionMetadata());
             }
 
