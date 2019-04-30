@@ -19,13 +19,13 @@ public class ItemComparatorForSequences implements Comparator<Item>, Serializabl
             BigDecimal value1 = Item.getNumericValue(v1, BigDecimal.class);
             BigDecimal value2 = Item.getNumericValue(v2, BigDecimal.class);
             result = value1.compareTo(value2);
-        } else if (v1 instanceof BooleanItem && v2 instanceof BooleanItem) {
-            Boolean value1 = new Boolean(((BooleanItem) v1).getBooleanValue());
-            Boolean value2 = new Boolean(((BooleanItem) v2).getBooleanValue());
+        } else if (v1.isBoolean() && v2.isBoolean()) {
+            Boolean value1 = new Boolean(v1.getBooleanValue());
+            Boolean value2 = new Boolean(v2.getBooleanValue());
             result = value1.compareTo(value2);
-        } else if (v1 instanceof StringItem&& v2 instanceof StringItem) {
-            String value1 = ((StringItem) v1).getStringValue();
-            String value2 = ((StringItem) v2).getStringValue();
+        } else if (v1.isString()&& v2.isString()) {
+            String value1 = v1.getStringValue();
+            String value2 = v2.getStringValue();
             result = value1.compareTo(value2);
         } else {
             throw new SparksoniqRuntimeException(v1.serialize() + " " + v2.serialize());

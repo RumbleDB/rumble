@@ -40,28 +40,8 @@ public class DoubleItem extends AtomicItem {
     }
 
     @Override
-    public String getStringValue() throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Double value exception");
-    }
-
-    @Override
-    public boolean getBooleanValue() throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Double value exception");
-    }
-
-    @Override
     public double getDoubleValue() {
         return _value;
-    }
-
-    @Override
-    public int getIntegerValue() throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Double value exception");
-    }
-
-    @Override
-    public BigDecimal getDecimalValue() throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Double value exception");
     }
 
     @Override

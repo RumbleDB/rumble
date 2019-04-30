@@ -56,7 +56,6 @@ public class ObjectItem extends JsonItem{
      * ObjectItem constructor from the given map data structure.
      * For each key, the corresponding values list is turned into an ArrayItem if it contains more than a single element.
      * @param keyValuePairs LinkedHashMap -- this map implementation preserves order of the keys -- essential for functionality
-     * @param itemMetadata
      */
     public ObjectItem(LinkedHashMap<String, List<Item>> keyValuePairs) {
         super();
@@ -77,11 +76,7 @@ public class ObjectItem extends JsonItem{
                 valueList.add(value);
             }
             else {
-                try {
-                    throw new OperationNotSupportedException("Unexpected list size found");
-                } catch (OperationNotSupportedException e) {
-                    e.printStackTrace();
-                }
+                throw new RuntimeException("Unexpected list size found.");
             }
         }
 
@@ -98,21 +93,6 @@ public class ObjectItem extends JsonItem{
             else
                 frequencies.put(key, 1);
         }
-    }
-
-    @Override
-    public List<Item> getItems() throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Objects are not arrays");
-    }
-
-    @Override
-    public Item getItemAt(int i) throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Objects are not arrays");
-    }
-
-    @Override
-    public void putItem(Item value) throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Objects are not arrays");
     }
 
     @Override
@@ -149,7 +129,7 @@ public class ObjectItem extends JsonItem{
         for (int i = 0; i < _keys.size(); ++i) {
             String key = _keys.get(i);
             Item value = _values.get(i);
-            boolean isStringValue = value instanceof StringItem;
+            boolean isStringValue = value.isString();
             sb.append("\"" + StringEscapeUtils.escapeJson(key) + "\"" + " : ");
             if(isStringValue)
             {

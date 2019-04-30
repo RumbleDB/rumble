@@ -67,11 +67,7 @@ public class ArrayFlattenFunctionIterator extends ArrayFunctionIterator {
     public void flatten(List<Item> items) {
         for (Item item:items) {
             if (item.isArray()) {
-                try {
-                    flatten(item.getItems());
-                } catch (OperationNotSupportedException e) {
-                    e.printStackTrace();
-                }
+                flatten(item.getItems());
             }
             else {
                 _nextResults.add(item);

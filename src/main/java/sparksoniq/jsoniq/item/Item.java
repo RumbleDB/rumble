@@ -34,12 +34,8 @@ import java.util.List;
 
 //TODO serialize with indentation
 public abstract class Item implements SerializableItem {
-    public static boolean isAtomic(Item resultItem) {
-        return resultItem instanceof AtomicItem;
-    }
-
     public static boolean isNumeric(Item item) {
-        return item instanceof IntegerItem || item instanceof DecimalItem || item instanceof DoubleItem;
+        return item.isInteger() || item.isDecimal() || item.isDouble();
     }
 
     //performs conversions for binary operations with a numeric return type
@@ -47,17 +43,17 @@ public abstract class Item implements SerializableItem {
     //(int,decimal) -> decimal
     //(decimal,double) -> double
     public static Type getNumericResultType(Item left, Item right) {
-        if (left instanceof DecimalItem)
+        if (left.isDecimal())
             return DecimalItem.class;
-        if (left instanceof DoubleItem) {
-            if (right instanceof DecimalItem)
+        if (left.isDouble()) {
+            if (right.isDecimal())
                 return DecimalItem.class;
             return DoubleItem.class;
         }
-        if (left instanceof IntegerItem) {
-            if (right instanceof DoubleItem)
+        if (left.isInteger()) {
+            if (right.isDouble())
                 return DoubleItem.class;
-            if (right instanceof DecimalItem)
+            if (right.isDecimal())
                 return DecimalItem.class;
             return IntegerItem.class;
         }
@@ -66,24 +62,24 @@ public abstract class Item implements SerializableItem {
 
     public static <T> T getNumericValue(Item item, Class<T> type) {
         if (isNumeric(item)) {
-            if (item instanceof DoubleItem) {
-                Double result = ((DoubleItem) item).getDoubleValue();
+            if (item.isDouble()) {
+                Double result = item.getDoubleValue();
                 if (type.equals(BigDecimal.class))
                     return (T) BigDecimal.valueOf(result);
                 if (type.equals(Integer.class))
                     return (T) new Integer(result.intValue());
                 return (T) result;
             }
-            if (item instanceof IntegerItem) {
-                Integer result = ((IntegerItem) item).getIntegerValue();
+            if (item.isInteger()) {
+                Integer result = item.getIntegerValue();
                 if (type.equals(BigDecimal.class))
                     return (T) BigDecimal.valueOf(result);
                 if (type.equals(Double.class))
                     return (T) new Double(result.doubleValue());
                 return (T) result;
             }
-            if (item instanceof DecimalItem) {
-                BigDecimal result = ((DecimalItem) item).getDecimalValue();
+            if (item.isDecimal()) {
+                BigDecimal result = item.getDecimalValue();
                 if (type.equals(Integer.class))
                     return (T) new Integer(result.intValue());
                 if (type.equals(Double.class))
@@ -99,23 +95,23 @@ public abstract class Item implements SerializableItem {
     public static boolean getEffectiveBooleanValue(Item item) {
         if (item == null)
             return false;
-        else if (item instanceof BooleanItem)
-            return ((BooleanItem) item).getBooleanValue();
+        else if (item.isBoolean())
+            return item.getBooleanValue();
         else if (isNumeric(item)) {
-            if (item instanceof IntegerItem)
-                return ((IntegerItem) item).getIntegerValue() != 0;
-            else if (item instanceof DoubleItem)
-                return ((DoubleItem) item).getDoubleValue() != 0;
-            else if (item instanceof DecimalItem)
-                return !((DecimalItem) item).getDecimalValue().equals(0);
+            if (item.isInteger())
+                return item.getIntegerValue() != 0;
+            else if (item.isDouble())
+                return item.getDoubleValue() != 0;
+            else if (item.isDecimal())
+                return !item.getDecimalValue().equals(0);
         }
-        else if (item instanceof NullItem)
+        else if (item.isNull())
             return false;
-        else if (item instanceof StringItem)
-            return !((StringItem) item).getStringValue().isEmpty();
-        else if (item instanceof ObjectItem)
+        else if (item.isString())
+            return !item.getStringValue().isEmpty();
+        else if (item.isObject())
             return true;
-        else if (item instanceof ArrayItem)
+        else if (item.isArray())
             return true;
 
         return true;
@@ -133,21 +129,21 @@ public abstract class Item implements SerializableItem {
             BigDecimal value1 = Item.getNumericValue(v1, BigDecimal.class);
             BigDecimal value2 = Item.getNumericValue(v2, BigDecimal.class);
             result = value1.compareTo(value2);
-        } else if (v1 instanceof BooleanItem && v2 instanceof BooleanItem) {
-            Boolean value1 = new Boolean(((BooleanItem) v1).getBooleanValue());
-            Boolean value2 = new Boolean(((BooleanItem) v2).getBooleanValue());
+        } else if (v1.isBoolean() && v2.isBoolean()) {
+            Boolean value1 = new Boolean(v1.getBooleanValue());
+            Boolean value2 = new Boolean(v2.getBooleanValue());
             result = value1.compareTo(value2);
-        } else if (v1 instanceof StringItem&& v2 instanceof StringItem) {
-            String value1 = ((StringItem) v1).getStringValue();
-            String value2 = ((StringItem) v2).getStringValue();
+        } else if (v1.isString()&& v2.isString()) {
+            String value1 = v1.getStringValue();
+            String value2 = v2.getStringValue();
             result = value1.compareTo(value2);
         }
-        else if (v1 instanceof NullItem || v2 instanceof NullItem) {
+        else if (v1.isNull() || v2.isNull()) {
             // null equals null
-            if (v1 instanceof NullItem && v2 instanceof NullItem) {
+            if (v1.isNull() && v2.isNull()) {
                 result = 0;
             }
-            else if (v1 instanceof NullItem) {
+            else if (v1.isNull()) {
                 result = -1;
             }
             else{
@@ -163,31 +159,57 @@ public abstract class Item implements SerializableItem {
         return compareItems(v1, v2) == 0;
     }
 
-    public abstract List<Item> getItems() throws OperationNotSupportedException;
+    public List<Item> getItems() {
+        throw new RuntimeException("Item is not an array.");
+    };
 
-    public abstract Item getItemAt(int i) throws OperationNotSupportedException;
+    public Item getItemAt(int i) {
+        throw new RuntimeException("Item is not an array.");
+    };
 
-    public abstract void putItem(Item value) throws OperationNotSupportedException;
+    public void putItem(Item value) {
+        throw new RuntimeException("Item is not an array.");
+    };
 
-    public abstract List<String> getKeys() throws OperationNotSupportedException;
+    public List<String> getKeys() {
+        throw new RuntimeException("Item is not an object.");
+    };
 
-    public abstract Collection<? extends Item> getValues() throws OperationNotSupportedException;
+    public Collection<? extends Item> getValues() {
+        throw new RuntimeException("Item is not an object.");
+    };
 
-    public abstract Item getItemByKey(String s) throws OperationNotSupportedException;
+    public Item getItemByKey(String s) {
+        throw new RuntimeException("Item is not an object.");
+    };
 
-    public abstract void putItemByKey(String s, Item value) throws OperationNotSupportedException;
+    public void putItemByKey(String s, Item value) {
+        throw new RuntimeException("Item is not an object.");
+    };
 
-    public abstract int getSize() throws OperationNotSupportedException;
+    public int getSize() {
+        throw new RuntimeException("Item is not an array.");
+    };
 
-    public abstract String getStringValue() throws OperationNotSupportedException;
+    public String getStringValue() {
+        throw new RuntimeException("Item is not a string.");
+    };
 
-    public abstract boolean getBooleanValue() throws OperationNotSupportedException;
+    public boolean getBooleanValue() {
+        throw new RuntimeException("Item is not a boolean.");
+    };
 
-    public abstract double getDoubleValue() throws OperationNotSupportedException;
+    public double getDoubleValue() {
+        throw new RuntimeException("Item is not a double.");
+    };
 
-    public abstract int getIntegerValue() throws OperationNotSupportedException;
+    public int getIntegerValue() {
+        throw new RuntimeException("Item is not an integer.");
+    };
 
-    public abstract BigDecimal getDecimalValue() throws OperationNotSupportedException;
+    public BigDecimal getDecimalValue() {
+        throw new RuntimeException("Item is not a big decimal.");
+    };
 
     public abstract boolean isTypeOf(ItemType type);
 

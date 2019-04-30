@@ -136,7 +136,7 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
                     groupVariableExpression.open(new DynamicContext(inputTuple));
                     while (groupVariableExpression.hasNext()) {
                         Item resultItem = groupVariableExpression.next();
-                        if (!Item.isAtomic(resultItem)) {
+                        if (!resultItem.isAtomic()) {
                             throw new NonAtomicKeyException("Group by keys must be atomics", _groupVariable.getIteratorMetadata().getExpressionMetadata());
                         }
                         newVariableResults.add(resultItem);

@@ -49,7 +49,7 @@ public class OrderByMapToPairClosure implements PairFunction<FlworTuple, FlworKe
             orderByExpression.getExpression().open(new DynamicContext(tuple));
             while (orderByExpression.getExpression().hasNext()){
                 Item resultItem = orderByExpression.getExpression().next();
-                if(resultItem != null && !Item.isAtomic(resultItem))
+                if(resultItem != null && !resultItem.isAtomic())
                     throw new NonAtomicKeyException("Order by keys must be atomics",
                             orderByExpression.getIteratorMetadata().getExpressionMetadata());
                 results.add(resultItem);

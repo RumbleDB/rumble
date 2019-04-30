@@ -70,17 +70,13 @@ public class ArrayDescendantFunctionIterator extends ArrayFunctionIterator {
 
     public void getDescendantArrays(List<Item> items) {
         for (Item item:items) {
-            try {
-                if (item.isArray()) {
-                    _nextResults.add(item);
-                    getDescendantArrays(item.getItems());
-                } else if (item.isObject()) {
-                    getDescendantArrays((List<Item>) item.getValues());
-                } else {
-                    // for atomic types: do nothing
-                }
-            } catch (OperationNotSupportedException e) {
-                e.printStackTrace();
+            if (item.isArray()) {
+                _nextResults.add(item);
+                getDescendantArrays(item.getItems());
+            } else if (item.isObject()) {
+                getDescendantArrays((List<Item>) item.getValues());
+            } else {
+                // for atomic types: do nothing
             }
         }
     }

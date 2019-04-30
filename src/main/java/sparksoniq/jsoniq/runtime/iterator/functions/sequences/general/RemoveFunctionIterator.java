@@ -50,11 +50,11 @@ public class RemoveFunctionIterator extends LocalFunctionCallIterator {
                     getMetadata());
         }
         Item positionItem = positionIterator.next();
-        if (positionItem instanceof ArrayItem) {
+        if (positionItem.isArray()) {
             throw new NonAtomicKeyException(
                     "Invalid args. remove can't be performed with an array parameter as the position",
                     getMetadata().getExpressionMetadata());
-        } else if (positionItem instanceof ObjectItem) {
+        } else if (positionItem.isObject()) {
             throw new NonAtomicKeyException(
                     "Invalid args. remove can't be performed with an object parameter as the position",
                     getMetadata().getExpressionMetadata());

@@ -25,8 +25,6 @@ import com.esotericsoftware.kryo.io.Output;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
-import javax.naming.OperationNotSupportedException;
-
 import org.apache.commons.lang3.StringEscapeUtils;
 
 import java.util.ArrayList;
@@ -50,28 +48,7 @@ public class ArrayItem extends JsonItem {
     }
 
     @Override
-    public Item getItemByKey(String s) throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Array items are not objects");
-    }
-
-    @Override
     public void putItem(Item value) { this._arrayItems.add(value); }
-
-    @Override
-    public void putItemByKey(String s, Item value) throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Array items are not objects");
-    }
-
-    @Override
-    public List<String> getKeys() throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Array items are not objects");
-    }
-
-    @Override
-    public Collection<? extends Item> getValues() throws OperationNotSupportedException {
-        throw new OperationNotSupportedException("Array items are not objects");
-    }
-
 
     @Override
     public  boolean isArray(){ return true; }
@@ -92,7 +69,7 @@ public class ArrayItem extends JsonItem {
         StringBuilder sb = new StringBuilder();
         sb.append("[ ");
         for (Item item : this._arrayItems) {
-            boolean isStringValue = item instanceof StringItem;
+            boolean isStringValue = item.isString();
             if(isStringValue) {
                 sb.append("\"");
                 sb.append(StringEscapeUtils.escapeJson(item.serialize()));

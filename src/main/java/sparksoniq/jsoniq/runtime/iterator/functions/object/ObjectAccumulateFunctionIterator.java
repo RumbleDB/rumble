@@ -25,21 +25,17 @@ public class ObjectAccumulateFunctionIterator extends ObjectFunctionIterator {
             for (Item item : items) {
                 // ignore non-object items
                 if (item.isObject()) {
-                    try {
-                        for (String key:item.getKeys()) {
-                            Item value = item.getItemByKey(key);
-                            if (!keyValuePairs.containsKey(key)) {
-                                List<Item> valueList = new ArrayList<>();
-                                valueList.add(value);
-                                keyValuePairs.put(key, valueList);
-                            }
-                            // store values for key collisions in a list
-                            else {
-                                keyValuePairs.get(key).add(value);
-                            }
+                    for (String key:item.getKeys()) {
+                        Item value = item.getItemByKey(key);
+                        if (!keyValuePairs.containsKey(key)) {
+                            List<Item> valueList = new ArrayList<>();
+                            valueList.add(value);
+                            keyValuePairs.put(key, valueList);
                         }
-                    } catch (OperationNotSupportedException e) {
-                        e.printStackTrace();
+                        // store values for key collisions in a list
+                        else {
+                            keyValuePairs.get(key).add(value);
+                        }
                     }
                 }
             }

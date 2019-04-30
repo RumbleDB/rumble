@@ -48,9 +48,8 @@ public class ObjectValuesFunctionIterator extends ObjectFunctionIterator {
     public void setNextResult() {
         while (_iterator.hasNext()) {
             Item item = _iterator.next();
-            if (item instanceof ObjectItem) {
-                ObjectItem objItem = (ObjectItem) item;
-                _nextResults.addAll(objItem.getValues());
+            if (item.isObject()) {
+                _nextResults.addAll(item.getValues());
                 if (!(_nextResults.isEmpty())) {
                     break;
                 }

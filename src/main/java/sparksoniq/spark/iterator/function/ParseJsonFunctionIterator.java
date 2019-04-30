@@ -54,21 +54,13 @@ public class ParseJsonFunctionIterator extends SparkFunctionCallIterator {
             RuntimeIterator urlIterator = this._children.get(0);
             urlIterator.open(context);
             if (this._children.size() == 1)
-                try {
-                    strings = SparkSessionManager.getInstance().getJavaSparkContext().textFile(urlIterator.next().getStringValue());
-                } catch (OperationNotSupportedException e) {
-                    throw new IllegalArgumentException("parse-json illegal argument");
-                }
+                strings = SparkSessionManager.getInstance().getJavaSparkContext().textFile(urlIterator.next().getStringValue());
             else {
                 RuntimeIterator partitionsIterator = this._children.get(1);
                 partitionsIterator.open(_currentDynamicContext);
-                try {
-                    strings = SparkSessionManager.getInstance().getJavaSparkContext().textFile(
-                            urlIterator.next().getStringValue(),
-                            partitionsIterator.next().getIntegerValue());
-                } catch (OperationNotSupportedException e) {
-                    throw new IllegalArgumentException("parse-json illegal argument");
-                }
+                strings = SparkSessionManager.getInstance().getJavaSparkContext().textFile(
+                        urlIterator.next().getStringValue(),
+                        partitionsIterator.next().getIntegerValue());
                 partitionsIterator.close();
             }
 

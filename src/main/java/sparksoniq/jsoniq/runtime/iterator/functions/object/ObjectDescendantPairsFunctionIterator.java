@@ -67,26 +67,22 @@ public class ObjectDescendantPairsFunctionIterator extends ObjectFunctionIterato
 
     public void getDescendantPairs(List<Item> items) {
         for (Item item:items) {
-            try {
-                if (item.isArray()) {
-                    getDescendantPairs(item.getItems());
-                } else if (item.isObject()) {
-                    List<String> keys = item.getKeys();
-                    for (String key : keys) {
-                        Item value = item.getItemByKey(key);
+            if (item.isArray()) {
+                getDescendantPairs(item.getItems());
+            } else if (item.isObject()) {
+                List<String> keys = item.getKeys();
+                for (String key : keys) {
+                    Item value = item.getItemByKey(key);
 
-                        List<String> keyList = Collections.singletonList(key);
-                        List<Item> valueList = Collections.singletonList(value);
+                    List<String> keyList = Collections.singletonList(key);
+                    List<Item> valueList = Collections.singletonList(value);
 
-                        ObjectItem result = new ObjectItem(keyList, valueList, ItemMetadata.fromIteratorMetadata(getMetadata()));
-                        _nextResults.add(result);
-                        getDescendantPairs(valueList);
-                    }
-                } else {
-                    // do nothing
+                    ObjectItem result = new ObjectItem(keyList, valueList, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                    _nextResults.add(result);
+                    getDescendantPairs(valueList);
                 }
-            } catch (OperationNotSupportedException e) {
-                e.printStackTrace();
+            } else {
+                // do nothing
             }
         }
     }
