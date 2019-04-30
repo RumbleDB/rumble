@@ -160,7 +160,7 @@ public abstract class Item implements SerializableItem {
     }
 
     public List<Item> getItems() {
-        throw new RuntimeException("Item is not an array or object.");
+        throw new RuntimeException("Item is not an array.");
     };
 
     public Item getItemAt(int i) {
@@ -176,7 +176,7 @@ public abstract class Item implements SerializableItem {
     };
 
     public Collection<? extends Item> getValues() {
-        throw new RuntimeException("Item is not an array or object.");
+        throw new RuntimeException("Item is not an object.");
     };
 
     public Item getItemByKey(String s) {
@@ -192,7 +192,7 @@ public abstract class Item implements SerializableItem {
     };
 
     public String getStringValue() {
-        throw new RuntimeException("getStringValue: Item is not a string.");
+        throw new RuntimeException("Item is not a string.");
     };
 
     public boolean getBooleanValue() {

@@ -56,7 +56,6 @@ public class ObjectItem extends JsonItem{
      * ObjectItem constructor from the given map data structure.
      * For each key, the corresponding values list is turned into an ArrayItem if it contains more than a single element.
      * @param keyValuePairs LinkedHashMap -- this map implementation preserves order of the keys -- essential for functionality
-     * @param itemMetadata
      */
     public ObjectItem(LinkedHashMap<String, List<Item>> keyValuePairs) {
         super();
@@ -77,7 +76,7 @@ public class ObjectItem extends JsonItem{
                 valueList.add(value);
             }
             else {
-                throw new RuntimeException("Unexpected list size found");
+                throw new RuntimeException("Unexpected list size found.");
             }
         }
 
