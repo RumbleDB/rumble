@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Author: Stefan Irimescu
+ * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
  package sparksoniq.jsoniq.compiler.translator.expr.flowr;
