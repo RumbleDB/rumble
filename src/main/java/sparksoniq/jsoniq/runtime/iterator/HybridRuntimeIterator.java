@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,10 +17,9 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.jsoniq.runtime.iterator;
+package sparksoniq.jsoniq.runtime.iterator;
 
 import org.apache.spark.api.java.JavaRDD;
-import sparksoniq.JsoniqQueryExecutor;
 import sparksoniq.ShellStart;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.io.json.JiqsItemParser;
@@ -39,30 +38,26 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     }
 
     @Override
-    public boolean isRDD()
-    {
-        if(!isRDDInitialized )
-        {
-          _isRDD = initIsRDD();
-          isRDDInitialized = true;
+    public boolean isRDD() {
+        if (!isRDDInitialized) {
+            _isRDD = initIsRDD();
+            isRDDInitialized = true;
         }
         return _isRDD;
     }
 
     @Override
-    public void open(DynamicContext context){
+    public void open(DynamicContext context) {
         super.open(context);
-        if(!isRDD())
-        {
+        if (!isRDD()) {
             openLocal(context);
         }
     }
 
     @Override
-    public void reset(DynamicContext context){
+    public void reset(DynamicContext context) {
         super.reset(context);
-        if(!_isRDD)
-        {
+        if (!_isRDD) {
             resetLocal(context);
             return;
         }
@@ -70,10 +65,9 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     }
 
     @Override
-    public void close(){
+    public void close() {
         super.close();
-        if(!_isRDD)
-        {
+        if (!_isRDD) {
             closeLocal();
             return;
         }
@@ -81,15 +75,14 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     }
 
     @Override
-    public boolean hasNext(){
-        if(!_isRDD)
-        {
+    public boolean hasNext() {
+        if (!_isRDD) {
             return hasNextLocal();
         }
-        if(result == null){
+        if (result == null) {
             currentResultIndex = 0;
             this._rdd = this.getRDD(_currentDynamicContext);
-            if(SparkSessionManager.LIMIT_COLLECT()) {
+            if (SparkSessionManager.LIMIT_COLLECT()) {
                 result = _rdd.take(SparkSessionManager.COLLECT_ITEM_LIMIT);
                 if (result.size() == SparkSessionManager.COLLECT_ITEM_LIMIT) {
                     if (ShellStart.terminal == null) {
@@ -100,8 +93,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
                                 + " items. This value can be configured with the --result-size parameter at startup.\n");
                     }
                 }
-            }
-            else {
+            } else {
                 result = _rdd.collect();
             }
             _hasNext = !result.isEmpty();
@@ -110,30 +102,34 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     }
 
     @Override
-    public Item next(){
-        if(!_isRDD)
-        {
+    public Item next() {
+        if (!_isRDD) {
             return nextLocal();
         }
-        if(!this._isOpen)
+        if (!this._isOpen)
             throw new IteratorFlowException("Runtime iterator is not open", getMetadata());
 
-        if(!(currentResultIndex <= result.size() - 1))
-             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.getClass().getSimpleName(),
-                     getMetadata());
-        if(currentResultIndex == result.size() - 1)
-             this._hasNext = false;
+        if (!(currentResultIndex <= result.size() - 1))
+            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.getClass().getSimpleName(),
+                    getMetadata());
+        if (currentResultIndex == result.size() - 1)
+            this._hasNext = false;
 
         Item item = result.get(currentResultIndex);
         currentResultIndex++;
         return item;
     }
-    
+
     protected abstract boolean initIsRDD();
+
     protected abstract void openLocal(DynamicContext context);
+
     protected abstract void closeLocal();
+
     protected abstract void resetLocal(DynamicContext context);
+
     protected abstract boolean hasNextLocal();
+
     protected abstract Item nextLocal();
 
 

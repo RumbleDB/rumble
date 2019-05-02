@@ -79,15 +79,14 @@ public class RoundFunctionIterator extends LocalFunctionCallIterator {
 
                     Double val = Item.getNumericValue(value, Double.class);
                     Integer prec = Item.getNumericValue(precision, Integer.class);
-    
+
                     BigDecimal bd = new BigDecimal(val);
                     bd = bd.setScale(prec, RoundingMode.HALF_UP);
                     Double result = bd.doubleValue();
-    
+
                     return new DoubleItem(result);
 
-                } catch (IteratorFlowException e)
-                {
+                } catch (IteratorFlowException e) {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
                 }
             } else {

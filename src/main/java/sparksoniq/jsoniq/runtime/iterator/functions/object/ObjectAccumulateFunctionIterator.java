@@ -26,7 +26,6 @@ import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
-import javax.naming.OperationNotSupportedException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -45,7 +44,7 @@ public class ObjectAccumulateFunctionIterator extends ObjectFunctionIterator {
             for (Item item : items) {
                 // ignore non-object items
                 if (item.isObject()) {
-                    for (String key:item.getKeys()) {
+                    for (String key : item.getKeys()) {
                         Item value = item.getItemByKey(key);
                         if (!keyValuePairs.containsKey(key)) {
                             List<Item> valueList = new ArrayList<>();

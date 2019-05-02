@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,30 +17,30 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.semantics.types;
+package sparksoniq.semantics.types;
 
 
 import java.io.Serializable;
 
-public class ItemType implements Serializable{
+public class ItemType implements Serializable {
 
     public ItemTypes getType() {
         return _type;
     }
 
-    public boolean isSubtypeOf(ItemType superType){
-        if(superType.getType() == ItemTypes.Item)
+    public boolean isSubtypeOf(ItemType superType) {
+        if (superType.getType() == ItemTypes.Item)
             return true;
-        if(superType.getType() == ItemTypes.JSONItem){
-            if(_type == ItemTypes.ObjectItem || _type == ItemTypes.ArrayItem || _type == ItemTypes.JSONItem
+        if (superType.getType() == ItemTypes.JSONItem) {
+            if (_type == ItemTypes.ObjectItem || _type == ItemTypes.ArrayItem || _type == ItemTypes.JSONItem
                     || _type == ItemTypes.NullItem)
                 return true;
             return false;
         }
 
-        if(superType.getType() == ItemTypes.AtomicItem){
-            if(_type == ItemTypes.StringItem || _type == ItemTypes.IntegerItem || _type == ItemTypes.DecimalItem
-                    || _type == ItemTypes.DoubleItem || _type == ItemTypes.BooleanItem )
+        if (superType.getType() == ItemTypes.AtomicItem) {
+            if (_type == ItemTypes.StringItem || _type == ItemTypes.IntegerItem || _type == ItemTypes.DecimalItem
+                    || _type == ItemTypes.DoubleItem || _type == ItemTypes.BooleanItem)
                 return true;
             return false;
         }

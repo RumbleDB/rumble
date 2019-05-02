@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,9 +24,7 @@ import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
-import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.item.ObjectItem;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -80,7 +78,7 @@ public class FlworKey implements KryoSerializable {
             Item comparisonItem = flworKey.keyItems.get(index);
 
             // check for incorrect ordering inputs
-            if ((currentItem != null && currentItem.isArray()) || (currentItem != null && currentItem.isObject())||
+            if ((currentItem != null && currentItem.isArray()) || (currentItem != null && currentItem.isObject()) ||
                     (comparisonItem != null && comparisonItem.isArray()) || (comparisonItem != null && comparisonItem.isObject())) {
                 throw new SparksoniqRuntimeException("Non atomic key not allowed");
             }
@@ -95,11 +93,9 @@ public class FlworKey implements KryoSerializable {
                 // null equals null
                 if (currentItem == null && comparisonItem == null) {
                     result = 0;
-                }
-                else if (currentItem == null) {
+                } else if (currentItem == null) {
                     result = -1;
-                }
-                else{
+                } else {
                     result = 1;
                 }
             } else {
@@ -111,7 +107,7 @@ public class FlworKey implements KryoSerializable {
 
             // if comparison result is not an equality, return it multiplied with the index of the expression compared
             if (result != 0) {
-                return result * (index+1); // use index+1 to prevent multiplication w/ 0 for the first index
+                return result * (index + 1); // use index+1 to prevent multiplication w/ 0 for the first index
             }
             index++;
         }

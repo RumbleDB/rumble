@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -38,7 +38,11 @@ import sparksoniq.spark.closures.GroupByLinearizeTupleClosure;
 import sparksoniq.spark.closures.GroupByToPairMapClosure;
 import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
     private final List<GroupByClauseSparkIteratorExpression> _variables;
@@ -79,7 +83,7 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
 
     @Override
     public FlworTuple next() {
-        if(_hasNext == true){
+        if (_hasNext == true) {
 
             if (_localTupleResults == null) {
                 _localTupleResults = new ArrayList<>();
@@ -112,7 +116,7 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
     }
 
 
-    private HashMap<FlworKey,List<FlworTuple>> mapTuplesToPairs() {
+    private HashMap<FlworKey, List<FlworTuple>> mapTuplesToPairs() {
         HashMap<FlworKey, List<FlworTuple>> keyValuePairs = new HashMap<>();
 
         // assign current context as parent. re-use the same context object for efficiency
@@ -175,13 +179,13 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
         Iterator<FlworTuple> iterator = keyTuplePairs.iterator();
         FlworTuple oldFirstTuple = iterator.next();
         FlworTuple newTuple = new FlworTuple(oldFirstTuple.getKeys().size());
-        for(String tupleVariable : oldFirstTuple.getKeys()){
+        for (String tupleVariable : oldFirstTuple.getKeys()) {
             iterator = keyTuplePairs.iterator();
-            if(_variables.stream().anyMatch( v -> v.getVariableReference().getVariableName().equals(tupleVariable)))
+            if (_variables.stream().anyMatch(v -> v.getVariableReference().getVariableName().equals(tupleVariable)))
                 newTuple.putValue(tupleVariable, oldFirstTuple.getValue(tupleVariable), false);
             else {
                 List<Item> allValues = new ArrayList<>();
-                while(iterator.hasNext())
+                while (iterator.hasNext())
                     allValues.addAll(iterator.next().getValue(tupleVariable));
                 newTuple.putValue(tupleVariable, allValues, false);
             }

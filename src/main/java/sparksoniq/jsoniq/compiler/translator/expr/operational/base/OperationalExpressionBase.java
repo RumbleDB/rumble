@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.jsoniq.compiler.translator.expr.operational.base;
+package sparksoniq.jsoniq.compiler.translator.expr.operational.base;
 
 import org.antlr.v4.runtime.Token;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
@@ -36,11 +36,9 @@ public abstract class OperationalExpressionBase extends Expression {
         return result;
     }
 
-    public static Operator getOperatorFromString(String token)
-    {
+    public static Operator getOperatorFromString(String token) {
         token = token.toUpperCase();
-        switch (token)
-        {
+        switch (token) {
             case "EQ":
                 return Operator.VC_EQ;
             case "NE":
@@ -92,10 +90,8 @@ public abstract class OperationalExpressionBase extends Expression {
         return Operator.NONE;
     }
 
-    public static String getStringFromOperator(Operator operator)
-    {
-        switch (operator)
-        {
+    public static String getStringFromOperator(Operator operator) {
+        switch (operator) {
 
             case PLUS:
                 return "+";
@@ -107,11 +103,12 @@ public abstract class OperationalExpressionBase extends Expression {
                 return "||";
             case INSTANCE_OF:
                 return "instance of";
-            default: return operator.toString().toLowerCase();
+            default:
+                return operator.toString().toLowerCase();
         }
     }
 
-    public enum Operator{
+    public enum Operator {
         OR,
         AND,
         NOT,
@@ -152,16 +149,14 @@ public abstract class OperationalExpressionBase extends Expression {
     public abstract boolean isActive();
 
 
-    public void validateOperators(List<Operator> validOps, List<Operator> ops)
-    {
-        for(Operator op : ops)
-            if(!validOps.contains(op))
+    public void validateOperators(List<Operator> validOps, List<Operator> ops) {
+        for (Operator op : ops)
+            if (!validOps.contains(op))
                 throw new IllegalArgumentException("Operational operators exception");
     }
 
-    public void validateOperator(List<Operator> validOps, Operator op)
-    {
-        if(!validOps.contains(op))
+    public void validateOperator(List<Operator> validOps, Operator op) {
+        if (!validOps.contains(op))
             throw new IllegalArgumentException("Operational operators exception");
     }
 
@@ -171,18 +166,17 @@ public abstract class OperationalExpressionBase extends Expression {
 
     @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result =  new ArrayList<>();
-        if(this._mainExpression!=null)
+        List<ExpressionOrClause> result = new ArrayList<>();
+        if (this._mainExpression != null)
             result.add(this._mainExpression);
-        if(depthSearch && _mainExpression != null)
+        if (depthSearch && _mainExpression != null)
             result.addAll(_mainExpression.getDescendants(depthSearch));
         return result;
     }
 
 
     protected OperationalExpressionBase(Expression _mainExpression,
-                                        Operator op, ExpressionMetadata metadata)
-    {
+                                        Operator op, ExpressionMetadata metadata) {
         super(metadata);
         this._mainExpression = _mainExpression;
         this._singleOperator = op;
@@ -191,8 +185,7 @@ public abstract class OperationalExpressionBase extends Expression {
     }
 
     protected OperationalExpressionBase(Expression _mainExpression,
-                                        List<Operator> ops, ExpressionMetadata metadata)
-    {
+                                        List<Operator> ops, ExpressionMetadata metadata) {
         super(metadata);
         this._mainExpression = _mainExpression;
         this._multipleOperators = ops;

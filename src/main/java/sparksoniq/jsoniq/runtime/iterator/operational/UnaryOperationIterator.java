@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.jsoniq.runtime.iterator.operational;
+package sparksoniq.jsoniq.runtime.iterator.operational;
 
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
@@ -42,20 +42,19 @@ public class UnaryOperationIterator extends UnaryOperationBaseIterator {
 
     @Override
     public Item next() {
-        if(this._hasNext) {
+        if (this._hasNext) {
             this._hasNext = false;
             _child.open(_currentDynamicContext);
             Item child = _child.next();
             _child.close();
 
-            if(this._operator== OperationalExpressionBase.Operator.MINUS)
-            {
-                if(Item.isNumeric(child)){
-                    if(child.isInteger())
+            if (this._operator == OperationalExpressionBase.Operator.MINUS) {
+                if (Item.isNumeric(child)) {
+                    if (child.isInteger())
                         return new IntegerItem(-1 * child.getIntegerValue());
-                    if(child.isDouble())
+                    if (child.isDouble())
                         return new DoubleItem(-1 * child.getDoubleValue());
-                    if(child.isDecimal())
+                    if (child.isDecimal())
                         return new DecimalItem(child.getDecimalValue().multiply(new BigDecimal(-1)));
                 }
                 throw new UnexpectedTypeException("Unary expression has non numeric args " +

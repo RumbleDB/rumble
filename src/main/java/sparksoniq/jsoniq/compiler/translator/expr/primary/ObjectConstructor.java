@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.jsoniq.compiler.translator.expr.primary;
+package sparksoniq.jsoniq.compiler.translator.expr.primary;
 
 import sparksoniq.jsoniq.compiler.translator.expr.CommaExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
@@ -32,8 +32,7 @@ public class ObjectConstructor extends PrimaryExpression {
 
     public static class PairConstructor extends PrimaryExpression {
 
-        public PairConstructor(Expression key, Expression value, ExpressionMetadata metadata)
-        {
+        public PairConstructor(Expression key, Expression value, ExpressionMetadata metadata) {
             super(metadata);
             this._key = key;
             this._value = value;
@@ -48,8 +47,8 @@ public class ObjectConstructor extends PrimaryExpression {
         }
 
         @Override
-        public String serializationString(boolean prefix){
-            String result = "(pairConstructor (exprSingle " +_key.serializationString(false) + ") : (exprSingle " + _value.serializationString(false);
+        public String serializationString(boolean prefix) {
+            String result = "(pairConstructor (exprSingle " + _key.serializationString(false) + ") : (exprSingle " + _value.serializationString(false);
             result += "))";
             return result;
 
@@ -92,31 +91,29 @@ public class ObjectConstructor extends PrimaryExpression {
 
     @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result =  new ArrayList<>();
-        if(!isMergedConstructor) {
+        List<ExpressionOrClause> result = new ArrayList<>();
+        if (!isMergedConstructor) {
             result.addAll(this._keys);
             result.addAll(this._values);
-        }
-        else
+        } else
             result.add(childExpression);
-        return getDescendantsFromChildren(result,depthSearch);
+        return getDescendantsFromChildren(result, depthSearch);
     }
 
     @Override
-    public  <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument){
+    public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
         return visitor.visitObjectConstructor(this, argument);
     }
 
     @Override
-    public String serializationString(boolean prefix){
+    public String serializationString(boolean prefix) {
         String result = "(primaryExpr (objectConstructor {";
-        if(!isMergedConstructor) {
+        if (!isMergedConstructor) {
             result += " ";
             for (Expression key : _keys)
                 result += new PairConstructor(key, _values.get(_keys.indexOf(key)), key.getMetadata()).serializationString(true)
                         + (_keys.indexOf(key) < _keys.size() - 1 ? " , " : " ");
-        }
-        else
+        } else
             result += "| " + childExpression.serializationString(prefix) + " |";
         result += "}))";
         return result;

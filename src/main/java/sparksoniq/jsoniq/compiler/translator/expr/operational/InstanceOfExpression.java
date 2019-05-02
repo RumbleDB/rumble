@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.jsoniq.compiler.translator.expr.operational;
+package sparksoniq.jsoniq.compiler.translator.expr.operational;
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworVarSequenceType;
@@ -35,7 +35,7 @@ public class InstanceOfExpression extends UnaryExpressionBase {
 
     public InstanceOfExpression(Expression _mainExpression, FlworVarSequenceType sequenceType,
                                 ExpressionMetadata metadata) {
-        super(_mainExpression, Operator.INSTANCE_OF , true, metadata);
+        super(_mainExpression, Operator.INSTANCE_OF, true, metadata);
         this._sequenceType = sequenceType;
     }
 
@@ -49,15 +49,15 @@ public class InstanceOfExpression extends UnaryExpressionBase {
     }
 
     @Override
-    public  <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument){
+    public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
         return visitor.visitInstanceOfExpression(this, argument);
     }
 
     @Override
-    public String serializationString(boolean prefix){
+    public String serializationString(boolean prefix) {
         String result = "(instanceOfExpr ";
         result += _mainExpression.serializationString(true);
-        result += _sequenceType!=null ? "instance of " + _sequenceType.serializationString(prefix): "";
+        result += _sequenceType != null ? "instance of " + _sequenceType.serializationString(prefix) : "";
         result += ")";
         return result;
     }

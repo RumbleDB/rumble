@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.jsoniq.compiler.translator.expr.control;
+package sparksoniq.jsoniq.compiler.translator.expr.control;
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
@@ -42,7 +42,7 @@ public class IfExpression extends Expression {
     }
 
     public IfExpression(Expression condition, Expression branch, Expression elseBranch,
-                        ExpressionMetadata metadataFromContext){
+                        ExpressionMetadata metadataFromContext) {
         this._condition = condition;
         this._branch = branch;
         this._elseBranch = elseBranch;
@@ -50,21 +50,21 @@ public class IfExpression extends Expression {
 
     @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result =  new ArrayList<>();
+        List<ExpressionOrClause> result = new ArrayList<>();
         result.add(_condition);
         result.add(_branch);
-        if(_elseBranch != null)
+        if (_elseBranch != null)
             result.add(_elseBranch);
         return getDescendantsFromChildren(result, depthSearch);
     }
 
     @Override
-    public  <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument){
+    public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
         return visitor.visitIfExpression(this, argument);
     }
 
     @Override
-    public String serializationString(boolean prefix){
+    public String serializationString(boolean prefix) {
         String result = "(ifExpr if ( ";
         result += _condition.serializationString(prefix);
         result += " ) then ";

@@ -62,8 +62,7 @@ public class SinFunctionIterator extends LocalFunctionCallIterator {
                     Double result = Math.sin(Item.getNumericValue(radians, Double.class));
                     return new DoubleItem(result);
 
-                } catch (IteratorFlowException e)
-                {
+                } catch (IteratorFlowException e) {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
                 }
             } else {

@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.jsoniq.runtime.iterator.primary;
+package sparksoniq.jsoniq.runtime.iterator.primary;
 
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.ArrayItem;
@@ -33,19 +33,18 @@ public class ArrayRuntimeIterator extends LocalRuntimeIterator {
 
     public ArrayRuntimeIterator(RuntimeIterator arrayItems, IteratorMetadata iteratorMetadata) {
         super(new ArrayList<>(), iteratorMetadata);
-        if(arrayItems!=null)
+        if (arrayItems != null)
             this._children.add(arrayItems);
     }
 
     @Override
     public ArrayItem next() {
-        if(this._hasNext) {
+        if (this._hasNext) {
             List<Item> result = this.runChildrenIterators(this._currentDynamicContext);
             this._item = new ArrayItem(result);
             this._hasNext = false;
             return _item;
-        }
-        else throw new IteratorFlowException("Invalid next() call on array iterator", getMetadata());
+        } else throw new IteratorFlowException("Invalid next() call on array iterator", getMetadata());
     }
 
     private ArrayItem _item = null;

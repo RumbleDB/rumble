@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.jsoniq.compiler.translator.expr.flowr;
+package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
@@ -33,9 +33,11 @@ public abstract class FlworVarDecl extends FlworClause {
     public VariableReference getVariableReference() {
         return variableReferenceNode;
     }
+
     public Expression getExpression() {
         return expression;
     }
+
     public FlworVarSequenceType getAsSequence() {
         return asSequence;
     }
@@ -50,14 +52,14 @@ public abstract class FlworVarDecl extends FlworClause {
                         FlworVarSequenceType seq, Expression expression,
                         ExpressionMetadata metadata) {
         this(forVar, metadata);
-        if(varRef == null)
+        if (varRef == null)
             throw new IllegalArgumentException("Flowr var decls cannot be empty");
         this.variableReferenceNode = varRef;
         this.asSequence = seq;
         this.expression = expression;
 
         //TODO add type inference?
-        if(this.asSequence == null)
+        if (this.asSequence == null)
             this.variableReferenceNode.setType(new SequenceType());
         else
             this.variableReferenceNode.setType(this.asSequence.getSequence());
@@ -65,15 +67,14 @@ public abstract class FlworVarDecl extends FlworClause {
 
     @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result =  new ArrayList<>();
+        List<ExpressionOrClause> result = new ArrayList<>();
         result.add(variableReferenceNode);
-        if(asSequence !=null)
+        if (asSequence != null)
             result.add(asSequence);
-        if(this.expression!=null)
+        if (this.expression != null)
             result.add(expression);
-        return getDescendantsFromChildren(result,depthSearch);
+        return getDescendantsFromChildren(result, depthSearch);
     }
-
 
 
     protected VariableReference variableReferenceNode;

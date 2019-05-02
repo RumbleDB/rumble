@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.jsoniq.runtime.iterator.postfix;
+package sparksoniq.jsoniq.runtime.iterator.postfix;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
@@ -46,14 +46,14 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
 
     @Override
     public Item nextLocal() {
-        if(_hasNext == true){
+        if (_hasNext == true) {
             Item result = _nextResult;  // save the result to be returned
             setNextResult();            // calculate and store the next result
             return result;
         }
         throw new IteratorFlowException("Invalid next call in Array Lookup", getMetadata());
     }
-    
+
 
     @Override
     protected boolean hasNextLocal() {
@@ -70,7 +70,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     protected void closeLocal() {
         _iterator.close();
     }
-    
+
     private void initLookupPosition() {
         RuntimeIterator lookupIterator = this._children.get(1);
 
@@ -89,8 +89,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
         lookupIterator.close();
         try {
             _lookup = Item.getNumericValue(lookupExpression, Integer.class);
-        } catch (IteratorFlowException e)
-        {
+        } catch (IteratorFlowException e) {
             throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
         }
     }
@@ -98,7 +97,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     @Override
     public void openLocal(DynamicContext context) {
         this._currentDynamicContext = context;
-        
+
         initLookupPosition();
 
         _iterator.open(_currentDynamicContext);
@@ -130,8 +129,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JavaRDD<Item> getRDD(DynamicContext dynamicContext)
-    {
+    public JavaRDD<Item> getRDD(DynamicContext dynamicContext) {
         _currentDynamicContext = dynamicContext;
         JavaRDD<Item> childRDD = this._children.get(0).getRDD(dynamicContext);
         initLookupPosition();
@@ -142,8 +140,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public boolean initIsRDD()
-    {
+    public boolean initIsRDD() {
         return _iterator.isRDD();
     }
 

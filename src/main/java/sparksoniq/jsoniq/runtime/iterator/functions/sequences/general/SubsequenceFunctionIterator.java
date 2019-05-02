@@ -24,7 +24,6 @@ import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnexpectedTypeException;
-import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -84,8 +83,7 @@ public class SubsequenceFunctionIterator extends LocalFunctionCallIterator {
             try {
                 _length = (int) Math.round((Item.getNumericValue(lengthItem, Double.class)));
 
-            } catch (IteratorFlowException e)
-            {
+            } catch (IteratorFlowException e) {
                 throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
             }
         }

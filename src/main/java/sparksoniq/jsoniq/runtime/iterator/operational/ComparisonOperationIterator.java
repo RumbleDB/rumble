@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,7 +24,9 @@ import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase.Operator;
-import sparksoniq.jsoniq.item.*;
+import sparksoniq.jsoniq.item.AtomicItem;
+import sparksoniq.jsoniq.item.BooleanItem;
+import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -42,10 +44,9 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
     private Item _right;
 
 
-
-    public static final Operator[] valueComparisonOperators = new Operator[] {
+    public static final Operator[] valueComparisonOperators = new Operator[]{
             Operator.VC_GE, Operator.VC_GT, Operator.VC_EQ, Operator.VC_NE, Operator.VC_LE, Operator.VC_LT};
-    public static final Operator[] generalComparisonOperators = new Operator[] {
+    public static final Operator[] generalComparisonOperators = new Operator[]{
             Operator.GC_GE, Operator.GC_GT, Operator.GC_EQ, Operator.GC_NE, Operator.GC_LE, Operator.GC_LT};
 
 
@@ -56,7 +57,7 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
 
     @Override
     public AtomicItem next() {
-        if(this.hasNext()){
+        if (this.hasNext()) {
             this._hasNext = false;
 
             // use stored values for value comparison
@@ -88,7 +89,7 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
         _rightIterator.open(_currentDynamicContext);
 
         // value comparison may return an empty sequence
-        if (Arrays.asList(valueComparisonOperators).contains(this._operator)){
+        if (Arrays.asList(valueComparisonOperators).contains(this._operator)) {
             // if EMPTY SEQUENCE - eg. () or ((),())
             // this check is added here to provide lazy evaluation: eg. () eq (2,3) = () instead of exception
             if (!(_leftIterator.hasNext() && _rightIterator.hasNext())) {
@@ -105,8 +106,7 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
                 _isValueComparison = true;
                 this._hasNext = true;
             }
-        }
-        else if (Arrays.asList(generalComparisonOperators).contains(this._operator)) {
+        } else if (Arrays.asList(generalComparisonOperators).contains(this._operator)) {
             // general comparison always returns a boolean
             this._hasNext = true;
         }
@@ -117,13 +117,14 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
 
     /**
      * Function to compare two lists of items one by one with each other.
+     *
      * @param left  item list of left iterator
      * @param right item list of right iterator
      * @return true if a single match is found, false if no matches. Given an empty sequence, false is returned.
      */
-    public BooleanItem compareAllPairs (ArrayList<Item> left, ArrayList<Item> right) {
-        for (Item l:left) {
-            for (Item r:right) {
+    public BooleanItem compareAllPairs(ArrayList<Item> left, ArrayList<Item> right) {
+        for (Item l : left) {
+            for (Item r : right) {
                 BooleanItem result = comparePair(l, r);
                 if (result.getBooleanValue() == true)
                     return result;
@@ -136,37 +137,32 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
 
         if (left.isArray() || right.isArray()) {
             throw new NonAtomicKeyException("Invalid args. Comparison can't be performed on array type", getMetadata().getExpressionMetadata());
-        }
-        else if (left.isObject() || right.isObject()) {
+        } else if (left.isObject() || right.isObject()) {
             throw new NonAtomicKeyException("Invalid args. Comparison can't be performed on object type", getMetadata().getExpressionMetadata());
         }
         if (left.isNull() || right.isNull()) {
             return compareItems(left, right);
-        }
-        else if (Item.isNumeric(left)) {
+        } else if (Item.isNumeric(left)) {
             if (!Item.isNumeric(right))
                 throw new UnexpectedTypeException("Invalid args for numerics comparison " + left.serialize() +
                         ", " + right.serialize(), getMetadata());
             return compareItems(left, right);
-        }
-        else if (left.isString()) {
+        } else if (left.isString()) {
             if (!(right.isString()))
                 throw new UnexpectedTypeException("Invalid args for string comparison " + left.serialize() +
                         ", " + right.serialize(), getMetadata());
             return compareItems(left, right);
-        }
-        else if (left.isBoolean()) {
+        } else if (left.isBoolean()) {
             if (!right.isBoolean())
                 throw new UnexpectedTypeException("Invalid args for boolean comparison " + left.serialize() +
                         ", " + right.serialize(), getMetadata());
             return compareItems(left, right);
-        }
-        else {
+        } else {
             throw new IteratorFlowException("Invalid comparison expression", getMetadata());
         }
     }
 
-    public BooleanItem compareItems (Item left, Item right) {
+    public BooleanItem compareItems(Item left, Item right) {
         int comparison = Item.compareItems(left, right);
         switch (this._operator) {
             case VC_EQ:

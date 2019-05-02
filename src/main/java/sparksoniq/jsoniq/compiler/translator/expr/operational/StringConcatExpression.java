@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.jsoniq.compiler.translator.expr.operational;
+package sparksoniq.jsoniq.compiler.translator.expr.operational;
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.NaryExpressionBase;
@@ -36,16 +36,16 @@ public class StringConcatExpression extends NaryExpressionBase {
     }
 
     @Override
-    public  <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument){
+    public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
         return visitor.visitStringConcatExpr(this, argument);
     }
 
     @Override
-    public String serializationString(boolean prefix){
+    public String serializationString(boolean prefix) {
         String result = "(stringConcatExpr ";
         result += _mainExpression.serializationString(true);
-        if(this.getRightExpressions() != null && this.getRightExpressions().size() > 0)
-            for(Expression expr : this.getRightExpressions())
+        if (this.getRightExpressions() != null && this.getRightExpressions().size() > 0)
+            for (Expression expr : this.getRightExpressions())
                 result += " || " + expr.serializationString(true);
         result += ")";
         return result;

@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.config;
+package sparksoniq.config;
 
 import sparksoniq.exceptions.CliException;
 
@@ -26,11 +26,12 @@ import java.util.HashMap;
 public class SparksoniqRuntimeConfiguration {
 
     public static final String ARGUMENT_PREFIX = "--";
+
     public static HashMap<String, String> processCommandLineArgs(String[] args) {
         HashMap<String, String> argumentMap = new HashMap<>();
-        for(int i = 0; i< args.length; i+=2)
-            if(args[i].startsWith(ARGUMENT_PREFIX))
-                argumentMap.put(args[i].trim().replace(ARGUMENT_PREFIX, ""), args[i+1]);
+        for (int i = 0; i < args.length; i += 2)
+            if (args[i].startsWith(ARGUMENT_PREFIX))
+                argumentMap.put(args[i].trim().replace(ARGUMENT_PREFIX, ""), args[i + 1]);
             else
                 throw new CliException(ARGUMENT_FORMAT_ERROR_MESSAGE);
         return argumentMap;
@@ -40,14 +41,15 @@ public class SparksoniqRuntimeConfiguration {
         this._arguments = arguments;
     }
 
-    public String getConfigurationArgument(String key){
-        if(this._arguments.containsKey(key))
+    public String getConfigurationArgument(String key) {
+        if (this._arguments.containsKey(key))
             return this._arguments.get(key);
         else
             return null;
     }
 
-    @Override public String toString(){
+    @Override
+    public String toString() {
         String result = "";
         result += "Item Display Limit: " + (_arguments.getOrDefault("result-size", "-")) + "\n" +
                 "Output Path: " + (_arguments.getOrDefault("output-path", "-")) + "\n" +

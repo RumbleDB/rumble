@@ -31,6 +31,7 @@ public class ItemComparatorForSequences implements Comparator<Item>, Serializabl
      * Comparator used for sequence aggregate functions and their  RDD evaluations
      * It compares 2 atomic items (non-null)
      * Non-atomics and nulls throw an exception
+     *
      * @return -1 if v1 < v2; 0 if v1 == v2; 1 if v1 > v2;
      */
     public int compare(Item v1, Item v2) {
@@ -43,7 +44,7 @@ public class ItemComparatorForSequences implements Comparator<Item>, Serializabl
             Boolean value1 = new Boolean(v1.getBooleanValue());
             Boolean value2 = new Boolean(v2.getBooleanValue());
             result = value1.compareTo(value2);
-        } else if (v1.isString()&& v2.isString()) {
+        } else if (v1.isString() && v2.isString()) {
             String value1 = v1.getStringValue();
             String value2 = v2.getStringValue();
             result = value1.compareTo(value2);

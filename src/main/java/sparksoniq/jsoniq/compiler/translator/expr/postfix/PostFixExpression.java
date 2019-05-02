@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.jsoniq.compiler.translator.expr.postfix;
+package sparksoniq.jsoniq.compiler.translator.expr.postfix;
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
@@ -32,8 +32,7 @@ import java.util.List;
 
 public class PostFixExpression extends Expression {
 
-    public boolean isPrimary()
-    {
+    public boolean isPrimary() {
         return _extensions == null || _extensions.isEmpty();
     }
 
@@ -54,35 +53,35 @@ public class PostFixExpression extends Expression {
                              ExpressionMetadata metadata) {
         super(metadata);
         this._primaryExpressionNode = primaryExpressionNode;
-        this._extensions =  new ArrayList<>();
+        this._extensions = new ArrayList<>();
         this._extensions.addAll(extensions);
     }
 
     @Override
-    public  <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument){
+    public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
         return visitor.visitPostfixExpression(this, argument);
     }
 
     @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result =  new ArrayList<>();
+        List<ExpressionOrClause> result = new ArrayList<>();
         result.add(this._primaryExpressionNode);
-        if(this._extensions != null)
+        if (this._extensions != null)
             _extensions.forEach(e -> {
-                if(e!=null)
+                if (e != null)
                     result.add(e);
             });
-        return getDescendantsFromChildren(result,depthSearch);
+        return getDescendantsFromChildren(result, depthSearch);
     }
 
     @Override
-    public String serializationString(boolean prefix){
+    public String serializationString(boolean prefix) {
         String result = "(postFixExpr ";
         result += get_primaryExpressionNode().serializationString(true);
-        if(this._extensions != null && this._extensions.size() > 0) {
-            for(PostfixExtension ext : this._extensions)
+        if (this._extensions != null && this._extensions.size() > 0) {
+            for (PostfixExtension ext : this._extensions)
                 result += " " + ext.serializationString(true)
-                        + (_extensions.indexOf(ext) < _extensions.size() -1 ? " " : "");
+                        + (_extensions.indexOf(ext) < _extensions.size() - 1 ? " " : "");
         }
         result += ")";
         return result;

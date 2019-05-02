@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.utils;
+package sparksoniq.utils;
 
 import org.apache.hadoop.fs.Path;
 import sparksoniq.JsoniqQueryExecutor;
@@ -38,7 +38,7 @@ public class FileUtils {
     public static java.nio.file.Path writeToFileInCurrentDirectory(String content) throws IOException {
         List<String> lines = Arrays.asList(content);
         String path = JsoniqQueryExecutor.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-        if(path.endsWith(".jar"))
+        if (path.endsWith(".jar"))
             path = path.substring(0, path.lastIndexOf(Path.SEPARATOR));
         String decodedPath = URLDecoder.decode(path, "UTF-8");
         java.nio.file.Path file = FileUtils.getUniqueFileName(decodedPath + Path.SEPARATOR + TEMP_QUERY_FILE_NAME);
@@ -48,7 +48,7 @@ public class FileUtils {
 
     public static java.nio.file.Path getUniqueFileName(String path) {
         Random random = new Random();
-        while(Files.exists(Paths.get(path))){
+        while (Files.exists(Paths.get(path))) {
             path = path + random.nextInt(100);
         }
         return Paths.get(path);

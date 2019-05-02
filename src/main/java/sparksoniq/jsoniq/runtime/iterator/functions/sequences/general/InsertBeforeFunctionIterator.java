@@ -23,10 +23,8 @@ package sparksoniq.jsoniq.runtime.iterator.functions.sequences.general;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.exceptions.UnexpectedTypeException;
-import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -129,7 +127,7 @@ public class InsertBeforeFunctionIterator extends LocalFunctionCallIterator {
             if (_sequenceIterator.hasNext()) {
                 _nextResult = _sequenceIterator.next();
                 _currentPosition++;
-            } else if (_insertIterator.hasNext()){
+            } else if (_insertIterator.hasNext()) {
                 _nextResult = _insertIterator.next();
             }
         }

@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -42,7 +42,12 @@ import sparksoniq.semantics.visitor.StaticContextVisitor;
 import sparksoniq.spark.SparkSessionManager;
 import sparksoniq.utils.FileUtils;
 
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -82,15 +87,13 @@ public class JsoniqQueryExecutor {
         generateStaticContext(visitor.getQueryExpression());
         // generate iterators
         RuntimeIterator result = generateRuntimeIterators(visitor.getQueryExpression());
-        if(result.isRDD() && outputPath != null)
-        {
+        if (result.isRDD() && outputPath != null) {
             JavaRDD<Item> rdd = result.getRDD(new DynamicContext());
             JavaRDD<String> output = rdd.map(o -> o.serialize());
             output.saveAsTextFile(outputPath);
-        }
-        else {
+        } else {
             String output = runIterators(result);
-            if(outputPath != null) {
+            if (outputPath != null) {
                 List<String> lines = Arrays.asList(output);
                 java.nio.file.Path file = Paths.get(outputPath);
                 Files.write(file, lines, Charset.forName("UTF-8"));
@@ -250,8 +253,8 @@ public class JsoniqQueryExecutor {
         if (iterator.hasNext()) {
             result = iterator.next();
         }
-        if (result == null) {	
-            return "";	
+        if (result == null) {
+            return "";
         }
         String singleOutput = result.serialize();
         if (!iterator.hasNext())

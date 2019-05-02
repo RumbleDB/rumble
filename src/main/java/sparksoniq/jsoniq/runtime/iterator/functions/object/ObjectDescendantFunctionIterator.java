@@ -26,7 +26,6 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
-import javax.naming.OperationNotSupportedException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -87,7 +86,7 @@ public class ObjectDescendantFunctionIterator extends ObjectFunctionIterator {
     }
 
     public void getDescendantObjects(List<Item> items) {
-        for (Item item:items) {
+        for (Item item : items) {
             if (item.isArray()) {
                 getDescendantObjects(item.getItems());
             } else if (item.isObject()) {

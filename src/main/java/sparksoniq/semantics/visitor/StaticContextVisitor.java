@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,7 +22,16 @@ package sparksoniq.semantics.visitor;
 import sparksoniq.exceptions.UndeclaredVariableException;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
-import sparksoniq.jsoniq.compiler.translator.expr.flowr.*;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.CountClause;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworClause;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworVarDecl;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.ForClause;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.ForClauseVar;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.GroupByClause;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.GroupByClauseVar;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.LetClause;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.LetClauseVar;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.ContextExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpression;

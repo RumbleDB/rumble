@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.jsoniq.runtime.iterator;
+package sparksoniq.jsoniq.runtime.iterator;
 
 import org.apache.spark.api.java.JavaRDD;
 import sparksoniq.ShellStart;
@@ -38,29 +38,28 @@ public abstract class SparkRuntimeIterator extends RuntimeIterator {
     }
 
     @Override
-    public boolean isRDD()
-    {
+    public boolean isRDD() {
         return true;
     }
 
     @Override
-    public void reset(DynamicContext context){
+    public void reset(DynamicContext context) {
         super.reset(context);
         result = null;
     }
 
     @Override
-    public void close(){
+    public void close() {
         super.close();
         result = null;
     }
 
     @Override
-    public boolean hasNext(){
-        if(result == null){
+    public boolean hasNext() {
+        if (result == null) {
             currentResultIndex = 0;
             this._rdd = this.getRDD(_currentDynamicContext);
-            if(SparkSessionManager.LIMIT_COLLECT()) {
+            if (SparkSessionManager.LIMIT_COLLECT()) {
                 result = _rdd.take(SparkSessionManager.COLLECT_ITEM_LIMIT);
                 if (result.size() == SparkSessionManager.COLLECT_ITEM_LIMIT) {
                     if (ShellStart.terminal == null) {
@@ -71,8 +70,7 @@ public abstract class SparkRuntimeIterator extends RuntimeIterator {
                                 + " items. This value can be configured with the --result-size parameter at startup.\n");
                     }
                 }
-            }
-            else {
+            } else {
                 result = _rdd.collect();
             }
             _hasNext = !result.isEmpty();
@@ -81,15 +79,15 @@ public abstract class SparkRuntimeIterator extends RuntimeIterator {
     }
 
     @Override
-    public Item next(){
-        if(!this._isOpen)
+    public Item next() {
+        if (!this._isOpen)
             throw new IteratorFlowException("Runtime iterator is not open", getMetadata());
 
-        if(!(currentResultIndex <= result.size() - 1))
-             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.getClass().getSimpleName(),
-                     getMetadata());
-        if(currentResultIndex == result.size() - 1)
-             this._hasNext = false;
+        if (!(currentResultIndex <= result.size() - 1))
+            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.getClass().getSimpleName(),
+                    getMetadata());
+        if (currentResultIndex == result.size() - 1)
+            this._hasNext = false;
 
         Item item = result.get(currentResultIndex);
         currentResultIndex++;

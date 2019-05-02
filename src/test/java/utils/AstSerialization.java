@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package utils;
+package utils;
 
 import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
 import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
@@ -27,34 +27,34 @@ import java.util.Arrays;
 public class AstSerialization {
 
     //all serialization strings
-    public static final String[] SERIALIZATION_RULES_FULL = new String[] {"module","mainModule","libraryModule","prolog",
-            "defaultCollationDecl","orderingModeDecl","emptyOrderDecl","decimalFormatDecl",
-            "dfPropertyName","moduleImport","varDecl","functionDecl","paramList","expr","exprSingle",
-            "flowrExpr","forClause","forVar","letClause","letVar","whereClause","groupByClause",
-            "groupByVar","orderByClause","countClause","quantifiedExpr", "quantifiedExprVar","switchExpr","switchCaseClause",
-            "typeSwitchExpr","caseClause","ifExpr","tryCatchExpr","orExpr","andExpr","notExpr",
+    public static final String[] SERIALIZATION_RULES_FULL = new String[]{"module", "mainModule", "libraryModule", "prolog",
+            "defaultCollationDecl", "orderingModeDecl", "emptyOrderDecl", "decimalFormatDecl",
+            "dfPropertyName", "moduleImport", "varDecl", "functionDecl", "paramList", "expr", "exprSingle",
+            "flowrExpr", "forClause", "forVar", "letClause", "letVar", "whereClause", "groupByClause",
+            "groupByVar", "orderByClause", "countClause", "quantifiedExpr", "quantifiedExprVar", "switchExpr", "switchCaseClause",
+            "typeSwitchExpr", "caseClause", "ifExpr", "tryCatchExpr", "orExpr", "andExpr", "notExpr",
 
-            "comparisonExpr","stringConcatExpr","rangeExpr","additiveExpr","multiplicativeExpr",
-            "instanceOfExpr","treatExpr","castableExpr","castExpr","unaryExpr","simpleMapExpr",
-            "postFixExpr","predicate","objectLookup","arrayLookup","arrayUnboxing","primaryExpr",
-            "varRef","parenthesizedExpr","contextItemExpr","orderedExpr","unorderedExpr",
-            "functionCall","argumentList","argument","sequenceType","objectConstructor","itemType",
-            "jSONItemTest","atomicType","pairConstructor","arrayConstructor","uriLiteral","stringLiteral"};
+            "comparisonExpr", "stringConcatExpr", "rangeExpr", "additiveExpr", "multiplicativeExpr",
+            "instanceOfExpr", "treatExpr", "castableExpr", "castExpr", "unaryExpr", "simpleMapExpr",
+            "postFixExpr", "predicate", "objectLookup", "arrayLookup", "arrayUnboxing", "primaryExpr",
+            "varRef", "parenthesizedExpr", "contextItemExpr", "orderedExpr", "unorderedExpr",
+            "functionCall", "argumentList", "argument", "sequenceType", "objectConstructor", "itemType",
+            "jSONItemTest", "atomicType", "pairConstructor", "arrayConstructor", "uriLiteral", "stringLiteral"};
 
     //contains serialization strings only for supported features
-    public static final String[] SERIALIZATION_RULES_PARTIAL = new String[] {"module","mainModule","#","#",
-            "#","#","#","#",
-            "#","#","varDecl","functionDecl","paramList","expr","exprSingle",
-            "flowrExpr","forClause","forVar","letClause","letVar","whereClause","groupByClause",
-            "groupByVar","orderByClause", "orderByExpr","countClause","quantifiedExpr", "quantifiedExprVar","#", "#",
-            "#","#","ifExpr","#","orExpr","andExpr","notExpr",
+    public static final String[] SERIALIZATION_RULES_PARTIAL = new String[]{"module", "mainModule", "#", "#",
+            "#", "#", "#", "#",
+            "#", "#", "varDecl", "functionDecl", "paramList", "expr", "exprSingle",
+            "flowrExpr", "forClause", "forVar", "letClause", "letVar", "whereClause", "groupByClause",
+            "groupByVar", "orderByClause", "orderByExpr", "countClause", "quantifiedExpr", "quantifiedExprVar", "#", "#",
+            "#", "#", "ifExpr", "#", "orExpr", "andExpr", "notExpr",
 
-            "comparisonExpr","stringConcatExpr","rangeExpr","additiveExpr","multiplicativeExpr",
-            "instanceOfExpr","#","#","#","unaryExpr","#",
-            "postFixExpr","predicate","objectLookup","arrayLookup","arrayUnboxing","primaryExpr",
-            "varRef","parenthesizedExpr","#","#","#",
-            "functionCall","argumentList","argument","sequenceType","objectConstructor","itemType",
-            "jSONItemTest","atomicType","pairConstructor","arrayConstructor","uriLiteral","stringLiteral"};
+            "comparisonExpr", "stringConcatExpr", "rangeExpr", "additiveExpr", "multiplicativeExpr",
+            "instanceOfExpr", "#", "#", "#", "unaryExpr", "#",
+            "postFixExpr", "predicate", "objectLookup", "arrayLookup", "arrayUnboxing", "primaryExpr",
+            "varRef", "parenthesizedExpr", "#", "#", "#",
+            "functionCall", "argumentList", "argument", "sequenceType", "objectConstructor", "itemType",
+            "jSONItemTest", "atomicType", "pairConstructor", "arrayConstructor", "uriLiteral", "stringLiteral"};
 
     public static boolean checkSerialization(JsoniqExpressionTreeVisitor visitor, JsoniqParser.MainModuleContext context) {
 
@@ -62,18 +62,18 @@ public class AstSerialization {
         antlrSerializedTree = filterNotSupportedFeatures(antlrSerializedTree);
         String expressionTree = visitor.getQueryExpression().serializationString(true);
         boolean isEqual = antlrSerializedTree.equals(expressionTree);
-        if(!isEqual)
-            System.out.println("Expected :" + antlrSerializedTree +";ACTUAL: " + expressionTree);
+        if (!isEqual)
+            System.out.println("Expected :" + antlrSerializedTree + ";ACTUAL: " + expressionTree);
         return isEqual;
     }
 
     //filter unsupported clauses
     private static String filterNotSupportedFeatures(String antlrSerializedTree) {
-        while (true){
+        while (true) {
             int startIndex = antlrSerializedTree.indexOf("(#");
-            if(startIndex < 0)
+            if (startIndex < 0)
                 break;
-            int stopIndex = findClosingBrace(antlrSerializedTree.toCharArray(),startIndex);
+            int stopIndex = findClosingBrace(antlrSerializedTree.toCharArray(), startIndex);
             antlrSerializedTree = antlrSerializedTree.substring(0, stopIndex)
                     + antlrSerializedTree.substring(stopIndex + 1, antlrSerializedTree.length());
             antlrSerializedTree = antlrSerializedTree.replaceFirst(" \\(#", "");
@@ -88,8 +88,7 @@ public class AstSerialization {
             char c = text[++closePos];
             if (c == '(') {
                 counter++;
-            }
-            else if (c == ')') {
+            } else if (c == ')') {
                 counter--;
             }
         }

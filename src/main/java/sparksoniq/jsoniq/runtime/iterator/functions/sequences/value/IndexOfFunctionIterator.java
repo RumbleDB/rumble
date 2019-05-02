@@ -61,7 +61,7 @@ public class IndexOfFunctionIterator extends LocalFunctionCallIterator {
         RuntimeIterator searchIterator = this._children.get(1);
         _currentIndex = 0;
 
-        _sequenceIterator .open(context);
+        _sequenceIterator.open(context);
         searchIterator.open(context);
 
         if (!searchIterator.hasNext()) {
@@ -82,7 +82,7 @@ public class IndexOfFunctionIterator extends LocalFunctionCallIterator {
     public void setNextResult() {
         _nextResult = null;
 
-        while(_sequenceIterator.hasNext()) {
+        while (_sequenceIterator.hasNext()) {
             _currentIndex += 1;
             Item item = _sequenceIterator.next();
             if (!item.isAtomic()) {

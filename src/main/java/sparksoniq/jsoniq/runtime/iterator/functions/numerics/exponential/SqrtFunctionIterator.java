@@ -62,8 +62,7 @@ public class SqrtFunctionIterator extends LocalFunctionCallIterator {
                     this._hasNext = false;
                     return new DoubleItem(result);
 
-                } catch (IteratorFlowException e)
-                {
+                } catch (IteratorFlowException e) {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
                 }
             } else {

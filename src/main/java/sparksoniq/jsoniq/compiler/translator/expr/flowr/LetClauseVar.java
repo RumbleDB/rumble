@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.jsoniq.compiler.translator.expr.flowr;
+package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
@@ -28,21 +28,21 @@ import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 public class LetClauseVar extends FlworVarDecl {
 
     public LetClauseVar(VariableReference varRef, FlworVarSequenceType sequence, Expression expr, ExpressionMetadata metadataFromContext) {
-        super(FLWOR_CLAUSES.LET_VAR, varRef, sequence,expr, metadataFromContext);
+        super(FLWOR_CLAUSES.LET_VAR, varRef, sequence, expr, metadataFromContext);
         this.variableReferenceNode = varRef;
         this.asSequence = sequence;
         this.expression = expr;
     }
 
     @Override
-    public  <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument){
+    public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
         return visitor.visitLetClauseVar(this, argument);
     }
 
     @Override
-    public String serializationString(boolean prefix){
+    public String serializationString(boolean prefix) {
         String result = "(letVar " + variableReferenceNode.serializationString(false) + " ";
-        if(this.asSequence !=null)
+        if (this.asSequence != null)
             result += "as " + asSequence.serializationString(true) + " ";
         result += ":= " + this.expression.serializationString(true);
         result += "))";

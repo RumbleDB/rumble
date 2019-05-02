@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.jsoniq.compiler.translator.expr.flowr;
+package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
 import sparksoniq.exceptions.SemanticException;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
@@ -33,10 +33,9 @@ public class LetClause extends FlworClause {
         return letVars;
     }
 
-    public LetClause(List<LetClauseVar> vars, ExpressionMetadata metadataFromContext)
-    {
+    public LetClause(List<LetClauseVar> vars, ExpressionMetadata metadataFromContext) {
         super(FLWOR_CLAUSES.LET, metadataFromContext);
-        if(vars == null || vars.isEmpty())
+        if (vars == null || vars.isEmpty())
             throw new SemanticException("Let clause must have at least one variable", metadataFromContext);
         this.letVars = vars;
 
@@ -44,25 +43,25 @@ public class LetClause extends FlworClause {
 
     @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result =  new ArrayList<>();
+        List<ExpressionOrClause> result = new ArrayList<>();
         letVars.forEach(e -> {
             if (e != null)
                 result.add(e);
         });
-        return getDescendantsFromChildren(result,depthSearch);
+        return getDescendantsFromChildren(result, depthSearch);
     }
 
     @Override
-    public  <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument){
+    public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
         return visitor.visitLetClause(this, argument);
     }
 
     @Override
-    public String serializationString(boolean prefix){
+    public String serializationString(boolean prefix) {
         String result = "(letClause let ";
-        for(LetClauseVar var: letVars)
+        for (LetClauseVar var : letVars)
             result += var.serializationString(true)
-                    + (letVars.indexOf(var) < letVars.size() -1 ? " , " : "");
+                    + (letVars.indexOf(var) < letVars.size() - 1 ? " , " : "");
         result += ")";
         return result;
     }

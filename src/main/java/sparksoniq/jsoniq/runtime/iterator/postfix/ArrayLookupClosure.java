@@ -45,8 +45,7 @@ public class ArrayLookupClosure implements FlatMapFunction<Item, Item> {
             return results.iterator();
 
         Item item = arg0.getItemAt(_lookup - 1);
-        if(item != null)
-        {
+        if (item != null) {
             results.add(item);
         }
         return results.iterator();

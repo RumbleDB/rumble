@@ -60,11 +60,10 @@ public class Log10FunctionIterator extends LocalFunctionCallIterator {
             if (Item.isNumeric(value)) {
                 try {
                     Double result = Math.log10(Item.getNumericValue(value, Double.class));
-    
+
                     return new DoubleItem(result);
-                
-                } catch (IteratorFlowException e)
-                {
+
+                } catch (IteratorFlowException e) {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
                 }
             } else {

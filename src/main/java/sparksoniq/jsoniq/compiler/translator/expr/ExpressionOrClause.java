@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.jsoniq.compiler.translator.expr;
+package sparksoniq.jsoniq.compiler.translator.expr;
 
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
@@ -34,8 +34,12 @@ public abstract class ExpressionOrClause {
     public abstract List<ExpressionOrClause> getDescendants(boolean depthSearch);
 
     //Visitor pattern implementation
-    /** Accept method for the pattern Visitor. */
+
+    /**
+     * Accept method for the pattern Visitor.
+     */
     public abstract <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument);
+
     //serialization
     public abstract String serializationString(boolean prefix);
 
@@ -54,14 +58,15 @@ public abstract class ExpressionOrClause {
         return metadata;
     }
 
-    protected ExpressionOrClause() {}
+    protected ExpressionOrClause() {
+    }
 
     protected ExpressionOrClause(ExpressionMetadata metadata) {
         this.metadata = metadata;
     }
 
-    protected List<ExpressionOrClause> getDescendantsFromChildren(List<ExpressionOrClause> result, boolean depthSearch){
-        if(depthSearch) {
+    protected List<ExpressionOrClause> getDescendantsFromChildren(List<ExpressionOrClause> result, boolean depthSearch) {
+        if (depthSearch) {
             List<ExpressionOrClause> childrenResults = new ArrayList<>();
             result.forEach(r -> childrenResults.addAll(r.getDescendants(depthSearch)));
             result.addAll(childrenResults);

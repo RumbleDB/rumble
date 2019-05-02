@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,10 +24,41 @@ import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.expr.control.IfExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.control.SwitchCaseExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.control.SwitchExpression;
-import sparksoniq.jsoniq.compiler.translator.expr.flowr.*;
-import sparksoniq.jsoniq.compiler.translator.expr.operational.*;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.CountClause;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.ForClause;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.ForClauseVar;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.GroupByClause;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.GroupByClauseVar;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.LetClause;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.LetClauseVar;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClause;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.ReturnClause;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.WhereClause;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.AdditiveExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.AndExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.ComparisonExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.InstanceOfExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.MultiplicativeExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.NotExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.OrExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.RangeExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.StringConcatExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.UnaryExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.PostFixExpression;
-import sparksoniq.jsoniq.compiler.translator.expr.primary.*;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.ArrayConstructor;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.BooleanLiteral;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.ContextExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.DecimalLiteral;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.DoubleLiteral;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionCall;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.IntegerLiteral;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.NullLiteral;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.ObjectConstructor;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.ParenthesizedExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.StringLiteral;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpressionVar;
 

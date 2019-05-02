@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -46,7 +46,7 @@ public class SparksoniqRuntimeException extends RuntimeException {
 
     public SparksoniqRuntimeException(String message, String errorCode) {
         super("Error [err: " + errorCode + " ] " + message);
-        if(!Arrays.asList(ErrorCodes.class.getFields()).stream().anyMatch(f -> {
+        if (!Arrays.asList(ErrorCodes.class.getFields()).stream().anyMatch(f -> {
             try {
                 return f.get(null).equals(errorCode);
             } catch (IllegalAccessException e) {
@@ -61,11 +61,11 @@ public class SparksoniqRuntimeException extends RuntimeException {
 
 
     public SparksoniqRuntimeException(String message, String errorCode, ExpressionMetadata metadata) {
-        super("Error [err: " + errorCode + "]" + (metadata != null?
+        super("Error [err: " + errorCode + "]" + (metadata != null ?
                 "LINE:" + metadata.getTokenLineNumber() +
-                ":COLUMN:" + metadata.getTokenColumnNumber() + ":" : "")
+                        ":COLUMN:" + metadata.getTokenColumnNumber() + ":" : "")
                 + message);
-        if(!Arrays.asList(ErrorCodes.class.getFields()).stream().anyMatch(f -> {
+        if (!Arrays.asList(ErrorCodes.class.getFields()).stream().anyMatch(f -> {
             try {
                 return f.get(null).equals(errorCode);
             } catch (IllegalAccessException e) {
@@ -79,12 +79,13 @@ public class SparksoniqRuntimeException extends RuntimeException {
         this.errorMessage = message;
     }
 
-    public SparksoniqRuntimeException(String message,  ExpressionMetadata metadata) {
-        super("Error [err: " + ErrorCodes.RuntimeExceptionErrorCode + "]" + (metadata != null?
+    public SparksoniqRuntimeException(String message, ExpressionMetadata metadata) {
+        super("Error [err: " + ErrorCodes.RuntimeExceptionErrorCode + "]" + (metadata != null ?
                 "LINE:" + metadata.getTokenLineNumber() +
                         ";COLUMN:" + metadata.getTokenColumnNumber() + ";" : "")
                 + message);
-        this.errorCode = ErrorCodes.RuntimeExceptionErrorCode;;
+        this.errorCode = ErrorCodes.RuntimeExceptionErrorCode;
+        ;
         this.metadata = metadata;
         this.errorMessage = message;
     }

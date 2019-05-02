@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.jsoniq.compiler.translator.expr.flowr;
+package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
@@ -38,7 +38,7 @@ public class FlworVarSequenceType extends Expression {
 
     public static ItemTypes getItemType(String text) {
         text = text.toLowerCase();
-        switch (text){
+        switch (text) {
             case "object":
                 return ItemTypes.ObjectItem;
             case "atomic":
@@ -60,14 +60,15 @@ public class FlworVarSequenceType extends Expression {
             case "json-item":
                 return ItemTypes.JSONItem;
 
-            default: return ItemTypes.Item;
+            default:
+                return ItemTypes.Item;
         }
     }
 
     public SequenceType getSequence() {
         return _sequence;
     }
-    
+
     public FlworVarSequenceType(ExpressionMetadata metadata) {
         super(metadata);
         this._sequence = new SequenceType(new ItemType(ItemTypes.Item),
@@ -75,14 +76,14 @@ public class FlworVarSequenceType extends Expression {
         this.isEmpty = true;
     }
 
-    public FlworVarSequenceType(ItemTypes item, SequenceType.Arity arity, ExpressionMetadata metadata){
+    public FlworVarSequenceType(ItemTypes item, SequenceType.Arity arity, ExpressionMetadata metadata) {
         super(metadata);
         this._sequence = new SequenceType(new ItemType(item), arity);
         this.isEmpty = false;
 
     }
 
-    public FlworVarSequenceType(ItemTypes item, ExpressionMetadata metadata){
+    public FlworVarSequenceType(ItemTypes item, ExpressionMetadata metadata) {
         super(metadata);
         this._sequence = new SequenceType(new ItemType(item), SequenceType.Arity.One);
         this.isEmpty = false;
@@ -95,9 +96,9 @@ public class FlworVarSequenceType extends Expression {
     }
 
     @Override
-    public String serializationString(boolean prefix){
+    public String serializationString(boolean prefix) {
         String result = "(sequenceType ";
-        if(isEmpty)
+        if (isEmpty)
             return result + "( )";
         result += "(itemType ";
         result += getSerializationOfItemType(this._sequence.getItemType().getType());
@@ -105,21 +106,33 @@ public class FlworVarSequenceType extends Expression {
         return result;
     }
 
-    private String getSerializationOfItemType(ItemTypes item){
-        switch (item){
-            case Item: return "item";
-            case IntegerItem: return "(atomicType integer)";
-            case DecimalItem: return "(atomicType decimal)";
-            case DoubleItem: return "(atomicType double)";
-            case AtomicItem: return "(atomicType atomic)";
-            case StringItem: return "(atomicType string)";
-            case BooleanItem: return "(atomicType boolean)";
-            case NullItem: return "(atomicType null)";
+    private String getSerializationOfItemType(ItemTypes item) {
+        switch (item) {
+            case Item:
+                return "item";
+            case IntegerItem:
+                return "(atomicType integer)";
+            case DecimalItem:
+                return "(atomicType decimal)";
+            case DoubleItem:
+                return "(atomicType double)";
+            case AtomicItem:
+                return "(atomicType atomic)";
+            case StringItem:
+                return "(atomicType string)";
+            case BooleanItem:
+                return "(atomicType boolean)";
+            case NullItem:
+                return "(atomicType null)";
 
-            case JSONItem: return "(jSONItemTest json-item)";
-            case ArrayItem: return "(jSONItemTest array)";
-            case ObjectItem: return "(jSONItemTest object)";
-            default: return "item";
+            case JSONItem:
+                return "(jSONItemTest json-item)";
+            case ArrayItem:
+                return "(jSONItemTest array)";
+            case ObjectItem:
+                return "(jSONItemTest object)";
+            default:
+                return "item";
         }
     }
 

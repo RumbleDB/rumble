@@ -63,7 +63,7 @@ public class SumFunctionIterator extends AggregateFunctionIterator {
             }
         }
         _iterator.close();
-        this._hasNext= true;
+        this._hasNext = true;
     }
 
     @Override
@@ -91,8 +91,7 @@ public class SumFunctionIterator extends AggregateFunctionIterator {
                 }
                 return new DecimalItem(sumResult);
 
-            } catch (IteratorFlowException e)
-            {
+            } catch (IteratorFlowException e) {
                 throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
             }
         } else

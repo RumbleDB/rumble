@@ -125,10 +125,9 @@ public class PredicateIterator extends HybridRuntimeIterator {
             this._hasNext = true;
         }
     }
-    
+
     @Override
-    public JavaRDD<Item> getRDD(DynamicContext dynamicContext)
-    {
+    public JavaRDD<Item> getRDD(DynamicContext dynamicContext) {
         _currentDynamicContext = dynamicContext;
         RuntimeIterator iterator = this._children.get(0);
         RuntimeIterator filter = this._children.get(1);
@@ -140,8 +139,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected boolean initIsRDD()
-    {
+    protected boolean initIsRDD() {
         return this._iterator.isRDD();
     }
 }

@@ -49,7 +49,7 @@ public class DistinctValuesFunctionIterator extends LocalFunctionCallIterator {
             setNextResult();            // calculate and store the next result
             return result;
         }
-            throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "distinct-values function", getMetadata());
+        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "distinct-values function", getMetadata());
     }
 
     @Override
@@ -66,7 +66,7 @@ public class DistinctValuesFunctionIterator extends LocalFunctionCallIterator {
     public void setNextResult() {
         _nextResult = null;
 
-        while(_sequenceIterator.hasNext()) {
+        while (_sequenceIterator.hasNext()) {
             Item item = _sequenceIterator.next();
             if (!item.isAtomic()) {
                 throw new NonAtomicKeyException("Invalid args. distinct-values can't be performed on non-atomics", getMetadata().getExpressionMetadata());

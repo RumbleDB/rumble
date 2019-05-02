@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,12 +27,48 @@ import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.expr.control.IfExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.control.SwitchCaseExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.control.SwitchExpression;
-import sparksoniq.jsoniq.compiler.translator.expr.flowr.*;
-import sparksoniq.jsoniq.compiler.translator.expr.operational.*;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.CountClause;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworClause;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.ForClause;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.ForClauseVar;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.GroupByClause;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.GroupByClauseVar;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.LetClause;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.LetClauseVar;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClause;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.ReturnClause;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.WhereClause;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.AdditiveExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.AndExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.ComparisonExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.InstanceOfExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.MultiplicativeExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.NotExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.OrExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.RangeExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.StringConcatExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.UnaryExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.PostFixExpression;
-import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.*;
-import sparksoniq.jsoniq.compiler.translator.expr.primary.*;
+import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.ArrayLookupExtension;
+import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.ArrayUnboxingExtension;
+import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.ObjectLookupExtension;
+import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.PostfixExtension;
+import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.PredicateExtension;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.ArrayConstructor;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.BooleanLiteral;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.ContextExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.DecimalLiteral;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.DoubleLiteral;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionCall;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.IntegerLiteral;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.NullLiteral;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.ObjectConstructor;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.ParenthesizedExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.StringLiteral;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpressionVar;
 import sparksoniq.jsoniq.runtime.iterator.CommaExpressionIterator;
@@ -41,17 +77,41 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.control.IfRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.control.SwitchRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
-import sparksoniq.jsoniq.runtime.iterator.operational.*;
+import sparksoniq.jsoniq.runtime.iterator.operational.AdditiveOperationIterator;
+import sparksoniq.jsoniq.runtime.iterator.operational.AndOperationIterator;
+import sparksoniq.jsoniq.runtime.iterator.operational.ComparisonOperationIterator;
+import sparksoniq.jsoniq.runtime.iterator.operational.InstanceOfIterator;
+import sparksoniq.jsoniq.runtime.iterator.operational.MultiplicativeOperationIterator;
+import sparksoniq.jsoniq.runtime.iterator.operational.NotOperationIterator;
+import sparksoniq.jsoniq.runtime.iterator.operational.OrOperationIterator;
+import sparksoniq.jsoniq.runtime.iterator.operational.RangeOperationIterator;
+import sparksoniq.jsoniq.runtime.iterator.operational.StringConcatIterator;
+import sparksoniq.jsoniq.runtime.iterator.operational.UnaryOperationIterator;
 import sparksoniq.jsoniq.runtime.iterator.postfix.ArrayLookupIterator;
 import sparksoniq.jsoniq.runtime.iterator.postfix.ArrayUnboxingIterator;
 import sparksoniq.jsoniq.runtime.iterator.postfix.ObjectLookupIterator;
 import sparksoniq.jsoniq.runtime.iterator.postfix.PredicateIterator;
-import sparksoniq.jsoniq.runtime.iterator.primary.*;
+import sparksoniq.jsoniq.runtime.iterator.primary.ArrayRuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.primary.BooleanRuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.primary.ContextExpressionIterator;
+import sparksoniq.jsoniq.runtime.iterator.primary.DecimalRuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.primary.DoubleRuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.primary.IntegerRuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.primary.NullRuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.primary.ObjectConstructorRuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.primary.StringRuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.runtime.iterator.quantifiers.QuantifiedExpressionIterator;
 import sparksoniq.jsoniq.runtime.iterator.quantifiers.QuantifiedExpressionVarIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
-import sparksoniq.spark.iterator.flowr.*;
+import sparksoniq.spark.iterator.flowr.CountClauseSparkIterator;
+import sparksoniq.spark.iterator.flowr.ForClauseSparkIterator;
+import sparksoniq.spark.iterator.flowr.GroupByClauseSparkIterator;
+import sparksoniq.spark.iterator.flowr.LetClauseSparkIterator;
+import sparksoniq.spark.iterator.flowr.OrderByClauseSparkIterator;
+import sparksoniq.spark.iterator.flowr.ReturnClauseSparkIterator;
+import sparksoniq.spark.iterator.flowr.WhereClauseSparkIterator;
 import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
 import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 
@@ -89,12 +149,12 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         return new ReturnClauseSparkIterator(
                 previous,
                 this.visit(((ReturnClause) expression.get_returnClause()).getReturnExpr(),
-                argument),createIteratorMetadata(expression.get_returnClause()));
+                        argument), createIteratorMetadata(expression.get_returnClause()));
     }
 
     private RuntimeTupleIterator visitFlowrClause(FlworClause clause,
-                                                            RuntimeIterator argument,
-                                                            RuntimeTupleIterator previousIterator) {
+                                                  RuntimeIterator argument,
+                                                  RuntimeTupleIterator previousIterator) {
         if (clause instanceof ForClause) {
             for (ForClauseVar var : ((ForClause) clause).getForVariables()) {
                 RuntimeIterator assignmentExpression = this.visit(var.getExpression(), argument);
@@ -108,7 +168,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 RuntimeIterator assignmentExpression = this.visit(var.getExpression(), argument);
                 VariableReferenceIterator variableReferenceIterator =
                         (VariableReferenceIterator) this.visit(var.getVariableReference(), argument);
-                previousIterator =new LetClauseSparkIterator(previousIterator, variableReferenceIterator, assignmentExpression,
+                previousIterator = new LetClauseSparkIterator(previousIterator, variableReferenceIterator, assignmentExpression,
                         createIteratorMetadata(clause));
             }
         } else if (clause instanceof GroupByClause) {

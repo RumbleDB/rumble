@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -45,7 +45,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
 
     public void open(DynamicContext context) {
         if (this._isOpen)
-            throw new IteratorFlowException("Runtime tuple iterator cannot be opened twice" + ", this: " +this.toString(), getMetadata());
+            throw new IteratorFlowException("Runtime tuple iterator cannot be opened twice" + ", this: " + this.toString(), getMetadata());
         this._isOpen = true;
         this._hasNext = true;
         this._currentDynamicContext = context;

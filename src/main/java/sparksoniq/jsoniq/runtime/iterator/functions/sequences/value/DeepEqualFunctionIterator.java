@@ -24,7 +24,6 @@ import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.BooleanItem;
 import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -66,7 +65,7 @@ public class DeepEqualFunctionIterator extends LocalFunctionCallIterator {
         if (items1.size() != items2.size()) {
             return false;
         } else {
-            for (int i = 0; i < items1.size(); i++){
+            for (int i = 0; i < items1.size(); i++) {
                 Item item1 = items1.get(i);
                 Item item2 = items2.get(i);
 
@@ -76,8 +75,8 @@ public class DeepEqualFunctionIterator extends LocalFunctionCallIterator {
                         return false;
                     } else {
                         // if types match, recursively check if array is deep-equal
-                        ArrayItem arrItem1 = (ArrayItem)item1;
-                        ArrayItem arrItem2 = (ArrayItem)item2;
+                        ArrayItem arrItem1 = (ArrayItem) item1;
+                        ArrayItem arrItem2 = (ArrayItem) item2;
 
                         if (!checkDeepEqual(arrItem1.getItems(), arrItem2.getItems())) {
                             return false;
@@ -90,14 +89,14 @@ public class DeepEqualFunctionIterator extends LocalFunctionCallIterator {
                     } else {
                         // if types match, recursively check if object is deep-equal
                         if (item1.getKeys().equals(item2.getKeys())) {
-                            if (!checkDeepEqual((List<Item>)item1.getValues(), (List<Item>)item2.getValues())) {
+                            if (!checkDeepEqual((List<Item>) item1.getValues(), (List<Item>) item2.getValues())) {
                                 return false;
                             }
                         } else {
                             return false;
                         }
                     }
-                } else if (Item.compareItems(item1, item2) != 0){
+                } else if (Item.compareItems(item1, item2) != 0) {
                     // if atomic items' values are not equal
                     return false;
                 } else {
