@@ -17,6 +17,7 @@
  * Author: Stefan Irimescu
  *
  */
+
 package sparksoniq.spark.udf;
 
 import org.apache.spark.sql.api.java.UDF1;

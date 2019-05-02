@@ -17,6 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
+
 package sparksoniq.jsoniq.runtime.iterator.functions.base;
 
 import sparksoniq.exceptions.UnknownFunctionCallException;

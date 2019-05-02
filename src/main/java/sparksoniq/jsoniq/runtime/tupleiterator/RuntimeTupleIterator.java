@@ -17,6 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
+
 package sparksoniq.jsoniq.runtime.tupleiterator;
 
 import com.esotericsoftware.kryo.Kryo;

@@ -17,6 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
+
 package sparksoniq.spark.iterator.function;
 
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;

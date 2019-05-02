@@ -17,6 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
+
 package sparksoniq.spark.closures;
 
 import org.apache.spark.api.java.function.PairFunction;

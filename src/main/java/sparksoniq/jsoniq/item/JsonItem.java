@@ -17,6 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
+
 package sparksoniq.jsoniq.item;
 
 import sparksoniq.semantics.types.ItemType;

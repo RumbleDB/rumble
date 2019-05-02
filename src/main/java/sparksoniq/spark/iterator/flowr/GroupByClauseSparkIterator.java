@@ -17,6 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
+
 package sparksoniq.spark.iterator.flowr;
 
 import org.apache.spark.api.java.JavaPairRDD;

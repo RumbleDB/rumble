@@ -17,6 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
+
 package sparksoniq.spark.closures;
 
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;

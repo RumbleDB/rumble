@@ -17,6 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
+
 package sparksoniq.spark.iterator.function;
 
 import org.apache.spark.api.java.JavaRDD;
