@@ -27,14 +27,14 @@ import java.io.Serializable;
 public class IteratorMetadata implements Serializable {
 
 
-    public ExpressionMetadata getExpressionMetadata() {
-        return _expressionMetadata;
-    }
+    private final ExpressionMetadata _expressionMetadata;
 
     public IteratorMetadata(ExpressionMetadata expressionMetadata) {
         this._expressionMetadata = expressionMetadata;
 
     }
 
-    private final ExpressionMetadata _expressionMetadata;
+    public ExpressionMetadata getExpressionMetadata() {
+        return _expressionMetadata;
+    }
 }

@@ -30,13 +30,13 @@ public class ObjectLookupExtension extends PostfixExtension {
 
     Expression _expression;
 
-    public Expression getExpression() {
-        return _expression;
-    }
-
     public ObjectLookupExtension(Expression expr, ExpressionMetadata metadata) {
         super(metadata);
         this._expression = expr;
+    }
+
+    public Expression getExpression() {
+        return _expression;
     }
 
     @Override

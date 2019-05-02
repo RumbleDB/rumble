@@ -29,9 +29,7 @@ import java.util.List;
 
 public class LetClause extends FlworClause {
 
-    public List<LetClauseVar> getLetVariables() {
-        return letVars;
-    }
+    private final List<LetClauseVar> letVars;
 
     public LetClause(List<LetClauseVar> vars, ExpressionMetadata metadataFromContext) {
         super(FLWOR_CLAUSES.LET, metadataFromContext);
@@ -39,6 +37,10 @@ public class LetClause extends FlworClause {
             throw new SemanticException("Let clause must have at least one variable", metadataFromContext);
         this.letVars = vars;
 
+    }
+
+    public List<LetClauseVar> getLetVariables() {
+        return letVars;
     }
 
     @Override
@@ -65,6 +67,4 @@ public class LetClause extends FlworClause {
         result += ")";
         return result;
     }
-
-    private final List<LetClauseVar> letVars;
 }

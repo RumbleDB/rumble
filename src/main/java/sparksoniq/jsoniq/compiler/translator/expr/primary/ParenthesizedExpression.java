@@ -31,9 +31,7 @@ import java.util.List;
 
 public class ParenthesizedExpression extends PrimaryExpression {
 
-    public Expression getExpression() {
-        return expression;
-    }
+    private Expression expression;
 
     public ParenthesizedExpression(Expression expression, ExpressionMetadata metadata) {
         super(metadata);
@@ -43,6 +41,10 @@ public class ParenthesizedExpression extends PrimaryExpression {
     public ParenthesizedExpression(ExpressionMetadata metadata) {
         super(metadata);
         this.expression = null;
+    }
+
+    public Expression getExpression() {
+        return expression;
     }
 
     @Override
@@ -68,7 +70,5 @@ public class ParenthesizedExpression extends PrimaryExpression {
         result += " )))";
         return result;
     }
-
-    private Expression expression;
 
 }

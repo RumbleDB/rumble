@@ -47,8 +47,8 @@ import java.util.Comparator;
 import java.util.List;
 
 public class AnnotationsTestsBase {
-    protected AnnotationProcessor.TestAnnotation currentAnnotation;
     protected static int counter = 0;
+    protected AnnotationProcessor.TestAnnotation currentAnnotation;
     protected List<File> testFiles = new ArrayList<>();
 
 

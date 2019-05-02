@@ -28,6 +28,8 @@ import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 public class InstanceOfExpression extends UnaryExpressionBase {
 
+    private FlworVarSequenceType _sequenceType;
+
     public InstanceOfExpression(Expression _mainExpression, ExpressionMetadata metadata) {
         super(_mainExpression, metadata);
         this._isActive = false;
@@ -61,7 +63,5 @@ public class InstanceOfExpression extends UnaryExpressionBase {
         result += ")";
         return result;
     }
-
-    private FlworVarSequenceType _sequenceType;
 
 }

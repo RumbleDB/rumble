@@ -43,6 +43,16 @@ public class JiqsJLineShell {
     private static final String PROMPT = "jiqs$ ";
     private static final String MID_QUERY_PROMPT = ">>> ";
     private static final String ERROR_MESSAGE_PROMPT = "[ERROR] ";
+    private final boolean _printTime;
+    private final SparksoniqRuntimeConfiguration _configuration;
+    private int _itemLimit;
+    private LineReader lineReader;
+    private JsoniqQueryExecutor jsoniqQueryExecutor;
+    private boolean queryStarted;
+    private String previousLine = "";
+    private String currentLine = "";
+    private String currentQueryContent = "";
+    private String welcomeMessage;
 
     public JiqsJLineShell(SparksoniqRuntimeConfiguration configuration) throws IOException {
         this._configuration = configuration;
@@ -165,17 +175,6 @@ public class JiqsJLineShell {
     private String getInitializationMessage() {
         return welcomeMessage + "\n" + _configuration.toString();
     }
-
-    private final boolean _printTime;
-    private final SparksoniqRuntimeConfiguration _configuration;
-    private int _itemLimit;
-    private LineReader lineReader;
-    private JsoniqQueryExecutor jsoniqQueryExecutor;
-    private boolean queryStarted;
-    private String previousLine = "";
-    private String currentLine = "";
-    private String currentQueryContent = "";
-    private String welcomeMessage;
 
 
 }

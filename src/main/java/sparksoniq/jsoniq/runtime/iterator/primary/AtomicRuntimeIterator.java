@@ -28,10 +28,10 @@ import java.util.List;
 
 public abstract class AtomicRuntimeIterator extends LocalRuntimeIterator {
 
-    @Override
-    public abstract AtomicItem next();
-
     protected AtomicRuntimeIterator(List<RuntimeIterator> children, IteratorMetadata iteratorMetadata) {
         super(children, iteratorMetadata);
     }
+
+    @Override
+    public abstract AtomicItem next();
 }

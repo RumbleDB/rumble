@@ -29,14 +29,7 @@ import java.util.List;
 
 public abstract class BinaryExpressionBase extends OperationalExpressionBase {
 
-    public Expression getRightExpression() {
-        return rightExpression;
-    }
-
-    @Override
-    public boolean isActive() {
-        return _isActive;
-    }
+    private Expression rightExpression;
 
     public BinaryExpressionBase(Expression mainExpression, ExpressionMetadata metadata) {
         super(mainExpression, Operator.NONE, metadata);
@@ -52,6 +45,15 @@ public abstract class BinaryExpressionBase extends OperationalExpressionBase {
             this._isActive = true;
     }
 
+    public Expression getRightExpression() {
+        return rightExpression;
+    }
+
+    @Override
+    public boolean isActive() {
+        return _isActive;
+    }
+
     public Operator getOperator() {
         return this._singleOperator;
     }
@@ -64,6 +66,4 @@ public abstract class BinaryExpressionBase extends OperationalExpressionBase {
             result.add(this.rightExpression);
         return getDescendantsFromChildren(result, depthSearch);
     }
-
-    private Expression rightExpression;
 }

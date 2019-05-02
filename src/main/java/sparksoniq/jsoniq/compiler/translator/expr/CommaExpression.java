@@ -28,6 +28,8 @@ import java.util.List;
 
 public class CommaExpression extends Expression {
 
+    private final List<Expression> _expressions;
+
     public CommaExpression(List<Expression> expressions, ExpressionMetadata metadata) {
         super(metadata);
         this._expressions = expressions;
@@ -48,7 +50,6 @@ public class CommaExpression extends Expression {
         return getDescendantsFromChildren(result, depthSearch);
     }
 
-
     @Override
     public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
         return visitor.visitCommaExpression(this, argument);
@@ -66,8 +67,6 @@ public class CommaExpression extends Expression {
         result += ")";
         return result;
     }
-
-    private final List<Expression> _expressions;
 
 
 }

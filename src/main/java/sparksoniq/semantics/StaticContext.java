@@ -29,9 +29,8 @@ import java.util.Map;
 
 public class StaticContext {
 
-    public StaticContext getParent() {
-        return _parent;
-    }
+    private Map<String, Tuple<SequenceType, ExpressionMetadata>> _inScopeVariables;
+    private StaticContext _parent;
 
     public StaticContext() {
         this._parent = null;
@@ -41,6 +40,10 @@ public class StaticContext {
     public StaticContext(StaticContext parent) {
         this._parent = parent;
         this._inScopeVariables = new HashMap<>();
+    }
+
+    public StaticContext getParent() {
+        return _parent;
     }
 
     public boolean isInScope(String varName) {
@@ -70,11 +73,7 @@ public class StaticContext {
         this._inScopeVariables.put(varName, new Tuple<>(type, metadata));
     }
 
-
     protected Map<String, Tuple<SequenceType, ExpressionMetadata>> getInScopeVariables() {
         return _inScopeVariables;
     }
-
-    private Map<String, Tuple<SequenceType, ExpressionMetadata>> _inScopeVariables;
-    private StaticContext _parent;
 }

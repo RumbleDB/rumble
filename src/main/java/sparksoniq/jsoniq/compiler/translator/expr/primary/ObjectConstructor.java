@@ -30,34 +30,22 @@ import java.util.List;
 
 public class ObjectConstructor extends PrimaryExpression {
 
-    public static class PairConstructor extends PrimaryExpression {
+    private boolean isMergedConstructor = false;
+    private List<Expression> _values;
+    private List<Expression> _keys;
+    private CommaExpression childExpression;
 
-        public PairConstructor(Expression key, Expression value, ExpressionMetadata metadata) {
-            super(metadata);
-            this._key = key;
-            this._value = value;
-        }
+    public ObjectConstructor(List<Expression> keys, List<Expression> values,
+                             ExpressionMetadata metadata) {
+        super(metadata);
+        this._keys = keys;
+        this._values = values;
+    }
 
-        public Expression get_key() {
-            return _key;
-        }
-
-        public Expression get_value() {
-            return _value;
-        }
-
-        @Override
-        public String serializationString(boolean prefix) {
-            String result = "(pairConstructor (exprSingle " + _key.serializationString(false) + ") : (exprSingle " + _value.serializationString(false);
-            result += "))";
-            return result;
-
-        }
-
-        private Expression _key;
-        private Expression _value;
-
-
+    public ObjectConstructor(CommaExpression expression, ExpressionMetadata metadata) {
+        super(metadata);
+        this.childExpression = expression;
+        this.isMergedConstructor = true;
     }
 
     public List<Expression> getKeys() {
@@ -74,19 +62,6 @@ public class ObjectConstructor extends PrimaryExpression {
 
     public CommaExpression getChildExpression() {
         return childExpression;
-    }
-
-    public ObjectConstructor(List<Expression> keys, List<Expression> values,
-                             ExpressionMetadata metadata) {
-        super(metadata);
-        this._keys = keys;
-        this._values = values;
-    }
-
-    public ObjectConstructor(CommaExpression expression, ExpressionMetadata metadata) {
-        super(metadata);
-        this.childExpression = expression;
-        this.isMergedConstructor = true;
     }
 
     @Override
@@ -120,10 +95,35 @@ public class ObjectConstructor extends PrimaryExpression {
 
     }
 
-    private boolean isMergedConstructor = false;
-    private List<Expression> _values;
-    private List<Expression> _keys;
-    private CommaExpression childExpression;
+    public static class PairConstructor extends PrimaryExpression {
+
+        private Expression _key;
+        private Expression _value;
+
+        public PairConstructor(Expression key, Expression value, ExpressionMetadata metadata) {
+            super(metadata);
+            this._key = key;
+            this._value = value;
+        }
+
+        public Expression get_key() {
+            return _key;
+        }
+
+        public Expression get_value() {
+            return _value;
+        }
+
+        @Override
+        public String serializationString(boolean prefix) {
+            String result = "(pairConstructor (exprSingle " + _key.serializationString(false) + ") : (exprSingle " + _value.serializationString(false);
+            result += "))";
+            return result;
+
+        }
+
+
+    }
 
 
 }

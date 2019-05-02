@@ -27,13 +27,15 @@ import sparksoniq.semantics.types.ItemTypes;
 
 public class BooleanItem extends AtomicItem {
 
-    public boolean getValue() {
-        return _value;
-    }
+    private boolean _value;
 
     public BooleanItem(boolean value) {
         super();
         this._value = value;
+    }
+
+    public boolean getValue() {
+        return _value;
     }
 
     @Override
@@ -67,6 +69,4 @@ public class BooleanItem extends AtomicItem {
     public void read(Kryo kryo, Input input) {
         this._value = input.readBoolean();
     }
-
-    private boolean _value;
 }

@@ -30,17 +30,9 @@ import java.util.List;
 
 public class FlworExpression extends Expression {
 
-    public FlworClause getStartClause() {
-        return _startClause;
-    }
-
-    public List<FlworClause> get_contentClauses() {
-        return _contentClauses;
-    }
-
-    public ReturnClause get_returnClause() {
-        return _returnClause;
-    }
+    private FlworClause _startClause;
+    private List<FlworClause> _contentClauses;
+    private ReturnClause _returnClause;
 
 
     public FlworExpression(FlworClause startClause,
@@ -54,6 +46,27 @@ public class FlworExpression extends Expression {
         set_startClause(startClause);
         set_contentClauses(containingClauses);
         set_returnClause(returnClause);
+    }
+
+    public FlworClause getStartClause() {
+        return _startClause;
+    }
+
+    public List<FlworClause> get_contentClauses() {
+        return _contentClauses;
+    }
+
+    private void set_contentClauses(List<FlworClause> contentClauses) {
+        this._contentClauses = new ArrayList<>();
+        this._contentClauses.addAll(contentClauses);
+    }
+
+    public ReturnClause get_returnClause() {
+        return _returnClause;
+    }
+
+    private void set_returnClause(ReturnClause returnClause) {
+        this._returnClause = returnClause;
     }
 
     @Override
@@ -88,19 +101,6 @@ public class FlworExpression extends Expression {
     private void set_startClause(FlworClause startClause) {
         this._startClause = startClause;
     }
-
-    private void set_contentClauses(List<FlworClause> contentClauses) {
-        this._contentClauses = new ArrayList<>();
-        this._contentClauses.addAll(contentClauses);
-    }
-
-    private void set_returnClause(ReturnClause returnClause) {
-        this._returnClause = returnClause;
-    }
-
-    private FlworClause _startClause;
-    private List<FlworClause> _contentClauses;
-    private ReturnClause _returnClause;
 
 
 }

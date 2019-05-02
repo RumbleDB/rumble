@@ -32,6 +32,8 @@ import java.util.List;
 public class ArraySizeFunctionIterator extends ArrayFunctionIterator {
 
 
+    private RuntimeIterator arrayIterator;
+
     public ArraySizeFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, ArrayFunctionOperators.SIZE, iteratorMetadata);
     }
@@ -61,6 +63,4 @@ public class ArraySizeFunctionIterator extends ArrayFunctionIterator {
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "SIZE function",
                 getMetadata());
     }
-
-    private RuntimeIterator arrayIterator;
 }

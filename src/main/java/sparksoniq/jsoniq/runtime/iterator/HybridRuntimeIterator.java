@@ -32,6 +32,13 @@ import java.util.List;
 
 public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
+    protected JiqsItemParser parser;
+    protected JavaRDD<Item> _rdd;
+    protected boolean isRDDInitialized = false;
+    protected boolean _isRDD;
+    protected List<Item> result = null;
+    protected int currentResultIndex = 0;
+
     protected HybridRuntimeIterator(List<RuntimeIterator> children, IteratorMetadata iteratorMetadata) {
         super(children, iteratorMetadata);
         this.parser = new JiqsItemParser();
@@ -131,12 +138,4 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     protected abstract boolean hasNextLocal();
 
     protected abstract Item nextLocal();
-
-
-    protected JiqsItemParser parser;
-    protected JavaRDD<Item> _rdd;
-    protected boolean isRDDInitialized = false;
-    protected boolean _isRDD;
-    protected List<Item> result = null;
-    protected int currentResultIndex = 0;
 }

@@ -26,6 +26,14 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class DoubleRuntimeIterator extends AtomicRuntimeIterator {
 
+    private double _item;
+
+    public DoubleRuntimeIterator(Double value, IteratorMetadata iteratorMetadata) {
+        super(null, iteratorMetadata);
+        this._item = value;
+
+    }
+
     @Override
     public DoubleItem next() {
         if (this._hasNext) {
@@ -35,12 +43,4 @@ public class DoubleRuntimeIterator extends AtomicRuntimeIterator {
 
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item, getMetadata());
     }
-
-    public DoubleRuntimeIterator(Double value, IteratorMetadata iteratorMetadata) {
-        super(null, iteratorMetadata);
-        this._item = value;
-
-    }
-
-    private double _item;
 }

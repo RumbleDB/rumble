@@ -37,16 +37,16 @@ public class QuantifiedExpressionVarIterator extends LocalRuntimeIterator {
     /*private List<Item> result = null;
     private int currentResultIndex;*/
 
-    public String getVariableReference() {
-        return _variableReference;
-    }
-
     public QuantifiedExpressionVarIterator(String variableReference, SequenceType sequenceType,
                                            RuntimeIterator expression, IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
         this._children.add(expression);
         this._variableReference = variableReference;
         this._sequenceType = sequenceType;
+    }
+
+    public String getVariableReference() {
+        return _variableReference;
     }
 
     @Override

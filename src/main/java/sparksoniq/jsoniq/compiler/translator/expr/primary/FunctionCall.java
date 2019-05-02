@@ -31,19 +31,22 @@ import java.util.List;
 
 public class FunctionCall extends PrimaryExpression {
 
-    public List<Expression> getParameters() {
-        return _parameters;
-    }
-
-    public String getFunctionName() {
-        return _functionName;
-    }
+    private final String _functionName;
+    private final List<Expression> _parameters;
 
 
     public FunctionCall(String functionName, List<Expression> parameters, ExpressionMetadata metadata) {
         super(metadata);
         this._functionName = functionName;
         this._parameters = parameters;
+    }
+
+    public List<Expression> getParameters() {
+        return _parameters;
+    }
+
+    public String getFunctionName() {
+        return _functionName;
     }
 
     @Override
@@ -74,7 +77,4 @@ public class FunctionCall extends PrimaryExpression {
     public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
         return visitor.visitFunctionCall(this, argument);
     }
-
-    private final String _functionName;
-    private final List<Expression> _parameters;
 }

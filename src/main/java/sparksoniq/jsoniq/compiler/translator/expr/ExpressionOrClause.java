@@ -31,9 +31,18 @@ import java.util.function.Predicate;
  */
 public abstract class ExpressionOrClause {
 
-    public abstract List<ExpressionOrClause> getDescendants(boolean depthSearch);
+    private ExpressionMetadata metadata;
 
     //Visitor pattern implementation
+
+    protected ExpressionOrClause() {
+    }
+
+    protected ExpressionOrClause(ExpressionMetadata metadata) {
+        this.metadata = metadata;
+    }
+
+    public abstract List<ExpressionOrClause> getDescendants(boolean depthSearch);
 
     /**
      * Accept method for the pattern Visitor.
@@ -58,13 +67,6 @@ public abstract class ExpressionOrClause {
         return metadata;
     }
 
-    protected ExpressionOrClause() {
-    }
-
-    protected ExpressionOrClause(ExpressionMetadata metadata) {
-        this.metadata = metadata;
-    }
-
     protected List<ExpressionOrClause> getDescendantsFromChildren(List<ExpressionOrClause> result, boolean depthSearch) {
         if (depthSearch) {
             List<ExpressionOrClause> childrenResults = new ArrayList<>();
@@ -73,7 +75,5 @@ public abstract class ExpressionOrClause {
         }
         return result;
     }
-
-    private ExpressionMetadata metadata;
 
 }

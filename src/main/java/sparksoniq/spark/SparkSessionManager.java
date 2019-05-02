@@ -44,15 +44,17 @@ import sparksoniq.semantics.DynamicContext;
 
 public class SparkSessionManager {
 
+    private static final String APP_NAME = "jsoniq-on-spark";
+    public static int COLLECT_ITEM_LIMIT = 0;
     private static SparkSessionManager _instance;
+    private static Level LOG_LEVEL = Level.FATAL;
     private SparkConf configuration;
     private SparkSession session;
     private JavaSparkContext javaSparkContext;
 
-    public static int COLLECT_ITEM_LIMIT = 0;
-    private static Level LOG_LEVEL = Level.FATAL;
-    private static final String APP_NAME = "jsoniq-on-spark";
 
+    private SparkSessionManager() {
+    }
 
     public static boolean LIMIT_COLLECT() {
         return COLLECT_ITEM_LIMIT > 0;
@@ -62,9 +64,6 @@ public class SparkSessionManager {
         if (_instance == null)
             _instance = new SparkSessionManager();
         return _instance;
-    }
-
-    private SparkSessionManager() {
     }
 
     public SparkSession getSession() {

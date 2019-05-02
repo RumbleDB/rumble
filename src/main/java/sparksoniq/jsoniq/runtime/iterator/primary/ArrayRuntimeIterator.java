@@ -31,6 +31,8 @@ import java.util.List;
 
 public class ArrayRuntimeIterator extends LocalRuntimeIterator {
 
+    private ArrayItem _item = null;
+
     public ArrayRuntimeIterator(RuntimeIterator arrayItems, IteratorMetadata iteratorMetadata) {
         super(new ArrayList<>(), iteratorMetadata);
         if (arrayItems != null)
@@ -46,6 +48,4 @@ public class ArrayRuntimeIterator extends LocalRuntimeIterator {
             return _item;
         } else throw new IteratorFlowException("Invalid next() call on array iterator", getMetadata());
     }
-
-    private ArrayItem _item = null;
 }

@@ -25,13 +25,8 @@ import java.io.Serializable;
 public class ExpressionMetadata implements Serializable {
 
 
-    public int getTokenLineNumber() {
-        return tokenLineNumber;
-    }
-
-    public int getTokenColumnNumber() {
-        return tokenColumnNumber;
-    }
+    private final int tokenLineNumber;
+    private final int tokenColumnNumber;
 
     public ExpressionMetadata(int line, int column) {
         this.tokenLineNumber = line;
@@ -39,6 +34,11 @@ public class ExpressionMetadata implements Serializable {
 
     }
 
-    private final int tokenLineNumber;
-    private final int tokenColumnNumber;
+    public int getTokenLineNumber() {
+        return tokenLineNumber;
+    }
+
+    public int getTokenColumnNumber() {
+        return tokenColumnNumber;
+    }
 }

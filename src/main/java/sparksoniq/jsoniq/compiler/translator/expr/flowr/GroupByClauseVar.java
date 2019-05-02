@@ -27,15 +27,17 @@ import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 public class GroupByClauseVar extends FlworVarDecl {
 
-    public String getUri() {
-        return uri;
-    }
+    private final String uri;
 
 
     public GroupByClauseVar(VariableReference varRef, FlworVarSequenceType sequence, Expression expr,
                             String uri, ExpressionMetadata metadata) {
         super(FLWOR_CLAUSES.GROUP_VAR, varRef, sequence, expr, metadata);
         this.uri = uri;
+    }
+
+    public String getUri() {
+        return uri;
     }
 
     @Override
@@ -53,6 +55,4 @@ public class GroupByClauseVar extends FlworVarDecl {
         result += ")";
         return result;
     }
-
-    private final String uri;
 }

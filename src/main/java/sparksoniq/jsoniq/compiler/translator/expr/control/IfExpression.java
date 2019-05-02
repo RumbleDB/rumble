@@ -29,6 +29,17 @@ import java.util.List;
 
 public class IfExpression extends Expression {
 
+    private final Expression _elseBranch;
+    private final Expression _condition;
+    private final Expression _branch;
+
+    public IfExpression(Expression condition, Expression branch, Expression elseBranch,
+                        ExpressionMetadata metadataFromContext) {
+        this._condition = condition;
+        this._branch = branch;
+        this._elseBranch = elseBranch;
+    }
+
     public Expression getElseBranch() {
         return _elseBranch;
     }
@@ -39,13 +50,6 @@ public class IfExpression extends Expression {
 
     public Expression getBranch() {
         return _branch;
-    }
-
-    public IfExpression(Expression condition, Expression branch, Expression elseBranch,
-                        ExpressionMetadata metadataFromContext) {
-        this._condition = condition;
-        this._branch = branch;
-        this._elseBranch = elseBranch;
     }
 
     @Override
@@ -74,8 +78,4 @@ public class IfExpression extends Expression {
         result += "))";
         return result;
     }
-
-    private final Expression _elseBranch;
-    private final Expression _condition;
-    private final Expression _branch;
 }

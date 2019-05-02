@@ -23,6 +23,10 @@ import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
 public abstract class AtomicItem extends Item {
+    protected AtomicItem() {
+        super();
+    }
+
     @Override
     public boolean isAtomic() {
         return true;
@@ -33,10 +37,6 @@ public abstract class AtomicItem extends Item {
         if (type.getType().equals(ItemTypes.AtomicItem) || type.getType().equals(ItemTypes.Item))
             return true;
         return false;
-    }
-
-    protected AtomicItem() {
-        super();
     }
 
 }

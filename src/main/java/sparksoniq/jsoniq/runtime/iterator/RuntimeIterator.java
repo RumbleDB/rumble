@@ -53,6 +53,58 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
             this._children.addAll(children);
     }
 
+    /**
+     * This function calculates the effective boolean value of the sequence given by iterator.
+     * Non-empty objects and arrays always return true.
+     * Empty sequence returns false.
+     * Singleton atomic values are evaluated to their effective boolean value.
+     * Multiple atomic values throw an exception.
+     *
+     * @param iterator has to be opened before calling this function
+     * @return
+     */
+    public static boolean getEffectiveBooleanValue(RuntimeIterator iterator) {
+        if (iterator.hasNext()) {
+            Item item = iterator.next();
+            boolean result;
+            if (item.isBoolean())
+                result = item.getBooleanValue();
+            else if (isNumeric(item)) {
+                if (item.isInteger())
+                    result = item.getIntegerValue() != 0;
+                else if (item.isDouble())
+                    result = item.getDoubleValue() != 0;
+                else if (item.isDecimal())
+                    result = !item.getDecimalValue().equals(0);
+                else {
+                    throw new SparksoniqRuntimeException("Unexpected numeric type found while calculating effective boolean value.");
+                }
+            } else if (item.isNull())
+                result = false;
+            else if (item.isString())
+                result = !item.getStringValue().isEmpty();
+            else if (item.isObject())
+                return true;
+            else if (item.isArray())
+                return true;
+            else {
+                throw new SparksoniqRuntimeException("Unexpected item type found while calculating effective boolean value.");
+            }
+
+            if (iterator.hasNext()) {
+                throw new InvalidArgumentTypeException(
+                        "Effective boolean value not defined for sequences of more than one atomic item. "
+                                + "Sequence containing: " + item.serialize() + " must be a singleton."
+                        , iterator.getMetadata());
+            }
+
+            return result;
+        } else {
+            return false;
+        }
+
+    }
+
     public void open(DynamicContext context) {
         if (this._isOpen)
             throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
@@ -146,57 +198,5 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         if (result != null && !(type.isInstance(result)))
             throw new UnexpectedTypeException("Invalid item type returned by iterator", iterator.getMetadata());
         return (T) result;
-    }
-
-    /**
-     * This function calculates the effective boolean value of the sequence given by iterator.
-     * Non-empty objects and arrays always return true.
-     * Empty sequence returns false.
-     * Singleton atomic values are evaluated to their effective boolean value.
-     * Multiple atomic values throw an exception.
-     *
-     * @param iterator has to be opened before calling this function
-     * @return
-     */
-    public static boolean getEffectiveBooleanValue(RuntimeIterator iterator) {
-        if (iterator.hasNext()) {
-            Item item = iterator.next();
-            boolean result;
-            if (item.isBoolean())
-                result = item.getBooleanValue();
-            else if (isNumeric(item)) {
-                if (item.isInteger())
-                    result = item.getIntegerValue() != 0;
-                else if (item.isDouble())
-                    result = item.getDoubleValue() != 0;
-                else if (item.isDecimal())
-                    result = !item.getDecimalValue().equals(0);
-                else {
-                    throw new SparksoniqRuntimeException("Unexpected numeric type found while calculating effective boolean value.");
-                }
-            } else if (item.isNull())
-                result = false;
-            else if (item.isString())
-                result = !item.getStringValue().isEmpty();
-            else if (item.isObject())
-                return true;
-            else if (item.isArray())
-                return true;
-            else {
-                throw new SparksoniqRuntimeException("Unexpected item type found while calculating effective boolean value.");
-            }
-
-            if (iterator.hasNext()) {
-                throw new InvalidArgumentTypeException(
-                        "Effective boolean value not defined for sequences of more than one atomic item. "
-                                + "Sequence containing: " + item.serialize() + " must be a singleton."
-                        , iterator.getMetadata());
-            }
-
-            return result;
-        } else {
-            return false;
-        }
-
     }
 }

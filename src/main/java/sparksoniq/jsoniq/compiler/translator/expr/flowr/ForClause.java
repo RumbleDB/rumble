@@ -30,10 +30,6 @@ import java.util.List;
 public class ForClause extends FlworClause {
 
 
-    public List<ForClauseVar> getForVariables() {
-        return forVariables;
-    }
-
     private final List<ForClauseVar> forVariables;
 
     public ForClause(List<ForClauseVar> vars, ExpressionMetadata metadataFromContext) {
@@ -41,6 +37,10 @@ public class ForClause extends FlworClause {
         if (vars == null || vars.isEmpty())
             throw new SemanticException("For clause must have at least one variable", metadataFromContext);
         this.forVariables = vars;
+    }
+
+    public List<ForClauseVar> getForVariables() {
+        return forVariables;
     }
 
     @Override

@@ -36,15 +36,8 @@ import java.util.List;
 
 public class ObjectItem extends JsonItem {
 
-    @Override
-    public List<String> getKeys() {
-        return _keys;
-    }
-
-    @Override
-    public Collection<? extends Item> getValues() {
-        return _values;
-    }
+    private List<Item> _values;
+    private List<String> _keys;
 
     public ObjectItem(List<String> keys, List<Item> values, ItemMetadata itemMetadata) {
         super();
@@ -82,6 +75,16 @@ public class ObjectItem extends JsonItem {
 
         this._keys = keyList;
         this._values = valueList;
+    }
+
+    @Override
+    public List<String> getKeys() {
+        return _keys;
+    }
+
+    @Override
+    public Collection<? extends Item> getValues() {
+        return _values;
     }
 
     private void checkForDuplicateKeys(List<String> keys, ItemMetadata metadata) {
@@ -162,9 +165,5 @@ public class ObjectItem extends JsonItem {
         this._keys = kryo.readObject(input, ArrayList.class);
         this._values = kryo.readObject(input, ArrayList.class);
     }
-
-
-    private List<Item> _values;
-    private List<String> _keys;
 
 }

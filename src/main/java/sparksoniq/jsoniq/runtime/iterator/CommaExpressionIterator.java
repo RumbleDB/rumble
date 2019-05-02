@@ -27,6 +27,10 @@ import sparksoniq.semantics.DynamicContext;
 import java.util.List;
 
 public class CommaExpressionIterator extends LocalRuntimeIterator {
+    private RuntimeIterator _currentChild;
+    private Item _nextResult;
+    private int _childIndex;
+
     public CommaExpressionIterator(List<RuntimeIterator> childIterators, IteratorMetadata iteratorMetadata) {
         super(childIterators, iteratorMetadata);
     }
@@ -74,8 +78,4 @@ public class CommaExpressionIterator extends LocalRuntimeIterator {
             this._hasNext = true;
         }
     }
-
-    private RuntimeIterator _currentChild;
-    private Item _nextResult;
-    private int _childIndex;
 }

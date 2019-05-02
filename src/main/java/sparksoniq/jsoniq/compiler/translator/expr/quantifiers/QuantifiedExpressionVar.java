@@ -30,6 +30,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class QuantifiedExpressionVar extends ExpressionOrClause {
+    private final VariableReference _variableReference;
+    private final Expression _expression;
+    private final SequenceType _sequenceType;
+
+    public QuantifiedExpressionVar(VariableReference varRef, Expression varExpression,
+                                   SequenceType sequenceType, ExpressionMetadata metadata) {
+        super(metadata);
+        this._variableReference = varRef;
+        this._expression = varExpression;
+        this._sequenceType = sequenceType;
+    }
+
     public Expression getExpression() {
         return _expression;
     }
@@ -39,17 +51,8 @@ public class QuantifiedExpressionVar extends ExpressionOrClause {
         return _variableReference;
     }
 
-
     public SequenceType getSequenceType() {
         return _sequenceType;
-    }
-
-    public QuantifiedExpressionVar(VariableReference varRef, Expression varExpression,
-                                   SequenceType sequenceType, ExpressionMetadata metadata) {
-        super(metadata);
-        this._variableReference = varRef;
-        this._expression = varExpression;
-        this._sequenceType = sequenceType;
     }
 
     @Override
@@ -69,8 +72,4 @@ public class QuantifiedExpressionVar extends ExpressionOrClause {
     public String serializationString(boolean prefix) {
         return null;
     }
-
-    private final VariableReference _variableReference;
-    private final Expression _expression;
-    private final SequenceType _sequenceType;
 }

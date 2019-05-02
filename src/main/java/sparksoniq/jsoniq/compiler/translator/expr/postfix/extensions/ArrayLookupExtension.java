@@ -29,15 +29,15 @@ import java.util.List;
 
 public class ArrayLookupExtension extends PostfixExtension {
 
-    public Expression getExpression() {
-        return _expression;
-    }
-
     Expression _expression;
 
     public ArrayLookupExtension(Expression commaExpr, ExpressionMetadata metadata) {
         super(metadata);
         this._expression = commaExpr;
+    }
+
+    public Expression getExpression() {
+        return _expression;
     }
 
     @Override

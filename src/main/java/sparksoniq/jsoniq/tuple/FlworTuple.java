@@ -35,6 +35,8 @@ import java.util.Set;
 
 public class FlworTuple implements Serializable, KryoSerializable {
 
+    private Map<String, List<Item>> variables;
+
     public FlworTuple() {
         variables = new HashMap<>(1, 1);
     }
@@ -118,7 +120,5 @@ public class FlworTuple implements Serializable, KryoSerializable {
     public void read(Kryo kryo, Input input) {
         variables = kryo.readObject(input, HashMap.class);
     }
-
-    private Map<String, List<Item>> variables;
 
 }

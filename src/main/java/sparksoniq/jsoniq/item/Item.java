@@ -33,6 +33,9 @@ import java.util.List;
 
 //TODO serialize with indentation
 public abstract class Item implements SerializableItem {
+    protected Item() {
+    }
+
     public static boolean isNumeric(Item item) {
         return item.isInteger() || item.isDecimal() || item.isDouble();
     }
@@ -155,6 +158,8 @@ public abstract class Item implements SerializableItem {
         return compareItems(v1, v2) == 0;
     }
 
+    ;
+
     public List<Item> getItems() {
         throw new RuntimeException("Item is not an array.");
     }
@@ -231,8 +236,6 @@ public abstract class Item implements SerializableItem {
         throw new RuntimeException("Item is not a big decimal.");
     }
 
-    ;
-
     public abstract boolean isTypeOf(ItemType type);
 
     public boolean isArray() {
@@ -273,9 +276,6 @@ public abstract class Item implements SerializableItem {
 
     public boolean isDecimal() {
         return false;
-    }
-
-    protected Item() {
     }
 
     private void readObject(ObjectInputStream aInputStream)

@@ -29,15 +29,17 @@ import java.util.List;
 
 public class GroupByClause extends FlworClause {
 
-    public List<GroupByClauseVar> getGroupVariables() {
-        return groupVars;
-    }
+    private final List<GroupByClauseVar> groupVars;
 
     public GroupByClause(List<GroupByClauseVar> vars, ExpressionMetadata metadata) {
         super(FLWOR_CLAUSES.GROUP_BY, metadata);
         if (vars == null || vars.isEmpty())
             throw new SemanticException("Group clause must have at least one variable", metadata);
         this.groupVars = vars;
+    }
+
+    public List<GroupByClauseVar> getGroupVariables() {
+        return groupVars;
     }
 
     @Override
@@ -64,6 +66,4 @@ public class GroupByClause extends FlworClause {
         result += ")";
         return result;
     }
-
-    private final List<GroupByClauseVar> groupVars;
 }

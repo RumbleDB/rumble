@@ -24,6 +24,20 @@ import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 public class OrderByClauseExpr extends FlworClause {
+    private final Expression _expression;
+    private final boolean _ascending;
+    private final EMPTY_ORDER _emptyOrder;
+    private final String _uri;
+
+    public OrderByClauseExpr(Expression expression, boolean ascending,
+                             String uri, EMPTY_ORDER empty_order, ExpressionMetadata metadata) {
+        super(FLWOR_CLAUSES.ORDER_BY_EXPR, metadata);
+        this._expression = expression;
+        this._ascending = ascending;
+        this._uri = uri;
+        this._emptyOrder = empty_order;
+    }
+
     public Expression getExpression() {
         return _expression;
     }
@@ -38,15 +52,6 @@ public class OrderByClauseExpr extends FlworClause {
 
     public String getUri() {
         return _uri;
-    }
-
-    public OrderByClauseExpr(Expression expression, boolean ascending,
-                             String uri, EMPTY_ORDER empty_order, ExpressionMetadata metadata) {
-        super(FLWOR_CLAUSES.ORDER_BY_EXPR, metadata);
-        this._expression = expression;
-        this._ascending = ascending;
-        this._uri = uri;
-        this._emptyOrder = empty_order;
     }
 
     @Override
@@ -64,15 +69,9 @@ public class OrderByClauseExpr extends FlworClause {
 //        result += ")";
         return result;
     }
-
     public enum EMPTY_ORDER {
         NONE,
         FIRST,
         LAST
     }
-
-    private final Expression _expression;
-    private final boolean _ascending;
-    private final EMPTY_ORDER _emptyOrder;
-    private final String _uri;
 }

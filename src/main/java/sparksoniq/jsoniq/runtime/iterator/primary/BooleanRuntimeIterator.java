@@ -25,6 +25,14 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class BooleanRuntimeIterator extends AtomicRuntimeIterator {
+    private boolean _item;
+
+    public BooleanRuntimeIterator(boolean value, IteratorMetadata iteratorMetadata) {
+        super(null, iteratorMetadata);
+        this._item = value;
+
+    }
+
     @Override
     public BooleanItem next() {
         if (this._hasNext) {
@@ -34,13 +42,5 @@ public class BooleanRuntimeIterator extends AtomicRuntimeIterator {
 
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item, getMetadata());
     }
-
-    public BooleanRuntimeIterator(boolean value, IteratorMetadata iteratorMetadata) {
-        super(null, iteratorMetadata);
-        this._item = value;
-
-    }
-
-    private boolean _item;
 }
 

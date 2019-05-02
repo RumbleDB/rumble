@@ -25,15 +25,15 @@ import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 public class DoubleLiteral extends PrimaryExpression {
 
-    public double getValue() {
-        return value;
-    }
-
     private double value;
 
     public DoubleLiteral(double _value, ExpressionMetadata metadata) {
         super(metadata);
         this.value = _value;
+    }
+
+    public double getValue() {
+        return value;
     }
 
     @Override

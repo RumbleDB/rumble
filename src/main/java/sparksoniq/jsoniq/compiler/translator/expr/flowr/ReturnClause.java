@@ -30,13 +30,15 @@ import java.util.List;
 public class ReturnClause extends FlworClause {
 
 
-    public Expression getReturnExpr() {
-        return returnExpr;
-    }
+    private final Expression returnExpr;
 
     public ReturnClause(Expression expr, ExpressionMetadata metadata) {
         super(FLWOR_CLAUSES.RETURN, metadata);
         this.returnExpr = expr;
+    }
+
+    public Expression getReturnExpr() {
+        return returnExpr;
     }
 
     @Override
@@ -52,13 +54,10 @@ public class ReturnClause extends FlworClause {
         return visitor.visitReturnClause(this, argument);
     }
 
-
     @Override
     public String serializationString(boolean prefix) {
         String result = "return " + returnExpr.serializationString(true);
         //result += ")";
         return result;
     }
-
-    private final Expression returnExpr;
 }

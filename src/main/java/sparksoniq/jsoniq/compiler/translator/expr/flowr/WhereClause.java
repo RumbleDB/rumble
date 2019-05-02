@@ -28,13 +28,15 @@ import java.util.List;
 
 public class WhereClause extends FlworClause {
 
-    public Expression getWhereExpression() {
-        return whereExpression;
-    }
+    private final Expression whereExpression;
 
     public WhereClause(Expression expr, ExpressionMetadata metadata) {
         super(FLWOR_CLAUSES.WHERE, metadata);
         this.whereExpression = expr;
+    }
+
+    public Expression getWhereExpression() {
+        return whereExpression;
     }
 
     @Override
@@ -57,6 +59,4 @@ public class WhereClause extends FlworClause {
         result += "))";
         return result;
     }
-
-    private final Expression whereExpression;
 }

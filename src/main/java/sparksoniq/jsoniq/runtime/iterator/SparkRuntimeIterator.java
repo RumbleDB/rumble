@@ -32,6 +32,11 @@ import java.util.List;
 
 public abstract class SparkRuntimeIterator extends RuntimeIterator {
 
+    protected JiqsItemParser parser;
+    protected JavaRDD<Item> _rdd;
+    protected List<Item> result = null;
+    protected int currentResultIndex = 0;
+
     protected SparkRuntimeIterator(List<RuntimeIterator> children, IteratorMetadata iteratorMetadata) {
         super(children, iteratorMetadata);
         this.parser = new JiqsItemParser();
@@ -93,9 +98,4 @@ public abstract class SparkRuntimeIterator extends RuntimeIterator {
         currentResultIndex++;
         return item;
     }
-
-    protected JiqsItemParser parser;
-    protected JavaRDD<Item> _rdd;
-    protected List<Item> result = null;
-    protected int currentResultIndex = 0;
 }
