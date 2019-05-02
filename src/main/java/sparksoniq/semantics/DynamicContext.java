@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.semantics;
+package sparksoniq.semantics;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
@@ -32,14 +32,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class DynamicContext implements Serializable, KryoSerializable{
+public class DynamicContext implements Serializable, KryoSerializable {
 
-    public DynamicContext(){
+    public DynamicContext() {
         this._parent = null;
         this._variableValues = new HashMap<>();
     }
 
-    public DynamicContext(DynamicContext parent){
+    public DynamicContext(DynamicContext parent) {
         this._parent = parent;
         this._variableValues = new HashMap<>();
     }
@@ -49,26 +49,26 @@ public class DynamicContext implements Serializable, KryoSerializable{
         setBindingsFromTuple(tuple);
     }
 
-    public DynamicContext(DynamicContext parent, FlworTuple tuple){
+    public DynamicContext(DynamicContext parent, FlworTuple tuple) {
         this._parent = parent;
         this._variableValues = new HashMap<>();
         setBindingsFromTuple(tuple);
     }
 
     public void setBindingsFromTuple(FlworTuple tuple) {
-        for(String key : tuple.getKeys())
-            if(!key.startsWith("."))
-                this.addVariableValue(key,tuple.getValue(key));
+        for (String key : tuple.getKeys())
+            if (!key.startsWith("."))
+                this.addVariableValue(key, tuple.getValue(key));
     }
 
-    public void addVariableValue(String varName, List<Item> value){
+    public void addVariableValue(String varName, List<Item> value) {
         this._variableValues.put(varName, value);
     }
 
     public List<Item> getVariableValue(String varName) {
-        if(_variableValues.containsKey(varName))
+        if (_variableValues.containsKey(varName))
             return _variableValues.get(varName);
-        else if(_parent !=null)
+        else if (_parent != null)
             return _parent.getVariableValue(varName);
         else
             throw new SparksoniqRuntimeException("Runtime error retrieving variable " +
@@ -79,7 +79,9 @@ public class DynamicContext implements Serializable, KryoSerializable{
         this._variableValues.remove(varName);
     }
 
-    public void removeAllVariables() {this._variableValues.clear();}
+    public void removeAllVariables() {
+        this._variableValues.clear();
+    }
 
     @Override
     public void write(Kryo kryo, Output output) {

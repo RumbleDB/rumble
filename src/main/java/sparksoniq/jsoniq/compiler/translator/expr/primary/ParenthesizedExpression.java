@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.jsoniq.compiler.translator.expr.primary;
+package sparksoniq.jsoniq.compiler.translator.expr.primary;
 
 import sparksoniq.jsoniq.compiler.translator.expr.CommaExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
@@ -46,22 +46,22 @@ public class ParenthesizedExpression extends PrimaryExpression {
     }
 
     @Override
-    public  <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument){
+    public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
         return visitor.visitParenthesizedExpression(this, argument);
     }
 
     @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result =  new ArrayList<>();
-        if(this.expression !=null)
+        List<ExpressionOrClause> result = new ArrayList<>();
+        if (this.expression != null)
             result.add(this.expression);
-        return getDescendantsFromChildren(result,depthSearch);
+        return getDescendantsFromChildren(result, depthSearch);
     }
 
     @Override
-    public String serializationString(boolean prefix){
+    public String serializationString(boolean prefix) {
         String result = "(primaryExpr (parenthesizedExpr (";
-        if(this.expression != null && ((CommaExpression)this.expression).getExpressions().size() >0) {
+        if (this.expression != null && ((CommaExpression) this.expression).getExpressions().size() > 0) {
             result += " " + this.expression.serializationString(true);
         }
 

@@ -62,8 +62,7 @@ public class LogFunctionIterator extends LocalFunctionCallIterator {
                     Double result = Math.log(Item.getNumericValue(value, Double.class));
                     return new DoubleItem(result);
 
-                } catch (IteratorFlowException e)
-                {
+                } catch (IteratorFlowException e) {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
                 }
             } else {

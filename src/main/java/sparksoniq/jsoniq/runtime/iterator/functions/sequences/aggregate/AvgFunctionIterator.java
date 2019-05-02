@@ -70,12 +70,11 @@ public class AvgFunctionIterator extends AggregateFunctionIterator {
                     sum = sum.add(Item.getNumericValue(r, BigDecimal.class));
                 return new DecimalItem(sum.divide(new BigDecimal(results.size())));
 
-            } catch (IteratorFlowException e)
-            {
+            } catch (IteratorFlowException e) {
                 throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
             }
         }
         throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "AVG function",
-                    getMetadata());
+                getMetadata());
     }
 }

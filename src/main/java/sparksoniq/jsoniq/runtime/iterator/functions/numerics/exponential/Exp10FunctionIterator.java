@@ -60,10 +60,9 @@ public class Exp10FunctionIterator extends LocalFunctionCallIterator {
             if (Item.isNumeric(exponent)) {
                 try {
                     Double result = Math.pow(10.0, Item.getNumericValue(exponent, Double.class));
-    
+
                     return new DoubleItem(result);
-                } catch (IteratorFlowException e)
-                {
+                } catch (IteratorFlowException e) {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
                 }
             } else {

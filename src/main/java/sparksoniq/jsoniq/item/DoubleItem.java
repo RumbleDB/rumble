@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.jsoniq.item;
+package sparksoniq.jsoniq.item;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
@@ -25,16 +25,13 @@ import com.esotericsoftware.kryo.io.Output;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
-import javax.naming.OperationNotSupportedException;
-import java.math.BigDecimal;
-
 public class DoubleItem extends AtomicItem {
 
     public double getValue() {
         return _value;
     }
 
-    public DoubleItem(double value){
+    public DoubleItem(double value) {
         super();
         this._value = value;
     }
@@ -45,10 +42,13 @@ public class DoubleItem extends AtomicItem {
     }
 
     @Override
-    public  boolean isDouble(){ return true; }
+    public boolean isDouble() {
+        return true;
+    }
 
-    @Override public boolean isTypeOf(ItemType type) {
-        if(type.getType().equals(ItemTypes.DoubleItem) || super.isTypeOf(type))
+    @Override
+    public boolean isTypeOf(ItemType type) {
+        if (type.getType().equals(ItemTypes.DoubleItem) || super.isTypeOf(type))
             return true;
         return false;
     }

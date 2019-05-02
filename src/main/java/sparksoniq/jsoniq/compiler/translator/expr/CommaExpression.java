@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.jsoniq.compiler.translator.expr;
+package sparksoniq.jsoniq.compiler.translator.expr;
 
 
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
@@ -39,10 +39,10 @@ public class CommaExpression extends Expression {
 
     @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result =  new ArrayList<>();
-        if(this._expressions!=null)
+        List<ExpressionOrClause> result = new ArrayList<>();
+        if (this._expressions != null)
             _expressions.forEach(e -> {
-                if(e!=null)
+                if (e != null)
                     result.add(e);
             });
         return getDescendantsFromChildren(result, depthSearch);
@@ -50,17 +50,17 @@ public class CommaExpression extends Expression {
 
 
     @Override
-    public  <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument){
+    public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
         return visitor.visitCommaExpression(this, argument);
     }
 
     @Override
-    public String serializationString(boolean prefix){
+    public String serializationString(boolean prefix) {
         String result = "(expr ";
         for (Expression expr : _expressions) {
 
-            result += "(exprSingle " + expr.serializationString(false) + (_expressions.size() >=2
-                    && _expressions.indexOf(expr) < _expressions.size() - 1? ") , " : ")");
+            result += "(exprSingle " + expr.serializationString(false) + (_expressions.size() >= 2
+                    && _expressions.indexOf(expr) < _expressions.size() - 1 ? ") , " : ")");
         }
 
         result += ")";

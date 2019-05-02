@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.jsoniq.compiler.translator.expr.flowr;
+package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
@@ -42,31 +42,31 @@ public class ForClauseVar extends FlworVarDecl {
                         VariableReference atVarRef, Expression expression, ExpressionMetadata metadataFromContext) {
         super(FLWOR_CLAUSES.FOR_VAR, varRef, seq, expression, metadataFromContext);
         this.allowEmpty = emptyFlag;
-        this.positionalVariableReference =  atVarRef;
+        this.positionalVariableReference = atVarRef;
     }
 
     @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result =  super.getDescendants(depthSearch);
+        List<ExpressionOrClause> result = super.getDescendants(depthSearch);
 
-        if(positionalVariableReference !=null)
+        if (positionalVariableReference != null)
             result.add(positionalVariableReference);
-        return getDescendantsFromChildren(result,depthSearch);
+        return getDescendantsFromChildren(result, depthSearch);
     }
 
     @Override
-    public  <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument){
+    public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
         return visitor.visitForClauseVar(this, argument);
     }
 
     @Override
-    public String serializationString(boolean prefix){
+    public String serializationString(boolean prefix) {
         String result = "(forVar " + variableReferenceNode.serializationString(false) + " ";
-        if(this.asSequence !=null)
+        if (this.asSequence != null)
             result += "as " + asSequence.serializationString(true) + " ";
-        if(allowEmpty)
+        if (allowEmpty)
             result += "allowing empty ";
-        if(positionalVariableReference != null)
+        if (positionalVariableReference != null)
             result += "at " + positionalVariableReference.serializationString(false) + " ";
         result += "in " + this.expression.serializationString(true);
         result += "))";

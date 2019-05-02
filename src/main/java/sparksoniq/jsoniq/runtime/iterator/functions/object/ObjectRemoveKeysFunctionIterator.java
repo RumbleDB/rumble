@@ -30,7 +30,6 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
-import javax.naming.OperationNotSupportedException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -58,8 +57,7 @@ public class ObjectRemoveKeysFunctionIterator extends ObjectFunctionIterator {
         }
         _removalKeys = new ArrayList<>();
         for (Item removalKeyItem : removalKeys) {
-            if(!removalKeyItem.isString())
-            {
+            if (!removalKeyItem.isString()) {
                 throw new UnexpectedTypeException("Remove-keys function has non-string key args.", getMetadata());
             }
             String removalKey = removalKeyItem.getStringValue();

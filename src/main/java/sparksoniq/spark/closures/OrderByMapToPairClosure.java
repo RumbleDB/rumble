@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.spark.closures;
+package sparksoniq.spark.closures;
 
 import org.apache.spark.api.java.function.PairFunction;
 import scala.Tuple2;
@@ -45,11 +45,11 @@ public class OrderByMapToPairClosure implements PairFunction<FlworTuple, FlworKe
     @Override
     public Tuple2<FlworKey, FlworTuple> call(FlworTuple tuple) throws Exception {
         List<Item> results = new ArrayList<>();
-        for(OrderByClauseSparkIteratorExpression orderByExpression : _expressions){
+        for (OrderByClauseSparkIteratorExpression orderByExpression : _expressions) {
             orderByExpression.getExpression().open(new DynamicContext(tuple));
-            while (orderByExpression.getExpression().hasNext()){
+            while (orderByExpression.getExpression().hasNext()) {
                 Item resultItem = orderByExpression.getExpression().next();
-                if(resultItem != null && !resultItem.isAtomic())
+                if (resultItem != null && !resultItem.isAtomic())
                     throw new NonAtomicKeyException("Order by keys must be atomics",
                             orderByExpression.getIteratorMetadata().getExpressionMetadata());
                 results.add(resultItem);

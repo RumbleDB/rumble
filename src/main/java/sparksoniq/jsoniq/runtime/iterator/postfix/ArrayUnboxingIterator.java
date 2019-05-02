@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.jsoniq.runtime.iterator.postfix;
+package sparksoniq.jsoniq.runtime.iterator.postfix;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
@@ -100,19 +100,18 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
             this._hasNext = true;
         }
     }
-    
+
     @Override
-    public JavaRDD<Item> getRDD(DynamicContext dynamicContext)
-    {
+    public JavaRDD<Item> getRDD(DynamicContext dynamicContext) {
         _currentDynamicContext = dynamicContext;
         JavaRDD<Item> childRDD = this._children.get(0).getRDD(dynamicContext);
         FlatMapFunction<Item, Item> transformation = new ArrayUnboxingClosure();
         JavaRDD<Item> resultRDD = childRDD.flatMap(transformation);
         return resultRDD;
     }
-     @Override
-    public boolean initIsRDD()
-    {
+
+    @Override
+    public boolean initIsRDD() {
         return _iterator.isRDD();
     }
 }

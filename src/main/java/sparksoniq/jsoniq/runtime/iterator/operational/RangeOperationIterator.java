@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -42,7 +42,7 @@ public class RangeOperationIterator extends BinaryOperationBaseIterator {
 
     @Override
     public AtomicItem next() {
-        if(_hasNext == true){
+        if (_hasNext == true) {
             if (_index == _right)
                 this._hasNext = false;
             return new IntegerItem(_index++);
@@ -66,8 +66,7 @@ public class RangeOperationIterator extends BinaryOperationBaseIterator {
             try {
                 _left = Item.getNumericValue(left, Integer.class);
                 _right = Item.getNumericValue(right, Integer.class);
-            } catch (IteratorFlowException e)
-            {
+            } catch (IteratorFlowException e) {
                 throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
             }
             if (_right < _left) {

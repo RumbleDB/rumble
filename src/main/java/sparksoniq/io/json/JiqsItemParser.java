@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,7 +21,15 @@ package sparksoniq.io.json;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import sparksoniq.jsoniq.item.*;
+import sparksoniq.jsoniq.item.ArrayItem;
+import sparksoniq.jsoniq.item.BooleanItem;
+import sparksoniq.jsoniq.item.DecimalItem;
+import sparksoniq.jsoniq.item.DoubleItem;
+import sparksoniq.jsoniq.item.IntegerItem;
+import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.NullItem;
+import sparksoniq.jsoniq.item.ObjectItem;
+import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 

@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,10 +17,15 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.jsoniq.compiler;
+package sparksoniq.jsoniq.compiler;
 
 import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
-import sparksoniq.jsoniq.compiler.translator.expr.primary.*;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.BooleanLiteral;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.DecimalLiteral;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.DoubleLiteral;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.IntegerLiteral;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.NullLiteral;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.PrimaryExpression;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 
 import java.math.BigDecimal;
@@ -28,14 +33,12 @@ import java.math.BigDecimal;
 
 public class ValueTypeHandler {
 
-    public static String getStringValue(JsoniqParser.StringLiteralContext ctx)
-    {
+    public static String getStringValue(JsoniqParser.StringLiteralContext ctx) {
         return ctx.getText().substring(1, ctx.getText().length() - 1);
     }
 
-    public static PrimaryExpression getValueType(String token, ExpressionMetadata metadataFromContext)
-    {
-        switch (token){
+    public static PrimaryExpression getValueType(String token, ExpressionMetadata metadataFromContext) {
+        switch (token) {
             case "null":
                 return new NullLiteral(metadataFromContext);
             case "true":
@@ -49,9 +52,9 @@ public class ValueTypeHandler {
 
     //TODO think of beter way to distinguish numeric literals
     private static PrimaryExpression getNumericLiteral(String token, ExpressionMetadata metadataFromContext) {
-        if(!token.contains(".") && !token.contains("e") && !token.contains("E"))
+        if (!token.contains(".") && !token.contains("e") && !token.contains("E"))
             return new IntegerLiteral(Integer.parseInt(token), metadataFromContext);
-        if(!token.contains("e") && !token.contains("E"))
+        if (!token.contains("e") && !token.contains("E"))
             return new DecimalLiteral(new BigDecimal(token), metadataFromContext);
         return new DoubleLiteral(Double.parseDouble(token), metadataFromContext);
 

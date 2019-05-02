@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.jsoniq.tuple;
+package sparksoniq.jsoniq.tuple;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
@@ -27,30 +27,36 @@ import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.Item;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-public class FlworTuple implements Serializable, KryoSerializable{
+public class FlworTuple implements Serializable, KryoSerializable {
 
-    public FlworTuple(){
+    public FlworTuple() {
         variables = new HashMap<>(1, 1);
     }
 
-    public FlworTuple(int nb){
+    public FlworTuple(int nb) {
         variables = new HashMap<>(nb, 1);
     }
 
     /**
      * Create a deep copy
+     *
      * @param toCopy original tuple
      */
-    public FlworTuple(FlworTuple toCopy){
+    public FlworTuple(FlworTuple toCopy) {
         variables = new HashMap<>(toCopy.getKeys().size(), 1);
-        for(String key: toCopy.getKeys())
+        for (String key : toCopy.getKeys())
             this.putValue(key, toCopy.getValue(key), true);
     }
 
     /**
      * Create a tuple containing only the given key-value pair
+     *
      * @param newKey
      * @param value
      */
@@ -61,21 +67,22 @@ public class FlworTuple implements Serializable, KryoSerializable{
 
     /**
      * Create a deep copy containing new key-value pair
+     *
      * @param toCopy original tuple
      * @param newKey
      * @param value
      */
-    public FlworTuple(FlworTuple toCopy, String newKey, List<Item> value){
+    public FlworTuple(FlworTuple toCopy, String newKey, List<Item> value) {
         this(toCopy);
         this.putValue(newKey, value, false);
     }
 
-    public boolean contains(String key){
+    public boolean contains(String key) {
         return variables.containsKey(key);
     }
 
-    public void putValue(String key, List<Item> value, boolean overrideExistingValue){
-        if(variables.containsKey(key) && overrideExistingValue) {
+    public void putValue(String key, List<Item> value, boolean overrideExistingValue) {
+        if (variables.containsKey(key) && overrideExistingValue) {
             String oldKey = key;
             List<Item> oldValue = variables.get(oldKey);
             while (variables.containsKey(oldKey))
@@ -85,14 +92,14 @@ public class FlworTuple implements Serializable, KryoSerializable{
         variables.put(key, value);
     }
 
-    public void putValue(String key, Item value, boolean overrideExistingValue){
+    public void putValue(String key, Item value, boolean overrideExistingValue) {
         List<Item> itemList = new ArrayList<>(1);
         itemList.add(value);
         this.putValue(key, itemList, overrideExistingValue);
     }
 
-    public List<Item> getValue(String key){
-        if(contains(key))
+    public List<Item> getValue(String key) {
+        if (contains(key))
             return variables.get(key);
 
         throw new SparksoniqRuntimeException("Undeclared FLOWR variable");

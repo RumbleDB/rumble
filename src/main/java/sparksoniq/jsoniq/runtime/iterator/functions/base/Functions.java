@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,15 +28,49 @@ import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayFlattenFunctionI
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayMembersFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArraySizeFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.booleans.BooleanFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.numerics.*;
-import sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential.*;
-import sparksoniq.jsoniq.runtime.iterator.functions.numerics.trigonometric.*;
-import sparksoniq.jsoniq.runtime.iterator.functions.object.*;
-import sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate.*;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.AbsFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.CeilingFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.FloorFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.PiFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.RoundFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.RoundHalfToEvenFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential.Exp10FunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential.ExpFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential.Log10FunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential.LogFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential.PowFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential.SqrtFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.trigonometric.ACosFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.trigonometric.ASinFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.trigonometric.ATan2FunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.trigonometric.ATanFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.trigonometric.CosFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.trigonometric.SinFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.trigonometric.TanFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectAccumulateFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectDescendantFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectDescendantPairsFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectIntersectFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectKeysFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectProjectFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectRemoveKeysFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectValuesFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate.AvgFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate.CountFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate.MaxFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate.MinFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate.SumFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.cardinality.ExactlyOneIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.cardinality.OneOrMoreIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.cardinality.ZeroOrOneIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.*;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.EmptyFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.ExistsFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.HeadFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.InsertBeforeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.RemoveFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.ReverseFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.SubsequenceFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.TailFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.value.DeepEqualFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.value.DistinctValuesFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.value.IndexOfFunctionIterator;
@@ -52,7 +86,65 @@ import sparksoniq.spark.iterator.function.ParseTextFunctionIterator;
 import java.util.HashMap;
 import java.util.List;
 
-import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.*;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ABS;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ACCUMULATE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ACOS;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ASIN;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ATAN;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ATAN2;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.AVG;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.BOOLEAN;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.CEILING;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.CONCAT;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.COS;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.COUNT;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DEEPEQUAL;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DESCENDANTARRAYS;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DESCENDANTOBJECTS;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DESCENDANTPAIRS;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DISTINCTVALUES;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.EMPTY;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.EXACTLYONE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.EXISTS;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.EXP;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.EXP10;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.FLATTEN;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.FLOOR;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.HEAD;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.INDEXOF;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.INSERTBEFORE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.INTERSECT;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.JSON_FILE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.KEYS;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.LOG;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.LOG10;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MAX;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MEMBERS;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MIN;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.NULL;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ONEORMORE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.PARALLELIZE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.PI;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.POW;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.PROJECT;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.REMOVE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.REMOVEKEYS;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.REVERSE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ROUND;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ROUNDHALFTOEVEN;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SIN;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SIZE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SQRT;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.STRINGJOIN;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SUBSEQUENCE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SUBSTRING;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SUM;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.TAIL;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.TAN;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.TEXT_FILE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.TOKENIZE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.VALUES;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ZEROORONE;
 
 public class Functions {
     private static HashMap<SparksoniqFunctionSignature, Class<? extends RuntimeIterator>> buildInFunctions;
@@ -118,7 +210,7 @@ public class Functions {
 
         buildInFunctions.put(new SparksoniqFunctionSignature(SUBSTRING, 2), SubstringFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(SUBSTRING, 3), SubstringFunctionIterator.class);
-        for(int i = 0; i <= 100; i++)
+        for (int i = 0; i <= 100; i++)
             buildInFunctions.put(new SparksoniqFunctionSignature(CONCAT, i), ConcatFunctionIterator.class);
 
         buildInFunctions.put(new SparksoniqFunctionSignature(STRINGJOIN, 1), StringJoinFunction.class);
@@ -146,7 +238,7 @@ public class Functions {
         String fnName = expression.getFunctionName();
         int arity = arguments.size();
         SparksoniqFunctionSignature functionSignature = new SparksoniqFunctionSignature(fnName, arity);
-        if(buildInFunctions.containsKey(functionSignature))
+        if (buildInFunctions.containsKey(functionSignature))
             return buildInFunctions.get(functionSignature);
         throw new UnknownFunctionCallException(fnName, arity, new IteratorMetadata(expression.getMetadata()));
     }
@@ -227,7 +319,6 @@ public class Functions {
          * function that applies a subsequence operation to the given sequence with the given start index and length parameters
          */
         public static final String SUBSEQUENCE = "subsequence";
-
 
 
         /**
@@ -335,7 +426,6 @@ public class Functions {
          * function that returns the the angle in radians subtended at the origin by the point on a plane with coordinates (x, y) and the positive x-axis.
          */
         public static final String ATAN2 = "atan2";
-
 
 
         /**

@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,18 +17,16 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.jsoniq.item;
+package sparksoniq.jsoniq.item;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import org.apache.commons.lang3.StringEscapeUtils;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
-import org.apache.commons.lang3.StringEscapeUtils;
-
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 public class ArrayItem extends JsonItem {
@@ -37,7 +35,7 @@ public class ArrayItem extends JsonItem {
         return _arrayItems;
     }
 
-    public ArrayItem(List<Item> arrayItems){
+    public ArrayItem(List<Item> arrayItems) {
         super();
         this._arrayItems = arrayItems;
     }
@@ -48,18 +46,23 @@ public class ArrayItem extends JsonItem {
     }
 
     @Override
-    public void putItem(Item value) { this._arrayItems.add(value); }
+    public void putItem(Item value) {
+        this._arrayItems.add(value);
+    }
 
     @Override
-    public  boolean isArray(){ return true; }
+    public boolean isArray() {
+        return true;
+    }
 
     @Override
     public int getSize() {
         return this._arrayItems.size();
     }
 
-    @Override public boolean isTypeOf(ItemType type) {
-        if(type.getType().equals(ItemTypes.ArrayItem) || super.isTypeOf(type))
+    @Override
+    public boolean isTypeOf(ItemType type) {
+        if (type.getType().equals(ItemTypes.ArrayItem) || super.isTypeOf(type))
             return true;
         return false;
     }
@@ -70,18 +73,17 @@ public class ArrayItem extends JsonItem {
         sb.append("[ ");
         for (Item item : this._arrayItems) {
             boolean isStringValue = item.isString();
-            if(isStringValue) {
+            if (isStringValue) {
                 sb.append("\"");
                 sb.append(StringEscapeUtils.escapeJson(item.serialize()));
                 sb.append("\"");
             } else {
-              sb.append(item.serialize());
+                sb.append(item.serialize());
             }
-            if(_arrayItems.indexOf(item) < _arrayItems.size() -1)
-            {
-              sb.append(", ");
+            if (_arrayItems.indexOf(item) < _arrayItems.size() - 1) {
+                sb.append(", ");
             } else {
-              sb.append(" ");
+                sb.append(" ");
             }
         }
         sb.append("]");

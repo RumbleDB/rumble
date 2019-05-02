@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.jsoniq.compiler.translator.expr.quantifiers;
+package sparksoniq.jsoniq.compiler.translator.expr.quantifiers;
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class QuantifiedExpression extends Expression {
-    public enum QuantifiedOperators{
+    public enum QuantifiedOperators {
         EVERY,
         SOME
     }
@@ -46,32 +46,32 @@ public class QuantifiedExpression extends Expression {
         return _variables;
     }
 
-    public QuantifiedExpression(QuantifiedOperators operator, Expression expression, List<QuantifiedExpressionVar> vars, ExpressionMetadata metadataFromContext){
+    public QuantifiedExpression(QuantifiedOperators operator, Expression expression, List<QuantifiedExpressionVar> vars, ExpressionMetadata metadataFromContext) {
         super(metadataFromContext);
         this._operator = operator;
-        this._variables  = vars;
+        this._variables = vars;
         this._expression = expression;
     }
 
     @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result =  new ArrayList<>();
-        if(_variables!=null)
+        List<ExpressionOrClause> result = new ArrayList<>();
+        if (_variables != null)
             _variables.forEach(e -> {
                 if (e != null)
                     result.add(e);
             });
         result.add(_expression);
-        return getDescendantsFromChildren(result,depthSearch);
+        return getDescendantsFromChildren(result, depthSearch);
     }
 
     @Override
-    public  <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument){
+    public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
         return visitor.visitQuantifiedExpression(this, argument);
     }
 
     @Override
-    public String serializationString(boolean prefix){
+    public String serializationString(boolean prefix) {
         return "";
     }
 

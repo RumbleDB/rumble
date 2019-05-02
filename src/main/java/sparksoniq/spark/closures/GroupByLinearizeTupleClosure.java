@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.spark.closures;
+package sparksoniq.spark.closures;
 
 import org.apache.spark.api.java.function.Function;
 import scala.Tuple2;
@@ -42,13 +42,13 @@ public class GroupByLinearizeTupleClosure implements Function<Tuple2<FlworKey, I
         Iterator<FlworTuple> iterator = v1._2().iterator();
         FlworTuple oldFirstTuple = iterator.next();
         FlworTuple newTuple = new FlworTuple(oldFirstTuple.getKeys().size());
-        for(String tupleVariable : oldFirstTuple.getKeys()){
+        for (String tupleVariable : oldFirstTuple.getKeys()) {
             iterator = v1._2().iterator();
-            if(_groupVariables.stream().anyMatch( v -> v.getVariableReference().getVariableName().equals(tupleVariable)))
+            if (_groupVariables.stream().anyMatch(v -> v.getVariableReference().getVariableName().equals(tupleVariable)))
                 newTuple.putValue(tupleVariable, oldFirstTuple.getValue(tupleVariable), false);
             else {
                 List<Item> allValues = new ArrayList<>();
-                while(iterator.hasNext())
+                while (iterator.hasNext())
                     allValues.addAll(iterator.next().getValue(tupleVariable));
                 newTuple.putValue(tupleVariable, allValues, false);
             }

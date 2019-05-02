@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,12 +17,16 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.jsoniq.runtime.iterator.operational;
+package sparksoniq.jsoniq.runtime.iterator.operational;
 
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
-import sparksoniq.jsoniq.item.*;
+import sparksoniq.jsoniq.item.AtomicItem;
+import sparksoniq.jsoniq.item.DecimalItem;
+import sparksoniq.jsoniq.item.DoubleItem;
+import sparksoniq.jsoniq.item.IntegerItem;
+import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -39,49 +43,46 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
 
     public AdditiveOperationIterator(RuntimeIterator left, RuntimeIterator right,
                                      OperationalExpressionBase.Operator operator, IteratorMetadata iteratorMetadata) {
-        super(left,right,operator, iteratorMetadata);
+        super(left, right, operator, iteratorMetadata);
     }
 
     @Override
     public AtomicItem next() {
-        if(this._hasNext){
+        if (this._hasNext) {
             this._hasNext = false;
 
             Type returnType = Item.getNumericResultType(_left, _right);
-            if(returnType.equals(IntegerItem.class)){
+            if (returnType.equals(IntegerItem.class)) {
                 try {
                     int l = Item.<Integer>getNumericValue(_left, Integer.class);
                     int r = Item.<Integer>getNumericValue(_right, Integer.class);
-                    return this._operator == OperationalExpressionBase.Operator.PLUS?
+                    return this._operator == OperationalExpressionBase.Operator.PLUS ?
                             new IntegerItem(l + r) :
                             new IntegerItem(l - r);
 
-                } catch (IteratorFlowException e)
-                {
+                } catch (IteratorFlowException e) {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
                 }
-            } else if(returnType.equals(DoubleItem.class)){
+            } else if (returnType.equals(DoubleItem.class)) {
                 try {
                     double l = Item.<Double>getNumericValue(_left, Double.class);
                     double r = Item.<Double>getNumericValue(_right, Double.class);
-                    return this._operator == OperationalExpressionBase.Operator.PLUS?
+                    return this._operator == OperationalExpressionBase.Operator.PLUS ?
                             new DoubleItem(l + r) :
                             new DoubleItem(l - r);
 
-                } catch (IteratorFlowException e)
-                {
+                } catch (IteratorFlowException e) {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
                 }
-            } else if(returnType.equals(DecimalItem.class)){
+            } else if (returnType.equals(DecimalItem.class)) {
                 try {
                     BigDecimal l = Item.<BigDecimal>getNumericValue(_left, BigDecimal.class);
                     BigDecimal r = Item.<BigDecimal>getNumericValue(_right, BigDecimal.class);
-                    return this._operator == OperationalExpressionBase.Operator.PLUS?
+                    return this._operator == OperationalExpressionBase.Operator.PLUS ?
                             new DecimalItem(l.add(r)) :
                             new DecimalItem(l.subtract(r));
 
-                } catch (IteratorFlowException e)
-                {
+                } catch (IteratorFlowException e) {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
                 }
             } else {
@@ -99,13 +100,12 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
         _leftIterator.open(_currentDynamicContext);
         _rightIterator.open(_currentDynamicContext);
 
-        if(!_leftIterator.hasNext() || !_rightIterator.hasNext()){
+        if (!_leftIterator.hasNext() || !_rightIterator.hasNext()) {
             this._hasNext = false;
-        }
-        else {
+        } else {
             _left = _leftIterator.next();
             _right = _rightIterator.next();
-            if(_leftIterator.hasNext() || _rightIterator.hasNext() || !Item.isNumeric(_left) || !Item.isNumeric(_right))
+            if (_leftIterator.hasNext() || _rightIterator.hasNext() || !Item.isNumeric(_left) || !Item.isNumeric(_right))
                 throw new UnexpectedTypeException("Additive expression has non numeric args " +
                         _left.serialize() + ", " + _right.serialize(), getMetadata());
 

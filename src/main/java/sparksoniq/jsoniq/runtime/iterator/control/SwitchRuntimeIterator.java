@@ -22,9 +22,7 @@ package sparksoniq.jsoniq.runtime.iterator.control;
 
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
-import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -87,8 +85,7 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
 
         if (testValue != null && testValue.isArray()) {
             throw new NonAtomicKeyException("Invalid args. Switch condition can't be an array type", getMetadata().getExpressionMetadata());
-        }
-        else if (testValue != null && testValue.isObject()) {
+        } else if (testValue != null && testValue.isObject()) {
             throw new NonAtomicKeyException("Invalid args. Switch condition  can't be an object type", getMetadata().getExpressionMetadata());
         }
 
@@ -98,8 +95,7 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
 
             if (caseValue != null && caseValue.isArray()) {
                 throw new NonAtomicKeyException("Invalid args. Switch case can't be an array type", getMetadata().getExpressionMetadata());
-            }
-            else if (caseValue != null && caseValue.isObject()) {
+            } else if (caseValue != null && caseValue.isObject()) {
                 throw new NonAtomicKeyException("Invalid args. Switch case  can't be an object type", getMetadata().getExpressionMetadata());
             }
 
@@ -111,8 +107,7 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
                 } else {
                     // no match, do nothing
                 }
-            }
-            else if (caseValue != null && Item.checkEquality(testValue, caseValue)) {
+            } else if (caseValue != null && Item.checkEquality(testValue, caseValue)) {
                 matchingIterator = cases.get(caseKey);
                 break;
             }

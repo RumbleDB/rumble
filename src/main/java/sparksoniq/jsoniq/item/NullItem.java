@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,22 +17,20 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.jsoniq.item;
+package sparksoniq.jsoniq.item;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
-import javax.naming.OperationNotSupportedException;
-import java.math.BigDecimal;
-
 public class NullItem extends AtomicItem {
 
-    public NullItem(){super();}
+    public NullItem() {
+        super();
+    }
 
     @Override
-    public boolean isNull()
-    {
+    public boolean isNull() {
         return true;
     }
 
@@ -43,7 +41,7 @@ public class NullItem extends AtomicItem {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeObjectOrNull(output,null, Item.class);
+        kryo.writeObjectOrNull(output, null, Item.class);
     }
 
     @Override

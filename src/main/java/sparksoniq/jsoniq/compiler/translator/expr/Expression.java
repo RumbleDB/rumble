@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.jsoniq.compiler.translator.expr;
+package sparksoniq.jsoniq.compiler.translator.expr;
 
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.StaticContext;
@@ -25,13 +25,11 @@ import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 public abstract class Expression extends ExpressionOrClause {
 
-    public Expression()
-    {
+    public Expression() {
         super();
     }
 
-    public Expression(ExpressionMetadata metadata)
-    {
+    public Expression(ExpressionMetadata metadata) {
         super(metadata);
     }
 
@@ -51,7 +49,7 @@ public abstract class Expression extends ExpressionOrClause {
     protected StaticContext _staticContext;
 
     @Override
-    public String serializationString(boolean prefix){
+    public String serializationString(boolean prefix) {
         return "";
     }
 

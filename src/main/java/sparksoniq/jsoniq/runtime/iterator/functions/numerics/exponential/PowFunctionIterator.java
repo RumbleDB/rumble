@@ -70,8 +70,7 @@ public class PowFunctionIterator extends LocalFunctionCallIterator {
                             , Item.getNumericValue(exponent, Double.class));
                     this._hasNext = false;
                     return new DoubleItem(result);
-                } catch (IteratorFlowException e)
-                {
+                } catch (IteratorFlowException e) {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
                 }
             } else {

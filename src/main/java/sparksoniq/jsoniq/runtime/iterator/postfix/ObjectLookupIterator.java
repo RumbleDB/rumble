@@ -24,7 +24,12 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 import sparksoniq.exceptions.InvalidSelectorException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
-import sparksoniq.jsoniq.item.*;
+import sparksoniq.jsoniq.item.BooleanItem;
+import sparksoniq.jsoniq.item.DecimalItem;
+import sparksoniq.jsoniq.item.DoubleItem;
+import sparksoniq.jsoniq.item.IntegerItem;
+import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.ContextExpressionIterator;
@@ -73,16 +78,16 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             } else {
                 // convert to string
                 if (_lookupKey.isBoolean()) {
-                    Boolean value = ((BooleanItem)_lookupKey).getValue();
+                    Boolean value = ((BooleanItem) _lookupKey).getValue();
                     _lookupKey = new StringItem(value.toString());
                 } else if (_lookupKey.isDecimal()) {
-                    BigDecimal value = ((DecimalItem)_lookupKey).getValue();
+                    BigDecimal value = ((DecimalItem) _lookupKey).getValue();
                     _lookupKey = new StringItem(value.toString());
                 } else if (_lookupKey.isDouble()) {
-                    Double value = ((DoubleItem)_lookupKey).getValue();
+                    Double value = ((DoubleItem) _lookupKey).getValue();
                     _lookupKey = new StringItem(value.toString());
                 } else if (_lookupKey.isInteger()) {
-                    Integer value = ((IntegerItem)_lookupKey).getValue();
+                    Integer value = ((IntegerItem) _lookupKey).getValue();
                     _lookupKey = new StringItem(value.toString());
                 } else if (_lookupKey.isString()) {
                     // do nothing
@@ -102,7 +107,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         _iterator.open(_currentDynamicContext);
         setNextResult();
     }
-    
+
     @Override
     protected boolean hasNextLocal() {
         return _hasNext;
@@ -121,7 +126,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
 
     @Override
     public Item nextLocal() {
-        if(_hasNext == true){
+        if (_hasNext == true) {
             Item result = _nextResult;  // save the result to be returned
             setNextResult();            // calculate and store the next result
             return result;
@@ -157,19 +162,15 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JavaRDD<Item> getRDD(DynamicContext dynamicContext)
-    {
+    public JavaRDD<Item> getRDD(DynamicContext dynamicContext) {
         _currentDynamicContext = dynamicContext;
         JavaRDD<Item> childRDD = this._children.get(0).getRDD(dynamicContext);
         initLookupKey();
         String key = null;
-        if(_contextLookup)
-        {
+        if (_contextLookup) {
             // For now this will always be an error. Later on we will pass the dynamic context from the parent iterator.
-            key = ((StringItem)_currentDynamicContext.getVariableValue("$$").get(0)).getStringValue();
-        }
-        else
-        {
+            key = ((StringItem) _currentDynamicContext.getVariableValue("$$").get(0)).getStringValue();
+        } else {
             key = ((StringItem) _lookupKey).getStringValue();
         }
         FlatMapFunction<Item, Item> transformation = new ObjectLookupClosure(key);
@@ -179,8 +180,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public boolean initIsRDD()
-    {
+    public boolean initIsRDD() {
         return _iterator.isRDD();
     }
 }

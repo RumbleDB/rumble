@@ -45,7 +45,7 @@ public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
     public CountClauseSparkIterator(RuntimeTupleIterator child, RuntimeIterator variableReference, IteratorMetadata iteratorMetadata) {
         super(child, iteratorMetadata);
         _variableName = ((VariableReferenceIterator) variableReference).getVariableName();
-        _currentCountIndex = 1 ;    // indices start at 1 in JSONiq
+        _currentCountIndex = 1;    // indices start at 1 in JSONiq
     }
 
     @Override
@@ -76,7 +76,7 @@ public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
 
     @Override
     public FlworTuple next() {
-        if(_hasNext == true){
+        if (_hasNext == true) {
             FlworTuple result = _nextLocalTupleResult;      // save the result to be returned
             setNextLocalTupleResult();              // calculate and store the next result
             return result;

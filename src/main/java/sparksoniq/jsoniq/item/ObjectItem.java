@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,23 +17,24 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.jsoniq.item;
+package sparksoniq.jsoniq.item;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import org.apache.commons.lang3.StringEscapeUtils;
 import sparksoniq.exceptions.DuplicateObjectKeyException;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
-import javax.naming.OperationNotSupportedException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 
-import org.apache.commons.lang3.StringEscapeUtils;
-
-import java.util.*;
-
-public class ObjectItem extends JsonItem{
+public class ObjectItem extends JsonItem {
 
     @Override
     public List<String> getKeys() {
@@ -45,7 +46,7 @@ public class ObjectItem extends JsonItem{
         return _values;
     }
 
-    public ObjectItem(List<String> keys, List<Item> values, ItemMetadata itemMetadata){
+    public ObjectItem(List<String> keys, List<Item> values, ItemMetadata itemMetadata) {
         super();
         checkForDuplicateKeys(keys, itemMetadata);
         this._keys = keys;
@@ -55,6 +56,7 @@ public class ObjectItem extends JsonItem{
     /**
      * ObjectItem constructor from the given map data structure.
      * For each key, the corresponding values list is turned into an ArrayItem if it contains more than a single element.
+     *
      * @param keyValuePairs LinkedHashMap -- this map implementation preserves order of the keys -- essential for functionality
      */
     public ObjectItem(LinkedHashMap<String, List<Item>> keyValuePairs) {
@@ -62,7 +64,7 @@ public class ObjectItem extends JsonItem{
 
         List<String> keyList = new ArrayList<>();
         List<Item> valueList = new ArrayList<>();
-        for (String key:keyValuePairs.keySet()) {
+        for (String key : keyValuePairs.keySet()) {
             // add all keys to the keyList
             keyList.add(key);
             List<Item> values = keyValuePairs.get(key);
@@ -70,12 +72,10 @@ public class ObjectItem extends JsonItem{
             if (values.size() > 1) {
                 ArrayItem valuesArray = new ArrayItem(values);
                 valueList.add(valuesArray);
-            }
-            else if (values.size() == 1) {
+            } else if (values.size() == 1) {
                 Item value = values.get(0);
                 valueList.add(value);
-            }
-            else {
+            } else {
                 throw new RuntimeException("Unexpected list size found.");
             }
         }
@@ -86,8 +86,8 @@ public class ObjectItem extends JsonItem{
 
     private void checkForDuplicateKeys(List<String> keys, ItemMetadata metadata) {
         HashMap<String, Integer> frequencies = new HashMap<>();
-        for(String key : keys) {
-            if(frequencies.containsKey(key))
+        for (String key : keys) {
+            if (frequencies.containsKey(key))
                 throw new DuplicateObjectKeyException(key, metadata.getExpressionMetadata());
 
             else
@@ -97,7 +97,7 @@ public class ObjectItem extends JsonItem{
 
     @Override
     public Item getItemByKey(String s) {
-        if(_keys.contains(s))
+        if (_keys.contains(s))
             return _values.get(_keys.indexOf(s));
         else
             return null;
@@ -105,8 +105,8 @@ public class ObjectItem extends JsonItem{
 
     @Override
     public void putItemByKey(String s, Item value) {
-        _values.replaceAll(item ->{
-            if(_values.indexOf(item) ==_keys.indexOf(s))
+        _values.replaceAll(item -> {
+            if (_values.indexOf(item) == _keys.indexOf(s))
                 return value;
             else
                 return item;
@@ -114,10 +114,13 @@ public class ObjectItem extends JsonItem{
     }
 
     @Override
-    public  boolean isObject(){ return true; }
+    public boolean isObject() {
+        return true;
+    }
 
-    @Override public boolean isTypeOf(ItemType type) {
-        if(type.getType().equals(ItemTypes.ObjectItem) || super.isTypeOf(type))
+    @Override
+    public boolean isTypeOf(ItemType type) {
+        if (type.getType().equals(ItemTypes.ObjectItem) || super.isTypeOf(type))
             return true;
         return false;
     }
@@ -131,8 +134,7 @@ public class ObjectItem extends JsonItem{
             Item value = _values.get(i);
             boolean isStringValue = value.isString();
             sb.append("\"" + StringEscapeUtils.escapeJson(key) + "\"" + " : ");
-            if(isStringValue)
-            {
+            if (isStringValue) {
                 sb.append("\"");
                 sb.append(StringEscapeUtils.escapeJson(value.serialize()));
                 sb.append("\"");
@@ -140,7 +142,7 @@ public class ObjectItem extends JsonItem{
                 sb.append(value.serialize());
             }
 
-            if(i < _keys.size() -1)
+            if (i < _keys.size() - 1)
                 sb.append(", ");
             else
                 sb.append(" ");

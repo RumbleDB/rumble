@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,7 +22,11 @@ package sparksoniq.jsoniq.runtime.iterator.operational;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
-import sparksoniq.jsoniq.item.*;
+import sparksoniq.jsoniq.item.AtomicItem;
+import sparksoniq.jsoniq.item.DecimalItem;
+import sparksoniq.jsoniq.item.DoubleItem;
+import sparksoniq.jsoniq.item.IntegerItem;
+import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -100,8 +104,7 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
                         default:
                             new IteratorFlowException("Non recognized multicative operator.", getMetadata());
                     }
-                } catch (IteratorFlowException e)
-                {
+                } catch (IteratorFlowException e) {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
                 }
             } else if (returnType.equals(DoubleItem.class)) {

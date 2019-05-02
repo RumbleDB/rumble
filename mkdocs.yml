@@ -1,11 +1,11 @@
 site_name: Sparksoniq documentation
 pages:
-- '1. Documentation home': 'index.md'
-- '2. Getting started': 'Getting started.md'
-- '3. Run on a cluster': 'Run on a cluster.md'
-- '4. The JSONiq language': 'JSONiq.md'
-- '5. Function library': 'Function library.md'
-- '6. Error codes': 'Error codes.md'
-- '7. Compile from GitHub': 'install.md'
-- '8. Licenses': 'Licenses.md'
+  - '1. Documentation home': 'index.md'
+  - '2. Getting started': 'Getting started.md'
+  - '3. Run on a cluster': 'Run on a cluster.md'
+  - '4. The JSONiq language': 'JSONiq.md'
+  - '5. Function library': 'Function library.md'
+  - '6. Error codes': 'Error codes.md'
+  - '7. Compile from GitHub': 'install.md'
+  - '8. Licenses': 'Licenses.md'
 theme: readthedocs

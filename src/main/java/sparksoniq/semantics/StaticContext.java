@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.semantics;
+package sparksoniq.semantics;
 
 import sparksoniq.exceptions.SemanticException;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
@@ -33,21 +33,21 @@ public class StaticContext {
         return _parent;
     }
 
-    public StaticContext(){
+    public StaticContext() {
         this._parent = null;
         this._inScopeVariables = new HashMap<>();
-        }
+    }
 
-    public StaticContext(StaticContext parent){
+    public StaticContext(StaticContext parent) {
         this._parent = parent;
         this._inScopeVariables = new HashMap<>();
     }
 
-    public boolean isInScope(String varName){
+    public boolean isInScope(String varName) {
         boolean found = false;
-        if(_inScopeVariables.containsKey(varName))
+        if (_inScopeVariables.containsKey(varName))
             return true;
-        else{
+        else {
             StaticContext ancestor = _parent;
             while (ancestor != null) {
                 found = found || ancestor.getInScopeVariables().containsKey(varName);
@@ -58,15 +58,15 @@ public class StaticContext {
     }
 
     public SequenceType getVariableSequenceType(String varName) {
-        if(_inScopeVariables.containsKey(varName))
+        if (_inScopeVariables.containsKey(varName))
             return _inScopeVariables.get(varName).getFirst();
-        else if(_parent !=null)
+        else if (_parent != null)
             return _parent.getVariableSequenceType(varName);
         else
             throw new SemanticException("Variable " + varName + " not in scope", null);
     }
 
-    public void addVariable(String varName, SequenceType type, ExpressionMetadata metadata){
+    public void addVariable(String varName, SequenceType type, ExpressionMetadata metadata) {
         this._inScopeVariables.put(varName, new Tuple<>(type, metadata));
     }
 
@@ -74,6 +74,7 @@ public class StaticContext {
     protected Map<String, Tuple<SequenceType, ExpressionMetadata>> getInScopeVariables() {
         return _inScopeVariables;
     }
+
     private Map<String, Tuple<SequenceType, ExpressionMetadata>> _inScopeVariables;
     private StaticContext _parent;
 }

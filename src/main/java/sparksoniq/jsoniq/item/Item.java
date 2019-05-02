@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,7 +23,6 @@ import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.base.SerializableItem;
 import sparksoniq.semantics.types.ItemType;
 
-import javax.naming.OperationNotSupportedException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -104,8 +103,7 @@ public abstract class Item implements SerializableItem {
                 return item.getDoubleValue() != 0;
             else if (item.isDecimal())
                 return !item.getDecimalValue().equals(0);
-        }
-        else if (item.isNull())
+        } else if (item.isNull())
             return false;
         else if (item.isString())
             return !item.getStringValue().isEmpty();
@@ -121,6 +119,7 @@ public abstract class Item implements SerializableItem {
      * Function that compares 2 items.
      * Non-atomics can't be compared.
      * Items have to be of the same type or one them has to be null.
+     *
      * @return -1 if v1 < v2; 0 if v1 == v2; 1 if v1 > v2;
      */
     public static int compareItems(Item v1, Item v2) {
@@ -133,20 +132,17 @@ public abstract class Item implements SerializableItem {
             Boolean value1 = new Boolean(v1.getBooleanValue());
             Boolean value2 = new Boolean(v2.getBooleanValue());
             result = value1.compareTo(value2);
-        } else if (v1.isString()&& v2.isString()) {
+        } else if (v1.isString() && v2.isString()) {
             String value1 = v1.getStringValue();
             String value2 = v2.getStringValue();
             result = value1.compareTo(value2);
-        }
-        else if (v1.isNull() || v2.isNull()) {
+        } else if (v1.isNull() || v2.isNull()) {
             // null equals null
             if (v1.isNull() && v2.isNull()) {
                 result = 0;
-            }
-            else if (v1.isNull()) {
+            } else if (v1.isNull()) {
                 result = -1;
-            }
-            else{
+            } else {
                 result = 1;
             }
         } else {
@@ -161,55 +157,81 @@ public abstract class Item implements SerializableItem {
 
     public List<Item> getItems() {
         throw new RuntimeException("Item is not an array.");
-    };
+    }
+
+    ;
 
     public Item getItemAt(int i) {
         throw new RuntimeException("Item is not an array.");
-    };
+    }
+
+    ;
 
     public void putItem(Item value) {
         throw new RuntimeException("Item is not an array.");
-    };
+    }
+
+    ;
 
     public List<String> getKeys() {
         throw new RuntimeException("Item is not an object.");
-    };
+    }
+
+    ;
 
     public Collection<? extends Item> getValues() {
         throw new RuntimeException("Item is not an object.");
-    };
+    }
+
+    ;
 
     public Item getItemByKey(String s) {
         throw new RuntimeException("Item is not an object.");
-    };
+    }
+
+    ;
 
     public void putItemByKey(String s, Item value) {
         throw new RuntimeException("Item is not an object.");
-    };
+    }
+
+    ;
 
     public int getSize() {
         throw new RuntimeException("Item is not an array.");
-    };
+    }
+
+    ;
 
     public String getStringValue() {
         throw new RuntimeException("Item is not a string.");
-    };
+    }
+
+    ;
 
     public boolean getBooleanValue() {
         throw new RuntimeException("Item is not a boolean.");
-    };
+    }
+
+    ;
 
     public double getDoubleValue() {
         throw new RuntimeException("Item is not a double.");
-    };
+    }
+
+    ;
 
     public int getIntegerValue() {
         throw new RuntimeException("Item is not an integer.");
-    };
+    }
+
+    ;
 
     public BigDecimal getDecimalValue() {
         throw new RuntimeException("Item is not a big decimal.");
-    };
+    }
+
+    ;
 
     public abstract boolean isTypeOf(ItemType type);
 

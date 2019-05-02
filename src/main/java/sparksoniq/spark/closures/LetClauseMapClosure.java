@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.spark.closures;
+package sparksoniq.spark.closures;
 
 import org.apache.spark.api.java.function.Function;
 import sparksoniq.jsoniq.item.Item;
@@ -32,10 +32,11 @@ public class LetClauseMapClosure implements Function<FlworTuple, FlworTuple> {
     private final String _variableName;
     private final RuntimeIterator _expression;
 
-    public LetClauseMapClosure( String variableName, RuntimeIterator expression) {
+    public LetClauseMapClosure(String variableName, RuntimeIterator expression) {
         this._expression = expression;
         this._variableName = variableName;
     }
+
     @Override
     public FlworTuple call(FlworTuple v1) throws Exception {
         List<Item> result = new ArrayList<>();

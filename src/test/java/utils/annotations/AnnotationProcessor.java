@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package utils.annotations;
+package utils.annotations;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -53,10 +53,14 @@ public class AnnotationProcessor {
             return errorCode;
         }
 
-        public String getErrorMetadata() { return errorMetadata; }
+        public String getErrorMetadata() {
+            return errorMetadata;
+        }
 
         public abstract boolean shouldParse();
+
         public abstract boolean shouldCompile();
+
         public abstract boolean shouldRun();
 
         protected String expectedOutput = "";
@@ -82,10 +86,14 @@ public class AnnotationProcessor {
         }
 
         @Override
-        public boolean shouldCompile() {return true;}
+        public boolean shouldCompile() {
+            return true;
+        }
 
         @Override
-        public boolean shouldRun() {return true;}
+        public boolean shouldRun() {
+            return true;
+        }
     }
 
     public static class UnrunnableTestAnnotation extends TestAnnotation {
@@ -102,10 +110,14 @@ public class AnnotationProcessor {
         }
 
         @Override
-        public boolean shouldCompile() {return true;}
+        public boolean shouldCompile() {
+            return true;
+        }
 
         @Override
-        public boolean shouldRun() {return false;}
+        public boolean shouldRun() {
+            return false;
+        }
 
     }
 
@@ -123,7 +135,9 @@ public class AnnotationProcessor {
         }
 
         @Override
-        public boolean shouldCompile() {return false;}
+        public boolean shouldCompile() {
+            return false;
+        }
 
         @Override
         public boolean shouldRun() {
@@ -143,7 +157,9 @@ public class AnnotationProcessor {
         }
 
         @Override
-        public boolean shouldCompile() {return true;}
+        public boolean shouldCompile() {
+            return true;
+        }
 
         @Override
         public boolean shouldRun() {
@@ -240,16 +256,16 @@ public class AnnotationProcessor {
                 shouldRun = Optional.of(false);
             } else if (token.contains("=")) {
 
-            String[] tokenParts = token.split("=", 2);
-            String key = tokenParts[0].trim();
-            String value = tokenParts[1].trim();
-            // Trim any quotes surrounding the value.
-            if (value.startsWith("\"")) {
-                value = value.substring(1, value.length() - 1);
+                String[] tokenParts = token.split("=", 2);
+                String key = tokenParts[0].trim();
+                String value = tokenParts[1].trim();
+                // Trim any quotes surrounding the value.
+                if (value.startsWith("\"")) {
+                    value = value.substring(1, value.length() - 1);
+                }
+                value = value.replaceAll("([^\\\\])\\\\n", "$1\n").replaceAll("\\\\\\\\n", "\\\\n");
+                parameters.put(key, value);
             }
-            value = value.replaceAll("([^\\\\])\\\\n", "$1\n").replaceAll("\\\\\\\\n", "\\\\n");
-            parameters.put(key, value);
-        }
         }
 
         if (!shouldParse.isPresent() && !shouldCompile.isPresent() && !shouldRun.isPresent()) {
@@ -257,16 +273,16 @@ public class AnnotationProcessor {
                     String.format("Missing compilability indicator (e.g. [%s]).", SHOULD_PARSE));
         }
 
-        if(shouldRun.isPresent()){
-            if(shouldRun.get())
+        if (shouldRun.isPresent()) {
+            if (shouldRun.get())
                 return new RunnableTestAnnotation(parameters.get(OUTPUT_KEY));
             else
                 return new UnrunnableTestAnnotation(parameters.get(ERROR_MESSAGE),
                         parameters.get(ERROR_METADATA));
         }
 
-        if(shouldCompile.isPresent()){
-            if(shouldCompile.get())
+        if (shouldCompile.isPresent()) {
+            if (shouldCompile.get())
                 return new CompilableTestAnnotation();
             else
                 return new UncompilableTestAnnotation(parameters.get(ERROR_MESSAGE),

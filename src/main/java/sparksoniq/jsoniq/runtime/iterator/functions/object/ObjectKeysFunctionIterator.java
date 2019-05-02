@@ -23,7 +23,6 @@ package sparksoniq.jsoniq.runtime.iterator.functions.object;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemUtil;
-import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -71,7 +70,7 @@ public class ObjectKeysFunctionIterator extends ObjectFunctionIterator {
     }
 
     public void setNextResult() {
-        while(_iterator.hasNext()) {
+        while (_iterator.hasNext()) {
             Item item = _iterator.next();
             // ignore non-object items
             if (item.isObject()) {
@@ -79,8 +78,7 @@ public class ObjectKeysFunctionIterator extends ObjectFunctionIterator {
                 for (String key : item.getKeys()) {
                     result = new StringItem(key);
                     // check if key was met earlier
-                    if (!ItemUtil.listContainsItem(_prevResults, result))
-                    {
+                    if (!ItemUtil.listContainsItem(_prevResults, result)) {
                         _prevResults.add(result);
                         _nextResults.add(result);
                     }

@@ -22,7 +22,6 @@ package sparksoniq.jsoniq.runtime.iterator.postfix;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
 import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.item.ObjectItem;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -42,8 +41,7 @@ public class ObjectLookupClosure implements FlatMapFunction<Item, Item> {
             return results.iterator();
 
         Item item = arg0.getItemByKey(_key);
-        if(item != null)
-        {
+        if (item != null) {
             results.add(item);
         }
         return results.iterator();

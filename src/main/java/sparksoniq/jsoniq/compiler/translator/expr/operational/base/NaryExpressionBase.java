@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.jsoniq.compiler.translator.expr.operational.base;
+package sparksoniq.jsoniq.compiler.translator.expr.operational.base;
 
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
@@ -33,9 +33,13 @@ public class NaryExpressionBase extends OperationalExpressionBase {
         return _rightExpressions;
     }
 
-    public List<Operator> getOperators(){return _multipleOperators;}
+    public List<Operator> getOperators() {
+        return _multipleOperators;
+    }
 
-    public Operator getSingleOperator(){return _singleOperator;}
+    public Operator getSingleOperator() {
+        return _singleOperator;
+    }
 
     @Override
     public boolean isActive() {
@@ -52,7 +56,7 @@ public class NaryExpressionBase extends OperationalExpressionBase {
                               ExpressionMetadata metadata) {
         super(mainExpression, op, metadata);
         this._rightExpressions = rhs;
-        if(Operator.NONE != op)
+        if (Operator.NONE != op)
             this._isActive = true;
     }
 
@@ -60,24 +64,23 @@ public class NaryExpressionBase extends OperationalExpressionBase {
                               List<Expression> rhs, List<Operator> ops, ExpressionMetadata metadata) {
         super(mainExpression, ops, metadata);
         this._rightExpressions = rhs;
-        this._isActive =true;
+        this._isActive = true;
     }
 
     @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result =  new ArrayList<>();
+        List<ExpressionOrClause> result = new ArrayList<>();
         result.add(this._mainExpression);
-        if(this._rightExpressions != null)
+        if (this._rightExpressions != null)
             _rightExpressions.forEach(e -> {
-                if(e!=null)
+                if (e != null)
                     result.add(e);
             });
-        return getDescendantsFromChildren(result,depthSearch);
+        return getDescendantsFromChildren(result, depthSearch);
     }
 
 
     private List<Expression> _rightExpressions;
-
 
 
 }

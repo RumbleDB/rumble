@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.jsoniq.compiler.translator.expr.flowr;
+package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
 import sparksoniq.exceptions.SemanticException;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
@@ -32,7 +32,7 @@ public class OrderByClause extends FlworClause {
 
     public OrderByClause(List<OrderByClauseExpr> exprs, boolean stable, ExpressionMetadata metadata) {
         super(FLWOR_CLAUSES.ORDER_BY, metadata);
-        if(exprs == null || exprs.isEmpty())
+        if (exprs == null || exprs.isEmpty())
             throw new SemanticException("Group clause must have at least one variable", metadata);
         this.expressions = exprs;
         this.isStable = stable;
@@ -40,25 +40,25 @@ public class OrderByClause extends FlworClause {
 
     @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result =  new ArrayList<>();
+        List<ExpressionOrClause> result = new ArrayList<>();
         expressions.forEach(e -> {
             if (e != null)
                 result.add(e);
         });
-        return getDescendantsFromChildren(result,depthSearch);
+        return getDescendantsFromChildren(result, depthSearch);
     }
 
     @Override
-    public  <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument){
+    public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
         return visitor.visitOrderByClause(this, argument);
     }
 
     @Override
-    public String serializationString(boolean prefix){
+    public String serializationString(boolean prefix) {
         String result = "(orderByClause order by ";
-        for(OrderByClauseExpr var: expressions)
+        for (OrderByClauseExpr var : expressions)
             result += var.serializationString(true)
-                    + (expressions.indexOf(var) < expressions.size() -1 ? " , " : "");
+                    + (expressions.indexOf(var) < expressions.size() - 1 ? " , " : "");
         result += ")";
         return result;
     }

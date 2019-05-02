@@ -26,7 +26,6 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
-import javax.naming.OperationNotSupportedException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -43,7 +42,7 @@ public class ArrayFlattenFunctionIterator extends ArrayFunctionIterator {
 
     @Override
     public Item next() {
-        if(_hasNext == true){
+        if (_hasNext == true) {
             Item result = _nextResults.remove();  // save the result to be returned
             if (_nextResults.isEmpty()) {
                 // if there are no more results left in the queue, trigger calculation for the next result
@@ -85,11 +84,10 @@ public class ArrayFlattenFunctionIterator extends ArrayFunctionIterator {
     }
 
     public void flatten(List<Item> items) {
-        for (Item item:items) {
+        for (Item item : items) {
             if (item.isArray()) {
                 flatten(item.getItems());
-            }
-            else {
+            } else {
                 _nextResults.add(item);
             }
         }

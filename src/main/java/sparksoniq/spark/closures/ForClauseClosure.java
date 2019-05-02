@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.spark.closures;
+package sparksoniq.spark.closures;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
 import sparksoniq.jsoniq.item.Item;
@@ -45,7 +45,7 @@ public class ForClauseClosure implements FlatMapFunction<FlworTuple, FlworTuple>
 
         // create a new tuple for each result from the expression
         _expression.open(new DynamicContext(tuple));
-        while(_expression.hasNext()) {
+        while (_expression.hasNext()) {
             List<Item> values = new ArrayList<>();
             values.add(_expression.next());
             FlworTuple newTuple = new FlworTuple(tuple, _variableName, values);

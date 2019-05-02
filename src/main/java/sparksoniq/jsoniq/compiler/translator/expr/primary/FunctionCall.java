@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.jsoniq.compiler.translator.expr.primary;
+package sparksoniq.jsoniq.compiler.translator.expr.primary;
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
@@ -40,7 +40,7 @@ public class FunctionCall extends PrimaryExpression {
     }
 
 
-    public FunctionCall(String functionName, List<Expression> parameters, ExpressionMetadata metadata){
+    public FunctionCall(String functionName, List<Expression> parameters, ExpressionMetadata metadata) {
         super(metadata);
         this._functionName = functionName;
         this._parameters = parameters;
@@ -48,30 +48,30 @@ public class FunctionCall extends PrimaryExpression {
 
     @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result =  new ArrayList<>();
+        List<ExpressionOrClause> result = new ArrayList<>();
         result.addAll(this._parameters);
-        return getDescendantsFromChildren(result,depthSearch);
+        return getDescendantsFromChildren(result, depthSearch);
     }
 
     @Override
-    public String serializationString(boolean prefix){
-        String result = "(primaryExpr (functionCall " ;
+    public String serializationString(boolean prefix) {
+        String result = "(primaryExpr (functionCall ";
         List<String> names = Arrays.asList(this._functionName.split(":"));
         Collections.reverse(names);
-        for(String name : names)
-            result += name + (names.indexOf(name) < names.size() -1 ? " : " : " ");
-        if(this._parameters.size() > 0)
+        for (String name : names)
+            result += name + (names.indexOf(name) < names.size() - 1 ? " : " : " ");
+        if (this._parameters.size() > 0)
             result += "(argumentList ( ";
-        for(Expression arg: this._parameters)
+        for (Expression arg : this._parameters)
             result += "(argument (exprSingle " + arg.serializationString(false) +
-                    (_parameters.indexOf(arg) < _parameters.size() - 1? ")) , ": ")) ");
+                    (_parameters.indexOf(arg) < _parameters.size() - 1 ? ")) , " : ")) ");
         result += "))))";
         return result;
 
     }
 
     @Override
-    public  <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument){
+    public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
         return visitor.visitFunctionCall(this, argument);
     }
 

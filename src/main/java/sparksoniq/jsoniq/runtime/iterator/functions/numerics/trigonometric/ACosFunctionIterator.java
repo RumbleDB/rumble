@@ -60,12 +60,12 @@ public class ACosFunctionIterator extends LocalFunctionCallIterator {
             if (Item.isNumeric(radians)) {
                 try {
                     Double result = Math.acos(Item.getNumericValue(radians, Double.class));
-    
+
                     return new DoubleItem(result);
 
-                } catch (IteratorFlowException e)
-                {
-                    throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());                }
+                } catch (IteratorFlowException e) {
+                    throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
+                }
             } else {
                 throw new UnexpectedTypeException("ACos expression has non numeric args " +
                         radians.serialize(), getMetadata());

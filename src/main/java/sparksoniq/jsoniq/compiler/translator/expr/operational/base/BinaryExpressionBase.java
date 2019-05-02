@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
- package sparksoniq.jsoniq.compiler.translator.expr.operational.base;
+package sparksoniq.jsoniq.compiler.translator.expr.operational.base;
 
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
@@ -48,20 +48,21 @@ public abstract class BinaryExpressionBase extends OperationalExpressionBase {
                                 ExpressionMetadata metadata) {
         super(mainExpression, op, metadata);
         this.rightExpression = rhs;
-        if(Operator.NONE != op && rhs!=null)
+        if (Operator.NONE != op && rhs != null)
             this._isActive = true;
     }
-    public Operator getOperator(){
-        return  this._singleOperator;
+
+    public Operator getOperator() {
+        return this._singleOperator;
     }
 
     @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result =  new ArrayList<>();
+        List<ExpressionOrClause> result = new ArrayList<>();
         result.add(this._mainExpression);
-        if(this.rightExpression != null)
+        if (this.rightExpression != null)
             result.add(this.rightExpression);
-        return getDescendantsFromChildren(result,depthSearch);
+        return getDescendantsFromChildren(result, depthSearch);
     }
 
     private Expression rightExpression;
