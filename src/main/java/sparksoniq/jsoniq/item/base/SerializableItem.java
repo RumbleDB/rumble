@@ -17,6 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
+
 package sparksoniq.jsoniq.item.base;
 
 import com.esotericsoftware.kryo.KryoSerializable;

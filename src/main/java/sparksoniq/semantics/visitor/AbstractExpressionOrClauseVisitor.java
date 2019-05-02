@@ -17,6 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
+
 package sparksoniq.semantics.visitor;
 
 import sparksoniq.jsoniq.compiler.translator.expr.CommaExpression;

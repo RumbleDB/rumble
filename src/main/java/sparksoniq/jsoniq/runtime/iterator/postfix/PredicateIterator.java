@@ -17,6 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
+
 package sparksoniq.jsoniq.runtime.iterator.postfix;
 
 import org.apache.spark.api.java.JavaRDD;

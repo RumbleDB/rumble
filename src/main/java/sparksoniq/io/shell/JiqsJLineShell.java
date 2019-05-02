@@ -17,6 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
+
 package sparksoniq.io.shell;
 
 import org.apache.commons.io.IOUtils;

@@ -17,6 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
+
 package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
 public enum FLWOR_CLAUSES {

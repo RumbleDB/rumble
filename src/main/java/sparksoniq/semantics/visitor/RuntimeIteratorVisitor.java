@@ -17,6 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
+
 package sparksoniq.semantics.visitor;
 
 import sparksoniq.exceptions.UnknownFunctionCallException;

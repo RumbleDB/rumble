@@ -17,6 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
+
 package sparksoniq.jsoniq.tuple;
 
 import com.esotericsoftware.kryo.Kryo;

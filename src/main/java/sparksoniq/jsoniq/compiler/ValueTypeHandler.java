@@ -17,6 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
+
 package sparksoniq.jsoniq.compiler;
 
 import sparksoniq.jsoniq.compiler.parser.JsoniqParser;

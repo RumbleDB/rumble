@@ -17,6 +17,7 @@
  * Author: Stefan Irimescu
  *
  */
+
 package sparksoniq.spark.udf;
 
 import org.apache.hadoop.hdfs.DFSUtil;
