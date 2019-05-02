@@ -83,11 +83,18 @@ import java.util.List;
 //used to build AST, will override methods
 public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.parser.JsoniqBaseVisitor<Void> {
 
-    public Expression getQueryExpression() {
-        return queryExpression;
-    }
+    private CommaExpression queryExpression;
+    private Expression currentExpression;
+    private PrimaryExpression currentPrimaryExpression;
+    private PostfixExtension currentPostFixExtension;
+    private FlworClause currentFlworClause;
 
     public JsoniqExpressionTreeVisitor() {
+    }
+    //endregion expr
+
+    public Expression getQueryExpression() {
+        return queryExpression;
     }
 
     @Override
@@ -141,7 +148,6 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         this.currentExpression = node;
         return null;
     }
-    //endregion expr
 
     //region Flowr
     //TODO [EXPRVISITOR] count
@@ -289,6 +295,8 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
 
     }
 
+    //endregion
+
     @Override
     public Void visitOrderByClause(JsoniqParser.OrderByClauseContext ctx) {
         OrderByClause node;
@@ -377,8 +385,6 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         this.currentFlworClause = node;
         return null;
     }
-
-    //endregion
 
     //region operational
     @Override
@@ -477,6 +483,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         this.currentExpression = node;
         return null;
     }
+    //endregion
 
     @Override
     public Void visitRangeExpr(JsoniqParser.RangeExprContext ctx) {
@@ -665,7 +672,6 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         this.currentPostFixExtension = new ArrayUnboxingExtension(createMetadataFromContext(ctx));
         return null;
     }
-    //endregion
 
     //region primary
     //TODO [EXPRVISITOR] orderedExpr unorderedExpr;
@@ -734,6 +740,8 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         return null;
     }
 
+    //endregion
+
     //TODO[EXPRVISITOR]? not supported in Pair constructor
     @Override
     public Void visitPairConstructor(JsoniqParser.PairConstructorContext ctx) {
@@ -783,6 +791,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         this.currentPrimaryExpression = node;
         return null;
     }
+    //endregion
 
     @Override
     public Void visitVarRef(JsoniqParser.VarRefContext ctx) {
@@ -800,8 +809,6 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         this.currentPrimaryExpression = new ContextExpression(createMetadataFromContext(ctx));
         return null;
     }
-
-    //endregion
 
     @Override
     public Void visitSequenceType(JsoniqParser.SequenceTypeContext ctx) {
@@ -851,7 +858,6 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         this.visitExprSingle(ctx.exprSingle());
         return null;
     }
-    //endregion
 
     @Override
     public Void visitIfExpr(JsoniqParser.IfExprContext ctx) {
@@ -867,7 +873,6 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         this.currentExpression = node;
         return null;
     }
-
 
     @Override
     public Void visitSwitchExpr(JsoniqParser.SwitchExprContext ctx) {
@@ -901,7 +906,6 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         return null;
     }
 
-
     @Override
     public Void visitQuantifiedExpr(JsoniqParser.QuantifiedExprContext ctx) {
         List<QuantifiedExpressionVar> vars = new ArrayList<>();
@@ -934,7 +938,6 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         return null;
     }
 
-
     private int getDepthLevel(JsoniqParser.ExprContext ctx) {
         int count = 0;
         ParseTree level = ctx;
@@ -951,13 +954,6 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         int tokenColumnNumber = ctx.getStart().getCharPositionInLine();
         return new ExpressionMetadata(tokenLineNumber, tokenColumnNumber);
     }
-
-
-    private CommaExpression queryExpression;
-    private Expression currentExpression;
-    private PrimaryExpression currentPrimaryExpression;
-    private PostfixExtension currentPostFixExtension;
-    private FlworClause currentFlworClause;
 
 }
 

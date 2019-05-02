@@ -30,17 +30,9 @@ import java.util.List;
 
 public abstract class FlworVarDecl extends FlworClause {
 
-    public VariableReference getVariableReference() {
-        return variableReferenceNode;
-    }
-
-    public Expression getExpression() {
-        return expression;
-    }
-
-    public FlworVarSequenceType getAsSequence() {
-        return asSequence;
-    }
+    protected VariableReference variableReferenceNode;
+    protected Expression expression;
+    protected FlworVarSequenceType asSequence;
 
 
     private FlworVarDecl(FLWOR_CLAUSES clauseType, ExpressionMetadata metadata) {
@@ -65,6 +57,18 @@ public abstract class FlworVarDecl extends FlworClause {
             this.variableReferenceNode.setType(this.asSequence.getSequence());
     }
 
+    public VariableReference getVariableReference() {
+        return variableReferenceNode;
+    }
+
+    public Expression getExpression() {
+        return expression;
+    }
+
+    public FlworVarSequenceType getAsSequence() {
+        return asSequence;
+    }
+
     @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
         List<ExpressionOrClause> result = new ArrayList<>();
@@ -75,9 +79,4 @@ public abstract class FlworVarDecl extends FlworClause {
             result.add(expression);
         return getDescendantsFromChildren(result, depthSearch);
     }
-
-
-    protected VariableReference variableReferenceNode;
-    protected Expression expression;
-    protected FlworVarSequenceType asSequence;
 }

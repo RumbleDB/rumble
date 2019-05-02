@@ -28,6 +28,17 @@ import java.io.Serializable;
 
 public class GroupByClauseSparkIteratorExpression implements Serializable {
 
+    private final VariableReferenceIterator _variableReference;
+    private final RuntimeIterator _expression;
+    private final IteratorMetadata iteratorMetadata;
+
+    public GroupByClauseSparkIteratorExpression(RuntimeIterator expression, VariableReferenceIterator variable,
+                                                IteratorMetadata iteratorMetadata) {
+        this._expression = expression;
+        this._variableReference = variable;
+        this.iteratorMetadata = iteratorMetadata;
+    }
+
     public VariableReferenceIterator getVariableReference() {
         return _variableReference;
     }
@@ -39,15 +50,4 @@ public class GroupByClauseSparkIteratorExpression implements Serializable {
     public RuntimeIterator getExpression() {
         return _expression;
     }
-
-    public GroupByClauseSparkIteratorExpression(RuntimeIterator expression, VariableReferenceIterator variable,
-                                                IteratorMetadata iteratorMetadata) {
-        this._expression = expression;
-        this._variableReference = variable;
-        this.iteratorMetadata = iteratorMetadata;
-    }
-
-    private final VariableReferenceIterator _variableReference;
-    private final RuntimeIterator _expression;
-    private final IteratorMetadata iteratorMetadata;
 }

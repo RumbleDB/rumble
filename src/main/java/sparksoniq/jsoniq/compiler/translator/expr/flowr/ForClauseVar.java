@@ -30,19 +30,22 @@ import java.util.List;
 
 public class ForClauseVar extends FlworVarDecl {
 
-    public boolean allowsEmpty() {
-        return allowEmpty;
-    }
-
-    public VariableReference getPositionalVariableReference() {
-        return positionalVariableReference;
-    }
+    private final boolean allowEmpty;
+    private final VariableReference positionalVariableReference;
 
     public ForClauseVar(VariableReference varRef, FlworVarSequenceType seq, boolean emptyFlag,
                         VariableReference atVarRef, Expression expression, ExpressionMetadata metadataFromContext) {
         super(FLWOR_CLAUSES.FOR_VAR, varRef, seq, expression, metadataFromContext);
         this.allowEmpty = emptyFlag;
         this.positionalVariableReference = atVarRef;
+    }
+
+    public boolean allowsEmpty() {
+        return allowEmpty;
+    }
+
+    public VariableReference getPositionalVariableReference() {
+        return positionalVariableReference;
     }
 
     @Override
@@ -72,7 +75,4 @@ public class ForClauseVar extends FlworVarDecl {
         result += "))";
         return result;
     }
-
-    private final boolean allowEmpty;
-    private final VariableReference positionalVariableReference;
 }

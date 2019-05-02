@@ -31,6 +31,11 @@ import java.util.List;
 
 public class VariableReferenceIterator extends LocalRuntimeIterator {
 
+    private SequenceType sequence;
+    private String _variableName;
+    private List<Item> items = null;
+    private int currentIndex = 0;
+
     public VariableReferenceIterator(String variableName, SequenceType seq, IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
         this._variableName = "$" + variableName;
@@ -72,13 +77,7 @@ public class VariableReferenceIterator extends LocalRuntimeIterator {
         return sequence;
     }
 
-
     public String getVariableName() {
         return _variableName;
     }
-
-    private SequenceType sequence;
-    private String _variableName;
-    private List<Item> items = null;
-    private int currentIndex = 0;
 }

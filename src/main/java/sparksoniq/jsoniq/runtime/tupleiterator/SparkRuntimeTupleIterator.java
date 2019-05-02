@@ -31,6 +31,11 @@ import java.util.List;
 
 public abstract class SparkRuntimeTupleIterator extends RuntimeTupleIterator {
 
+    protected JiqsItemParser parser;
+    protected JavaRDD<FlworTuple> _rdd;
+    protected List<FlworTuple> result = null;
+    protected int currentResultIndex = 0;
+
     protected SparkRuntimeTupleIterator(RuntimeTupleIterator _child, IteratorMetadata iteratorMetadata) {
         super(_child, iteratorMetadata);
         this.parser = new JiqsItemParser();
@@ -72,9 +77,4 @@ public abstract class SparkRuntimeTupleIterator extends RuntimeTupleIterator {
         currentResultIndex++;
         return tuple;
     }
-
-    protected JiqsItemParser parser;
-    protected JavaRDD<FlworTuple> _rdd;
-    protected List<FlworTuple> result = null;
-    protected int currentResultIndex = 0;
 }

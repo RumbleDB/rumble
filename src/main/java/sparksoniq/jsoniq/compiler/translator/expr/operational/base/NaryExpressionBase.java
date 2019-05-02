@@ -29,22 +29,7 @@ import java.util.List;
 
 public class NaryExpressionBase extends OperationalExpressionBase {
 
-    public List<Expression> getRightExpressions() {
-        return _rightExpressions;
-    }
-
-    public List<Operator> getOperators() {
-        return _multipleOperators;
-    }
-
-    public Operator getSingleOperator() {
-        return _singleOperator;
-    }
-
-    @Override
-    public boolean isActive() {
-        return _isActive;
-    }
+    private List<Expression> _rightExpressions;
 
     public NaryExpressionBase(Expression mainExpression, ExpressionMetadata metadata) {
         super(mainExpression, Operator.NONE, metadata);
@@ -67,6 +52,23 @@ public class NaryExpressionBase extends OperationalExpressionBase {
         this._isActive = true;
     }
 
+    public List<Expression> getRightExpressions() {
+        return _rightExpressions;
+    }
+
+    public List<Operator> getOperators() {
+        return _multipleOperators;
+    }
+
+    public Operator getSingleOperator() {
+        return _singleOperator;
+    }
+
+    @Override
+    public boolean isActive() {
+        return _isActive;
+    }
+
     @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
         List<ExpressionOrClause> result = new ArrayList<>();
@@ -78,9 +80,6 @@ public class NaryExpressionBase extends OperationalExpressionBase {
             });
         return getDescendantsFromChildren(result, depthSearch);
     }
-
-
-    private List<Expression> _rightExpressions;
 
 
 }

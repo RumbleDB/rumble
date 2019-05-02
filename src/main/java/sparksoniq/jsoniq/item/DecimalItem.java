@@ -30,13 +30,15 @@ import java.math.BigDecimal;
 
 public class DecimalItem extends AtomicItem {
 
-    public BigDecimal getValue() {
-        return _value;
-    }
+    private BigDecimal _value;
 
     public DecimalItem(BigDecimal decimal) {
         super();
         this._value = decimal;
+    }
+
+    public BigDecimal getValue() {
+        return _value;
     }
 
     @Override
@@ -70,6 +72,4 @@ public class DecimalItem extends AtomicItem {
     public void read(Kryo kryo, Input input) {
         this._value = kryo.readObject(input, BigDecimal.class);
     }
-
-    private BigDecimal _value;
 }

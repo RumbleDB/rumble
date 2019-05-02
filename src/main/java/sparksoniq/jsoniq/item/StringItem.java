@@ -27,13 +27,15 @@ import sparksoniq.semantics.types.ItemTypes;
 
 public class StringItem extends AtomicItem {
 
-    public String getValue() {
-        return _value;
-    }
+    private String _value;
 
     public StringItem(String value) {
         super();
         this._value = value;
+    }
+
+    public String getValue() {
+        return _value;
     }
 
     @Override
@@ -67,6 +69,4 @@ public class StringItem extends AtomicItem {
     public void read(Kryo kryo, Input input) {
         this._value = input.readString();
     }
-
-    private String _value;
 }

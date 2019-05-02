@@ -24,6 +24,13 @@ import java.io.Serializable;
 
 public class ItemType implements Serializable {
 
+    private final ItemTypes _type;
+
+    public ItemType(ItemTypes type) {
+        this._type = type;
+
+    }
+
     public ItemTypes getType() {
         return _type;
     }
@@ -47,13 +54,6 @@ public class ItemType implements Serializable {
 
         return false;
     }
-
-    public ItemType(ItemTypes type) {
-        this._type = type;
-
-    }
-
-    private final ItemTypes _type;
 
 
 }

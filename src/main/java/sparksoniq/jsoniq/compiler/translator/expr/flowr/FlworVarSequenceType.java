@@ -32,8 +32,28 @@ import java.util.List;
 
 public class FlworVarSequenceType extends Expression {
 
-    public boolean isEmpty() {
-        return isEmpty;
+    private SequenceType _sequence;
+    private boolean isEmpty;
+
+    public FlworVarSequenceType(ExpressionMetadata metadata) {
+        super(metadata);
+        this._sequence = new SequenceType(new ItemType(ItemTypes.Item),
+                SequenceType.Arity.ZeroOrMore);
+        this.isEmpty = true;
+    }
+
+    public FlworVarSequenceType(ItemTypes item, SequenceType.Arity arity, ExpressionMetadata metadata) {
+        super(metadata);
+        this._sequence = new SequenceType(new ItemType(item), arity);
+        this.isEmpty = false;
+
+    }
+
+    public FlworVarSequenceType(ItemTypes item, ExpressionMetadata metadata) {
+        super(metadata);
+        this._sequence = new SequenceType(new ItemType(item), SequenceType.Arity.One);
+        this.isEmpty = false;
+
     }
 
     public static ItemTypes getItemType(String text) {
@@ -65,29 +85,12 @@ public class FlworVarSequenceType extends Expression {
         }
     }
 
+    public boolean isEmpty() {
+        return isEmpty;
+    }
+
     public SequenceType getSequence() {
         return _sequence;
-    }
-
-    public FlworVarSequenceType(ExpressionMetadata metadata) {
-        super(metadata);
-        this._sequence = new SequenceType(new ItemType(ItemTypes.Item),
-                SequenceType.Arity.ZeroOrMore);
-        this.isEmpty = true;
-    }
-
-    public FlworVarSequenceType(ItemTypes item, SequenceType.Arity arity, ExpressionMetadata metadata) {
-        super(metadata);
-        this._sequence = new SequenceType(new ItemType(item), arity);
-        this.isEmpty = false;
-
-    }
-
-    public FlworVarSequenceType(ItemTypes item, ExpressionMetadata metadata) {
-        super(metadata);
-        this._sequence = new SequenceType(new ItemType(item), SequenceType.Arity.One);
-        this.isEmpty = false;
-
     }
 
     @Override
@@ -135,7 +138,4 @@ public class FlworVarSequenceType extends Expression {
                 return "item";
         }
     }
-
-    private SequenceType _sequence;
-    private boolean isEmpty;
 }

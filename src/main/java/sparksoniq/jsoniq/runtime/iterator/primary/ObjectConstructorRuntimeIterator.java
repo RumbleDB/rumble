@@ -34,6 +34,10 @@ import java.util.List;
 
 public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
 
+    private List<RuntimeIterator> _keys;
+    private List<RuntimeIterator> _values;
+    private boolean _isMergedObject = false;
+
     public ObjectConstructorRuntimeIterator(List<RuntimeIterator> keys, List<RuntimeIterator> values,
                                             IteratorMetadata iteratorMetadata) {
         super(keys, iteratorMetadata);
@@ -41,8 +45,6 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
         this._keys = keys;
         this._values = values;
     }
-
-
     public ObjectConstructorRuntimeIterator(List<RuntimeIterator> childExpressions,
                                             IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
@@ -102,8 +104,4 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
         }
         throw new IteratorFlowException("Invalid next() call on object!", getMetadata());
     }
-
-    private List<RuntimeIterator> _keys;
-    private List<RuntimeIterator> _values;
-    private boolean _isMergedObject = false;
 }

@@ -32,17 +32,8 @@ import java.util.List;
 
 public class PostFixExpression extends Expression {
 
-    public boolean isPrimary() {
-        return _extensions == null || _extensions.isEmpty();
-    }
-
-    public PrimaryExpression get_primaryExpressionNode() {
-        return _primaryExpressionNode;
-    }
-
-    public List<PostfixExtension> getExtensions() {
-        return _extensions;
-    }
+    private PrimaryExpression _primaryExpressionNode;
+    private List<PostfixExtension> _extensions = null;
 
     public PostFixExpression(PrimaryExpression primaryExpressionNode, ExpressionMetadata metadata) {
         super(metadata);
@@ -55,6 +46,18 @@ public class PostFixExpression extends Expression {
         this._primaryExpressionNode = primaryExpressionNode;
         this._extensions = new ArrayList<>();
         this._extensions.addAll(extensions);
+    }
+
+    public boolean isPrimary() {
+        return _extensions == null || _extensions.isEmpty();
+    }
+
+    public PrimaryExpression get_primaryExpressionNode() {
+        return _primaryExpressionNode;
+    }
+
+    public List<PostfixExtension> getExtensions() {
+        return _extensions;
     }
 
     @Override
@@ -86,8 +89,5 @@ public class PostFixExpression extends Expression {
         result += ")";
         return result;
     }
-
-    private PrimaryExpression _primaryExpressionNode;
-    private List<PostfixExtension> _extensions = null;
 
 }

@@ -28,15 +28,18 @@ import java.io.Serializable;
 
 public class VariableReference extends PrimaryExpression implements Serializable {
 
-    public String getVariableName() {
-        return name;
-    }
+    private String name;
+    private SequenceType _type;
+
 
     public VariableReference(String _name, ExpressionMetadata metadata) {
         super(metadata);
         this.name = _name;
     }
 
+    public String getVariableName() {
+        return name;
+    }
 
     public SequenceType getType() {
         return _type;
@@ -57,9 +60,6 @@ public class VariableReference extends PrimaryExpression implements Serializable
         result += (prefix ? ")" : "") + ")";
         return result;
     }
-
-    private String name;
-    private SequenceType _type;
 
 
 }

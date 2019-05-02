@@ -30,6 +30,17 @@ import java.util.List;
 
 public class SwitchExpression extends Expression {
 
+    private final Expression testCondition;
+    private final List<SwitchCaseExpression> cases;
+    private final Expression defaultExpression;
+
+    public SwitchExpression(Expression testCondition, List<SwitchCaseExpression> cases, Expression defaultExpression, ExpressionMetadata metadataFromContext) {
+        super(metadataFromContext);
+        this.testCondition = testCondition;
+        this.cases = cases;
+        this.defaultExpression = defaultExpression;
+    }
+
     public Expression getTestCondition() {
         return testCondition;
     }
@@ -40,13 +51,6 @@ public class SwitchExpression extends Expression {
 
     public Expression getDefaultExpression() {
         return defaultExpression;
-    }
-
-    public SwitchExpression(Expression testCondition, List<SwitchCaseExpression> cases, Expression defaultExpression, ExpressionMetadata metadataFromContext) {
-        super(metadataFromContext);
-        this.testCondition = testCondition;
-        this.cases = cases;
-        this.defaultExpression = defaultExpression;
     }
 
     @Override
@@ -68,8 +72,4 @@ public class SwitchExpression extends Expression {
     public String serializationString(boolean prefix) {
         return "";
     }
-
-    private final Expression testCondition;
-    private final List<SwitchCaseExpression> cases;
-    private final Expression defaultExpression;
 }

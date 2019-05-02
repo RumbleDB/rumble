@@ -30,6 +30,31 @@ import java.util.List;
 
 public abstract class OperationalExpressionBase extends Expression {
 
+    protected boolean _isActive;
+    protected Expression _mainExpression;
+    protected List<Operator> _multipleOperators;
+    protected Operator _singleOperator;
+    private boolean _hasMultipleOperators;
+
+
+    protected OperationalExpressionBase(Expression _mainExpression,
+                                        Operator op, ExpressionMetadata metadata) {
+        super(metadata);
+        this._mainExpression = _mainExpression;
+        this._singleOperator = op;
+        this._hasMultipleOperators = false;
+
+    }
+
+    protected OperationalExpressionBase(Expression _mainExpression,
+                                        List<Operator> ops, ExpressionMetadata metadata) {
+        super(metadata);
+        this._mainExpression = _mainExpression;
+        this._multipleOperators = ops;
+        this._hasMultipleOperators = true;
+
+    }
+
     public static List<Operator> getOperatorFromOpList(List<Token> ops) {
         List<Operator> result = new ArrayList<>();
         ops.forEach(op -> result.add(getOperatorFromString(op.getText())));
@@ -108,6 +133,32 @@ public abstract class OperationalExpressionBase extends Expression {
         }
     }
 
+    public abstract boolean isActive();
+
+    public void validateOperators(List<Operator> validOps, List<Operator> ops) {
+        for (Operator op : ops)
+            if (!validOps.contains(op))
+                throw new IllegalArgumentException("Operational operators exception");
+    }
+
+    public void validateOperator(List<Operator> validOps, Operator op) {
+        if (!validOps.contains(op))
+            throw new IllegalArgumentException("Operational operators exception");
+    }
+
+    public Expression getMainExpression() {
+        return _mainExpression;
+    }
+
+    @Override
+    public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
+        List<ExpressionOrClause> result = new ArrayList<>();
+        if (this._mainExpression != null)
+            result.add(this._mainExpression);
+        if (depthSearch && _mainExpression != null)
+            result.addAll(_mainExpression.getDescendants(depthSearch));
+        return result;
+    }
     public enum Operator {
         OR,
         AND,
@@ -145,57 +196,4 @@ public abstract class OperationalExpressionBase extends Expression {
         NONE,
 
     }
-
-    public abstract boolean isActive();
-
-
-    public void validateOperators(List<Operator> validOps, List<Operator> ops) {
-        for (Operator op : ops)
-            if (!validOps.contains(op))
-                throw new IllegalArgumentException("Operational operators exception");
-    }
-
-    public void validateOperator(List<Operator> validOps, Operator op) {
-        if (!validOps.contains(op))
-            throw new IllegalArgumentException("Operational operators exception");
-    }
-
-    public Expression getMainExpression() {
-        return _mainExpression;
-    }
-
-    @Override
-    public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result = new ArrayList<>();
-        if (this._mainExpression != null)
-            result.add(this._mainExpression);
-        if (depthSearch && _mainExpression != null)
-            result.addAll(_mainExpression.getDescendants(depthSearch));
-        return result;
-    }
-
-
-    protected OperationalExpressionBase(Expression _mainExpression,
-                                        Operator op, ExpressionMetadata metadata) {
-        super(metadata);
-        this._mainExpression = _mainExpression;
-        this._singleOperator = op;
-        this._hasMultipleOperators = false;
-
-    }
-
-    protected OperationalExpressionBase(Expression _mainExpression,
-                                        List<Operator> ops, ExpressionMetadata metadata) {
-        super(metadata);
-        this._mainExpression = _mainExpression;
-        this._multipleOperators = ops;
-        this._hasMultipleOperators = true;
-
-    }
-
-    protected boolean _isActive;
-    private boolean _hasMultipleOperators;
-    protected Expression _mainExpression;
-    protected List<Operator> _multipleOperators;
-    protected Operator _singleOperator;
 }

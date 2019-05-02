@@ -30,6 +30,9 @@ import java.util.List;
 public class OrderByClause extends FlworClause {
 
 
+    private final List<OrderByClauseExpr> expressions;
+    private final boolean isStable;
+
     public OrderByClause(List<OrderByClauseExpr> exprs, boolean stable, ExpressionMetadata metadata) {
         super(FLWOR_CLAUSES.ORDER_BY, metadata);
         if (exprs == null || exprs.isEmpty())
@@ -70,7 +73,4 @@ public class OrderByClause extends FlworClause {
     public List<OrderByClauseExpr> getExpressions() {
         return expressions;
     }
-
-    private final List<OrderByClauseExpr> expressions;
-    private final boolean isStable;
 }

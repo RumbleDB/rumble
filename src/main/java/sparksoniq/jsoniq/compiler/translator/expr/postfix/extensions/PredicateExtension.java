@@ -29,15 +29,15 @@ import java.util.List;
 
 public class PredicateExtension extends PostfixExtension {
 
-    public Expression getExpression() {
-        return _expression;
-    }
-
     Expression _expression;
 
     public PredicateExtension(Expression _collection, ExpressionMetadata metadata) {
         super(metadata);
         this._expression = _collection;
+    }
+
+    public Expression getExpression() {
+        return _expression;
     }
 
     @Override

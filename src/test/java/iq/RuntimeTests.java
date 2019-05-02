@@ -45,8 +45,12 @@ public class RuntimeTests extends AnnotationsTestsBase {
 
     public static final File runtimeTestsDirectory = new File(System.getProperty("user.dir") +
             "/src/main/resources/test_files/runtime");
-    protected final File _testFile;
     protected static List<File> _testFiles = new ArrayList<>();
+    protected final File _testFile;
+
+    public RuntimeTests(File testFile) {
+        this._testFile = testFile;
+    }
 
     public static void readFileList(File dir) {
         FileManager.loadJiqFiles(dir).forEach(file -> RuntimeTests._testFiles.add(file));
@@ -58,13 +62,6 @@ public class RuntimeTests extends AnnotationsTestsBase {
         RuntimeTests.readFileList(RuntimeTests.runtimeTestsDirectory);
         RuntimeTests._testFiles.forEach(file -> result.add(new Object[]{file}));
         return result;
-    }
-
-    @Test(timeout = 1000000)
-    public void testRuntimeIterators() throws Throwable {
-        System.err.println(AnnotationsTestsBase.counter++ + " : " + _testFile);
-        JsoniqExpressionTreeVisitor visitor = new JsoniqExpressionTreeVisitor();
-        testAnnotations(_testFile.getAbsolutePath(), visitor);
     }
 
     @BeforeClass
@@ -83,8 +80,11 @@ public class RuntimeTests extends AnnotationsTestsBase {
 
     }
 
-    public RuntimeTests(File testFile) {
-        this._testFile = testFile;
+    @Test(timeout = 1000000)
+    public void testRuntimeIterators() throws Throwable {
+        System.err.println(AnnotationsTestsBase.counter++ + " : " + _testFile);
+        JsoniqExpressionTreeVisitor visitor = new JsoniqExpressionTreeVisitor();
+        testAnnotations(_testFile.getAbsolutePath(), visitor);
     }
 
     @Override

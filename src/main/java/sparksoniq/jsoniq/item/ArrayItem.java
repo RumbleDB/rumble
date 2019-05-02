@@ -31,13 +31,15 @@ import java.util.List;
 
 public class ArrayItem extends JsonItem {
 
-    public List<Item> getItems() {
-        return _arrayItems;
-    }
+    private List<Item> _arrayItems;
 
     public ArrayItem(List<Item> arrayItems) {
         super();
         this._arrayItems = arrayItems;
+    }
+
+    public List<Item> getItems() {
+        return _arrayItems;
     }
 
     @Override
@@ -99,6 +101,4 @@ public class ArrayItem extends JsonItem {
     public void read(Kryo kryo, Input input) {
         this._arrayItems = kryo.readObject(input, ArrayList.class);
     }
-
-    private List<Item> _arrayItems;
 }

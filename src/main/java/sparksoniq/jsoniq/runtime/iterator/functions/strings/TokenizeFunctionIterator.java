@@ -32,6 +32,11 @@ import sparksoniq.semantics.DynamicContext;
 import java.util.List;
 
 public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
+    private String[] _results;
+    private Item _nextResult;
+    private int _currentPosition;
+    private boolean _lastEmptyString;
+
     public TokenizeFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
     }
@@ -45,7 +50,6 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
         }
         throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "tokenize function", getMetadata());
     }
-
 
     @Override
     public void open(DynamicContext context) {
@@ -124,9 +128,4 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
             _hasNext = false;
         }
     }
-
-    private String[] _results;
-    private Item _nextResult;
-    private int _currentPosition;
-    private boolean _lastEmptyString;
 }

@@ -26,17 +26,9 @@ import java.util.Arrays;
 
 public class SparksoniqRuntimeException extends RuntimeException {
 
-    public String getErrorCode() {
-        return errorCode;
-    }
-
-    public ExpressionMetadata getMetadata() {
-        return metadata;
-    }
-
-    public String getJSONiqErrorMessage() {
-        return errorMessage;
-    }
+    private final String errorCode;
+    private final String errorMessage;
+    private ExpressionMetadata metadata;
 
     public SparksoniqRuntimeException(String message) {
         super("Error [err: " + ErrorCodes.RuntimeExceptionErrorCode + " ] " + message);
@@ -90,7 +82,15 @@ public class SparksoniqRuntimeException extends RuntimeException {
         this.errorMessage = message;
     }
 
-    private final String errorCode;
-    private final String errorMessage;
-    private ExpressionMetadata metadata;
+    public String getErrorCode() {
+        return errorCode;
+    }
+
+    public ExpressionMetadata getMetadata() {
+        return metadata;
+    }
+
+    public String getJSONiqErrorMessage() {
+        return errorMessage;
+    }
 }

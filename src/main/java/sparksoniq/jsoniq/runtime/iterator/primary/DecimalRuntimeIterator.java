@@ -28,6 +28,14 @@ import java.math.BigDecimal;
 
 public class DecimalRuntimeIterator extends AtomicRuntimeIterator {
 
+    private BigDecimal _item;
+
+    public DecimalRuntimeIterator(BigDecimal value, IteratorMetadata iteratorMetadata) {
+        super(null, iteratorMetadata);
+        this._item = value;
+
+    }
+
     @Override
     public DecimalItem next() {
         if (this._hasNext) {
@@ -37,12 +45,4 @@ public class DecimalRuntimeIterator extends AtomicRuntimeIterator {
 
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item, getMetadata());
     }
-
-    public DecimalRuntimeIterator(BigDecimal value, IteratorMetadata iteratorMetadata) {
-        super(null, iteratorMetadata);
-        this._item = value;
-
-    }
-
-    private BigDecimal _item;
 }

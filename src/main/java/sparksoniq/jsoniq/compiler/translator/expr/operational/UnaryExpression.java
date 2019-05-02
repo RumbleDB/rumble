@@ -31,11 +31,6 @@ import java.util.List;
 public class UnaryExpression extends UnaryExpressionBase {
 
     public static final Operator[] operators = new Operator[]{Operator.PLUS, Operator.MINUS};
-
-    public PostFixExpression get_postfixExpression() {
-        return _postfixExpression;
-    }
-
     private PostFixExpression _postfixExpression;
 
     public UnaryExpression(PostFixExpression _mainExpression, ExpressionMetadata metadata) {
@@ -48,6 +43,10 @@ public class UnaryExpression extends UnaryExpressionBase {
         super(_mainExpression, ops, ops != null && !ops.isEmpty(), metadata);
         this.validateOperators(Arrays.asList(operators), ops);
         this._postfixExpression = _mainExpression;
+    }
+
+    public PostFixExpression get_postfixExpression() {
+        return _postfixExpression;
     }
 
     @Override

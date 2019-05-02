@@ -34,6 +34,9 @@ import java.util.Map;
 
 public class DynamicContext implements Serializable, KryoSerializable {
 
+    private Map<String, List<Item>> _variableValues;
+    private DynamicContext _parent;
+
     public DynamicContext() {
         this._parent = null;
         this._variableValues = new HashMap<>();
@@ -94,8 +97,5 @@ public class DynamicContext implements Serializable, KryoSerializable {
         _parent = kryo.readObjectOrNull(input, DynamicContext.class);
         _variableValues = kryo.readObject(input, HashMap.class);
     }
-
-    private Map<String, List<Item>> _variableValues;
-    private DynamicContext _parent;
 }
 

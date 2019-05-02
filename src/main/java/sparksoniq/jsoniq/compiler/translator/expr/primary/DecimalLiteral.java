@@ -27,15 +27,15 @@ import java.math.BigDecimal;
 
 public class DecimalLiteral extends PrimaryExpression {
 
-    public BigDecimal getValue() {
-        return value;
-    }
-
     private BigDecimal value;
 
     public DecimalLiteral(BigDecimal _value, ExpressionMetadata metadata) {
         super(metadata);
         this.value = _value;
+    }
+
+    public BigDecimal getValue() {
+        return value;
     }
 
     @Override

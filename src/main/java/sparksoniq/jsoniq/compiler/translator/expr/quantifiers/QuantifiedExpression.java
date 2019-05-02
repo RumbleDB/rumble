@@ -28,9 +28,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class QuantifiedExpression extends Expression {
-    public enum QuantifiedOperators {
-        EVERY,
-        SOME
+    private final Expression _expression;
+    private final QuantifiedOperators _operator;
+    private final List<QuantifiedExpressionVar> _variables;
+
+
+    public QuantifiedExpression(QuantifiedOperators operator, Expression expression, List<QuantifiedExpressionVar> vars, ExpressionMetadata metadataFromContext) {
+        super(metadataFromContext);
+        this._operator = operator;
+        this._variables = vars;
+        this._expression = expression;
     }
 
     public ExpressionOrClause getEvaluationExpression() {
@@ -41,16 +48,8 @@ public class QuantifiedExpression extends Expression {
         return _operator;
     }
 
-
     public List<QuantifiedExpressionVar> getVariables() {
         return _variables;
-    }
-
-    public QuantifiedExpression(QuantifiedOperators operator, Expression expression, List<QuantifiedExpressionVar> vars, ExpressionMetadata metadataFromContext) {
-        super(metadataFromContext);
-        this._operator = operator;
-        this._variables = vars;
-        this._expression = expression;
     }
 
     @Override
@@ -74,8 +73,8 @@ public class QuantifiedExpression extends Expression {
     public String serializationString(boolean prefix) {
         return "";
     }
-
-    private final Expression _expression;
-    private final QuantifiedOperators _operator;
-    private final List<QuantifiedExpressionVar> _variables;
+    public enum QuantifiedOperators {
+        EVERY,
+        SOME
+    }
 }

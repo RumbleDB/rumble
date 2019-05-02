@@ -32,16 +32,16 @@ import java.util.List;
 
 public class FlworClause extends ExpressionOrClause {
 
-    public FLWOR_CLAUSES getClauseType() {
-        return clauseType;
-    }
+    protected FLWOR_CLAUSES clauseType;
 
     public FlworClause(FLWOR_CLAUSES clauseType, ExpressionMetadata metadata) {
         super(metadata);
         this.clauseType = clauseType;
     }
 
-    protected FLWOR_CLAUSES clauseType;
+    public FLWOR_CLAUSES getClauseType() {
+        return clauseType;
+    }
 
     @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {

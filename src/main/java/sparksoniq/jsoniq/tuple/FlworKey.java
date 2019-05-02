@@ -31,14 +31,16 @@ import java.util.List;
 
 public class FlworKey implements KryoSerializable {
 
-    public List<Item> getKeyItems() {
-        return keyItems;
-    }
+    private List<Item> keyItems;
 
     public FlworKey(List<Item> contents) {
         this.keyItems = new ArrayList<>();
         this.keyItems.addAll(contents);
 
+    }
+
+    public List<Item> getKeyItems() {
+        return keyItems;
     }
 
     @Override
@@ -56,7 +58,6 @@ public class FlworKey implements KryoSerializable {
         else
             return false;
     }
-
 
     /**
      * Invariant - two Flworkeys have the same length
@@ -124,9 +125,6 @@ public class FlworKey implements KryoSerializable {
     public void read(Kryo kryo, Input input) {
         keyItems = kryo.readObject(input, ArrayList.class);
     }
-
-
-    private List<Item> keyItems;
 
 
 }

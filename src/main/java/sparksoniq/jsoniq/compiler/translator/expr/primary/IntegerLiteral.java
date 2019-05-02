@@ -25,15 +25,15 @@ import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 public class IntegerLiteral extends PrimaryExpression {
 
-    public int getValue() {
-        return value;
-    }
-
     private int value;
 
     public IntegerLiteral(int _value, ExpressionMetadata metadata) {
         super(metadata);
         this.value = _value;
+    }
+
+    public int getValue() {
+        return value;
     }
 
     @Override

@@ -22,6 +22,9 @@ package sparksoniq.utils;
 
 public class Tuple<T, V> {
 
+    private final T first;
+    private final V second;
+
     public Tuple(T first, V second) {
         this.first = first;
         this.second = second;
@@ -34,7 +37,4 @@ public class Tuple<T, V> {
     public V getSecond() {
         return second;
     }
-
-    private final T first;
-    private final V second;
 }

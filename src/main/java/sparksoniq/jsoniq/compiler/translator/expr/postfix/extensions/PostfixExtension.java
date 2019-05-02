@@ -30,6 +30,8 @@ import java.util.List;
 
 public abstract class PostfixExtension extends ExpressionOrClause {
 
+    private PostFixExpression parent;
+
     protected PostfixExtension(ExpressionMetadata metadata) {
         super(metadata);
     }
@@ -47,7 +49,6 @@ public abstract class PostfixExtension extends ExpressionOrClause {
         return new ArrayList<>();
     }
 
-
     @Override
     public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
         return visitor.visitDescendants(this, argument);
@@ -57,6 +58,4 @@ public abstract class PostfixExtension extends ExpressionOrClause {
     public String serializationString(boolean prefix) {
         return "";
     }
-
-    private PostFixExpression parent;
 }

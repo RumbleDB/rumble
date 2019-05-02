@@ -26,6 +26,12 @@ import java.util.HashMap;
 public class SparksoniqRuntimeConfiguration {
 
     public static final String ARGUMENT_PREFIX = "--";
+    private static final String ARGUMENT_FORMAT_ERROR_MESSAGE = "Invalid argument format. Required format: --property value";
+    private HashMap<String, String> _arguments;
+
+    public SparksoniqRuntimeConfiguration(HashMap<String, String> arguments) {
+        this._arguments = arguments;
+    }
 
     public static HashMap<String, String> processCommandLineArgs(String[] args) {
         HashMap<String, String> argumentMap = new HashMap<>();
@@ -35,10 +41,6 @@ public class SparksoniqRuntimeConfiguration {
             else
                 throw new CliException(ARGUMENT_FORMAT_ERROR_MESSAGE);
         return argumentMap;
-    }
-
-    public SparksoniqRuntimeConfiguration(HashMap<String, String> arguments) {
-        this._arguments = arguments;
     }
 
     public String getConfigurationArgument(String key) {
@@ -57,7 +59,4 @@ public class SparksoniqRuntimeConfiguration {
                 "Query Path : " + (_arguments.getOrDefault("query-path", "-")) + "\n";
         return result;
     }
-
-    private static final String ARGUMENT_FORMAT_ERROR_MESSAGE = "Invalid argument format. Required format: --property value";
-    private HashMap<String, String> _arguments;
 }

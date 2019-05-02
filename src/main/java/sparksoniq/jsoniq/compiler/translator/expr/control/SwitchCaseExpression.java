@@ -30,6 +30,9 @@ import java.util.List;
 
 public class SwitchCaseExpression extends Expression {
 
+    private final Expression returnExpression;
+    private final Expression condition;
+
     public SwitchCaseExpression(Expression condition, Expression returnExpression,
                                 ExpressionMetadata metadataFromContext) {
         super(metadataFromContext);
@@ -63,7 +66,4 @@ public class SwitchCaseExpression extends Expression {
     public String serializationString(boolean prefix) {
         return "";
     }
-
-    private final Expression returnExpression;
-    private final Expression condition;
 }

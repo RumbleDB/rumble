@@ -23,31 +23,10 @@ import java.io.Serializable;
 
 public class SequenceType implements Serializable {
 
-    public boolean isEmpty() {
-        return _isEmpty;
-    }
+    private Arity _arity;
+    private ItemType _itemType;
+    private boolean _isEmpty = false;
 
-
-    public ItemType getItemType() {
-        return _itemType;
-    }
-
-    public Arity getArity() {
-        return _arity;
-    }
-
-
-    public enum Arity {
-        OneOrZero,
-        OneOrMore,
-        ZeroOrMore,
-        One
-    }
-
-    public boolean isSubtypeOf(SequenceType superType) {
-        return this._itemType.isSubtypeOf(superType.getItemType()) &&
-                this._arity == superType._arity;
-    }
 
     public SequenceType(ItemType itemType, Arity arity) {
         this._itemType = itemType;
@@ -67,7 +46,26 @@ public class SequenceType implements Serializable {
         this._isEmpty = true;
     }
 
-    private Arity _arity;
-    private ItemType _itemType;
-    private boolean _isEmpty = false;
+    public boolean isEmpty() {
+        return _isEmpty;
+    }
+
+    public ItemType getItemType() {
+        return _itemType;
+    }
+
+    public Arity getArity() {
+        return _arity;
+    }
+
+    public boolean isSubtypeOf(SequenceType superType) {
+        return this._itemType.isSubtypeOf(superType.getItemType()) &&
+                this._arity == superType._arity;
+    }
+    public enum Arity {
+        OneOrZero,
+        OneOrMore,
+        ZeroOrMore,
+        One
+    }
 }

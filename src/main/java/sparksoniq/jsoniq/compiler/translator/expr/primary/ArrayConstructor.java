@@ -31,10 +31,6 @@ import java.util.List;
 
 public class ArrayConstructor extends PrimaryExpression {
 
-    public Expression getExpression() {
-        return expression;
-    }
-
     private Expression expression;
 
     public ArrayConstructor(Expression expression, ExpressionMetadata metadata) {
@@ -45,6 +41,10 @@ public class ArrayConstructor extends PrimaryExpression {
     public ArrayConstructor(ExpressionMetadata metadata) {
         super(metadata);
         this.expression = null;
+    }
+
+    public Expression getExpression() {
+        return expression;
     }
 
     @Override

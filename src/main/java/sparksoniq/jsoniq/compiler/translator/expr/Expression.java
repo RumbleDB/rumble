@@ -25,6 +25,8 @@ import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 public abstract class Expression extends ExpressionOrClause {
 
+    protected StaticContext _staticContext;
+
     public Expression() {
         super();
     }
@@ -45,8 +47,6 @@ public abstract class Expression extends ExpressionOrClause {
     public void setStaticContext(StaticContext _staticContext) {
         this._staticContext = _staticContext;
     }
-
-    protected StaticContext _staticContext;
 
     @Override
     public String serializationString(boolean prefix) {

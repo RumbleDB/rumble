@@ -25,15 +25,15 @@ import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 public class BooleanLiteral extends PrimaryExpression {
 
-    public boolean getValue() {
-        return value;
-    }
-
     private boolean value;
 
     public BooleanLiteral(boolean _value, ExpressionMetadata metadata) {
         super(metadata);
         this.value = _value;
+    }
+
+    public boolean getValue() {
+        return value;
     }
 
     @Override

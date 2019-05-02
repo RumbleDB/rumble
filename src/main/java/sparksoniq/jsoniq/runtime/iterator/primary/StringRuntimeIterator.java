@@ -27,6 +27,14 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class StringRuntimeIterator extends AtomicRuntimeIterator {
 
+    private String _item;
+
+    public StringRuntimeIterator(String value, IteratorMetadata iteratorMetadata) {
+        super(null, iteratorMetadata);
+        this._item = value;
+        _item = StringEscapeUtils.unescapeJson(_item);
+    }
+
     @Override
     public StringItem next() {
         if (this._hasNext) {
@@ -36,12 +44,4 @@ public class StringRuntimeIterator extends AtomicRuntimeIterator {
 
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item, getMetadata());
     }
-
-    public StringRuntimeIterator(String value, IteratorMetadata iteratorMetadata) {
-        super(null, iteratorMetadata);
-        this._item = value;
-        _item = StringEscapeUtils.unescapeJson(_item);
-    }
-
-    private String _item;
 }

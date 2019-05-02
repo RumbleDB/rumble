@@ -24,6 +24,10 @@ import sparksoniq.semantics.types.ItemTypes;
 
 public abstract class JsonItem extends Item {
 
+    protected JsonItem() {
+        super();
+    }
+
     @Override
     public boolean isAtomic() {
         return false;
@@ -34,9 +38,5 @@ public abstract class JsonItem extends Item {
         if (type.getType().equals(ItemTypes.JSONItem) || type.getType().equals(ItemTypes.Item))
             return true;
         return false;
-    }
-
-    protected JsonItem() {
-        super();
     }
 }
