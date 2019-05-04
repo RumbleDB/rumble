@@ -23,6 +23,7 @@ import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
+import org.apache.spark.SparkException;
 import org.junit.Assert;
 import sparksoniq.exceptions.ParsingException;
 import sparksoniq.exceptions.SemanticException;
@@ -157,6 +158,13 @@ public class AnnotationsTestsBase {
                     checkExpectedOutput(currentAnnotation.getOutput(), runtimeIterator);
                 } catch (Exception exception) {
                     String errorOutput = exception.getMessage();
+                    if (exception instanceof SparkException) {
+                        Throwable rootCause = exception;
+                        while(rootCause.getCause() != null) {
+                            rootCause = rootCause.getCause();
+                        }
+                        errorOutput = rootCause.getMessage();
+                    }
                     checkErrorCode(errorOutput, currentAnnotation.getErrorCode(), currentAnnotation.getErrorMetadata());
                     return context;
                 }
