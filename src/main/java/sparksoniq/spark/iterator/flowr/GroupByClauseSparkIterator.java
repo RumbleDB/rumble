@@ -137,7 +137,7 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
                     }
 
                     List<Item> newVariableResults = new ArrayList<>();
-                    groupVariableExpression.open(new DynamicContext(inputTuple));
+                    groupVariableExpression.open(tupleContext);
                     while (groupVariableExpression.hasNext()) {
                         Item resultItem = groupVariableExpression.next();
                         if (!resultItem.isAtomic()) {
@@ -157,7 +157,7 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
                         throw new InvalidGroupVariableException("Variable " + groupVariableReference.getVariableName() + " cannot be used in group clause", _groupVariable.getIteratorMetadata());
                     }
 
-                    groupVariableReference.open(new DynamicContext(inputTuple));
+                    groupVariableReference.open(tupleContext);
                     while (groupVariableReference.hasNext()) {
                         results.add(groupVariableReference.next());
                     }
