@@ -21,26 +21,32 @@
 package sparksoniq.spark.udf;
 
 import org.apache.spark.sql.api.java.UDF1;
-import sparksoniq.jsoniq.item.IntegerItem;
+import scala.collection.mutable.WrappedArray;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.spark.DataFrameUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class CountClauseSerializeUDF implements UDF1<Long, byte[]> {
+public class GroupClauseSerializeAggregateResultsUDF implements UDF1<WrappedArray, byte[]> {
 
     private List<Item> _nextResult;
+    private List<List<Item>> _deserializedParams;
 
-    public CountClauseSerializeUDF() {
+    public GroupClauseSerializeAggregateResultsUDF() {
         _nextResult = new ArrayList<>();
+        _deserializedParams = new ArrayList<>();
     }
 
     @Override
-    public byte[] call(Long countIndex) {
+    public byte[] call(WrappedArray wrappedParameters) {
         _nextResult.clear();
-        _nextResult.add(new IntegerItem(countIndex.intValue()));
+        _deserializedParams.clear();
+        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams);
 
+        for (List<Item> deserializedParam : _deserializedParams) {
+            _nextResult.addAll(deserializedParam);
+        }
         return DataFrameUtils.serializeItemList(_nextResult);
     }
 }

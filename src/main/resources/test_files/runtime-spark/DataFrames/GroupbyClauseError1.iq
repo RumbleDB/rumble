@@ -1,5 +1,7 @@
-(:JIQS: ShouldCrash; ErrorCode="XQST0094" :)
+(:JIQS: ShouldCrash; ErrorCode="XPTY0004" :)
 for $i in json-file("./src/main/resources/queries/conf-ex.json", 10)
 let $j := $i.choices
 group by $j := $i.choices
 return $j
+
+(: non-atomic group by error :)
