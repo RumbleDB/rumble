@@ -22,6 +22,7 @@ package sparksoniq.jsoniq.runtime.iterator.primary;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.NullItem;
 import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
@@ -45,6 +46,7 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
         this._keys = keys;
         this._values = values;
     }
+
     public ObjectConstructorRuntimeIterator(List<RuntimeIterator> childExpressions,
                                             IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
@@ -75,25 +77,23 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
                 for (RuntimeIterator valueIterator : this._values) {
                     List<Item> currentResults = new ArrayList<>();
                     valueIterator.open(this._currentDynamicContext);
-                    while (valueIterator.hasNext())
+                    while (valueIterator.hasNext()) {
                         currentResults.add(valueIterator.next());
-//                    if(valueIterator.hasNext())
-//                        throw new IteratorFlowException("Object value must return one item!");
+                    }
                     valueIterator.close();
                     //SIMILAR TO ZORBA, if value is more than one item, wrap it in an array
-                    if (currentResults.size() > 1)
+                    if (currentResults.size() > 1) {
                         values.add(new ArrayItem(currentResults));
-                    else
+                    } else if (currentResults.size() == 1) {
                         values.add(currentResults.get(0));
+                    } else {
+                        values.add(new NullItem());
+                    }
                 }
 
                 for (RuntimeIterator keyIterator : this._keys) {
                     keyIterator.open(this._currentDynamicContext);
-                    try {
-                        keys.add(((StringItem) keyIterator.next()).getStringValue());
-                    } catch (Exception ex) {
-                        throw new IteratorFlowException("Object must have string keys!", getMetadata());
-                    }
+                    keys.add((keyIterator.next()).getStringValue());
                     if (keyIterator.hasNext())
                         throw new IteratorFlowException("Object value must return one item!", getMetadata());
                     keyIterator.close();
