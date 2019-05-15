@@ -20,11 +20,11 @@
 package sparksoniq.jsoniq.runtime.iterator.primary;
 
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.NullItem;
 import sparksoniq.jsoniq.item.ObjectItem;
-import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -93,9 +93,16 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
 
                 for (RuntimeIterator keyIterator : this._keys) {
                     keyIterator.open(this._currentDynamicContext);
-                    keys.add((keyIterator.next()).getStringValue());
+                    if (!keyIterator.hasNext()) {
+                        throw new IteratorFlowException("A key cannot be the empty sequence", getMetadata());
+                    }
+                    Item key = keyIterator.next();
+                    if (!key.isString()) {
+                        throw new UnexpectedTypeException("Key provided for object creation must be of type String", getMetadata());
+                    }
+                    keys.add(key.getStringValue());
                     if (keyIterator.hasNext())
-                        throw new IteratorFlowException("Object value must return one item!", getMetadata());
+                        throw new IteratorFlowException("A key cannot be a sequence of more than one item", getMetadata());
                     keyIterator.close();
                 }
                 this._hasNext = false;
