@@ -158,79 +158,53 @@ public abstract class Item implements SerializableItem {
         return compareItems(v1, v2) == 0;
     }
 
-    ;
-
     public List<Item> getItems() {
         throw new RuntimeException("Item is not an array.");
     }
-
-    ;
 
     public Item getItemAt(int i) {
         throw new RuntimeException("Item is not an array.");
     }
 
-    ;
-
     public void putItem(Item value) {
         throw new RuntimeException("Item is not an array.");
     }
-
-    ;
 
     public List<String> getKeys() {
         throw new RuntimeException("Item is not an object.");
     }
 
-    ;
-
     public Collection<? extends Item> getValues() {
         throw new RuntimeException("Item is not an object.");
     }
-
-    ;
 
     public Item getItemByKey(String s) {
         throw new RuntimeException("Item is not an object.");
     }
 
-    ;
-
     public void putItemByKey(String s, Item value) {
         throw new RuntimeException("Item is not an object.");
     }
-
-    ;
 
     public int getSize() {
         throw new RuntimeException("Item is not an array.");
     }
 
-    ;
-
     public String getStringValue() {
         throw new RuntimeException("Item is not a string.");
     }
-
-    ;
 
     public boolean getBooleanValue() {
         throw new RuntimeException("Item is not a boolean.");
     }
 
-    ;
-
     public double getDoubleValue() {
         throw new RuntimeException("Item is not a double.");
     }
 
-    ;
-
     public int getIntegerValue() {
         throw new RuntimeException("Item is not an integer.");
     }
-
-    ;
 
     public BigDecimal getDecimalValue() {
         throw new RuntimeException("Item is not a big decimal.");
