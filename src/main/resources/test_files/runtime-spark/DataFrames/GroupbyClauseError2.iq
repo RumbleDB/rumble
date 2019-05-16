@@ -1,6 +1,0 @@
-(:JIQS: ShouldCrash; ErrorCode="XPDY0130" :)
-for $i in json-file("./src/main/resources/queries/conf-ex.json", 10)
-group by $target := $i.target
-return $target
-
-(: variable out of scope :)

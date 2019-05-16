@@ -234,7 +234,6 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
             throw new SparksoniqRuntimeException("Invalid groupby clause.");
         }
         Dataset<Row> df = _child.getDataFrame(context);
-        StructType originalInputSchema = df.schema();
         StructType inputSchema;
         String[] columnNamesArray;
         List<String> columnNames;
@@ -323,9 +322,8 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
             }
         }
 
-
-        List<StructField> typedFields = new ArrayList<>();  // Determine the return type for grouping UDF
-        StringBuilder groupingSQL = new StringBuilder();    // Prepare the SQL statement for the group by query
+        // Determine the return type for grouping UDF
+        List<StructField> typedFields = new ArrayList<>();
         String appendedGroupingColumnsName = "grouping_columns";
         for (int columnIndex = 0; columnIndex < typesForAllColumns.size(); columnIndex++) {
             String columnTypeString = typesForAllColumns.get(columnIndex);
@@ -352,24 +350,6 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
                 throw new SparksoniqRuntimeException("Unexpected grouping type found while determining UDF return type.");
             }
             typedFields.add(DataTypes.createStructField(columnName, columnType, true));
-
-            // accessing the created grouping row as "`grouping_columns`.`0-nullEmptyCheckField` (desc)"
-            // prepare sql for expression's 1st column
-            groupingSQL.append("`");
-            groupingSQL.append(appendedGroupingColumnsName);
-            groupingSQL.append("`.`");
-            groupingSQL.append(columnIndex);
-            groupingSQL.append("-nullEmptyCheckField`, ");
-
-            // prepare sql for expression's 2nd column
-            groupingSQL.append("`");
-            groupingSQL.append(appendedGroupingColumnsName);
-            groupingSQL.append("`.`");
-            groupingSQL.append(columnIndex);
-            groupingSQL.append("-valueField`");
-            if (columnIndex != typesForAllColumns.size() - 1) {
-                groupingSQL.append(", ");
-            }
         }
 
         df.sparkSession().udf().register("createGroupingColumns",
@@ -394,7 +374,7 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
             groupbyVariableNames.add(variableAccessExpression.getVariableName());
         }
         String projectSQL = DataFrameUtils.getGroupbyProjectSQL(
-                originalInputSchema,
+                inputSchema,
                 -1,
                 false,
                 serializerUDFName,
