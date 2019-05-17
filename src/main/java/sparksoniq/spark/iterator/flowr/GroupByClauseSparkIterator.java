@@ -316,7 +316,7 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
                             // do nothing, type is already set to integer
                         }
                     } else if (!currentColumnType.equals(columnType)) {
-                        throw new UnexpectedTypeException("Group by column must contain values of a single type.", getMetadata());
+                        throw new UnexpectedTypeException("Group by variable must contain values of a single type.", getMetadata());
                     }
                 }
             }

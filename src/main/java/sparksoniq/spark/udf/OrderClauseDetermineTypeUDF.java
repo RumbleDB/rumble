@@ -73,7 +73,7 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
             if (expression.getExpression().hasNext()) {
                 _nextItem = expression.getExpression().next();
                 if (expression.getExpression().hasNext()) {
-                    throw new SparksoniqRuntimeException("Order by expressions must return a singleton for each row.");
+                    throw new UnexpectedTypeException("Can not order by variables with sequences of multiple items.", expression.getIteratorMetadata());
                 }
             }
             expression.getExpression().close();
@@ -93,7 +93,7 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
             } else if (_nextItem.isDecimal()) {
                 result.add("decimal");
             } else if (_nextItem.isArray() || _nextItem.isObject()) {
-                throw new UnexpectedTypeException("Order by column must contain only atomics.", expression.getIteratorMetadata());
+                throw new UnexpectedTypeException("Order by variable can not contain arrays or objects.", expression.getIteratorMetadata());
             } else {
                 throw new SparksoniqRuntimeException("Unexpected type found.");
             }

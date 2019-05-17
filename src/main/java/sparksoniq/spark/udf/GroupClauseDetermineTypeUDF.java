@@ -71,7 +71,7 @@ public class GroupClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
             if (expression.hasNext()) {
                 _nextItem = expression.next();
                 if (expression.hasNext()) {
-                    throw new SparksoniqRuntimeException("Group by expressions must return a singleton for each row");
+                    throw new UnexpectedTypeException("Can not group on variables with sequences of multiple items.", expression.getMetadata());
                 }
             }
             expression.close();
@@ -91,7 +91,7 @@ public class GroupClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
             } else if (_nextItem.isDecimal()) {
                 result.add("decimal");
             } else if (_nextItem.isArray() || _nextItem.isObject()) {
-                throw new UnexpectedTypeException("Group by column must contain only atomics.", expression.getMetadata());
+                throw new UnexpectedTypeException("Group by variable can not contain arrays or objects.", expression.getMetadata());
             } else {
                 throw new SparksoniqRuntimeException("Unexpected type found.");
             }
