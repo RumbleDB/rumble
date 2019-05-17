@@ -1,0 +1,9 @@
+(:JIQS: ShouldCrash; ErrorCode="XPTY0004"; :)
+for $i in (1,2,3)
+let $j := (1, 2)
+order by $j
+return $i
+
+(: can't group on sequences :)
+
+

@@ -2,7 +2,7 @@
 for $i in (
    { "product" : "broiler", "store number" : 1, "quantity" : 20  },
    { "product" : "toaster", "store number" : 2, "quantity" : "aaaa"  })
-order by $i."quantity"
+group by $j := $i."quantity"
 return $i
 
-(: mismatch in order types:)
+(: mismatch in group types:)
