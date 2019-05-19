@@ -21,32 +21,31 @@
 package sparksoniq.spark.udf;
 
 import org.apache.spark.sql.api.java.UDF1;
-import org.apache.spark.sql.types.StructType;
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
-import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
-    private List<OrderByClauseSparkIteratorExpression> _expressions;
-    private StructType _inputSchema;
+public class GroupClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
+    private List<VariableReferenceIterator> _expressions;
+    private List<String> _inputColumnNames;
 
     private List<List<Item>> _deserializedParams;
     private DynamicContext _context;
     private Item _nextItem;
     private List<String> result;
 
-    public OrderClauseDetermineTypeUDF(
-            List<OrderByClauseSparkIteratorExpression> expressions,
-            StructType inputSchema) {
+    public GroupClauseDetermineTypeUDF(
+            List<VariableReferenceIterator> expressions,
+            List<String> inputColumnNames) {
         _expressions = expressions;
-        _inputSchema = inputSchema;
+        _inputColumnNames = inputColumnNames;
 
         _deserializedParams = new ArrayList<>();
         _context = new DynamicContext();
@@ -59,24 +58,23 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
         result.clear();
 
         DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams);
-        String[] columnNames = _inputSchema.fieldNames();
 
-        for (OrderByClauseSparkIteratorExpression expression : _expressions) {
+        for (VariableReferenceIterator expression : _expressions) {
             // prepare dynamic context
             _context.removeAllVariables();
-            for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
-                _context.addVariableValue(columnNames[columnIndex], _deserializedParams.get(columnIndex));
+            for (int columnIndex = 0; columnIndex < _inputColumnNames.size(); columnIndex++) {
+                _context.addVariableValue(_inputColumnNames.get(columnIndex), _deserializedParams.get(columnIndex));
             }
 
             // apply expression in the dynamic context
-            expression.getExpression().open(_context);
-            if (expression.getExpression().hasNext()) {
-                _nextItem = expression.getExpression().next();
-                if (expression.getExpression().hasNext()) {
-                    throw new UnexpectedTypeException("Can not order by variables with sequences of multiple items.", expression.getIteratorMetadata());
+            expression.open(_context);
+            if (expression.hasNext()) {
+                _nextItem = expression.next();
+                if (expression.hasNext()) {
+                    throw new UnexpectedTypeException("Can not group on variables with sequences of multiple items.", expression.getMetadata());
                 }
             }
-            expression.getExpression().close();
+            expression.close();
 
             if (_nextItem == null) {
                 result.add("empty-sequence");
@@ -93,7 +91,7 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
             } else if (_nextItem.isDecimal()) {
                 result.add("decimal");
             } else if (_nextItem.isArray() || _nextItem.isObject()) {
-                throw new UnexpectedTypeException("Order by variable can not contain arrays or objects.", expression.getIteratorMetadata());
+                throw new UnexpectedTypeException("Group by variable can not contain arrays or objects.", expression.getMetadata());
             } else {
                 throw new SparksoniqRuntimeException("Unexpected type found.");
             }
