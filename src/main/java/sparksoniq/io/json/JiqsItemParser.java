@@ -64,7 +64,7 @@ public class JiqsItemParser implements Serializable {
             }
             if (object instanceof JSONObject) {
                 JSONObject currentObject = (JSONObject) object;
-                int numberOfValues = currentObject.keySet().size();
+                int numberOfValues = currentObject.length();
                 List<String> keys = new ArrayList<>(numberOfValues);
                 List<Item> values = new ArrayList<>(numberOfValues);
                 Iterator<String> keyIterator = currentObject.keys();
