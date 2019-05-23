@@ -261,4 +261,8 @@ public abstract class Item implements SerializableItem {
             throws IOException {
         aOutputStream.defaultWriteObject();
     }
+    
+    public abstract boolean equals(Object otherItem);
+
+    public abstract int hashCode();
 }

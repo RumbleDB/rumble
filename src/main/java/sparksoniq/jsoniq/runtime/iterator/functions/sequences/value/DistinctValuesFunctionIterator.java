@@ -77,7 +77,6 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
     public void openLocal(DynamicContext context) {
         _prevResults = new ArrayList<>();
 
-        _sequenceIterator = this._children.get(0);
         _sequenceIterator.open(_currentDynamicContext);
 
         setNextResult();

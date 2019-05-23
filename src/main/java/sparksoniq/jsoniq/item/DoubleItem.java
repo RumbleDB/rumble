@@ -69,4 +69,23 @@ public class DoubleItem extends AtomicItem {
     public void read(Kryo kryo, Input input) {
         this._value = input.readDouble();
     }
+    
+    public boolean equals(Object otherItem)
+    {
+        if(!(otherItem instanceof Item))
+        {
+            return false;
+        }
+        Item o = (Item)otherItem;
+        if(!o.isDouble())
+        {
+            return false;
+        }
+        return (getDoubleValue() == o.getDoubleValue());
+    }
+    
+    public int hashCode()
+    {
+        return (int)Math.round(getDoubleValue());
+    }
 }

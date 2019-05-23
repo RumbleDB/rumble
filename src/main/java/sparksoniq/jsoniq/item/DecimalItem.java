@@ -72,4 +72,23 @@ public class DecimalItem extends AtomicItem {
     public void read(Kryo kryo, Input input) {
         this._value = kryo.readObject(input, BigDecimal.class);
     }
+    
+    public boolean equals(Object otherItem)
+    {
+        if(!(otherItem instanceof Item))
+        {
+            return false;
+        }
+        Item o = (Item)otherItem;
+        if(!o.isDecimal())
+        {
+            return false;
+        }
+        return (getDecimalValue().equals(o.getDecimalValue()));
+    }
+    
+    public int hashCode()
+    {
+        return getDecimalValue().hashCode();
+    }
 }
