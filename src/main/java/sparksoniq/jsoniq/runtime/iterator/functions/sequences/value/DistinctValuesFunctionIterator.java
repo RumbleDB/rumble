@@ -23,14 +23,12 @@ package sparksoniq.jsoniq.runtime.iterator.functions.sequences.value;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.item.ItemUtil;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
@@ -90,7 +88,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
             if (!item.isAtomic()) {
                 throw new NonAtomicKeyException("Invalid args. distinct-values can't be performed on non-atomics", getMetadata().getExpressionMetadata());
             } else {
-                if (!ItemUtil.listContainsItem(_prevResults, item)) {
+                if (!_prevResults.contains(item)) {
                     _prevResults.add(item);
                     _nextResult = item;
                     break;
