@@ -80,15 +80,31 @@ public class DecimalItem extends AtomicItem {
             return false;
         }
         Item o = (Item)otherItem;
-        if(!o.isDecimal())
+        if(o.isInteger())
         {
-            return false;
+            if(getDecimalValue().stripTrailingZeros().scale() > 0)
+            {
+                return false;
+            }
+            return getDecimalValue().intValueExact() == o.getIntegerValue();
         }
-        return (getDecimalValue().equals(o.getDecimalValue()));
+        if(o.isDecimal())
+        {
+            return (getDecimalValue().equals(o.getDecimalValue()));
+        }
+        if(o.isDouble())
+        {
+            return (o.getDoubleValue() == getDecimalValue().doubleValue());
+        }
+        return false;
     }
     
     public int hashCode()
     {
+        if(getDecimalValue().stripTrailingZeros().scale() == 0)
+        {
+            return getDecimalValue().intValue();
+        }
         return getDecimalValue().hashCode();
     }
 }

@@ -19,6 +19,8 @@
  */
 package sparksoniq.jsoniq.item;
 
+import java.math.BigDecimal;
+
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -78,11 +80,23 @@ public class IntegerItem extends AtomicItem {
             return false;
         }
         Item o = (Item)otherItem;
-        if(!o.isInteger())
+        if(o.isInteger())
         {
-            return false;
+            return getIntegerValue() == o.getIntegerValue();
         }
-        return (getIntegerValue() == o.getIntegerValue());
+        if(o.isDecimal())
+        {
+            if(o.getDecimalValue().stripTrailingZeros().scale() > 0)
+            {
+                return false;
+            }
+            return o.getDecimalValue().intValueExact() == getIntegerValue();
+        }
+        if(o.isDouble())
+        {
+            return (o.getDoubleValue() == (double)getIntegerValue());
+        }
+        return false;
     }
     
     public int hashCode()
