@@ -91,18 +91,10 @@ public class DataFrameUtils {
         return byteArray;
     }
 
-    public static byte[] serializeItemList(List<Item> toSerialize) {
-        Kryo kryo = KM.getOrCreateKryo();
-
-        Output output = new ByteBufferOutput(128, -1);
+    public static byte[] serializeItemList(List<Item> toSerialize, Kryo kryo, Output output) {
+        output.clear();
         kryo.writeClassAndObject(output, toSerialize);
-        output.close();
-
-        byte[] byteArray = output.toBytes();
-
-        KM.releaseKryoInstance(kryo);
-
-        return byteArray;
+        return output.toBytes();
     }
 
     /**
@@ -211,17 +203,17 @@ public class DataFrameUtils {
         }
     }
 
-    public static Row reserializeRowWithNewData(Row prevRow, List<Item> newColumn, int duplicateColumnIndex) {
+    public static Row reserializeRowWithNewData(Row prevRow, List<Item> newColumn, int duplicateColumnIndex, Kryo kryo, Output output) {
         List<byte[]> newRowColumns = new ArrayList<>();
         for (int columnIndex = 0; columnIndex < prevRow.length(); columnIndex++) {
             if (duplicateColumnIndex == columnIndex) {
-                newRowColumns.add(serializeItemList(newColumn));
+                newRowColumns.add(serializeItemList(newColumn, kryo, output));
             } else {
                 newRowColumns.add((byte[]) prevRow.get(columnIndex));
             }
         }
         if (duplicateColumnIndex == -1) {
-            newRowColumns.add(serializeItemList(newColumn));
+            newRowColumns.add(serializeItemList(newColumn, kryo, output));
         }
         return RowFactory.create(newRowColumns.toArray());
     }

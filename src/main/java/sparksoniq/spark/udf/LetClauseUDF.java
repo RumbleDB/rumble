@@ -24,6 +24,8 @@ import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.types.StructType;
 
 import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.ByteBufferOutput;
+import com.esotericsoftware.kryo.io.Output;
 
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.jsoniq.item.Item;
@@ -44,6 +46,7 @@ public class LetClauseUDF implements UDF1<WrappedArray, byte[]> {
     private List<Item> _nextResult;
     
     private transient Kryo _kryo;
+    private transient Output _output;
     
     public LetClauseUDF(
             RuntimeIterator expression,
@@ -57,6 +60,7 @@ public class LetClauseUDF implements UDF1<WrappedArray, byte[]> {
         
         _kryo = new Kryo();
         DataFrameUtils.registerKryoClassesKryo(_kryo);
+        _output = new ByteBufferOutput(128, -1);
     }
 
 
@@ -83,7 +87,7 @@ public class LetClauseUDF implements UDF1<WrappedArray, byte[]> {
         }
         _expression.close();
 
-        return DataFrameUtils.serializeItemList(_nextResult);
+        return DataFrameUtils.serializeItemList(_nextResult, _kryo, _output);
     }
     
     private void readObject(java.io.ObjectInputStream in)
@@ -92,6 +96,7 @@ public class LetClauseUDF implements UDF1<WrappedArray, byte[]> {
         
         _kryo = new Kryo();
         DataFrameUtils.registerKryoClassesKryo(_kryo);
+        _output = new ByteBufferOutput(128, -1);
     }
     
 }

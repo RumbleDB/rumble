@@ -21,19 +21,32 @@
 package sparksoniq.spark.udf;
 
 import org.apache.spark.sql.api.java.UDF1;
+
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.ByteBufferOutput;
+import com.esotericsoftware.kryo.io.Output;
+
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.spark.DataFrameUtils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class CountClauseSerializeUDF implements UDF1<Long, byte[]> {
 
     private List<Item> _nextResult;
+    
+    private transient Kryo _kryo;
+    private transient Output _output;
 
     public CountClauseSerializeUDF() {
         _nextResult = new ArrayList<>();
+        
+        _kryo = new Kryo();
+        DataFrameUtils.registerKryoClassesKryo(_kryo);
+        _output = new ByteBufferOutput(128, -1);
     }
 
     @Override
@@ -41,6 +54,15 @@ public class CountClauseSerializeUDF implements UDF1<Long, byte[]> {
         _nextResult.clear();
         _nextResult.add(new IntegerItem(countIndex.intValue()));
 
-        return DataFrameUtils.serializeItemList(_nextResult);
+        return DataFrameUtils.serializeItemList(_nextResult, _kryo, _output);
+    }
+    
+    private void readObject(java.io.ObjectInputStream in)
+            throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        
+        _kryo = new Kryo();
+        DataFrameUtils.registerKryoClassesKryo(_kryo);
+        _output = new ByteBufferOutput(128, -1);
     }
 }

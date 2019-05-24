@@ -23,19 +23,30 @@ package sparksoniq.spark.closures;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
+
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.ByteBufferOutput;
+import com.esotericsoftware.kryo.io.Output;
+
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.DataFrameUtils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ForClauseLocalToRowClosure implements Function<Item, Row> {
     private final FlworTuple _inputTuple;
 
+    private transient Kryo _kryo;
+    private transient Output _output;
 
     public ForClauseLocalToRowClosure(FlworTuple inputTuple) {
         this._inputTuple = inputTuple;
+        _kryo = new Kryo();
+        DataFrameUtils.registerKryoClassesKryo(_kryo);
+        _output = new ByteBufferOutput(128, -1);
     }
 
     @Override
@@ -49,9 +60,18 @@ public class ForClauseLocalToRowClosure implements Function<Item, Row> {
 
         List<byte[]> serializedRowColumns = new ArrayList<>();
         for (List<Item> column : rowColumns) {
-            serializedRowColumns.add(DataFrameUtils.serializeItemList(column));
+            serializedRowColumns.add(DataFrameUtils.serializeItemList(column, _kryo, _output));
         }
 
         return RowFactory.create(serializedRowColumns.toArray());
+    }
+    
+    private void readObject(java.io.ObjectInputStream in)
+            throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        
+        _kryo = new Kryo();
+        DataFrameUtils.registerKryoClassesKryo(_kryo);
+        _output = new ByteBufferOutput(128, -1);
     }
 }
