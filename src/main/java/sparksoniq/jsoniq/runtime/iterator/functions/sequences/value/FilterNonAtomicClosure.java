@@ -18,19 +18,18 @@
  *
  */
 
-package sparksoniq.jsoniq.item;
+package sparksoniq.jsoniq.runtime.iterator.functions.sequences.value;
 
-import java.util.List;
+import org.apache.spark.api.java.function.Function;
 
-public class ItemUtil {
+import sparksoniq.jsoniq.item.Item;
 
+public class FilterNonAtomicClosure implements Function<Item, Boolean> {
 
-    public static boolean listContainsItem(List<Item> list, Item newItem) {
-        for (Item i : list) {
-            if (Item.compareItems(i, newItem) == 0) {
-                return true;
-            }
-        }
-        return false;
+    public FilterNonAtomicClosure() {
     }
-}
+
+    public Boolean call(Item item) throws Exception {
+        return !item.isAtomic();
+    }
+};

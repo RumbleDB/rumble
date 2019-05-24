@@ -69,4 +69,23 @@ public class StringItem extends AtomicItem {
     public void read(Kryo kryo, Input input) {
         this._value = input.readString();
     }
+    
+    public boolean equals(Object otherItem)
+    {
+        if(!(otherItem instanceof Item))
+        {
+            return false;
+        }
+        Item o = (Item)otherItem;
+        if(!o.isString())
+        {
+            return false;
+        }
+        return (getStringValue().equals(o.getStringValue()));
+    }
+    
+    public int hashCode()
+    {
+        return getStringValue().hashCode();
+    }
 }

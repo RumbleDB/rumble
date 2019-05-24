@@ -69,4 +69,23 @@ public class BooleanItem extends AtomicItem {
     public void read(Kryo kryo, Input input) {
         this._value = input.readBoolean();
     }
+    
+    public boolean equals(Object otherItem)
+    {
+        if(!(otherItem instanceof Item))
+        {
+            return false;
+        }
+        Item o = (Item)otherItem;
+        if(!o.isBoolean())
+        {
+            return false;
+        }
+        return (getBooleanValue() == o.getBooleanValue());
+    }
+    
+    public int hashCode()
+    {
+        return getBooleanValue()?1:0;
+    }
 }
