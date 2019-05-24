@@ -52,7 +52,6 @@ public class ForClauseUDF implements UDF1<WrappedArray, List> {
     public ForClauseUDF(
             RuntimeIterator expression,
             StructType inputSchema) {
-        System.out.println("Instantiating ForClauseUDF.");
         _expression = expression;
         _inputSchema = inputSchema;
 
