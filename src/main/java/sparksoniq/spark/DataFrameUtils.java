@@ -33,8 +33,16 @@ import org.apache.spark.sql.expressions.Window;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import scala.collection.mutable.WrappedArray;
+import sparksoniq.jsoniq.item.ArrayItem;
+import sparksoniq.jsoniq.item.BooleanItem;
+import sparksoniq.jsoniq.item.DecimalItem;
+import sparksoniq.jsoniq.item.DoubleItem;
+import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.KryoManager;
+import sparksoniq.jsoniq.item.NullItem;
+import sparksoniq.jsoniq.item.ObjectItem;
+import sparksoniq.jsoniq.item.StringItem;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
@@ -54,6 +62,20 @@ import static org.apache.spark.sql.functions.udf;
 public class DataFrameUtils {
 
     private static KryoManager KM = KryoManager.getInstance();
+    
+    public static void registerKryoClassesKryo(Kryo kryo)
+    {
+        kryo.register(Item.class);
+        kryo.register(ArrayItem.class);
+        kryo.register(ObjectItem.class);
+        kryo.register(StringItem.class);
+        kryo.register(IntegerItem.class);
+        kryo.register(DoubleItem.class);
+        kryo.register(DecimalItem.class);
+        kryo.register(NullItem.class);
+        kryo.register(BooleanItem.class);
+        kryo.register(ArrayList.class);
+    }
 
     public static byte[] serializeItem(Item toSerialize) {
         Kryo kryo = KM.getOrCreateKryo();

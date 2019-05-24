@@ -26,15 +26,7 @@ import org.apache.spark.sql.types.StructType;
 import com.esotericsoftware.kryo.Kryo;
 
 import scala.collection.mutable.WrappedArray;
-import sparksoniq.jsoniq.item.ArrayItem;
-import sparksoniq.jsoniq.item.BooleanItem;
-import sparksoniq.jsoniq.item.DecimalItem;
-import sparksoniq.jsoniq.item.DoubleItem;
-import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.item.NullItem;
-import sparksoniq.jsoniq.item.ObjectItem;
-import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
@@ -67,16 +59,7 @@ public class ForClauseUDF implements UDF1<WrappedArray, List> {
         _results = new ArrayList<>();
         
         _kryo = new Kryo();
-        _kryo.register(Item.class);
-        _kryo.register(ArrayItem.class);
-        _kryo.register(ObjectItem.class);
-        _kryo.register(StringItem.class);
-        _kryo.register(IntegerItem.class);
-        _kryo.register(DoubleItem.class);
-        _kryo.register(DecimalItem.class);
-        _kryo.register(NullItem.class);
-        _kryo.register(BooleanItem.class);
-        _kryo.register(ArrayList.class);
+        DataFrameUtils.registerKryoClassesKryo(_kryo);
     }
 
 
@@ -113,15 +96,6 @@ public class ForClauseUDF implements UDF1<WrappedArray, List> {
         in.defaultReadObject();
         
         _kryo = new Kryo();
-        _kryo.register(Item.class);
-        _kryo.register(ArrayItem.class);
-        _kryo.register(ObjectItem.class);
-        _kryo.register(StringItem.class);
-        _kryo.register(IntegerItem.class);
-        _kryo.register(DoubleItem.class);
-        _kryo.register(DecimalItem.class);
-        _kryo.register(NullItem.class);
-        _kryo.register(BooleanItem.class);
-        _kryo.register(ArrayList.class);
+        DataFrameUtils.registerKryoClassesKryo(_kryo);
     }
 }
