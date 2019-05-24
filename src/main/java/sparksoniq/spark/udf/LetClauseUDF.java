@@ -22,12 +22,25 @@ package sparksoniq.spark.udf;
 
 import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.types.StructType;
+
+import com.esotericsoftware.kryo.Kryo;
+
 import scala.collection.mutable.WrappedArray;
+import sparksoniq.jsoniq.item.ArrayItem;
+import sparksoniq.jsoniq.item.BooleanItem;
+import sparksoniq.jsoniq.item.DecimalItem;
+import sparksoniq.jsoniq.item.DoubleItem;
+import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.NullItem;
+import sparksoniq.jsoniq.item.ObjectItem;
+import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
 
+import java.beans.Transient;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,7 +51,9 @@ public class LetClauseUDF implements UDF1<WrappedArray, byte[]> {
     private List<List<Item>> _deserializedParams;
     private DynamicContext _context;
     private List<Item> _nextResult;
-
+    
+    private transient Kryo _kryo;
+    
     public LetClauseUDF(
             RuntimeIterator expression,
             StructType inputSchema) {
@@ -48,6 +63,18 @@ public class LetClauseUDF implements UDF1<WrappedArray, byte[]> {
         _deserializedParams = new ArrayList<>();
         _context = new DynamicContext();
         _nextResult = new ArrayList<>();
+        
+        _kryo = new Kryo();
+        _kryo.register(Item.class);
+        _kryo.register(ArrayItem.class);
+        _kryo.register(ObjectItem.class);
+        _kryo.register(StringItem.class);
+        _kryo.register(IntegerItem.class);
+        _kryo.register(DoubleItem.class);
+        _kryo.register(DecimalItem.class);
+        _kryo.register(NullItem.class);
+        _kryo.register(BooleanItem.class);
+        _kryo.register(ArrayList.class);
     }
 
 
@@ -57,7 +84,7 @@ public class LetClauseUDF implements UDF1<WrappedArray, byte[]> {
         _context.removeAllVariables();
         _nextResult.clear();
 
-        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams);
+        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo);
 
         String[] columnNames = _inputSchema.fieldNames();
 
@@ -76,4 +103,22 @@ public class LetClauseUDF implements UDF1<WrappedArray, byte[]> {
 
         return DataFrameUtils.serializeItemList(_nextResult);
     }
+    
+    private void readObject(java.io.ObjectInputStream in)
+            throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        
+        _kryo = new Kryo();
+        _kryo.register(Item.class);
+        _kryo.register(ArrayItem.class);
+        _kryo.register(ObjectItem.class);
+        _kryo.register(StringItem.class);
+        _kryo.register(IntegerItem.class);
+        _kryo.register(DoubleItem.class);
+        _kryo.register(DecimalItem.class);
+        _kryo.register(NullItem.class);
+        _kryo.register(BooleanItem.class);
+        _kryo.register(ArrayList.class);
+    }
+    
 }

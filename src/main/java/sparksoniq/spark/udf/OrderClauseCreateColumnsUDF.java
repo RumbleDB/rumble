@@ -24,15 +24,26 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.types.StructType;
+
+import com.esotericsoftware.kryo.Kryo;
+
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
+import sparksoniq.jsoniq.item.ArrayItem;
+import sparksoniq.jsoniq.item.BooleanItem;
+import sparksoniq.jsoniq.item.DecimalItem;
+import sparksoniq.jsoniq.item.DoubleItem;
+import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.NullItem;
+import sparksoniq.jsoniq.item.ObjectItem;
+import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,6 +57,8 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
     private List<List<Item>> _deserializedParams;
     private DynamicContext _context;
     private List<Object> _results;
+    
+    private transient Kryo _kryo;
 
     public OrderClauseCreateColumnsUDF(
             List<OrderByClauseSparkIteratorExpression> expressions,
@@ -58,6 +71,18 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
         _deserializedParams = new ArrayList<>();
         _context = new DynamicContext();
         _results = new ArrayList<>();
+        
+        _kryo = new Kryo();
+        _kryo.register(Item.class);
+        _kryo.register(ArrayItem.class);
+        _kryo.register(ObjectItem.class);
+        _kryo.register(StringItem.class);
+        _kryo.register(IntegerItem.class);
+        _kryo.register(DoubleItem.class);
+        _kryo.register(DecimalItem.class);
+        _kryo.register(NullItem.class);
+        _kryo.register(BooleanItem.class);
+        _kryo.register(ArrayList.class);
     }
 
     @Override
@@ -65,7 +90,7 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
         _deserializedParams.clear();
         _results.clear();
 
-        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams);
+        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo);
         String[] columnNames = _inputSchema.fieldNames();
 
         for (int expressionIndex = 0; expressionIndex < _expressions.size(); expressionIndex++) {
@@ -126,5 +151,22 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
 
         }
         return RowFactory.create(_results.toArray());
+    }
+    
+    private void readObject(java.io.ObjectInputStream in)
+            throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        
+        _kryo = new Kryo();
+        _kryo.register(Item.class);
+        _kryo.register(ArrayItem.class);
+        _kryo.register(ObjectItem.class);
+        _kryo.register(StringItem.class);
+        _kryo.register(IntegerItem.class);
+        _kryo.register(DoubleItem.class);
+        _kryo.register(DecimalItem.class);
+        _kryo.register(NullItem.class);
+        _kryo.register(BooleanItem.class);
+        _kryo.register(ArrayList.class);
     }
 }

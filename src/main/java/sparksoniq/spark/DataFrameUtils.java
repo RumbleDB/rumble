@@ -171,11 +171,20 @@ public class DataFrameUtils {
         return obj;
     }
 
-    public static void deserializeWrappedParameters(WrappedArray wrappedParameters, List<List<Item>> deserializedParams) {
+    public static Object deserializeByteArray(byte[] toDeserialize, Kryo kryo) {
+        Input input = new Input(new ByteArrayInputStream(toDeserialize));
+
+        Object obj = kryo.readClassAndObject(input);
+        input.close();
+
+        return obj;
+    }
+
+    public static void deserializeWrappedParameters(WrappedArray wrappedParameters, List<List<Item>> deserializedParams, Kryo kryo) {
         Object[] serializedParams = (Object[]) wrappedParameters.array();
         for (int paramIndex = 0; paramIndex < serializedParams.length; paramIndex++) {
             Object serializedParam = serializedParams[paramIndex];
-            Object deserializedParam = deserializeByteArray((byte[]) serializedParam);
+            Object deserializedParam = deserializeByteArray((byte[]) serializedParam, kryo);
             deserializedParams.add((List<Item>) deserializedParam);
         }
     }

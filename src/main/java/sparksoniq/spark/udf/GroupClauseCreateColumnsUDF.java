@@ -23,14 +23,25 @@ package sparksoniq.spark.udf;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.api.java.UDF1;
+
+import com.esotericsoftware.kryo.Kryo;
+
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
+import sparksoniq.jsoniq.item.ArrayItem;
+import sparksoniq.jsoniq.item.BooleanItem;
+import sparksoniq.jsoniq.item.DecimalItem;
+import sparksoniq.jsoniq.item.DoubleItem;
+import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.NullItem;
+import sparksoniq.jsoniq.item.ObjectItem;
+import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +55,8 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
     private List<List<Item>> _deserializedParams;
     private DynamicContext _context;
     private List<Object> _results;
+    
+    private transient Kryo _kryo;
 
     public GroupClauseCreateColumnsUDF(
             List<VariableReferenceIterator> expressions,
@@ -56,6 +69,18 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
         _deserializedParams = new ArrayList<>();
         _context = new DynamicContext();
         _results = new ArrayList<>();
+        
+        _kryo = new Kryo();
+        _kryo.register(Item.class);
+        _kryo.register(ArrayItem.class);
+        _kryo.register(ObjectItem.class);
+        _kryo.register(StringItem.class);
+        _kryo.register(IntegerItem.class);
+        _kryo.register(DoubleItem.class);
+        _kryo.register(DecimalItem.class);
+        _kryo.register(NullItem.class);
+        _kryo.register(BooleanItem.class);
+        _kryo.register(ArrayList.class);
     }
 
     @Override
@@ -63,7 +88,7 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
         _deserializedParams.clear();
         _results.clear();
 
-        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams);
+        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo);
 
         for (int expressionIndex = 0; expressionIndex < _expressions.size(); expressionIndex++) {
             VariableReferenceIterator expression = _expressions.get(expressionIndex);
@@ -120,5 +145,22 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
 
         }
         return RowFactory.create(_results.toArray());
+    }
+    
+    private void readObject(java.io.ObjectInputStream in)
+            throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        
+        _kryo = new Kryo();
+        _kryo.register(Item.class);
+        _kryo.register(ArrayItem.class);
+        _kryo.register(ObjectItem.class);
+        _kryo.register(StringItem.class);
+        _kryo.register(IntegerItem.class);
+        _kryo.register(DoubleItem.class);
+        _kryo.register(DecimalItem.class);
+        _kryo.register(NullItem.class);
+        _kryo.register(BooleanItem.class);
+        _kryo.register(ArrayList.class);
     }
 }

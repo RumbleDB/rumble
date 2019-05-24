@@ -21,14 +21,26 @@
 package sparksoniq.spark.udf;
 
 import org.apache.spark.sql.api.java.UDF1;
+
+import com.esotericsoftware.kryo.Kryo;
+
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnexpectedTypeException;
+import sparksoniq.jsoniq.item.ArrayItem;
+import sparksoniq.jsoniq.item.BooleanItem;
+import sparksoniq.jsoniq.item.DecimalItem;
+import sparksoniq.jsoniq.item.DoubleItem;
+import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.NullItem;
+import sparksoniq.jsoniq.item.ObjectItem;
+import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,6 +52,8 @@ public class GroupClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
     private DynamicContext _context;
     private Item _nextItem;
     private List<String> result;
+    
+    private transient Kryo _kryo;
 
     public GroupClauseDetermineTypeUDF(
             List<VariableReferenceIterator> expressions,
@@ -50,6 +64,18 @@ public class GroupClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
         _deserializedParams = new ArrayList<>();
         _context = new DynamicContext();
         result = new ArrayList<>();
+        
+        _kryo = new Kryo();
+        _kryo.register(Item.class);
+        _kryo.register(ArrayItem.class);
+        _kryo.register(ObjectItem.class);
+        _kryo.register(StringItem.class);
+        _kryo.register(IntegerItem.class);
+        _kryo.register(DoubleItem.class);
+        _kryo.register(DecimalItem.class);
+        _kryo.register(NullItem.class);
+        _kryo.register(BooleanItem.class);
+        _kryo.register(ArrayList.class);
     }
 
     @Override
@@ -57,7 +83,7 @@ public class GroupClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
         _deserializedParams.clear();
         result.clear();
 
-        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams);
+        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo);
 
         for (VariableReferenceIterator expression : _expressions) {
             // prepare dynamic context
@@ -97,5 +123,22 @@ public class GroupClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
             }
         }
         return result;
+    }
+    
+    private void readObject(java.io.ObjectInputStream in)
+            throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        
+        _kryo = new Kryo();
+        _kryo.register(Item.class);
+        _kryo.register(ArrayItem.class);
+        _kryo.register(ObjectItem.class);
+        _kryo.register(StringItem.class);
+        _kryo.register(IntegerItem.class);
+        _kryo.register(DoubleItem.class);
+        _kryo.register(DecimalItem.class);
+        _kryo.register(NullItem.class);
+        _kryo.register(BooleanItem.class);
+        _kryo.register(ArrayList.class);
     }
 }
