@@ -77,18 +77,10 @@ public class DataFrameUtils {
         kryo.register(ArrayList.class);
     }
 
-    public static byte[] serializeItem(Item toSerialize) {
-        Kryo kryo = KM.getOrCreateKryo();
-
-        Output output = new ByteBufferOutput(128, -1);
+    public static byte[] serializeItem(Item toSerialize, Kryo kryo, Output output) {
+        output.clear();
         kryo.writeClassAndObject(output, toSerialize);
-        output.close();
-
-        byte[] byteArray = output.toBytes();
-
-        KM.releaseKryoInstance(kryo);
-
-        return byteArray;
+        return output.toBytes();
     }
 
     public static byte[] serializeItemList(List<Item> toSerialize, Kryo kryo, Output output) {
@@ -170,19 +162,6 @@ public class DataFrameUtils {
         }
 
         return queryColumnString.toString();
-    }
-
-    public static Object deserializeByteArray(byte[] toDeserialize) {
-        Kryo kryo = KM.getOrCreateKryo();
-
-        Input input = new Input(new ByteArrayInputStream(toDeserialize));
-
-        Object obj = kryo.readClassAndObject(input);
-        input.close();
-
-        KM.releaseKryoInstance(kryo);
-
-        return obj;
     }
 
     public static Object deserializeByteArray(byte[] toDeserialize, Kryo kryo) {
