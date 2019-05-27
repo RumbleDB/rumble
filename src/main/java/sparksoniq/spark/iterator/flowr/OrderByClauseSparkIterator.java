@@ -209,6 +209,7 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         String udfSQL = DataFrameUtils.getSQL(inputSchema, -1, false);
 
         df.createOrReplaceTempView("input");
+        df.sparkSession().table("input").cache();
         Dataset<Row> columnTypesDf = df.sparkSession().sql(
                 String.format("select distinct(determineOrderingDataType(array(%s))) as `distinct-types` from input",
                         udfSQL)
@@ -317,7 +318,6 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         String projectSQL = selectSQL.substring(0, selectSQL.length() - 1);   // remove trailing comma
         udfSQL = projectSQL;
 
-        df.createOrReplaceTempView("input");
         return df.sparkSession().sql(
                 String.format(
                         "select %s from (select %s createOrderingColumns(array(%s)) as `%s` from input order by %s)",
