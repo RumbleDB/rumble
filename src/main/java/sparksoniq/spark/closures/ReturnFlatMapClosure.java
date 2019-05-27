@@ -23,11 +23,16 @@ package sparksoniq.spark.closures;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.StructType;
+
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -35,10 +40,17 @@ import java.util.List;
 public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
     RuntimeIterator _expression;
     StructType _oldSchema;
+    
+    private transient Kryo _kryo;
+    private transient Input _input;
 
     public ReturnFlatMapClosure(RuntimeIterator expression, StructType oldSchema) {
         this._expression = expression;
         this._oldSchema = oldSchema;
+
+        _kryo = new Kryo();
+        DataFrameUtils.registerKryoClassesKryo(_kryo);
+        _input = new Input();
     }
 
     @Override
@@ -46,7 +58,7 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
         String[] columnNames = _oldSchema.fieldNames();
 
         // Deserialize row
-        List<Object> deserializedRow = DataFrameUtils.deserializeEntireRow(row);
+        List<Object> deserializedRow = DataFrameUtils.deserializeEntireRow(row, _kryo, _input);
         List<List<Item>> rowColumns = new ArrayList<>();
         for (Object columnObject:deserializedRow) {
             List<Item> column = (List<Item>) columnObject;
@@ -68,5 +80,14 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
         _expression.close();
 
         return results.iterator();
+    }
+    
+    private void readObject(java.io.ObjectInputStream in)
+            throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        
+        _kryo = new Kryo();
+        DataFrameUtils.registerKryoClassesKryo(_kryo);
+        _input = new Input();
     }
 }

@@ -205,19 +205,14 @@ public class DataFrameUtils {
         return obj;
     }
 
-    public static List<Object> deserializeEntireRow(Row row) {
-        Kryo kryo = KM.getOrCreateKryo();
-
+    public static List<Object> deserializeEntireRow(Row row, Kryo kryo, Input input) {
         ArrayList<Object> deserializedColumnObjects = new ArrayList<>();
         for (int columnIndex = 0; columnIndex < row.length(); columnIndex++) {
-            Input input = new ByteBufferInput();
             input.setBuffer((byte[]) row.get(columnIndex));
             Object deserializedColumnObject = kryo.readClassAndObject(input);
             deserializedColumnObjects.add(deserializedColumnObject);
-            input.close();
         }
 
-        KM.releaseKryoInstance(kryo);
         return deserializedColumnObjects;
     }
 

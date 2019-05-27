@@ -22,11 +22,16 @@
 import org.apache.spark.api.java.function.FilterFunction;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.StructType;
+
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,6 +41,9 @@ public class WhereClauseMapClosure implements FilterFunction<Row> {
 
     private List<List<Item>> _rowColumns;
     private DynamicContext _context;
+    
+    private transient Kryo _kryo;
+    private transient Input _input;
 
     public WhereClauseMapClosure(RuntimeIterator expression, StructType inputSchema) {
         this._expression = expression;
@@ -53,7 +61,7 @@ public class WhereClauseMapClosure implements FilterFunction<Row> {
         String[] columnNames = _inputSchema.fieldNames();
 
         // Deserialize row
-        List<Object> deserializedRow = DataFrameUtils.deserializeEntireRow(row);
+        List<Object> deserializedRow = DataFrameUtils.deserializeEntireRow(row, _kryo, _input);
         for (Object columnObject : deserializedRow) {
             List<Item> column = (List<Item>) columnObject;
             _rowColumns.add(column);
@@ -68,5 +76,14 @@ public class WhereClauseMapClosure implements FilterFunction<Row> {
         Item result = _expression.next();
         _expression.close();
         return result.getBooleanValue();
+    }
+    
+    private void readObject(java.io.ObjectInputStream in)
+            throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        
+        _kryo = new Kryo();
+        DataFrameUtils.registerKryoClassesKryo(_kryo);
+        _input = new Input();
     }
 }

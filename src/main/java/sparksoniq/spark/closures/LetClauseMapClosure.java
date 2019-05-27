@@ -26,6 +26,7 @@ import org.apache.spark.sql.types.StructType;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.ByteBufferOutput;
+import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 import sparksoniq.jsoniq.item.Item;
@@ -48,6 +49,7 @@ public class LetClauseMapClosure implements MapFunction<Row, Row> {
 
     private transient Kryo _kryo;
     private transient Output _output;
+    private transient Input _input;
 
     public LetClauseMapClosure(
             RuntimeIterator expression,
@@ -64,6 +66,7 @@ public class LetClauseMapClosure implements MapFunction<Row, Row> {
         _kryo = new Kryo();
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _output = new ByteBufferOutput(128, -1);
+        _input = new Input();
     }
 
     @Override
@@ -75,7 +78,7 @@ public class LetClauseMapClosure implements MapFunction<Row, Row> {
         String[] columnNames = _inputSchema.fieldNames();
 
         // Deserialize row
-        List<Object> deserializedRow = DataFrameUtils.deserializeEntireRow(row);
+        List<Object> deserializedRow = DataFrameUtils.deserializeEntireRow(row, _kryo, _input);
         for (Object columnObject : deserializedRow) {
             List<Item> column = (List<Item>) columnObject;
             _rowColumns.add(column);
@@ -104,5 +107,6 @@ public class LetClauseMapClosure implements MapFunction<Row, Row> {
         _kryo = new Kryo();
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _output = new ByteBufferOutput(128, -1);
+        _input = new Input();
     }
 }
