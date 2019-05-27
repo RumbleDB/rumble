@@ -25,6 +25,7 @@ import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.api.java.UDF1;
 
 import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
 
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
@@ -50,6 +51,7 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
     private List<Object> _results;
     
     private transient Kryo _kryo;
+    private transient Input _input;
 
     public GroupClauseCreateColumnsUDF(
             List<VariableReferenceIterator> expressions,
@@ -65,6 +67,7 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
         
         _kryo = new Kryo();
         DataFrameUtils.registerKryoClassesKryo(_kryo);
+        _input = new Input();
     }
 
     @Override
@@ -72,7 +75,7 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
         _deserializedParams.clear();
         _results.clear();
 
-        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo);
+        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
 
         for (int expressionIndex = 0; expressionIndex < _expressions.size(); expressionIndex++) {
             VariableReferenceIterator expression = _expressions.get(expressionIndex);
@@ -137,5 +140,6 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
         
         _kryo = new Kryo();
         DataFrameUtils.registerKryoClassesKryo(_kryo);
+        _input = new Input();
     }
 }

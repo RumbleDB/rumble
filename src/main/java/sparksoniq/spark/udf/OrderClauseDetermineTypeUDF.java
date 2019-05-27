@@ -24,6 +24,7 @@ import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.types.StructType;
 
 import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
 
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
@@ -47,6 +48,7 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
     private List<String> result;
     
     private transient Kryo _kryo;
+    private transient Input _input;
 
     public OrderClauseDetermineTypeUDF(
             List<OrderByClauseSparkIteratorExpression> expressions,
@@ -60,6 +62,7 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
         
         _kryo = new Kryo();
         DataFrameUtils.registerKryoClassesKryo(_kryo);
+        _input = new Input();
     }
 
     @Override
@@ -67,7 +70,7 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
         _deserializedParams.clear();
         result.clear();
 
-        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo);
+        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
         String[] columnNames = _inputSchema.fieldNames();
 
         for (OrderByClauseSparkIteratorExpression expression : _expressions) {
@@ -116,5 +119,6 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
         
         _kryo = new Kryo();
         DataFrameUtils.registerKryoClassesKryo(_kryo);
+        _input = new Input();
     }
 }

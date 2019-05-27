@@ -24,6 +24,7 @@ import org.apache.spark.sql.api.java.UDF1;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.ByteBufferOutput;
+import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 import scala.collection.mutable.WrappedArray;
@@ -41,6 +42,7 @@ public class GroupClauseSerializeAggregateResultsUDF implements UDF1<WrappedArra
     
     private transient Kryo _kryo;
     private transient Output _output;
+    private transient Input _input;
 
     public GroupClauseSerializeAggregateResultsUDF() {
         _nextResult = new ArrayList<>();
@@ -49,13 +51,14 @@ public class GroupClauseSerializeAggregateResultsUDF implements UDF1<WrappedArra
         _kryo = new Kryo();
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _output = new ByteBufferOutput(128, -1);
+        _input = new Input();
     }
 
     @Override
     public byte[] call(WrappedArray wrappedParameters) {
         _nextResult.clear();
         _deserializedParams.clear();
-        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo);
+        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
 
         for (List<Item> deserializedParam : _deserializedParams) {
             _nextResult.addAll(deserializedParam);
@@ -70,5 +73,6 @@ public class GroupClauseSerializeAggregateResultsUDF implements UDF1<WrappedArra
         _kryo = new Kryo();
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _output = new ByteBufferOutput(128, -1);
+        _input = new Input();
     }
 }

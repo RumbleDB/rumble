@@ -23,6 +23,7 @@ package sparksoniq.spark.udf;
 import org.apache.spark.sql.api.java.UDF1;
 
 import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
 
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
@@ -46,6 +47,7 @@ public class GroupClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
     private List<String> result;
     
     private transient Kryo _kryo;
+    private transient Input _input;
 
     public GroupClauseDetermineTypeUDF(
             List<VariableReferenceIterator> expressions,
@@ -59,6 +61,7 @@ public class GroupClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
         
         _kryo = new Kryo();
         DataFrameUtils.registerKryoClassesKryo(_kryo);
+        _input = new Input();
     }
 
     @Override
@@ -66,7 +69,7 @@ public class GroupClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
         _deserializedParams.clear();
         result.clear();
 
-        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo);
+        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
 
         for (VariableReferenceIterator expression : _expressions) {
             // prepare dynamic context
@@ -114,5 +117,6 @@ public class GroupClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
         
         _kryo = new Kryo();
         DataFrameUtils.registerKryoClassesKryo(_kryo);
+        _input = new Input();
     }
 }

@@ -25,6 +25,7 @@ import org.apache.spark.sql.types.StructType;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.ByteBufferOutput;
+import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 import scala.collection.mutable.WrappedArray;
@@ -48,6 +49,7 @@ public class ForClauseUDF implements UDF1<WrappedArray, List> {
     
     private transient Kryo _kryo;
     private transient Output _output;
+    private transient Input _input;
 
     public ForClauseUDF(
             RuntimeIterator expression,
@@ -63,6 +65,7 @@ public class ForClauseUDF implements UDF1<WrappedArray, List> {
         _kryo = new Kryo();
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _output = new ByteBufferOutput(128, -1);
+        _input = new Input();
     }
 
 
@@ -72,7 +75,7 @@ public class ForClauseUDF implements UDF1<WrappedArray, List> {
         _context.removeAllVariables();
         _results.clear();
 
-        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo);
+        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
 
         String[] columnNames = _inputSchema.fieldNames();
 
@@ -101,5 +104,6 @@ public class ForClauseUDF implements UDF1<WrappedArray, List> {
         _kryo = new Kryo();
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _output = new ByteBufferOutput(128, -1);
+        _input = new Input();
     }
 }

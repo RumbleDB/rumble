@@ -164,34 +164,16 @@ public class DataFrameUtils {
         return queryColumnString.toString();
     }
 
-    public static Object deserializeByteArray(byte[] toDeserialize, Kryo kryo) {
-        Input input = new Input(new ByteArrayInputStream(toDeserialize));
-
-        Object obj = kryo.readClassAndObject(input);
-        input.close();
-
-        return obj;
-    }
-
     public static Object deserializeByteArray(byte[] toDeserialize, Kryo kryo, Input input) {
         input.setBuffer(toDeserialize);
         return kryo.readClassAndObject(input);
     }
 
-    public static void deserializeWrappedParameters(WrappedArray wrappedParameters, List<List<Item>> deserializedParams, Kryo kryo) {
-        Object[] serializedParams = (Object[]) wrappedParameters.array();
-        for (int paramIndex = 0; paramIndex < serializedParams.length; paramIndex++) {
-            Object serializedParam = serializedParams[paramIndex];
-            Object deserializedParam = deserializeByteArray((byte[]) serializedParam, kryo);
-            deserializedParams.add((List<Item>) deserializedParam);
-        }
-    }
-
     public static void deserializeWrappedParameters(WrappedArray wrappedParameters, List<List<Item>> deserializedParams, Kryo kryo, Input input) {
         Object[] serializedParams = (Object[]) wrappedParameters.array();
         for (Object serializedParam: serializedParams) {
-            Object deserializedParam = deserializeByteArray((byte[]) serializedParam, kryo, input);
-            deserializedParams.add((List<Item>) deserializedParam);
+            List<Item> deserializedParam = (List<Item>) deserializeByteArray((byte[]) serializedParam, kryo, input);
+            deserializedParams.add(deserializedParam);
         }
     }
 
