@@ -24,6 +24,8 @@ import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.types.StructType;
 
 import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.ByteBufferInput;
+import com.esotericsoftware.kryo.io.Input;
 
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.jsoniq.item.BooleanItem;
@@ -44,6 +46,7 @@ public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
     private DynamicContext _context;
     
     private transient Kryo _kryo;
+    private transient Input _input;
 
     public WhereClauseUDF(
             RuntimeIterator expression,
@@ -56,6 +59,7 @@ public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
         
         _kryo = new Kryo();
         DataFrameUtils.registerKryoClassesKryo(_kryo);
+        _input = new Input();
     }
 
 
@@ -64,7 +68,7 @@ public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
         _deserializedParams.clear();
         _context.removeAllVariables();
 
-        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo);
+        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
 
         String[] columnNames = _inputSchema.fieldNames();
 
@@ -87,5 +91,6 @@ public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
         
         _kryo = new Kryo();
         DataFrameUtils.registerKryoClassesKryo(_kryo);
+        _input = new Input();
     }
 }
