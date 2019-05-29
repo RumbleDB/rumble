@@ -22,58 +22,56 @@ package sparksoniq;
 
 import sparksoniq.config.SparksoniqRuntimeConfiguration;
 import sparksoniq.exceptions.CliException;
+import sparksoniq.io.shell.JiqsJLineShell;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.IOException;
 import java.util.HashMap;
 
 public class Main {
-    public static void main(String[] args) throws IOException {
-        HashMap<String, String> arguments;
-        String outputDataFilePath, queryFilePath = "", logFilePath = "";
-        int outputItemLimit = 200;
-        try {
-            arguments = SparksoniqRuntimeConfiguration.processCommandLineArgs(args);
-            outputDataFilePath = arguments.get("output-path");
-            initializeApplication();
-            if (arguments.containsKey("query-path"))
-                queryFilePath = arguments.get("query-path");
-            if (arguments.containsKey("log-path"))
-                logFilePath = arguments.get("log-path");
-            if (arguments.containsKey("result-size"))
-                outputItemLimit = Integer.valueOf(arguments.get("result-size"));
+    public static JiqsJLineShell terminal = null;
 
+    public static void main(String[] args) throws IOException {
+        SparksoniqRuntimeConfiguration sparksoniqConf = null;
+        // Parse arguments
+        try {
+            sparksoniqConf = new SparksoniqRuntimeConfiguration(args);
+
+            // Initialize
+            initializeApplication();
+            
+            if(sparksoniqConf.isShell())
+            {
+                launchShell(sparksoniqConf);
+            } else {
+                runQueryExecutor(sparksoniqConf);
+            }
         } catch (Exception ex) {
             throw new CliException(ex.getMessage());
         }
 
-        String masterConfig = SparkSessionManager.getInstance().getJavaSparkContext().getConf().get("spark.master");
-
-        if (masterConfig.contains("local")) {
-            System.out.println("Running in local mode");
-            runQueryExecutor(queryFilePath, outputDataFilePath, true, logFilePath, outputItemLimit);
-        } else {
-            System.out.println("Running in remote mode");
-            runQueryExecutor(queryFilePath, outputDataFilePath, false, logFilePath, outputItemLimit);
-        }
     }
 
-    private static void runQueryExecutor(String queryFile, String outputDataFilePath,
-                                         boolean local, String logFilePath, int outputItemLimit) throws IOException {
+    private static void runQueryExecutor(SparksoniqRuntimeConfiguration sparksoniqConf) throws IOException {
+        
         JsoniqQueryExecutor translator;
-        if (logFilePath.isEmpty())
-            translator = new JsoniqQueryExecutor(local, outputItemLimit);
-        else
-            translator = new JsoniqQueryExecutor(local, outputItemLimit, logFilePath);
-        if (local) {
-            translator.runLocal(queryFile, outputDataFilePath);
+        translator = new JsoniqQueryExecutor(sparksoniqConf);
+        if (sparksoniqConf.isLocal()) {
+            System.out.println("Running in local mode");
+            translator.runLocal(sparksoniqConf.getQueryPath(), sparksoniqConf.getOutputPath());
         } else {
-            translator.run(queryFile, outputDataFilePath);
+            System.out.println("Running in remote mode");
+            translator.run(sparksoniqConf.getQueryPath(), sparksoniqConf.getOutputPath());
         }
     }
 
     private static void initializeApplication() {
         SparkSessionManager.getInstance().initializeConfigurationAndSession();
+    }
+    
+    private static void launchShell(SparksoniqRuntimeConfiguration sparksoniqConf) throws IOException {
+        terminal = new JiqsJLineShell(sparksoniqConf);
+        terminal.launch();
     }
 
 }

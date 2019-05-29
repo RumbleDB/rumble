@@ -46,7 +46,6 @@ public class JiqsJLineShell {
     private static final String ERROR_MESSAGE_PROMPT = "[ERROR] ";
     private final boolean _printTime;
     private final SparksoniqRuntimeConfiguration _configuration;
-    private int _itemLimit;
     private LineReader lineReader;
     private JsoniqQueryExecutor jsoniqQueryExecutor;
     private boolean queryStarted;
@@ -57,14 +56,6 @@ public class JiqsJLineShell {
 
     public JiqsJLineShell(SparksoniqRuntimeConfiguration configuration) throws IOException {
         this._configuration = configuration;
-        this._itemLimit = 100;
-        initialize();
-        this._printTime = true;
-    }
-
-    public JiqsJLineShell(SparksoniqRuntimeConfiguration configuration, int itemLimit) throws IOException {
-        this._configuration = configuration;
-        this._itemLimit = itemLimit;
         initialize();
         this._printTime = true;
     }
@@ -132,7 +123,7 @@ public class JiqsJLineShell {
 //                .parser(new JiqsJlineParser())
                 .build();
         PrintWriter outputWriter = new PrintWriter(terminal.output());
-        jsoniqQueryExecutor = new JsoniqQueryExecutor(false, _itemLimit);
+        jsoniqQueryExecutor = new JsoniqQueryExecutor(false, _configuration.getResultSizeCap());
     }
 
     private void handleException(Exception ex) {

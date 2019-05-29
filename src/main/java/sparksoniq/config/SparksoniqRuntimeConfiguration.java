@@ -20,6 +20,7 @@
 package sparksoniq.config;
 
 import sparksoniq.exceptions.CliException;
+import sparksoniq.spark.SparkSessionManager;
 
 import java.util.HashMap;
 
@@ -29,8 +30,9 @@ public class SparksoniqRuntimeConfiguration {
     private static final String ARGUMENT_FORMAT_ERROR_MESSAGE = "Invalid argument format. Required format: --property value";
     private HashMap<String, String> _arguments;
 
-    public SparksoniqRuntimeConfiguration(HashMap<String, String> arguments) {
-        this._arguments = arguments;
+    public SparksoniqRuntimeConfiguration(String[] args) {
+        this._arguments = new HashMap<String, String>();
+        processCommandLineArgs(args);
     }
 
     public static HashMap<String, String> processCommandLineArgs(String[] args) {
@@ -48,6 +50,46 @@ public class SparksoniqRuntimeConfiguration {
             return this._arguments.get(key);
         else
             return null;
+    }
+
+    public String getOutputPath() {
+        if (this._arguments.containsKey("output-path"))
+            return this._arguments.get("output-path");
+        else
+            return null;
+    }
+
+    public String getLogPath() {
+        if (this._arguments.containsKey("log-path"))
+            return this._arguments.get("log-path");
+        else
+            return null;
+    }
+
+    public String getQueryPath() {
+        if (this._arguments.containsKey("query-path"))
+            return this._arguments.get("query-path");
+        else
+            return null;
+    }
+
+    public int getResultSizeCap() {
+        if (this._arguments.containsKey("result-size"))
+            return Integer.parseInt(this._arguments.get("result-size"));
+        else
+            return 200;
+    }
+
+    public boolean isShell() {
+        if (this._arguments.containsKey("shell"))
+            return _arguments.get("shell") == "yes";
+        else
+            return false;
+    }
+    
+    public boolean isLocal() {
+        String masterConfig = SparkSessionManager.getInstance().getJavaSparkContext().getConf().get("spark.master");
+        return masterConfig.contains("local");
     }
 
     @Override
