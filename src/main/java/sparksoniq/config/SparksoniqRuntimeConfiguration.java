@@ -31,18 +31,12 @@ public class SparksoniqRuntimeConfiguration {
     private HashMap<String, String> _arguments;
 
     public SparksoniqRuntimeConfiguration(String[] args) {
-        this._arguments = new HashMap<String, String>();
-        processCommandLineArgs(args);
-    }
-
-    public static HashMap<String, String> processCommandLineArgs(String[] args) {
-        HashMap<String, String> argumentMap = new HashMap<>();
+        _arguments = new HashMap<>();
         for (int i = 0; i < args.length; i += 2)
             if (args[i].startsWith(ARGUMENT_PREFIX))
-                argumentMap.put(args[i].trim().replace(ARGUMENT_PREFIX, ""), args[i + 1]);
+                _arguments.put(args[i].trim().replace(ARGUMENT_PREFIX, ""), args[i + 1]);
             else
                 throw new CliException(ARGUMENT_FORMAT_ERROR_MESSAGE);
-        return argumentMap;
     }
 
     public String getConfigurationArgument(String key) {
@@ -81,8 +75,9 @@ public class SparksoniqRuntimeConfiguration {
     }
 
     public boolean isShell() {
+        System.out.println(_arguments.get("shell"));
         if (this._arguments.containsKey("shell"))
-            return _arguments.get("shell") == "yes";
+            return _arguments.get("shell").equals("yes");
         else
             return false;
     }

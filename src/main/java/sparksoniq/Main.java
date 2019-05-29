@@ -43,11 +43,18 @@ public class Main {
             if(sparksoniqConf.isShell())
             {
                 launchShell(sparksoniqConf);
-            } else {
+            } else if(sparksoniqConf.getQueryPath() != null) {
                 runQueryExecutor(sparksoniqConf);
+            } else {
+                System.out.println("Sparksoniq version 0.9.7.");
+                System.out.println("Usage:");
+                System.out.println("spark-submit sparksoniq-0.9.7.jar --shell yes");
+                System.out.println("spark-submit sparksoniq-0.9.7.jar --query-path my-query.jq");
+                System.out.println("spark-submit sparksoniq-0.9.7.jar --query-path my-query.jq --output-path my-output.json");
+                System.out.println("spark-submit sparksoniq-0.9.7.jar --query-path my-query.jq --output-path my-output.json --log-path my-log.txt");
             }
         } catch (Exception ex) {
-            throw new CliException(ex.getMessage());
+            throw ex;
         }
 
     }

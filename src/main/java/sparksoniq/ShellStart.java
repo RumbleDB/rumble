@@ -45,8 +45,8 @@ spark-submit --class sparksoniq.ShellStart  --master local[*]  --deploy-mode cli
 public class ShellStart {
     public static void main(String[] args) throws IOException {
         String[] newargs = Arrays.copyOf(args, args.length + 2);
-        newargs[args.length-2] = "shell";
-        newargs[args.length-1] = "yes";
+        newargs[args.length] = "--shell";
+        newargs[args.length+1] = "yes";
         Main.main(newargs);
     }
 }
