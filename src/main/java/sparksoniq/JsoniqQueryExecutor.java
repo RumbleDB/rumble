@@ -94,7 +94,7 @@ public class JsoniqQueryExecutor {
         }
         long endTime = System.currentTimeMillis();
         long totalTime = endTime - startTime;
-        if (!_configuration.getLogPath().isEmpty()) {
+        if (_configuration.getLogPath() != null) {
             writeTimeLog(totalTime);
         }
     }
@@ -126,7 +126,7 @@ public class JsoniqQueryExecutor {
         }
         long endTime = System.currentTimeMillis();
         long totalTime = endTime - startTime;
-        if (!_configuration.getLogPath().isEmpty()) {
+        if (_configuration.getLogPath() != null) {
             writeTimeLog(totalTime);
         }
     }

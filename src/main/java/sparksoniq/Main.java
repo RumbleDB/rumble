@@ -37,21 +37,32 @@ public class Main {
         try {
             sparksoniqConf = new SparksoniqRuntimeConfiguration(args);
 
-            // Initialize
-            initializeApplication();
-            
             if(sparksoniqConf.isShell())
             {
+                initializeApplication();
                 launchShell(sparksoniqConf);
             } else if(sparksoniqConf.getQueryPath() != null) {
+                initializeApplication();
                 runQueryExecutor(sparksoniqConf);
             } else {
-                System.out.println("Sparksoniq version 0.9.7.");
+                System.out.println("************************");
+                System.out.println("Sparksoniq version 0.9.7");
+                System.out.println("************************");
                 System.out.println("Usage:");
+                System.out.println("spark-submit <Spark arguments> <path to sparksoniq jar> <Sparksoniq arguments>");
+                System.out.println("");
+                System.out.println("Example usage:");
                 System.out.println("spark-submit sparksoniq-0.9.7.jar --shell yes");
-                System.out.println("spark-submit sparksoniq-0.9.7.jar --query-path my-query.jq");
-                System.out.println("spark-submit sparksoniq-0.9.7.jar --query-path my-query.jq --output-path my-output.json");
-                System.out.println("spark-submit sparksoniq-0.9.7.jar --query-path my-query.jq --output-path my-output.json --log-path my-log.txt");
+                System.out.println("spark-submit --master local[*] sparksoniq-0.9.7.jar --shell yes");
+                System.out.println("spark-submit --master local[2] sparksoniq-0.9.7.jar --shell yes");
+                System.out.println("spark-submit --master local[*] --driver-memory 10G sparksoniq-0.9.7.jar --shell yes");
+                System.out.println("");
+                System.out.println("spark-submit --master yarn sparksoniq-0.9.7.jar --shell yes");
+                System.out.println("spark-submit --master yarn --executor-cores 3 --executor-memory 5G sparksoniq-0.9.7.jar --shell yes");
+                System.out.println("spark-submit --master local[*] sparksoniq-0.9.7.jar --query-path my-query.jq");
+                System.out.println("spark-submit --master local[*] sparksoniq-0.9.7.jar --query-path my-query.jq");
+                System.out.println("spark-submit --master yarn --executor-cores 3 --executor-memory 5G sparksoniq-0.9.7.jar --query-path hdfs:///my-query.jq --output-path hdfs:///my-output.json");
+                System.out.println("spark-submit --master local[*] sparksoniq-0.9.7.jar --query-path my-query.jq --output-path my-output.json --log-path my-log.txt");
             }
         } catch (Exception ex) {
             throw ex;
