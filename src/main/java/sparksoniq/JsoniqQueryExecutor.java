@@ -61,9 +61,11 @@ import java.util.List;
 public class JsoniqQueryExecutor {
     public static final String TEMP_QUERY_FILE_NAME = "Temp_Query";
     private SparksoniqRuntimeConfiguration _configuration;
+    private boolean _useLocalOutputLog;
 
-    public JsoniqQueryExecutor(SparksoniqRuntimeConfiguration configuration) {
+    public JsoniqQueryExecutor(boolean useLocalOutputLog, SparksoniqRuntimeConfiguration configuration) {
         _configuration = configuration;
+        _useLocalOutputLog = useLocalOutputLog;
         SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
     }
 
@@ -106,7 +108,7 @@ public class JsoniqQueryExecutor {
         // generate iterators
         RuntimeIterator result = generateRuntimeIterators(visitor.getQueryExpression());
         // collect output in memory and write to filesystem from java
-        if (_configuration.isLocal()) {
+        if (_useLocalOutputLog) {
             String output = runIterators(result);
             org.apache.hadoop.fs.FileSystem fileSystem = org.apache.hadoop.fs.FileSystem
                     .get(SparkSessionManager.getInstance().getJavaSparkContext().hadoopConfiguration());

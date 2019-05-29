@@ -55,7 +55,7 @@ public class Main {
     private static void runQueryExecutor(SparksoniqRuntimeConfiguration sparksoniqConf) throws IOException {
         
         JsoniqQueryExecutor translator;
-        translator = new JsoniqQueryExecutor(sparksoniqConf);
+        translator = new JsoniqQueryExecutor(sparksoniqConf.isLocal(), sparksoniqConf);
         if (sparksoniqConf.isLocal()) {
             System.out.println("Running in local mode");
             translator.runLocal(sparksoniqConf.getQueryPath(), sparksoniqConf.getOutputPath());
