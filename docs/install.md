@@ -60,13 +60,13 @@ Once the ANTLR sources have been generated, you can compile the entire project l
 
     $ mvn clean compile assembly:single
     
-After successful completion, you can check the `target` directory, which should contain the compiled classes as well as the JAR file `jsoniq-spark-app-0.9.7-jar-with-dependencies.jar`.
+After successful completion, you can check the `target` directory, which should contain the compiled classes as well as the JAR file `jsoniq-spark-app-1.0-jar-with-dependencies.jar`.
     
 ## Running locally
 
 The most straightforward to test if the above steps were successful is to run the Rumble shell locally, like so:
 
-    $ spark-submit --class rumble.ShellStart --master local[2] --deploy-mode client target/jsoniq-spark-app-0.9.7-jar-with-dependencies.jar
+    $ spark-submit --master local[2] --deploy-mode client target/spark-rumble-1.0-jar-with-dependencies.jar --shell yes
 
 The Rumble shell should start:
 
@@ -113,6 +113,6 @@ This is it. Rumble is step and ready to go locally. You can now move on to a JSO
 
 You can also try to run the Rumble shell on a cluster if you have one available and configured -- this is done in the same way as any other `spark-submit` command:
 
-    $ spark-submit --class rumble.ShellStart --master yarn --deploy-mode client --num-executors 40 jsoniq-spark-app-0.9.7-jar-with-dependencies.jar
+    $ spark-submit --master yarn --deploy-mode client --num-executors 40 spark-rumble-1.0-jar-with-dependencies.jar
     
 More details are provided in the rest of the documentation.
