@@ -1,6 +1,6 @@
 # Installing Rumble
 
-We show here how to install Rumble from the github repository if you wish to do so (for example, to use the latest master). However, the easiest way to use Sparksoniq is to simply download the already compiled .jar files.
+We show here how to install Rumble from the github repository if you wish to do so (for example, to use the latest master). However, the easiest way to use Rumble is to simply download the already compiled .jar files.
 
 ## Requirements
 
@@ -107,7 +107,7 @@ You can try a few more queries.
     >>> 
     ( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
     
-This is it. Rumble is step and ready to go locally. You can now move on to a JSONiq tutorial. A Sparksoniq tutorial will also follow soon.
+This is it. Rumble is step and ready to go locally. You can now move on to a JSONiq tutorial. A Rumble tutorial will also follow soon.
 
 ## Running on a cluster
 
