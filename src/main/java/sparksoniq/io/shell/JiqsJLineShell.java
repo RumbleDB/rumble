@@ -126,14 +126,13 @@ public class JiqsJLineShell {
         jsoniqQueryExecutor = new JsoniqQueryExecutor(false, _configuration);
     }
 
-    private void handleException(Exception ex) {
+    private void handleException(Throwable ex) {
         if (ex != null) {
             if (ex instanceof EndOfFileException) {
                 this.currentLine = this.EXIT_COMMAND;
             } else if (ex instanceof SparkException) {
                 Throwable sparkExceptionCause = ex.getCause();
-                Throwable innerSparkExceptionCause = sparkExceptionCause.getCause();
-                output(ERROR_MESSAGE_PROMPT + innerSparkExceptionCause.getMessage());
+                handleException(sparkExceptionCause);;
             } else if (!(ex instanceof UserInterruptException)) {
                 output(ERROR_MESSAGE_PROMPT + ex.getMessage().split("\n")[0]);
             }
