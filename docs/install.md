@@ -60,7 +60,7 @@ Once the ANTLR sources have been generated, you can compile the entire project l
 
     $ mvn clean compile assembly:single
     
-After successful completion, you can check the `target` directory, which should contain the compiled classes as well as the JAR file `jsoniq-spark-app-1.0-jar-with-dependencies.jar`.
+After successful completion, you can check the `target` directory, which should contain the compiled classes as well as the JAR file `spark-rumble-1.0-jar-with-dependencies.jar`.
     
 ## Running locally
 
