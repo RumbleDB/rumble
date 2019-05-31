@@ -26,7 +26,6 @@ import sparksoniq.io.shell.JiqsJLineShell;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.IOException;
-import java.util.HashMap;
 
 public class Main {
     public static JiqsJLineShell terminal = null;

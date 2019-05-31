@@ -19,15 +19,8 @@
  */
 package sparksoniq;
 
-import sparksoniq.config.SparksoniqRuntimeConfiguration;
-import sparksoniq.exceptions.CliException;
-import sparksoniq.io.shell.JiqsJLineShell;
-import sparksoniq.spark.SparkSessionManager;
-
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.Arrays;
-import java.util.HashMap;
 
 /*
 GENERIC LAUNCH COMMAND
