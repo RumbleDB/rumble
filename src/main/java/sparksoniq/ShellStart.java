@@ -19,13 +19,8 @@
  */
 package sparksoniq;
 
-import sparksoniq.config.SparksoniqRuntimeConfiguration;
-import sparksoniq.exceptions.CliException;
-import sparksoniq.io.shell.JiqsJLineShell;
-import sparksoniq.spark.SparkSessionManager;
-
 import java.io.IOException;
-import java.util.HashMap;
+import java.util.Arrays;
 
 /*
 GENERIC LAUNCH COMMAND
@@ -41,24 +36,10 @@ spark-submit --class sparksoniq.ShellStart  --master local[*]  --deploy-mode cli
  */
 
 public class ShellStart {
-    public static JiqsJLineShell terminal = null;
-
     public static void main(String[] args) throws IOException {
-        HashMap<String, String> arguments;
-        try {
-            arguments = SparksoniqRuntimeConfiguration.processCommandLineArgs(args);
-        } catch (CliException ex) {
-            System.out.println(ex.getMessage());
-            return;
-        }
-
-        SparkSessionManager.getInstance().initializeConfigurationAndSession();
-        if (arguments.containsKey("result-size")) {
-            int itemLimit = Integer.parseInt(arguments.get("result-size"));
-            terminal = new JiqsJLineShell(new SparksoniqRuntimeConfiguration(arguments), itemLimit);
-            terminal.launch();
-        } else
-            terminal = new JiqsJLineShell(new SparksoniqRuntimeConfiguration(arguments));
-        terminal.launch();
+        String[] newargs = Arrays.copyOf(args, args.length + 2);
+        newargs[args.length] = "--shell";
+        newargs[args.length+1] = "yes";
+        Main.main(newargs);
     }
 }
