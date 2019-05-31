@@ -1,25 +1,24 @@
-# Running Sparksoniq on a cluster
+# Running Rumble on a cluster
 
-After you have tried Sparksoniq locally as explained in the getting started section, you can take Sparksoniq to a real cluster
+After you have tried Rumble locally as explained in the getting started section, you can take Rumble to a real cluster
 simply by modifying the command line parameters as documented [here for spark-submit](https://spark.apache.org/docs/latest/submitting-applications.html).
 
 If the Spark cluster is running on yarn, then the --master option must be changed from local[\*] to yarn compared to the getting started guide.
 
-    spark-submit --class sparksoniq.ShellStart --master yarn --deploy-mode client
-                 sparksoniq-0.9.7.jar
+    spark-submit --master yarn --deploy-mode client spark-rumble-1.0.jar --shell yes
                  
 You can also adapt the number of executors, etc.
 
-    spark-submit --class sparksoniq.ShellStart --master yarn --deploy-mode client
+    spark-submit --master yarn --deploy-mode client
                  --num-executors 30 --executor-cores 3 --executor-memory 10g
-                 sparksoniq-0.9.7.jar
+                 spark-rumble-1.0.jar --shell yes
 
 The size limit for materialization can also be made higher with --result-size (the default is 100). This affects the number of items displayed on the shells as an answer to a query, as well as any materializations happening within the query with push-down is not supported. Warnings are issued if the cap is reached.
 
-    spark-submit --class sparksoniq.ShellStart --master yarn --deploy-mode client
+    spark-submit --master yarn --deploy-mode client
                  --num-executors 30 --executor-cores 3 --executor-memory 10g
-                 sparksoniq-0.9.7.jar
-                 --result-size 10000
+                 spark-rumble-1.0.jar
+                 --shell yes --result-size 10000
 
 ## Creation functions
 
@@ -55,11 +54,11 @@ Note that by default only the first 1000 items in the output will be displayed o
 
 ## Execution of single queries and output to HDFS
 
-Sparksoniq also supports executing a single query from the command line, reading from HDFS and outputting the results to HDFS, with the query file being either local or on HDFS. For this, remove the --class argument (which takes sparksoniq.Main as the entry class) and use the --query-path, --output-path and --log-path parameters.
+Rumble also supports executing a single query from the command line, reading from HDFS and outputting the results to HDFS, with the query file being either local or on HDFS. For this, remove the --class argument (which takes rumble.Main as the entry class) and use the --query-path, --output-path and --log-path parameters.
 
     spark-submit --master yarn --deploy-mode client
                  --num-executors 30 --executor-cores 3 --executor-memory 10g
-                 sparksoniq-0.9.7.jar
+                 spark-rumble-1.0.jar
                  --query-path "hdfs:///user/me/query.jq"
                  --output-path "hdfs:///user/me/results/output"
                  --log-path "hdfs:///user/me/logging/mylog"
@@ -68,7 +67,7 @@ The query path can also be a local, absolute path. It is also possible to omit t
 
     spark-submit --master yarn --deploy-mode client
                  --num-executors 30 --executor-cores 3 --executor-memory 10g
-                 sparksoniq-0.9.7.jar
+                 spark-rumble-1.0.jar
                  --query-path "/home/me/my-local-machine/query.jq"
                  --output-path "/user/me/results/output"
                  --log-path "hdfs:///user/me/logging/mylog"

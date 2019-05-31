@@ -1,6 +1,6 @@
 # Function library
 
-We list here the functions supported by Sparksoniq, and introduce them by means of examples. Highly detailed specifications can be found in the [underlying W3C standard](https://www.w3.org/TR/xpath-functions-30/#func-floor), unless the function is marked as specific to JSON or Sparksoniq, in which case it can be found [here](http://www.jsoniq.org/docs/JSONiq/html-single/index.html#idm34604304).
+We list here the functions supported by Rumble, and introduce them by means of examples. Highly detailed specifications can be found in the [underlying W3C standard](https://www.w3.org/TR/xpath-functions-30/#func-floor), unless the function is marked as specific to JSON or Rumble, in which case it can be found [here](http://www.jsoniq.org/docs/JSONiq/html-single/index.html#idm34604304).
 
 ## Aggregation functions
 
@@ -357,7 +357,7 @@ returns ("aa", "bb", "cc", "dd")
 
 We support two more functions to read a JSON file from HDFS or send a large sequence to the cluster:
 
-### json-file (Sparksoniq specific)
+### json-file (Rumble specific)
 
 Exists in unary and binary. The first parameter specifies the JSON file (or set of JSON files) to read.
 The second, optional parameter specifies the minimum number of partitions. It is recommended to use it in a local setup, as the default is only one partition, which does not fully use the parallelism. If the input is on HDFS, then blocks are taken as splits by default. This is also similar to Sparks textFile().
@@ -393,7 +393,7 @@ where $my-json.property eq "some value"
 return $my-json
 ```
 
-### text-file (Sparksoniq specific)
+### text-file (Rumble specific)
 
 Exists in unary and binary. The first parameter specifies the text file (or set of text files) to read and return as a sequence of strings.
 The second, optional parameter specifies the minimum number of partitions. It is recommended to use it in a local setup, as the default is only one partition, which does not fully use the parallelism. If the input is on HDFS, then blocks are taken as splits by default. This is also similar to Sparks textFile().
@@ -410,7 +410,7 @@ count(
 
 (Also see examples for json-file for host and port, sets of files and working directory).
 
-### parallelize (Sparksoniq specific)
+### parallelize (Rumble specific)
 
 This function behaves like the Spark parallelize() you are familiar with and sends a large sequence to the cluster.
 The rest of the FLWOR expression is then evaluated with Spark transformations on the cluster.
