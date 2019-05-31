@@ -65,7 +65,7 @@ public class Main {
                 System.out.println("spark-submit --master local[*] sparksoniq-0.9.7.jar --query-path my-query.jq --output-path my-output.json --log-path my-log.txt");
             }
         } catch (Exception ex) {
-            throw ex;
+            throw new CliException(ex.getMessage());
         }
 
     }

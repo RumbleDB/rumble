@@ -75,7 +75,6 @@ public class SparksoniqRuntimeConfiguration {
     }
 
     public boolean isShell() {
-        System.out.println(_arguments.get("shell"));
         if (this._arguments.containsKey("shell"))
             return _arguments.get("shell").equals("yes");
         else
@@ -90,7 +89,8 @@ public class SparksoniqRuntimeConfiguration {
     @Override
     public String toString() {
         String result = "";
-        result += "Item Display Limit: " + (_arguments.getOrDefault("result-size", "-")) + "\n" +
+        result += "Master: " + SparkSessionManager.getInstance().getJavaSparkContext().getConf().get("spark.master") + "\n" +
+                "Item Display Limit: " + (_arguments.getOrDefault("result-size", "-")) + "\n" +
                 "Output Path: " + (_arguments.getOrDefault("output-path", "-")) + "\n" +
                 "Log Path: " + (_arguments.getOrDefault("log-path", "-")) + "\n" +
                 "Query Path : " + (_arguments.getOrDefault("query-path", "-")) + "\n";
