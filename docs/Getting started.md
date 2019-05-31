@@ -48,11 +48,11 @@ In a shell, from the directory where the rumble .jar lies, type, all on one line
 The Rumble shell appears:
 
     Using Spark's default log4j profile: org/apache/spark/log4j-defaults.properties
-       _____                  __                    ________
-      / ___/____  ____ ______/ /___________  ____  /  _/ __ \
-      \__ \/ __ \/ __ `/ ___/ //_/ ___/ __ \/ __ \ / // / / /
-     ___/ / /_/ / /_/ / /  / ,< (__  ) /_/ / / / // // /_/ /
-    /____/ .___/\__,_/_/  /_/|_/____/\____/_/ /_/___/\___\_\
+        ____                  __    __   
+       / __ \__  ______ ___  / /_  / /__ 
+      / /_/ / / / / __ `__ \/ __ \/ / _ \
+     / _, _/ /_/ / / / / / / /_/ / /  __/
+    /_/ |_|\__,_/_/ /_/ /_/_.___/_/\___/ 
     Master: local[2]
     Item Display Limit: 100
     Output Path: -
