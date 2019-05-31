@@ -22,7 +22,7 @@ You can test that this worked with:
 
 ### Installing Rumble
 
-In order to run Rumble, you need to download the .jar file from the [download page](https://github.com/Sparksoniq/sumble/releases)
+In order to run Rumble, you need to download the .jar file from the [download page](https://github.com/Sparksoniq/rumble/releases)
 and put it in a directory of your choice. For Spark 2.4.1 we recommend the .jar file with ant 4.7 (not 4.5.3).
 
 ### Creating some data set
@@ -41,10 +41,9 @@ Create, in the same directory as Rumble, a file data.json and put the following 
 
 ## Running simple queries locally
 
-In a shell, from the directory where the sumble .jar lies, type, all on one line:
+In a shell, from the directory where the rumble .jar lies, type, all on one line:
 
-    spark-submit --class sumble.ShellStart --master local[*] --deploy-mode client
-                 sumble-0.9.7.jar
+    spark-submit --master local[*] --deploy-mode client rumble-0.9.7.jar --shell yes
                  
 The Rumble shell appears:
 

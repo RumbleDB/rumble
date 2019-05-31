@@ -30,7 +30,7 @@ Type the following commands to check that the necessary commands are available. 
 
 ## Checkout
 
-You first need to download the sumble code to your local machine.
+You first need to download the rumble code to your local machine.
 
 In the shell, go to the desired location:
 
@@ -38,11 +38,11 @@ In the shell, go to the desired location:
     
 Clone the github repository:
     
-    $ git clone git@github.com:Rumble/sumble.git
+    $ git clone git@github.com:Rumble/rumble.git
     
 Go to the root of this repository:
 
-    $ cd sumble
+    $ cd rumble
     
 ## Compile
 
@@ -50,7 +50,7 @@ Go to the root of this repository:
 
 For convenience, we have included the ANTLRv4 files for 4.5.3 and 4.7 in the lib directory of the repository (see corresponding license).
 
-From the root directory of the sumble local checkout, you first need to build the parser:
+From the root directory of the rumble local checkout, you first need to build the parser:
 
     $ ant -buildfile build_antlr_parser.xml generate-parser -Dantlr.jar=/lib/antlr-4.7-complete.jar
     
@@ -66,7 +66,7 @@ After successful completion, you can check the `target` directory, which should 
 
 The most straightforward to test if the above steps were successful is to run the Rumble shell locally, like so:
 
-    $ spark-submit --class sumble.ShellStart --master local[2] --deploy-mode client target/jsoniq-spark-app-0.9.7-jar-with-dependencies.jar
+    $ spark-submit --class rumble.ShellStart --master local[2] --deploy-mode client target/jsoniq-spark-app-0.9.7-jar-with-dependencies.jar
 
 The Rumble shell should start:
 
@@ -113,6 +113,6 @@ This is it. Rumble is step and ready to go locally. You can now move on to a JSO
 
 You can also try to run the Rumble shell on a cluster if you have one available and configured -- this is done in the same way as any other `spark-submit` command:
 
-    $ spark-submit --class sumble.ShellStart --master yarn --deploy-mode client --num-executors 40 jsoniq-spark-app-0.9.7-jar-with-dependencies.jar
+    $ spark-submit --class rumble.ShellStart --master yarn --deploy-mode client --num-executors 40 jsoniq-spark-app-0.9.7-jar-with-dependencies.jar
     
 More details are provided in the rest of the documentation.
