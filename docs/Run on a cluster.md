@@ -1,6 +1,6 @@
 # Running Rumble on a cluster
 
-After you have tried Rumble locally as explained in the getting started section, you can take Sparksoniq to a real cluster
+After you have tried Rumble locally as explained in the getting started section, you can take Rumble to a real cluster
 simply by modifying the command line parameters as documented [here for spark-submit](https://spark.apache.org/docs/latest/submitting-applications.html).
 
 If the Spark cluster is running on yarn, then the --master option must be changed from local[\*] to yarn compared to the getting started guide.
