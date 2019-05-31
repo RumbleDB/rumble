@@ -41,7 +41,7 @@ It is a type error if there is not exactly one supplied parameter
 for an object or array selector.
 
 - [XPDY0139] - Unimplemented feature error. Raised when a JSONiq feature 
-that is not yet implemented in Sparksoniq is used.
+that is not yet implemented in Rumble is used.
 
 - [XPDY0140] - Undeclared variable error.
 

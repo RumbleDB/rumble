@@ -1,6 +1,6 @@
 # Licenses
 
-Sparksoniq uses the following software:
+Rumble uses the following software:
 
 - Spark 2.1.0 Libraries - Apache License
 - ANTLR v4 Framework - BSD License

@@ -1,6 +1,6 @@
 # JSONiq
 
-Sparksoniq relies on the JSONiq language.
+Rumble relies on the JSONiq language.
 
 ## JSONiq reference
 
@@ -8,7 +8,7 @@ The complete specification can be found [here](http://www.jsoniq.org/docs/JSONiq
 
 ## JSONiq tutorial
 
-A tutorial can be found [here](https://github.com/ghislainfourny/jsoniq-tutorial). All queries in this tutorial will work with Sparksoniq.
+A tutorial can be found [here](https://github.com/ghislainfourny/jsoniq-tutorial). All queries in this tutorial will work with Rumble.
 
 ## JSONiq tutorial for Python users
 
