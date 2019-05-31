@@ -22,7 +22,6 @@ package sparksoniq.jsoniq.runtime.iterator;
 import org.apache.spark.api.java.JavaRDD;
 
 import sparksoniq.Main;
-import sparksoniq.ShellStart;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.io.json.JiqsItemParser;
 import sparksoniq.jsoniq.item.Item;
