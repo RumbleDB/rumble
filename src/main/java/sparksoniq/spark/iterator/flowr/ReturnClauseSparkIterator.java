@@ -32,14 +32,12 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.spark.closures.OLD_ReturnFlatMapClosure;
 import sparksoniq.spark.closures.ReturnFlatMapClosure;
 
 import java.util.Arrays;
 
 public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
-    private JavaRDD<Item> itemRDD;
     private RuntimeTupleIterator _child;
     private DynamicContext _tupleContext;   // re-use same DynamicContext object for efficiency
     private RuntimeIterator _expression;
@@ -59,12 +57,9 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDD(DynamicContext context) {
         RuntimeIterator expression = this._children.get(0);
-        if (_child.isDataFrame()) {
-            Dataset<Row> df = this._child.getDataFrame(context);
-            StructType oldSchema = df.schema();
-            return df.javaRDD().flatMap(new ReturnFlatMapClosure(expression, oldSchema));
-        }
-        return this._child.getRDD(context).flatMap(new OLD_ReturnFlatMapClosure(expression));
+        Dataset<Row> df = this._child.getDataFrame(context);
+        StructType oldSchema = df.schema();
+        return df.javaRDD().flatMap(new ReturnFlatMapClosure(expression, oldSchema));
     }
 
     @Override
@@ -142,8 +137,4 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         _expression.close();
         setNextLocalResult();
     }
-
-
-
-
 }
