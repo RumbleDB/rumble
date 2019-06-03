@@ -279,13 +279,14 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
         columnNamesArray = inputSchema.fieldNames();
         columnNames = Arrays.asList(columnNamesArray);
 
+        df.createOrReplaceTempView("input");
+        df.sparkSession().table("input").cache();
         df.sparkSession().udf().register("determineGroupingDataType",
                 new GroupClauseDetermineTypeUDF(variableAccessExpressions, columnNames),
                 DataTypes.createArrayType(DataTypes.StringType));
 
         String udfSQL = DataFrameUtils.getSQL(inputSchema, -1, false);
 
-        df.createOrReplaceTempView("input");
         Dataset<Row> columnTypesDf = df.sparkSession().sql(
                 String.format("select distinct(determineGroupingDataType(array(%s))) as `distinct-types` from input",
                         udfSQL)
@@ -381,7 +382,6 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
                 groupbyVariableNames
         );
 
-        df.createOrReplaceTempView("input");
         return df.sparkSession().sql(
                 String.format(
                         "select %s from (%s) group by `%s`",
