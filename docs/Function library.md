@@ -311,6 +311,14 @@ concat("foo", "bar", "foobar")
 
 returns "foobarfoobar"
 
+### starts-with
+
+```
+starts-with("foobar", "foo")
+```
+
+returns true
+
 ### string-join
 
 ```
