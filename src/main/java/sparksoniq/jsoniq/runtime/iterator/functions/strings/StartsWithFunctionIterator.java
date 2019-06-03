@@ -33,7 +33,9 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import java.util.List;
 
 public class StartsWithFunctionIterator extends LocalFunctionCallIterator {
-    public StartsWithFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
+    public StartsWithFunctionIterator(
+            List<RuntimeIterator> arguments,
+            IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
     }
 
@@ -41,17 +43,24 @@ public class StartsWithFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            StringItem substringItem = this.getSingleItemOfTypeFromIterator(this._children.get(1), StringItem.class);
+            StringItem substringItem = this.getSingleItemOfTypeFromIterator(
+                this._children.get(1),
+                StringItem.class);
             if (substringItem == null || substringItem.getStringValue().isEmpty()) {
                 return new BooleanItem(true);
             }
-            StringItem stringItem = this.getSingleItemOfTypeFromIterator(this._children.get(0), StringItem.class);
+            StringItem stringItem = this.getSingleItemOfTypeFromIterator(
+                this._children.get(0),
+                StringItem.class);
             if (stringItem == null || stringItem.getStringValue().isEmpty()) {
                 return new BooleanItem(false);
             }
-            boolean result = stringItem.getStringValue().startsWith(substringItem.getStringValue());
+            boolean result = stringItem.getStringValue().startsWith(
+                substringItem.getStringValue());
             return new BooleanItem(result);
         } else
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " substring function", getMetadata());
+            throw new IteratorFlowException(
+                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " substring function",
+                getMetadata());
     }
 }
