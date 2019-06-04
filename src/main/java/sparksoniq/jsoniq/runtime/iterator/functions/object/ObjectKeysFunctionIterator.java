@@ -21,8 +21,10 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.object;
 
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.StringItem;
+import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
@@ -32,20 +34,23 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-public class ObjectKeysFunctionIterator extends ObjectFunctionIterator {
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.api.java.function.Function;
+
+public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
 
     private RuntimeIterator _iterator;
     private Queue<Item> _nextResults;   // queue that holds the results created by the current item in inspection
     private List<Item> _prevResults;
 
     public ObjectKeysFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
-        super(arguments, ObjectFunctionOperators.KEYS, iteratorMetadata);
+        super(arguments,iteratorMetadata);
+        _iterator = arguments.get(0);
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-
+    public void openLocal(DynamicContext context) {
         _iterator = this._children.get(0);
         _iterator.open(context);
         _prevResults = new ArrayList<>();
@@ -55,7 +60,7 @@ public class ObjectKeysFunctionIterator extends ObjectFunctionIterator {
     }
 
     @Override
-    public Item next() {
+    public Item nextLocal() {
         if (this._hasNext) {
             Item result = _nextResults.remove();  // save the result to be returned
             if (_nextResults.isEmpty()) {
@@ -66,6 +71,22 @@ public class ObjectKeysFunctionIterator extends ObjectFunctionIterator {
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " KEYS function",
                 getMetadata());
+    }
+
+    @Override
+    protected boolean hasNextLocal() {
+        return _hasNext;
+    }
+
+    @Override
+    protected void resetLocal(DynamicContext context) {
+        _iterator.reset(_currentDynamicContext);
+        setNextResult();
+    }
+
+    @Override
+    protected void closeLocal() {
+        _iterator.close();
     }
 
     public void setNextResult() {
@@ -95,5 +116,18 @@ public class ObjectKeysFunctionIterator extends ObjectFunctionIterator {
         } else {
             this._hasNext = true;
         }
+    }
+
+    @Override
+    public JavaRDD<Item> getRDD(DynamicContext dynamicContext) {
+        _currentDynamicContext = dynamicContext;
+        JavaRDD<Item> childRDD = _iterator.getRDD(dynamicContext);
+        FlatMapFunction<Item, Item> transformation = new ObjectKeysClosure();
+        return childRDD.flatMap(transformation).distinct();
+    }
+
+    @Override
+    public boolean initIsRDD() {
+        return _iterator.isRDD();
     }
 }
