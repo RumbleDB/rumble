@@ -40,9 +40,11 @@ import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpr
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
     private final List<GroupByClauseSparkIteratorExpression> _variables;
@@ -206,5 +208,16 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
         //linearize iterable tuples into arrays
         this._rdd = groupedPair.map(new GroupByLinearizeTupleClosure(_variables));
         return _rdd;
+    }
+
+    public Set<String> getVariableDependencies()
+    {
+        Set<String> result = new HashSet<String>();
+        for(GroupByClauseSparkIteratorExpression iterator : _variables)
+        {
+            result.addAll(iterator.getExpression().getVariableDependencies());
+            result.remove(iterator.getVariableReference());
+        }
+        return result;
     }
 }

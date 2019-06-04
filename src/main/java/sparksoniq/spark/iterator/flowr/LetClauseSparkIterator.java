@@ -33,7 +33,9 @@ import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.closures.LetClauseMapClosure;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
 
@@ -135,5 +137,13 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
             return _rdd;
         }
         throw new SparksoniqRuntimeException("Initial letClauses don't support RDDs");
+    }
+
+    public Set<String> getVariableDependencies()
+    {
+        Set<String> result = new HashSet<String>();
+        result.addAll(_expression.getVariableDependencies());
+        result.remove(_variableName);
+        return result;
     }
 }

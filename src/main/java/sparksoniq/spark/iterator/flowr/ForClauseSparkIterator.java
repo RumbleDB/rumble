@@ -35,7 +35,9 @@ import sparksoniq.spark.closures.ForClauseLocalToRDDClosure;
 import sparksoniq.spark.closures.InitialForClauseClosure;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
 
@@ -178,5 +180,13 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
             }
         }
         return _rdd;
+    }
+
+    public Set<String> getVariableDependencies()
+    {
+        Set<String> result = new HashSet<String>();
+        result.addAll(_expression.getVariableDependencies());
+        result.remove(_variableName);
+        return result;
     }
 }

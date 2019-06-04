@@ -30,7 +30,11 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.closures.ReturnFlatMapClosure;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
@@ -135,5 +139,11 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         setNextLocalResult();
     }
 
-
+    public Set<String> getVariableDependencies()
+    {
+        Set<String> result = new HashSet<String>();
+        result.addAll(_expression.getVariableDependencies());
+        result.addAll(_child.getVariableDependencies());
+        return result;
+    }
 }

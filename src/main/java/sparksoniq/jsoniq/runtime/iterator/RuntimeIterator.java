@@ -33,7 +33,9 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static sparksoniq.jsoniq.item.Item.isNumeric;
 
@@ -198,5 +200,15 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         if (result != null && !(type.isInstance(result)))
             throw new UnexpectedTypeException("Invalid item type returned by iterator", iterator.getMetadata());
         return (T) result;
+    }
+
+    public Set<String> getVariableDependencies()
+    {
+        Set<String> result = new HashSet<String>();
+        for(RuntimeIterator iterator : _children)
+        {
+            result.addAll(iterator.getVariableDependencies());
+        }
+        return result;
     }
 }

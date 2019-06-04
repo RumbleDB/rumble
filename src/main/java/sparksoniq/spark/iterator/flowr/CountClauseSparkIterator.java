@@ -35,7 +35,9 @@ import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.closures.CountClauseClosure;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
     private String _variableName;
@@ -108,5 +110,12 @@ public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
         return _child.getRDD(context).zipWithIndex()
                 .mapValues(index -> index + 1)
                 .map(new CountClauseClosure(variableName, getMetadata()));
+    }
+
+    public Set<String> getVariableDependencies()
+    {
+        Set<String> result = new HashSet<String>();
+        result.add(_variableName);
+        return result;
     }
 }
