@@ -75,6 +75,7 @@ import sparksoniq.jsoniq.runtime.iterator.functions.sequences.value.DeepEqualFun
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.value.DistinctValuesFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.value.IndexOfFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.ConcatFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.strings.EndsWithFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.StringJoinFunction;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.SubstringFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.TokenizeFunctionIterator;
@@ -104,6 +105,7 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DESCENDANTPAIRS;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DISTINCTVALUES;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.EMPTY;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ENDSWITH;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.EXACTLYONE;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.EXISTS;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.EXP;
@@ -217,6 +219,7 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(STRINGJOIN, 2), StringJoinFunction.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(TOKENIZE, 1), TokenizeFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(TOKENIZE, 2), TokenizeFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(ENDSWITH, 2), EndsWithFunctionIterator.class);
 
         buildInFunctions.put(new SparksoniqFunctionSignature(KEYS, 1), ObjectKeysFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(MEMBERS, 1), ArrayMembersFunctionIterator.class);
@@ -444,6 +447,10 @@ public class Functions {
          * function that returns tokens
          */
         public static final String TOKENIZE = "tokenize";
+        /**
+         * function that returns tokens
+         */
+        public static final String ENDSWITH = "ends-with";
 
 
         /**
