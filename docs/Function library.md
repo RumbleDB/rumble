@@ -353,6 +353,14 @@ tokenize("aa;bb;cc;dd", ";")
 
 returns ("aa", "bb", "cc", "dd")
 
+### ends-with
+
+```
+ends-with("foobar", "bar")
+```
+
+returns true.
+
 ## Integration with HDFS and Spark
 
 We support two more functions to read a JSON file from HDFS or send a large sequence to the cluster:
