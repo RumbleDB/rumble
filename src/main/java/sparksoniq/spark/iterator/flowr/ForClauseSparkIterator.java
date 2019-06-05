@@ -186,15 +186,21 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
     {
         Set<String> result = new HashSet<String>();
         result.addAll(_expression.getVariableDependencies());
-        result.remove(_child.getBoundVariables());
-        result.addAll(_child.getVariableDependencies());
+        if(_child != null)
+        {
+            result.remove(_child.getBoundVariables());
+            result.addAll(_child.getVariableDependencies());
+        }
         return result;
     }
 
     public Set<String> getBoundVariables()
     {
         Set<String> result = new HashSet<String>();
-        result.addAll(_child.getBoundVariables());
+        if(_child != null)
+        {
+            result.addAll(_child.getBoundVariables());
+        }
         result.add(_variableName);
         return result;
     }
