@@ -2,6 +2,80 @@
 
 We list here the functions supported by Rumble, and introduce them by means of examples. Highly detailed specifications can be found in the [underlying W3C standard](https://www.w3.org/TR/xpath-functions-30/#func-floor), unless the function is marked as specific to JSON or Rumble, in which case it can be found [here](http://www.jsoniq.org/docs/JSONiq/html-single/index.html#idm34604304).
 
+## Sequence functions
+
+### empty
+
+Returns a boolean whether the input sequence is empty or not.
+
+```
+empty(1 to 10)
+```
+
+returns false.
+
+
+```
+empty(())
+```
+
+returns true.
+
+This is pushed down to Spark and works on big sequences.
+
+
+```
+empty(json-file("file.json"))
+```
+
+
+### exists
+
+Returns a boolean whether the input sequence has at least one item or not.
+
+```
+exists(1 to 10)
+```
+
+returns true.
+
+
+```
+exists(())
+```
+
+returns false.
+
+This is pushed down to Spark and works on big sequences.
+
+```
+exists(json-file("file.json"))
+```
+
+
+### head
+
+Returns the first item of a sequence, or the empty sequence if it is empty.
+
+```
+head(1 to 10)
+```
+
+returns true.
+
+
+```
+head(())
+```
+
+returns ().
+
+This is pushed down to Spark and works on big sequences.
+
+```
+head(json-file("file.json"))
+```
+
 ## Aggregation functions
 
 ### sum

@@ -26,37 +26,35 @@ import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
-import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
 
 public class EmptyFunctionIterator extends LocalFunctionCallIterator {
 
+    private RuntimeIterator _sequenceIterator ;
+    
     public EmptyFunctionIterator(List<RuntimeIterator> parameters, IteratorMetadata iteratorMetadata) {
         super(parameters, iteratorMetadata);
+        _sequenceIterator = this._children.get(0);
     }
 
     @Override
     public Item next() {
         if (this.hasNext()) {
             this._hasNext = false;
-            RuntimeIterator sequenceIterator = this._children.get(0);
-            sequenceIterator.open(_currentDynamicContext);
-            Item result;
-            if (sequenceIterator.hasNext()) {
-                result = new BooleanItem(false);
-
-            } else {
-                result = new BooleanItem(true);
+            if(_sequenceIterator.isRDD())
+            {
+                List<Item> i = _sequenceIterator.getRDD(_currentDynamicContext).take(1);
+                return new BooleanItem(i.isEmpty());
             }
-            sequenceIterator.close();
-            return result;
+            _sequenceIterator.open(_currentDynamicContext);
+            if (_sequenceIterator.hasNext()) {
+                _sequenceIterator.close();
+                return new BooleanItem(false);
+            } else {
+                return new BooleanItem(true);
+            }
         }
         throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "empty function", getMetadata());
-    }
-
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
     }
 }
