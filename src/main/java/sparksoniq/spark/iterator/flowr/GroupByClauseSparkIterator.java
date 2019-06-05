@@ -232,4 +232,19 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
         result.addAll(_child.getBoundVariables());
         return result;
     }
+    
+    public void print(StringBuffer buffer, int indent)
+    {
+        super.print(buffer, indent);
+        for(GroupByClauseSparkIteratorExpression iterator : _variables)
+        {
+            for (int i = 0; i < indent + 1; ++i)
+            {
+                buffer.append("  ");
+            }
+            buffer.append("Variable " + iterator.getVariableReference().getVariableName());
+            buffer.append("\n");
+            iterator.getExpression().print(buffer, indent+1);
+        }
+    }
 }

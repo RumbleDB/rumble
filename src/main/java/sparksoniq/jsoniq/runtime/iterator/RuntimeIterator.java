@@ -222,6 +222,13 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
             buffer.append("  ");
         }
         buffer.append(getClass().getName());
+        buffer.append(" | ");
+
+        buffer.append("Variable dependencies: ");
+        for(String v : getVariableDependencies())
+        {
+          buffer.append(v + " ");
+        }
         buffer.append("\n");
         for (RuntimeIterator iterator : this._children) {
             iterator.print(buffer, indent + 1);

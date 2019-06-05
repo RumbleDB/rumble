@@ -161,4 +161,16 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
         result.add(_variableName);
         return result;
     }
+    
+    public void print(StringBuffer buffer, int indent)
+    {
+        super.print(buffer, indent);
+        for (int i = 0; i < indent + 1; ++i)
+        {
+            buffer.append("  ");
+        }
+        buffer.append("Variable " + _variableName);
+        buffer.append("\n");
+        _expression.print(buffer, indent+1);
+    }
 }

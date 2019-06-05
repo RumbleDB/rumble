@@ -120,23 +120,15 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
             buffer.append("  ");
         }
         buffer.append(getClass().getName());
-        buffer.append("\n");
+        buffer.append(" | ");
 
-        for (int i = 0; i < indent + 1; ++i)
-        {
-            buffer.append("  ");
-        }
         buffer.append("Variable dependencies: ");
         for(String v : getVariableDependencies())
         {
           buffer.append(v + " ");
         }
-        buffer.append("\n");
+        buffer.append(" | ");
 
-        for (int i = 0; i < indent + 1; ++i)
-        {
-            buffer.append("  ");
-        }
         buffer.append("Variables bound in current FLWOR: ");
         for(String v : getBoundVariables())
         {

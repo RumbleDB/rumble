@@ -197,4 +197,13 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         result.addAll(_child.getBoundVariables());
         return result;
     }
+    
+    public void print(StringBuffer buffer, int indent)
+    {
+        super.print(buffer, indent);
+        for(OrderByClauseSparkIteratorExpression iterator : _expressions)
+        {
+            iterator.getExpression().print(buffer, indent+1);
+        }
+    }
 }

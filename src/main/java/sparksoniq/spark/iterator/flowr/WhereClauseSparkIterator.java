@@ -116,7 +116,7 @@ public class WhereClauseSparkIterator extends SparkRuntimeTupleIterator {
     {
         Set<String> result = new HashSet<String>();
         result.addAll(_expression.getVariableDependencies());
-        result.remove(_child.getBoundVariables());
+        result.removeAll(_child.getBoundVariables());
         result.addAll(_child.getVariableDependencies());
         return result;
     }
@@ -126,5 +126,11 @@ public class WhereClauseSparkIterator extends SparkRuntimeTupleIterator {
         Set<String> result = new HashSet<String>();
         result.addAll(_child.getBoundVariables());
         return result;
+    }
+    
+    public void print(StringBuffer buffer, int indent)
+    {
+        super.print(buffer,  indent);
+        _expression.print(buffer, indent + 1);
     }
 }
