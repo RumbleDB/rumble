@@ -101,6 +101,16 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
 
     public abstract JavaRDD<FlworTuple> getRDD(DynamicContext context);
 
+    /*
+    * Variable dependencies are variables that MUST be provided in the dynamic context
+    * for successful execution.
+    * 
+    * These variables are:
+    * 1. All variables that the expression of the clause depends on (recursive call of getVariableDependencies on the expression)
+    * 2. Except those variables bound in the current FLWOR (obtained from the auxiliary method getVariablesBoundInCurrentFLWORExpression), because those are provided in the Tuples
+    * 3.Plus (recursively calling getVariableDependencies) all the Variable Dependencies of the child clause if it exists.
+    * 
+    */
     public Set<String> getVariableDependencies()
     {
         Set<String> result = new HashSet<String>();
@@ -108,6 +118,11 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         return result;
     }
 
+    /*
+     * Returns the variables bound in previous clauses of the current FLWOR.
+     * These variables can be removed from the dependencies of expressions in subsequent clauses,
+     * because their values are provided in the tuples rather than the dynamic context object.
+     */
     public Set<String> getVariablesBoundInCurrentFLWORExpression()
     {
         return new HashSet<String>();
