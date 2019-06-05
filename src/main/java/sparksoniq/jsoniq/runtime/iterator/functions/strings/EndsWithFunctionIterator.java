@@ -60,7 +60,7 @@ public class EndsWithFunctionIterator extends LocalFunctionCallIterator {
             return new BooleanItem(result);
         } else
             throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " substring function",
+                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " ends-with function",
                 getMetadata());
     }
 }
