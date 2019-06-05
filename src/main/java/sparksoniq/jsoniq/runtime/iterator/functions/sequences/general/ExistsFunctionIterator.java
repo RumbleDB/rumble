@@ -32,24 +32,30 @@ import java.util.List;
 
 public class ExistsFunctionIterator extends LocalFunctionCallIterator {
 
+    private RuntimeIterator _sequenceIterator;
     public ExistsFunctionIterator(List<RuntimeIterator> parameters, IteratorMetadata iteratorMetadata) {
         super(parameters, iteratorMetadata);
+        _sequenceIterator = this._children.get(0);
     }
 
     @Override
     public Item next() {
         if (this.hasNext()) {
             this._hasNext = false;
-            RuntimeIterator sequenceIterator = this._children.get(0);
-            sequenceIterator.open(_currentDynamicContext);
+            if(_sequenceIterator.isRDD())
+            {
+                List<Item> i = _sequenceIterator.getRDD(_currentDynamicContext).take(1);
+                return new BooleanItem(!i.isEmpty());
+            }
+            _sequenceIterator.open(_currentDynamicContext);
             Item result;
-            if (sequenceIterator.hasNext()) {
+            if (_sequenceIterator.hasNext()) {
                 result = new BooleanItem(true);
 
             } else {
                 result = new BooleanItem(false);
             }
-            sequenceIterator.close();
+            _sequenceIterator.close();
             return result;
         }
         throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "exists function", getMetadata());

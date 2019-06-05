@@ -2,6 +2,44 @@
 
 We list here the functions supported by Rumble, and introduce them by means of examples. Highly detailed specifications can be found in the [underlying W3C standard](https://www.w3.org/TR/xpath-functions-30/#func-floor), unless the function is marked as specific to JSON or Rumble, in which case it can be found [here](http://www.jsoniq.org/docs/JSONiq/html-single/index.html#idm34604304).
 
+## Sequence functions
+
+### empty
+
+```
+empty(1 to 10)
+```
+
+returns false.
+
+
+```
+empty(())
+```
+
+returns true.
+
+This is pushed down to Spark and works on big sequences.
+
+
+### exists
+
+```
+exists(1 to 10)
+```
+
+returns true.
+
+
+```
+exists(())
+```
+
+returns false.
+
+This is pushed down to Spark and works on big sequences.
+
+
 ## Aggregation functions
 
 ### sum
