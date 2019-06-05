@@ -60,7 +60,7 @@ public class StartsWithFunctionIterator extends LocalFunctionCallIterator {
             return new BooleanItem(result);
         } else
             throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " substring function",
+                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " starts-with function",
                 getMetadata());
     }
 }
