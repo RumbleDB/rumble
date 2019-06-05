@@ -34,6 +34,7 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.closures.OrderByClauseSortClosure;
 import sparksoniq.spark.closures.OrderByMapToPairClosure;
+import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
 import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 
 import java.util.ArrayList;
@@ -185,6 +186,15 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         {
             result.addAll(iterator.getExpression().getVariableDependencies());
         }
+        result.removeAll(_child.getBoundVariables());
+        result.addAll(_child.getVariableDependencies());
+        return result;
+    }
+
+    public Set<String> getBoundVariables()
+    {
+        Set<String> result = new HashSet<String>();
+        result.addAll(_child.getBoundVariables());
         return result;
     }
 }

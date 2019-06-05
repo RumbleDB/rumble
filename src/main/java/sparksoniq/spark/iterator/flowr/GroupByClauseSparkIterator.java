@@ -216,8 +216,20 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
         for(GroupByClauseSparkIteratorExpression iterator : _variables)
         {
             result.addAll(iterator.getExpression().getVariableDependencies());
-            result.remove(iterator.getVariableReference());
         }
+        result.remove(_child.getBoundVariables());
+        result.addAll(_child.getVariableDependencies());
+        return result;
+    }
+
+    public Set<String> getBoundVariables()
+    {
+        Set<String> result = new HashSet<String>();
+        for(GroupByClauseSparkIteratorExpression iterator : _variables)
+        {
+            result.add(iterator.getVariableReference().getVariableName());
+        }
+        result.addAll(_child.getBoundVariables());
         return result;
     }
 }

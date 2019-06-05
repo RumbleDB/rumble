@@ -106,4 +106,9 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         result.addAll(_child.getVariableDependencies());
         return result;
     }
+
+    public Set<String> getBoundVariables()
+    {
+        return new HashSet<String>();
+    }
 }

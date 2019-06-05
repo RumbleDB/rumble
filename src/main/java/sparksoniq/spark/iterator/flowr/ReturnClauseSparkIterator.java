@@ -141,6 +141,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     {
         Set<String> result = new HashSet<String>();
         result.addAll(_expression.getVariableDependencies());
+        result.removeAll(_child.getBoundVariables());
         result.addAll(_child.getVariableDependencies());
         return result;
     }
