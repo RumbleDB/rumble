@@ -23,6 +23,9 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+
+import scala.reflect.internal.Trees.This;
+
 import org.apache.spark.api.java.JavaRDD;
 import sparksoniq.exceptions.InvalidArgumentTypeException;
 import sparksoniq.exceptions.IteratorFlowException;
@@ -210,5 +213,18 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
             result.addAll(iterator.getVariableDependencies());
         }
         return result;
+    }
+    
+    public void print(StringBuffer buffer, int indent)
+    {
+        for (int i = 0; i < indent; ++i)
+        {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getName());
+        buffer.append("\n");
+        for (RuntimeIterator iterator : this._children) {
+            iterator.print(buffer, indent + 1);
+        }
     }
 }

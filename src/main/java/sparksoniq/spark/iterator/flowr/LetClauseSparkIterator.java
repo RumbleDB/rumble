@@ -145,7 +145,7 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
         result.addAll(_expression.getVariableDependencies());
         if(_child != null)
         {
-            result.remove(_child.getBoundVariables());
+            result.removeAll(_child.getBoundVariables());
             result.addAll(_child.getVariableDependencies());
         }
         return result;

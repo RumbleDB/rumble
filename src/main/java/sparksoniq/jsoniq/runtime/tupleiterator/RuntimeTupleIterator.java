@@ -29,6 +29,7 @@ import java.util.Set;
 
 import org.apache.spark.api.java.JavaRDD;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
@@ -110,5 +111,42 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     public Set<String> getBoundVariables()
     {
         return new HashSet<String>();
+    }
+    
+    public void print(StringBuffer buffer, int indent)
+    {
+        for (int i = 0; i < indent; ++i)
+        {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getName());
+        buffer.append("\n");
+
+        for (int i = 0; i < indent + 1; ++i)
+        {
+            buffer.append("  ");
+        }
+        buffer.append("Variable dependencies: ");
+        for(String v : getVariableDependencies())
+        {
+          buffer.append(v + " ");
+        }
+        buffer.append("\n");
+
+        for (int i = 0; i < indent + 1; ++i)
+        {
+            buffer.append("  ");
+        }
+        buffer.append("Variables bound in current FLWOR: ");
+        for(String v : getBoundVariables())
+        {
+          buffer.append(v + " ");
+        }
+        buffer.append("\n");
+
+        if(_child != null)
+        {
+          _child.print(buffer, indent + 1);
+        }
     }
 }
