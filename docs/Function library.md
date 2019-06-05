@@ -22,6 +22,11 @@ returns true.
 This is pushed down to Spark and works on big sequences.
 
 
+```
+empty(json-file("file.json"))
+```
+
+
 ### exists
 
 ```
@@ -38,6 +43,10 @@ exists(())
 returns false.
 
 This is pushed down to Spark and works on big sequences.
+
+```
+exists(json-file("file.json"))
+```
 
 
 ### head
@@ -57,6 +66,9 @@ returns ().
 
 This is pushed down to Spark and works on big sequences.
 
+```
+head(json-file("file.json"))
+```
 
 ## Aggregation functions
 
