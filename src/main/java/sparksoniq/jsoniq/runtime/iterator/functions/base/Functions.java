@@ -75,7 +75,11 @@ import sparksoniq.jsoniq.runtime.iterator.functions.sequences.value.DeepEqualFun
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.value.DistinctValuesFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.value.IndexOfFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.ConcatFunctionIterator;
+<<<<<<< HEAD
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.EndsWithFunctionIterator;
+=======
+import sparksoniq.jsoniq.runtime.iterator.functions.strings.StartsWithFunctionIterator;
+>>>>>>> 655a64a2961cde4888b7b81c4baf1c8b7155cd4d
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.StringJoinFunction;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.SubstringFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.TokenizeFunctionIterator;
@@ -137,6 +141,7 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SIN;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SIZE;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SQRT;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.STARTSWITH;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.STRINGJOIN;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SUBSEQUENCE;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SUBSTRING;
@@ -215,11 +220,12 @@ public class Functions {
         for (int i = 0; i <= 100; i++)
             buildInFunctions.put(new SparksoniqFunctionSignature(CONCAT, i), ConcatFunctionIterator.class);
 
+        buildInFunctions.put(new SparksoniqFunctionSignature(ENDSWITH, 2), EndsWithFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(STRINGJOIN, 1), StringJoinFunction.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(STRINGJOIN, 2), StringJoinFunction.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(TOKENIZE, 1), TokenizeFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(TOKENIZE, 2), TokenizeFunctionIterator.class);
-        buildInFunctions.put(new SparksoniqFunctionSignature(ENDSWITH, 2), EndsWithFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(STARTSWITH, 2), StartsWithFunctionIterator.class);
 
         buildInFunctions.put(new SparksoniqFunctionSignature(KEYS, 1), ObjectKeysFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(MEMBERS, 1), ArrayMembersFunctionIterator.class);
@@ -448,9 +454,13 @@ public class Functions {
          */
         public static final String TOKENIZE = "tokenize";
         /**
-         * function that returns tokens
+         * function that checks whether a string ends with a substring
          */
         public static final String ENDSWITH = "ends-with";
+        /**
+         * function that checks whether a string starts with a substring
+         */
+        public static final String STARTSWITH = "starts-with";
 
 
         /**

@@ -78,6 +78,12 @@ returns ("foo", "bar").  Also works on an input sequence, eliminating duplicates
 keys(({"foo" : "bar", "bar" : "foobar"}, {"foo": "bar2"}))
 ```
 
+Keys calls are pushed down to Spark, so this works on billions of items as well:
+
+```
+keys(json-file("file.json"))
+```
+
 ### project
 
 ```
@@ -115,6 +121,11 @@ returns ("bar", "foobar").  Also works on an input sequence, in a distributive w
 values(({"foo" : "bar", "bar" : "foobar"}, {"foo" : "bar2"}))
 ```
 
+Values calls are pushed down to Spark, so this works on billions of items as well:
+
+```
+values(json-file("file.json"))
+```
 
 ## Array functions
 
@@ -310,6 +321,14 @@ concat("foo", "bar", "foobar")
 ```
 
 returns "foobarfoobar"
+
+### starts-with
+
+```
+starts-with("foobar", "foo")
+```
+
+returns true
 
 ### string-join
 
