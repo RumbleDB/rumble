@@ -322,6 +322,22 @@ concat("foo", "bar", "foobar")
 
 returns "foobarfoobar"
 
+### contains
+
+```
+contains("foobar", "ob")
+```
+
+returns true.
+
+### ends-with
+
+```
+ends-with("foobar", "bar")
+```
+
+returns true.
+
 ### starts-with
 
 ```
@@ -371,14 +387,6 @@ tokenize("aa;bb;cc;dd", ";")
 ```
 
 returns ("aa", "bb", "cc", "dd")
-
-### ends-with
-
-```
-ends-with("foobar", "bar")
-```
-
-returns true.
 
 ## Integration with HDFS and Spark
 
