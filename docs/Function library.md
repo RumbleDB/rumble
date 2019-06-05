@@ -6,6 +6,8 @@ We list here the functions supported by Rumble, and introduce them by means of e
 
 ### empty
 
+Returns a boolean whether the input sequence is empty or not.
+
 ```
 empty(1 to 10)
 ```
@@ -29,6 +31,8 @@ empty(json-file("file.json"))
 
 ### exists
 
+Returns a boolean whether the input sequence has at least one item or not.
+
 ```
 exists(1 to 10)
 ```
@@ -50,6 +54,8 @@ exists(json-file("file.json"))
 
 
 ### head
+
+Returns the first item of a sequence, or the empty sequence if it is empty.
 
 ```
 head(1 to 10)
