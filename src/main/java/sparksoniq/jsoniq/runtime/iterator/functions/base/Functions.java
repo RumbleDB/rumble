@@ -75,11 +75,8 @@ import sparksoniq.jsoniq.runtime.iterator.functions.sequences.value.DeepEqualFun
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.value.DistinctValuesFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.value.IndexOfFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.ConcatFunctionIterator;
-<<<<<<< HEAD
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.EndsWithFunctionIterator;
-=======
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.StartsWithFunctionIterator;
->>>>>>> 655a64a2961cde4888b7b81c4baf1c8b7155cd4d
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.StringJoinFunction;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.SubstringFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.TokenizeFunctionIterator;
