@@ -119,10 +119,10 @@ public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
         return result;
     }
 
-    public Set<String> getBoundVariables()
+    public Set<String> getVariablesBoundInCurrentFLWORExpression()
     {
         Set<String> result = new HashSet<String>();
-        result.addAll(_child.getBoundVariables());
+        result.addAll(_child.getVariablesBoundInCurrentFLWORExpression());
         result.add(_variableName);
         return result;
     }

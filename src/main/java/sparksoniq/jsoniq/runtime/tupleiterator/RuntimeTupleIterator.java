@@ -108,7 +108,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         return result;
     }
 
-    public Set<String> getBoundVariables()
+    public Set<String> getVariablesBoundInCurrentFLWORExpression()
     {
         return new HashSet<String>();
     }
@@ -130,7 +130,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         buffer.append(" | ");
 
         buffer.append("Variables bound in current FLWOR: ");
-        for(String v : getBoundVariables())
+        for(String v : getVariablesBoundInCurrentFLWORExpression())
         {
           buffer.append(v + " ");
         }
