@@ -60,9 +60,4 @@ public class ExistsFunctionIterator extends LocalFunctionCallIterator {
         }
         throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "exists function", getMetadata());
     }
-
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-    }
 }

@@ -36,6 +36,7 @@ public class HeadFunctionIterator extends LocalFunctionCallIterator {
 
     public HeadFunctionIterator(List<RuntimeIterator> parameters, IteratorMetadata iteratorMetadata) {
         super(parameters, iteratorMetadata);
+        _iterator = this._children.get(0);
     }
 
     @Override
@@ -50,9 +51,28 @@ public class HeadFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
+        setResult();
+    }
 
-        _iterator = this._children.get(0);
-        _iterator.open(context);
+    @Override
+    public void reset(DynamicContext context) {
+        super.reset(context);
+        setResult();
+    }
+    
+    public void setResult() {
+        if(_iterator.isRDD())
+        {
+            List<Item> i = _iterator.getRDD(_currentDynamicContext).take(1);
+            if(i.isEmpty())
+            {
+                this._hasNext = false;
+                return;
+            }
+            this._hasNext = true;
+            _result = i.get(0);
+        }
+        _iterator.open(_currentDynamicContext);
         if (_iterator.hasNext()) {
             this._hasNext = true;
             _result = _iterator.next();
@@ -61,4 +81,5 @@ public class HeadFunctionIterator extends LocalFunctionCallIterator {
         }
         _iterator.close();
     }
+    
 }

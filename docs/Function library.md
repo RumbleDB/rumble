@@ -40,6 +40,24 @@ returns false.
 This is pushed down to Spark and works on big sequences.
 
 
+### head
+
+```
+head(1 to 10)
+```
+
+returns true.
+
+
+```
+head(())
+```
+
+returns ().
+
+This is pushed down to Spark and works on big sequences.
+
+
 ## Aggregation functions
 
 ### sum
