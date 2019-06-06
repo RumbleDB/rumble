@@ -25,6 +25,7 @@ import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.api.java.UDF1;
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
+import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.NullItem;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
@@ -87,7 +88,7 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
             // apply expression in the dynamic context
             expression.open(_context);
             boolean isEmptySequence = true;
-            while (expression.hasNext()) {
+            if (expression.hasNext()) {
                 isEmptySequence = false;
                 Item nextItem = expression.next();
                 if (nextItem.isNull()) {
@@ -123,8 +124,11 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
                     _results.add(null);
                     _results.add(new Double(nextItem.getDoubleValue()));
                 } else {
-                    throw new SparksoniqRuntimeException("Unexpected grouping type found while creating columns.");
+                    throw new UnexpectedTypeException("Group by variable can not contain arrays or objects.", expression.getMetadata());
                 }
+            }
+            if (expression.hasNext()) {
+                throw new UnexpectedTypeException("Can not group on variables with sequences of multiple items.", expression.getMetadata());
             }
             if (isEmptySequence) {
                 _results.add(emptySequenceGroupIndex);

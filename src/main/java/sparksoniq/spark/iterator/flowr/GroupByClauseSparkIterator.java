@@ -280,19 +280,19 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
         columnNames = Arrays.asList(columnNamesArray);
 
         df.createOrReplaceTempView("input");
-        df.sparkSession().table("input").cache();
-        df.sparkSession().udf().register("determineGroupingDataType",
-                new GroupClauseDetermineTypeUDF(variableAccessExpressions, columnNames),
-                DataTypes.createArrayType(DataTypes.StringType));
-
-        String udfSQL = DataFrameUtils.getSQL(inputSchema, -1, false);
-
-        Dataset<Row> columnTypesDf = df.sparkSession().sql(
-                String.format("select distinct(determineGroupingDataType(array(%s))) as `distinct-types` from input",
-                        udfSQL)
-        );
-        Object columnTypesObject = columnTypesDf.collect();
-        Row[] columnTypesOfRows = ((Row[]) columnTypesObject);
+//        df.sparkSession().table("input").cache();
+//        df.sparkSession().udf().register("determineGroupingDataType",
+//                new GroupClauseDetermineTypeUDF(variableAccessExpressions, columnNames),
+//                DataTypes.createArrayType(DataTypes.StringType));
+//
+//        String udfSQL = DataFrameUtils.getSQL(inputSchema, -1, false);
+//
+//        Dataset<Row> columnTypesDf = df.sparkSession().sql(
+//                String.format("select distinct(determineGroupingDataType(array(%s))) as `distinct-types` from input",
+//                        udfSQL)
+//        );
+//        Object columnTypesObject = columnTypesDf.collect();
+//        Row[] columnTypesOfRows = ((Row[]) columnTypesObject);
 
         // Every column represents a group by expression
         // Check that every column contains a matching atomic type in all rows (nulls and empty-sequences are allowed)
@@ -348,7 +348,7 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
                 DataTypes.BinaryType);
 
         String selectSQL = DataFrameUtils.getSQL(inputSchema, -1, true);
-        udfSQL = DataFrameUtils.getSQL(inputSchema, -1, false);
+        String udfSQL = DataFrameUtils.getSQL(inputSchema, -1, false);
 
         String createColumnsSQL = String.format(
                 "select %s createGroupingColumns(array(%s)) as `%s` from input",
