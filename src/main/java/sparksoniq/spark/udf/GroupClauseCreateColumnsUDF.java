@@ -71,9 +71,12 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
             // nulls and empty sequences have special grouping captured in the first grouping column
             // if non-null, non-empty-sequence value is given, the second column is used to group the input
             // indices are assigned to each value type for the first column
-            int emptySequenceGroupIndex = 1;         // by default, empty sequence is taken as first(=least)
-            int nullGroupIndex = 2;                  // null is the smallest value except empty sequence(default)
-            int valueGroupIndex = 3;                 // values are larger than null and empty sequence(default)
+            int emptySequenceGroupIndex = 1;
+            int nullGroupIndex = 2;
+            int trueGroupIndex = 3;
+            int falseGroupIndex = 4;
+            int stringGroupIndex = 5;
+            int doubleGroupIndex = 5;
 
             // prepare dynamic context
             _context.removeAllVariables();
@@ -87,34 +90,46 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
             while (expression.hasNext()) {
                 isEmptySequence = false;
                 Item nextItem = expression.next();
-                if (nextItem instanceof NullItem) {
+                if (nextItem.isNull()) {
                     _results.add(nullGroupIndex);
-                    _results.add(null);     // placeholder for valueColumn(2nd column)
-                } else {
-                    // any other atomic type
-                    _results.add(valueGroupIndex);
-
-                    // extract type information for the sorting column
-                    String typeName = (String) _allColumnTypes.get(expressionIndex);
-
-                    if (typeName.equals("bool")) {
-                        _results.add(nextItem.getBooleanValue());
-                    } else if (typeName.equals("string")) {
-                        _results.add(nextItem.getStringValue());
-                    } else if (typeName.equals("integer")) {
-                        _results.add(Item.getNumericValue(nextItem, Integer.class));
-                    } else if (typeName.equals("double")) {
-                        _results.add(Item.getNumericValue(nextItem, Double.class));
-                    } else if (typeName.equals("decimal")) {
-                        _results.add(Item.getNumericValue(nextItem, BigDecimal.class));
+                    _results.add(null);
+                    _results.add(null);
+                } else if (nextItem.isBoolean() ){
+                    if(nextItem.getBooleanValue())
+                    {
+                        _results.add(trueGroupIndex);
                     } else {
-                        throw new SparksoniqRuntimeException("Unexpected grouping type found while creating columns.");
-                    }
+                        _results.add(falseGroupIndex);
+                    }                        
+                    _results.add(null);
+                    _results.add(null);
+                } else if (nextItem.isString()) {
+                    _results.add(stringGroupIndex);
+                    _results.add(nextItem.getStringValue());
+                    _results.add(null);
+                } else if (nextItem.isInteger()) {
+                    // any other atomic type
+                    _results.add(doubleGroupIndex);
+                    _results.add(null);
+                    _results.add(new Double(nextItem.getIntegerValue()));
+                } else if (nextItem.isDecimal()) {
+                    // any other atomic type
+                    _results.add(doubleGroupIndex);
+                    _results.add(null);
+                    _results.add(new Double(nextItem.getDecimalValue().doubleValue()));
+                } else if (nextItem.isDouble()) {
+                    // any other atomic type
+                    _results.add(doubleGroupIndex);
+                    _results.add(null);
+                    _results.add(new Double(nextItem.getDoubleValue()));
+                } else {
+                    throw new SparksoniqRuntimeException("Unexpected grouping type found while creating columns.");
                 }
             }
             if (isEmptySequence) {
                 _results.add(emptySequenceGroupIndex);
-                _results.add(null);     // placeholder for valueColumn(2nd column)
+                _results.add(null);
+                _results.add(null);
             }
             expression.close();
 

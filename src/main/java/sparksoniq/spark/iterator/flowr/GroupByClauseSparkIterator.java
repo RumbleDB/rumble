@@ -327,29 +327,14 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
         List<StructField> typedFields = new ArrayList<>();
         String appendedGroupingColumnsName = "grouping_columns";
         for (int columnIndex = 0; columnIndex < typesForAllColumns.size(); columnIndex++) {
-            String columnTypeString = typesForAllColumns.get(columnIndex);
-            String columnName;
-            DataType columnType;
-
-            // every expression contains an int column for null/empty check
-            columnName = columnIndex + "-nullEmptyCheckField";
+            // every expression contains an int column for null/empty/true/false/string/double check
+            String columnName = columnIndex + "-nullEmptyBooleanCheckField";
             typedFields.add(DataTypes.createStructField(columnName, DataTypes.IntegerType, false));
-
-            // create fields for the given value types
-            columnName = columnIndex + "-valueField";
-            if (columnTypeString.equals("bool")) {
-                columnType = DataTypes.BooleanType;
-            } else if (columnTypeString.equals("string")) {
-                columnType = DataTypes.StringType;
-            } else if (columnTypeString.equals("integer")) {
-                columnType = DataTypes.IntegerType;
-            } else if (columnTypeString.equals("double")) {
-                columnType = DataTypes.DoubleType;
-            } else if (columnTypeString.equals("decimal")) {
-                columnType = DataTypes.createDecimalType();
-            } else {
-                throw new SparksoniqRuntimeException("Unexpected grouping type found while determining UDF return type.");
-            }
+            columnName = columnIndex + "-stringField";
+            DataType columnType = DataTypes.StringType;
+            typedFields.add(DataTypes.createStructField(columnName, columnType, true));
+            columnName = columnIndex + "-doubleField";
+            columnType = DataTypes.DoubleType;
             typedFields.add(DataTypes.createStructField(columnName, columnType, true));
         }
 
