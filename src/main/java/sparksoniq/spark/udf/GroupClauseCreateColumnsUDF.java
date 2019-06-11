@@ -71,8 +71,8 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
             // indices are assigned to each value type for the first column
             int emptySequenceGroupIndex = 1;
             int nullGroupIndex = 2;
-            int trueGroupIndex = 3;
-            int falseGroupIndex = 4;
+            int booleanTrueGroupIndex = 3;
+            int booleanFalseGroupIndex = 4;
             int stringGroupIndex = 5;
             int doubleGroupIndex = 5;
 
@@ -95,9 +95,9 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
                 } else if (nextItem.isBoolean() ){
                     if(nextItem.getBooleanValue())
                     {
-                        _results.add(trueGroupIndex);
+                        _results.add(booleanTrueGroupIndex);
                     } else {
-                        _results.add(falseGroupIndex);
+                        _results.add(booleanFalseGroupIndex);
                     }                        
                     _results.add(null);
                     _results.add(null);
