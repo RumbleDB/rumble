@@ -41,6 +41,8 @@ import java.util.Set;
 public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
     private RuntimeIterator _expression;
     private StructType _inputSchema;
+    Set<String> _dependencies;
+    String[] _columnNames;
 
     private DynamicContext _context;
     
@@ -58,6 +60,10 @@ public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
         _kryo = new Kryo();
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _input = new Input();
+        
+        _columnNames = _inputSchema.fieldNames();
+        _dependencies = _expression.getVariableDependencies();
+
     }
 
 
@@ -65,15 +71,12 @@ public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
     public Boolean call(WrappedArray wrappedParameters) {
         _context.removeAllVariables();
 
-        String[] columnNames = _inputSchema.fieldNames();
-        Set<String> dependencies = _expression.getVariableDependencies();
-
         Object[] serializedParams = (Object[]) wrappedParameters.array();
         
         // prepare dynamic context
-        for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
-            String var = columnNames[columnIndex];
-            if(dependencies.contains(var))
+        for (int columnIndex = 0; columnIndex < _columnNames.length; columnIndex++) {
+            String var = _columnNames[columnIndex];
+            if(_dependencies.contains(var))
             {
                 byte[] bytes = (byte[]) serializedParams[columnIndex];
                 List<Item> deserializedParam = (List<Item>) DataFrameUtils.deserializeByteArray(bytes, _kryo, _input);

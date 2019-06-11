@@ -42,8 +42,9 @@ import java.util.Set;
 public class LetClauseUDF implements UDF1<WrappedArray, byte[]> {
     private RuntimeIterator _expression;
     private StructType _inputSchema;
+    Set<String> _dependencies;
+    String[] _columnNames;
 
-    private List<List<Item>> _deserializedParams;
     private DynamicContext _context;
     private List<Item> _nextResult;
     
@@ -57,7 +58,6 @@ public class LetClauseUDF implements UDF1<WrappedArray, byte[]> {
         _expression = expression;
         _inputSchema = inputSchema;
 
-        _deserializedParams = new ArrayList<>();
         _context = new DynamicContext();
         _nextResult = new ArrayList<>();
         
@@ -65,24 +65,23 @@ public class LetClauseUDF implements UDF1<WrappedArray, byte[]> {
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _output = new ByteBufferOutput(128, -1);
         _input = new Input();
+        
+        _columnNames = _inputSchema.fieldNames();
+        _dependencies = _expression.getVariableDependencies();
     }
 
 
     @Override
     public byte[] call(WrappedArray wrappedParameters) {
-        _deserializedParams.clear();
         _context.removeAllVariables();
         _nextResult.clear();
-
-        String[] columnNames = _inputSchema.fieldNames();
-        Set<String> dependencies = _expression.getVariableDependencies();
         
         Object[] serializedParams = (Object[]) wrappedParameters.array();
 
         // prepare dynamic context
-        for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
-            String var = columnNames[columnIndex];
-            if(dependencies.contains(var))
+        for (int columnIndex = 0; columnIndex < _columnNames.length; columnIndex++) {
+            String var = _columnNames[columnIndex];
+            if(_dependencies.contains(var))
             {
                 byte[] bytes = (byte[]) serializedParams[columnIndex];
                 List<Item> deserializedParam = (List<Item>) DataFrameUtils.deserializeByteArray(bytes, _kryo, _input);

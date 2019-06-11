@@ -47,6 +47,8 @@ import java.util.Set;
 
 public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
     private List<OrderByClauseSparkIteratorExpression> _expressions;
+    Set<String> _dependencies;
+    String[] _columnNames;
     private StructType _inputSchema;
     private Map _allColumnTypes;
 
@@ -67,6 +69,12 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
         _context = new DynamicContext();
         _results = new ArrayList<>();
         
+        _dependencies = new HashSet<String>();
+        for (OrderByClauseSparkIteratorExpression expression : _expressions) {
+            _dependencies.addAll(expression.getExpression().getVariableDependencies());
+        }
+        _columnNames = _inputSchema.fieldNames();
+        
         _kryo = new Kryo();
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _input = new Input();
@@ -76,18 +84,13 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
     public Row call(WrappedArray wrappedParameters) {
         _results.clear();
 
-        String[] columnNames = _inputSchema.fieldNames();
-        Set<String> dependencies = new HashSet<String>();
-        for (OrderByClauseSparkIteratorExpression expression : _expressions) {
-            dependencies.addAll(expression.getExpression().getVariableDependencies());
-        }
         Object[] serializedParams = (Object[]) wrappedParameters.array();
 
         // prepare dynamic context
         _context.removeAllVariables();
-        for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
-            String var = columnNames[columnIndex];
-            if(dependencies.contains(var))
+        for (int columnIndex = 0; columnIndex < _columnNames.length; columnIndex++) {
+            String var = _columnNames[columnIndex];
+            if(_dependencies.contains(var))
             {
                 byte[] bytes = (byte[]) serializedParams[columnIndex];
                 List<Item> deserializedParam = (List<Item>) DataFrameUtils.deserializeByteArray(bytes, _kryo, _input);
