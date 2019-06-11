@@ -40,15 +40,16 @@ import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpr
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
     private List<OrderByClauseSparkIteratorExpression> _expressions;
     private StructType _inputSchema;
     private Map _allColumnTypes;
 
-    private List<List<Item>> _deserializedParams;
     private DynamicContext _context;
     private List<Object> _results;
     
@@ -63,7 +64,6 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
         _inputSchema = inputSchema;
         _allColumnTypes = allColumnTypes;
 
-        _deserializedParams = new ArrayList<>();
         _context = new DynamicContext();
         _results = new ArrayList<>();
         
@@ -74,11 +74,26 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
 
     @Override
     public Row call(WrappedArray wrappedParameters) {
-        _deserializedParams.clear();
         _results.clear();
 
-        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
         String[] columnNames = _inputSchema.fieldNames();
+        Set<String> dependencies = new HashSet<String>();
+        for (OrderByClauseSparkIteratorExpression expression : _expressions) {
+            dependencies.addAll(expression.getExpression().getVariableDependencies());
+        }
+        Object[] serializedParams = (Object[]) wrappedParameters.array();
+
+        // prepare dynamic context
+        _context.removeAllVariables();
+        for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
+            String var = columnNames[columnIndex];
+            if(dependencies.contains(var))
+            {
+                byte[] bytes = (byte[]) serializedParams[columnIndex];
+                List<Item> deserializedParam = (List<Item>) DataFrameUtils.deserializeByteArray(bytes, _kryo, _input);
+                _context.addVariableValue(var, deserializedParam);
+            }
+        }
 
         for (int expressionIndex = 0; expressionIndex < _expressions.size(); expressionIndex++) {
             OrderByClauseSparkIteratorExpression expression = _expressions.get(expressionIndex);
@@ -91,12 +106,6 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
             int valueOrderIndex = 3;                 // values are larger than null and empty sequence(default)
             if (expression.getEmptyOrder() == OrderByClauseExpr.EMPTY_ORDER.LAST) {
                 emptySequenceOrderIndex = 4;
-            }
-
-            // prepare dynamic context
-            _context.removeAllVariables();
-            for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
-                _context.addVariableValue(columnNames[columnIndex], _deserializedParams.get(columnIndex));
             }
 
             // apply expression in the dynamic context
