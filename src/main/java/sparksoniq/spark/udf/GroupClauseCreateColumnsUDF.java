@@ -25,6 +25,7 @@ import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.api.java.UDF1;
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
+import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.NullItem;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
@@ -39,7 +40,6 @@ import java.util.Map;
 public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
     private List<VariableReferenceIterator> _expressions;
     private List<String> _inputColumnNames;
-    private Map _allColumnTypes;
 
     private List<List<Item>> _deserializedParams;
     private DynamicContext _context;
@@ -47,11 +47,9 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
 
     public GroupClauseCreateColumnsUDF(
             List<VariableReferenceIterator> expressions,
-            List<String> inputColumnNames,
-            Map allColumnTypes) {
+            List<String> inputColumnNames) {
         _expressions = expressions;
         _inputColumnNames = inputColumnNames;
-        _allColumnTypes = allColumnTypes;
 
         _deserializedParams = new ArrayList<>();
         _context = new DynamicContext();
@@ -68,12 +66,15 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
         for (int expressionIndex = 0; expressionIndex < _expressions.size(); expressionIndex++) {
             VariableReferenceIterator expression = _expressions.get(expressionIndex);
 
-            // nulls and empty sequences have special grouping captured in the first grouping column
-            // if non-null, non-empty-sequence value is given, the second column is used to group the input
-            // indices are assigned to each value type for the first column
-            int emptySequenceGroupIndex = 1;         // by default, empty sequence is taken as first(=least)
-            int nullGroupIndex = 2;                  // null is the smallest value except empty sequence(default)
-            int valueGroupIndex = 3;                 // values are larger than null and empty sequence(default)
+            // nulls, true, false and empty sequences have special grouping captured in the first grouping column.
+            // The second column is used for strings, with a special value in the first column.
+            // The third column is used for numbers (as a double), with a special value in the first column.
+            int emptySequenceGroupIndex = 1;
+            int nullGroupIndex = 2;
+            int booleanTrueGroupIndex = 3;
+            int booleanFalseGroupIndex = 4;
+            int stringGroupIndex = 5;
+            int doubleGroupIndex = 5;
 
             // prepare dynamic context
             _context.removeAllVariables();
@@ -84,37 +85,49 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
             // apply expression in the dynamic context
             expression.open(_context);
             boolean isEmptySequence = true;
-            while (expression.hasNext()) {
+            if (expression.hasNext()) {
                 isEmptySequence = false;
                 Item nextItem = expression.next();
-                if (nextItem instanceof NullItem) {
+                if (nextItem.isNull()) {
                     _results.add(nullGroupIndex);
-                    _results.add(null);     // placeholder for valueColumn(2nd column)
-                } else {
-                    // any other atomic type
-                    _results.add(valueGroupIndex);
-
-                    // extract type information for the sorting column
-                    String typeName = (String) _allColumnTypes.get(expressionIndex);
-
-                    if (typeName.equals("bool")) {
-                        _results.add(nextItem.getBooleanValue());
-                    } else if (typeName.equals("string")) {
-                        _results.add(nextItem.getStringValue());
-                    } else if (typeName.equals("integer")) {
-                        _results.add(Item.getNumericValue(nextItem, Integer.class));
-                    } else if (typeName.equals("double")) {
-                        _results.add(Item.getNumericValue(nextItem, Double.class));
-                    } else if (typeName.equals("decimal")) {
-                        _results.add(Item.getNumericValue(nextItem, BigDecimal.class));
+                    _results.add(null);
+                    _results.add(null);
+                } else if (nextItem.isBoolean() ){
+                    if(nextItem.getBooleanValue())
+                    {
+                        _results.add(booleanTrueGroupIndex);
                     } else {
-                        throw new SparksoniqRuntimeException("Unexpected grouping type found while creating columns.");
-                    }
+                        _results.add(booleanFalseGroupIndex);
+                    }                        
+                    _results.add(null);
+                    _results.add(null);
+                } else if (nextItem.isString()) {
+                    _results.add(stringGroupIndex);
+                    _results.add(nextItem.getStringValue());
+                    _results.add(null);
+                } else if (nextItem.isInteger()) {
+                    _results.add(doubleGroupIndex);
+                    _results.add(null);
+                    _results.add(new Double(nextItem.getIntegerValue()));
+                } else if (nextItem.isDecimal()) {
+                    _results.add(doubleGroupIndex);
+                    _results.add(null);
+                    _results.add(new Double(nextItem.getDecimalValue().doubleValue()));
+                } else if (nextItem.isDouble()) {
+                    _results.add(doubleGroupIndex);
+                    _results.add(null);
+                    _results.add(new Double(nextItem.getDoubleValue()));
+                } else {
+                    throw new UnexpectedTypeException("Group by variable can not contain arrays or objects.", expression.getMetadata());
                 }
+            }
+            if (expression.hasNext()) {
+                throw new UnexpectedTypeException("Can not group on variables with sequences of multiple items.", expression.getMetadata());
             }
             if (isEmptySequence) {
                 _results.add(emptySequenceGroupIndex);
-                _results.add(null);     // placeholder for valueColumn(2nd column)
+                _results.add(null);
+                _results.add(null);
             }
             expression.close();
 
