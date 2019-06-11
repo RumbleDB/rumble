@@ -66,9 +66,9 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
         for (int expressionIndex = 0; expressionIndex < _expressions.size(); expressionIndex++) {
             VariableReferenceIterator expression = _expressions.get(expressionIndex);
 
-            // nulls and empty sequences have special grouping captured in the first grouping column
-            // if non-null, non-empty-sequence value is given, the second column is used to group the input
-            // indices are assigned to each value type for the first column
+            // nulls, true, false and empty sequences have special grouping captured in the first grouping column.
+            // The second column is used for strings, with a special value in the first column.
+            // The third column is used for numbers (as a double), with a special value in the first column.
             int emptySequenceGroupIndex = 1;
             int nullGroupIndex = 2;
             int booleanTrueGroupIndex = 3;
@@ -106,17 +106,14 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
                     _results.add(nextItem.getStringValue());
                     _results.add(null);
                 } else if (nextItem.isInteger()) {
-                    // any other atomic type
                     _results.add(doubleGroupIndex);
                     _results.add(null);
                     _results.add(new Double(nextItem.getIntegerValue()));
                 } else if (nextItem.isDecimal()) {
-                    // any other atomic type
                     _results.add(doubleGroupIndex);
                     _results.add(null);
                     _results.add(new Double(nextItem.getDecimalValue().doubleValue()));
                 } else if (nextItem.isDouble()) {
-                    // any other atomic type
                     _results.add(doubleGroupIndex);
                     _results.add(null);
                     _results.add(new Double(nextItem.getDoubleValue()));
