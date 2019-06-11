@@ -106,4 +106,40 @@ public class ArrayItem extends JsonItem {
     public void read(Kryo kryo, Input input) {
         this._arrayItems = kryo.readObject(input, ArrayList.class);
     }
+    
+    public boolean equals(Object otherItem)
+    {
+        if(!(otherItem instanceof Item))
+        {
+            return false;
+        }
+        Item o = (Item)otherItem;
+        if(!o.isArray())
+        {
+            return false;
+        }
+        if(getSize() != o.getSize())
+        {
+            return false;
+        }
+        for(int i= 0; i< getSize(); ++i)
+        {
+            if(!getItemAt(i).equals(o.getItemAt(i)))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    public int hashCode()
+    {
+        int result = 0;
+        result += getSize();
+        for(int i= 0; i< getSize(); ++i)
+        {
+            result += getItemAt(i).hashCode();
+        }
+        return result;
+    }
 }

@@ -147,10 +147,6 @@ public abstract class Item implements SerializableItem {
         return result;
     }
 
-    public static boolean checkEquality(Item v1, Item v2) {
-        return compareItems(v1, v2) == 0;
-    }
-
     public List<Item> getItems() {
         throw new RuntimeException("Item is not an array.");
     }
@@ -254,4 +250,8 @@ public abstract class Item implements SerializableItem {
             throws IOException {
         aOutputStream.defaultWriteObject();
     }
+    
+    public abstract boolean equals(Object otherItem);
+
+    public abstract int hashCode();
 }

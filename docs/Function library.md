@@ -1,6 +1,80 @@
 # Function library
 
-We list here the functions supported by Sparksoniq, and introduce them by means of examples. Highly detailed specifications can be found in the [underlying W3C standard](https://www.w3.org/TR/xpath-functions-30/#func-floor), unless the function is marked as specific to JSON or Sparksoniq, in which case it can be found [here](http://www.jsoniq.org/docs/JSONiq/html-single/index.html#idm34604304).
+We list here the functions supported by Rumble, and introduce them by means of examples. Highly detailed specifications can be found in the [underlying W3C standard](https://www.w3.org/TR/xpath-functions-30/#func-floor), unless the function is marked as specific to JSON or Rumble, in which case it can be found [here](http://www.jsoniq.org/docs/JSONiq/html-single/index.html#idm34604304).
+
+## Sequence functions
+
+### empty
+
+Returns a boolean whether the input sequence is empty or not.
+
+```
+empty(1 to 10)
+```
+
+returns false.
+
+
+```
+empty(())
+```
+
+returns true.
+
+This is pushed down to Spark and works on big sequences.
+
+
+```
+empty(json-file("file.json"))
+```
+
+
+### exists
+
+Returns a boolean whether the input sequence has at least one item or not.
+
+```
+exists(1 to 10)
+```
+
+returns true.
+
+
+```
+exists(())
+```
+
+returns false.
+
+This is pushed down to Spark and works on big sequences.
+
+```
+exists(json-file("file.json"))
+```
+
+
+### head
+
+Returns the first item of a sequence, or the empty sequence if it is empty.
+
+```
+head(1 to 10)
+```
+
+returns true.
+
+
+```
+head(())
+```
+
+returns ().
+
+This is pushed down to Spark and works on big sequences.
+
+```
+head(json-file("file.json"))
+```
 
 ## Aggregation functions
 
@@ -78,6 +152,12 @@ returns ("foo", "bar").  Also works on an input sequence, eliminating duplicates
 keys(({"foo" : "bar", "bar" : "foobar"}, {"foo": "bar2"}))
 ```
 
+Keys calls are pushed down to Spark, so this works on billions of items as well:
+
+```
+keys(json-file("file.json"))
+```
+
 ### project
 
 ```
@@ -115,6 +195,11 @@ returns ("bar", "foobar").  Also works on an input sequence, in a distributive w
 values(({"foo" : "bar", "bar" : "foobar"}, {"foo" : "bar2"}))
 ```
 
+Values calls are pushed down to Spark, so this works on billions of items as well:
+
+```
+values(json-file("file.json"))
+```
 
 ## Array functions
 
@@ -311,6 +396,30 @@ concat("foo", "bar", "foobar")
 
 returns "foobarfoobar"
 
+### contains
+
+```
+contains("foobar", "ob")
+```
+
+returns true.
+
+### ends-with
+
+```
+ends-with("foobar", "bar")
+```
+
+returns true.
+
+### starts-with
+
+```
+starts-with("foobar", "foo")
+```
+
+returns true
+
 ### string-join
 
 ```
@@ -357,7 +466,7 @@ returns ("aa", "bb", "cc", "dd")
 
 We support two more functions to read a JSON file from HDFS or send a large sequence to the cluster:
 
-### json-file (Sparksoniq specific)
+### json-file (Rumble specific)
 
 Exists in unary and binary. The first parameter specifies the JSON file (or set of JSON files) to read.
 The second, optional parameter specifies the minimum number of partitions. It is recommended to use it in a local setup, as the default is only one partition, which does not fully use the parallelism. If the input is on HDFS, then blocks are taken as splits by default. This is also similar to Sparks textFile().
@@ -393,7 +502,7 @@ where $my-json.property eq "some value"
 return $my-json
 ```
 
-### text-file (Sparksoniq specific)
+### text-file (Rumble specific)
 
 Exists in unary and binary. The first parameter specifies the text file (or set of text files) to read and return as a sequence of strings.
 The second, optional parameter specifies the minimum number of partitions. It is recommended to use it in a local setup, as the default is only one partition, which does not fully use the parallelism. If the input is on HDFS, then blocks are taken as splits by default. This is also similar to Sparks textFile().
@@ -410,7 +519,7 @@ count(
 
 (Also see examples for json-file for host and port, sets of files and working directory).
 
-### parallelize (Sparksoniq specific)
+### parallelize (Rumble specific)
 
 This function behaves like the Spark parallelize() you are familiar with and sends a large sequence to the cluster.
 The rest of the FLWOR expression is then evaluated with Spark transformations on the cluster.

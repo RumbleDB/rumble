@@ -50,4 +50,19 @@ public class NullItem extends AtomicItem {
         kryo.readObjectOrNull(input, Item.class);
 
     }
+    
+    public boolean equals(Object otherItem)
+    {
+        if(!(otherItem instanceof Item))
+        {
+            return false;
+        }
+        Item o = (Item)otherItem;
+        return o.isNull();
+    }
+    
+    public int hashCode()
+    {
+        return 0;
+    }
 }

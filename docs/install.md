@@ -1,6 +1,6 @@
-# Installing Sparksoniq
+# Installing Rumble
 
-We show here how to install Sparksoniq from the github repository if you wish to do so (for example, to use the latest master). However, the easiest way to use Sparksoniq is to simply download the already compiled .jar files.
+We show here how to install Rumble from the github repository if you wish to do so (for example, to use the latest master). However, the easiest way to use Rumble is to simply download the already compiled .jar files.
 
 ## Requirements
 
@@ -14,7 +14,7 @@ The following software is required:
 
 Important: Java 9 is not supported by Spark. You specifically need Java 8. 
 
-Important: the ANTLR version varies with the Spark version, because Spark is also shipped with an ANTLR runtime (example: Spark 2.2.0 is with ANTLR 4.5.3, Spark 2.3.0 with ANTLR 4.7). The ANTLR runtime MUST match the ANTLR generator used to generate the Sparksoniq jar file.
+Important: the ANTLR version varies with the Spark version, because Spark is also shipped with an ANTLR runtime (example: Spark 2.2.0 is with ANTLR 4.5.3, Spark 2.3.0 with ANTLR 4.7). The ANTLR runtime MUST match the ANTLR generator used to generate the Rumble jar file.
 
 ### Checking the requirements
 
@@ -30,7 +30,7 @@ Type the following commands to check that the necessary commands are available. 
 
 ## Checkout
 
-You first need to download the sparksoniq code to your local machine.
+You first need to download the rumble code to your local machine.
 
 In the shell, go to the desired location:
 
@@ -38,11 +38,11 @@ In the shell, go to the desired location:
     
 Clone the github repository:
     
-    $ git clone git@github.com:Sparksoniq/sparksoniq.git
+    $ git clone git@github.com:Rumble/rumble.git
     
 Go to the root of this repository:
 
-    $ cd sparksoniq
+    $ cd rumble
     
 ## Compile
 
@@ -50,32 +50,34 @@ Go to the root of this repository:
 
 For convenience, we have included the ANTLRv4 files for 4.5.3 and 4.7 in the lib directory of the repository (see corresponding license).
 
-From the root directory of the sparksoniq local checkout, you first need to build the parser:
+From the root directory of the rumble local checkout, you first need to build the parser:
 
     $ ant -buildfile build_antlr_parser.xml generate-parser -Dantlr.jar=/lib/antlr-4.7-complete.jar
     
-### Sparksoniq
+### Rumble
 
 Once the ANTLR sources have been generated, you can compile the entire project like so:
 
     $ mvn clean compile assembly:single
     
-After successful completion, you can check the `target` directory, which should contain the compiled classes as well as the JAR file `jsoniq-spark-app-0.9.6-jar-with-dependencies.jar`.
+After successful completion, you can check the `target` directory, which should contain the compiled classes as well as the JAR file `spark-rumble-1.0-jar-with-dependencies.jar`.
     
 ## Running locally
 
-The most straightforward to test if the above steps were successful is to run the Sparksoniq shell locally, like so:
+The most straightforward to test if the above steps were successful is to run the Rumble shell locally, like so:
 
-    $ spark-submit --class sparksoniq.ShellStart --master local[2] --deploy-mode client target/jsoniq-spark-app-0.9.6-jar-with-dependencies.jar
+    $ spark-submit --master local[2] --deploy-mode client target/spark-rumble-1.0-jar-with-dependencies.jar --shell yes
 
-The Sparksoniq shell should start:
+The Rumble shell should start:
 
     Using Spark's default log4j profile: org/apache/spark/log4j-defaults.properties
-       _____                  __                    ________
-      / ___/____  ____ ______/ /___________  ____  /  _/ __ \
-      \__ \/ __ \/ __ `/ ___/ //_/ ___/ __ \/ __ \ / // / / /
-     ___/ / /_/ / /_/ / /  / ,< (__  ) /_/ / / / // // /_/ /
-    /____/ .___/\__,_/_/  /_/|_/____/\____/_/ /_/___/\___\_\
+
+        ____                  __    __   
+       / __ \__  ______ ___  / /_  / /__ 
+      / /_/ / / / / __ `__ \/ __ \/ / _ \
+     / _, _/ /_/ / / / / / / /_/ / /  __/
+    /_/ |_|\__,_/_/ /_/ /_/_.___/_/\___/ 
+
     Master: local[2]
     Item Display Limit: 1000
     Output Path: -
@@ -107,12 +109,12 @@ You can try a few more queries.
     >>> 
     ( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
     
-This is it. Sparksoniq is step and ready to go locally. You can now move on to a JSONiq tutorial. A Sparksoniq tutorial will also follow soon.
+This is it. Rumble is step and ready to go locally. You can now move on to a JSONiq tutorial. A Rumble tutorial will also follow soon.
 
 ## Running on a cluster
 
-You can also try to run the Sparksoniq shell on a cluster if you have one available and configured -- this is done in the same way as any other `spark-submit` command:
+You can also try to run the Rumble shell on a cluster if you have one available and configured -- this is done in the same way as any other `spark-submit` command:
 
-    $ spark-submit --class sparksoniq.ShellStart --master yarn --deploy-mode client --num-executors 40 jsoniq-spark-app-0.9.6-jar-with-dependencies.jar
+    $ spark-submit --master yarn --deploy-mode client --num-executors 40 spark-rumble-1.0-jar-with-dependencies.jar
     
 More details are provided in the rest of the documentation.

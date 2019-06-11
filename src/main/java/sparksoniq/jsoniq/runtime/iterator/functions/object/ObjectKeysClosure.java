@@ -14,23 +14,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
+ * Authors: Stefan Irimescu, Can Berker Cikis, Ghislain Fourny
  *
  */
 
-package sparksoniq.jsoniq.item;
+package sparksoniq.jsoniq.runtime.iterator.functions.object;
 
+import org.apache.spark.api.java.function.FlatMapFunction;
+import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.StringItem;
+
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
-public class ItemUtil {
+public class ObjectKeysClosure implements FlatMapFunction<Item, Item> {
 
-
-    public static boolean listContainsItem(List<Item> list, Item newItem) {
-        for (Item i : list) {
-            if (Item.compareItems(i, newItem) == 0) {
-                return true;
-            }
-        }
-        return false;
+    public ObjectKeysClosure() {
     }
-}
+
+    public Iterator<Item> call(Item arg0) throws Exception {
+        List<Item> results = new ArrayList<Item>();
+
+        if (!arg0.isObject())
+            return results.iterator();
+
+        for (String key : arg0.getKeys()) {
+            results.add(new StringItem(key));
+        }
+        return results.iterator();
+    }
+};

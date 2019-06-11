@@ -4,7 +4,7 @@
 
 ### Installing Spark
 
-Sparksoniq requires a spark installation on ideally Linux or Mac.
+Rumble requires a spark installation on ideally Linux or Mac.
 We recommend installing 2.4.1 from [this page](https://spark.apache.org/downloads.html).
 Download the file and unzip it, which will create a directory called spark-2.4.1-bin-hadoop2.7. 
 
@@ -20,14 +20,14 @@ You can test that this worked with:
 
     spark-submit --version
 
-### Installing Sparksoniq
+### Installing Rumble
 
-In order to run Sparksoniq, you need to download the .jar file from the [download page](https://github.com/Sparksoniq/sparksoniq/releases)
+In order to run Rumble, you need to download the .jar file from the [download page](https://github.com/Sparksoniq/rumble/releases)
 and put it in a directory of your choice. For Spark 2.4.1 we recommend the .jar file with ant 4.7 (not 4.5.3).
 
 ### Creating some data set
 
-Create, in the same directory as Sparksoniq, a file data.json and put the following content inside. This is a list of JSON objects in the jsonlines format.
+Create, in the same directory as Rumble, a file data.json and put the following content inside. This is a list of JSON objects in the jsonlines format.
 
     { "product" : "broiler", "store number" : 1, "quantity" : 20  }
     { "product" : "toaster", "store number" : 2, "quantity" : 100 }
@@ -41,19 +41,18 @@ Create, in the same directory as Sparksoniq, a file data.json and put the follow
 
 ## Running simple queries locally
 
-In a shell, from the directory where the sparksoniq .jar lies, type, all on one line:
+In a shell, from the directory where the rumble .jar lies, type, all on one line:
 
-    spark-submit --class sparksoniq.ShellStart --master local[*] --deploy-mode client
-                 sparksoniq-0.9.6-with-antlr-4.7.jar
+    spark-submit --master local[*] --deploy-mode client spark-rumble-1.0.jar --shell yes
                  
-The Sparksoniq shell appears:
+The Rumble shell appears:
 
     Using Spark's default log4j profile: org/apache/spark/log4j-defaults.properties
-       _____                  __                    ________
-      / ___/____  ____ ______/ /___________  ____  /  _/ __ \
-      \__ \/ __ \/ __ `/ ___/ //_/ ___/ __ \/ __ \ / // / / /
-     ___/ / /_/ / /_/ / /  / ,< (__  ) /_/ / / / // // /_/ /
-    /____/ .___/\__,_/_/  /_/|_/____/\____/_/ /_/___/\___\_\
+        ____                  __    __   
+       / __ \__  ______ ___  / /_  / /__ 
+      / /_/ / / / / __ `__ \/ __ \/ / _ \
+     / _, _/ /_/ / / / / / / /_/ / /  __/
+    /_/ |_|\__,_/_/ /_/ /_/_.___/_/\___/ 
     Master: local[2]
     Item Display Limit: 100
     Output Path: -
@@ -89,7 +88,7 @@ Data can be filtered with the where clause. Below the hood, a Spark transformati
     where $i.quantity gt 99
     return $i
     
-Sparksoniq also supports grouping and aggregation, like so:
+Rumble also supports grouping and aggregation, like so:
 
     for $i in json-file("data.json", 10)
     let $quantity := $i.quantity
@@ -97,7 +96,7 @@ Sparksoniq also supports grouping and aggregation, like so:
     return { "product" : $product, "total-quantity" : sum($quantity) }
     
 
-Sparksoniq also supports ordering, like so. Note that clauses (where, let, group by, order by) can appear in any order.
+Rumble also supports ordering, like so. Note that clauses (where, let, group by, order by) can appear in any order.
 The only constraint is that the first clause should be a for or a let clause.
 
     for $i in json-file("data.json", 10)
@@ -107,7 +106,7 @@ The only constraint is that the first clause should be a for or a let clause.
     order by $sum descending
     return { "product" : $product, "total-quantity" : $sum }
 
-Finally, Sparksoniq can also parallelize local data, exactly like Sparks' parallelize() creation:
+Finally, Rumble can also parallelize local data, exactly like Sparks' parallelize() creation:
 
     for $i in parallelize((
      { "product" : "broiler", "store number" : 1, "quantity" : 20  },

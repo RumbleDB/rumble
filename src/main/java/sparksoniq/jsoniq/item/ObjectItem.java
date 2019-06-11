@@ -170,5 +170,54 @@ public class ObjectItem extends JsonItem {
         this._keys = kryo.readObject(input, ArrayList.class);
         this._values = kryo.readObject(input, ArrayList.class);
     }
+    
+    public boolean equals(Object otherItem)
+    {
+        if(!(otherItem instanceof Item))
+        {
+            return false;
+        }
+        Item o = (Item)otherItem;
+        if(!o.isObject())
+        {
+            return false;
+        }
+        for(String s : getKeys())
+        {
+            Item v = o.getItemByKey(s);
+            if(v == null)
+            {
+                return false;
+            }
+            if(!getItemByKey(s).equals(v))
+            {
+                return false;
+            }
+        }
+        for(String s : o.getKeys())
+        {
+            Item v = getItemByKey(s);
+            if(v == null)
+            {
+                return false;
+            }
+            if(!o.getItemByKey(s).equals(v))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    public int hashCode()
+    {
+        int result = 0;
+        result += getSize();
+        for(String s : getKeys())
+        {
+            result += getItemByKey(s).hashCode();
+        }
+        return result;
+    }
 
 }
