@@ -18,43 +18,49 @@
  *
  */
 
-package sparksoniq.jsoniq.runtime.iterator.functions.sequences.general;
+package sparksoniq.jsoniq.runtime.iterator.functions.strings;
 
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.BooleanItem;
+import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.List;
 
-public class EmptyFunctionIterator extends LocalFunctionCallIterator {
-
-    private RuntimeIterator _sequenceIterator ;
-    
-    public EmptyFunctionIterator(List<RuntimeIterator> parameters, IteratorMetadata iteratorMetadata) {
-        super(parameters, iteratorMetadata);
-        _sequenceIterator = this._children.get(0);
+public class StartsWithFunctionIterator extends LocalFunctionCallIterator {
+    public StartsWithFunctionIterator(
+            List<RuntimeIterator> arguments,
+            IteratorMetadata iteratorMetadata) {
+        super(arguments, iteratorMetadata);
     }
 
     @Override
     public Item next() {
-        if (this.hasNext()) {
+        if (this._hasNext) {
             this._hasNext = false;
-            if(_sequenceIterator.isRDD())
-            {
-                List<Item> i = _sequenceIterator.getRDD(_currentDynamicContext).take(1);
-                return new BooleanItem(i.isEmpty());
-            }
-            _sequenceIterator.open(_currentDynamicContext);
-            if (_sequenceIterator.hasNext()) {
-                _sequenceIterator.close();
-                return new BooleanItem(false);
-            } else {
+            StringItem substringItem = this.getSingleItemOfTypeFromIterator(
+                this._children.get(1),
+                StringItem.class);
+            if (substringItem == null || substringItem.getStringValue().isEmpty()) {
                 return new BooleanItem(true);
             }
-        }
-        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "empty function", getMetadata());
+            StringItem stringItem = this.getSingleItemOfTypeFromIterator(
+                this._children.get(0),
+                StringItem.class);
+            if (stringItem == null || stringItem.getStringValue().isEmpty()) {
+                return new BooleanItem(false);
+            }
+            boolean result = stringItem.getStringValue().startsWith(
+                substringItem.getStringValue());
+            return new BooleanItem(result);
+        } else
+            throw new IteratorFlowException(
+                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " starts-with function",
+                getMetadata());
     }
 }

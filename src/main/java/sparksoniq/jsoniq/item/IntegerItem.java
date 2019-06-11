@@ -75,4 +75,35 @@ public class IntegerItem extends AtomicItem {
     public void read(Kryo kryo, Input input) {
         this._value = input.readInt();
     }
+    
+    public boolean equals(Object otherItem)
+    {
+        if(!(otherItem instanceof Item))
+        {
+            return false;
+        }
+        Item o = (Item)otherItem;
+        if(o.isInteger())
+        {
+            return getIntegerValue() == o.getIntegerValue();
+        }
+        if(o.isDecimal())
+        {
+            if(o.getDecimalValue().stripTrailingZeros().scale() > 0)
+            {
+                return false;
+            }
+            return o.getDecimalValue().intValueExact() == getIntegerValue();
+        }
+        if(o.isDouble())
+        {
+            return (o.getDoubleValue() == (double)getIntegerValue());
+        }
+        return false;
+    }
+    
+    public int hashCode()
+    {
+        return getIntegerValue();
+    }
 }

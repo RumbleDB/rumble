@@ -77,4 +77,39 @@ public class DecimalItem extends AtomicItem {
     public void read(Kryo kryo, Input input) {
         this._value = kryo.readObject(input, BigDecimal.class);
     }
+    
+    public boolean equals(Object otherItem)
+    {
+        if(!(otherItem instanceof Item))
+        {
+            return false;
+        }
+        Item o = (Item)otherItem;
+        if(o.isInteger())
+        {
+            if(getDecimalValue().stripTrailingZeros().scale() > 0)
+            {
+                return false;
+            }
+            return getDecimalValue().intValueExact() == o.getIntegerValue();
+        }
+        if(o.isDecimal())
+        {
+            return (getDecimalValue().equals(o.getDecimalValue()));
+        }
+        if(o.isDouble())
+        {
+            return (o.getDoubleValue() == getDecimalValue().doubleValue());
+        }
+        return false;
+    }
+    
+    public int hashCode()
+    {
+        if(getDecimalValue().stripTrailingZeros().scale() == 0)
+        {
+            return getDecimalValue().intValue();
+        }
+        return getDecimalValue().hashCode();
+    }
 }

@@ -21,6 +21,7 @@
 package sparksoniq.config;
 
 import sparksoniq.exceptions.CliException;
+import sparksoniq.spark.SparkSessionManager;
 
 import java.util.HashMap;
 
@@ -30,18 +31,13 @@ public class SparksoniqRuntimeConfiguration {
     private static final String ARGUMENT_FORMAT_ERROR_MESSAGE = "Invalid argument format. Required format: --property value";
     private HashMap<String, String> _arguments;
 
-    public SparksoniqRuntimeConfiguration(HashMap<String, String> arguments) {
-        this._arguments = arguments;
-    }
-
-    public static HashMap<String, String> processCommandLineArgs(String[] args) {
-        HashMap<String, String> argumentMap = new HashMap<>();
+    public SparksoniqRuntimeConfiguration(String[] args) {
+        _arguments = new HashMap<>();
         for (int i = 0; i < args.length; i += 2)
             if (args[i].startsWith(ARGUMENT_PREFIX))
-                argumentMap.put(args[i].trim().replace(ARGUMENT_PREFIX, ""), args[i + 1]);
+                _arguments.put(args[i].trim().replace(ARGUMENT_PREFIX, ""), args[i + 1]);
             else
                 throw new CliException(ARGUMENT_FORMAT_ERROR_MESSAGE);
-        return argumentMap;
     }
 
     public String getConfigurationArgument(String key) {
@@ -51,10 +47,51 @@ public class SparksoniqRuntimeConfiguration {
             return null;
     }
 
+    public String getOutputPath() {
+        if (this._arguments.containsKey("output-path"))
+            return this._arguments.get("output-path");
+        else
+            return null;
+    }
+
+    public String getLogPath() {
+        if (this._arguments.containsKey("log-path"))
+            return this._arguments.get("log-path");
+        else
+            return null;
+    }
+
+    public String getQueryPath() {
+        if (this._arguments.containsKey("query-path"))
+            return this._arguments.get("query-path");
+        else
+            return null;
+    }
+
+    public int getResultSizeCap() {
+        if (this._arguments.containsKey("result-size"))
+            return Integer.parseInt(this._arguments.get("result-size"));
+        else
+            return 200;
+    }
+
+    public boolean isShell() {
+        if (this._arguments.containsKey("shell"))
+            return _arguments.get("shell").equals("yes");
+        else
+            return false;
+    }
+    
+    public boolean isLocal() {
+        String masterConfig = SparkSessionManager.getInstance().getJavaSparkContext().getConf().get("spark.master");
+        return masterConfig.contains("local");
+    }
+
     @Override
     public String toString() {
         String result = "";
-        result += "Item Display Limit: " + (_arguments.getOrDefault("result-size", "-")) + "\n" +
+        result += "Master: " + SparkSessionManager.getInstance().getJavaSparkContext().getConf().get("spark.master") + "\n" +
+                "Item Display Limit: " + (_arguments.getOrDefault("result-size", "-")) + "\n" +
                 "Output Path: " + (_arguments.getOrDefault("output-path", "-")) + "\n" +
                 "Log Path: " + (_arguments.getOrDefault("log-path", "-")) + "\n" +
                 "Query Path : " + (_arguments.getOrDefault("query-path", "-")) + "\n";
