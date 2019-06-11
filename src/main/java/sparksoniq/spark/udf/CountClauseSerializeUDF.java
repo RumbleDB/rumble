@@ -28,6 +28,7 @@ import com.esotericsoftware.kryo.io.Output;
 
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.spark.DataFrameUtils;
 
 import java.io.IOException;
@@ -52,7 +53,7 @@ public class CountClauseSerializeUDF implements UDF1<Long, byte[]> {
     @Override
     public byte[] call(Long countIndex) {
         _nextResult.clear();
-        _nextResult.add(new IntegerItem(countIndex.intValue()));
+        _nextResult.add(ItemFactory.getInstance().createIntegerItem(countIndex.intValue()));
 
         return DataFrameUtils.serializeItemList(_nextResult, _kryo, _output);
     }

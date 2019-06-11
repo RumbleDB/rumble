@@ -22,6 +22,8 @@ package sparksoniq.jsoniq.runtime.iterator.primary;
 
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.BooleanItem;
+import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
@@ -35,10 +37,10 @@ public class BooleanRuntimeIterator extends AtomicRuntimeIterator {
     }
 
     @Override
-    public BooleanItem next() {
+    public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            return new BooleanItem(_item);
+            return ItemFactory.getInstance().createBooleanItem(_item);
         }
 
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item, getMetadata());

@@ -29,6 +29,7 @@ import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -101,7 +102,7 @@ public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
             FlworTuple inputTuple = _child.next();
 
             List<Item> results = new ArrayList<>();
-            results.add(new IntegerItem(_currentCountIndex++));
+            results.add(ItemFactory.getInstance().createIntegerItem(_currentCountIndex++));
 
             FlworTuple newTuple = new FlworTuple(inputTuple, _variableName, results);
             _nextLocalTupleResult = newTuple;

@@ -23,6 +23,7 @@ package sparksoniq.jsoniq.runtime.iterator.functions.booleans;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.BooleanItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -42,7 +43,7 @@ public class BooleanFunctionIterator extends LocalFunctionCallIterator {
             iterator.open(_currentDynamicContext);
             boolean effectiveBooleanValue = getEffectiveBooleanValue(iterator);
             iterator.close();
-            return new BooleanItem(effectiveBooleanValue);
+            return ItemFactory.getInstance().createBooleanItem(effectiveBooleanValue);
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " boolean function", getMetadata());
     }

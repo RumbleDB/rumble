@@ -22,6 +22,7 @@ package sparksoniq.jsoniq.runtime.iterator.functions.object;
 
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -59,7 +60,7 @@ public class ObjectAccumulateFunctionIterator extends ObjectFunctionIterator {
                 }
             }
 
-            ObjectItem result = new ObjectItem(keyValuePairs);
+            Item result = ItemFactory.getInstance().createObjectItem(keyValuePairs);
 
             this._hasNext = false;
             return result;

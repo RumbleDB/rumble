@@ -34,6 +34,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ObjectItem extends JsonItem {
 
@@ -57,7 +58,7 @@ public class ObjectItem extends JsonItem {
      *
      * @param keyValuePairs LinkedHashMap -- this map implementation preserves order of the keys -- essential for functionality
      */
-    public ObjectItem(LinkedHashMap<String, List<Item>> keyValuePairs) {
+    public ObjectItem(Map<String, List<Item>> keyValuePairs) {
         super();
 
         List<String> keyList = new ArrayList<>();
@@ -68,7 +69,7 @@ public class ObjectItem extends JsonItem {
             List<Item> values = keyValuePairs.get(key);
             // for each key, convert the lists of values into arrayItems
             if (values.size() > 1) {
-                ArrayItem valuesArray = new ArrayItem(values);
+                Item valuesArray = ItemFactory.getInstance().createArrayItem(values);
                 valueList.add(valuesArray);
             } else if (values.size() == 1) {
                 Item value = values.get(0);

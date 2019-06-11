@@ -23,6 +23,7 @@ package sparksoniq.jsoniq.runtime.iterator.functions.object;
 import sparksoniq.exceptions.InvalidSelectorException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -100,7 +101,7 @@ public class ObjectProjectFunctionIterator extends ObjectFunctionIterator {
                 finalValueList.add(value);
             }
         }
-        return new ObjectItem(finalKeylist, finalValueList, ItemMetadata.fromIteratorMetadata(getMetadata()));
+        return ItemFactory.getInstance().createObjectItem(finalKeylist, finalValueList, ItemMetadata.fromIteratorMetadata(getMetadata()));
 
     }
 }
