@@ -40,7 +40,6 @@ import java.util.Map;
 public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
     private List<VariableReferenceIterator> _expressions;
     private List<String> _inputColumnNames;
-    private Map _allColumnTypes;
 
     private List<List<Item>> _deserializedParams;
     private DynamicContext _context;
@@ -48,11 +47,9 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
 
     public GroupClauseCreateColumnsUDF(
             List<VariableReferenceIterator> expressions,
-            List<String> inputColumnNames,
-            Map allColumnTypes) {
+            List<String> inputColumnNames) {
         _expressions = expressions;
         _inputColumnNames = inputColumnNames;
-        _allColumnTypes = allColumnTypes;
 
         _deserializedParams = new ArrayList<>();
         _context = new DynamicContext();

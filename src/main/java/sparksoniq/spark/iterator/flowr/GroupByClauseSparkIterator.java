@@ -280,48 +280,6 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
         columnNames = Arrays.asList(columnNamesArray);
 
         df.createOrReplaceTempView("input");
-//        df.sparkSession().table("input").cache();
-//        df.sparkSession().udf().register("determineGroupingDataType",
-//                new GroupClauseDetermineTypeUDF(variableAccessExpressions, columnNames),
-//                DataTypes.createArrayType(DataTypes.StringType));
-//
-//        String udfSQL = DataFrameUtils.getSQL(inputSchema, -1, false);
-//
-//        Dataset<Row> columnTypesDf = df.sparkSession().sql(
-//                String.format("select distinct(determineGroupingDataType(array(%s))) as `distinct-types` from input",
-//                        udfSQL)
-//        );
-//        Object columnTypesObject = columnTypesDf.collect();
-//        Row[] columnTypesOfRows = ((Row[]) columnTypesObject);
-
-        // Every column represents a group by expression
-        // Check that every column contains a matching atomic type in all rows (nulls and empty-sequences are allowed)
-//        Map<Integer, String> typesForAllColumns = new LinkedHashMap<>();
-//        for (Row columnTypesOfRow : columnTypesOfRows) {
-//            List columnsTypesOfRowAsList = columnTypesOfRow.getList(0);
-//            for (int columnIndex = 0; columnIndex < columnsTypesOfRowAsList.size(); columnIndex++) {
-//                String columnType = (String) columnsTypesOfRowAsList.get(columnIndex);
-//
-//                if (!columnType.equals("empty-sequence") && !columnType.equals("null")) {
-//                    String currentColumnType = typesForAllColumns.get(columnIndex);
-//                    if (currentColumnType == null) {
-//                        typesForAllColumns.put(columnIndex, columnType);
-//                    } else if ((currentColumnType.equals("integer") || currentColumnType.equals("double") || currentColumnType.equals("decimal"))
-//                            && (columnType.equals("integer") || columnType.equals("double") || columnType.equals("decimal"))) {
-//                        // the numeric type calculation is identical to Item::getNumericResultType()
-//                        if (currentColumnType.equals("double") || columnType.equals("double")) {
-//                            typesForAllColumns.put(columnIndex, "double");
-//                        } else if (currentColumnType.equals("decimal") || columnType.equals("decimal")) {
-//                            typesForAllColumns.put(columnIndex, "decimal");
-//                        } else {
-//                            // do nothing, type is already set to integer
-//                        }
-//                    } else if (!currentColumnType.equals(columnType)) {
-//                        throw new UnexpectedTypeException("Group by variable must contain values of a single type.", getMetadata());
-//                    }
-//                }
-//            }
-//        }
 
         // Determine the return type for grouping UDF
         List<StructField> typedFields = new ArrayList<>();
@@ -339,7 +297,7 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
         }
 
         df.sparkSession().udf().register("createGroupingColumns",
-                new GroupClauseCreateColumnsUDF(variableAccessExpressions, columnNames, null),
+                new GroupClauseCreateColumnsUDF(variableAccessExpressions, columnNames),
                 DataTypes.createStructType(typedFields));
 
         String serializerUDFName = "serialize";
