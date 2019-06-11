@@ -78,9 +78,14 @@ public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
             String var = _columnNames[columnIndex];
             if(_dependencies.contains(var))
             {
-                byte[] bytes = (byte[]) serializedParams[columnIndex];
-                List<Item> deserializedParam = (List<Item>) DataFrameUtils.deserializeByteArray(bytes, _kryo, _input);
-                _context.addVariableValue(var, deserializedParam);
+                List<Item> sequence = new ArrayList<Item>();
+                List<byte[]> bytes = (List<byte[]>) serializedParams[columnIndex];
+                for (byte[] b : bytes)
+                {
+                    Item i = (Item) DataFrameUtils.deserializeByteArray(b, _kryo, _input);
+                    sequence.add(i);
+                }
+                _context.addVariableValue(var, sequence);
             }
         }
 

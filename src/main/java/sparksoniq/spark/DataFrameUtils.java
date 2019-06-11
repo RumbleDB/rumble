@@ -82,10 +82,15 @@ public class DataFrameUtils {
         return output.toBytes();
     }
 
-    public static byte[] serializeItemList(List<Item> toSerialize, Kryo kryo, Output output) {
-        output.clear();
-        kryo.writeClassAndObject(output, toSerialize);
-        return output.toBytes();
+    public static List<byte[]> serializeItemList(List<Item> toSerialize, Kryo kryo, Output output) {
+        List<byte[]> result = new ArrayList<byte[]>();
+        for(Item i : toSerialize)
+        {
+            output.clear();
+            kryo.writeClassAndObject(output, toSerialize);
+            result.add(output.toBytes());
+        }
+        return result;
     }
 
     /**
@@ -163,26 +168,31 @@ public class DataFrameUtils {
         return queryColumnString.toString();
     }
 
-    public static Object deserializeByteArray(byte[] toDeserialize, Kryo kryo, Input input) {
+    public static Item deserializeByteArray(byte[] toDeserialize, Kryo kryo, Input input) {
         input.setBuffer(toDeserialize);
-        return kryo.readClassAndObject(input);
+        return (Item) kryo.readClassAndObject(input);
     }
 
     public static void deserializeWrappedParameters(WrappedArray wrappedParameters, List<List<Item>> deserializedParams, Kryo kryo, Input input) {
         Object[] serializedParams = (Object[]) wrappedParameters.array();
         for (Object serializedParam: serializedParams) {
-            List<Item> deserializedParam = (List<Item>) deserializeByteArray((byte[]) serializedParam, kryo, input);
+            List<byte[]> bytes = (List<byte[]>) serializedParam;
+            List<Item> deserializedParam = new ArrayList<Item>();
+            for(byte[] b : bytes)
+            {
+                deserializedParam.add(deserializeByteArray(b, kryo, input));
+            }
             deserializedParams.add(deserializedParam);
         }
     }
 
     public static Row reserializeRowWithNewData(Row prevRow, List<Item> newColumn, int duplicateColumnIndex, Kryo kryo, Output output) {
-        List<byte[]> newRowColumns = new ArrayList<>();
+        List<List<byte[]>> newRowColumns = new ArrayList<>();
         for (int columnIndex = 0; columnIndex < prevRow.length(); columnIndex++) {
             if (duplicateColumnIndex == columnIndex) {
                 newRowColumns.add(serializeItemList(newColumn, kryo, output));
             } else {
-                newRowColumns.add((byte[]) prevRow.get(columnIndex));
+                newRowColumns.add((List<byte[]>) prevRow.get(columnIndex));
             }
         }
         if (duplicateColumnIndex == -1) {
@@ -192,17 +202,27 @@ public class DataFrameUtils {
     }
 
     public static List<Item> deserializeRowField(Row row, int columnIndex, Kryo kryo, Input input) {
-        byte[] bytes = (byte[]) row.get(columnIndex);
-        input.setBuffer(bytes);
-        return (List<Item>) kryo.readClassAndObject(input);
+        List<byte[]> bytes = (List<byte[]>) row.get(columnIndex);
+        List<Item> result = new ArrayList<Item>();
+        for(byte[] b : bytes)
+        {
+            input.setBuffer(b);
+            result.add((Item) kryo.readClassAndObject(input));
+        }
+        return result;
     }
 
-    public static List<Object> deserializeEntireRow(Row row, Kryo kryo, Input input) {
-        ArrayList<Object> deserializedColumnObjects = new ArrayList<>();
+    public static List<List<Item>> deserializeEntireRow(Row row, Kryo kryo, Input input) {
+        List<List<Item>> deserializedColumnObjects = new ArrayList<List<Item>>();
         for (int columnIndex = 0; columnIndex < row.length(); columnIndex++) {
-            input.setBuffer((byte[]) row.get(columnIndex));
-            Object deserializedColumnObject = kryo.readClassAndObject(input);
-            deserializedColumnObjects.add(deserializedColumnObject);
+            List<byte[]> bytes = (List<byte[]>) row.get(columnIndex);
+            List<Item> result = new ArrayList<Item>();
+            for(byte[] b : bytes)
+            {
+                input.setBuffer(b);
+                result.add((Item) kryo.readClassAndObject(input));
+            }
+            deserializedColumnObjects.add(result);
         }
 
         return deserializedColumnObjects;

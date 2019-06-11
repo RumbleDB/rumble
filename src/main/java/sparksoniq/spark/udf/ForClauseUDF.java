@@ -38,14 +38,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ForClauseUDF implements UDF1<WrappedArray, List> {
+public class ForClauseUDF implements UDF1<WrappedArray, List<List<byte[]>>> {
     private RuntimeIterator _expression;
     private StructType _inputSchema;
 
     private List<List<Item>> _deserializedParams;
     private DynamicContext _context;
     private List<Item> _nextResult;
-    private List<byte[]> _results;
+    private List<List<byte[]>> _results;
     
     private transient Kryo _kryo;
     private transient Output _output;
@@ -70,7 +70,7 @@ public class ForClauseUDF implements UDF1<WrappedArray, List> {
 
 
     @Override
-    public List call(WrappedArray wrappedParameters) {
+    public List<List<byte[]>> call(WrappedArray wrappedParameters) {
         _deserializedParams.clear();
         _context.removeAllVariables();
         _results.clear();

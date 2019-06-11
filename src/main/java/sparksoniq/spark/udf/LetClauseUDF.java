@@ -39,7 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class LetClauseUDF implements UDF1<WrappedArray, byte[]> {
+public class LetClauseUDF implements UDF1<WrappedArray, List<byte[]>> {
     private RuntimeIterator _expression;
     private StructType _inputSchema;
     Set<String> _dependencies;
@@ -72,7 +72,7 @@ public class LetClauseUDF implements UDF1<WrappedArray, byte[]> {
 
 
     @Override
-    public byte[] call(WrappedArray wrappedParameters) {
+    public List<byte[]> call(WrappedArray wrappedParameters) {
         _context.removeAllVariables();
         _nextResult.clear();
         
@@ -83,9 +83,14 @@ public class LetClauseUDF implements UDF1<WrappedArray, byte[]> {
             String var = _columnNames[columnIndex];
             if(_dependencies.contains(var))
             {
-                byte[] bytes = (byte[]) serializedParams[columnIndex];
-                List<Item> deserializedParam = (List<Item>) DataFrameUtils.deserializeByteArray(bytes, _kryo, _input);
-                _context.addVariableValue(var, deserializedParam);
+                List<Item> sequence = new ArrayList<Item>();
+                List<byte[]> bytes = (List<byte[]>) serializedParams[columnIndex];
+                for (byte[] b : bytes)
+                {
+                    Item i = (Item) DataFrameUtils.deserializeByteArray(b, _kryo, _input);
+                    sequence.add(i);
+                }
+                _context.addVariableValue(var, sequence);
             }
         }
 

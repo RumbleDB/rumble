@@ -34,7 +34,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CountClauseSerializeUDF implements UDF1<Long, byte[]> {
+public class CountClauseSerializeUDF implements UDF1<Long, List<byte[]>> {
 
     private List<Item> _nextResult;
     
@@ -50,7 +50,7 @@ public class CountClauseSerializeUDF implements UDF1<Long, byte[]> {
     }
 
     @Override
-    public byte[] call(Long countIndex) {
+    public List<byte[]> call(Long countIndex) {
         _nextResult.clear();
         _nextResult.add(new IntegerItem(countIndex.intValue()));
 

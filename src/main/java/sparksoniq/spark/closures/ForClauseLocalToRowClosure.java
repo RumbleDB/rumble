@@ -58,7 +58,7 @@ public class ForClauseLocalToRowClosure implements Function<Item, Row> {
         itemList.add(item);
         rowColumns.add(itemList);
 
-        List<byte[]> serializedRowColumns = new ArrayList<>();
+        List<List<byte[]>> serializedRowColumns = new ArrayList<>();
         for (List<Item> column : rowColumns) {
             serializedRowColumns.add(DataFrameUtils.serializeItemList(column, _kryo, _output));
         }
