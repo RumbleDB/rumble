@@ -46,6 +46,7 @@ import sparksoniq.spark.udf.ForClauseUDF;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -271,5 +272,40 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
         }
         _child.close();
         return df;
+    }
+
+    public Set<String> getVariableDependencies()
+    {
+        Set<String> result = new HashSet<String>();
+        result.addAll(_expression.getVariableDependencies());
+        if(_child != null)
+        {
+            result.removeAll(_child.getVariablesBoundInCurrentFLWORExpression());
+            result.addAll(_child.getVariableDependencies());
+        }
+        return result;
+    }
+
+    public Set<String> getVariablesBoundInCurrentFLWORExpression()
+    {
+        Set<String> result = new HashSet<String>();
+        if(_child != null)
+        {
+            result.addAll(_child.getVariablesBoundInCurrentFLWORExpression());
+        }
+        result.add(_variableName);
+        return result;
+    }
+    
+    public void print(StringBuffer buffer, int indent)
+    {
+        super.print(buffer, indent);
+        for (int i = 0; i < indent + 1; ++i)
+        {
+            buffer.append("  ");
+        }
+        buffer.append("Variable " + _variableName);
+        buffer.append("\n");
+        _expression.print(buffer, indent+1);
     }
 }

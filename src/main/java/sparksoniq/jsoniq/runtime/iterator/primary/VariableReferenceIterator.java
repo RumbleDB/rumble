@@ -28,7 +28,9 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.SequenceType;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class VariableReferenceIterator extends LocalRuntimeIterator {
 
@@ -80,5 +82,12 @@ public class VariableReferenceIterator extends LocalRuntimeIterator {
 
     public String getVariableName() {
         return _variableName;
+    }
+
+    public Set<String> getVariableDependencies()
+    {
+        Set<String> result = new HashSet<String>();
+        result.add(_variableName);
+        return result;
     }
 }

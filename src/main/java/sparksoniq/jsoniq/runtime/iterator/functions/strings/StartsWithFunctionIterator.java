@@ -21,9 +21,7 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.strings;
 
 import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.BooleanItem;
-import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;

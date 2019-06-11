@@ -42,7 +42,9 @@ import sparksoniq.spark.udf.CountClauseSerializeUDF;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
     private String _variableName;
@@ -142,5 +144,32 @@ public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
                         selectSQL, _variableName, _variableName)
         );
         return dfWithIndex;
+    }
+
+    public Set<String> getVariableDependencies()
+    {
+        Set<String> result = new HashSet<String>();
+        result.addAll(_child.getVariableDependencies());
+        return result;
+    }
+
+    public Set<String> getVariablesBoundInCurrentFLWORExpression()
+    {
+        Set<String> result = new HashSet<String>();
+        result.addAll(_child.getVariablesBoundInCurrentFLWORExpression());
+        result.add(_variableName);
+        return result;
+    }
+    
+    public void print(StringBuffer buffer, int indent)
+    {
+        super.print(buffer, indent);
+        for (int i = 0; i < indent + 1; ++i)
+        {
+            buffer.append("  ");
+        }
+        buffer.append("Variable " + _variableName);
+        buffer.append("\n");
+
     }
 }

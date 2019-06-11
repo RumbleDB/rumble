@@ -61,6 +61,4 @@ public class VariableReference extends PrimaryExpression implements Serializable
         result += (prefix ? ")" : "") + ")";
         return result;
     }
-
-
 }
