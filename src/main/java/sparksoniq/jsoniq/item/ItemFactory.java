@@ -9,11 +9,17 @@ import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 public class ItemFactory {
     
     private static ItemFactory _instance;
+    private Item _nullItem;
+    private Item _trueBooleanItem;
+    private Item _falseBooleanItem;
     
     public static ItemFactory getInstance() {
         if(_instance == null)
         {
             _instance = new ItemFactory();
+            _instance._nullItem = new NullItem();
+            _instance._trueBooleanItem = new BooleanItem(true);
+            _instance._falseBooleanItem = new BooleanItem(false);
         }
         return _instance;
     }
@@ -23,11 +29,11 @@ public class ItemFactory {
     }
 
     public Item createBooleanItem(boolean b) {
-        return new BooleanItem(b);
+        return b?_trueBooleanItem:_falseBooleanItem;
     }
 
     public Item createNullItem() {
-        return new NullItem();
+        return _nullItem;
     }
 
     public Item createIntegerItem(int i) {
