@@ -119,7 +119,7 @@ public class ArrayItem extends JsonItem {
         }
         for(int i= 0; i< getSize(); ++i)
         {
-            if(getItemAt(i) != o.getItemAt(i))
+            if(!getItemAt(i).equals(o.getItemAt(i)))
             {
                 return false;
             }
