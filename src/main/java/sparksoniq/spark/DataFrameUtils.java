@@ -31,6 +31,7 @@ import org.apache.spark.sql.expressions.Window;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import scala.collection.mutable.WrappedArray;
+import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.BooleanItem;
 import sparksoniq.jsoniq.item.DecimalItem;
@@ -190,17 +191,10 @@ public class DataFrameUtils {
         return RowFactory.create(newRowColumns.toArray());
     }
 
-    public static Object deserializeRowColumn(Row row, int columnIndex) {
-        Kryo kryo = KM.getOrCreateKryo();
-
-        Input input = new Input(new ByteArrayInputStream((byte[]) row.get(columnIndex)));
-
-        Object obj = kryo.readClassAndObject(input);
-        input.close();
-
-        KM.releaseKryoInstance(kryo);
-
-        return obj;
+    public static List<Item> deserializeRowField(Row row, int columnIndex, Kryo kryo, Input input) {
+        byte[] bytes = (byte[]) row.get(columnIndex);
+        input.setBuffer(bytes);
+        return (List<Item>) kryo.readClassAndObject(input);
     }
 
     public static List<Object> deserializeEntireRow(Row row, Kryo kryo, Input input) {

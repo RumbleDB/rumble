@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
     RuntimeIterator _expression;
@@ -56,19 +57,24 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
     @Override
     public Iterator<Item> call(Row row) {
         String[] columnNames = _oldSchema.fieldNames();
+        
+        Set<String> dependencies = _expression.getVariableDependencies();
 
         // Deserialize row
-        List<Object> deserializedRow = DataFrameUtils.deserializeEntireRow(row, _kryo, _input);
-        List<List<Item>> rowColumns = new ArrayList<>();
-        for (Object columnObject:deserializedRow) {
-            List<Item> column = (List<Item>) columnObject;
-            rowColumns.add(column);
-        }
+//        List<Object> deserializedRow = DataFrameUtils.deserializeEntireRow(row, _kryo, _input);
+//        List<List<Item>> rowColumns = new ArrayList<>();
+//        for (Object columnObject:deserializedRow) {
+//            List<Item> column = (List<Item>) columnObject;
+//            rowColumns.add(column);
+//        }
 
         // Create dynamic context with deserialized data
         DynamicContext context = new DynamicContext();
         for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
-            context.addVariableValue(columnNames[columnIndex], rowColumns.get(columnIndex));
+            String field = columnNames[columnIndex];
+            System.out.println("Field: " + field);
+            List<Item> i = DataFrameUtils.deserializeRowField(row, columnIndex, _kryo, _input); //rowColumns.get(columnIndex);
+            context.addVariableValue(field, i);
         }
 
         // Apply expression to the context
