@@ -75,6 +75,7 @@ import sparksoniq.jsoniq.runtime.iterator.functions.sequences.value.DeepEqualFun
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.value.DistinctValuesFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.value.IndexOfFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.ConcatFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.strings.ContainsFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.EndsWithFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.StartsWithFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.StringJoinFunction;
@@ -98,6 +99,7 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.BOOLEAN;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.CEILING;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.CONCAT;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.CONTAINS;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.COS;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.COUNT;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DEEPEQUAL;
@@ -223,6 +225,7 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(TOKENIZE, 1), TokenizeFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(TOKENIZE, 2), TokenizeFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(STARTSWITH, 2), StartsWithFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(CONTAINS, 2), ContainsFunctionIterator.class);
 
         buildInFunctions.put(new SparksoniqFunctionSignature(KEYS, 1), ObjectKeysFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(MEMBERS, 1), ArrayMembersFunctionIterator.class);
@@ -458,6 +461,10 @@ public class Functions {
          * function that checks whether a string starts with a substring
          */
         public static final String STARTSWITH = "starts-with";
+        /**
+         * function that checks whether a string contains a substring
+         */
+        public static final String CONTAINS = "contains";
 
 
         /**
