@@ -37,6 +37,7 @@ import sparksoniq.spark.DataFrameUtils;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class LetClauseUDF implements UDF1<WrappedArray, byte[]> {
     private RuntimeIterator _expression;
@@ -73,13 +74,20 @@ public class LetClauseUDF implements UDF1<WrappedArray, byte[]> {
         _context.removeAllVariables();
         _nextResult.clear();
 
-        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
-
         String[] columnNames = _inputSchema.fieldNames();
+        Set<String> dependencies = _expression.getVariableDependencies();
+        
+        Object[] serializedParams = (Object[]) wrappedParameters.array();
 
         // prepare dynamic context
         for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
-            _context.addVariableValue(columnNames[columnIndex], _deserializedParams.get(columnIndex));
+            String var = columnNames[columnIndex];
+            if(dependencies.contains(var))
+            {
+                byte[] bytes = (byte[]) serializedParams[columnIndex];
+                List<Item> deserializedParam = (List<Item>) DataFrameUtils.deserializeByteArray(bytes, _kryo, _input);
+                _context.addVariableValue(var, deserializedParam);
+            }
         }
 
         // apply expression in the dynamic context

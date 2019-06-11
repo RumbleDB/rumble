@@ -37,6 +37,7 @@ import sparksoniq.spark.DataFrameUtils;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class LetClauseMapClosure implements MapFunction<Row, Row> {
     private final RuntimeIterator _expression;
@@ -76,17 +77,16 @@ public class LetClauseMapClosure implements MapFunction<Row, Row> {
         _newColumn.clear();
 
         String[] columnNames = _inputSchema.fieldNames();
-
-        // Deserialize row
-        List<Object> deserializedRow = DataFrameUtils.deserializeEntireRow(row, _kryo, _input);
-        for (Object columnObject : deserializedRow) {
-            List<Item> column = (List<Item>) columnObject;
-            _rowColumns.add(column);
-        }
+        Set<String> dependencies = _expression.getVariableDependencies();
 
         // Create dynamic context with deserialized data
         for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
-            _context.addVariableValue(columnNames[columnIndex], _rowColumns.get(columnIndex));
+            String field = columnNames[columnIndex];
+            if(dependencies.contains(field))
+            {
+                List<Item> i = DataFrameUtils.deserializeRowField(row, columnIndex, _kryo, _input); //rowColumns.get(columnIndex);
+                _context.addVariableValue(field, i);
+            }
         }
 
         // Apply expression to the context

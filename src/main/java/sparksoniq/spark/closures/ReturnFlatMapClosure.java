@@ -57,24 +57,17 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
     @Override
     public Iterator<Item> call(Row row) {
         String[] columnNames = _oldSchema.fieldNames();
-        
         Set<String> dependencies = _expression.getVariableDependencies();
 
-        // Deserialize row
-//        List<Object> deserializedRow = DataFrameUtils.deserializeEntireRow(row, _kryo, _input);
-//        List<List<Item>> rowColumns = new ArrayList<>();
-//        for (Object columnObject:deserializedRow) {
-//            List<Item> column = (List<Item>) columnObject;
-//            rowColumns.add(column);
-//        }
-
-        // Create dynamic context with deserialized data
+        // Create dynamic context with deserialized data but only with dependencies
         DynamicContext context = new DynamicContext();
         for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
             String field = columnNames[columnIndex];
-            System.out.println("Field: " + field);
-            List<Item> i = DataFrameUtils.deserializeRowField(row, columnIndex, _kryo, _input); //rowColumns.get(columnIndex);
-            context.addVariableValue(field, i);
+            if(dependencies.contains(field))
+            {
+                List<Item> i = DataFrameUtils.deserializeRowField(row, columnIndex, _kryo, _input); //rowColumns.get(columnIndex);
+                context.addVariableValue(field, i);
+            }
         }
 
         // Apply expression to the context
