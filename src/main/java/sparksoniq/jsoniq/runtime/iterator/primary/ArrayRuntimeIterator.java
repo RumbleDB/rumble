@@ -22,6 +22,7 @@ package sparksoniq.jsoniq.runtime.iterator.primary;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -31,7 +32,7 @@ import java.util.List;
 
 public class ArrayRuntimeIterator extends LocalRuntimeIterator {
 
-    private ArrayItem _item = null;
+    private Item _item = null;
 
     public ArrayRuntimeIterator(RuntimeIterator arrayItems, IteratorMetadata iteratorMetadata) {
         super(new ArrayList<>(), iteratorMetadata);
@@ -40,10 +41,10 @@ public class ArrayRuntimeIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public ArrayItem next() {
+    public Item next() {
         if (this._hasNext) {
             List<Item> result = this.runChildrenIterators(this._currentDynamicContext);
-            this._item = new ArrayItem(result);
+            this._item = ItemFactory.getInstance().createArrayItem(result);
             this._hasNext = false;
             return _item;
         } else throw new IteratorFlowException("Invalid next() call on array iterator", getMetadata());

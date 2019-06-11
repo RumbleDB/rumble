@@ -23,6 +23,7 @@ package sparksoniq.spark.closures;
 import org.apache.spark.api.java.function.Function;
 import scala.Tuple2;
 import sparksoniq.jsoniq.item.IntegerItem;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
@@ -40,7 +41,7 @@ public class CountClauseClosure implements Function<Tuple2<FlworTuple, Long>, Fl
         FlworTuple result = inputTuple._1;
         result.putValue(
                 variableName,
-                new IntegerItem(inputTuple._2.intValue()),
+                ItemFactory.getInstance().createIntegerItem(inputTuple._2.intValue()),
                 true
         );
         return result;

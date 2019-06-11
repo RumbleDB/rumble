@@ -20,8 +20,8 @@
 package sparksoniq.jsoniq.runtime.iterator.primary;
 
 import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.jsoniq.item.AtomicItem;
-import sparksoniq.jsoniq.item.NullItem;
+import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
@@ -32,10 +32,10 @@ public class NullRuntimeIterator extends AtomicRuntimeIterator {
     }
 
     @Override
-    public AtomicItem next() {
+    public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            return new NullItem();
+            return ItemFactory.getInstance().createNullItem();
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "\"null\"", getMetadata());
     }

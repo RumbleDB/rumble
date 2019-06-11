@@ -27,6 +27,7 @@ import sparksoniq.jsoniq.item.DecimalItem;
 import sparksoniq.jsoniq.item.DoubleItem;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.NullItem;
 import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.item.StringItem;
@@ -44,15 +45,15 @@ public class JiqsItemParser implements Serializable {
     public static Item getItemFromObject(Object object, IteratorMetadata metadata) {
         if (object != null) {
             if (object instanceof String)
-                return new StringItem(object.toString());
+                return ItemFactory.getInstance().createStringItem(object.toString());
             if (object instanceof Integer)
-                return new IntegerItem((int) object);
+                return ItemFactory.getInstance().createIntegerItem((int) object);
             if (object instanceof Double)
-                return new DoubleItem((double) object);
+                return ItemFactory.getInstance().createDoubleItem((double) object);
             if (object instanceof BigDecimal)
-                return new DecimalItem(new BigDecimal(object.toString()));
+                return ItemFactory.getInstance().createDecimalItem(new BigDecimal(object.toString()));
             if (object instanceof Boolean)
-                return new BooleanItem((boolean) object);
+                return ItemFactory.getInstance().createBooleanItem((boolean) object);
             if (object instanceof JSONArray) {
                 JSONArray curentArray = (JSONArray) object;
                 int numberOfValues = curentArray.length();
@@ -60,7 +61,7 @@ public class JiqsItemParser implements Serializable {
                 int index = 0;
                 while (index < numberOfValues)
                     values.add(getItemFromObject(curentArray.get(index++), metadata));
-                return new ArrayItem(values);
+                return ItemFactory.getInstance().createArrayItem(values);
             }
             if (object instanceof JSONObject) {
                 JSONObject currentObject = (JSONObject) object;
@@ -71,11 +72,11 @@ public class JiqsItemParser implements Serializable {
                 while (keyIterator.hasNext())
                     keys.add(keyIterator.next());
                 keys.forEach(_key -> values.add(getItemFromObject(currentObject.get(_key), metadata)));
-                return new ObjectItem(keys, values, ItemMetadata.fromIteratorMetadata(metadata));
+                return ItemFactory.getInstance().createObjectItem(keys, values, ItemMetadata.fromIteratorMetadata(metadata));
             }
 
         }
-        return new NullItem();
+        return ItemFactory.getInstance().createNullItem();
     }
 
 }

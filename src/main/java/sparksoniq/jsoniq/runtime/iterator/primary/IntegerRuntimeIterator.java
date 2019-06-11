@@ -21,6 +21,8 @@ package sparksoniq.jsoniq.runtime.iterator.primary;
 
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.IntegerItem;
+import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
@@ -35,10 +37,10 @@ public class IntegerRuntimeIterator extends AtomicRuntimeIterator {
     }
 
     @Override
-    public IntegerItem next() {
+    public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            return new IntegerItem(_item);
+            return ItemFactory.getInstance().createIntegerItem(_item);
         }
 
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item, getMetadata());

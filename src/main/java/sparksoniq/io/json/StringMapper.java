@@ -21,6 +21,7 @@ package sparksoniq.io.json;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.StringItem;
 
 import java.util.Iterator;
@@ -40,7 +41,7 @@ public class StringMapper implements FlatMapFunction<Iterator<String>, Item> {
 
             @Override
             public Item next() {
-                Item stringItem = new StringItem(stringIterator.next());
+                Item stringItem = ItemFactory.getInstance().createStringItem(stringIterator.next());
                 return stringItem;
             }
 

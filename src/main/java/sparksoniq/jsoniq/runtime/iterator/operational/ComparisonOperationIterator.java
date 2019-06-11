@@ -27,6 +27,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalEx
 import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.jsoniq.item.BooleanItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -54,7 +55,7 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
     }
 
     @Override
-    public AtomicItem next() {
+    public Item next() {
         if (this.hasNext()) {
             this._hasNext = false;
 
@@ -120,18 +121,18 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
      * @param right item list of right iterator
      * @return true if a single match is found, false if no matches. Given an empty sequence, false is returned.
      */
-    public BooleanItem compareAllPairs(ArrayList<Item> left, ArrayList<Item> right) {
+    public Item compareAllPairs(ArrayList<Item> left, ArrayList<Item> right) {
         for (Item l : left) {
             for (Item r : right) {
-                BooleanItem result = comparePair(l, r);
+                Item result = comparePair(l, r);
                 if (result.getBooleanValue() == true)
                     return result;
             }
         }
-        return new BooleanItem(false);
+        return ItemFactory.getInstance().createBooleanItem(false);
     }
 
-    public BooleanItem comparePair(Item left, Item right) {
+    public Item comparePair(Item left, Item right) {
 
         if (left.isArray() || right.isArray()) {
             throw new NonAtomicKeyException("Invalid args. Comparison can't be performed on array type", getMetadata().getExpressionMetadata());
@@ -160,27 +161,27 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
         }
     }
 
-    public BooleanItem compareItems(Item left, Item right) {
+    public Item compareItems(Item left, Item right) {
         int comparison = Item.compareItems(left, right);
         switch (this._operator) {
             case VC_EQ:
             case GC_EQ:
-                return new BooleanItem(comparison == 0);
+                return ItemFactory.getInstance().createBooleanItem(comparison == 0);
             case VC_NE:
             case GC_NE:
-                return new BooleanItem(comparison != 0);
+                return ItemFactory.getInstance().createBooleanItem(comparison != 0);
             case VC_LT:
             case GC_LT:
-                return new BooleanItem(comparison < 0);
+                return ItemFactory.getInstance().createBooleanItem(comparison < 0);
             case VC_LE:
             case GC_LE:
-                return new BooleanItem(comparison < 0 || comparison == 0);
+                return ItemFactory.getInstance().createBooleanItem(comparison < 0 || comparison == 0);
             case VC_GT:
             case GC_GT:
-                return new BooleanItem(comparison > 0);
+                return ItemFactory.getInstance().createBooleanItem(comparison > 0);
             case VC_GE:
             case GC_GE:
-                return new BooleanItem(comparison > 0 || comparison == 0);
+                return ItemFactory.getInstance().createBooleanItem(comparison > 0 || comparison == 0);
             default:
         }
         throw new IteratorFlowException("Unrecognized operator found", getMetadata());

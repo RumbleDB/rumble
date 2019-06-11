@@ -24,6 +24,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalEx
 import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.jsoniq.item.BooleanItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.types.SequenceType;
@@ -41,7 +42,7 @@ public class InstanceOfIterator extends UnaryOperationIterator {
     }
 
     @Override
-    public AtomicItem next() {
+    public Item next() {
         if (this._hasNext) {
             List<Item> items = new ArrayList<>();
             _child.open(_currentDynamicContext);
@@ -52,17 +53,17 @@ public class InstanceOfIterator extends UnaryOperationIterator {
             //Empty sequence, more items
             if (items.isEmpty() && (_sequenceType.getArity() == SequenceType.Arity.One ||
                     _sequenceType.getArity() == SequenceType.Arity.OneOrMore)) {
-                return new BooleanItem(false);
+                return ItemFactory.getInstance().createBooleanItem(false);
             }
             if (items.size() == 1 && _sequenceType.getArity() == SequenceType.Arity.ZeroOrMore) {
-                return new BooleanItem(false);
+                return ItemFactory.getInstance().createBooleanItem(false);
             }
             for (Item item : items) {
                 if (!item.isTypeOf(_sequenceType.getItemType())) {
-                    return new BooleanItem(false);
+                    return ItemFactory.getInstance().createBooleanItem(false);
                 }
             }
-            return new BooleanItem(true);
+            return ItemFactory.getInstance().createBooleanItem(true);
         } else
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
     }
