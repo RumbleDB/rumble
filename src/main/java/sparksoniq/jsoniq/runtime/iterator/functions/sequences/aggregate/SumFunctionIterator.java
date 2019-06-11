@@ -23,7 +23,6 @@ package sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate;
 import sparksoniq.exceptions.InvalidArgumentTypeException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
-import sparksoniq.jsoniq.item.DecimalItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;

@@ -22,7 +22,6 @@ package sparksoniq.spark.closures;
 
 import org.apache.spark.api.java.function.Function;
 import scala.Tuple2;
-import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.tuple.FlworTuple;
