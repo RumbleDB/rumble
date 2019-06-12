@@ -81,6 +81,13 @@ public class SparksoniqRuntimeConfiguration {
         else
             return false;
     }
+
+    public boolean isPrintIteratorTree() {
+        if (this._arguments.containsKey("print-iterator-tree"))
+            return _arguments.get("print-iterator-tree").equals("yes");
+        else
+            return false;
+    }
     
     public boolean isLocal() {
         String masterConfig = SparkSessionManager.getInstance().getJavaSparkContext().getConf().get("spark.master");

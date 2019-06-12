@@ -20,7 +20,7 @@
 
 package sparksoniq.jsoniq.runtime.iterator.primary;
 
-import sparksoniq.jsoniq.item.AtomicItem;
+import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -34,5 +34,5 @@ public abstract class AtomicRuntimeIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public abstract AtomicItem next();
+    public abstract Item next();
 }

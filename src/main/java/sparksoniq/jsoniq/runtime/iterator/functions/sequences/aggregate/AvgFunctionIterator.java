@@ -22,8 +22,8 @@ package sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate;
 
 import sparksoniq.exceptions.InvalidArgumentTypeException;
 import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.jsoniq.item.DecimalItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
@@ -68,7 +68,7 @@ public class AvgFunctionIterator extends AggregateFunctionIterator {
                 BigDecimal sum = new BigDecimal(0);
                 for (Item r : results)
                     sum = sum.add(Item.getNumericValue(r, BigDecimal.class));
-                return new DecimalItem(sum.divide(new BigDecimal(results.size())));
+                return ItemFactory.getInstance().createDecimalItem(sum.divide(new BigDecimal(results.size())));
 
             } catch (IteratorFlowException e) {
                 throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());

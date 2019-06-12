@@ -22,8 +22,8 @@ package sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate;
 
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
-import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
@@ -41,7 +41,7 @@ public class CountFunctionIterator extends AggregateFunctionIterator {
             if (!iterator.isRDD()) {
                 List<Item> results = getItemsFromIteratorWithCurrentContext(iterator);
                 this._hasNext = false;
-                return new IntegerItem(results.size());
+                return ItemFactory.getInstance().createIntegerItem(results.size());
             } else {
                 Long count = iterator.getRDD(_currentDynamicContext).count();
                 this._hasNext = false;
@@ -49,7 +49,7 @@ public class CountFunctionIterator extends AggregateFunctionIterator {
                     // TODO: handle too big x values
                     throw new SparksoniqRuntimeException("The count value is too big to convert to integer type.");
                 } else {
-                    return new IntegerItem(count.intValue());
+                    return ItemFactory.getInstance().createIntegerItem(count.intValue());
                 }
             }
         } else

@@ -33,7 +33,9 @@ import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class PredicateIterator extends HybridRuntimeIterator {
 
@@ -142,5 +144,14 @@ public class PredicateIterator extends HybridRuntimeIterator {
     @Override
     protected boolean initIsRDD() {
         return this._iterator.isRDD();
+    }
+
+    public Set<String> getVariableDependencies()
+    {
+        Set<String> result = new HashSet<String>();
+        result.addAll(_filter.getVariableDependencies());
+        result.remove("$");
+        result.addAll(_iterator.getVariableDependencies());
+        return result;
     }
 }

@@ -24,6 +24,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+
 import org.apache.spark.api.java.JavaRDD;
 import sparksoniq.exceptions.InvalidArgumentTypeException;
 import sparksoniq.exceptions.IteratorFlowException;
@@ -34,7 +35,9 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static sparksoniq.jsoniq.item.Item.isNumeric;
 
@@ -203,5 +206,35 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         if (result != null && !(type.isInstance(result)))
             throw new UnexpectedTypeException("Invalid item type returned by iterator", iterator.getMetadata());
         return (T) result;
+    }
+
+    public Set<String> getVariableDependencies()
+    {
+        Set<String> result = new HashSet<String>();
+        for(RuntimeIterator iterator : _children)
+        {
+            result.addAll(iterator.getVariableDependencies());
+        }
+        return result;
+    }
+    
+    public void print(StringBuffer buffer, int indent)
+    {
+        for (int i = 0; i < indent; ++i)
+        {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getName());
+        buffer.append(" | ");
+
+        buffer.append("Variable dependencies: ");
+        for(String v : getVariableDependencies())
+        {
+          buffer.append(v + " ");
+        }
+        buffer.append("\n");
+        for (RuntimeIterator iterator : this._children) {
+            iterator.print(buffer, indent + 1);
+        }
     }
 }

@@ -79,6 +79,13 @@ public class JsoniqQueryExecutor {
         generateStaticContext(visitor.getQueryExpression());
         // generate iterators
         RuntimeIterator result = generateRuntimeIterators(visitor.getQueryExpression());
+        if(_configuration.isPrintIteratorTree())
+        {
+            StringBuffer sb = new StringBuffer();
+            result.print(sb, 0);
+            System.out.println(sb);
+            return;
+        }
         if (result.isRDD() && outputPath != null) {
             JavaRDD<Item> rdd = result.getRDD(new DynamicContext());
             JavaRDD<String> output = rdd.map(o -> o.serialize());

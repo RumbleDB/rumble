@@ -32,7 +32,6 @@ import sparksoniq.exceptions.InvalidGroupVariableException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
-import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
@@ -47,17 +46,17 @@ import sparksoniq.spark.closures.GroupByLinearizeTupleClosure;
 import sparksoniq.spark.closures.GroupByToPairMapClosure;
 import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
 import sparksoniq.spark.udf.GroupClauseCreateColumnsUDF;
-import sparksoniq.spark.udf.GroupClauseDetermineTypeUDF;
 import sparksoniq.spark.udf.GroupClauseSerializeAggregateResultsUDF;
 import sparksoniq.spark.udf.LetClauseUDF;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
     private final List<GroupByClauseSparkIteratorExpression> _expressions;
@@ -331,5 +330,43 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
                         projectSQL, createColumnsSQL, appendedGroupingColumnsName
                 )
         );
+    }
+
+    public Set<String> getVariableDependencies()
+    {
+        Set<String> result = new HashSet<String>();
+        for(GroupByClauseSparkIteratorExpression iterator : _expressions)
+        {
+            result.addAll(iterator.getExpression().getVariableDependencies());
+        }
+        result.removeAll(_child.getVariablesBoundInCurrentFLWORExpression());
+        result.addAll(_child.getVariableDependencies());
+        return result;
+    }
+
+    public Set<String> getVariablesBoundInCurrentFLWORExpression()
+    {
+        Set<String> result = new HashSet<String>();
+        for(GroupByClauseSparkIteratorExpression iterator : _expressions)
+        {
+            result.add(iterator.getVariableReference().getVariableName());
+        }
+        result.addAll(_child.getVariablesBoundInCurrentFLWORExpression());
+        return result;
+    }
+    
+    public void print(StringBuffer buffer, int indent)
+    {
+        super.print(buffer, indent);
+        for(GroupByClauseSparkIteratorExpression iterator : _expressions)
+        {
+            for (int i = 0; i < indent + 1; ++i)
+            {
+                buffer.append("  ");
+            }
+            buffer.append("Variable " + iterator.getVariableReference().getVariableName());
+            buffer.append("\n");
+            iterator.getExpression().print(buffer, indent+1);
+        }
     }
 }

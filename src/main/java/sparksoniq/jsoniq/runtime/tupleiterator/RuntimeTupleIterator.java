@@ -24,6 +24,10 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+
+import java.util.HashSet;
+import java.util.Set;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -102,5 +106,59 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     public abstract boolean isDataFrame();
 
     public abstract Dataset<Row> getDataFrame(DynamicContext context);
+    /*
+    * Variable dependencies are variables that MUST be provided in the dynamic context
+    * for successful execution.
+    * 
+    * These variables are:
+    * 1. All variables that the expression of the clause depends on (recursive call of getVariableDependencies on the expression)
+    * 2. Except those variables bound in the current FLWOR (obtained from the auxiliary method getVariablesBoundInCurrentFLWORExpression), because those are provided in the Tuples
+    * 3.Plus (recursively calling getVariableDependencies) all the Variable Dependencies of the child clause if it exists.
+    * 
+    */
+    public Set<String> getVariableDependencies()
+    {
+        Set<String> result = new HashSet<String>();
+        result.addAll(_child.getVariableDependencies());
+        return result;
+    }
 
+    /*
+     * Returns the variables bound in previous clauses of the current FLWOR.
+     * These variables can be removed from the dependencies of expressions in subsequent clauses,
+     * because their values are provided in the tuples rather than the dynamic context object.
+     */
+    public Set<String> getVariablesBoundInCurrentFLWORExpression()
+    {
+        return new HashSet<String>();
+    }
+    
+    public void print(StringBuffer buffer, int indent)
+    {
+        for (int i = 0; i < indent; ++i)
+        {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getName());
+        buffer.append(" | ");
+
+        buffer.append("Variable dependencies: ");
+        for(String v : getVariableDependencies())
+        {
+          buffer.append(v + " ");
+        }
+        buffer.append(" | ");
+
+        buffer.append("Variables bound in current FLWOR: ");
+        for(String v : getVariablesBoundInCurrentFLWORExpression())
+        {
+          buffer.append(v + " ");
+        }
+        buffer.append("\n");
+
+        if(_child != null)
+        {
+          _child.print(buffer, indent + 1);
+        }
+    }
 }
