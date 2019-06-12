@@ -46,7 +46,7 @@ public class ForClauseLocalToRowClosure implements Function<Item, Row> {
         this._inputTuple = inputTuple;
         _kryo = new Kryo();
         DataFrameUtils.registerKryoClassesKryo(_kryo);
-        _output = new ByteBufferOutput(128, -1);
+        _output = new Output(128, -1);
     }
 
     @Override
@@ -72,6 +72,6 @@ public class ForClauseLocalToRowClosure implements Function<Item, Row> {
         
         _kryo = new Kryo();
         DataFrameUtils.registerKryoClassesKryo(_kryo);
-        _output = new ByteBufferOutput(128, -1);
+        _output = new Output(128, -1);
     }
 }

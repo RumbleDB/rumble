@@ -43,7 +43,7 @@ public class ForClauseSerializeClosure implements Function<Item, Row> {
     public ForClauseSerializeClosure() {
         _kryo = new Kryo();
         DataFrameUtils.registerKryoClassesKryo(_kryo);
-        _output = new ByteBufferOutput(128, -1);
+        _output = new Output(128, -1);
     }
 
     /**
@@ -64,6 +64,6 @@ public class ForClauseSerializeClosure implements Function<Item, Row> {
         
         _kryo = new Kryo();
         DataFrameUtils.registerKryoClassesKryo(_kryo);
-        _output = new ByteBufferOutput(128, -1);
+        _output = new Output(128, -1);
     }
 }
