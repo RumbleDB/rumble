@@ -23,11 +23,10 @@ package sparksoniq.jsoniq.runtime.iterator.functions.sequences.general;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.BooleanItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
-import sparksoniq.semantics.DynamicContext;
-
 import java.util.List;
 
 public class ExistsFunctionIterator extends LocalFunctionCallIterator {
@@ -50,10 +49,10 @@ public class ExistsFunctionIterator extends LocalFunctionCallIterator {
             _sequenceIterator.open(_currentDynamicContext);
             Item result;
             if (_sequenceIterator.hasNext()) {
-                result = new BooleanItem(true);
+                result = ItemFactory.getInstance().createBooleanItem(true);
 
             } else {
-                result = new BooleanItem(false);
+                result = ItemFactory.getInstance().createBooleanItem(false);
             }
             _sequenceIterator.close();
             return result;

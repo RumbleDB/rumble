@@ -23,7 +23,7 @@ package sparksoniq.jsoniq.runtime.iterator.functions.strings;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.item.StringItem;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -117,11 +117,11 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
             }
         }
         if (_currentPosition < _results.length) {
-            _nextResult = new StringItem(_results[_currentPosition]);
+            _nextResult = ItemFactory.getInstance().createStringItem(_results[_currentPosition]);
             _currentPosition++;
             _hasNext = true;
         } else if (_lastEmptyString) {
-            _nextResult = new StringItem(new String(""));
+            _nextResult = ItemFactory.getInstance().createStringItem(new String(""));
             _hasNext = true;
             _lastEmptyString = false;
         } else {

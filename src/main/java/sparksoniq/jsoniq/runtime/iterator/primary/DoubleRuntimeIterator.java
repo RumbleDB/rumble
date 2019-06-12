@@ -20,7 +20,8 @@
 package sparksoniq.jsoniq.runtime.iterator.primary;
 
 import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.jsoniq.item.DoubleItem;
+import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
@@ -35,10 +36,10 @@ public class DoubleRuntimeIterator extends AtomicRuntimeIterator {
     }
 
     @Override
-    public DoubleItem next() {
+    public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            return new DoubleItem(_item);
+            return ItemFactory.getInstance().createDoubleItem(_item);
         }
 
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item, getMetadata());
