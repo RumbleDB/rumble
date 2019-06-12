@@ -34,10 +34,13 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.closures.OrderByClauseSortClosure;
 import sparksoniq.spark.closures.OrderByMapToPairClosure;
+import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
 import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.TreeMap;
 
 public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
@@ -174,5 +177,33 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         keyTuplePair = keyTuplePair.sortByKey(new OrderByClauseSortClosure(this._expressions, _isStable));
         //map back to tuple RDD
         return keyTuplePair.map(tuple2 -> tuple2._2());
+    }
+
+    public Set<String> getVariableDependencies()
+    {
+        Set<String> result = new HashSet<String>();
+        for(OrderByClauseSparkIteratorExpression iterator : _expressions)
+        {
+            result.addAll(iterator.getExpression().getVariableDependencies());
+        }
+        result.removeAll(_child.getVariablesBoundInCurrentFLWORExpression());
+        result.addAll(_child.getVariableDependencies());
+        return result;
+    }
+
+    public Set<String> getVariablesBoundInCurrentFLWORExpression()
+    {
+        Set<String> result = new HashSet<String>();
+        result.addAll(_child.getVariablesBoundInCurrentFLWORExpression());
+        return result;
+    }
+    
+    public void print(StringBuffer buffer, int indent)
+    {
+        super.print(buffer, indent);
+        for(OrderByClauseSparkIteratorExpression iterator : _expressions)
+        {
+            iterator.getExpression().print(buffer, indent+1);
+        }
     }
 }

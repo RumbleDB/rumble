@@ -40,9 +40,11 @@ import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpr
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
     private final List<GroupByClauseSparkIteratorExpression> _variables;
@@ -206,5 +208,43 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
         //linearize iterable tuples into arrays
         this._rdd = groupedPair.map(new GroupByLinearizeTupleClosure(_variables));
         return _rdd;
+    }
+
+    public Set<String> getVariableDependencies()
+    {
+        Set<String> result = new HashSet<String>();
+        for(GroupByClauseSparkIteratorExpression iterator : _variables)
+        {
+            result.addAll(iterator.getExpression().getVariableDependencies());
+        }
+        result.removeAll(_child.getVariablesBoundInCurrentFLWORExpression());
+        result.addAll(_child.getVariableDependencies());
+        return result;
+    }
+
+    public Set<String> getVariablesBoundInCurrentFLWORExpression()
+    {
+        Set<String> result = new HashSet<String>();
+        for(GroupByClauseSparkIteratorExpression iterator : _variables)
+        {
+            result.add(iterator.getVariableReference().getVariableName());
+        }
+        result.addAll(_child.getVariablesBoundInCurrentFLWORExpression());
+        return result;
+    }
+    
+    public void print(StringBuffer buffer, int indent)
+    {
+        super.print(buffer, indent);
+        for(GroupByClauseSparkIteratorExpression iterator : _variables)
+        {
+            for (int i = 0; i < indent + 1; ++i)
+            {
+                buffer.append("  ");
+            }
+            buffer.append("Variable " + iterator.getVariableReference().getVariableName());
+            buffer.append("\n");
+            iterator.getExpression().print(buffer, indent+1);
+        }
     }
 }

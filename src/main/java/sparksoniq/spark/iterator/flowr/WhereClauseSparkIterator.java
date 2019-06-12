@@ -19,6 +19,9 @@
  */
 package sparksoniq.spark.iterator.flowr;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.apache.spark.api.java.JavaRDD;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
@@ -107,5 +110,27 @@ public class WhereClauseSparkIterator extends SparkRuntimeTupleIterator {
             throw new SparksoniqRuntimeException("Invalid where clause.");
         }
         return _rdd;
+    }
+
+    public Set<String> getVariableDependencies()
+    {
+        Set<String> result = new HashSet<String>();
+        result.addAll(_expression.getVariableDependencies());
+        result.removeAll(_child.getVariablesBoundInCurrentFLWORExpression());
+        result.addAll(_child.getVariableDependencies());
+        return result;
+    }
+
+    public Set<String> getVariablesBoundInCurrentFLWORExpression()
+    {
+        Set<String> result = new HashSet<String>();
+        result.addAll(_child.getVariablesBoundInCurrentFLWORExpression());
+        return result;
+    }
+    
+    public void print(StringBuffer buffer, int indent)
+    {
+        super.print(buffer,  indent);
+        _expression.print(buffer, indent + 1);
     }
 }

@@ -31,6 +31,8 @@ import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.closures.ReturnFlatMapClosure;
 
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
@@ -135,5 +137,24 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         setNextLocalResult();
     }
 
-
+    public Set<String> getVariableDependencies()
+    {
+        Set<String> result = new HashSet<String>();
+        result.addAll(_expression.getVariableDependencies());
+        result.removeAll(_child.getVariablesBoundInCurrentFLWORExpression());
+        result.addAll(_child.getVariableDependencies());
+        return result;
+    }
+    
+    public void print(StringBuffer buffer, int indent)
+    {
+        for (int i = 0; i < indent; ++i)
+        {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getName());
+        buffer.append("\n");
+        _child.print(buffer, indent + 1);
+        _expression.print(buffer, indent + 1);
+    }
 }
