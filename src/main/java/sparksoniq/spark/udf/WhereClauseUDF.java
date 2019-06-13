@@ -34,7 +34,6 @@ import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 

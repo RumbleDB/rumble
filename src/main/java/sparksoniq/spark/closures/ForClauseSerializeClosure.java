@@ -25,7 +25,6 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 
 import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.ByteBufferOutput;
 import com.esotericsoftware.kryo.io.Output;
 
 import sparksoniq.jsoniq.item.Item;
@@ -43,7 +42,7 @@ public class ForClauseSerializeClosure implements Function<Item, Row> {
     public ForClauseSerializeClosure() {
         _kryo = new Kryo();
         DataFrameUtils.registerKryoClassesKryo(_kryo);
-        _output = new ByteBufferOutput(128, -1);
+        _output = new Output(128, -1);
     }
 
     /**
@@ -64,6 +63,6 @@ public class ForClauseSerializeClosure implements Function<Item, Row> {
         
         _kryo = new Kryo();
         DataFrameUtils.registerKryoClassesKryo(_kryo);
-        _output = new ByteBufferOutput(128, -1);
+        _output = new Output(128, -1);
     }
 }

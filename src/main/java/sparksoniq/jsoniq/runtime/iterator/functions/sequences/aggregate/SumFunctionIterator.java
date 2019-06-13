@@ -23,8 +23,8 @@ package sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate;
 import sparksoniq.exceptions.InvalidArgumentTypeException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
-import sparksoniq.jsoniq.item.DecimalItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
@@ -89,7 +89,7 @@ public class SumFunctionIterator extends AggregateFunctionIterator {
                     BigDecimal current = Item.getNumericValue(r, BigDecimal.class);
                     sumResult = sumResult.add(current);
                 }
-                return new DecimalItem(sumResult);
+                return ItemFactory.getInstance().createDecimalItem(sumResult);
 
             } catch (IteratorFlowException e) {
                 throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());

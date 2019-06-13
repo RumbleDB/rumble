@@ -23,6 +23,7 @@ package sparksoniq.jsoniq.runtime.iterator.functions.strings;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
@@ -38,7 +39,7 @@ public class StringJoinFunction extends LocalFunctionCallIterator {
     @Override
     public Item next() {
         if (this._hasNext) {
-            StringItem joinString = new StringItem("");
+            Item joinString = ItemFactory.getInstance().createStringItem("");
             List<Item> strings = getItemsFromIteratorWithCurrentContext(this._children.get(0));
             if (this._children.size() > 1) {
                 RuntimeIterator joinStringIterator = this._children.get(1);
@@ -57,7 +58,7 @@ public class StringJoinFunction extends LocalFunctionCallIterator {
                 stringBuilder = stringBuilder.append(((StringItem) item).getStringValue());
             }
             this._hasNext = false;
-            return new StringItem(stringBuilder.toString());
+            return ItemFactory.getInstance().createStringItem(stringBuilder.toString());
         } else
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " string-join function", getMetadata());
     }

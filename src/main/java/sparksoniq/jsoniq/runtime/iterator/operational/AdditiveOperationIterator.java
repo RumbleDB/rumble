@@ -23,11 +23,11 @@ package sparksoniq.jsoniq.runtime.iterator.operational;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
-import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.jsoniq.item.DecimalItem;
 import sparksoniq.jsoniq.item.DoubleItem;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -48,7 +48,7 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
     }
 
     @Override
-    public AtomicItem next() {
+    public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
 
@@ -58,8 +58,8 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
                     int l = Item.<Integer>getNumericValue(_left, Integer.class);
                     int r = Item.<Integer>getNumericValue(_right, Integer.class);
                     return this._operator == OperationalExpressionBase.Operator.PLUS ?
-                            new IntegerItem(l + r) :
-                            new IntegerItem(l - r);
+                            ItemFactory.getInstance().createIntegerItem(l + r) :
+                            ItemFactory.getInstance().createIntegerItem(l - r);
 
                 } catch (IteratorFlowException e) {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
@@ -69,8 +69,8 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
                     double l = Item.<Double>getNumericValue(_left, Double.class);
                     double r = Item.<Double>getNumericValue(_right, Double.class);
                     return this._operator == OperationalExpressionBase.Operator.PLUS ?
-                            new DoubleItem(l + r) :
-                            new DoubleItem(l - r);
+                            ItemFactory.getInstance().createDoubleItem(l + r) :
+                            ItemFactory.getInstance().createDoubleItem(l - r);
 
                 } catch (IteratorFlowException e) {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
@@ -80,8 +80,8 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
                     BigDecimal l = Item.<BigDecimal>getNumericValue(_left, BigDecimal.class);
                     BigDecimal r = Item.<BigDecimal>getNumericValue(_right, BigDecimal.class);
                     return this._operator == OperationalExpressionBase.Operator.PLUS ?
-                            new DecimalItem(l.add(r)) :
-                            new DecimalItem(l.subtract(r));
+                            ItemFactory.getInstance().createDecimalItem(l.add(r)) :
+                            ItemFactory.getInstance().createDecimalItem(l.subtract(r));
 
                 } catch (IteratorFlowException e) {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());

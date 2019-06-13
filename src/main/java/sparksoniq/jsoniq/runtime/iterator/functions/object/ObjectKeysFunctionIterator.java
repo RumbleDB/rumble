@@ -22,7 +22,7 @@ package sparksoniq.jsoniq.runtime.iterator.functions.object;
 
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.item.StringItem;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -91,9 +91,9 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
             Item item = _iterator.next();
             // ignore non-object items
             if (item.isObject()) {
-                StringItem result;
+                Item result;
                 for (String key : item.getKeys()) {
-                    result = new StringItem(key);
+                    result = ItemFactory.getInstance().createStringItem(key);
                     // check if key was met earlier
                     if (!_prevResults.contains(result)) {
                         _prevResults.add(result);

@@ -22,9 +22,8 @@ package sparksoniq.jsoniq.runtime.iterator.functions.numerics;
 
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
-import sparksoniq.jsoniq.item.DoubleItem;
-import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -72,7 +71,7 @@ public class RoundHalfToEvenFunctionIterator extends LocalFunctionCallIterator {
             }
             // if second param is not given precision is set as 0 (rounds to a whole number)
             else {
-                precision = new IntegerItem(0);
+                precision = ItemFactory.getInstance().createIntegerItem(0);
             }
             if (Item.isNumeric(value) && Item.isNumeric(precision)) {
 
@@ -85,7 +84,7 @@ public class RoundHalfToEvenFunctionIterator extends LocalFunctionCallIterator {
                     Double result = bd.doubleValue();
 
 
-                    return new DoubleItem(result);
+                    return ItemFactory.getInstance().createDoubleItem(result);
 
                 } catch (IteratorFlowException e) {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());

@@ -22,9 +22,8 @@ package sparksoniq.jsoniq.runtime.iterator.primary;
 
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
-import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.item.NullItem;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
@@ -56,7 +55,7 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public ObjectItem next() {
+    public Item next() {
         if (this._hasNext) {
             List<Item> values = new ArrayList<>();
             List<String> keys = new ArrayList<>();
@@ -71,7 +70,7 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
                     iterator.close();
                 }
                 this._hasNext = false;
-                return new ObjectItem(keys, values, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                return ItemFactory.getInstance().createObjectItem(keys, values, ItemMetadata.fromIteratorMetadata(getMetadata()));
 
             } else {
 
@@ -84,11 +83,11 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
                     valueIterator.close();
                     //SIMILAR TO ZORBA, if value is more than one item, wrap it in an array
                     if (currentResults.size() > 1) {
-                        values.add(new ArrayItem(currentResults));
+                        values.add(ItemFactory.getInstance().createArrayItem(currentResults));
                     } else if (currentResults.size() == 1) {
                         values.add(currentResults.get(0));
                     } else {
-                        values.add(new NullItem());
+                        values.add(ItemFactory.getInstance().createNullItem());
                     }
                 }
 
@@ -107,7 +106,7 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
                     keyIterator.close();
                 }
                 this._hasNext = false;
-                return new ObjectItem(keys, values, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                return ItemFactory.getInstance().createObjectItem(keys, values, ItemMetadata.fromIteratorMetadata(getMetadata()));
             }
         }
         throw new IteratorFlowException("Invalid next() call on object!", getMetadata());

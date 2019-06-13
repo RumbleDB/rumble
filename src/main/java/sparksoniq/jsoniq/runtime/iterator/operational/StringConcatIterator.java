@@ -23,9 +23,8 @@ package sparksoniq.jsoniq.runtime.iterator.operational;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
-import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.item.StringItem;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -36,7 +35,7 @@ public class StringConcatIterator extends BinaryOperationBaseIterator {
     }
 
     @Override
-    public AtomicItem next() {
+    public Item next() {
         if (this.hasNext()) {
             _leftIterator.open(_currentDynamicContext);
             _rightIterator.open(_currentDynamicContext);
@@ -46,12 +45,12 @@ public class StringConcatIterator extends BinaryOperationBaseIterator {
             if (_leftIterator.hasNext()) {
                 left = _leftIterator.next();
             } else {
-                left = new StringItem("");
+                left = ItemFactory.getInstance().createStringItem("");
             }
             if (_rightIterator.hasNext()) {
                 right = _rightIterator.next();
             } else {
-                right = new StringItem("");
+                right = ItemFactory.getInstance().createStringItem("");
             }
             if (!(left.isAtomic()) || !(right.isAtomic()))
                 throw new UnexpectedTypeException("String concat expression has arguments that can't be converted to a string " +
@@ -63,7 +62,7 @@ public class StringConcatIterator extends BinaryOperationBaseIterator {
             _leftIterator.close();
             _rightIterator.close();
             this._hasNext = false;
-            return new StringItem(leftStringValue.concat(rightStringValue));
+            return ItemFactory.getInstance().createStringItem(leftStringValue.concat(rightStringValue));
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
 
