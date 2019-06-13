@@ -93,27 +93,42 @@ public class DataFrameUtils {
      * @param trailingComma          boolean field to have a trailing comma
      * @return comma separated variables to be used in spark SQL
      */
-    public static String getSQL(
+    public static List<String> getColumnNames(
             StructType inputSchema,
             int duplicateVariableIndex,
-            boolean trailingComma,
             Set<String> dependencies) {
+        List<String> result = new ArrayList<String>();
         String[] columnNames = inputSchema.fieldNames();
-        StringBuilder queryColumnString = new StringBuilder();
-        String comma = "";
         for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
             if (columnIndex == duplicateVariableIndex) {
                 continue;
             }
             String var = columnNames[columnIndex];
-            if(true)//dependencies == null || dependencies.contains(var))
+            if(dependencies == null || dependencies.contains(var))
             {
-                queryColumnString.append(comma);
-                comma = ",";
-                queryColumnString.append("`");
-                queryColumnString.append(columnNames[columnIndex]);
-                queryColumnString.append("`");
+                result.add(columnNames[columnIndex]);
             }
+        }
+        return result;
+    }
+
+    /**
+     * @param inputSchema            schema specifies the columns to be used in the query
+     * @param duplicateVariableIndex enables skipping a variable
+     * @param trailingComma          boolean field to have a trailing comma
+     * @return comma separated variables to be used in spark SQL
+     */
+    public static String getSQL(
+            List<String> columnNames,
+            boolean trailingComma) {
+        StringBuilder queryColumnString = new StringBuilder();
+        String comma = "";
+        for (String var : columnNames) {
+            queryColumnString.append(comma);
+            comma = ",";
+            queryColumnString.append("`");
+            queryColumnString.append(var);
+            queryColumnString.append("`");
         }
         if(trailingComma)
         {

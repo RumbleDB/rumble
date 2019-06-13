@@ -20,6 +20,7 @@
 
 package sparksoniq.spark.iterator.flowr;
 
+import org.apache.hadoop.hdfs.server.namenode.decommission_jsp;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -165,13 +166,17 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
             Dataset<Row> df = _child.getDataFrame(context);
 
             StructType inputSchema = df.schema();
+            
+            int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(_variableName);
+
+            List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
+            List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, _dependencies);
 
             df.sparkSession().udf().register("letClauseUDF",
-                    new LetClauseUDF(_expression, inputSchema), DataTypes.BinaryType);
+                    new LetClauseUDF(_expression, inputSchema, UDFcolumns), DataTypes.BinaryType);
 
-            int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(_variableName);
-            String selectSQL = DataFrameUtils.getSQL(inputSchema, duplicateVariableIndex, true, null);
-            String udfSQL = DataFrameUtils.getSQL(inputSchema, -1, false, _dependencies);
+            String selectSQL = DataFrameUtils.getSQL(allColumns, true);
+            String udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
 
             df.createOrReplaceTempView("input");
             df = df.sparkSession().sql(

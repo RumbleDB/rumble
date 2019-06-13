@@ -48,7 +48,7 @@ import java.util.Set;
 public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
     private List<OrderByClauseSparkIteratorExpression> _expressions;
     Set<String> _dependencies;
-    String[] _columnNames;
+    List<String> _columnNames;
     private StructType _inputSchema;
     private Map _allColumnTypes;
 
@@ -61,7 +61,8 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
     public OrderClauseCreateColumnsUDF(
             List<OrderByClauseSparkIteratorExpression> expressions,
             StructType inputSchema,
-            Map allColumnTypes) {
+            Map allColumnTypes,
+            List<String> columnNames) {
         _expressions = expressions;
         _inputSchema = inputSchema;
         _allColumnTypes = allColumnTypes;
@@ -73,7 +74,7 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
         for (OrderByClauseSparkIteratorExpression expression : _expressions) {
             _dependencies.addAll(expression.getExpression().getVariableDependencies());
         }
-        _columnNames = _inputSchema.fieldNames();
+        _columnNames = columnNames;
         
         _kryo = new Kryo();
         DataFrameUtils.registerKryoClassesKryo(_kryo);
@@ -88,8 +89,8 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
 
         // prepare dynamic context
         _context.removeAllVariables();
-        for (int columnIndex = 0; columnIndex < _columnNames.length; columnIndex++) {
-            String var = _columnNames[columnIndex];
+        for (int columnIndex = 0; columnIndex < _columnNames.size(); columnIndex++) {
+            String var = _columnNames.get(columnIndex);
             if(_dependencies.contains(var))
             {
                 byte[] bytes = (byte[]) serializedParams[columnIndex];

@@ -225,12 +225,16 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
 
             StructType inputSchema = df.schema();
 
-            df.sparkSession().udf().register("forClauseUDF",
-                    new ForClauseUDF(_expression, inputSchema), DataTypes.createArrayType(DataTypes.BinaryType));
-
             int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(_variableName);
-            String selectSQL = DataFrameUtils.getSQL(inputSchema, duplicateVariableIndex, true, null);
-            String udfSQL = DataFrameUtils.getSQL(inputSchema, -1, false, _dependencies);
+
+            List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
+            List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, _dependencies);
+
+            df.sparkSession().udf().register("forClauseUDF",
+                    new ForClauseUDF(_expression, inputSchema, UDFcolumns), DataTypes.createArrayType(DataTypes.BinaryType));
+
+            String selectSQL = DataFrameUtils.getSQL(allColumns, true);
+            String udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
 
             df.createOrReplaceTempView("input");
             df = df.sparkSession().sql(

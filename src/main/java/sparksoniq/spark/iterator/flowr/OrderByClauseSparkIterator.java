@@ -215,7 +215,9 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
                 new OrderClauseDetermineTypeUDF(_expressions, inputSchema),
                 DataTypes.createArrayType(DataTypes.StringType));
 
-        String udfSQL = DataFrameUtils.getSQL(inputSchema, -1, false, _dependencies);
+        List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, null);
+
+        String udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
 
         df.createOrReplaceTempView("input");
         df.sparkSession().table("input").cache();
@@ -319,13 +321,16 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
             }
         }
 
+        List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema, -1, null);
+        UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, null);
+
         df.sparkSession().udf().register("createOrderingColumns",
-                new OrderClauseCreateColumnsUDF(_expressions, inputSchema, typesForAllColumns),
+                new OrderClauseCreateColumnsUDF(_expressions, inputSchema, typesForAllColumns, UDFcolumns),
                 DataTypes.createStructType(typedFields));
 
-        String selectSQL = DataFrameUtils.getSQL(inputSchema, -1, true, null);
+        String selectSQL = DataFrameUtils.getSQL(allColumns, true);
         String projectSQL = selectSQL.substring(0, selectSQL.length() - 1);   // remove trailing comma
-        udfSQL = DataFrameUtils.getSQL(inputSchema, -1, false, _dependencies);
+        udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
 
         return df.sparkSession().sql(
                 String.format(

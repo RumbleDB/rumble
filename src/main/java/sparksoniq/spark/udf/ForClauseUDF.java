@@ -40,6 +40,7 @@ import java.util.List;
 public class ForClauseUDF implements UDF1<WrappedArray, List> {
     private RuntimeIterator _expression;
     private StructType _inputSchema;
+    List<String> _columnNames;
 
     private List<List<Item>> _deserializedParams;
     private DynamicContext _context;
@@ -52,9 +53,11 @@ public class ForClauseUDF implements UDF1<WrappedArray, List> {
 
     public ForClauseUDF(
             RuntimeIterator expression,
-            StructType inputSchema) {
+            StructType inputSchema,
+            List<String> columnNames) {
         _expression = expression;
         _inputSchema = inputSchema;
+        _columnNames = columnNames;
 
         _deserializedParams = new ArrayList<>();
         _context = new DynamicContext();
@@ -76,11 +79,9 @@ public class ForClauseUDF implements UDF1<WrappedArray, List> {
 
         DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
 
-        String[] columnNames = _inputSchema.fieldNames();
-
         // prepare dynamic context
-        for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
-            _context.addVariableValue(columnNames[columnIndex], _deserializedParams.get(columnIndex));
+        for (int columnIndex = 0; columnIndex < _columnNames.size(); columnIndex++) {
+            _context.addVariableValue(_columnNames.get(columnIndex), _deserializedParams.get(columnIndex));
         }
 
         // apply expression in the dynamic context

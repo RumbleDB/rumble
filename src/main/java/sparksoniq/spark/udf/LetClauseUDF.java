@@ -42,7 +42,7 @@ public class LetClauseUDF implements UDF1<WrappedArray, byte[]> {
     private RuntimeIterator _expression;
     private StructType _inputSchema;
     Set<String> _dependencies;
-    String[] _columnNames;
+    List<String> _columnNames;
 
     private DynamicContext _context;
     private List<Item> _nextResult;
@@ -53,7 +53,8 @@ public class LetClauseUDF implements UDF1<WrappedArray, byte[]> {
     
     public LetClauseUDF(
             RuntimeIterator expression,
-            StructType inputSchema) {
+            StructType inputSchema,
+            List<String> columnNames) {
         _expression = expression;
         _inputSchema = inputSchema;
 
@@ -65,7 +66,7 @@ public class LetClauseUDF implements UDF1<WrappedArray, byte[]> {
         _output = new Output(128, -1);
         _input = new Input();
         
-        _columnNames = _inputSchema.fieldNames();
+        _columnNames = columnNames;
         _dependencies = _expression.getVariableDependencies();
     }
 
@@ -78,8 +79,8 @@ public class LetClauseUDF implements UDF1<WrappedArray, byte[]> {
         Object[] serializedParams = (Object[]) wrappedParameters.array();
 
         // prepare dynamic context
-        for (int columnIndex = 0; columnIndex < _columnNames.length; columnIndex++) {
-            String var = _columnNames[columnIndex];
+        for (int columnIndex = 0; columnIndex < _columnNames.size(); columnIndex++) {
+            String var = _columnNames.get(columnIndex);
             if(_dependencies.contains(var))
             {
                 byte[] bytes = (byte[]) serializedParams[columnIndex];

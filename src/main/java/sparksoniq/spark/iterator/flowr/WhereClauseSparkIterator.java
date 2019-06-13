@@ -21,6 +21,7 @@
 package sparksoniq.spark.iterator.flowr;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.spark.api.java.JavaRDD;
@@ -133,10 +134,14 @@ public class WhereClauseSparkIterator extends SparkRuntimeTupleIterator {
         }
         Dataset<Row> df = _child.getDataFrame(context);
         StructType inputSchema = df.schema();
-        df.sparkSession().udf().register("whereClauseUDF",
-                new WhereClauseUDF(_expression, inputSchema), DataTypes.BooleanType);
 
-        String udfSQL = DataFrameUtils.getSQL(inputSchema, -1, false, null);
+        List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, _dependencies);
+
+
+        df.sparkSession().udf().register("whereClauseUDF",
+                new WhereClauseUDF(_expression, inputSchema, UDFcolumns), DataTypes.BooleanType);
+
+        String udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
 
         df.createOrReplaceTempView("input");
         df = df.sparkSession().sql(
