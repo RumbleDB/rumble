@@ -51,11 +51,13 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
     private RuntimeIterator _expression;
     private DynamicContext _tupleContext;   // re-use same DynamicContext object for efficiency
     private FlworTuple _nextLocalTupleResult;
+    Set<String> _dependencies;
 
     public LetClauseSparkIterator(RuntimeTupleIterator child, VariableReferenceIterator variableReference, RuntimeIterator expression, IteratorMetadata iteratorMetadata) {
         super(child, iteratorMetadata);
         _variableName = variableReference.getVariableName();
         _expression = expression;
+        _dependencies = _expression.getVariableDependencies();
     }
 
     @Override
@@ -168,8 +170,8 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
                     new LetClauseUDF(_expression, inputSchema), DataTypes.BinaryType);
 
             int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(_variableName);
-            String selectSQL = DataFrameUtils.getSQL(inputSchema, duplicateVariableIndex, true);
-            String udfSQL = DataFrameUtils.getSQL(inputSchema, -1, false);
+            String selectSQL = DataFrameUtils.getSQL(inputSchema, duplicateVariableIndex, true, null);
+            String udfSQL = DataFrameUtils.getSQL(inputSchema, -1, false, _dependencies);
 
             df.createOrReplaceTempView("input");
             df = df.sparkSession().sql(

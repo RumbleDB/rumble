@@ -43,6 +43,7 @@ import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.closures.OrderByClauseSortClosure;
 import sparksoniq.spark.closures.OrderByMapToPairClosure;
+import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
 import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 import sparksoniq.spark.udf.OrderClauseCreateColumnsUDF;
 import sparksoniq.spark.udf.OrderClauseDetermineTypeUDF;
@@ -58,6 +59,7 @@ import java.util.TreeMap;
 public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
     private final boolean _isStable;
     private final List<OrderByClauseSparkIteratorExpression> _expressions;
+    Set<String> _dependencies;
 
     private List<FlworTuple> _localTupleResults;
     private int _resultIndex;
@@ -67,6 +69,11 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         super(child, iteratorMetadata);
         this._expressions = expressions;
         this._isStable = stable;
+        _dependencies = new HashSet<String>();
+        for(OrderByClauseSparkIteratorExpression e : _expressions)
+        {
+            _dependencies.addAll(e.getExpression().getVariableDependencies());
+        }
     }
 
     @Override
@@ -208,7 +215,7 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
                 new OrderClauseDetermineTypeUDF(_expressions, inputSchema),
                 DataTypes.createArrayType(DataTypes.StringType));
 
-        String udfSQL = DataFrameUtils.getSQL(inputSchema, -1, false);
+        String udfSQL = DataFrameUtils.getSQL(inputSchema, -1, false, _dependencies);
 
         df.createOrReplaceTempView("input");
         df.sparkSession().table("input").cache();
@@ -316,9 +323,9 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
                 new OrderClauseCreateColumnsUDF(_expressions, inputSchema, typesForAllColumns),
                 DataTypes.createStructType(typedFields));
 
-        String selectSQL = DataFrameUtils.getSQL(inputSchema, -1, true);
+        String selectSQL = DataFrameUtils.getSQL(inputSchema, -1, true, null);
         String projectSQL = selectSQL.substring(0, selectSQL.length() - 1);   // remove trailing comma
-        udfSQL = projectSQL;
+        udfSQL = DataFrameUtils.getSQL(inputSchema, -1, false, _dependencies);
 
         return df.sparkSession().sql(
                 String.format(

@@ -62,12 +62,20 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
     private final List<GroupByClauseSparkIteratorExpression> _expressions;
     private List<FlworTuple> _localTupleResults;
     private int _resultIndex;
-
+    Set<String> _dependencies;
 
     public GroupByClauseSparkIterator(RuntimeTupleIterator child, List<GroupByClauseSparkIteratorExpression> variables,
                                       IteratorMetadata iteratorMetadata) {
         super(child, iteratorMetadata);
         this._expressions = variables;
+        _dependencies = new HashSet<String>();
+        for(GroupByClauseSparkIteratorExpression e : _expressions)
+        {
+            if(e.getExpression() != null)
+            {
+                _dependencies.addAll(e.getExpression().getVariableDependencies());
+            }
+        }
     }
 
     @Override
@@ -254,8 +262,8 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
                         new LetClauseUDF(newVariableExpression, inputSchema), DataTypes.BinaryType);
 
                 int duplicateVariableIndex = columnNames.indexOf(newVariableName);
-                String selectSQL = DataFrameUtils.getSQL(inputSchema, duplicateVariableIndex, true);
-                String udfSQL = DataFrameUtils.getSQL(inputSchema, -1, false);
+                String selectSQL = DataFrameUtils.getSQL(inputSchema, duplicateVariableIndex, true, null);
+                String udfSQL = DataFrameUtils.getSQL(inputSchema, -1, false, _dependencies);
 
                 df.createOrReplaceTempView("input");
                 df = df.sparkSession().sql(
@@ -304,8 +312,8 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
                 new GroupClauseSerializeAggregateResultsUDF(),
                 DataTypes.BinaryType);
 
-        String selectSQL = DataFrameUtils.getSQL(inputSchema, -1, true);
-        String udfSQL = DataFrameUtils.getSQL(inputSchema, -1, false);
+        String selectSQL = DataFrameUtils.getSQL(inputSchema, -1, true, null);
+        String udfSQL = DataFrameUtils.getSQL(inputSchema, -1, false, _dependencies);
 
         String createColumnsSQL = String.format(
                 "select %s createGroupingColumns(array(%s)) as `%s` from input",

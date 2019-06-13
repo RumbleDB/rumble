@@ -46,6 +46,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.count;
@@ -95,21 +96,29 @@ public class DataFrameUtils {
     public static String getSQL(
             StructType inputSchema,
             int duplicateVariableIndex,
-            boolean trailingComma) {
+            boolean trailingComma,
+            Set<String> dependencies) {
         String[] columnNames = inputSchema.fieldNames();
         StringBuilder queryColumnString = new StringBuilder();
+        String comma = "";
         for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
             if (columnIndex == duplicateVariableIndex) {
                 continue;
             }
-            queryColumnString.append("`");
-            queryColumnString.append(columnNames[columnIndex]);
-            queryColumnString.append("`");
-            if (trailingComma || columnIndex != (columnNames.length - 1)) {
-                queryColumnString.append(",");
+            String var = columnNames[columnIndex];
+            if(true)//dependencies == null || dependencies.contains(var))
+            {
+                queryColumnString.append(comma);
+                comma = ",";
+                queryColumnString.append("`");
+                queryColumnString.append(columnNames[columnIndex]);
+                queryColumnString.append("`");
             }
         }
-
+        if(trailingComma)
+        {
+            queryColumnString.append(comma);
+        }
         return queryColumnString.toString();
     }
 

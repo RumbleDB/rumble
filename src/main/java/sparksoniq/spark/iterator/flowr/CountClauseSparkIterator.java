@@ -131,7 +131,7 @@ public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
         Dataset<Row> df = _child.getDataFrame(context);
         StructType inputSchema = df.schema();
         int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(_variableName);
-        String selectSQL = DataFrameUtils.getSQL(inputSchema, duplicateVariableIndex, true);
+        String selectSQL = DataFrameUtils.getSQL(inputSchema, duplicateVariableIndex, true, null);
 
         Dataset<Row> dfWithIndex = DataFrameUtils.zipWithIndex(df, new Long(1), _variableName);
 

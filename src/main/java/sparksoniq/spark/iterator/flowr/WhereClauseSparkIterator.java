@@ -46,10 +46,12 @@ public class WhereClauseSparkIterator extends SparkRuntimeTupleIterator {
     private DynamicContext _tupleContext;   // re-use same DynamicContext object for efficiency
     private FlworTuple _nextLocalTupleResult;
     private FlworTuple _inputTuple;     // tuple received from child, used for tuple creation
+    Set<String> _dependencies;
 
     public WhereClauseSparkIterator(RuntimeTupleIterator child, RuntimeIterator whereExpression, IteratorMetadata iteratorMetadata) {
         super(child, iteratorMetadata);
         _expression = whereExpression;
+        _dependencies = _expression.getVariableDependencies();
     }
 
     @Override
@@ -134,7 +136,7 @@ public class WhereClauseSparkIterator extends SparkRuntimeTupleIterator {
         df.sparkSession().udf().register("whereClauseUDF",
                 new WhereClauseUDF(_expression, inputSchema), DataTypes.BooleanType);
 
-        String udfSQL = DataFrameUtils.getSQL(inputSchema, -1, false);
+        String udfSQL = DataFrameUtils.getSQL(inputSchema, -1, false, null);
 
         df.createOrReplaceTempView("input");
         df = df.sparkSession().sql(
