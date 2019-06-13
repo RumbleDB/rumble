@@ -22,12 +22,20 @@ package sparksoniq.spark.udf;
 
 import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.types.StructType;
+
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.ByteBufferInput;
+import com.esotericsoftware.kryo.io.ByteBufferOutput;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,7 +46,11 @@ public class LetClauseUDF implements UDF1<WrappedArray, byte[]> {
     private List<List<Item>> _deserializedParams;
     private DynamicContext _context;
     private List<Item> _nextResult;
-
+    
+    private transient Kryo _kryo;
+    private transient Output _output;
+    private transient Input _input;
+    
     public LetClauseUDF(
             RuntimeIterator expression,
             StructType inputSchema) {
@@ -48,6 +60,11 @@ public class LetClauseUDF implements UDF1<WrappedArray, byte[]> {
         _deserializedParams = new ArrayList<>();
         _context = new DynamicContext();
         _nextResult = new ArrayList<>();
+        
+        _kryo = new Kryo();
+        DataFrameUtils.registerKryoClassesKryo(_kryo);
+        _output = new ByteBufferOutput(128, -1);
+        _input = new Input();
     }
 
 
@@ -57,7 +74,7 @@ public class LetClauseUDF implements UDF1<WrappedArray, byte[]> {
         _context.removeAllVariables();
         _nextResult.clear();
 
-        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams);
+        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
 
         String[] columnNames = _inputSchema.fieldNames();
 
@@ -74,6 +91,17 @@ public class LetClauseUDF implements UDF1<WrappedArray, byte[]> {
         }
         _expression.close();
 
-        return DataFrameUtils.serializeItemList(_nextResult);
+        return DataFrameUtils.serializeItemList(_nextResult, _kryo, _output);
     }
+    
+    private void readObject(java.io.ObjectInputStream in)
+            throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        
+        _kryo = new Kryo();
+        DataFrameUtils.registerKryoClassesKryo(_kryo);
+        _output = new ByteBufferOutput(128, -1);
+        _input = new Input();
+    }
+    
 }

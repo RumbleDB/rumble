@@ -22,6 +22,10 @@ package sparksoniq.spark.udf;
 
 import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.types.StructType;
+
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnexpectedTypeException;
@@ -30,6 +34,7 @@ import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,6 +46,9 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
     private DynamicContext _context;
     private Item _nextItem;
     private List<String> result;
+    
+    private transient Kryo _kryo;
+    private transient Input _input;
 
     public OrderClauseDetermineTypeUDF(
             List<OrderByClauseSparkIteratorExpression> expressions,
@@ -51,6 +59,10 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
         _deserializedParams = new ArrayList<>();
         _context = new DynamicContext();
         result = new ArrayList<>();
+        
+        _kryo = new Kryo();
+        DataFrameUtils.registerKryoClassesKryo(_kryo);
+        _input = new Input();
     }
 
     @Override
@@ -58,7 +70,7 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
         _deserializedParams.clear();
         result.clear();
 
-        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams);
+        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
         String[] columnNames = _inputSchema.fieldNames();
 
         for (OrderByClauseSparkIteratorExpression expression : _expressions) {
@@ -99,5 +111,14 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
             }
         }
         return result;
+    }
+    
+    private void readObject(java.io.ObjectInputStream in)
+            throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        
+        _kryo = new Kryo();
+        DataFrameUtils.registerKryoClassesKryo(_kryo);
+        _input = new Input();
     }
 }

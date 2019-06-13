@@ -23,11 +23,18 @@ package sparksoniq.spark.closures;
 import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.StructType;
+
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.ByteBufferOutput;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,6 +46,10 @@ public class LetClauseMapClosure implements MapFunction<Row, Row> {
     private List<List<Item>> _rowColumns;
     private DynamicContext _context;
     private List<Item> _newColumn;
+
+    private transient Kryo _kryo;
+    private transient Output _output;
+    private transient Input _input;
 
     public LetClauseMapClosure(
             RuntimeIterator expression,
@@ -52,6 +63,10 @@ public class LetClauseMapClosure implements MapFunction<Row, Row> {
         _context = new DynamicContext();
         _newColumn = new ArrayList<>();
 
+        _kryo = new Kryo();
+        DataFrameUtils.registerKryoClassesKryo(_kryo);
+        _output = new ByteBufferOutput(128, -1);
+        _input = new Input();
     }
 
     @Override
@@ -63,7 +78,7 @@ public class LetClauseMapClosure implements MapFunction<Row, Row> {
         String[] columnNames = _inputSchema.fieldNames();
 
         // Deserialize row
-        List<Object> deserializedRow = DataFrameUtils.deserializeEntireRow(row);
+        List<Object> deserializedRow = DataFrameUtils.deserializeEntireRow(row, _kryo, _input);
         for (Object columnObject : deserializedRow) {
             List<Item> column = (List<Item>) columnObject;
             _rowColumns.add(column);
@@ -82,6 +97,16 @@ public class LetClauseMapClosure implements MapFunction<Row, Row> {
         }
         _expression.close();
 
-        return DataFrameUtils.reserializeRowWithNewData(row, _newColumn, _duplicateColumnIndex);
+        return DataFrameUtils.reserializeRowWithNewData(row, _newColumn, _duplicateColumnIndex, _kryo, _output);
+    }
+    
+    private void readObject(java.io.ObjectInputStream in)
+            throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        
+        _kryo = new Kryo();
+        DataFrameUtils.registerKryoClassesKryo(_kryo);
+        _output = new ByteBufferOutput(128, -1);
+        _input = new Input();
     }
 }

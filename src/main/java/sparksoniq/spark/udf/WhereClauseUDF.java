@@ -22,6 +22,11 @@ package sparksoniq.spark.udf;
 
 import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.types.StructType;
+
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.ByteBufferInput;
+import com.esotericsoftware.kryo.io.Input;
+
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.jsoniq.item.BooleanItem;
 import sparksoniq.jsoniq.item.Item;
@@ -29,6 +34,7 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,6 +44,9 @@ public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
 
     private List<List<Item>> _deserializedParams;
     private DynamicContext _context;
+    
+    private transient Kryo _kryo;
+    private transient Input _input;
 
     public WhereClauseUDF(
             RuntimeIterator expression,
@@ -47,6 +56,10 @@ public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
 
         _deserializedParams = new ArrayList<>();
         _context = new DynamicContext();
+        
+        _kryo = new Kryo();
+        DataFrameUtils.registerKryoClassesKryo(_kryo);
+        _input = new Input();
     }
 
 
@@ -55,7 +68,7 @@ public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
         _deserializedParams.clear();
         _context.removeAllVariables();
 
-        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams);
+        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
 
         String[] columnNames = _inputSchema.fieldNames();
 
@@ -70,5 +83,14 @@ public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
         _expression.close();
 
         return ((BooleanItem) nextItem).getBooleanValue();
+    }
+    
+    private void readObject(java.io.ObjectInputStream in)
+            throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        
+        _kryo = new Kryo();
+        DataFrameUtils.registerKryoClassesKryo(_kryo);
+        _input = new Input();
     }
 }

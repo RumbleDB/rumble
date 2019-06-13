@@ -33,8 +33,16 @@ import org.apache.spark.sql.expressions.Window;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import scala.collection.mutable.WrappedArray;
+import sparksoniq.jsoniq.item.ArrayItem;
+import sparksoniq.jsoniq.item.BooleanItem;
+import sparksoniq.jsoniq.item.DecimalItem;
+import sparksoniq.jsoniq.item.DoubleItem;
+import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.KryoManager;
+import sparksoniq.jsoniq.item.NullItem;
+import sparksoniq.jsoniq.item.ObjectItem;
+import sparksoniq.jsoniq.item.StringItem;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
@@ -54,33 +62,31 @@ import static org.apache.spark.sql.functions.udf;
 public class DataFrameUtils {
 
     private static KryoManager KM = KryoManager.getInstance();
-
-    public static byte[] serializeItem(Item toSerialize) {
-        Kryo kryo = KM.getOrCreateKryo();
-
-        Output output = new ByteBufferOutput(128, -1);
-        kryo.writeClassAndObject(output, toSerialize);
-        output.close();
-
-        byte[] byteArray = output.toBytes();
-
-        KM.releaseKryoInstance(kryo);
-
-        return byteArray;
+    
+    public static void registerKryoClassesKryo(Kryo kryo)
+    {
+        kryo.register(Item.class);
+        kryo.register(ArrayItem.class);
+        kryo.register(ObjectItem.class);
+        kryo.register(StringItem.class);
+        kryo.register(IntegerItem.class);
+        kryo.register(DoubleItem.class);
+        kryo.register(DecimalItem.class);
+        kryo.register(NullItem.class);
+        kryo.register(BooleanItem.class);
+        kryo.register(ArrayList.class);
     }
 
-    public static byte[] serializeItemList(List<Item> toSerialize) {
-        Kryo kryo = KM.getOrCreateKryo();
-
-        Output output = new ByteBufferOutput(128, -1);
+    public static byte[] serializeItem(Item toSerialize, Kryo kryo, Output output) {
+        output.clear();
         kryo.writeClassAndObject(output, toSerialize);
-        output.close();
+        return output.toBytes();
+    }
 
-        byte[] byteArray = output.toBytes();
-
-        KM.releaseKryoInstance(kryo);
-
-        return byteArray;
+    public static byte[] serializeItemList(List<Item> toSerialize, Kryo kryo, Output output) {
+        output.clear();
+        kryo.writeClassAndObject(output, toSerialize);
+        return output.toBytes();
     }
 
     /**
@@ -158,39 +164,30 @@ public class DataFrameUtils {
         return queryColumnString.toString();
     }
 
-    public static Object deserializeByteArray(byte[] toDeserialize) {
-        Kryo kryo = KM.getOrCreateKryo();
-
-        Input input = new Input(new ByteArrayInputStream(toDeserialize));
-
-        Object obj = kryo.readClassAndObject(input);
-        input.close();
-
-        KM.releaseKryoInstance(kryo);
-
-        return obj;
+    public static Object deserializeByteArray(byte[] toDeserialize, Kryo kryo, Input input) {
+        input.setBuffer(toDeserialize);
+        return kryo.readClassAndObject(input);
     }
 
-    public static void deserializeWrappedParameters(WrappedArray wrappedParameters, List<List<Item>> deserializedParams) {
+    public static void deserializeWrappedParameters(WrappedArray wrappedParameters, List<List<Item>> deserializedParams, Kryo kryo, Input input) {
         Object[] serializedParams = (Object[]) wrappedParameters.array();
-        for (int paramIndex = 0; paramIndex < serializedParams.length; paramIndex++) {
-            Object serializedParam = serializedParams[paramIndex];
-            Object deserializedParam = deserializeByteArray((byte[]) serializedParam);
-            deserializedParams.add((List<Item>) deserializedParam);
+        for (Object serializedParam: serializedParams) {
+            List<Item> deserializedParam = (List<Item>) deserializeByteArray((byte[]) serializedParam, kryo, input);
+            deserializedParams.add(deserializedParam);
         }
     }
 
-    public static Row reserializeRowWithNewData(Row prevRow, List<Item> newColumn, int duplicateColumnIndex) {
+    public static Row reserializeRowWithNewData(Row prevRow, List<Item> newColumn, int duplicateColumnIndex, Kryo kryo, Output output) {
         List<byte[]> newRowColumns = new ArrayList<>();
         for (int columnIndex = 0; columnIndex < prevRow.length(); columnIndex++) {
             if (duplicateColumnIndex == columnIndex) {
-                newRowColumns.add(serializeItemList(newColumn));
+                newRowColumns.add(serializeItemList(newColumn, kryo, output));
             } else {
                 newRowColumns.add((byte[]) prevRow.get(columnIndex));
             }
         }
         if (duplicateColumnIndex == -1) {
-            newRowColumns.add(serializeItemList(newColumn));
+            newRowColumns.add(serializeItemList(newColumn, kryo, output));
         }
         return RowFactory.create(newRowColumns.toArray());
     }
@@ -208,19 +205,14 @@ public class DataFrameUtils {
         return obj;
     }
 
-    public static List<Object> deserializeEntireRow(Row row) {
-        Kryo kryo = KM.getOrCreateKryo();
-
+    public static List<Object> deserializeEntireRow(Row row, Kryo kryo, Input input) {
         ArrayList<Object> deserializedColumnObjects = new ArrayList<>();
         for (int columnIndex = 0; columnIndex < row.length(); columnIndex++) {
-            Input input = new ByteBufferInput();
             input.setBuffer((byte[]) row.get(columnIndex));
             Object deserializedColumnObject = kryo.readClassAndObject(input);
             deserializedColumnObjects.add(deserializedColumnObject);
-            input.close();
         }
 
-        KM.releaseKryoInstance(kryo);
         return deserializedColumnObjects;
     }
 
