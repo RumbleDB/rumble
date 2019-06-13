@@ -24,7 +24,6 @@ import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.types.StructType;
 
 import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.ByteBufferOutput;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
@@ -64,7 +63,7 @@ public class ForClauseUDF implements UDF1<WrappedArray, List> {
         
         _kryo = new Kryo();
         DataFrameUtils.registerKryoClassesKryo(_kryo);
-        _output = new ByteBufferOutput(128, -1);
+        _output = new Output(128, -1);
         _input = new Input();
     }
 
@@ -103,7 +102,7 @@ public class ForClauseUDF implements UDF1<WrappedArray, List> {
         
         _kryo = new Kryo();
         DataFrameUtils.registerKryoClassesKryo(_kryo);
-        _output = new ByteBufferOutput(128, -1);
+        _output = new Output(128, -1);
         _input = new Input();
     }
 }
