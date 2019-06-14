@@ -52,6 +52,7 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
     private StructType _inputSchema;
     private Map _allColumnTypes;
 
+    private List<List<Item>> _deserializedParams;
     private DynamicContext _context;
     private List<Object> _results;
     
@@ -67,6 +68,7 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
         _inputSchema = inputSchema;
         _allColumnTypes = allColumnTypes;
 
+        _deserializedParams = new ArrayList<>();
         _context = new DynamicContext();
         _results = new ArrayList<>();
         
@@ -83,20 +85,15 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
 
     @Override
     public Row call(WrappedArray wrappedParameters) {
+        _deserializedParams.clear();
+        _context.removeAllVariables();
         _results.clear();
 
-        Object[] serializedParams = (Object[]) wrappedParameters.array();
+        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
 
         // prepare dynamic context
-        _context.removeAllVariables();
         for (int columnIndex = 0; columnIndex < _columnNames.size(); columnIndex++) {
-            String var = _columnNames.get(columnIndex);
-            if(_dependencies.contains(var))
-            {
-                byte[] bytes = (byte[]) serializedParams[columnIndex];
-                List<Item> deserializedParam = (List<Item>) DataFrameUtils.deserializeByteArray(bytes, _kryo, _input);
-                _context.addVariableValue(var, deserializedParam);
-            }
+            _context.addVariableValue(_columnNames.get(columnIndex), _deserializedParams.get(columnIndex));
         }
 
         for (int expressionIndex = 0; expressionIndex < _expressions.size(); expressionIndex++) {

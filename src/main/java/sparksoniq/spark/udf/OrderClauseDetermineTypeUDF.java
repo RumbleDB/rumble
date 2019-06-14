@@ -43,7 +43,7 @@ import java.util.Set;
 public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
     private List<OrderByClauseSparkIteratorExpression> _expressions;
     Set<String> _dependencies;
-    String[] _columnNames;
+    List<String> _columnNames;
     private StructType _inputSchema;
 
     private List<List<Item>> _deserializedParams;
@@ -56,7 +56,8 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
 
     public OrderClauseDetermineTypeUDF(
             List<OrderByClauseSparkIteratorExpression> expressions,
-            StructType inputSchema) {
+            StructType inputSchema,
+            List<String> columnNames) {
         _expressions = expressions;
         _inputSchema = inputSchema;
 
@@ -68,7 +69,7 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
         for (OrderByClauseSparkIteratorExpression expression : _expressions) {
             _dependencies.addAll(expression.getExpression().getVariableDependencies());
         }
-        _columnNames = _inputSchema.fieldNames();
+        _columnNames = columnNames;
         
         _kryo = new Kryo();
         DataFrameUtils.registerKryoClassesKryo(_kryo);
@@ -78,20 +79,14 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
     @Override
     public List call(WrappedArray wrappedParameters) {
         _deserializedParams.clear();
+        _context.removeAllVariables();
         result.clear();
 
-        Object[] serializedParams = (Object[]) wrappedParameters.array();
+        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
 
         // prepare dynamic context
-        _context.removeAllVariables();
-        for (int columnIndex = 0; columnIndex < _columnNames.length; columnIndex++) {
-            String var = _columnNames[columnIndex];
-            if(_dependencies.contains(var))
-            {
-                byte[] bytes = (byte[]) serializedParams[columnIndex];
-                List<Item> deserializedParam = (List<Item>) DataFrameUtils.deserializeByteArray(bytes, _kryo, _input);
-                _context.addVariableValue(var, deserializedParam);
-            }
+        for (int columnIndex = 0; columnIndex < _columnNames.size(); columnIndex++) {
+            _context.addVariableValue(_columnNames.get(columnIndex), _deserializedParams.get(columnIndex));
         }
 
         for (OrderByClauseSparkIteratorExpression expression : _expressions) {

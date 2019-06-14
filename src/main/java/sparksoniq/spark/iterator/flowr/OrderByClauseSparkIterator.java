@@ -211,11 +211,11 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         Dataset<Row> df = _child.getDataFrame(context);
         StructType inputSchema = df.schema();
 
-        df.sparkSession().udf().register("determineOrderingDataType",
-                new OrderClauseDetermineTypeUDF(_expressions, inputSchema),
-                DataTypes.createArrayType(DataTypes.StringType));
-
         List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, null);
+
+        df.sparkSession().udf().register("determineOrderingDataType",
+                new OrderClauseDetermineTypeUDF(_expressions, inputSchema, UDFcolumns),
+                DataTypes.createArrayType(DataTypes.StringType));
 
         String udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
 
@@ -322,7 +322,7 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         }
 
         List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema, -1, null);
-        UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, null);
+        UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, _dependencies);
 
         df.sparkSession().udf().register("createOrderingColumns",
                 new OrderClauseCreateColumnsUDF(_expressions, inputSchema, typesForAllColumns, UDFcolumns),
