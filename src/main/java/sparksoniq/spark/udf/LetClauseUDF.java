@@ -76,7 +76,7 @@ public class LetClauseUDF implements UDF1<WrappedArray, byte[]> {
         _deserializedParams.clear();
         _context.removeAllVariables();
         _nextResult.clear();
-        
+
         DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
 
         // prepare dynamic context

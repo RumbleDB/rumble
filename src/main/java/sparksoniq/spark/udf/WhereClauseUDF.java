@@ -34,6 +34,7 @@ import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -43,6 +44,7 @@ public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
     Set<String> _dependencies;
     List<String> _columnNames;
 
+    private List<List<Item>> _deserializedParams;
     private DynamicContext _context;
     
     private transient Kryo _kryo;
@@ -55,6 +57,7 @@ public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
         _expression = expression;
         _inputSchema = inputSchema;
 
+        _deserializedParams = new ArrayList<>();
         _context = new DynamicContext();
         
         _kryo = new Kryo();
@@ -69,19 +72,14 @@ public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
 
     @Override
     public Boolean call(WrappedArray wrappedParameters) {
+        _deserializedParams.clear();
         _context.removeAllVariables();
 
-        Object[] serializedParams = (Object[]) wrappedParameters.array();
-        
+        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
+
         // prepare dynamic context
         for (int columnIndex = 0; columnIndex < _columnNames.size(); columnIndex++) {
-            String var = _columnNames.get(columnIndex);
-            if(_dependencies.contains(var))
-            {
-                byte[] bytes = (byte[]) serializedParams[columnIndex];
-                List<Item> deserializedParam = (List<Item>) DataFrameUtils.deserializeByteArray(bytes, _kryo, _input);
-                _context.addVariableValue(var, deserializedParam);
-            }
+            _context.addVariableValue(_columnNames.get(columnIndex), _deserializedParams.get(columnIndex));
         }
 
         // apply expression in the dynamic context
