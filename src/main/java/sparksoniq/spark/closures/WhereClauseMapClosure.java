@@ -34,7 +34,6 @@ import sparksoniq.spark.DataFrameUtils;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 public class WhereClauseMapClosure implements FilterFunction<Row> {
     private final RuntimeIterator _expression;
@@ -60,16 +59,17 @@ public class WhereClauseMapClosure implements FilterFunction<Row> {
         _context.removeAllVariables();
 
         String[] columnNames = _inputSchema.fieldNames();
-        Set<String> dependencies = _expression.getVariableDependencies();
+
+        // Deserialize row
+        List<Object> deserializedRow = DataFrameUtils.deserializeEntireRow(row, _kryo, _input);
+        for (Object columnObject : deserializedRow) {
+            List<Item> column = (List<Item>) columnObject;
+            _rowColumns.add(column);
+        }
 
         // Create dynamic context with deserialized data
         for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
-            String field = columnNames[columnIndex];
-            if(dependencies.contains(field))
-            {
-                List<Item> i = DataFrameUtils.deserializeRowField(row, columnIndex, _kryo, _input); //rowColumns.get(columnIndex);
-                _context.addVariableValue(field, i);
-            }
+            _context.addVariableValue(columnNames[columnIndex], _rowColumns.get(columnIndex));
         }
 
         _expression.open(_context);
