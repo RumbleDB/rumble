@@ -41,7 +41,6 @@ import java.util.Set;
 public class LetClauseUDF implements UDF1<WrappedArray, byte[]> {
     private RuntimeIterator _expression;
     private StructType _inputSchema;
-    Set<String> _dependencies;
     List<String> _columnNames;
 
     private DynamicContext _context;
@@ -67,7 +66,6 @@ public class LetClauseUDF implements UDF1<WrappedArray, byte[]> {
         _input = new Input();
         
         _columnNames = columnNames;
-        _dependencies = _expression.getVariableDependencies();
     }
 
 
@@ -81,12 +79,9 @@ public class LetClauseUDF implements UDF1<WrappedArray, byte[]> {
         // prepare dynamic context
         for (int columnIndex = 0; columnIndex < _columnNames.size(); columnIndex++) {
             String var = _columnNames.get(columnIndex);
-            if(_dependencies.contains(var))
-            {
-                byte[] bytes = (byte[]) serializedParams[columnIndex];
-                List<Item> deserializedParam = (List<Item>) DataFrameUtils.deserializeByteArray(bytes, _kryo, _input);
-                _context.addVariableValue(var, deserializedParam);
-            }
+            byte[] bytes = (byte[]) serializedParams[columnIndex];
+            List<Item> deserializedParam = (List<Item>) DataFrameUtils.deserializeByteArray(bytes, _kryo, _input);
+            _context.addVariableValue(var, deserializedParam);
         }
 
         // apply expression in the dynamic context
