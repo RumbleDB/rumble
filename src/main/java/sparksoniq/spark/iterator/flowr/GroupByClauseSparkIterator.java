@@ -306,10 +306,6 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
             typedFields.add(DataTypes.createStructField(columnName, columnType, true));
         }
 
-        df.sparkSession().udf().register("createGroupingColumns",
-                new GroupClauseCreateColumnsUDF(variableAccessExpressions, columnNames),
-                DataTypes.createStructType(typedFields));
-
         String serializerUDFName = "serialize";
         df.sparkSession().udf().register(serializerUDFName,
                 new GroupClauseSerializeAggregateResultsUDF(),
@@ -317,6 +313,10 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
 
         List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema, -1, null);
         List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, null);
+
+        df.sparkSession().udf().register("createGroupingColumns",
+                new GroupClauseCreateColumnsUDF(variableAccessExpressions, UDFcolumns),
+                DataTypes.createStructType(typedFields));
 
         String selectSQL = DataFrameUtils.getSQL(allColumns, true);
         String udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
