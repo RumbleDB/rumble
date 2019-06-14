@@ -25,6 +25,7 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.StructType;
 
 import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.ByteBufferOutput;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
@@ -37,7 +38,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 public class ForClauseFlatMapClosure implements FlatMapFunction<Row, Row> {
     private RuntimeIterator _expression;
@@ -80,16 +80,17 @@ public class ForClauseFlatMapClosure implements FlatMapFunction<Row, Row> {
         _results.clear();
 
         String[] columnNames = _inputSchema.fieldNames();
-        Set<String> dependencies = _expression.getVariableDependencies();
+
+        // Deserialize row
+        List<Object> deserializedRow = DataFrameUtils.deserializeEntireRow(row, _kryo, _input);
+        for (Object columnObject : deserializedRow) {
+            List<Item> column = (List<Item>) columnObject;
+            _rowColumns.add(column);
+        }
 
         // prepare dynamic context
         for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
-            String field = columnNames[columnIndex];
-            if(dependencies.contains(field))
-            {
-                List<Item> i = DataFrameUtils.deserializeRowField(row, columnIndex, _kryo, _input); //rowColumns.get(columnIndex);
-                _context.addVariableValue(field, i);
-            }
+            _context.addVariableValue(columnNames[columnIndex], _rowColumns.get(columnIndex));
         }
 
         // apply expression in the dynamic context
