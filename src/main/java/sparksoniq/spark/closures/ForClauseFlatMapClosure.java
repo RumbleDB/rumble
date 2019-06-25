@@ -68,6 +68,7 @@ public class ForClauseFlatMapClosure implements FlatMapFunction<Row, Row> {
         _newColumn = new ArrayList<>();
 
         _kryo = new Kryo();
+        _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _output = new Output(128, -1);
         _input = new Input();
@@ -114,6 +115,7 @@ public class ForClauseFlatMapClosure implements FlatMapFunction<Row, Row> {
         in.defaultReadObject();
         
         _kryo = new Kryo();
+        _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _output = new Output(128, -1);
         _input = new Input();

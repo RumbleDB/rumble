@@ -64,6 +64,7 @@ public class LetClauseMapClosure implements MapFunction<Row, Row> {
         _newColumn = new ArrayList<>();
 
         _kryo = new Kryo();
+        _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _output = new ByteBufferOutput(128, -1);
         _input = new Input();
@@ -105,6 +106,7 @@ public class LetClauseMapClosure implements MapFunction<Row, Row> {
         in.defaultReadObject();
         
         _kryo = new Kryo();
+        _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _output = new ByteBufferOutput(128, -1);
         _input = new Input();

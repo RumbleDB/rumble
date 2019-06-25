@@ -60,6 +60,7 @@ public class GroupClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
         result = new ArrayList<>();
         
         _kryo = new Kryo();
+        _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _input = new Input();
     }
@@ -116,6 +117,7 @@ public class GroupClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
         in.defaultReadObject();
         
         _kryo = new Kryo();
+        _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _input = new Input();
     }
