@@ -21,8 +21,14 @@
 package sparksoniq.jsoniq.item;
 
 import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.Serializer;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+
+import avro.shaded.com.google.common.cache.Cache;
+
+import org.apache.commons.collections.map.AbstractReferenceMap;
+import org.apache.commons.collections.map.ReferenceMap;
 import org.apache.commons.lang3.StringEscapeUtils;
 import sparksoniq.exceptions.DuplicateObjectKeyException;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
@@ -31,9 +37,11 @@ import sparksoniq.semantics.types.ItemTypes;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 public class ObjectItem extends JsonItem {
 
@@ -219,5 +227,76 @@ public class ObjectItem extends JsonItem {
         }
         return result;
     }
+    
+    public static class ObjectItemSerializer extends Serializer<ObjectItem> {
+        
+        ThreadLocal<Map> cache = new ThreadLocal<Map>() {
+            @Override
+            protected Map initialValue() {
+                return new ReferenceMap(AbstractReferenceMap.SOFT, AbstractReferenceMap.SOFT);
+            }
+        };
+        
+        
+        @Override
+        public void write(Kryo kryo, Output output, ObjectItem object) {
+            object.write(kryo, output);
+            cache.get().put(new ByteArray(output.toBytes()), object);
+        }
 
+        @Override
+        public ObjectItem read(Kryo kryo, Input input, Class<ObjectItem> type) {
+            ObjectItem i = (ObjectItem) cache.get().get(new ByteArray(input.getBuffer()));
+            if(i!= null)
+            {
+                return i;
+            }
+            ObjectItem result = new ObjectItem();
+            result.read(kryo,  input);
+            return result;
+        }
+        
+    }
+    
+    public static class ByteArray {
+        byte[] content;
+        
+        public ByteArray(byte[] bytes)
+        {
+            content = bytes;
+        }
+        
+        @Override
+        public int hashCode()
+        {
+            int result = 0;
+            for(byte b: content)
+            {
+                result += b;
+            }
+            return result;
+        }
+        
+        @Override
+        public boolean equals(Object o)
+        {
+            if(!(o instanceof ByteArray))
+            {
+                return false;
+            }
+            byte[] other = ((ByteArray) o).content;
+            if(other.length != content.length)
+            {
+                return false;
+            }
+            for (int i = 0; i < content.length; ++i)
+            {
+                if(content[i] != other[i])
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
 }
