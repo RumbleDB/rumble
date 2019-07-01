@@ -36,6 +36,7 @@ import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -230,10 +231,17 @@ public class ObjectItem extends JsonItem {
     
     public static class ObjectItemSerializer extends Serializer<ObjectItem> {
         
-        ThreadLocal<Map> cache = new ThreadLocal<Map>() {
+        private static ThreadLocal<byte[]> lastBytes = new ThreadLocal<byte[]>() {
             @Override
-            protected Map initialValue() {
-                return new ReferenceMap(AbstractReferenceMap.SOFT, AbstractReferenceMap.SOFT);
+            protected byte[] initialValue() {
+                return null;
+            }
+        };
+        
+        private static ThreadLocal<ObjectItem> lastObjectItem = new ThreadLocal<ObjectItem>() {
+            @Override
+            protected ObjectItem initialValue() {
+                return null;
             }
         };
         
@@ -241,62 +249,22 @@ public class ObjectItem extends JsonItem {
         @Override
         public void write(Kryo kryo, Output output, ObjectItem object) {
             object.write(kryo, output);
-            cache.get().put(new ByteArray(output.toBytes()), object);
+            lastBytes.set(output.toBytes());
+            lastObjectItem.set(object);
         }
 
         @Override
         public ObjectItem read(Kryo kryo, Input input, Class<ObjectItem> type) {
-            ObjectItem i = (ObjectItem) cache.get().get(new ByteArray(input.getBuffer()));
-            if(i!= null)
+            byte[] i = lastBytes.get();
+            ObjectItem o = lastObjectItem.get();
+            if(Arrays.equals(input.getBuffer(), i))
             {
-                return i;
+                return o;
             }
             ObjectItem result = new ObjectItem();
             result.read(kryo,  input);
             return result;
         }
         
-    }
-    
-    public static class ByteArray {
-        byte[] content;
-        
-        public ByteArray(byte[] bytes)
-        {
-            content = bytes;
-        }
-        
-        @Override
-        public int hashCode()
-        {
-            int result = 0;
-            for(byte b: content)
-            {
-                result += b;
-            }
-            return result;
-        }
-        
-        @Override
-        public boolean equals(Object o)
-        {
-            if(!(o instanceof ByteArray))
-            {
-                return false;
-            }
-            byte[] other = ((ByteArray) o).content;
-            if(other.length != content.length)
-            {
-                return false;
-            }
-            for (int i = 0; i < content.length; ++i)
-            {
-                if(content[i] != other[i])
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
     }
 }

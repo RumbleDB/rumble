@@ -66,7 +66,7 @@ public class DataFrameUtils {
     {
         kryo.register(Item.class);
         kryo.register(ArrayItem.class);
-        kryo.register(ObjectItem.class);
+        kryo.register(ObjectItem.class, new ObjectItem.ObjectItemSerializer());
         kryo.register(StringItem.class);
         kryo.register(IntegerItem.class);
         kryo.register(DoubleItem.class);
