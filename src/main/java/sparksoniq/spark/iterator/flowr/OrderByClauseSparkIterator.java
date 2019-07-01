@@ -211,7 +211,7 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         Dataset<Row> df = _child.getDataFrame(context);
         StructType inputSchema = df.schema();
 
-        List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema, -1, null);
+        List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema);
         List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, _dependencies);
 
         df.sparkSession().udf().register("determineOrderingDataType",

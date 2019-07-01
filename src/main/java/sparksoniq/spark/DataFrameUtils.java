@@ -41,6 +41,7 @@ import sparksoniq.jsoniq.item.KryoManager;
 import sparksoniq.jsoniq.item.NullItem;
 import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.item.StringItem;
+import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -90,8 +91,8 @@ public class DataFrameUtils {
     /**
      * @param inputSchema            schema specifies the columns to be used in the query
      * @param duplicateVariableIndex enables skipping a variable
-     * @param trailingComma          boolean field to have a trailing comma
-     * @return comma separated variables to be used in spark SQL
+     * @param dependencies           restriction of the results to within a specified set
+     * @return list of SQL column names in the schema
      */
     public static List<String> getColumnNames(
             StructType inputSchema,
@@ -113,6 +114,29 @@ public class DataFrameUtils {
     }
 
     /**
+     * @param inputSchema schema specifies the columns to be used in the query
+     * @return list of SQL column names in the schema
+     */
+    public static List<String> getColumnNames(
+            StructType inputSchema) {
+        return getColumnNames(inputSchema);
+    }
+   
+    public static void prepareDynamicContext(
+            DynamicContext context,
+            List<String> columnNames,
+            List<List<Item>> deserializedParams
+        )
+    {
+     // prepare dynamic context
+        for (int columnIndex = 0; columnIndex < columnNames.size(); columnIndex++) {
+            context.addVariableValue(columnNames.get(columnIndex), deserializedParams.get(columnIndex));
+        }
+    }
+    
+    private static String COMMA = ";";
+
+    /**
      * @param inputSchema            schema specifies the columns to be used in the query
      * @param duplicateVariableIndex enables skipping a variable
      * @param trailingComma          boolean field to have a trailing comma
@@ -125,7 +149,7 @@ public class DataFrameUtils {
         String comma = "";
         for (String var : columnNames) {
             queryColumnString.append(comma);
-            comma = ",";
+            comma = COMMA;
             queryColumnString.append("`");
             queryColumnString.append(var);
             queryColumnString.append("`");

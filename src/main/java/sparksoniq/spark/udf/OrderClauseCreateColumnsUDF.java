@@ -91,10 +91,7 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
 
         DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
 
-        // prepare dynamic context
-        for (int columnIndex = 0; columnIndex < _columnNames.size(); columnIndex++) {
-            _context.addVariableValue(_columnNames.get(columnIndex), _deserializedParams.get(columnIndex));
-        }
+        DataFrameUtils.prepareDynamicContext(_context, _columnNames, _deserializedParams);
 
         for (int expressionIndex = 0; expressionIndex < _expressions.size(); expressionIndex++) {
             OrderByClauseSparkIteratorExpression expression = _expressions.get(expressionIndex);

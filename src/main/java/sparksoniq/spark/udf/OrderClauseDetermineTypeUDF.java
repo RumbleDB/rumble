@@ -84,10 +84,7 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
 
         DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
 
-        // prepare dynamic context
-        for (int columnIndex = 0; columnIndex < _columnNames.size(); columnIndex++) {
-            _context.addVariableValue(_columnNames.get(columnIndex), _deserializedParams.get(columnIndex));
-        }
+        DataFrameUtils.prepareDynamicContext(_context, _columnNames, _deserializedParams);
 
         for (OrderByClauseSparkIteratorExpression expression : _expressions) {
             // apply expression in the dynamic context

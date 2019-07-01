@@ -314,7 +314,7 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
                 DataTypes.BinaryType);
         
 
-        List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema, -1, null);
+        List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema);
         List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, groupingVariables);
 
         df.sparkSession().udf().register("createGroupingColumns",
