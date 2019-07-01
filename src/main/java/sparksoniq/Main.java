@@ -66,7 +66,8 @@ public class Main {
                 System.out.println("spark-submit --master local[*] spark-rumble-1.0.jar --query-path my-query.jq --output-path my-output.json --log-path my-log.txt");
             }
         } catch (Exception ex) {
-            throw new CliException(ex.getMessage());
+            System.out.println("An error has occured: " + ex.getMessage());
+            ex.printStackTrace();
         }
 
     }
