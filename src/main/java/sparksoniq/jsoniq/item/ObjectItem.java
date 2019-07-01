@@ -271,7 +271,6 @@ public class ObjectItem extends JsonItem {
                 int inputLength = input.read(inputBytes);
                 if(Arrays.equals(bytes, inputBytes))
                 {
-                    System.out.println("Cache hit!");
                     return object;
                 }
                 input.setPosition(position);
