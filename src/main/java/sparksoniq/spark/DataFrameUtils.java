@@ -119,7 +119,7 @@ public class DataFrameUtils {
      */
     public static List<String> getColumnNames(
             StructType inputSchema) {
-        return getColumnNames(inputSchema);
+        return getColumnNames(inputSchema, -1, null);
     }
    
     public static void prepareDynamicContext(
