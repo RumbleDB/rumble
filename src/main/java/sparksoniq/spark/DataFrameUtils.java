@@ -134,7 +134,7 @@ public class DataFrameUtils {
         }
     }
     
-    private static String COMMA = ";";
+    private static String COMMA = ",";
 
     /**
      * @param inputSchema            schema specifies the columns to be used in the query
