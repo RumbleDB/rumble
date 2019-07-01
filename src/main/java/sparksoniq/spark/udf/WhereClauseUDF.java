@@ -36,10 +36,13 @@ import sparksoniq.spark.DataFrameUtils;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
     private RuntimeIterator _expression;
     private StructType _inputSchema;
+    Set<String> _dependencies;
+    List<String> _columnNames;
 
     private List<List<Item>> _deserializedParams;
     private DynamicContext _context;
@@ -49,7 +52,8 @@ public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
 
     public WhereClauseUDF(
             RuntimeIterator expression,
-            StructType inputSchema) {
+            StructType inputSchema,
+            List<String> columnNames) {
         _expression = expression;
         _inputSchema = inputSchema;
 
@@ -57,8 +61,13 @@ public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
         _context = new DynamicContext();
         
         _kryo = new Kryo();
+        _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _input = new Input();
+        
+        _columnNames = columnNames;
+        _dependencies = _expression.getVariableDependencies();
+
     }
 
 
@@ -69,12 +78,7 @@ public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
 
         DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
 
-        String[] columnNames = _inputSchema.fieldNames();
-
-        // prepare dynamic context
-        for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
-            _context.addVariableValue(columnNames[columnIndex], _deserializedParams.get(columnIndex));
-        }
+        DataFrameUtils.prepareDynamicContext(_context, _columnNames, _deserializedParams);
 
         // apply expression in the dynamic context
         _expression.open(_context);
@@ -89,6 +93,7 @@ public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
         in.defaultReadObject();
         
         _kryo = new Kryo();
+        _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _input = new Input();
     }

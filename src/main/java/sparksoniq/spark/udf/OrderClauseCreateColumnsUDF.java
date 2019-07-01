@@ -40,11 +40,15 @@ import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpr
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
     private List<OrderByClauseSparkIteratorExpression> _expressions;
+    Set<String> _dependencies;
+    List<String> _columnNames;
     private StructType _inputSchema;
     private Map _allColumnTypes;
 
@@ -58,7 +62,8 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
     public OrderClauseCreateColumnsUDF(
             List<OrderByClauseSparkIteratorExpression> expressions,
             StructType inputSchema,
-            Map allColumnTypes) {
+            Map allColumnTypes,
+            List<String> columnNames) {
         _expressions = expressions;
         _inputSchema = inputSchema;
         _allColumnTypes = allColumnTypes;
@@ -67,7 +72,14 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
         _context = new DynamicContext();
         _results = new ArrayList<>();
         
+        _dependencies = new HashSet<String>();
+        for (OrderByClauseSparkIteratorExpression expression : _expressions) {
+            _dependencies.addAll(expression.getExpression().getVariableDependencies());
+        }
+        _columnNames = columnNames;
+        
         _kryo = new Kryo();
+        _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _input = new Input();
     }
@@ -75,10 +87,12 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
     @Override
     public Row call(WrappedArray wrappedParameters) {
         _deserializedParams.clear();
+        _context.removeAllVariables();
         _results.clear();
 
         DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
-        String[] columnNames = _inputSchema.fieldNames();
+
+        DataFrameUtils.prepareDynamicContext(_context, _columnNames, _deserializedParams);
 
         for (int expressionIndex = 0; expressionIndex < _expressions.size(); expressionIndex++) {
             OrderByClauseSparkIteratorExpression expression = _expressions.get(expressionIndex);
@@ -91,12 +105,6 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
             int valueOrderIndex = 3;                 // values are larger than null and empty sequence(default)
             if (expression.getEmptyOrder() == OrderByClauseExpr.EMPTY_ORDER.LAST) {
                 emptySequenceOrderIndex = 4;
-            }
-
-            // prepare dynamic context
-            _context.removeAllVariables();
-            for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
-                _context.addVariableValue(columnNames[columnIndex], _deserializedParams.get(columnIndex));
             }
 
             // apply expression in the dynamic context
@@ -145,6 +153,7 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
         in.defaultReadObject();
         
         _kryo = new Kryo();
+        _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _input = new Input();
     }

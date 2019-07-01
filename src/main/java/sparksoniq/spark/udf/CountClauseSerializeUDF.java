@@ -44,6 +44,7 @@ public class CountClauseSerializeUDF implements UDF1<Long, byte[]> {
         _nextResult = new ArrayList<>();
         
         _kryo = new Kryo();
+        _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _output = new Output(128, -1);
     }
@@ -61,6 +62,7 @@ public class CountClauseSerializeUDF implements UDF1<Long, byte[]> {
         in.defaultReadObject();
         
         _kryo = new Kryo();
+        _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _output = new Output(128, -1);
     }

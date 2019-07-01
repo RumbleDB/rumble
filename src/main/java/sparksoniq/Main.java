@@ -17,7 +17,6 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
-
 package sparksoniq;
 
 

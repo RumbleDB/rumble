@@ -25,7 +25,6 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 
 import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.ByteBufferOutput;
 import com.esotericsoftware.kryo.io.Output;
 
 import sparksoniq.jsoniq.item.Item;
@@ -45,6 +44,7 @@ public class ForClauseLocalToRowClosure implements Function<Item, Row> {
     public ForClauseLocalToRowClosure(FlworTuple inputTuple) {
         this._inputTuple = inputTuple;
         _kryo = new Kryo();
+        _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _output = new Output(128, -1);
     }
@@ -71,6 +71,7 @@ public class ForClauseLocalToRowClosure implements Function<Item, Row> {
         in.defaultReadObject();
         
         _kryo = new Kryo();
+        _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _output = new Output(128, -1);
     }
