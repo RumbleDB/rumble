@@ -248,18 +248,33 @@ public class ObjectItem extends JsonItem {
         
         @Override
         public void write(Kryo kryo, Output output, ObjectItem object) {
+            int position1 = output.position();
             object.write(kryo, output);
-            lastBytes.set(output.toBytes());
+            byte[] buffer = output.getBuffer();
+            int position2 = output.position();
+
+            byte[] serialized = new byte[position2 - position1];
+            System.arraycopy(buffer, position1, serialized, 0, position2 - position1);
+
+            lastBytes.set(serialized);
             lastObjectItem.set(object);
         }
 
         @Override
         public ObjectItem read(Kryo kryo, Input input, Class<ObjectItem> type) {
-            byte[] i = lastBytes.get();
-            ObjectItem o = lastObjectItem.get();
-            if(Arrays.equals(input.getBuffer(), i))
+            byte[] bytes = lastBytes.get();
+            if(bytes != null)
             {
-                return o;
+                ObjectItem object = lastObjectItem.get();
+                int position = input.position();
+                byte[] inputBytes = new byte[bytes.length];
+                int inputLength = input.read(inputBytes);
+                if(Arrays.equals(bytes, inputBytes))
+                {
+                    System.out.println("Cache hit!");
+                    return object;
+                }
+                input.setPosition(position);
             }
             ObjectItem result = new ObjectItem();
             result.read(kryo,  input);
