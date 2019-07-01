@@ -25,7 +25,6 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 
 import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.ByteBufferOutput;
 import com.esotericsoftware.kryo.io.Output;
 
 import sparksoniq.jsoniq.item.Item;

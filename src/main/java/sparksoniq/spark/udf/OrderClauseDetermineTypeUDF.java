@@ -36,10 +36,14 @@ import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpr
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
     private List<OrderByClauseSparkIteratorExpression> _expressions;
+    Set<String> _dependencies;
+    List<String> _columnNames;
     private StructType _inputSchema;
 
     private List<List<Item>> _deserializedParams;
@@ -52,13 +56,20 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
 
     public OrderClauseDetermineTypeUDF(
             List<OrderByClauseSparkIteratorExpression> expressions,
-            StructType inputSchema) {
+            StructType inputSchema,
+            List<String> columnNames) {
         _expressions = expressions;
         _inputSchema = inputSchema;
 
         _deserializedParams = new ArrayList<>();
         _context = new DynamicContext();
         result = new ArrayList<>();
+        
+        _dependencies = new HashSet<String>();
+        for (OrderByClauseSparkIteratorExpression expression : _expressions) {
+            _dependencies.addAll(expression.getExpression().getVariableDependencies());
+        }
+        _columnNames = columnNames;
         
         _kryo = new Kryo();
         _kryo.setReferences(false);
@@ -69,18 +80,14 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
     @Override
     public List call(WrappedArray wrappedParameters) {
         _deserializedParams.clear();
+        _context.removeAllVariables();
         result.clear();
 
         DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
-        String[] columnNames = _inputSchema.fieldNames();
+
+        DataFrameUtils.prepareDynamicContext(_context, _columnNames, _deserializedParams);
 
         for (OrderByClauseSparkIteratorExpression expression : _expressions) {
-            // prepare dynamic context
-            _context.removeAllVariables();
-            for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
-                _context.addVariableValue(columnNames[columnIndex], _deserializedParams.get(columnIndex));
-            }
-
             // apply expression in the dynamic context
             expression.getExpression().open(_context);
             if (expression.getExpression().hasNext()) {

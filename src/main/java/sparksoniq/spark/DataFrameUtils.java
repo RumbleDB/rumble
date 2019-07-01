@@ -41,12 +41,13 @@ import sparksoniq.jsoniq.item.KryoManager;
 import sparksoniq.jsoniq.item.NullItem;
 import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.item.StringItem;
+import sparksoniq.semantics.DynamicContext;
 
-import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.count;
@@ -90,27 +91,73 @@ public class DataFrameUtils {
     /**
      * @param inputSchema            schema specifies the columns to be used in the query
      * @param duplicateVariableIndex enables skipping a variable
-     * @param trailingComma          boolean field to have a trailing comma
-     * @return comma separated variables to be used in spark SQL
+     * @param dependencies           restriction of the results to within a specified set
+     * @return list of SQL column names in the schema
      */
-    public static String getSQL(
+    public static List<String> getColumnNames(
             StructType inputSchema,
             int duplicateVariableIndex,
-            boolean trailingComma) {
+            Set<String> dependencies) {
+        List<String> result = new ArrayList<String>();
         String[] columnNames = inputSchema.fieldNames();
-        StringBuilder queryColumnString = new StringBuilder();
         for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
             if (columnIndex == duplicateVariableIndex) {
                 continue;
             }
-            queryColumnString.append("`");
-            queryColumnString.append(columnNames[columnIndex]);
-            queryColumnString.append("`");
-            if (trailingComma || columnIndex != (columnNames.length - 1)) {
-                queryColumnString.append(",");
+            String var = columnNames[columnIndex];
+            if(dependencies == null || dependencies.contains(var))
+            {
+                result.add(columnNames[columnIndex]);
             }
         }
+        return result;
+    }
 
+    /**
+     * @param inputSchema schema specifies the columns to be used in the query
+     * @return list of SQL column names in the schema
+     */
+    public static List<String> getColumnNames(
+            StructType inputSchema) {
+        return getColumnNames(inputSchema, -1, null);
+    }
+   
+    public static void prepareDynamicContext(
+            DynamicContext context,
+            List<String> columnNames,
+            List<List<Item>> deserializedParams
+        )
+    {
+     // prepare dynamic context
+        for (int columnIndex = 0; columnIndex < columnNames.size(); columnIndex++) {
+            context.addVariableValue(columnNames.get(columnIndex), deserializedParams.get(columnIndex));
+        }
+    }
+    
+    private static String COMMA = ",";
+
+    /**
+     * @param inputSchema            schema specifies the columns to be used in the query
+     * @param duplicateVariableIndex enables skipping a variable
+     * @param trailingComma          boolean field to have a trailing comma
+     * @return comma separated variables to be used in spark SQL
+     */
+    public static String getSQL(
+            List<String> columnNames,
+            boolean trailingComma) {
+        StringBuilder queryColumnString = new StringBuilder();
+        String comma = "";
+        for (String var : columnNames) {
+            queryColumnString.append(comma);
+            comma = COMMA;
+            queryColumnString.append("`");
+            queryColumnString.append(var);
+            queryColumnString.append("`");
+        }
+        if(trailingComma)
+        {
+            queryColumnString.append(comma);
+        }
         return queryColumnString.toString();
     }
 
@@ -190,17 +237,10 @@ public class DataFrameUtils {
         return RowFactory.create(newRowColumns.toArray());
     }
 
-    public static Object deserializeRowColumn(Row row, int columnIndex) {
-        Kryo kryo = KM.getOrCreateKryo();
-
-        Input input = new Input(new ByteArrayInputStream((byte[]) row.get(columnIndex)));
-
-        Object obj = kryo.readClassAndObject(input);
-        input.close();
-
-        KM.releaseKryoInstance(kryo);
-
-        return obj;
+    public static List<Item> deserializeRowField(Row row, int columnIndex, Kryo kryo, Input input) {
+        byte[] bytes = (byte[]) row.get(columnIndex);
+        input.setBuffer(bytes);
+        return (List<Item>) kryo.readClassAndObject(input);
     }
 
     public static List<Object> deserializeEntireRow(Row row, Kryo kryo, Input input) {
