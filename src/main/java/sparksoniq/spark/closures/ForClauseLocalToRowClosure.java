@@ -44,6 +44,7 @@ public class ForClauseLocalToRowClosure implements Function<Item, Row> {
     public ForClauseLocalToRowClosure(FlworTuple inputTuple) {
         this._inputTuple = inputTuple;
         _kryo = new Kryo();
+        _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _output = new Output(128, -1);
     }
@@ -70,6 +71,7 @@ public class ForClauseLocalToRowClosure implements Function<Item, Row> {
         in.defaultReadObject();
         
         _kryo = new Kryo();
+        _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _output = new Output(128, -1);
     }

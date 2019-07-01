@@ -61,6 +61,7 @@ public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
         _context = new DynamicContext();
         
         _kryo = new Kryo();
+        _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _input = new Input();
         
@@ -92,6 +93,7 @@ public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
         in.defaultReadObject();
         
         _kryo = new Kryo();
+        _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _input = new Input();
     }

@@ -51,6 +51,11 @@ public class WhereClauseMapClosure implements FilterFunction<Row> {
 
         _rowColumns = new ArrayList<>();
         _context = new DynamicContext();
+        
+        _kryo = new Kryo();
+        _kryo.setReferences(false);
+        DataFrameUtils.registerKryoClassesKryo(_kryo);
+        _input = new Input();
     }
 
     @Override
@@ -83,6 +88,7 @@ public class WhereClauseMapClosure implements FilterFunction<Row> {
         in.defaultReadObject();
         
         _kryo = new Kryo();
+        _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _input = new Input();
     }
