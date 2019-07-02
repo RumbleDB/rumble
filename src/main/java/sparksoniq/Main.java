@@ -67,6 +67,7 @@ public class Main {
             }
         } catch (Exception ex) {
             System.out.println("An error has occured: " + ex.getMessage());
+            System.out.println("We should investigate this. Please contact us or file an issue on GitHub with your query.");
             ex.printStackTrace();
         }
 
