@@ -44,6 +44,7 @@ import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,11 +63,25 @@ public class DataFrameUtils {
 
     private static KryoManager KM = KryoManager.getInstance();
     
+    private static ThreadLocal<byte[]> lastBytesCache = new ThreadLocal<byte[]>() {
+        @Override
+        protected byte[] initialValue() {
+            return null;
+        }
+    };
+
+    private static ThreadLocal<List<Item>> lastObjectItemCache = new ThreadLocal<List<Item>>() {
+        @Override
+        protected List<Item> initialValue() {
+            return null;
+        }
+    };
+
     public static void registerKryoClassesKryo(Kryo kryo)
     {
         kryo.register(Item.class);
         kryo.register(ArrayItem.class);
-        kryo.register(ObjectItem.class, new ObjectItem.ObjectItemSerializer());
+        kryo.register(ObjectItem.class);
         kryo.register(StringItem.class);
         kryo.register(IntegerItem.class);
         kryo.register(DoubleItem.class);
@@ -85,7 +100,13 @@ public class DataFrameUtils {
     public static byte[] serializeItemList(List<Item> toSerialize, Kryo kryo, Output output) {
         output.clear();
         kryo.writeClassAndObject(output, toSerialize);
-        return output.toBytes();
+        byte[] serializedBytes = output.toBytes();
+        if(toSerialize.size() == 1 && toSerialize.get(0).isObject())
+        {
+            lastBytesCache.set(serializedBytes);
+            lastObjectItemCache.set(toSerialize);
+        }
+        return serializedBytes;
     }
 
     /**
@@ -210,6 +231,15 @@ public class DataFrameUtils {
     }
 
     public static Object deserializeByteArray(byte[] toDeserialize, Kryo kryo, Input input) {
+        byte[] bytes = lastBytesCache.get();
+        if(bytes != null)
+        {
+            if(Arrays.equals(bytes, toDeserialize))
+            {
+                List<Item> deserializedParam = lastObjectItemCache.get();
+                return deserializedParam;
+            }
+        }
         input.setBuffer(toDeserialize);
         return kryo.readClassAndObject(input);
     }
