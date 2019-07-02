@@ -21,14 +21,8 @@
 package sparksoniq.jsoniq.item;
 
 import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.Serializer;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-
-import avro.shaded.com.google.common.cache.Cache;
-
-import org.apache.commons.collections.map.AbstractReferenceMap;
-import org.apache.commons.collections.map.ReferenceMap;
 import org.apache.commons.lang3.StringEscapeUtils;
 import sparksoniq.exceptions.DuplicateObjectKeyException;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
@@ -36,13 +30,10 @@ import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.WeakHashMap;
 
 public class ObjectItem extends JsonItem {
 
@@ -228,4 +219,5 @@ public class ObjectItem extends JsonItem {
         }
         return result;
     }
+
 }
