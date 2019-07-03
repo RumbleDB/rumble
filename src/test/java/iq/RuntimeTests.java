@@ -17,6 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
+
 package iq;
 
 import iq.base.AnnotationsTestsBase;
@@ -136,7 +137,7 @@ public class RuntimeTests extends AnnotationsTestsBase {
         JavaRDD<String> output = rdd.map(o -> o.serialize());
         long resultCount = output.count();
         if (resultCount == 0) {
-            // do nothing, empty output
+            return "";
         }
         if (resultCount == 1) {
             return output.collect().get(0);

@@ -17,12 +17,14 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
+
 package sparksoniq.jsoniq.runtime.iterator;
 
 import org.apache.spark.api.java.JavaRDD;
 
 import sparksoniq.Main;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.SparkRuntimeException;
 import sparksoniq.io.json.JiqsItemParser;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -49,7 +51,17 @@ public abstract class SparkRuntimeIterator extends RuntimeIterator {
     }
 
     @Override
-    public void reset(DynamicContext context) {
+    public boolean isDataFrame() {
+        return false;
+    }
+
+    @Override
+    public boolean getDataFrame() {
+        throw new SparkRuntimeException("Iterator has no DataFrames", getMetadata());
+    }
+
+    @Override
+    public void reset(DynamicContext context){
         super.reset(context);
         result = null;
     }

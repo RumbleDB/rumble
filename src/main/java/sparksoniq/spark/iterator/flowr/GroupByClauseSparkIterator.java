@@ -17,10 +17,17 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
+
 package sparksoniq.spark.iterator.flowr;
 
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.DataType;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import sparksoniq.exceptions.InvalidGroupVariableException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
@@ -34,11 +41,16 @@ import sparksoniq.jsoniq.runtime.tupleiterator.SparkRuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.closures.GroupByLinearizeTupleClosure;
 import sparksoniq.spark.closures.GroupByToPairMapClosure;
 import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
+import sparksoniq.spark.udf.GroupClauseCreateColumnsUDF;
+import sparksoniq.spark.udf.GroupClauseSerializeAggregateResultsUDF;
+import sparksoniq.spark.udf.LetClauseUDF;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -47,20 +59,35 @@ import java.util.Map;
 import java.util.Set;
 
 public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
-    private final List<GroupByClauseSparkIteratorExpression> _variables;
+    private final List<GroupByClauseSparkIteratorExpression> _expressions;
     private List<FlworTuple> _localTupleResults;
     private int _resultIndex;
-
+    Set<String> _dependencies;
 
     public GroupByClauseSparkIterator(RuntimeTupleIterator child, List<GroupByClauseSparkIteratorExpression> variables,
                                       IteratorMetadata iteratorMetadata) {
         super(child, iteratorMetadata);
-        this._variables = variables;
+        this._expressions = variables;
+        _dependencies = new HashSet<String>();
+        for(GroupByClauseSparkIteratorExpression e : _expressions)
+        {
+            if(e.getExpression() != null)
+            {
+                _dependencies.addAll(e.getExpression().getVariableDependencies());
+            } else {
+                _dependencies.add(e.getVariableReference().getVariableName());
+            }
+        }
     }
 
     @Override
     public boolean isRDD() {
         return _child.isRDD();
+    }
+
+    @Override
+    public boolean isDataFrame() {
+        return _child.isDataFrame();
     }
 
     @Override
@@ -85,7 +112,7 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
 
     @Override
     public FlworTuple next() {
-        if (_hasNext == true) {
+        if (_hasNext) {
 
             if (_localTupleResults == null) {
                 _localTupleResults = new ArrayList<>();
@@ -127,15 +154,15 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
             FlworTuple inputTuple = _child.next();
 
             List<Item> results = new ArrayList<>();
-            for (GroupByClauseSparkIteratorExpression _groupVariable : _variables) {
+            for (GroupByClauseSparkIteratorExpression expression : _expressions) {
                 tupleContext.removeAllVariables();                     // clear the previous variables
                 tupleContext.setBindingsFromTuple(inputTuple);        // assign new variables from new tuple
 
                 // if grouping on an expression
-                RuntimeIterator groupVariableExpression = _groupVariable.getExpression();
+                RuntimeIterator groupVariableExpression = expression.getExpression();
                 if (groupVariableExpression != null) {
-                    if (inputTuple.contains(_groupVariable.getVariableReference().getVariableName())) {
-                        throw new InvalidGroupVariableException("Group by variable redeclaration is illegal", _groupVariable.getIteratorMetadata());
+                    if (inputTuple.contains(expression.getVariableReference().getVariableName())) {
+                        throw new InvalidGroupVariableException("Group by variable redeclaration is illegal", expression.getIteratorMetadata());
                     }
 
                     List<Item> newVariableResults = new ArrayList<>();
@@ -143,20 +170,20 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
                     while (groupVariableExpression.hasNext()) {
                         Item resultItem = groupVariableExpression.next();
                         if (!resultItem.isAtomic()) {
-                            throw new NonAtomicKeyException("Group by keys must be atomics", _groupVariable.getIteratorMetadata().getExpressionMetadata());
+                            throw new NonAtomicKeyException("Group by keys must be atomics", expression.getIteratorMetadata().getExpressionMetadata());
                         }
                         newVariableResults.add(resultItem);
                     }
                     groupVariableExpression.close();
 
                     //if a new variable is declared inside the group by clause, insert value in tuple
-                    inputTuple.putValue(_groupVariable.getVariableReference().getVariableName(), newVariableResults, false);
+                    inputTuple.putValue(expression.getVariableReference().getVariableName(), newVariableResults, false);
                     results.addAll(newVariableResults);
 
                 } else { // if grouping on a variable reference
-                    VariableReferenceIterator groupVariableReference = _groupVariable.getVariableReference();
+                    VariableReferenceIterator groupVariableReference = expression.getVariableReference();
                     if (!inputTuple.contains(groupVariableReference.getVariableName())) {
-                        throw new InvalidGroupVariableException("Variable " + groupVariableReference.getVariableName() + " cannot be used in group clause", _groupVariable.getIteratorMetadata());
+                        throw new InvalidGroupVariableException("Variable " + groupVariableReference.getVariableName() + " cannot be used in group clause", expression.getIteratorMetadata());
                     }
 
                     groupVariableReference.open(tupleContext);
@@ -183,7 +210,7 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
         FlworTuple newTuple = new FlworTuple(oldFirstTuple.getKeys().size());
         for (String tupleVariable : oldFirstTuple.getKeys()) {
             iterator = keyTuplePairs.iterator();
-            if (_variables.stream().anyMatch(v -> v.getVariableReference().getVariableName().equals(tupleVariable)))
+            if (_expressions.stream().anyMatch(v -> v.getVariableReference().getVariableName().equals(tupleVariable)))
                 newTuple.putValue(tupleVariable, oldFirstTuple.getValue(tupleVariable), false);
             else {
                 List<Item> allValues = new ArrayList<>();
@@ -201,19 +228,131 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
         _rdd = this._child.getRDD(context);
         //map to pairs - ArrayItem [sort keys] , tuples
         JavaPairRDD<FlworKey, FlworTuple> keyTuplePair = this._rdd
-                .mapToPair(new GroupByToPairMapClosure(_variables));
+                .mapToPair(new GroupByToPairMapClosure(_expressions));
         //group by key
         JavaPairRDD<FlworKey, Iterable<FlworTuple>> groupedPair =
                 keyTuplePair.groupByKey();
         //linearize iterable tuples into arrays
-        this._rdd = groupedPair.map(new GroupByLinearizeTupleClosure(_variables));
+        this._rdd = groupedPair.map(new GroupByLinearizeTupleClosure(_expressions));
         return _rdd;
+    }
+
+    @Override
+    public Dataset<Row> getDataFrame(DynamicContext context) {
+        if (this._child == null) {
+            throw new SparksoniqRuntimeException("Invalid groupby clause.");
+        }
+        Dataset<Row> df = _child.getDataFrame(context);
+        StructType inputSchema;
+        String[] columnNamesArray;
+        List<String> columnNames;
+
+        List<VariableReferenceIterator> variableAccessExpressions = new ArrayList<>();
+        for (int expressionIndex = 0; expressionIndex < _expressions.size(); expressionIndex++) {
+            GroupByClauseSparkIteratorExpression expression = _expressions.get(expressionIndex);
+            inputSchema = df.schema();
+            columnNamesArray = inputSchema.fieldNames();
+            columnNames = Arrays.asList(columnNamesArray);
+
+            if (expression.getExpression() != null) {
+                // if a variable is defined in-place with groupby, execute a let on the variable
+                variableAccessExpressions.add(expression.getVariableReference());
+                String newVariableName = expression.getVariableReference().getVariableName();
+                RuntimeIterator newVariableExpression = expression.getExpression();
+                int duplicateVariableIndex = columnNames.indexOf(newVariableName);
+
+                List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
+                List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, _dependencies);
+
+                df.sparkSession().udf().register("letClauseUDF",
+                        new LetClauseUDF(newVariableExpression, inputSchema, UDFcolumns), DataTypes.BinaryType);
+
+                String selectSQL = DataFrameUtils.getSQL(allColumns, true);
+                String udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
+
+                df.createOrReplaceTempView("input");
+                df = df.sparkSession().sql(
+                        String.format("select %s letClauseUDF(array(%s)) as `%s` from input",
+                                selectSQL, udfSQL, newVariableName)
+                );
+
+            } else {
+                if (!columnNames.contains(expression.getVariableReference().getVariableName())) {
+                    throw new InvalidGroupVariableException(
+                            "Variable " + expression.getVariableReference().getVariableName() + " cannot be used in group clause", expression.getIteratorMetadata()
+                    );
+                }
+                variableAccessExpressions.add(expression.getVariableReference());
+            }
+        }
+
+        // determine grouping data types after all variable introductions are completed
+        inputSchema = df.schema();
+        Set<String> groupingVariables = new HashSet<String>();
+
+        df.createOrReplaceTempView("input");
+
+        // Determine the return type for grouping UDF
+        List<StructField> typedFields = new ArrayList<>();
+        String appendedGroupingColumnsName = "grouping_columns";
+        for (int columnIndex = 0; columnIndex < _expressions.size(); columnIndex++) {
+            groupingVariables.add(_expressions.get(columnIndex).getVariableReference().getVariableName());
+            // every expression contains an int column for null/empty/true/false/string/double check
+            String columnName = columnIndex + "-nullEmptyBooleanCheckField";
+            typedFields.add(DataTypes.createStructField(columnName, DataTypes.IntegerType, false));
+            columnName = columnIndex + "-stringField";
+            DataType columnType = DataTypes.StringType;
+            typedFields.add(DataTypes.createStructField(columnName, columnType, true));
+            columnName = columnIndex + "-doubleField";
+            columnType = DataTypes.DoubleType;
+            typedFields.add(DataTypes.createStructField(columnName, columnType, true));
+        }
+
+        String serializerUDFName = "serialize";
+        df.sparkSession().udf().register(serializerUDFName,
+                new GroupClauseSerializeAggregateResultsUDF(),
+                DataTypes.BinaryType);
+        
+
+        List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema);
+        List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, groupingVariables);
+
+        df.sparkSession().udf().register("createGroupingColumns",
+                new GroupClauseCreateColumnsUDF(variableAccessExpressions, UDFcolumns),
+                DataTypes.createStructType(typedFields));
+
+        String selectSQL = DataFrameUtils.getSQL(allColumns, true);
+        String udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
+
+        String createColumnsSQL = String.format(
+                "select %s createGroupingColumns(array(%s)) as `%s` from input",
+                selectSQL, udfSQL, appendedGroupingColumnsName
+        );
+
+        List<String> groupbyVariableNames = new ArrayList<>();
+        for (VariableReferenceIterator variableAccessExpression : variableAccessExpressions) {
+            groupbyVariableNames.add(variableAccessExpression.getVariableName());
+        }
+        String projectSQL = DataFrameUtils.getGroupbyProjectSQL(
+                inputSchema,
+                -1,
+                false,
+                serializerUDFName,
+                groupbyVariableNames
+        );
+
+        return df.sparkSession().sql(
+                String.format(
+                        "select %s from (%s) group by `%s`",
+                        projectSQL, createColumnsSQL, appendedGroupingColumnsName
+                )
+        );
     }
 
     public Set<String> getVariableDependencies()
     {
         Set<String> result = new HashSet<String>();
-        for(GroupByClauseSparkIteratorExpression iterator : _variables)
+        for(GroupByClauseSparkIteratorExpression iterator : _expressions)
         {
             result.addAll(iterator.getExpression().getVariableDependencies());
         }
@@ -225,7 +364,7 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
     public Set<String> getVariablesBoundInCurrentFLWORExpression()
     {
         Set<String> result = new HashSet<String>();
-        for(GroupByClauseSparkIteratorExpression iterator : _variables)
+        for(GroupByClauseSparkIteratorExpression iterator : _expressions)
         {
             result.add(iterator.getVariableReference().getVariableName());
         }
@@ -236,7 +375,7 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
     public void print(StringBuffer buffer, int indent)
     {
         super.print(buffer, indent);
-        for(GroupByClauseSparkIteratorExpression iterator : _variables)
+        for(GroupByClauseSparkIteratorExpression iterator : _expressions)
         {
             for (int i = 0; i < indent + 1; ++i)
             {

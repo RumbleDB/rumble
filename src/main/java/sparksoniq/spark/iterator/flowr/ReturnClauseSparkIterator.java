@@ -17,9 +17,13 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
+
 package sparksoniq.spark.iterator.flowr;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.StructType;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
@@ -36,7 +40,6 @@ import java.util.Set;
 
 public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
-    private JavaRDD<Item> itemRDD;
     private RuntimeTupleIterator _child;
     private DynamicContext _tupleContext;   // re-use same DynamicContext object for efficiency
     private RuntimeIterator _expression;
@@ -55,10 +58,10 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDD(DynamicContext context) {
-
         RuntimeIterator expression = this._children.get(0);
-        itemRDD = this._child.getRDD(context).flatMap(new ReturnFlatMapClosure(expression));
-        return itemRDD;
+        Dataset<Row> df = this._child.getDataFrame(context);
+        StructType oldSchema = df.schema();
+        return df.javaRDD().flatMap(new ReturnFlatMapClosure(expression, oldSchema));
     }
 
     @Override

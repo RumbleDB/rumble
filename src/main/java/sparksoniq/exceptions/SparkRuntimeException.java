@@ -17,6 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
+
 package sparksoniq.exceptions;
 
 import sparksoniq.exceptions.codes.ErrorCodes;

@@ -17,6 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
+
 package sparksoniq.jsoniq.item;
 
 import com.esotericsoftware.kryo.Kryo;
@@ -28,6 +29,10 @@ import sparksoniq.semantics.types.ItemTypes;
 public class DoubleItem extends AtomicItem {
 
     private double _value;
+
+    public DoubleItem() {
+        super();
+    }
 
     public DoubleItem(double value) {
         super();

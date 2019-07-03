@@ -17,9 +17,15 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
+
 package sparksoniq.spark.iterator.flowr;
 
+import org.apache.hadoop.hdfs.server.namenode.decommission_jsp;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructType;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.Item;
@@ -30,9 +36,12 @@ import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
 import sparksoniq.jsoniq.runtime.tupleiterator.SparkRuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.spark.closures.LetClauseMapClosure;
+import sparksoniq.spark.DataFrameUtils;
+import sparksoniq.spark.closures.OLD_LetClauseMapClosure;
+import sparksoniq.spark.udf.LetClauseUDF;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -43,11 +52,13 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
     private RuntimeIterator _expression;
     private DynamicContext _tupleContext;   // re-use same DynamicContext object for efficiency
     private FlworTuple _nextLocalTupleResult;
+    Set<String> _dependencies;
 
     public LetClauseSparkIterator(RuntimeTupleIterator child, VariableReferenceIterator variableReference, RuntimeIterator expression, IteratorMetadata iteratorMetadata) {
         super(child, iteratorMetadata);
         _variableName = variableReference.getVariableName();
         _expression = expression;
+        _dependencies = _expression.getVariableDependencies();
     }
 
     @Override
@@ -56,6 +67,15 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
             return false;
         } else {
             return _child.isRDD();
+        }
+    }
+
+    @Override
+    public boolean isDataFrame() {
+        if (this._child == null) {
+            return false;
+        } else {
+            return _child.isDataFrame();
         }
     }
 
@@ -133,10 +153,39 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
     public JavaRDD<FlworTuple> getRDD(DynamicContext context) {
         if (this._child != null) {
             this._rdd = _child.getRDD(context);
-            this._rdd = this._rdd.map(new LetClauseMapClosure(_variableName, _expression));
+            this._rdd = this._rdd.map(new OLD_LetClauseMapClosure(_variableName, _expression));
             return _rdd;
         }
         throw new SparksoniqRuntimeException("Initial letClauses don't support RDDs");
+    }
+
+    @Override
+    public Dataset<Row> getDataFrame(DynamicContext context) {
+        //if it's not a start clause
+        if (this._child != null) {
+            Dataset<Row> df = _child.getDataFrame(context);
+
+            StructType inputSchema = df.schema();
+            
+            int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(_variableName);
+
+            List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
+            List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, _dependencies);
+
+            df.sparkSession().udf().register("letClauseUDF",
+                    new LetClauseUDF(_expression, inputSchema, UDFcolumns), DataTypes.BinaryType);
+
+            String selectSQL = DataFrameUtils.getSQL(allColumns, true);
+            String udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
+
+            df.createOrReplaceTempView("input");
+            df = df.sparkSession().sql(
+                    String.format("select %s letClauseUDF(array(%s)) as `%s` from input",
+                            selectSQL, udfSQL, _variableName)
+            );
+            return df;
+        }
+        throw new SparksoniqRuntimeException("Initial letClauses don't support DataFrames");
     }
 
     public Set<String> getVariableDependencies()

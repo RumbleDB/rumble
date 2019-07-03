@@ -17,6 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
+
 package sparksoniq.jsoniq.compiler;
 
 import org.antlr.v4.runtime.ParserRuleContext;

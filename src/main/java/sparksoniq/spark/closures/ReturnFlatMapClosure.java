@@ -17,32 +17,78 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
+
 package sparksoniq.spark.closures;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.StructType;
+
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.spark.DataFrameUtils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
-public class ReturnFlatMapClosure implements FlatMapFunction<FlworTuple, Item> {
-    private final RuntimeIterator _expression;
+public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
+    RuntimeIterator _expression;
+    StructType _oldSchema;
+    
+    private transient Kryo _kryo;
+    private transient Input _input;
 
-    public ReturnFlatMapClosure(RuntimeIterator expression) {
+    public ReturnFlatMapClosure(RuntimeIterator expression, StructType oldSchema) {
         this._expression = expression;
+        this._oldSchema = oldSchema;
+
+        _kryo = new Kryo();
+        _kryo.setReferences(false);
+        DataFrameUtils.registerKryoClassesKryo(_kryo);
+        _input = new Input();
     }
 
     @Override
-    public Iterator<Item> call(FlworTuple v1) {
-        List<Item> result = new ArrayList<>();
-        _expression.open(new DynamicContext(v1));
-        while (_expression.hasNext())
-            result.add(_expression.next());
+    public Iterator<Item> call(Row row) {
+        String[] columnNames = _oldSchema.fieldNames();
+        Set<String> dependencies = _expression.getVariableDependencies();
+
+        // Create dynamic context with deserialized data but only with dependencies
+        DynamicContext context = new DynamicContext();
+        for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
+            String field = columnNames[columnIndex];
+            if(dependencies.contains(field))
+            {
+                List<Item> i = DataFrameUtils.deserializeRowField(row, columnIndex, _kryo, _input); //rowColumns.get(columnIndex);
+                context.addVariableValue(field, i);
+            }
+        }
+
+        // Apply expression to the context
+        List<Item> results = new ArrayList<>();
+        _expression.open(context);
+        while (_expression.hasNext()) {
+            results.add(_expression.next());
+        }
         _expression.close();
-        return result.iterator();
+
+        return results.iterator();
+    }
+    
+    private void readObject(java.io.ObjectInputStream in)
+            throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        
+        _kryo = new Kryo();
+        _kryo.setReferences(false);
+        DataFrameUtils.registerKryoClassesKryo(_kryo);
+        _input = new Input();
     }
 }

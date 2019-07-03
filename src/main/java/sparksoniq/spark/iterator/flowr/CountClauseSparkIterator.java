@@ -21,6 +21,10 @@
 package sparksoniq.spark.iterator.flowr;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructType;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.Item;
@@ -32,9 +36,12 @@ import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
 import sparksoniq.jsoniq.runtime.tupleiterator.SparkRuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.closures.CountClauseClosure;
+import sparksoniq.spark.udf.CountClauseSerializeUDF;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -53,6 +60,11 @@ public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
     @Override
     public boolean isRDD() {
         return _child.isRDD();
+    }
+
+    @Override
+    public boolean isDataFrame() {
+        return _child.isDataFrame();
     }
 
     @Override
@@ -102,7 +114,6 @@ public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
         }
     }
 
-
     @Override
     public JavaRDD<FlworTuple> getRDD(DynamicContext context) {
         String variableName = _variableName;
@@ -110,6 +121,32 @@ public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
         return _child.getRDD(context).zipWithIndex()
                 .mapValues(index -> index + 1)
                 .map(new CountClauseClosure(variableName, getMetadata()));
+    }
+
+    @Override
+    public Dataset<Row> getDataFrame(DynamicContext context) {
+        if (this._child == null) {
+            throw new SparksoniqRuntimeException("Invalid count clause.");
+        }
+        Dataset<Row> df = _child.getDataFrame(context);
+        StructType inputSchema = df.schema();
+        int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(_variableName);
+        
+        List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
+
+        String selectSQL = DataFrameUtils.getSQL(allColumns, true);
+
+        Dataset<Row> dfWithIndex = DataFrameUtils.zipWithIndex(df, new Long(1), _variableName);
+
+        df.sparkSession().udf().register("serializeCountIndex",
+                new CountClauseSerializeUDF(), DataTypes.BinaryType);
+
+        dfWithIndex.createOrReplaceTempView("input");
+        dfWithIndex = dfWithIndex.sparkSession().sql(
+                String.format("select %s serializeCountIndex(`%s`) as `%s` from input",
+                        selectSQL, _variableName, _variableName)
+        );
+        return dfWithIndex;
     }
 
     public Set<String> getVariableDependencies()

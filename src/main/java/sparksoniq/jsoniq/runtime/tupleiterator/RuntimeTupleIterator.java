@@ -17,6 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
+
 package sparksoniq.jsoniq.runtime.tupleiterator;
 
 import com.esotericsoftware.kryo.Kryo;
@@ -28,8 +29,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
@@ -101,6 +103,9 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
 
     public abstract JavaRDD<FlworTuple> getRDD(DynamicContext context);
 
+    public abstract boolean isDataFrame();
+
+    public abstract Dataset<Row> getDataFrame(DynamicContext context);
     /*
     * Variable dependencies are variables that MUST be provided in the dynamic context
     * for successful execution.

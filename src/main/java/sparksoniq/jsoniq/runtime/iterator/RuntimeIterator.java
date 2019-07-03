@@ -17,14 +17,13 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
+
 package sparksoniq.jsoniq.runtime.iterator;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-
-import scala.reflect.internal.Trees.This;
 
 import org.apache.spark.api.java.JavaRDD;
 import sparksoniq.exceptions.InvalidArgumentTypeException;
@@ -160,6 +159,10 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     public abstract boolean isRDD();
 
     public abstract JavaRDD<Item> getRDD(DynamicContext dynamicContext);
+
+    public abstract boolean isDataFrame();
+
+    public abstract boolean getDataFrame();
 
     public abstract Item next();
 

@@ -17,6 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
+
 package utils;
 
 import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;

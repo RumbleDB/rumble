@@ -17,6 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
+
 package sparksoniq.jsoniq.item;
 
 import com.esotericsoftware.kryo.Kryo;
@@ -28,6 +29,10 @@ import sparksoniq.semantics.types.ItemTypes;
 public class StringItem extends AtomicItem {
 
     private String _value;
+
+    public StringItem() {
+        super();
+    }
 
     public StringItem(String value) {
         super();

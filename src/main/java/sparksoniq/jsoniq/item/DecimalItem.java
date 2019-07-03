@@ -17,6 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
+
 package sparksoniq.jsoniq.item;
 
 import com.esotericsoftware.kryo.Kryo;
@@ -31,6 +32,10 @@ import java.math.BigDecimal;
 public class DecimalItem extends AtomicItem {
 
     private BigDecimal _value;
+
+    public DecimalItem() {
+        super();
+    }
 
     public DecimalItem(BigDecimal decimal) {
         super();

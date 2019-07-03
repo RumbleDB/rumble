@@ -17,6 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
+
 package sparksoniq.jsoniq.runtime.iterator.operational;
 
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;

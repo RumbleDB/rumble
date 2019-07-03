@@ -17,6 +17,7 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
+
 package sparksoniq.io.json;
 
 import org.apache.spark.api.java.function.FlatMapFunction;

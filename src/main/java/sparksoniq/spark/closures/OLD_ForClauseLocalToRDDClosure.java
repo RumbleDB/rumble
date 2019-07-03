@@ -17,25 +17,28 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
+
 package sparksoniq.spark.closures;
 
 import org.apache.spark.api.java.function.Function;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.tuple.FlworTuple;
-import sparksoniq.semantics.DynamicContext;
 
-public class WhereClauseClosure implements Function<FlworTuple, Boolean> {
-    private final RuntimeIterator _expression;
+public class OLD_ForClauseLocalToRDDClosure implements Function<Item, FlworTuple> {
+    private final String _variableName;
+    private final FlworTuple _inputTuple;
 
-    public WhereClauseClosure(RuntimeIterator expression) {
-        this._expression = expression;
+
+    public OLD_ForClauseLocalToRDDClosure(String variableName, FlworTuple inputTuple) {
+        this._variableName = variableName;
+        this._inputTuple = inputTuple;
     }
 
     @Override
-    public Boolean call(FlworTuple v1) throws Exception {
-        _expression.open(new DynamicContext(v1));
-        boolean effectiveBooleanValue = RuntimeIterator.getEffectiveBooleanValue(_expression);
-        _expression.close();
-        return effectiveBooleanValue;
+    public FlworTuple call(Item item) throws Exception {
+        FlworTuple result = new FlworTuple(_inputTuple);
+        result.putValue(_variableName, item, true);
+        return result;
+
     }
 }

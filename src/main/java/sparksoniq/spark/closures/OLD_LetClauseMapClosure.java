@@ -6,7 +6,7 @@
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,30 +14,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
+ * Author: Stefan Irimescu
  *
  */
-package sparksoniq.spark.closures;
+ package sparksoniq.spark.closures;
 
 import org.apache.spark.api.java.function.Function;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
+import sparksoniq.semantics.DynamicContext;
 
-public class ForClauseLocalToRDDClosure implements Function<Item, FlworTuple> {
+import java.util.ArrayList;
+import java.util.List;
+
+public class OLD_LetClauseMapClosure implements Function<FlworTuple, FlworTuple> {
     private final String _variableName;
-    private final FlworTuple _inputTuple;
+    private final RuntimeIterator _expression;
 
-
-    public ForClauseLocalToRDDClosure(String variableName, FlworTuple inputTuple) {
+    public OLD_LetClauseMapClosure(String variableName, RuntimeIterator expression) {
+        this._expression = expression;
         this._variableName = variableName;
-        this._inputTuple = inputTuple;
     }
-
     @Override
-    public FlworTuple call(Item item) throws Exception {
-        FlworTuple result = new FlworTuple(_inputTuple);
-        result.putValue(_variableName, item, true);
-        return result;
-
+    public FlworTuple call(FlworTuple v1) throws Exception {
+        List<Item> result = new ArrayList<>();
+        _expression.open(new DynamicContext(v1));
+        while (_expression.hasNext())
+            result.add(_expression.next());
+        _expression.close();
+        v1.putValue(_variableName, result, true);
+        return v1;
     }
 }
