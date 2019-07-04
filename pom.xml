@@ -101,6 +101,11 @@
             <version>20160810</version>
         </dependency>
         <dependency>
+          <groupId>com.jsoniter</groupId>
+          <artifactId>jsoniter</artifactId>
+          <version>0.9.19</version>
+        </dependency>
+        <dependency>
             <groupId>org.jline</groupId>
             <artifactId>jline</artifactId>
             <version>3.11.0</version>
