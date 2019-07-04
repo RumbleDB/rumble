@@ -21,16 +21,13 @@
 package sparksoniq.io.json;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
-import org.json.JSONObject;
 
 import com.jsoniter.JsonIterator;
-import com.jsoniter.any.Any;
 
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.Iterator;
-import java.util.Map;
 
 public class StringToItemMapper implements FlatMapFunction<Iterator<String>, Item> {
     private final IteratorMetadata metadata;
@@ -50,7 +47,6 @@ public class StringToItemMapper implements FlatMapFunction<Iterator<String>, Ite
             @Override
             public Item next() {
                 JsonIterator object = JsonIterator.parse(stringIterator.next());
-//                JSONObject object = new JSONObject(stringIterator.next());
                 return JiqsItemParser.getItemFromObject(object, metadata);
             }
 

@@ -20,13 +20,8 @@
 
 package sparksoniq.io.json;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-
 import com.jsoniter.JsonIterator;
 import com.jsoniter.ValueType;
-import com.jsoniter.any.Any;
-
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemFactory;
@@ -37,7 +32,6 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class JiqsItemParser implements Serializable {
