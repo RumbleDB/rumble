@@ -24,6 +24,9 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.rumbledb.org.json.JSONException;
+import org.rumbledb.org.json.JSONTokener;
+
 import sparksoniq.exceptions.DuplicateObjectKeyException;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.semantics.types.ItemType;
@@ -42,6 +45,8 @@ public class ObjectItem extends JsonItem {
 
     public ObjectItem() {
         super();
+        this._keys = new ArrayList<String>();
+        this._values= new ArrayList<Item>();
     }
 
     public ObjectItem(List<String> keys, List<Item> values, ItemMetadata itemMetadata) {
@@ -220,4 +225,65 @@ public class ObjectItem extends JsonItem {
         return result;
     }
 
+    public ObjectItem(JSONTokener x) throws JSONException {
+        this();
+        char c;
+        String key;
+
+        if (x.nextClean() != '{') {
+            throw x.syntaxError("A JSONObject text must begin with '{'");
+        }
+        for (;;) {
+            c = x.nextClean();
+            switch (c) {
+            case 0:
+                throw x.syntaxError("A JSONObject text must end with '}'");
+            case '}':
+                return;
+            default:
+                x.back();
+                Item k = x.nextValue();
+                key = k.getStringValue();
+            }
+
+            // The key is followed by ':'.
+
+            c = x.nextClean();
+            if (c != ':') {
+                throw x.syntaxError("Expected a ':' after a key");
+            }
+            
+            // Use syntaxError(..) to include error location
+            
+            if (key != null) {
+                // Check if key exists
+                if (_keys.contains(key)) {
+                    // key already exists
+                    throw x.syntaxError("Duplicate key \"" + key + "\"");
+                }
+                // Only add value if non-null
+                Item value = x.nextValue();
+                if (value!=null) {
+                    _keys.add(key);
+                    _values.add(value);
+                }
+            }
+
+            // Pairs are separated by ','.
+
+            switch (x.nextClean()) {
+            case ';':
+            case ',':
+                if (x.nextClean() == '}') {
+                    return;
+                }
+                x.back();
+                break;
+            case '}':
+                return;
+            default:
+                throw x.syntaxError("Expected a ',' or '}'");
+            }
+        }
+    }
 }

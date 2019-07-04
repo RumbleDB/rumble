@@ -21,8 +21,11 @@
 package sparksoniq.io.json;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
-import org.json.JSONObject;
+import org.rumbledb.org.json.JSONObject;
+import org.rumbledb.org.json.JSONTokener;
+
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.Iterator;
@@ -44,8 +47,8 @@ public class StringToItemMapper implements FlatMapFunction<Iterator<String>, Ite
 
             @Override
             public Item next() {
-                JSONObject object = new JSONObject(stringIterator.next());
-                return JiqsItemParser.getItemFromObject(object, metadata);
+                ObjectItem object = new ObjectItem(new JSONTokener(stringIterator.next()));
+                return object;
             }
 
             @Override

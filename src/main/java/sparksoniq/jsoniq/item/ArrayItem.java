@@ -24,6 +24,10 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.rumbledb.org.json.JSONException;
+import org.rumbledb.org.json.JSONObject;
+import org.rumbledb.org.json.JSONTokener;
+
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
@@ -36,6 +40,7 @@ public class ArrayItem extends JsonItem {
     
     public ArrayItem() {
         super();
+        this._arrayItems = new ArrayList<Item>();
     }
 
     public ArrayItem(List<Item> arrayItems) {
@@ -141,5 +146,50 @@ public class ArrayItem extends JsonItem {
             result += getItemAt(i).hashCode();
         }
         return result;
+    }
+    
+    public ArrayItem(JSONTokener x) throws JSONException {
+        this();
+        if (x.nextClean() != '[') {
+            throw x.syntaxError("A JSONArray text must start with '['");
+        }
+        
+        char nextChar = x.nextClean();
+        if (nextChar == 0) {
+            // array is unclosed. No ']' found, instead EOF
+            throw x.syntaxError("Expected a ',' or ']'");
+        }
+        if (nextChar != ']') {
+            x.back();
+            for (;;) {
+                if (x.nextClean() == ',') {
+                    x.back();
+                    _arrayItems.add(ItemFactory.getInstance().createNullItem());
+                } else {
+                    x.back();
+                    _arrayItems.add(x.nextValue());
+                }
+                switch (x.nextClean()) {
+                case 0:
+                    // array is unclosed. No ']' found, instead EOF
+                    throw x.syntaxError("Expected a ',' or ']'");
+                case ',':
+                    nextChar = x.nextClean();
+                    if (nextChar == 0) {
+                        // array is unclosed. No ']' found, instead EOF
+                        throw x.syntaxError("Expected a ',' or ']'");
+                    }
+                    if (nextChar == ']') {
+                        return;
+                    }
+                    x.back();
+                    break;
+                case ']':
+                    return;
+                default:
+                    throw x.syntaxError("Expected a ',' or ']'");
+                }
+            }
+        }
     }
 }

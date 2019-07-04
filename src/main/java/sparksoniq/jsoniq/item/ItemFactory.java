@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
+import org.rumbledb.org.json.JSONTokener;
+
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 
 public class ItemFactory {
@@ -60,6 +62,11 @@ public class ItemFactory {
         return new ArrayItem(items);
     }
     
+    public Item createArrayItem(JSONTokener j)
+    {
+        return new ArrayItem(j);
+    }
+    
     public Item createObjectItem(List<String> keys, List<Item> values, ItemMetadata itemMetadata)
     {
         return new ObjectItem(keys, values, itemMetadata);
@@ -68,6 +75,11 @@ public class ItemFactory {
     public Item createObjectItem(Map<String, List<Item>> keyValuePairs)
     {
         return new ObjectItem(keyValuePairs);
+    }
+    
+    public Item createObjectItem(JSONTokener j)
+    {
+        return new ObjectItem(j);
     }
 
 }

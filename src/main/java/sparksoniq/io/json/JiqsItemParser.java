@@ -20,8 +20,8 @@
 
 package sparksoniq.io.json;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
+import org.rumbledb.org.json.JSONArray;
+import org.rumbledb.org.json.JSONObject;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
