@@ -213,6 +213,13 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema);
         List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, _dependencies);
 
+        
+        
+        
+        
+        
+        
+        
         df.sparkSession().udf().register("determineOrderingDataType",
                 new OrderClauseDetermineTypeUDF(_expressions, inputSchema, UDFcolumns),
                 DataTypes.createArrayType(DataTypes.StringType));
@@ -257,35 +264,27 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
                 }
             }
         }
+        
+        
+        
+        
+        
+        
+        
 
 
         List<StructField> typedFields = new ArrayList<>();  // Determine the return type for ordering UDF
         StringBuilder orderingSQL = new StringBuilder();    // Prepare the SQL statement for the order by query
         String appendedOrderingColumnsName = "ordering_columns";
-        for (int columnIndex = 0; columnIndex < typesForAllColumns.size(); columnIndex++) {
-            String columnTypeString = typesForAllColumns.get(columnIndex);
-            String columnName;
-            DataType columnType;
-
-            // every expression contains an int column for null/empty check
-            columnName = columnIndex + "-nullEmptyCheckField";
+        for (int columnIndex = 0; columnIndex <  _expressions.size(); columnIndex++) {
+            // every expression contains an int column for null/empty/true/false/string/double check
+            String columnName = columnIndex + "-nullEmptyBooleanCheckField";
             typedFields.add(DataTypes.createStructField(columnName, DataTypes.IntegerType, false));
-
-            // create fields for the given value types
-            columnName = columnIndex + "-valueField";
-            if (columnTypeString.equals("bool")) {
-                columnType = DataTypes.BooleanType;
-            } else if (columnTypeString.equals("string")) {
-                columnType = DataTypes.StringType;
-            } else if (columnTypeString.equals("integer")) {
-                columnType = DataTypes.IntegerType;
-            } else if (columnTypeString.equals("double")) {
-                columnType = DataTypes.DoubleType;
-            } else if (columnTypeString.equals("decimal")) {
-                columnType = DataTypes.createDecimalType();
-            } else {
-                throw new SparksoniqRuntimeException("Unexpected ordering type found while determining UDF return type.");
-            }
+            columnName = columnIndex + "-stringField";
+            DataType columnType = DataTypes.StringType;
+            typedFields.add(DataTypes.createStructField(columnName, columnType, true));
+            columnName = columnIndex + "-doubleField";
+            columnType = DataTypes.DoubleType;
             typedFields.add(DataTypes.createStructField(columnName, columnType, true));
 
             OrderByClauseSparkIteratorExpression expression = _expressions.get(columnIndex);
@@ -295,7 +294,7 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
             orderingSQL.append(appendedOrderingColumnsName);
             orderingSQL.append("`.`");
             orderingSQL.append(columnIndex);
-            orderingSQL.append("-nullEmptyCheckField`");
+            orderingSQL.append("-nullEmptyBooleanCheckField`");
             if (expression.isAscending()) {
                 orderingSQL.append(", ");
             } else {
@@ -307,8 +306,20 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
             orderingSQL.append(appendedOrderingColumnsName);
             orderingSQL.append("`.`");
             orderingSQL.append(columnIndex);
-            orderingSQL.append("-valueField`");
-            if (columnIndex != typesForAllColumns.size() - 1) {
+            orderingSQL.append("-stringField`");
+            if (expression.isAscending()) {
+                orderingSQL.append(", ");
+            } else {
+                orderingSQL.append(" desc, ");
+            }
+
+            // prepare sql for expression's 3rd column
+            orderingSQL.append("`");
+            orderingSQL.append(appendedOrderingColumnsName);
+            orderingSQL.append("`.`");
+            orderingSQL.append(columnIndex);
+            orderingSQL.append("-doubleField`");
+            if (columnIndex != _expressions.size() - 1) {
                 if (expression.isAscending()) {
                     orderingSQL.append(", ");
                 } else {

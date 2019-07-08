@@ -30,6 +30,7 @@ import com.esotericsoftware.kryo.io.Input;
 
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
+import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.NullItem;
@@ -97,14 +98,17 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
         for (int expressionIndex = 0; expressionIndex < _expressions.size(); expressionIndex++) {
             OrderByClauseSparkIteratorExpression expression = _expressions.get(expressionIndex);
 
-            // nulls and empty sequences have special ordering captured in the first sorting column
-            // if non-null, non-empty-sequence value is given, the second column is used to sort the input
-            // indices are assigned to each value type for the first column
-            int emptySequenceOrderIndex = 1;         // by default, empty sequence is taken as first(=least)
-            int nullOrderIndex = 2;                  // null is the smallest value except empty sequence(default)
-            int valueOrderIndex = 3;                 // values are larger than null and empty sequence(default)
+            // nulls, true, false and empty sequences have special grouping captured in the first grouping column.
+            // The second column is used for strings, with a special value in the first column.
+            // The third column is used for numbers (as a double), with a special value in the first column.
+            int emptySequenceOrderIndex = 1; // by default, empty sequence is taken as first(=least)
+            int nullGroupIndex = 2;
+            int booleanTrueOrderIndex = 3;
+            int booleanFalseOrderIndex = 4;
+            int stringGroupIndex = 5;
+            int doubleGroupIndex = 5;
             if (expression.getEmptyOrder() == OrderByClauseExpr.EMPTY_ORDER.LAST) {
-                emptySequenceOrderIndex = 4;
+                emptySequenceOrderIndex = 6;
             }
 
             // apply expression in the dynamic context
@@ -113,34 +117,46 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
             while (expression.getExpression().hasNext()) {
                 isEmptySequence = false;
                 Item nextItem = expression.getExpression().next();
-                if (nextItem instanceof NullItem) {
-                    _results.add(nullOrderIndex);
-                    _results.add(null);     // placeholder for valueColumn(2nd column)
-                } else {
-                    // any other atomic type
-                    _results.add(valueOrderIndex);
-
-                    // extract type information for the sorting column
-                    String typeName = (String) _allColumnTypes.get(expressionIndex);
-
-                    if (typeName.equals("bool")) {
-                        _results.add(nextItem.getBooleanValue());
-                    } else if (typeName.equals("string")) {
-                        _results.add(nextItem.getStringValue());
-                    } else if (typeName.equals("integer")) {
-                        _results.add(Item.getNumericValue(nextItem, Integer.class));
-                    } else if (typeName.equals("double")) {
-                        _results.add(Item.getNumericValue(nextItem, Double.class));
-                    } else if (typeName.equals("decimal")) {
-                        _results.add(Item.getNumericValue(nextItem, BigDecimal.class));
+                if (nextItem.isNull()) {
+                    _results.add(nullGroupIndex);
+                    _results.add(null);
+                    _results.add(null);
+                } else if (nextItem.isBoolean() ){
+                    if(nextItem.getBooleanValue())
+                    {
+                        _results.add(booleanTrueOrderIndex);
                     } else {
-                        throw new SparksoniqRuntimeException("Unexpected ordering type found while creating columns.");
-                    }
+                        _results.add(booleanFalseOrderIndex);
+                    }                        
+                    _results.add(null);
+                    _results.add(null);
+                } else if (nextItem.isString()) {
+                    _results.add(stringGroupIndex);
+                    _results.add(nextItem.getStringValue());
+                    _results.add(null);
+                } else if (nextItem.isInteger()) {
+                    _results.add(doubleGroupIndex);
+                    _results.add(null);
+                    _results.add(new Double(nextItem.getIntegerValue()));
+                } else if (nextItem.isDecimal()) {
+                    _results.add(doubleGroupIndex);
+                    _results.add(null);
+                    _results.add(new Double(nextItem.getDecimalValue().doubleValue()));
+                } else if (nextItem.isDouble()) {
+                    _results.add(doubleGroupIndex);
+                    _results.add(null);
+                    _results.add(new Double(nextItem.getDoubleValue()));
+                } else {
+                    throw new UnexpectedTypeException("Order by value can not contain arrays or objects.", expression.getExpression().getMetadata());
                 }
+            }
+            if (expression.getExpression().hasNext()) {
+                throw new UnexpectedTypeException("Cannot order values with sequences of multiple items.", expression.getExpression().getMetadata());
             }
             if (isEmptySequence) {
                 _results.add(emptySequenceOrderIndex);
-                _results.add(null);     // placeholder for valueColumn(2nd column)
+                _results.add(null);
+                _results.add(null);
             }
             expression.getExpression().close();
 
