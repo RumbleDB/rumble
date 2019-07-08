@@ -32,10 +32,12 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.closures.ReturnFlatMapClosure;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
@@ -60,8 +62,16 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     public JavaRDD<Item> getRDD(DynamicContext context) {
         RuntimeIterator expression = this._children.get(0);
         Dataset<Row> df = this._child.getDataFrame(context);
-        StructType oldSchema = df.schema();
-        return df.javaRDD().flatMap(new ReturnFlatMapClosure(expression, oldSchema));
+        df.createOrReplaceTempView("input");
+        StructType inputSchema = df.schema();
+        Set<String> dependencies = expression.getVariableDependencies();
+        List<String> columns = DataFrameUtils.getColumnNames(inputSchema, -1, dependencies);
+        String SQLvariables = DataFrameUtils.getSQL(columns, false);
+        df = df.sparkSession().sql(
+            String.format("select %s from input",
+                    SQLvariables)
+        );
+        return df.javaRDD().flatMap(new ReturnFlatMapClosure(expression, inputSchema));
     }
 
     @Override
