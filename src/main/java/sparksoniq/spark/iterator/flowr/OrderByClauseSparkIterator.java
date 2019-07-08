@@ -340,10 +340,19 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         String projectSQL = selectSQL.substring(0, selectSQL.length() - 1);   // remove trailing comma
         udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
 
+        Dataset<Row> intermediateDF = df.sparkSession().sql(
+                String.format(
+                        "select %s createOrderingColumns(array(%s)) as `%s` from input order by %s",
+                        selectSQL, udfSQL, appendedOrderingColumnsName, orderingSQL
+                )
+        );
+
+        intermediateDF.createOrReplaceTempView("input");
+        
         return df.sparkSession().sql(
                 String.format(
-                        "select %s from (select %s createOrderingColumns(array(%s)) as `%s` from input order by %s)",
-                        projectSQL, selectSQL, udfSQL, appendedOrderingColumnsName, orderingSQL
+                        "select %s from input",
+                        projectSQL
                 )
         );
     }
