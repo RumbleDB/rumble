@@ -36,7 +36,6 @@ import sparksoniq.spark.DataFrameUtils;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 public class LetClauseUDF implements UDF1<WrappedArray, byte[]> {
     private RuntimeIterator _expression;

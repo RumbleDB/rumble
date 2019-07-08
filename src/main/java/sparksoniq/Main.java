@@ -21,7 +21,6 @@ package sparksoniq;
 
 
 import sparksoniq.config.SparksoniqRuntimeConfiguration;
-import sparksoniq.exceptions.CliException;
 import sparksoniq.io.shell.JiqsJLineShell;
 import sparksoniq.spark.SparkSessionManager;
 
