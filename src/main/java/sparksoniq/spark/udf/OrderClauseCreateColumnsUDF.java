@@ -50,8 +50,6 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
     private List<OrderByClauseSparkIteratorExpression> _expressions;
     Set<String> _dependencies;
     List<String> _columnNames;
-    private StructType _inputSchema;
-    private Map _allColumnTypes;
 
     private List<List<Item>> _deserializedParams;
     private DynamicContext _context;
@@ -63,11 +61,8 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
     public OrderClauseCreateColumnsUDF(
             List<OrderByClauseSparkIteratorExpression> expressions,
             StructType inputSchema,
-            Map allColumnTypes,
             List<String> columnNames) {
         _expressions = expressions;
-        _inputSchema = inputSchema;
-        _allColumnTypes = allColumnTypes;
 
         _deserializedParams = new ArrayList<>();
         _context = new DynamicContext();
@@ -106,9 +101,9 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
             int booleanTrueOrderIndex = 3;
             int booleanFalseOrderIndex = 4;
             int stringGroupIndex = 5;
-            int doubleGroupIndex = 5;
+            int doubleGroupIndex = 6;
             if (expression.getEmptyOrder() == OrderByClauseExpr.EMPTY_ORDER.LAST) {
-                emptySequenceOrderIndex = 6;
+                emptySequenceOrderIndex = 7;
             }
 
             // apply expression in the dynamic context
