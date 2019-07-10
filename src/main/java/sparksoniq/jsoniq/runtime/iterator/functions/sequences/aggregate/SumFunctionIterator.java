@@ -78,7 +78,7 @@ public class SumFunctionIterator extends AggregateFunctionIterator {
             }
 
             results.forEach(r -> {
-                if (!Item.isNumeric(r))
+                if (!r.isNumeric())
                     throw new InvalidArgumentTypeException("Sum expression has non numeric args " +
                             r.serialize(), getMetadata());
             });
@@ -86,7 +86,7 @@ public class SumFunctionIterator extends AggregateFunctionIterator {
                 // if input is empty sequence and _zeroItem is not given 0 is returned
                 BigDecimal sumResult = new BigDecimal(0);
                 for (Item r : results) {
-                    BigDecimal current = Item.getNumericValue(r, BigDecimal.class);
+                    BigDecimal current = r.getNumericValue(BigDecimal.class);
                     sumResult = sumResult.add(current);
                 }
                 return ItemFactory.getInstance().createDecimalItem(sumResult);

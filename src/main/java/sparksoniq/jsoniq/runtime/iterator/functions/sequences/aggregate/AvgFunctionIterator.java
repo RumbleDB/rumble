@@ -59,7 +59,7 @@ public class AvgFunctionIterator extends AggregateFunctionIterator {
             List<Item> results = getItemsFromIteratorWithCurrentContext(_iterator);
             this._hasNext = false;
             results.forEach(r -> {
-                if (!Item.isNumeric(r))
+                if (!r.isNumeric())
                     throw new InvalidArgumentTypeException("Average expression has non numeric args " +
                             r.serialize(), getMetadata());
             });
@@ -67,7 +67,8 @@ public class AvgFunctionIterator extends AggregateFunctionIterator {
                 //TODO check numeric types conversions
                 BigDecimal sum = new BigDecimal(0);
                 for (Item r : results)
-                    sum = sum.add(Item.getNumericValue(r, BigDecimal.class));
+                    sum = sum.add(r.getNumericValue(BigDecimal.class));
+
                 return ItemFactory.getInstance().createDecimalItem(sum.divide(new BigDecimal(results.size())));
 
             } catch (IteratorFlowException e) {

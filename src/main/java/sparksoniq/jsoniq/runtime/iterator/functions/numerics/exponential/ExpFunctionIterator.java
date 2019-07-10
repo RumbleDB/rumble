@@ -57,9 +57,9 @@ public class ExpFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             this._hasNext = false;
             Item exponent = this.getSingleItemOfTypeFromIterator(_iterator, Item.class);
-            if (Item.isNumeric(exponent)) {
+            if (exponent.isNumeric()) {
                 try {
-                    Double result = Math.exp(Item.getNumericValue(exponent, Double.class));
+                    Double result = Math.exp(exponent.getNumericValue(Double.class));
                     return ItemFactory.getInstance().createDoubleItem(result);
 
                 } catch (IteratorFlowException e) {

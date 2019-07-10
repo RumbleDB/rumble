@@ -73,11 +73,11 @@ public class RoundHalfToEvenFunctionIterator extends LocalFunctionCallIterator {
             else {
                 precision = ItemFactory.getInstance().createIntegerItem(0);
             }
-            if (Item.isNumeric(value) && Item.isNumeric(precision)) {
+            if (value.isNumeric() && precision.isNumeric()) {
 
                 try {
-                    Double val = Item.getNumericValue(value, Double.class);
-                    Integer prec = Item.getNumericValue(precision, Integer.class);
+                    Double val = value.getNumericValue(Double.class);
+                    Integer prec = precision.getNumericValue(Integer.class);
 
                     BigDecimal bd = new BigDecimal(val);
                     bd = bd.setScale(prec, RoundingMode.HALF_EVEN);

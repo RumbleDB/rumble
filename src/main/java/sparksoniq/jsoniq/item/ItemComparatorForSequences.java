@@ -36,9 +36,9 @@ public class ItemComparatorForSequences implements Comparator<Item>, Serializabl
      */
     public int compare(Item v1, Item v2) {
         int result;
-        if (Item.isNumeric(v1) && Item.isNumeric(v2)) {
-            BigDecimal value1 = Item.getNumericValue(v1, BigDecimal.class);
-            BigDecimal value2 = Item.getNumericValue(v2, BigDecimal.class);
+        if (v1.isNumeric() && v2.isNumeric()) {
+            BigDecimal value1 = v1.getNumericValue(BigDecimal.class);
+            BigDecimal value2 = v2.getNumericValue(BigDecimal.class);
             result = value1.compareTo(value2);
         } else if (v1.isBoolean() && v2.isBoolean()) {
             Boolean value1 = new Boolean(v1.getBooleanValue());
