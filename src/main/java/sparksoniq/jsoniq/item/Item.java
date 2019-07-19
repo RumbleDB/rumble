@@ -60,27 +60,7 @@ public abstract class Item implements SerializableItem {
     }
 
     //returns an effective boolean value of any item type
-    public boolean getEffectiveBooleanValue() {
-        if (this.isBoolean())
-            return this.getBooleanValue();
-        else if (this.isNumeric()) {
-            if (this.isInteger())
-                return this.getIntegerValue() != 0;
-            else if (this.isDouble())
-                return this.getDoubleValue() != 0;
-            else if (this.isDecimal())
-                return !this.getDecimalValue().equals(0);
-        } else if (this.isNull())
-            return false;
-        else if (this.isString())
-            return !this.getStringValue().isEmpty();
-        else if (this.isObject())
-            return true;
-        else if (this.isArray())
-            return true;
-
-        return true;
-    }
+    public abstract boolean getEffectiveBooleanValue();
 
     /**
      * Function that compares 2 items.

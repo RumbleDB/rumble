@@ -52,6 +52,11 @@ public class DecimalItem extends AtomicItem {
     }
 
     @Override
+    public boolean getEffectiveBooleanValue() {
+        return !this.getDecimalValue().equals(0);
+    }
+
+    @Override
     public <T> T getNumericValue(Class<T> type) {
         BigDecimal result = this.getDecimalValue();
         if (type.equals(Integer.class))

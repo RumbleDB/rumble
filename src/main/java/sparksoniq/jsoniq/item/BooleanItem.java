@@ -49,6 +49,11 @@ public class BooleanItem extends AtomicItem {
     }
 
     @Override
+    public boolean getEffectiveBooleanValue() {
+        return this.getBooleanValue();
+    }
+
+    @Override
     public boolean isBoolean() {
         return true;
     }

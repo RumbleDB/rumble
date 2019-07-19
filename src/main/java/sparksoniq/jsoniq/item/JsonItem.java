@@ -30,6 +30,11 @@ public abstract class JsonItem extends Item {
     }
 
     @Override
+    public boolean getEffectiveBooleanValue() {
+        return true;
+    }
+
+    @Override
     public boolean isAtomic() {
         return false;
     }

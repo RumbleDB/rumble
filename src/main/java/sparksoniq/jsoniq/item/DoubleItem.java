@@ -51,6 +51,11 @@ public class DoubleItem extends AtomicItem {
     }
 
     @Override
+    public boolean getEffectiveBooleanValue() {
+        return this.getDoubleValue() != 0;
+    }
+
+    @Override
     public <T> T getNumericValue(Class<T> type) {
         Double result = this.getDoubleValue();
         if (type.equals(BigDecimal.class))
