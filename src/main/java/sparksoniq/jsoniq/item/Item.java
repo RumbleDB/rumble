@@ -56,33 +56,6 @@ public abstract class Item implements SerializableItem {
     }
 
     public <T> T getNumericValue(Class<T> type) {
-        if (this.isNumeric()) {
-            if (this.isDouble()) {
-                Double result = this.getDoubleValue();
-                if (type.equals(BigDecimal.class))
-                    return (T) BigDecimal.valueOf(result);
-                if (type.equals(Integer.class))
-                    return (T) new Integer(result.intValue());
-                return (T) result;
-            }
-            if (this.isInteger()) {
-                Integer result = this.getIntegerValue();
-                if (type.equals(BigDecimal.class))
-                    return (T) BigDecimal.valueOf(result);
-                if (type.equals(Double.class))
-                    return (T) new Double(result.doubleValue());
-                return (T) result;
-            }
-            if (this.isDecimal()) {
-                BigDecimal result = this.getDecimalValue();
-                if (type.equals(Integer.class))
-                    return (T) new Integer(result.intValue());
-                if (type.equals(Double.class))
-                    return (T) new Double(result.doubleValue());
-                return (T) result;
-            }
-
-        }
         throw new IteratorFlowException("Cannot call getNumericValue on non numeric");
     }
 

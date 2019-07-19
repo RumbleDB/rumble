@@ -52,6 +52,16 @@ public class DecimalItem extends AtomicItem {
     }
 
     @Override
+    public <T> T getNumericValue(Class<T> type) {
+        BigDecimal result = this.getDecimalValue();
+        if (type.equals(Integer.class))
+            return (T) new Integer(result.intValue());
+        if (type.equals(Double.class))
+            return (T) new Double(result.doubleValue());
+        return (T) result;
+    }
+
+    @Override
     public boolean isDecimal() {
         return true;
     }
@@ -77,37 +87,29 @@ public class DecimalItem extends AtomicItem {
     public void read(Kryo kryo, Input input) {
         this._value = kryo.readObject(input, BigDecimal.class);
     }
-    
-    public boolean equals(Object otherItem)
-    {
-        if(!(otherItem instanceof Item))
-        {
+
+    public boolean equals(Object otherItem) {
+        if (!(otherItem instanceof Item)) {
             return false;
         }
-        Item o = (Item)otherItem;
-        if(o.isInteger())
-        {
-            if(getDecimalValue().stripTrailingZeros().scale() > 0)
-            {
+        Item o = (Item) otherItem;
+        if (o.isInteger()) {
+            if (getDecimalValue().stripTrailingZeros().scale() > 0) {
                 return false;
             }
             return getDecimalValue().intValueExact() == o.getIntegerValue();
         }
-        if(o.isDecimal())
-        {
+        if (o.isDecimal()) {
             return (getDecimalValue().equals(o.getDecimalValue()));
         }
-        if(o.isDouble())
-        {
+        if (o.isDouble()) {
             return (o.getDoubleValue() == getDecimalValue().doubleValue());
         }
         return false;
     }
-    
-    public int hashCode()
-    {
-        if(getDecimalValue().stripTrailingZeros().scale() == 0)
-        {
+
+    public int hashCode() {
+        if (getDecimalValue().stripTrailingZeros().scale() == 0) {
             return getDecimalValue().intValue();
         }
         return getDecimalValue().hashCode();

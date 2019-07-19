@@ -26,6 +26,8 @@ import com.esotericsoftware.kryo.io.Output;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
+import java.math.BigDecimal;
+
 public class DoubleItem extends AtomicItem {
 
     private double _value;
@@ -46,6 +48,16 @@ public class DoubleItem extends AtomicItem {
     @Override
     public double getDoubleValue() {
         return _value;
+    }
+
+    @Override
+    public <T> T getNumericValue(Class<T> type) {
+        Double result = this.getDoubleValue();
+        if (type.equals(BigDecimal.class))
+            return (T) BigDecimal.valueOf(result);
+        if (type.equals(Integer.class))
+            return (T) new Integer(result.intValue());
+        return (T) result;
     }
 
     @Override
