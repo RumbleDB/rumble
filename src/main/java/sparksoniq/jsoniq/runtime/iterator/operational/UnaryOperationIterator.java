@@ -48,7 +48,7 @@ public class UnaryOperationIterator extends UnaryOperationBaseIterator {
             _child.close();
 
             if (this._operator == OperationalExpressionBase.Operator.MINUS) {
-                if (Item.isNumeric(child)) {
+                if (child.isNumeric()) {
                     if (child.isInteger())
                         return ItemFactory.getInstance().createIntegerItem(-1 * child.getIntegerValue());
                     if (child.isDouble())

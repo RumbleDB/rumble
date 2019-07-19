@@ -128,11 +128,11 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
                     } else if (typeName.equals("string")) {
                         _results.add(nextItem.getStringValue());
                     } else if (typeName.equals("integer")) {
-                        _results.add(Item.getNumericValue(nextItem, Integer.class));
+                        _results.add(nextItem.getNumericValue(Integer.class));
                     } else if (typeName.equals("double")) {
-                        _results.add(Item.getNumericValue(nextItem, Double.class));
+                        _results.add(nextItem.getNumericValue(Double.class));
                     } else if (typeName.equals("decimal")) {
-                        _results.add(Item.getNumericValue(nextItem, BigDecimal.class));
+                        _results.add(nextItem.getNumericValue(BigDecimal.class));
                     } else {
                         throw new SparksoniqRuntimeException("Unexpected ordering type found while creating columns.");
                     }

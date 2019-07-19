@@ -55,8 +55,8 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
             Type returnType = Item.getNumericResultType(_left, _right);
             if (returnType.equals(IntegerItem.class)) {
                 try {
-                    int l = Item.<Integer>getNumericValue(_left, Integer.class);
-                    int r = Item.<Integer>getNumericValue(_right, Integer.class);
+                    int l = _left.getNumericValue(Integer.class);
+                    int r = _right.getNumericValue(Integer.class);
                     return this._operator == OperationalExpressionBase.Operator.PLUS ?
                             ItemFactory.getInstance().createIntegerItem(l + r) :
                             ItemFactory.getInstance().createIntegerItem(l - r);
@@ -66,8 +66,8 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
                 }
             } else if (returnType.equals(DoubleItem.class)) {
                 try {
-                    double l = Item.<Double>getNumericValue(_left, Double.class);
-                    double r = Item.<Double>getNumericValue(_right, Double.class);
+                    double l = _left.getNumericValue(Double.class);
+                    double r = _right.getNumericValue(Double.class);
                     return this._operator == OperationalExpressionBase.Operator.PLUS ?
                             ItemFactory.getInstance().createDoubleItem(l + r) :
                             ItemFactory.getInstance().createDoubleItem(l - r);
@@ -77,8 +77,8 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
                 }
             } else if (returnType.equals(DecimalItem.class)) {
                 try {
-                    BigDecimal l = Item.<BigDecimal>getNumericValue(_left, BigDecimal.class);
-                    BigDecimal r = Item.<BigDecimal>getNumericValue(_right, BigDecimal.class);
+                    BigDecimal l = _left.getNumericValue(BigDecimal.class);
+                    BigDecimal r = _right.getNumericValue(BigDecimal.class);
                     return this._operator == OperationalExpressionBase.Operator.PLUS ?
                             ItemFactory.getInstance().createDecimalItem(l.add(r)) :
                             ItemFactory.getInstance().createDecimalItem(l.subtract(r));
@@ -106,7 +106,7 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
         } else {
             _left = _leftIterator.next();
             _right = _rightIterator.next();
-            if (_leftIterator.hasNext() || _rightIterator.hasNext() || !Item.isNumeric(_left) || !Item.isNumeric(_right))
+            if (_leftIterator.hasNext() || _rightIterator.hasNext() || !_left.isNumeric() || !_right.isNumeric())
                 throw new UnexpectedTypeException("Additive expression has non numeric args " +
                         _left.serialize() + ", " + _right.serialize(), getMetadata());
 

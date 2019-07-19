@@ -49,6 +49,11 @@ public class StringItem extends AtomicItem {
     }
 
     @Override
+    public boolean getEffectiveBooleanValue() {
+        return !this.getStringValue().isEmpty();
+    }
+
+    @Override
     public boolean isTypeOf(ItemType type) {
         if (type.getType().equals(ItemTypes.StringItem) || super.isTypeOf(type))
             return true;

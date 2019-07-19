@@ -37,8 +37,8 @@ public abstract class Item implements SerializableItem {
     protected Item() {
     }
 
-    public static boolean isNumeric(Item item) {
-        return item.isInteger() || item.isDecimal() || item.isDouble();
+    public boolean isNumeric() {
+        return this.isInteger() || this.isDecimal() || this.isDouble();
     }
 
     //performs conversions for binary operations with a numeric return type
@@ -55,94 +55,45 @@ public abstract class Item implements SerializableItem {
         return IntegerItem.class;
     }
 
-    public static <T> T getNumericValue(Item item, Class<T> type) {
-        if (isNumeric(item)) {
-            if (item.isDouble()) {
-                Double result = item.getDoubleValue();
-                if (type.equals(BigDecimal.class))
-                    return (T) BigDecimal.valueOf(result);
-                if (type.equals(Integer.class))
-                    return (T) new Integer(result.intValue());
-                return (T) result;
-            }
-            if (item.isInteger()) {
-                Integer result = item.getIntegerValue();
-                if (type.equals(BigDecimal.class))
-                    return (T) BigDecimal.valueOf(result);
-                if (type.equals(Double.class))
-                    return (T) new Double(result.doubleValue());
-                return (T) result;
-            }
-            if (item.isDecimal()) {
-                BigDecimal result = item.getDecimalValue();
-                if (type.equals(Integer.class))
-                    return (T) new Integer(result.intValue());
-                if (type.equals(Double.class))
-                    return (T) new Double(result.doubleValue());
-                return (T) result;
-            }
-
-        }
+    public <T> T getNumericValue(Class<T> type) {
         throw new IteratorFlowException("Cannot call getNumericValue on non numeric");
     }
 
     //returns an effective boolean value of any item type
-    public static boolean getEffectiveBooleanValue(Item item) {
-        if (item == null)
-            return false;
-        else if (item.isBoolean())
-            return item.getBooleanValue();
-        else if (isNumeric(item)) {
-            if (item.isInteger())
-                return item.getIntegerValue() != 0;
-            else if (item.isDouble())
-                return item.getDoubleValue() != 0;
-            else if (item.isDecimal())
-                return !item.getDecimalValue().equals(0);
-        } else if (item.isNull())
-            return false;
-        else if (item.isString())
-            return !item.getStringValue().isEmpty();
-        else if (item.isObject())
-            return true;
-        else if (item.isArray())
-            return true;
-
-        return true;
-    }
+    public abstract boolean getEffectiveBooleanValue();
 
     /**
      * Function that compares 2 items.
      * Non-atomics can't be compared.
      * Items have to be of the same type or one them has to be null.
      *
-     * @return -1 if v1 < v2; 0 if v1 == v2; 1 if v1 > v2;
+     * @return -1 if this < other; 0 if this == other; 1 if this > other;
      */
-    public static int compareItems(Item v1, Item v2) {
+    public int compareTo(Item other) {
         int result;
-        if (Item.isNumeric(v1) && Item.isNumeric(v2)) {
-            BigDecimal value1 = Item.getNumericValue(v1, BigDecimal.class);
-            BigDecimal value2 = Item.getNumericValue(v2, BigDecimal.class);
+        if (this.isNumeric() && other.isNumeric()) {
+            BigDecimal value1 = this.getNumericValue(BigDecimal.class);
+            BigDecimal value2 = other.getNumericValue(BigDecimal.class);
             result = value1.compareTo(value2);
-        } else if (v1.isBoolean() && v2.isBoolean()) {
-            Boolean value1 = new Boolean(v1.getBooleanValue());
-            Boolean value2 = new Boolean(v2.getBooleanValue());
+        } else if (this.isBoolean() && other.isBoolean()) {
+            Boolean value1 = this.getBooleanValue();
+            Boolean value2 = other.getBooleanValue();
             result = value1.compareTo(value2);
-        } else if (v1.isString() && v2.isString()) {
-            String value1 = v1.getStringValue();
-            String value2 = v2.getStringValue();
+        } else if (this.isString() && other.isString()) {
+            String value1 = this.getStringValue();
+            String value2 = other.getStringValue();
             result = value1.compareTo(value2);
-        } else if (v1.isNull() || v2.isNull()) {
+        } else if (this.isNull() || other.isNull()) {
             // null equals null
-            if (v1.isNull() && v2.isNull()) {
+            if (this.isNull() && other.isNull()) {
                 result = 0;
-            } else if (v1.isNull()) {
+            } else if (this.isNull()) {
                 result = -1;
             } else {
                 result = 1;
             }
         } else {
-            result = v1.serialize().compareTo(v2.serialize());
+            result = this.serialize().compareTo(other.serialize());
         }
         return result;
     }
