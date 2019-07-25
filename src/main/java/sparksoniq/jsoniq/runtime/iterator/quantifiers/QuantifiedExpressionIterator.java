@@ -24,6 +24,7 @@ import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpression;
 import sparksoniq.jsoniq.item.BooleanItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -72,7 +73,7 @@ public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
             for (BooleanItem res : results)
                 result = this._operator == QuantifiedExpression.QuantifiedOperators.EVERY ?
                         result && res.getBooleanValue() : result || res.getBooleanValue();
-            return new BooleanItem(result);
+            return ItemFactory.getInstance().createBooleanItem(result);
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "Quantified Expr", getMetadata());
     }

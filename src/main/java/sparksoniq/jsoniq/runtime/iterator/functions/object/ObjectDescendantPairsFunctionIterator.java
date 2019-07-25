@@ -22,7 +22,7 @@ package sparksoniq.jsoniq.runtime.iterator.functions.object;
 
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.item.ObjectItem;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -100,7 +100,7 @@ public class ObjectDescendantPairsFunctionIterator extends ObjectFunctionIterato
                     List<String> keyList = Collections.singletonList(key);
                     List<Item> valueList = Collections.singletonList(value);
 
-                    ObjectItem result = new ObjectItem(keyList, valueList, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                    Item result = ItemFactory.getInstance().createObjectItem(keyList, valueList, ItemMetadata.fromIteratorMetadata(getMetadata()));
                     _nextResults.add(result);
                     getDescendantPairs(valueList);
                 }

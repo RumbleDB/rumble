@@ -37,7 +37,6 @@ import sparksoniq.spark.DataFrameUtils;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 public class LetClauseMapClosure implements MapFunction<Row, Row> {
     private final RuntimeIterator _expression;
@@ -65,6 +64,7 @@ public class LetClauseMapClosure implements MapFunction<Row, Row> {
         _newColumn = new ArrayList<>();
 
         _kryo = new Kryo();
+        _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _output = new ByteBufferOutput(128, -1);
         _input = new Input();
@@ -77,16 +77,13 @@ public class LetClauseMapClosure implements MapFunction<Row, Row> {
         _newColumn.clear();
 
         String[] columnNames = _inputSchema.fieldNames();
-        Set<String> dependencies = _expression.getVariableDependencies();
+
+        // Deserialize row
+        _rowColumns = DataFrameUtils.deserializeEntireRow(row, _kryo, _input);
 
         // Create dynamic context with deserialized data
         for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
-            String field = columnNames[columnIndex];
-            if(dependencies.contains(field))
-            {
-                List<Item> i = DataFrameUtils.deserializeRowField(row, columnIndex, _kryo, _input); //rowColumns.get(columnIndex);
-                _context.addVariableValue(field, i);
-            }
+            _context.addVariableValue(columnNames[columnIndex], _rowColumns.get(columnIndex));
         }
 
         // Apply expression to the context
@@ -105,6 +102,7 @@ public class LetClauseMapClosure implements MapFunction<Row, Row> {
         in.defaultReadObject();
         
         _kryo = new Kryo();
+        _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _output = new ByteBufferOutput(128, -1);
         _input = new Input();

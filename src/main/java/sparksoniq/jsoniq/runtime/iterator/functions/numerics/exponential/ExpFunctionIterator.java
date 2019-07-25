@@ -22,8 +22,8 @@ package sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential;
 
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
-import sparksoniq.jsoniq.item.DoubleItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -57,10 +57,10 @@ public class ExpFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             this._hasNext = false;
             Item exponent = this.getSingleItemOfTypeFromIterator(_iterator, Item.class);
-            if (Item.isNumeric(exponent)) {
+            if (exponent.isNumeric()) {
                 try {
-                    Double result = Math.exp(Item.getNumericValue(exponent, Double.class));
-                    return new DoubleItem(result);
+                    Double result = Math.exp(exponent.getNumericValue(Double.class));
+                    return ItemFactory.getInstance().createDoubleItem(result);
 
                 } catch (IteratorFlowException e) {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());

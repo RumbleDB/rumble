@@ -42,8 +42,9 @@ public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
     private RuntimeIterator _expression;
     private StructType _inputSchema;
     Set<String> _dependencies;
-    String[] _columnNames;
+    List<String> _columnNames;
 
+    private List<List<Item>> _deserializedParams;
     private DynamicContext _context;
     
     private transient Kryo _kryo;
@@ -51,17 +52,20 @@ public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
 
     public WhereClauseUDF(
             RuntimeIterator expression,
-            StructType inputSchema) {
+            StructType inputSchema,
+            List<String> columnNames) {
         _expression = expression;
         _inputSchema = inputSchema;
 
+        _deserializedParams = new ArrayList<>();
         _context = new DynamicContext();
         
         _kryo = new Kryo();
+        _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _input = new Input();
         
-        _columnNames = _inputSchema.fieldNames();
+        _columnNames = columnNames;
         _dependencies = _expression.getVariableDependencies();
 
     }
@@ -69,25 +73,12 @@ public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
 
     @Override
     public Boolean call(WrappedArray wrappedParameters) {
+        _deserializedParams.clear();
         _context.removeAllVariables();
 
-        Object[] serializedParams = (Object[]) wrappedParameters.array();
-        
-        // prepare dynamic context
-        for (int columnIndex = 0; columnIndex < _columnNames.length; columnIndex++) {
-            String var = _columnNames[columnIndex];
-            if(_dependencies.contains(var))
-            {
-                List<Item> sequence = new ArrayList<Item>();
-                List<byte[]> bytes = (List<byte[]>) serializedParams[columnIndex];
-                for (byte[] b : bytes)
-                {
-                    Item i = (Item) DataFrameUtils.deserializeByteArray(b, _kryo, _input);
-                    sequence.add(i);
-                }
-                _context.addVariableValue(var, sequence);
-            }
-        }
+        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
+
+        DataFrameUtils.prepareDynamicContext(_context, _columnNames, _deserializedParams);
 
         // apply expression in the dynamic context
         _expression.open(_context);
@@ -102,6 +93,7 @@ public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
         in.defaultReadObject();
         
         _kryo = new Kryo();
+        _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _input = new Input();
     }

@@ -32,7 +32,6 @@ import sparksoniq.exceptions.InvalidGroupVariableException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
-import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
@@ -47,7 +46,6 @@ import sparksoniq.spark.closures.GroupByLinearizeTupleClosure;
 import sparksoniq.spark.closures.GroupByToPairMapClosure;
 import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
 import sparksoniq.spark.udf.GroupClauseCreateColumnsUDF;
-import sparksoniq.spark.udf.GroupClauseDetermineTypeUDF;
 import sparksoniq.spark.udf.GroupClauseSerializeAggregateResultsUDF;
 import sparksoniq.spark.udf.LetClauseUDF;
 
@@ -56,7 +54,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -65,12 +62,22 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
     private final List<GroupByClauseSparkIteratorExpression> _expressions;
     private List<FlworTuple> _localTupleResults;
     private int _resultIndex;
-
+    Set<String> _dependencies;
 
     public GroupByClauseSparkIterator(RuntimeTupleIterator child, List<GroupByClauseSparkIteratorExpression> variables,
                                       IteratorMetadata iteratorMetadata) {
         super(child, iteratorMetadata);
         this._expressions = variables;
+        _dependencies = new HashSet<String>();
+        for(GroupByClauseSparkIteratorExpression e : _expressions)
+        {
+            if(e.getExpression() != null)
+            {
+                _dependencies.addAll(e.getExpression().getVariableDependencies());
+            } else {
+                _dependencies.add(e.getVariableReference().getVariableName());
+            }
+        }
     }
 
     @Override
@@ -252,13 +259,16 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
                 variableAccessExpressions.add(expression.getVariableReference());
                 String newVariableName = expression.getVariableReference().getVariableName();
                 RuntimeIterator newVariableExpression = expression.getExpression();
+                int duplicateVariableIndex = columnNames.indexOf(newVariableName);
+
+                List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
+                List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, _dependencies);
 
                 df.sparkSession().udf().register("letClauseUDF",
-                        new LetClauseUDF(newVariableExpression, inputSchema), DataTypes.BinaryType);
+                        new LetClauseUDF(newVariableExpression, inputSchema, UDFcolumns), DataTypes.BinaryType);
 
-                int duplicateVariableIndex = columnNames.indexOf(newVariableName);
-                String selectSQL = DataFrameUtils.getSQL(inputSchema, duplicateVariableIndex, true);
-                String udfSQL = DataFrameUtils.getSQL(inputSchema, -1, false);
+                String selectSQL = DataFrameUtils.getSQL(allColumns, true);
+                String udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
 
                 df.createOrReplaceTempView("input");
                 df = df.sparkSession().sql(
@@ -278,94 +288,41 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
 
         // determine grouping data types after all variable introductions are completed
         inputSchema = df.schema();
-        columnNamesArray = inputSchema.fieldNames();
-        columnNames = Arrays.asList(columnNamesArray);
+        Set<String> groupingVariables = new HashSet<String>();
 
         df.createOrReplaceTempView("input");
-        df.sparkSession().table("input").cache();
-        df.sparkSession().udf().register("determineGroupingDataType",
-                new GroupClauseDetermineTypeUDF(variableAccessExpressions, columnNames),
-                DataTypes.createArrayType(DataTypes.StringType));
-
-        String udfSQL = DataFrameUtils.getSQL(inputSchema, -1, false);
-
-        Dataset<Row> columnTypesDf = df.sparkSession().sql(
-                String.format("select distinct(determineGroupingDataType(array(%s))) as `distinct-types` from input",
-                        udfSQL)
-        );
-        Object columnTypesObject = columnTypesDf.collect();
-        Row[] columnTypesOfRows = ((Row[]) columnTypesObject);
-
-        // Every column represents a group by expression
-        // Check that every column contains a matching atomic type in all rows (nulls and empty-sequences are allowed)
-        Map<Integer, String> typesForAllColumns = new LinkedHashMap<>();
-        for (Row columnTypesOfRow : columnTypesOfRows) {
-            List columnsTypesOfRowAsList = columnTypesOfRow.getList(0);
-            for (int columnIndex = 0; columnIndex < columnsTypesOfRowAsList.size(); columnIndex++) {
-                String columnType = (String) columnsTypesOfRowAsList.get(columnIndex);
-
-                if (!columnType.equals("empty-sequence") && !columnType.equals("null")) {
-                    String currentColumnType = typesForAllColumns.get(columnIndex);
-                    if (currentColumnType == null) {
-                        typesForAllColumns.put(columnIndex, columnType);
-                    } else if ((currentColumnType.equals("integer") || currentColumnType.equals("double") || currentColumnType.equals("decimal"))
-                            && (columnType.equals("integer") || columnType.equals("double") || columnType.equals("decimal"))) {
-                        // the numeric type calculation is identical to Item::getNumericResultType()
-                        if (currentColumnType.equals("double") || columnType.equals("double")) {
-                            typesForAllColumns.put(columnIndex, "double");
-                        } else if (currentColumnType.equals("decimal") || columnType.equals("decimal")) {
-                            typesForAllColumns.put(columnIndex, "decimal");
-                        } else {
-                            // do nothing, type is already set to integer
-                        }
-                    } else if (!currentColumnType.equals(columnType)) {
-                        throw new UnexpectedTypeException("Group by variable must contain values of a single type.", getMetadata());
-                    }
-                }
-            }
-        }
 
         // Determine the return type for grouping UDF
         List<StructField> typedFields = new ArrayList<>();
         String appendedGroupingColumnsName = "grouping_columns";
-        for (int columnIndex = 0; columnIndex < typesForAllColumns.size(); columnIndex++) {
-            String columnTypeString = typesForAllColumns.get(columnIndex);
-            String columnName;
-            DataType columnType;
-
-            // every expression contains an int column for null/empty check
-            columnName = columnIndex + "-nullEmptyCheckField";
+        for (int columnIndex = 0; columnIndex < _expressions.size(); columnIndex++) {
+            groupingVariables.add(_expressions.get(columnIndex).getVariableReference().getVariableName());
+            // every expression contains an int column for null/empty/true/false/string/double check
+            String columnName = columnIndex + "-nullEmptyBooleanCheckField";
             typedFields.add(DataTypes.createStructField(columnName, DataTypes.IntegerType, false));
-
-            // create fields for the given value types
-            columnName = columnIndex + "-valueField";
-            if (columnTypeString.equals("bool")) {
-                columnType = DataTypes.BooleanType;
-            } else if (columnTypeString.equals("string")) {
-                columnType = DataTypes.StringType;
-            } else if (columnTypeString.equals("integer")) {
-                columnType = DataTypes.IntegerType;
-            } else if (columnTypeString.equals("double")) {
-                columnType = DataTypes.DoubleType;
-            } else if (columnTypeString.equals("decimal")) {
-                columnType = DataTypes.createDecimalType();
-            } else {
-                throw new SparksoniqRuntimeException("Unexpected grouping type found while determining UDF return type.");
-            }
+            columnName = columnIndex + "-stringField";
+            DataType columnType = DataTypes.StringType;
+            typedFields.add(DataTypes.createStructField(columnName, columnType, true));
+            columnName = columnIndex + "-doubleField";
+            columnType = DataTypes.DoubleType;
             typedFields.add(DataTypes.createStructField(columnName, columnType, true));
         }
-
-        df.sparkSession().udf().register("createGroupingColumns",
-                new GroupClauseCreateColumnsUDF(variableAccessExpressions, columnNames, typesForAllColumns),
-                DataTypes.createStructType(typedFields));
 
         String serializerUDFName = "serialize";
         df.sparkSession().udf().register(serializerUDFName,
                 new GroupClauseSerializeAggregateResultsUDF(),
                 DataTypes.BinaryType);
+        
 
-        String selectSQL = DataFrameUtils.getSQL(inputSchema, -1, true);
-        udfSQL = DataFrameUtils.getSQL(inputSchema, -1, false);
+        List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema);
+        List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, groupingVariables);
+
+        df.sparkSession().udf().register("createGroupingColumns",
+                new GroupClauseCreateColumnsUDF(variableAccessExpressions, UDFcolumns),
+                DataTypes.createStructType(typedFields));
+
+        String selectSQL = DataFrameUtils.getSQL(allColumns, true);
+        String udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
 
         String createColumnsSQL = String.format(
                 "select %s createGroupingColumns(array(%s)) as `%s` from input",

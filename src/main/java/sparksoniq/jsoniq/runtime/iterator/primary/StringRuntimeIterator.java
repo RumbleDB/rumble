@@ -22,7 +22,8 @@ package sparksoniq.jsoniq.runtime.iterator.primary;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.jsoniq.item.StringItem;
+import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
@@ -37,10 +38,10 @@ public class StringRuntimeIterator extends AtomicRuntimeIterator {
     }
 
     @Override
-    public StringItem next() {
+    public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            return new StringItem(_item);
+            return ItemFactory.getInstance().createStringItem(_item);
         }
 
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item, getMetadata());

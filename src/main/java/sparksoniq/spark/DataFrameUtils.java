@@ -31,7 +31,6 @@ import org.apache.spark.sql.expressions.Window;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import scala.collection.mutable.WrappedArray;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.BooleanItem;
 import sparksoniq.jsoniq.item.DecimalItem;
@@ -42,12 +41,14 @@ import sparksoniq.jsoniq.item.KryoManager;
 import sparksoniq.jsoniq.item.NullItem;
 import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.item.StringItem;
+import sparksoniq.semantics.DynamicContext;
 
-import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.count;
@@ -62,6 +63,20 @@ public class DataFrameUtils {
 
     private static KryoManager KM = KryoManager.getInstance();
     
+    private static ThreadLocal<byte[]> lastBytesCache = new ThreadLocal<byte[]>() {
+        @Override
+        protected byte[] initialValue() {
+            return null;
+        }
+    };
+
+    private static ThreadLocal<Item> lastObjectItemCache = new ThreadLocal<Item>() {
+        @Override
+        protected Item initialValue() {
+            return null;
+        }
+    };
+
     public static void registerKryoClassesKryo(Kryo kryo)
     {
         kryo.register(Item.class);
@@ -84,14 +99,69 @@ public class DataFrameUtils {
 
     public static List<byte[]> serializeItemList(List<Item> toSerialize, Kryo kryo, Output output) {
         List<byte[]> result = new ArrayList<byte[]>();
+        byte[] serializedBytes = null;
         for(Item i : toSerialize)
         {
             output.clear();
             kryo.writeClassAndObject(output, toSerialize);
-            result.add(output.toBytes());
+            serializedBytes = output.toBytes();
+            result.add(serializedBytes);
+        }
+        if(toSerialize.size() == 1 && toSerialize.get(0).isObject())
+        {
+            lastBytesCache.set(serializedBytes);
+            lastObjectItemCache.set(toSerialize.get(0));
         }
         return result;
     }
+
+    /**
+     * @param inputSchema            schema specifies the columns to be used in the query
+     * @param duplicateVariableIndex enables skipping a variable
+     * @param dependencies           restriction of the results to within a specified set
+     * @return list of SQL column names in the schema
+     */
+    public static List<String> getColumnNames(
+            StructType inputSchema,
+            int duplicateVariableIndex,
+            Set<String> dependencies) {
+        List<String> result = new ArrayList<String>();
+        String[] columnNames = inputSchema.fieldNames();
+        for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
+            if (columnIndex == duplicateVariableIndex) {
+                continue;
+            }
+            String var = columnNames[columnIndex];
+            if(dependencies == null || dependencies.contains(var))
+            {
+                result.add(columnNames[columnIndex]);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * @param inputSchema schema specifies the columns to be used in the query
+     * @return list of SQL column names in the schema
+     */
+    public static List<String> getColumnNames(
+            StructType inputSchema) {
+        return getColumnNames(inputSchema, -1, null);
+    }
+   
+    public static void prepareDynamicContext(
+            DynamicContext context,
+            List<String> columnNames,
+            List<List<Item>> deserializedParams
+        )
+    {
+     // prepare dynamic context
+        for (int columnIndex = 0; columnIndex < columnNames.size(); columnIndex++) {
+            context.addVariableValue(columnNames.get(columnIndex), deserializedParams.get(columnIndex));
+        }
+    }
+    
+    private static String COMMA = ",";
 
     /**
      * @param inputSchema            schema specifies the columns to be used in the query
@@ -100,23 +170,21 @@ public class DataFrameUtils {
      * @return comma separated variables to be used in spark SQL
      */
     public static String getSQL(
-            StructType inputSchema,
-            int duplicateVariableIndex,
+            List<String> columnNames,
             boolean trailingComma) {
-        String[] columnNames = inputSchema.fieldNames();
         StringBuilder queryColumnString = new StringBuilder();
-        for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
-            if (columnIndex == duplicateVariableIndex) {
-                continue;
-            }
+        String comma = "";
+        for (String var : columnNames) {
+            queryColumnString.append(comma);
+            comma = COMMA;
             queryColumnString.append("`");
-            queryColumnString.append(columnNames[columnIndex]);
+            queryColumnString.append(var);
             queryColumnString.append("`");
-            if (trailingComma || columnIndex != (columnNames.length - 1)) {
-                queryColumnString.append(",");
-            }
         }
-
+        if(trailingComma)
+        {
+            queryColumnString.append(comma);
+        }
         return queryColumnString.toString();
     }
 
@@ -169,6 +237,15 @@ public class DataFrameUtils {
     }
 
     public static Item deserializeByteArray(byte[] toDeserialize, Kryo kryo, Input input) {
+        byte[] bytes = lastBytesCache.get();
+        if(bytes != null)
+        {
+            if(Arrays.equals(bytes, toDeserialize))
+            {
+                Item deserializedItem = lastObjectItemCache.get();
+                return deserializedItem;
+            }
+        }
         input.setBuffer(toDeserialize);
         return (Item) kryo.readClassAndObject(input);
     }

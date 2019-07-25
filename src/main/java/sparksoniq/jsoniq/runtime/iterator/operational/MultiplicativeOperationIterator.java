@@ -23,11 +23,11 @@ package sparksoniq.jsoniq.runtime.iterator.operational;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
-import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.jsoniq.item.DecimalItem;
 import sparksoniq.jsoniq.item.DoubleItem;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -59,7 +59,7 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
         } else {
             _left = _leftIterator.next();
             _right = _rightIterator.next();
-            if (_leftIterator.hasNext() || _rightIterator.hasNext() || !Item.isNumeric(_left) || !Item.isNumeric(_right))
+            if (_leftIterator.hasNext() || _rightIterator.hasNext() || !_left.isNumeric() || !_right.isNumeric())
                 throw new UnexpectedTypeException("Multiplicative expression has non numeric args " +
                         _left.serialize() + ", " + _right.serialize(), getMetadata());
 
@@ -70,38 +70,38 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
     }
 
     @Override
-    public AtomicItem next() {
+    public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
 
             Type returnType = Item.getNumericResultType(_left, _right);
             if (returnType.equals(IntegerItem.class)) {
                 try {
-                    int l = Item.<Integer>getNumericValue(_left, Integer.class);
-                    int r = Item.<Integer>getNumericValue(_right, Integer.class);
+                    int l = _left.getNumericValue(Integer.class);
+                    int r = _right.getNumericValue(Integer.class);
                     switch (this._operator) {
                         case MUL:
-                            return new IntegerItem(l * r);
+                            return ItemFactory.getInstance().createIntegerItem(l * r);
                         case DIV:
-                            BigDecimal decLeft = Item.<BigDecimal>getNumericValue(_left, BigDecimal.class);
-                            BigDecimal decRight = Item.<BigDecimal>getNumericValue(_right, BigDecimal.class);
+                            BigDecimal decLeft = _left.getNumericValue(BigDecimal.class);
+                            BigDecimal decRight = _right.getNumericValue(BigDecimal.class);
                             BigDecimal bdResult = decLeft.divide(decRight, 10, BigDecimal.ROUND_HALF_UP);
                             // if the result contains no decimal part, convert to integer
                             if (bdResult.stripTrailingZeros().scale() <= 0) {
                                 try {
                                     // exception is thrown if information is lost during conversion to integer
                                     // this happens if the bigdecimal has a decimal part, or if it can't be fit to an integer
-                                    return new IntegerItem(bdResult.intValueExact());
+                                    return ItemFactory.getInstance().createIntegerItem(bdResult.intValueExact());
                                 } catch (ArithmeticException e) {
                                     e.printStackTrace();
                                 }
                             } else {
-                                return new DecimalItem(bdResult);
+                                return ItemFactory.getInstance().createDecimalItem(bdResult);
                             }
                         case MOD:
-                            return new IntegerItem(l % r);
+                            return ItemFactory.getInstance().createIntegerItem(l % r);
                         case IDIV:
-                            return new IntegerItem(l / r);
+                            return ItemFactory.getInstance().createIntegerItem(l / r);
                         default:
                             new IteratorFlowException("Non recognized multicative operator.", getMetadata());
                     }
@@ -109,32 +109,32 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
                 }
             } else if (returnType.equals(DoubleItem.class)) {
-                double l = Item.<Double>getNumericValue(_left, Double.class);
-                double r = Item.<Double>getNumericValue(_right, Double.class);
+                double l = _left.getNumericValue(Double.class);
+                double r = _right.getNumericValue(Double.class);
                 switch (this._operator) {
                     case MUL:
-                        return new DoubleItem(l * r);
+                        return ItemFactory.getInstance().createDoubleItem(l * r);
                     case DIV:
-                        return new DoubleItem(l / r);
+                        return ItemFactory.getInstance().createDoubleItem(l / r);
                     case MOD:
-                        return new DoubleItem(l % r);
+                        return ItemFactory.getInstance().createDoubleItem(l % r);
                     case IDIV:
-                        return new IntegerItem((int) (l / r));
+                        return ItemFactory.getInstance().createIntegerItem((int) (l / r));
                     default:
                         new IteratorFlowException("Non recognized multicative operator.", getMetadata());
                 }
             } else if (returnType.equals(DecimalItem.class)) {
-                BigDecimal l = Item.<BigDecimal>getNumericValue(_left, BigDecimal.class);
-                BigDecimal r = Item.<BigDecimal>getNumericValue(_right, BigDecimal.class);
+                BigDecimal l = _left.getNumericValue(BigDecimal.class);
+                BigDecimal r = _right.getNumericValue(BigDecimal.class);
                 switch (this._operator) {
                     case MUL:
-                        return new DecimalItem(l.multiply(r));
+                        return ItemFactory.getInstance().createDecimalItem(l.multiply(r));
                     case DIV:
-                        return new DecimalItem(l.divide(r, 10, BigDecimal.ROUND_HALF_UP));
+                        return ItemFactory.getInstance().createDecimalItem(l.divide(r, 10, BigDecimal.ROUND_HALF_UP));
                     case MOD:
-                        return new DecimalItem(l.remainder(r));
+                        return ItemFactory.getInstance().createDecimalItem(l.remainder(r));
                     case IDIV:
-                        return new IntegerItem(l.divideToIntegralValue(r).intValueExact());
+                        return ItemFactory.getInstance().createIntegerItem(l.divideToIntegralValue(r).intValueExact());
                     default:
                         new IteratorFlowException("Non recognized multicative operator.", getMetadata());
                 }

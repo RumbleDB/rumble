@@ -41,6 +41,11 @@ public class NullItem extends AtomicItem {
     }
 
     @Override
+    public boolean getEffectiveBooleanValue() {
+        return false;
+    }
+
+    @Override
     public void write(Kryo kryo, Output output) {
         kryo.writeObjectOrNull(output, null, Item.class);
     }

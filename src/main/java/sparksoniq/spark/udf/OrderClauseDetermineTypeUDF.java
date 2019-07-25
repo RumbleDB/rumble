@@ -43,7 +43,7 @@ import java.util.Set;
 public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
     private List<OrderByClauseSparkIteratorExpression> _expressions;
     Set<String> _dependencies;
-    String[] _columnNames;
+    List<String> _columnNames;
     private StructType _inputSchema;
 
     private List<List<Item>> _deserializedParams;
@@ -56,7 +56,8 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
 
     public OrderClauseDetermineTypeUDF(
             List<OrderByClauseSparkIteratorExpression> expressions,
-            StructType inputSchema) {
+            StructType inputSchema,
+            List<String> columnNames) {
         _expressions = expressions;
         _inputSchema = inputSchema;
 
@@ -68,9 +69,10 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
         for (OrderByClauseSparkIteratorExpression expression : _expressions) {
             _dependencies.addAll(expression.getExpression().getVariableDependencies());
         }
-        _columnNames = _inputSchema.fieldNames();
+        _columnNames = columnNames;
         
         _kryo = new Kryo();
+        _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _input = new Input();
     }
@@ -78,26 +80,12 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
     @Override
     public List call(WrappedArray wrappedParameters) {
         _deserializedParams.clear();
+        _context.removeAllVariables();
         result.clear();
 
-        Object[] serializedParams = (Object[]) wrappedParameters.array();
+        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
 
-        // prepare dynamic context
-        _context.removeAllVariables();
-        for (int columnIndex = 0; columnIndex < _columnNames.length; columnIndex++) {
-            String var = _columnNames[columnIndex];
-            if(_dependencies.contains(var))
-            {
-                List<Item> sequence = new ArrayList<Item>();
-                List<byte[]> bytes = (List<byte[]>) serializedParams[columnIndex];
-                for (byte[] b : bytes)
-                {
-                    Item i = (Item) DataFrameUtils.deserializeByteArray(b, _kryo, _input);
-                    sequence.add(i);
-                }
-                _context.addVariableValue(var, sequence);
-            }
-        }
+        DataFrameUtils.prepareDynamicContext(_context, _columnNames, _deserializedParams);
 
         for (OrderByClauseSparkIteratorExpression expression : _expressions) {
             // apply expression in the dynamic context
@@ -138,6 +126,7 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
         in.defaultReadObject();
         
         _kryo = new Kryo();
+        _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _input = new Input();
     }

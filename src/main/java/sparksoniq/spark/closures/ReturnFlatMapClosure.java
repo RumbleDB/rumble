@@ -50,6 +50,7 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
         this._oldSchema = oldSchema;
 
         _kryo = new Kryo();
+        _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _input = new Input();
     }
@@ -86,6 +87,7 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
         in.defaultReadObject();
         
         _kryo = new Kryo();
+        _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _input = new Input();
     }

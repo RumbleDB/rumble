@@ -22,8 +22,8 @@ package sparksoniq.jsoniq.runtime.iterator.functions.numerics;
 
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
-import sparksoniq.jsoniq.item.DoubleItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -57,10 +57,10 @@ public class AbsFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             this._hasNext = false;
             Item value = this.getSingleItemOfTypeFromIterator(_iterator, Item.class);
-            if (Item.isNumeric(value)) {
+            if (value.isNumeric()) {
                 try {
-                    Double result = Math.abs(Item.getNumericValue(value, Double.class));
-                    return new DoubleItem(result);
+                    Double result = Math.abs(value.getNumericValue(Double.class));
+                    return ItemFactory.getInstance().createDoubleItem(result);
                 } catch (IteratorFlowException e) {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
                 }

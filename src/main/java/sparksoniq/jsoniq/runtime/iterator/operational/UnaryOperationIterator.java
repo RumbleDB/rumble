@@ -23,10 +23,8 @@ package sparksoniq.jsoniq.runtime.iterator.operational;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
-import sparksoniq.jsoniq.item.DecimalItem;
-import sparksoniq.jsoniq.item.DoubleItem;
-import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.UnaryOperationBaseIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -50,13 +48,13 @@ public class UnaryOperationIterator extends UnaryOperationBaseIterator {
             _child.close();
 
             if (this._operator == OperationalExpressionBase.Operator.MINUS) {
-                if (Item.isNumeric(child)) {
+                if (child.isNumeric()) {
                     if (child.isInteger())
-                        return new IntegerItem(-1 * child.getIntegerValue());
+                        return ItemFactory.getInstance().createIntegerItem(-1 * child.getIntegerValue());
                     if (child.isDouble())
-                        return new DoubleItem(-1 * child.getDoubleValue());
+                        return ItemFactory.getInstance().createDoubleItem(-1 * child.getDoubleValue());
                     if (child.isDecimal())
-                        return new DecimalItem(child.getDecimalValue().multiply(new BigDecimal(-1)));
+                        return ItemFactory.getInstance().createDecimalItem(child.getDecimalValue().multiply(new BigDecimal(-1)));
                 }
                 throw new UnexpectedTypeException("Unary expression has non numeric args " +
                         child.serialize(), getMetadata());

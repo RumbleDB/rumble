@@ -34,7 +34,6 @@ import sparksoniq.spark.DataFrameUtils;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 public class WhereClauseMapClosure implements FilterFunction<Row> {
     private final RuntimeIterator _expression;
@@ -52,6 +51,11 @@ public class WhereClauseMapClosure implements FilterFunction<Row> {
 
         _rowColumns = new ArrayList<>();
         _context = new DynamicContext();
+        
+        _kryo = new Kryo();
+        _kryo.setReferences(false);
+        DataFrameUtils.registerKryoClassesKryo(_kryo);
+        _input = new Input();
     }
 
     @Override
@@ -60,16 +64,14 @@ public class WhereClauseMapClosure implements FilterFunction<Row> {
         _context.removeAllVariables();
 
         String[] columnNames = _inputSchema.fieldNames();
-        Set<String> dependencies = _expression.getVariableDependencies();
+
+        // Deserialize row
+        _rowColumns = DataFrameUtils.deserializeEntireRow(row, _kryo, _input);
+
 
         // Create dynamic context with deserialized data
         for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
-            String field = columnNames[columnIndex];
-            if(dependencies.contains(field))
-            {
-                List<Item> i = DataFrameUtils.deserializeRowField(row, columnIndex, _kryo, _input); //rowColumns.get(columnIndex);
-                _context.addVariableValue(field, i);
-            }
+            _context.addVariableValue(columnNames[columnIndex], _rowColumns.get(columnIndex));
         }
 
         _expression.open(_context);
@@ -83,6 +85,7 @@ public class WhereClauseMapClosure implements FilterFunction<Row> {
         in.defaultReadObject();
         
         _kryo = new Kryo();
+        _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _input = new Input();
     }

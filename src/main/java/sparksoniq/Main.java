@@ -17,12 +17,10 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
-
 package sparksoniq;
 
 
 import sparksoniq.config.SparksoniqRuntimeConfiguration;
-import sparksoniq.exceptions.CliException;
 import sparksoniq.io.shell.JiqsJLineShell;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -67,7 +65,10 @@ public class Main {
                 System.out.println("spark-submit --master local[*] spark-rumble-1.0.jar --query-path my-query.jq --output-path my-output.json --log-path my-log.txt");
             }
         } catch (Exception ex) {
-            throw new CliException(ex.getMessage());
+            System.out.println("An error has occured: " + ex.getMessage());
+            System.out.println("We should investigate this 🙈. Please contact us or file an issue on GitHub with your query.");
+            System.out.println("Link: https://github.com/RumbleDB/rumble/issues");
+            ex.printStackTrace();
         }
 
     }

@@ -30,6 +30,7 @@ import sparksoniq.jsoniq.item.DecimalItem;
 import sparksoniq.jsoniq.item.DoubleItem;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -80,16 +81,16 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                 // convert to string
                 if (_lookupKey.isBoolean()) {
                     Boolean value = ((BooleanItem) _lookupKey).getValue();
-                    _lookupKey = new StringItem(value.toString());
+                    _lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
                 } else if (_lookupKey.isDecimal()) {
                     BigDecimal value = ((DecimalItem) _lookupKey).getValue();
-                    _lookupKey = new StringItem(value.toString());
+                    _lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
                 } else if (_lookupKey.isDouble()) {
                     Double value = ((DoubleItem) _lookupKey).getValue();
-                    _lookupKey = new StringItem(value.toString());
+                    _lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
                 } else if (_lookupKey.isInteger()) {
                     Integer value = ((IntegerItem) _lookupKey).getValue();
-                    _lookupKey = new StringItem(value.toString());
+                    _lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
                 } else if (_lookupKey.isString()) {
                     // do nothing
                 }

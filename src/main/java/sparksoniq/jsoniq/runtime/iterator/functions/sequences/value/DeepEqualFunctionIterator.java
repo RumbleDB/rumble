@@ -21,8 +21,8 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.sequences.value;
 
 import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.jsoniq.item.BooleanItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -53,7 +53,7 @@ public class DeepEqualFunctionIterator extends LocalFunctionCallIterator {
             List<Item> items2 = getItemsFromIteratorWithCurrentContext(sequenceIterator2);
 
             boolean res = checkDeepEqual(items1, items2);
-            return new BooleanItem(res);
+            return ItemFactory.getInstance().createBooleanItem(res);
         } else {
             throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "deep-equal function", getMetadata());
         }

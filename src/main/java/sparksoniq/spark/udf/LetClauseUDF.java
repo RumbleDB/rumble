@@ -24,7 +24,6 @@ import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.types.StructType;
 
 import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.ByteBufferOutput;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
@@ -37,14 +36,13 @@ import sparksoniq.spark.DataFrameUtils;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 public class LetClauseUDF implements UDF1<WrappedArray, List<byte[]>> {
     private RuntimeIterator _expression;
     private StructType _inputSchema;
-    Set<String> _dependencies;
-    String[] _columnNames;
+    List<String> _columnNames;
 
+    private List<List<Item>> _deserializedParams;
     private DynamicContext _context;
     private List<Item> _nextResult;
     
@@ -54,45 +52,34 @@ public class LetClauseUDF implements UDF1<WrappedArray, List<byte[]>> {
     
     public LetClauseUDF(
             RuntimeIterator expression,
-            StructType inputSchema) {
+            StructType inputSchema,
+            List<String> columnNames) {
         _expression = expression;
         _inputSchema = inputSchema;
 
+        _deserializedParams = new ArrayList<>();
         _context = new DynamicContext();
         _nextResult = new ArrayList<>();
         
         _kryo = new Kryo();
+        _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
-        _output = new ByteBufferOutput(128, -1);
+        _output = new Output(128, -1);
         _input = new Input();
         
-        _columnNames = _inputSchema.fieldNames();
-        _dependencies = _expression.getVariableDependencies();
+        _columnNames = columnNames;
     }
 
 
     @Override
     public List<byte[]> call(WrappedArray wrappedParameters) {
+        _deserializedParams.clear();
         _context.removeAllVariables();
         _nextResult.clear();
-        
-        Object[] serializedParams = (Object[]) wrappedParameters.array();
 
-        // prepare dynamic context
-        for (int columnIndex = 0; columnIndex < _columnNames.length; columnIndex++) {
-            String var = _columnNames[columnIndex];
-            if(_dependencies.contains(var))
-            {
-                List<Item> sequence = new ArrayList<Item>();
-                List<byte[]> bytes = (List<byte[]>) serializedParams[columnIndex];
-                for (byte[] b : bytes)
-                {
-                    Item i = (Item) DataFrameUtils.deserializeByteArray(b, _kryo, _input);
-                    sequence.add(i);
-                }
-                _context.addVariableValue(var, sequence);
-            }
-        }
+        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
+
+        DataFrameUtils.prepareDynamicContext(_context, _columnNames, _deserializedParams);
 
         // apply expression in the dynamic context
         _expression.open(_context);
@@ -110,8 +97,9 @@ public class LetClauseUDF implements UDF1<WrappedArray, List<byte[]>> {
         in.defaultReadObject();
         
         _kryo = new Kryo();
+        _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
-        _output = new ByteBufferOutput(128, -1);
+        _output = new Output(128, -1);
         _input = new Input();
     }
     

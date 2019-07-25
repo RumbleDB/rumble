@@ -58,6 +58,7 @@ import java.util.TreeMap;
 public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
     private final boolean _isStable;
     private final List<OrderByClauseSparkIteratorExpression> _expressions;
+    Set<String> _dependencies;
 
     private List<FlworTuple> _localTupleResults;
     private int _resultIndex;
@@ -67,6 +68,11 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         super(child, iteratorMetadata);
         this._expressions = expressions;
         this._isStable = stable;
+        _dependencies = new HashSet<String>();
+        for(OrderByClauseSparkIteratorExpression e : _expressions)
+        {
+            _dependencies.addAll(e.getExpression().getVariableDependencies());
+        }
     }
 
     @Override
@@ -204,11 +210,14 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         Dataset<Row> df = _child.getDataFrame(context);
         StructType inputSchema = df.schema();
 
+        List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema);
+        List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, _dependencies);
+
         df.sparkSession().udf().register("determineOrderingDataType",
-                new OrderClauseDetermineTypeUDF(_expressions, inputSchema),
+                new OrderClauseDetermineTypeUDF(_expressions, inputSchema, UDFcolumns),
                 DataTypes.createArrayType(DataTypes.StringType));
 
-        String udfSQL = DataFrameUtils.getSQL(inputSchema, -1, false);
+        String udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
 
         df.createOrReplaceTempView("input");
         df.sparkSession().table("input").cache();
@@ -313,12 +322,12 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         }
 
         df.sparkSession().udf().register("createOrderingColumns",
-                new OrderClauseCreateColumnsUDF(_expressions, inputSchema, typesForAllColumns),
+                new OrderClauseCreateColumnsUDF(_expressions, inputSchema, typesForAllColumns, UDFcolumns),
                 DataTypes.createStructType(typedFields));
 
-        String selectSQL = DataFrameUtils.getSQL(inputSchema, -1, true);
+        String selectSQL = DataFrameUtils.getSQL(allColumns, true);
         String projectSQL = selectSQL.substring(0, selectSQL.length() - 1);   // remove trailing comma
-        udfSQL = projectSQL;
+        udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
 
         return df.sparkSession().sql(
                 String.format(

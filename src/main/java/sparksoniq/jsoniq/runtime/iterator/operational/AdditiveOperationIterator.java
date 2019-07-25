@@ -23,11 +23,11 @@ package sparksoniq.jsoniq.runtime.iterator.operational;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
-import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.jsoniq.item.DecimalItem;
 import sparksoniq.jsoniq.item.DoubleItem;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -48,40 +48,40 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
     }
 
     @Override
-    public AtomicItem next() {
+    public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
 
             Type returnType = Item.getNumericResultType(_left, _right);
             if (returnType.equals(IntegerItem.class)) {
                 try {
-                    int l = Item.<Integer>getNumericValue(_left, Integer.class);
-                    int r = Item.<Integer>getNumericValue(_right, Integer.class);
+                    int l = _left.getNumericValue(Integer.class);
+                    int r = _right.getNumericValue(Integer.class);
                     return this._operator == OperationalExpressionBase.Operator.PLUS ?
-                            new IntegerItem(l + r) :
-                            new IntegerItem(l - r);
+                            ItemFactory.getInstance().createIntegerItem(l + r) :
+                            ItemFactory.getInstance().createIntegerItem(l - r);
 
                 } catch (IteratorFlowException e) {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
                 }
             } else if (returnType.equals(DoubleItem.class)) {
                 try {
-                    double l = Item.<Double>getNumericValue(_left, Double.class);
-                    double r = Item.<Double>getNumericValue(_right, Double.class);
+                    double l = _left.getNumericValue(Double.class);
+                    double r = _right.getNumericValue(Double.class);
                     return this._operator == OperationalExpressionBase.Operator.PLUS ?
-                            new DoubleItem(l + r) :
-                            new DoubleItem(l - r);
+                            ItemFactory.getInstance().createDoubleItem(l + r) :
+                            ItemFactory.getInstance().createDoubleItem(l - r);
 
                 } catch (IteratorFlowException e) {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
                 }
             } else if (returnType.equals(DecimalItem.class)) {
                 try {
-                    BigDecimal l = Item.<BigDecimal>getNumericValue(_left, BigDecimal.class);
-                    BigDecimal r = Item.<BigDecimal>getNumericValue(_right, BigDecimal.class);
+                    BigDecimal l = _left.getNumericValue(BigDecimal.class);
+                    BigDecimal r = _right.getNumericValue(BigDecimal.class);
                     return this._operator == OperationalExpressionBase.Operator.PLUS ?
-                            new DecimalItem(l.add(r)) :
-                            new DecimalItem(l.subtract(r));
+                            ItemFactory.getInstance().createDecimalItem(l.add(r)) :
+                            ItemFactory.getInstance().createDecimalItem(l.subtract(r));
 
                 } catch (IteratorFlowException e) {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
@@ -106,7 +106,7 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
         } else {
             _left = _leftIterator.next();
             _right = _rightIterator.next();
-            if (_leftIterator.hasNext() || _rightIterator.hasNext() || !Item.isNumeric(_left) || !Item.isNumeric(_right))
+            if (_leftIterator.hasNext() || _rightIterator.hasNext() || !_left.isNumeric() || !_right.isNumeric())
                 throw new UnexpectedTypeException("Additive expression has non numeric args " +
                         _left.serialize() + ", " + _right.serialize(), getMetadata());
 

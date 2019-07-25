@@ -23,8 +23,8 @@ package sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate;
 import sparksoniq.exceptions.InvalidArgumentTypeException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
-import sparksoniq.jsoniq.item.DecimalItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
@@ -78,7 +78,7 @@ public class SumFunctionIterator extends AggregateFunctionIterator {
             }
 
             results.forEach(r -> {
-                if (!Item.isNumeric(r))
+                if (!r.isNumeric())
                     throw new InvalidArgumentTypeException("Sum expression has non numeric args " +
                             r.serialize(), getMetadata());
             });
@@ -86,10 +86,10 @@ public class SumFunctionIterator extends AggregateFunctionIterator {
                 // if input is empty sequence and _zeroItem is not given 0 is returned
                 BigDecimal sumResult = new BigDecimal(0);
                 for (Item r : results) {
-                    BigDecimal current = Item.getNumericValue(r, BigDecimal.class);
+                    BigDecimal current = r.getNumericValue(BigDecimal.class);
                     sumResult = sumResult.add(current);
                 }
-                return new DecimalItem(sumResult);
+                return ItemFactory.getInstance().createDecimalItem(sumResult);
 
             } catch (IteratorFlowException e) {
                 throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());

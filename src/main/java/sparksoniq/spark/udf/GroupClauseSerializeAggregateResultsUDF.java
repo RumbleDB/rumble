@@ -23,7 +23,6 @@ package sparksoniq.spark.udf;
 import org.apache.spark.sql.api.java.UDF1;
 
 import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.ByteBufferOutput;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
@@ -49,8 +48,9 @@ public class GroupClauseSerializeAggregateResultsUDF implements UDF1<WrappedArra
         _deserializedParams = new ArrayList<>();
         
         _kryo = new Kryo();
+        _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
-        _output = new ByteBufferOutput(128, -1);
+        _output = new Output(128, -1);
         _input = new Input();
     }
 
@@ -71,8 +71,9 @@ public class GroupClauseSerializeAggregateResultsUDF implements UDF1<WrappedArra
         in.defaultReadObject();
         
         _kryo = new Kryo();
+        _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
-        _output = new ByteBufferOutput(128, -1);
+        _output = new Output(128, -1);
         _input = new Input();
     }
 }
