@@ -23,6 +23,7 @@ package sparksoniq.jsoniq.runtime.iterator.functions.arrays;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
@@ -31,14 +32,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-public class ArrayDescendantFunctionIterator extends ArrayFunctionIterator {
+public class ArrayDescendantFunctionIterator extends LocalFunctionCallIterator {
 
     private RuntimeIterator _iterator;
     private Queue<Item> _nextResults;   // queue that holds the results created by the current item in inspection
 
 
     public ArrayDescendantFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
-        super(arguments, ArrayFunctionOperators.DESCENDANT, iteratorMetadata);
+        super(arguments, iteratorMetadata);
     }
 
     @Override

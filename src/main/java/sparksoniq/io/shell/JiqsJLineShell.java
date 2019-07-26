@@ -123,7 +123,6 @@ public class JiqsJLineShell {
                 .highlighter(new DefaultHighlighter())
 //                .parser(new JiqsJlineParser())
                 .build();
-        PrintWriter outputWriter = new PrintWriter(terminal.output());
         jsoniqQueryExecutor = new JsoniqQueryExecutor(false, _configuration);
     }
 

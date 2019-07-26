@@ -26,20 +26,21 @@ import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ObjectProjectFunctionIterator extends ObjectFunctionIterator {
+public class ObjectProjectFunctionIterator extends LocalFunctionCallIterator {
 
     private RuntimeIterator _iterator;
     private Item _nextResult;
     private List<Item> _projKeys;
 
     public ObjectProjectFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
-        super(arguments, ObjectFunctionOperators.PROJECT, iteratorMetadata);
+        super(arguments, iteratorMetadata);
     }
 
     @Override

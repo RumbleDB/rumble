@@ -44,7 +44,6 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
     private List<OrderByClauseSparkIteratorExpression> _expressions;
     Set<String> _dependencies;
     List<String> _columnNames;
-    private StructType _inputSchema;
 
     private List<List<Item>> _deserializedParams;
     private DynamicContext _context;
@@ -56,10 +55,8 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
 
     public OrderClauseDetermineTypeUDF(
             List<OrderByClauseSparkIteratorExpression> expressions,
-            StructType inputSchema,
             List<String> columnNames) {
         _expressions = expressions;
-        _inputSchema = inputSchema;
 
         _deserializedParams = new ArrayList<>();
         _context = new DynamicContext();

@@ -49,7 +49,6 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
     private List<OrderByClauseSparkIteratorExpression> _expressions;
     Set<String> _dependencies;
     List<String> _columnNames;
-    private StructType _inputSchema;
     private Map _allColumnTypes;
 
     private List<List<Item>> _deserializedParams;
@@ -61,11 +60,9 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
 
     public OrderClauseCreateColumnsUDF(
             List<OrderByClauseSparkIteratorExpression> expressions,
-            StructType inputSchema,
             Map allColumnTypes,
             List<String> columnNames) {
         _expressions = expressions;
-        _inputSchema = inputSchema;
         _allColumnTypes = allColumnTypes;
 
         _deserializedParams = new ArrayList<>();

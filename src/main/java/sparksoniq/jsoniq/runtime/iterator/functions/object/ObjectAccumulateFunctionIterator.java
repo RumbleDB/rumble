@@ -24,15 +24,16 @@ import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-public class ObjectAccumulateFunctionIterator extends ObjectFunctionIterator {
+public class ObjectAccumulateFunctionIterator extends LocalFunctionCallIterator {
     public ObjectAccumulateFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
-        super(arguments, ObjectFunctionOperators.ACCUMULATE, iteratorMetadata);
+        super(arguments, iteratorMetadata);
     }
 
     @Override

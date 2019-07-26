@@ -39,7 +39,6 @@ import java.util.List;
 
 public class ForClauseUDF implements UDF1<WrappedArray, List> {
     private RuntimeIterator _expression;
-    private StructType _inputSchema;
     List<String> _columnNames;
 
     private List<List<Item>> _deserializedParams;
@@ -53,10 +52,8 @@ public class ForClauseUDF implements UDF1<WrappedArray, List> {
 
     public ForClauseUDF(
             RuntimeIterator expression,
-            StructType inputSchema,
             List<String> columnNames) {
         _expression = expression;
-        _inputSchema = inputSchema;
         _columnNames = columnNames;
 
         _deserializedParams = new ArrayList<>();
