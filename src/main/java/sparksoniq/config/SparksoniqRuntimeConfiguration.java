@@ -54,6 +54,13 @@ public class SparksoniqRuntimeConfiguration {
             return null;
     }
 
+    public boolean getOverwrite() {
+        if (this._arguments.containsKey("overwrite"))
+            return this._arguments.get("overwrite").equals("yes");
+        else
+            return false;
+    }
+
     public String getLogPath() {
         if (this._arguments.containsKey("log-path"))
             return this._arguments.get("log-path");
