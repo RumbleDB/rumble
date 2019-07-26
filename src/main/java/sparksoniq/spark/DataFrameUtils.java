@@ -30,7 +30,10 @@ import org.apache.spark.sql.expressions.UserDefinedFunction;
 import org.apache.spark.sql.expressions.Window;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
+
 import scala.collection.mutable.WrappedArray;
+import scala.collection.JavaConverters;
+import scala.collection.Seq;
 import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.BooleanItem;
 import sparksoniq.jsoniq.item.DecimalItem;
@@ -97,13 +100,13 @@ public class DataFrameUtils {
         return output.toBytes();
     }
 
-    public static List<byte[]> serializeItemList(List<Item> toSerialize, Kryo kryo, Output output) {
-        List<byte[]> result = new ArrayList<byte[]>();
+    public static Seq<byte[]> serializeItemList(List<Item> toSerialize, Kryo kryo, Output output) {
+        List<byte[]> result = new ArrayList<byte[]>(toSerialize.size());
         byte[] serializedBytes = null;
         for(Item i : toSerialize)
         {
             output.clear();
-            kryo.writeClassAndObject(output, toSerialize);
+            kryo.writeClassAndObject(output, i);
             serializedBytes = output.toBytes();
             result.add(serializedBytes);
         }
@@ -112,7 +115,7 @@ public class DataFrameUtils {
             lastBytesCache.set(serializedBytes);
             lastObjectItemCache.set(toSerialize.get(0));
         }
-        return result;
+        return JavaConverters.asScalaIteratorConverter(result.iterator()).asScala().toSeq();
     }
 
     /**
@@ -253,9 +256,9 @@ public class DataFrameUtils {
     public static void deserializeWrappedParameters(WrappedArray wrappedParameters, List<List<Item>> deserializedParams, Kryo kryo, Input input) {
         Object[] serializedParams = (Object[]) wrappedParameters.array();
         for (Object serializedParam: serializedParams) {
-            List<byte[]> bytes = (List<byte[]>) serializedParam;
+            Seq<byte[]> bytes = (Seq<byte[]>) serializedParam;
             List<Item> deserializedParam = new ArrayList<Item>();
-            for(byte[] b : bytes)
+            for(byte[] b : JavaConverters.asJavaIterableConverter(bytes).asJava())
             {
                 deserializedParam.add(deserializeByteArray(b, kryo, input));
             }
@@ -264,12 +267,12 @@ public class DataFrameUtils {
     }
 
     public static Row reserializeRowWithNewData(Row prevRow, List<Item> newColumn, int duplicateColumnIndex, Kryo kryo, Output output) {
-        List<List<byte[]>> newRowColumns = new ArrayList<>();
+        List<Seq<byte[]>> newRowColumns = new ArrayList<>();
         for (int columnIndex = 0; columnIndex < prevRow.length(); columnIndex++) {
             if (duplicateColumnIndex == columnIndex) {
                 newRowColumns.add(serializeItemList(newColumn, kryo, output));
             } else {
-                newRowColumns.add((List<byte[]>) prevRow.get(columnIndex));
+                newRowColumns.add((Seq<byte[]>) prevRow.get(columnIndex));
             }
         }
         if (duplicateColumnIndex == -1) {
@@ -279,9 +282,9 @@ public class DataFrameUtils {
     }
 
     public static List<Item> deserializeRowField(Row row, int columnIndex, Kryo kryo, Input input) {
-        List<byte[]> bytes = (List<byte[]>) row.get(columnIndex);
+        Seq<byte[]> bytes = (Seq<byte[]>) row.get(columnIndex);
         List<Item> result = new ArrayList<Item>();
-        for(byte[] b : bytes)
+        for(byte[] b : JavaConverters.asJavaIterableConverter(bytes).asJava())
         {
             input.setBuffer(b);
             result.add((Item) kryo.readClassAndObject(input));
@@ -292,9 +295,9 @@ public class DataFrameUtils {
     public static List<List<Item>> deserializeEntireRow(Row row, Kryo kryo, Input input) {
         List<List<Item>> deserializedColumnObjects = new ArrayList<List<Item>>();
         for (int columnIndex = 0; columnIndex < row.length(); columnIndex++) {
-            List<byte[]> bytes = (List<byte[]>) row.get(columnIndex);
+            Seq<byte[]> bytes = (Seq<byte[]>) row.get(columnIndex);
             List<Item> result = new ArrayList<Item>();
-            for(byte[] b : bytes)
+            for(byte[] b : JavaConverters.asJavaIterableConverter(bytes).asJava())
             {
                 input.setBuffer(b);
                 result.add((Item) kryo.readClassAndObject(input));
