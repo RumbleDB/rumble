@@ -23,12 +23,15 @@ package sparksoniq.jsoniq.runtime.iterator.primary;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 public class ContextExpressionIterator extends LocalRuntimeIterator {
     public ContextExpressionIterator(IteratorMetadata iteratorMetadata) {
@@ -47,10 +50,10 @@ public class ContextExpressionIterator extends LocalRuntimeIterator {
         throw new IteratorFlowException("Invalid next() call in Context Expression!", getMetadata());
     }
 
-    public Set<String> getVariableDependencies()
+    public Map<String, RuntimeIterator.VariableDependency> getVariableDependencies()
     {
-        Set<String> result = new HashSet<String>();
-        result.add("$");
+        Map<String, RuntimeIterator.VariableDependency> result = new TreeMap<String, RuntimeIterator.VariableDependency>();
+        result.put("$", RuntimeIterator.VariableDependency.FULL);
         return result;
     }
 }

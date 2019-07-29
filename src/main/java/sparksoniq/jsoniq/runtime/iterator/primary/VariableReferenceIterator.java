@@ -30,7 +30,9 @@ import sparksoniq.semantics.types.SequenceType;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 public class VariableReferenceIterator extends LocalRuntimeIterator {
 
@@ -84,10 +86,10 @@ public class VariableReferenceIterator extends LocalRuntimeIterator {
         return _variableName;
     }
 
-    public Set<String> getVariableDependencies()
+    public Map<String, RuntimeIterator.VariableDependency> getVariableDependencies()
     {
-        Set<String> result = new HashSet<String>();
-        result.add(_variableName);
+        Map<String, RuntimeIterator.VariableDependency> result = new TreeMap<String, RuntimeIterator.VariableDependency>();
+        result.put(_variableName, RuntimeIterator.VariableDependency.FULL);
         return result;
     }
 }
