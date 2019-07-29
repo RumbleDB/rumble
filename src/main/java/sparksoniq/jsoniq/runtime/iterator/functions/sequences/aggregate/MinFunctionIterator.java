@@ -26,11 +26,14 @@ import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemComparatorForSequences;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class MinFunctionIterator extends AggregateFunctionIterator {
 
@@ -77,5 +80,18 @@ public class MinFunctionIterator extends AggregateFunctionIterator {
         } else
             throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "MIN function",
                     getMetadata());
+    }
+
+    public Map<String, RuntimeIterator.VariableDependency> getVariableDependencies()
+    {
+        if(_children.get(0) instanceof VariableReferenceIterator)
+        {
+            VariableReferenceIterator expr = (VariableReferenceIterator) _children.get(0);
+            Map<String, RuntimeIterator.VariableDependency> result = new TreeMap<String, RuntimeIterator.VariableDependency>();
+            result.put(expr.getVariableName(), RuntimeIterator.VariableDependency.MIN);
+            return result;
+        } else {
+            return super.getVariableDependencies();
+        }
     }
 }

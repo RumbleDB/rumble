@@ -22,12 +22,16 @@ package sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate;
 
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class CountFunctionIterator extends AggregateFunctionIterator {
     public CountFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
@@ -55,5 +59,18 @@ public class CountFunctionIterator extends AggregateFunctionIterator {
         } else
             throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + " count function",
                     getMetadata());
+    }
+
+    public Map<String, RuntimeIterator.VariableDependency> getVariableDependencies()
+    {
+        if(_children.get(0) instanceof VariableReferenceIterator)
+        {
+            VariableReferenceIterator expr = (VariableReferenceIterator) _children.get(0);
+            Map<String, RuntimeIterator.VariableDependency> result = new TreeMap<String, RuntimeIterator.VariableDependency>();
+            result.put(expr.getVariableName(), RuntimeIterator.VariableDependency.COUNT);
+            return result;
+        } else {
+            return super.getVariableDependencies();
+        }
     }
 }
