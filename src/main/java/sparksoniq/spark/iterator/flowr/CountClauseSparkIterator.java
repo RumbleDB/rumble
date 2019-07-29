@@ -39,6 +39,7 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.closures.CountClauseClosure;
+import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
 import sparksoniq.spark.udf.CountClauseSerializeUDF;
 
 import java.util.ArrayList;
@@ -176,5 +177,16 @@ public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
         }
         buffer.append("Variable " + _variableName);
         buffer.append("\n");
+    }
+    
+    public void setParentDependencies(Map<String, RuntimeIterator.VariableDependency> parentDependencies)
+    {
+        _parentDependencies = parentDependencies;
+        
+        // passing dependencies to parent
+        Map<String, RuntimeIterator.VariableDependency> recursiveDependencies = new TreeMap<String, RuntimeIterator.VariableDependency>();
+        recursiveDependencies.putAll(parentDependencies);
+        recursiveDependencies.remove(_variableName);
+        _child.setParentDependencies(recursiveDependencies);
     }
 }

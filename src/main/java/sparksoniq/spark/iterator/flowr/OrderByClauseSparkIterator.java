@@ -43,6 +43,7 @@ import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.closures.OrderByClauseSortClosure;
 import sparksoniq.spark.closures.OrderByMapToPairClosure;
+import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
 import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 import sparksoniq.spark.udf.OrderClauseCreateColumnsUDF;
 import sparksoniq.spark.udf.OrderClauseDetermineTypeUDF;
@@ -366,5 +367,30 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         {
             iterator.getExpression().print(buffer, indent+1);
         }
+    }
+    
+    public void setParentDependencies(Map<String, RuntimeIterator.VariableDependency> parentDependencies)
+    {
+        _parentDependencies = parentDependencies;
+        
+        // passing dependencies to parent
+        Map<String, RuntimeIterator.VariableDependency> recursiveDependencies = new TreeMap<String, RuntimeIterator.VariableDependency>();
+        recursiveDependencies.putAll(parentDependencies);
+        for(OrderByClauseSparkIteratorExpression iterator : _expressions)
+        {
+            Map<String, RuntimeIterator.VariableDependency> exprDependency = iterator.getExpression().getVariableDependencies();
+            for(String k : exprDependency.keySet())
+            {
+                if(recursiveDependencies.containsKey(k)) {
+                    if(recursiveDependencies.get(k) != exprDependency.get(k))
+                    {
+                        recursiveDependencies.put(k, RuntimeIterator.VariableDependency.FULL);
+                    }
+                } else {
+                    recursiveDependencies.put(k, exprDependency.get(k));
+                }
+            }
+        }
+        _child.setParentDependencies(recursiveDependencies);
     }
 }

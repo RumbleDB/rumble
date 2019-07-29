@@ -41,6 +41,7 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.closures.OLD_WhereClauseClosure;
+import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
 import sparksoniq.spark.udf.WhereClauseUDF;
 
 public class WhereClauseSparkIterator extends SparkRuntimeTupleIterator {
@@ -175,5 +176,28 @@ public class WhereClauseSparkIterator extends SparkRuntimeTupleIterator {
     {
         super.print(buffer,  indent);
         _expression.print(buffer, indent + 1);
+    }
+    
+    public void setParentDependencies(Map<String, RuntimeIterator.VariableDependency> parentDependencies)
+    {
+        _parentDependencies = parentDependencies;
+        
+        // passing dependencies to parent
+        Map<String, RuntimeIterator.VariableDependency> recursiveDependencies = new TreeMap<String, RuntimeIterator.VariableDependency>();
+        recursiveDependencies.putAll(parentDependencies);
+        
+        Map<String, RuntimeIterator.VariableDependency> exprDependency = _expression.getVariableDependencies();
+        for(String k : exprDependency.keySet())
+        {
+            if(recursiveDependencies.containsKey(k)) {
+                if(recursiveDependencies.get(k) != exprDependency.get(k))
+                {
+                    recursiveDependencies.put(k, RuntimeIterator.VariableDependency.FULL);
+                }
+            } else {
+                recursiveDependencies.put(k, exprDependency.get(k));
+            }
+        }
+        _child.setParentDependencies(recursiveDependencies);
     }
 }

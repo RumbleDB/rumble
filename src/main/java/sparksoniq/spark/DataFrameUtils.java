@@ -37,6 +37,7 @@ import sparksoniq.jsoniq.item.DecimalItem;
 import sparksoniq.jsoniq.item.DoubleItem;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.KryoManager;
 import sparksoniq.jsoniq.item.NullItem;
 import sparksoniq.jsoniq.item.ObjectItem;
@@ -194,12 +195,14 @@ public class DataFrameUtils {
             int duplicateVariableIndex,
             boolean trailingComma,
             String serializerUdfName,
-            List<String> groupbyVariableNames
+            List<String> groupbyVariableNames,
+            Map<String, RuntimeIterator.VariableDependency> dependencies
     ) {
         String[] columnNames = inputSchema.fieldNames();
         StringBuilder queryColumnString = new StringBuilder();
         for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
             String columnName = columnNames[columnIndex];
+
             boolean applyDistinct = false;
             if (columnIndex == duplicateVariableIndex) {
                 continue;
@@ -208,18 +211,39 @@ public class DataFrameUtils {
                 applyDistinct = true;
             }
 
-            queryColumnString.append(serializerUdfName);
-            queryColumnString.append("(");
-            if (applyDistinct) {
-                queryColumnString.append("array_distinct(");
+            boolean applyCount = false;
+            if (dependencies.containsKey(columnName) && dependencies.get(columnName) == RuntimeIterator.VariableDependency.COUNT) {
+                applyCount = true;
+                System.out.println(columnName + " : a count.");
+            } else {
+                System.out.println(columnName + " : not a count.");
+                System.out.println(dependencies.containsKey(columnName));
+                if(dependencies.containsKey(columnName)) { System.out.println(dependencies.get(columnName)); }
             }
-            queryColumnString.append("collect_list(`");
+
+            if(applyCount) {
+                queryColumnString.append("count(`");
+            } else {
+                queryColumnString.append(serializerUdfName);
+                queryColumnString.append("(");
+                if (applyDistinct) {
+                    queryColumnString.append("array_distinct(");
+                }
+                queryColumnString.append("collect_list(`");
+            }
+
             queryColumnString.append(columnName);
-            queryColumnString.append("`)");
-            if (applyDistinct) {
+
+            if(applyCount) {
+                queryColumnString.append("`)");
+            } else {
+                queryColumnString.append("`)");
+                if (applyDistinct) {
+                    queryColumnString.append(")");
+                }
                 queryColumnString.append(")");
             }
-            queryColumnString.append(") as `");
+            queryColumnString.append(" as `");
             queryColumnString.append(columnName);
             queryColumnString.append("`");
 
@@ -269,9 +293,17 @@ public class DataFrameUtils {
     }
 
     public static List<Item> deserializeRowField(Row row, int columnIndex, Kryo kryo, Input input) {
-        byte[] bytes = (byte[]) row.get(columnIndex);
-        input.setBuffer(bytes);
-        return (List<Item>) kryo.readClassAndObject(input);
+        Object o = row.get(columnIndex);
+        if(o instanceof Long)
+        {
+            List<Item> result = new ArrayList<Item>(1);
+            result.add(ItemFactory.getInstance().createIntegerItem(((Long) o).intValue()));
+            return result;
+        } else {
+            byte[] bytes = (byte[]) o;
+            input.setBuffer(bytes);
+            return (List<Item>) kryo.readClassAndObject(input);
+        }
     }
 
     public static List<Object> deserializeEntireRow(Row row, Kryo kryo, Input input) {

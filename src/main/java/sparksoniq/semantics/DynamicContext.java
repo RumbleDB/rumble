@@ -93,19 +93,17 @@ public class DynamicContext implements Serializable, KryoSerializable {
                     "" + varName + " value");
     }
 
-    public List<Item> getVariableCount(String varName) {
+    public Item getVariableCount(String varName) {
         if (_variableValues.containsKey(varName))
         {
             if(_variableCounts.contains(varName))
             {
-                return _variableValues.get(varName);
+                return _variableValues.get(varName).get(0);
             }
             else
             {
                 Item count = ItemFactory.getInstance().createIntegerItem(_variableValues.get(varName).size());
-                List<Item> value = new ArrayList<Item>(1);
-                value.add(count);
-                return value;
+                return count;
             }
         }
         else if (_parent != null)

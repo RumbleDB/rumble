@@ -43,6 +43,12 @@ public class CountFunctionIterator extends AggregateFunctionIterator {
         if (this._hasNext) {
             RuntimeIterator iterator = this._children.get(0);
             if (!iterator.isRDD()) {
+                if(_children.get(0) instanceof VariableReferenceIterator)
+                {
+                    VariableReferenceIterator expr = (VariableReferenceIterator) _children.get(0);
+                    this._hasNext = false;
+                    return _currentDynamicContext.getVariableCount(expr.getVariableName());
+                }
                 List<Item> results = getItemsFromIteratorWithCurrentContext(iterator);
                 this._hasNext = false;
                 return ItemFactory.getInstance().createIntegerItem(results.size());

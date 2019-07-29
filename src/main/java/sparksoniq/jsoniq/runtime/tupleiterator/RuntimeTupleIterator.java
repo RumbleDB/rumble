@@ -47,6 +47,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     protected boolean _isOpen;
     protected RuntimeTupleIterator _child;
     protected DynamicContext _currentDynamicContext;
+    protected Map<String, RuntimeIterator.VariableDependency> _parentDependencies;
 
     protected RuntimeTupleIterator(RuntimeTupleIterator child, IteratorMetadata metadata) {
         this.metadata = metadata;
@@ -110,6 +111,9 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     public abstract boolean isDataFrame();
 
     public abstract Dataset<Row> getDataFrame(DynamicContext context);
+    
+    public abstract void setParentDependencies(Map<String, RuntimeIterator.VariableDependency> parentDependencies);
+
     /*
     * Variable dependencies are variables that MUST be provided in the dynamic context
     * for successful execution.
@@ -117,7 +121,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     * These variables are:
     * 1. All variables that the expression of the clause depends on (recursive call of getVariableDependencies on the expression)
     * 2. Except those variables bound in the current FLWOR (obtained from the auxiliary method getVariablesBoundInCurrentFLWORExpression), because those are provided in the Tuples
-    * 3.Plus (recursively calling getVariableDependencies) all the Variable Dependencies of the child clause if it exists.
+    * 3. Plus (recursively calling getVariableDependencies) all the Variable Dependencies of the child clause if it exists.
     * 
     */
     public Map<String, RuntimeIterator.VariableDependency> getVariableDependencies()

@@ -339,7 +339,8 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
                 -1,
                 false,
                 serializerUDFName,
-                groupbyVariableNames
+                groupbyVariableNames,
+                _parentDependencies
         );
 
         return df.sparkSession().sql(
@@ -390,4 +391,34 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
             iterator.getExpression().print(buffer, indent+1);
         }
     }
+    
+    public void setParentDependencies(Map<String, RuntimeIterator.VariableDependency> parentDependencies)
+    {
+        _parentDependencies = parentDependencies;
+        
+        // passing dependencies to parent
+        Map<String, RuntimeIterator.VariableDependency> recursiveDependencies = new TreeMap<String, RuntimeIterator.VariableDependency>();
+        recursiveDependencies.putAll(parentDependencies);
+        for(GroupByClauseSparkIteratorExpression iterator : _expressions)
+        {
+            recursiveDependencies.remove(iterator.getVariableReference().getVariableName());
+        }
+        for(GroupByClauseSparkIteratorExpression iterator : _expressions)
+        {
+            Map<String, RuntimeIterator.VariableDependency> exprDependency = iterator.getExpression().getVariableDependencies();
+            for(String k : exprDependency.keySet())
+            {
+                if(recursiveDependencies.containsKey(k)) {
+                    if(recursiveDependencies.get(k) != exprDependency.get(k))
+                    {
+                        recursiveDependencies.put(k, RuntimeIterator.VariableDependency.FULL);
+                    }
+                } else {
+                    recursiveDependencies.put(k, exprDependency.get(k));
+                }
+            }
+        }
+        _child.setParentDependencies(recursiveDependencies);
+    }
+
 }
