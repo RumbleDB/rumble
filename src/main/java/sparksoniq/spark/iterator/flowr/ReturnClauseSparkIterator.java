@@ -36,7 +36,9 @@ import sparksoniq.spark.closures.ReturnFlatMapClosure;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
@@ -140,12 +142,15 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         setNextLocalResult();
     }
 
-    public Set<String> getVariableDependencies()
+    public Map<String, RuntimeIterator.VariableDependency> getVariableDependencies()
     {
-        Set<String> result = new HashSet<String>();
-        result.addAll(_expression.getVariableDependencies());
-        result.removeAll(_child.getVariablesBoundInCurrentFLWORExpression());
-        result.addAll(_child.getVariableDependencies());
+        Map<String, RuntimeIterator.VariableDependency> result = new TreeMap<String, RuntimeIterator.VariableDependency>();
+        result.putAll(_expression.getVariableDependencies());
+        for (String var : _child.getVariablesBoundInCurrentFLWORExpression())
+        {
+            result.remove(var);
+        }
+        result.putAll(_child.getVariableDependencies());
         return result;
     }
     

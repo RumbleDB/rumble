@@ -33,6 +33,7 @@ import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.NullItem;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
@@ -44,10 +45,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
     private List<OrderByClauseSparkIteratorExpression> _expressions;
-    Set<String> _dependencies;
+    Map<String, RuntimeIterator.VariableDependency> _dependencies;
     List<String> _columnNames;
     private StructType _inputSchema;
     private Map _allColumnTypes;
@@ -72,9 +74,9 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
         _context = new DynamicContext();
         _results = new ArrayList<>();
         
-        _dependencies = new HashSet<String>();
+        _dependencies = new TreeMap<String, RuntimeIterator.VariableDependency>();
         for (OrderByClauseSparkIteratorExpression expression : _expressions) {
-            _dependencies.addAll(expression.getExpression().getVariableDependencies());
+            _dependencies.putAll(expression.getExpression().getVariableDependencies());
         }
         _columnNames = columnNames;
         

@@ -57,25 +57,26 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
     private final List<GroupByClauseSparkIteratorExpression> _expressions;
     private List<FlworTuple> _localTupleResults;
     private int _resultIndex;
-    Set<String> _dependencies;
+    Map<String, RuntimeIterator.VariableDependency> _dependencies;
 
     public GroupByClauseSparkIterator(RuntimeTupleIterator child, List<GroupByClauseSparkIteratorExpression> variables,
                                       IteratorMetadata iteratorMetadata) {
         super(child, iteratorMetadata);
         this._expressions = variables;
-        _dependencies = new HashSet<String>();
+        _dependencies = new TreeMap<String, RuntimeIterator.VariableDependency>();
         for(GroupByClauseSparkIteratorExpression e : _expressions)
         {
             if(e.getExpression() != null)
             {
-                _dependencies.addAll(e.getExpression().getVariableDependencies());
+                _dependencies.putAll(e.getExpression().getVariableDependencies());
             } else {
-                _dependencies.add(e.getVariableReference().getVariableName());
+                _dependencies.put(e.getVariableReference().getVariableName(), RuntimeIterator.VariableDependency.FULL);
             }
         }
     }
@@ -288,7 +289,7 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
 
         // determine grouping data types after all variable introductions are completed
         inputSchema = df.schema();
-        Set<String> groupingVariables = new HashSet<String>();
+        Map<String, RuntimeIterator.VariableDependency> groupingVariables = new TreeMap<String, RuntimeIterator.VariableDependency>();
 
         df.createOrReplaceTempView("input");
 
@@ -296,7 +297,7 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
         List<StructField> typedFields = new ArrayList<>();
         String appendedGroupingColumnsName = "grouping_columns";
         for (int columnIndex = 0; columnIndex < _expressions.size(); columnIndex++) {
-            groupingVariables.add(_expressions.get(columnIndex).getVariableReference().getVariableName());
+            groupingVariables.put(_expressions.get(columnIndex).getVariableReference().getVariableName(), RuntimeIterator.VariableDependency.FULL);
             // every expression contains an int column for null/empty/true/false/string/double check
             String columnName = columnIndex + "-nullEmptyBooleanCheckField";
             typedFields.add(DataTypes.createStructField(columnName, DataTypes.IntegerType, false));
@@ -349,15 +350,18 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
         );
     }
 
-    public Set<String> getVariableDependencies()
+    public Map<String, RuntimeIterator.VariableDependency> getVariableDependencies()
     {
-        Set<String> result = new HashSet<String>();
+        Map<String, RuntimeIterator.VariableDependency> result = new TreeMap<String, RuntimeIterator.VariableDependency>();
         for(GroupByClauseSparkIteratorExpression iterator : _expressions)
         {
-            result.addAll(iterator.getExpression().getVariableDependencies());
+            result.putAll(iterator.getExpression().getVariableDependencies());
         }
-        result.removeAll(_child.getVariablesBoundInCurrentFLWORExpression());
-        result.addAll(_child.getVariableDependencies());
+        for (String var : _child.getVariablesBoundInCurrentFLWORExpression())
+        {
+            result.remove(var);
+        }
+        result.putAll(_child.getVariableDependencies());
         return result;
     }
 

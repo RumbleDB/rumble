@@ -22,7 +22,9 @@ package sparksoniq.spark.iterator.flowr;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
@@ -47,7 +49,7 @@ public class WhereClauseSparkIterator extends SparkRuntimeTupleIterator {
     private DynamicContext _tupleContext;   // re-use same DynamicContext object for efficiency
     private FlworTuple _nextLocalTupleResult;
     private FlworTuple _inputTuple;     // tuple received from child, used for tuple creation
-    Set<String> _dependencies;
+    Map<String, RuntimeIterator.VariableDependency> _dependencies;
 
     public WhereClauseSparkIterator(RuntimeTupleIterator child, RuntimeIterator whereExpression, IteratorMetadata iteratorMetadata) {
         super(child, iteratorMetadata);
@@ -150,12 +152,15 @@ public class WhereClauseSparkIterator extends SparkRuntimeTupleIterator {
         return df;
     }
 
-    public Set<String> getVariableDependencies()
+    public Map<String, RuntimeIterator.VariableDependency> getVariableDependencies()
     {
-        Set<String> result = new HashSet<String>();
-        result.addAll(_expression.getVariableDependencies());
-        result.removeAll(_child.getVariablesBoundInCurrentFLWORExpression());
-        result.addAll(_child.getVariableDependencies());
+        Map<String, RuntimeIterator.VariableDependency> result = new TreeMap<String, RuntimeIterator.VariableDependency>();
+        result.putAll(_expression.getVariableDependencies());
+        for (String var : _child.getVariablesBoundInCurrentFLWORExpression())
+        {
+            result.remove(var);
+        }
+        result.putAll(_child.getVariableDependencies());
         return result;
     }
 

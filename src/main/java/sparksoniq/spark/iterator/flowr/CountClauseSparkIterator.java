@@ -30,6 +30,7 @@ import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator.VariableDependency;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
@@ -44,7 +45,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
     private String _variableName;
@@ -149,10 +152,10 @@ public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
         return dfWithIndex;
     }
 
-    public Set<String> getVariableDependencies()
+    public Map<String, RuntimeIterator.VariableDependency> getVariableDependencies()
     {
-        Set<String> result = new HashSet<String>();
-        result.addAll(_child.getVariableDependencies());
+        Map<String, RuntimeIterator.VariableDependency> result = new TreeMap<String, RuntimeIterator.VariableDependency>();
+        result.putAll(_child.getVariableDependencies());
         return result;
     }
 

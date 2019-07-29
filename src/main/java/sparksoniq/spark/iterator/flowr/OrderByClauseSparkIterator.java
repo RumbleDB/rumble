@@ -58,7 +58,7 @@ import java.util.TreeMap;
 public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
     private final boolean _isStable;
     private final List<OrderByClauseSparkIteratorExpression> _expressions;
-    Set<String> _dependencies;
+    Map<String, RuntimeIterator.VariableDependency> _dependencies;
 
     private List<FlworTuple> _localTupleResults;
     private int _resultIndex;
@@ -68,10 +68,10 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         super(child, iteratorMetadata);
         this._expressions = expressions;
         this._isStable = stable;
-        _dependencies = new HashSet<String>();
+        _dependencies = new TreeMap<String, RuntimeIterator.VariableDependency>();
         for(OrderByClauseSparkIteratorExpression e : _expressions)
         {
-            _dependencies.addAll(e.getExpression().getVariableDependencies());
+            _dependencies.putAll(e.getExpression().getVariableDependencies());
         }
     }
 
@@ -337,15 +337,18 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         );
     }
 
-    public Set<String> getVariableDependencies()
+    public Map<String, RuntimeIterator.VariableDependency> getVariableDependencies()
     {
-        Set<String> result = new HashSet<String>();
+        Map<String, RuntimeIterator.VariableDependency> result = new TreeMap<String, RuntimeIterator.VariableDependency>();
         for(OrderByClauseSparkIteratorExpression iterator : _expressions)
         {
-            result.addAll(iterator.getExpression().getVariableDependencies());
+            result.putAll(iterator.getExpression().getVariableDependencies());
         }
-        result.removeAll(_child.getVariablesBoundInCurrentFLWORExpression());
-        result.addAll(_child.getVariableDependencies());
+        for (String var : _child.getVariablesBoundInCurrentFLWORExpression())
+        {
+            result.remove(var);
+        }
+        result.putAll(_child.getVariableDependencies());
         return result;
     }
 

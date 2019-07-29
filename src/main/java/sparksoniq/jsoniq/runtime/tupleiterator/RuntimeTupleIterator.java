@@ -26,12 +26,16 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator.VariableDependency;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
@@ -116,10 +120,10 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     * 3.Plus (recursively calling getVariableDependencies) all the Variable Dependencies of the child clause if it exists.
     * 
     */
-    public Set<String> getVariableDependencies()
+    public Map<String, RuntimeIterator.VariableDependency> getVariableDependencies()
     {
-        Set<String> result = new HashSet<String>();
-        result.addAll(_child.getVariableDependencies());
+        Map<String, RuntimeIterator.VariableDependency> result = new TreeMap<String, RuntimeIterator.VariableDependency>();
+        result.putAll(_child.getVariableDependencies());
         return result;
     }
 
@@ -143,9 +147,10 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         buffer.append(" | ");
 
         buffer.append("Variable dependencies: ");
-        for(String v : getVariableDependencies())
+        Map<String, VariableDependency> dependencies = getVariableDependencies();
+        for(String v : dependencies.keySet())
         {
-          buffer.append(v + " ");
+          buffer.append(v + "(" + dependencies.get(v) + ")"  + " ");
         }
         buffer.append(" | ");
 

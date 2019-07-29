@@ -30,6 +30,7 @@ import scala.collection.mutable.WrappedArray;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
@@ -38,11 +39,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
     private List<OrderByClauseSparkIteratorExpression> _expressions;
-    Set<String> _dependencies;
+    Map<String, RuntimeIterator.VariableDependency> _dependencies;
     List<String> _columnNames;
     private StructType _inputSchema;
 
@@ -65,9 +68,9 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
         _context = new DynamicContext();
         result = new ArrayList<>();
         
-        _dependencies = new HashSet<String>();
+        _dependencies = new TreeMap<String, RuntimeIterator.VariableDependency>();
         for (OrderByClauseSparkIteratorExpression expression : _expressions) {
-            _dependencies.addAll(expression.getExpression().getVariableDependencies());
+            _dependencies.putAll(expression.getExpression().getVariableDependencies());
         }
         _columnNames = columnNames;
         

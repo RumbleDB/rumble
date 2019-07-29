@@ -41,6 +41,7 @@ import sparksoniq.jsoniq.item.KryoManager;
 import sparksoniq.jsoniq.item.NullItem;
 import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.item.StringItem;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
@@ -118,7 +119,7 @@ public class DataFrameUtils {
     public static List<String> getColumnNames(
             StructType inputSchema,
             int duplicateVariableIndex,
-            Set<String> dependencies) {
+            Map<String, RuntimeIterator.VariableDependency> dependencies) {
         List<String> result = new ArrayList<String>();
         String[] columnNames = inputSchema.fieldNames();
         for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
@@ -126,7 +127,7 @@ public class DataFrameUtils {
                 continue;
             }
             String var = columnNames[columnIndex];
-            if(dependencies == null || dependencies.contains(var))
+            if(dependencies == null || dependencies.containsKey(var))
             {
                 result.add(columnNames[columnIndex]);
             }

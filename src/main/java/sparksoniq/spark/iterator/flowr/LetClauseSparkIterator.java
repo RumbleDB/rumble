@@ -43,7 +43,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
 
@@ -51,7 +53,7 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
     private RuntimeIterator _expression;
     private DynamicContext _tupleContext;   // re-use same DynamicContext object for efficiency
     private FlworTuple _nextLocalTupleResult;
-    Set<String> _dependencies;
+    Map<String, RuntimeIterator.VariableDependency> _dependencies;
 
     public LetClauseSparkIterator(RuntimeTupleIterator child, VariableReferenceIterator variableReference, RuntimeIterator expression, IteratorMetadata iteratorMetadata) {
         super(child, iteratorMetadata);
@@ -187,14 +189,17 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
         throw new SparksoniqRuntimeException("Initial letClauses don't support DataFrames");
     }
 
-    public Set<String> getVariableDependencies()
+    public Map<String, RuntimeIterator.VariableDependency> getVariableDependencies()
     {
-        Set<String> result = new HashSet<String>();
-        result.addAll(_expression.getVariableDependencies());
+        Map<String, RuntimeIterator.VariableDependency> result = new TreeMap<String, RuntimeIterator.VariableDependency>();
+        result.putAll(_expression.getVariableDependencies());
         if(_child != null)
         {
-            result.removeAll(_child.getVariablesBoundInCurrentFLWORExpression());
-            result.addAll(_child.getVariableDependencies());
+            for (String var : _child.getVariablesBoundInCurrentFLWORExpression())
+            {
+                result.remove(var);
+            }
+            result.putAll(_child.getVariableDependencies());
         }
         return result;
     }

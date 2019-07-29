@@ -48,13 +48,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
 
     private String _variableName;           // for efficient use in local iteration
     private RuntimeIterator _expression;
-    Set<String> _dependencies;
+    Map<String, RuntimeIterator.VariableDependency> _dependencies;
     private DynamicContext _tupleContext;   // re-use same DynamicContext object for efficiency
     private FlworTuple _nextLocalTupleResult;
     private FlworTuple _inputTuple;     // tuple received from child, used for tuple creation
@@ -280,14 +282,17 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
         return df;
     }
 
-    public Set<String> getVariableDependencies()
+    public Map<String, RuntimeIterator.VariableDependency> getVariableDependencies()
     {
-        Set<String> result = new HashSet<String>();
-        result.addAll(_expression.getVariableDependencies());
+        Map<String, RuntimeIterator.VariableDependency> result = new TreeMap<String, RuntimeIterator.VariableDependency>();
+        result.putAll(_expression.getVariableDependencies());
         if(_child != null)
         {
-            result.removeAll(_child.getVariablesBoundInCurrentFLWORExpression());
-            result.addAll(_child.getVariableDependencies());
+            for (String var : _child.getVariablesBoundInCurrentFLWORExpression())
+            {
+                result.remove(var);
+            }
+            result.putAll(_child.getVariableDependencies());
         }
         return result;
     }

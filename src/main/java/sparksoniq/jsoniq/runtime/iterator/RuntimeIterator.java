@@ -36,7 +36,9 @@ import sparksoniq.semantics.DynamicContext;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoSerializable {
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
@@ -204,13 +206,22 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
             throw new UnexpectedTypeException("Invalid item type returned by iterator", iterator.getMetadata());
         return (T) result;
     }
+    
+    public enum VariableDependency {
+        FULL,
+        COUNT,
+        SUM,
+        AVG,
+        MAX,
+        MIN
+    }
 
-    public Set<String> getVariableDependencies()
+    public Map<String, VariableDependency> getVariableDependencies()
     {
-        Set<String> result = new HashSet<String>();
+        Map<String, VariableDependency> result = new TreeMap<String, VariableDependency>();
         for(RuntimeIterator iterator : _children)
         {
-            result.addAll(iterator.getVariableDependencies());
+            result.putAll(iterator.getVariableDependencies());
         }
         return result;
     }
@@ -225,9 +236,10 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         buffer.append(" | ");
 
         buffer.append("Variable dependencies: ");
-        for(String v : getVariableDependencies())
+        Map<String, VariableDependency> dependencies = getVariableDependencies();
+        for(String v : dependencies.keySet())
         {
-          buffer.append(v + " ");
+          buffer.append(v + "(" + dependencies.get(v) + ")"  + " ");
         }
         buffer.append("\n");
         for (RuntimeIterator iterator : this._children) {
