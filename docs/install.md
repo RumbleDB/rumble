@@ -6,13 +6,11 @@ We show here how to install Rumble from the github repository if you wish to do 
 
 The following software is required:
 
-- [Java SE](http://www.oracle.com/technetwork/java/javase/downloads/index.html) 8 (last tested on 1.8.0_121). The JDK is needed here, but the JRE will be enough when the packaged JAR is available.
+- [Java SE](http://www.oracle.com/technetwork/java/javase/downloads/index.html) 11 (last tested on 11.0.4). The JDK is needed here, but the JRE will be enough when the packaged JAR is available.
 - [Spark](https://spark.apache.org/), version 2.0.0 (for example)
 - [Ant](http://www.ant.org/), version 1.10.1
 - [ANTLR](http://www.ant.org/), version 4.7 (supplied in our repository, also 4.5.3)
 - [Maven](https://maven.apache.org/) 3.5.0
-
-Important: Java 9 is not supported by Spark. You specifically need Java 8. 
 
 Important: the ANTLR version varies with the Spark version, because Spark is also shipped with an ANTLR runtime (example: Spark 2.2.0 is with ANTLR 4.5.3, Spark 2.3.0 with ANTLR 4.7). The ANTLR runtime MUST match the ANTLR generator used to generate the Rumble jar file.
 
