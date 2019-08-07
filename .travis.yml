@@ -1,6 +1,6 @@
 language: java
 jdk:
-  - oraclejdk8
+  - oraclejdk9
 sudo: false
 before_script:
   - _JAVA_OPTIONS="-Xmx8192m -Xms512m"
