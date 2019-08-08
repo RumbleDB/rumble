@@ -6,7 +6,7 @@ We show here how to install Rumble from the github repository if you wish to do 
 
 The following software is required:
 
-- [Java SE](http://www.oracle.com/technetwork/java/javase/downloads/index.html) 11 (last tested on 11.0.4). The JDK is needed here, but the JRE is enough with the packaged jar file.
+- [Java SE](http://www.oracle.com/technetwork/java/javase/downloads/index.html) 8+ (last tested on 8u221). The JDK is needed here, but the JRE is enough with the packaged jar file.
 - [Spark](https://spark.apache.org/), version 2.4.3 (for example)
 - [Ant](http://www.ant.org/), version 1.10.1
 - [ANTLR](http://www.ant.org/), version 4.7 (supplied in our repository)
