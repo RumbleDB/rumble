@@ -50,7 +50,9 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.Charset;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
@@ -68,6 +70,24 @@ public class JsoniqQueryExecutor {
     }
 
     public void runLocal(String queryFile, String outputPath) throws IOException {
+        File outputFile = null;
+        if(outputPath != null)
+        {
+            outputFile = new File(outputPath);
+            if(outputFile.exists())
+            {
+                if(!_configuration.getOverwrite())
+                {
+                    System.err.println("Output path " + outputPath + " already exists. Please use --overwrite yes to overwrite.");
+                    System.exit(1);
+                } else if(outputFile.isDirectory()) {
+                    org.apache.commons.io.FileUtils.deleteDirectory(outputFile);
+                } else {
+                    outputFile.delete();
+                }
+            }
+        }
+
         CharStream charStream = CharStreams.fromFileName(queryFile);
         long startTime = System.currentTimeMillis();
         JsoniqExpressionTreeVisitor visitor = this.parse(new JsoniqLexer(charStream));
@@ -90,8 +110,7 @@ public class JsoniqQueryExecutor {
             String output = runIterators(result);
             if (outputPath != null) {
                 List<String> lines = Arrays.asList(output);
-                java.nio.file.Path file = Paths.get(outputPath);
-                Files.write(file, lines, Charset.forName("UTF-8"));
+                org.apache.commons.io.FileUtils.writeLines(outputFile, "UTF-8", lines);
             } else {
                 System.out.println(output);
             }
