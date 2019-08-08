@@ -44,7 +44,7 @@ public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
 	 */
 	private static final long serialVersionUID = 1L;
 	private RuntimeIterator _expression;
-    private StructType _inputSchema;
+
     Set<String> _dependencies;
     List<String> _columnNames;
 
@@ -59,7 +59,6 @@ public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
             StructType inputSchema,
             List<String> columnNames) {
         _expression = expression;
-        _inputSchema = inputSchema;
 
         _deserializedParams = new ArrayList<>();
         _context = new DynamicContext();

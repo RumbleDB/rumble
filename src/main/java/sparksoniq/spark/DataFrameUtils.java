@@ -37,7 +37,6 @@ import sparksoniq.jsoniq.item.DecimalItem;
 import sparksoniq.jsoniq.item.DoubleItem;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.item.KryoManager;
 import sparksoniq.jsoniq.item.NullItem;
 import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.item.StringItem;
@@ -61,8 +60,6 @@ import static org.apache.spark.sql.functions.udf;
 
 public class DataFrameUtils {
 
-    private static KryoManager KM = KryoManager.getInstance();
-    
     private static ThreadLocal<byte[]> lastBytesCache = new ThreadLocal<byte[]>() {
         @Override
         protected byte[] initialValue() {

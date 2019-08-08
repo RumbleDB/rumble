@@ -26,13 +26,14 @@ import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemComparatorForSequences;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.Collections;
 import java.util.List;
 
-public class MinFunctionIterator extends AggregateFunctionIterator {
+public class MinFunctionIterator extends LocalFunctionCallIterator {
 
     /**
 	 * 
@@ -41,7 +42,7 @@ public class MinFunctionIterator extends AggregateFunctionIterator {
 	private RuntimeIterator _iterator;
 
     public MinFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
-        super(arguments, AggregateFunctionOperator.MIN, iteratorMetadata);
+        super(arguments, iteratorMetadata);
     }
 
     @Override

@@ -23,8 +23,6 @@ package sparksoniq.spark.udf;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.api.java.UDF1;
-import org.apache.spark.sql.types.StructType;
-
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 
@@ -53,7 +51,6 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
 	private List<OrderByClauseSparkIteratorExpression> _expressions;
     Set<String> _dependencies;
     List<String> _columnNames;
-    private StructType _inputSchema;
     private Map<Integer, String> _allColumnTypes;
 
     private List<List<Item>> _deserializedParams;
@@ -65,11 +62,9 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
 
     public OrderClauseCreateColumnsUDF(
             List<OrderByClauseSparkIteratorExpression> expressions,
-            StructType inputSchema,
             Map<Integer, String> allColumnTypes,
             List<String> columnNames) {
         _expressions = expressions;
-        _inputSchema = inputSchema;
         _allColumnTypes = allColumnTypes;
 
         _deserializedParams = new ArrayList<>();

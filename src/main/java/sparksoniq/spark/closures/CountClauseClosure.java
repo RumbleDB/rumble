@@ -23,7 +23,6 @@ package sparksoniq.spark.closures;
 import org.apache.spark.api.java.function.Function;
 import scala.Tuple2;
 import sparksoniq.jsoniq.item.ItemFactory;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
 public class CountClauseClosure implements Function<Tuple2<FlworTuple, Long>, FlworTuple> {
@@ -32,11 +31,9 @@ public class CountClauseClosure implements Function<Tuple2<FlworTuple, Long>, Fl
 	 */
 	private static final long serialVersionUID = 1L;
 	private String variableName;
-    private IteratorMetadata metadata;
 
-    public CountClauseClosure(String variableName, IteratorMetadata metadata) {
+    public CountClauseClosure(String variableName) {
         this.variableName = variableName;
-        this.metadata = metadata;
     }
 
     @Override

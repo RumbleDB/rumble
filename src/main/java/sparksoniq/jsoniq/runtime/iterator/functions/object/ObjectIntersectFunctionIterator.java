@@ -24,6 +24,7 @@ import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.ArrayList;
@@ -31,14 +32,14 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-public class ObjectIntersectFunctionIterator extends ObjectFunctionIterator {
-    /**
+public class ObjectIntersectFunctionIterator extends LocalFunctionCallIterator {
+	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
 
 	public ObjectIntersectFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
-        super(arguments, ObjectFunctionOperators.INTERSECT, iteratorMetadata);
+        super(arguments, iteratorMetadata);
     }
 
     @Override

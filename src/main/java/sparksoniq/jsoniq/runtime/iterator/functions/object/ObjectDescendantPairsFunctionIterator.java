@@ -25,6 +25,7 @@ import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
@@ -34,7 +35,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-public class ObjectDescendantPairsFunctionIterator extends ObjectFunctionIterator {
+public class ObjectDescendantPairsFunctionIterator extends LocalFunctionCallIterator {
 
     /**
 	 * 
@@ -44,7 +45,7 @@ public class ObjectDescendantPairsFunctionIterator extends ObjectFunctionIterato
     private Queue<Item> _nextResults;   // queue that holds the results created by the current item in inspection
 
     public ObjectDescendantPairsFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
-        super(arguments, ObjectFunctionOperators.DESCENDANTPAIRS, iteratorMetadata);
+        super(arguments, iteratorMetadata);
     }
 
     @Override

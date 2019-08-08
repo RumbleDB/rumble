@@ -25,13 +25,14 @@ import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.math.BigDecimal;
 import java.util.List;
 
-public class AvgFunctionIterator extends AggregateFunctionIterator {
+public class AvgFunctionIterator extends LocalFunctionCallIterator {
 
     /**
 	 * 
@@ -40,7 +41,7 @@ public class AvgFunctionIterator extends AggregateFunctionIterator {
 	private RuntimeIterator _iterator;
 
     public AvgFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
-        super(arguments, AggregateFunctionOperator.AVG, iteratorMetadata);
+        super(arguments, iteratorMetadata);
     }
 
     @Override

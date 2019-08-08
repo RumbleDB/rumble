@@ -235,7 +235,7 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
             List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, _dependencies);
 
             df.sparkSession().udf().register("forClauseUDF",
-                    new ForClauseUDF(_expression, inputSchema, UDFcolumns), DataTypes.createArrayType(DataTypes.BinaryType));
+                    new ForClauseUDF(_expression, UDFcolumns), DataTypes.createArrayType(DataTypes.BinaryType));
 
             String selectSQL = DataFrameUtils.getSQL(allColumns, true);
             String udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
