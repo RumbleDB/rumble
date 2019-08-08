@@ -20,8 +20,9 @@
 
 package sparksoniq;
 
-import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.BailErrorStrategy;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -47,15 +48,10 @@ import sparksoniq.utils.FileUtils;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.Charset;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
@@ -91,10 +87,9 @@ public class JsoniqQueryExecutor {
             }
         }
 
-        FileInputStream fis = new FileInputStream(queryFile);
+        CharStream charStream = CharStreams.fromFileName(queryFile);
         long startTime = System.currentTimeMillis();
-        JsoniqExpressionTreeVisitor visitor = this.parse(new JsoniqLexer(
-                new ANTLRInputStream(fis)));
+        JsoniqExpressionTreeVisitor visitor = this.parse(new JsoniqLexer(charStream));
         // generate static context
         generateStaticContext(visitor.getQueryExpression());
         // generate iterators
@@ -202,10 +197,9 @@ public class JsoniqQueryExecutor {
         arg = arg.trim();
         //return embedded file
         if (arg.isEmpty())
-            new JsoniqLexer(new ANTLRInputStream(Main.class.getResourceAsStream("/queries/runQuery.iq")));
+            new JsoniqLexer(CharStreams.fromStream(Main.class.getResourceAsStream("/queries/runQuery.iq")));
         if (arg.startsWith("file://") || arg.startsWith("/")) {
-            FileReader reader = this.getFileReader(arg);
-            return new JsoniqLexer(new ANTLRInputStream(reader));
+            return new JsoniqLexer(CharStreams.fromFileName(arg));
         }
         if (arg.startsWith("hdfs://")) {
             org.apache.hadoop.fs.FileSystem fileSystem = org.apache.hadoop.fs.FileSystem
@@ -217,20 +211,9 @@ public class JsoniqQueryExecutor {
                 // ex.printStackTrace();
                 throw ex;
             }
-            return new JsoniqLexer(new ANTLRInputStream(in));
+            return new JsoniqLexer(CharStreams.fromStream(in));
         }
         throw new RuntimeException("Unknown url protocol");
-    }
-
-    private FileReader getFileReader(String arg) throws FileNotFoundException {
-        FileReader reader;
-        try {
-            reader = new FileReader(new File(arg));
-        } catch (FileNotFoundException e) {
-            // e.printStackTrace();
-            throw e;
-        }
-        return reader;
     }
 
     private JsoniqExpressionTreeVisitor parse(JsoniqLexer lexer) {
