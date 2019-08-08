@@ -24,7 +24,12 @@ import sparksoniq.exceptions.codes.ErrorCodes;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class UnexpectedTypeException extends SparksoniqRuntimeException {
-    public UnexpectedTypeException(String message, IteratorMetadata metadata) {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public UnexpectedTypeException(String message, IteratorMetadata metadata) {
         super(message, ErrorCodes.UnexpectedTypeErrorCode, metadata.getExpressionMetadata());
     }
 }

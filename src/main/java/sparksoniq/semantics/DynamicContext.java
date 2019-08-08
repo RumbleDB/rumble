@@ -35,7 +35,11 @@ import java.util.Map;
 
 public class DynamicContext implements Serializable, KryoSerializable {
 
-    private Map<String, List<Item>> _variableValues;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private Map<String, List<Item>> _variableValues;
     private DynamicContext _parent;
 
     public DynamicContext() {

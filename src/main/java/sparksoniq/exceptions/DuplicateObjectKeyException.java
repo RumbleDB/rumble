@@ -24,7 +24,12 @@ import sparksoniq.exceptions.codes.ErrorCodes;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 
 public class DuplicateObjectKeyException extends SparksoniqRuntimeException {
-    public DuplicateObjectKeyException(String keyName, ExpressionMetadata metadata) {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public DuplicateObjectKeyException(String keyName, ExpressionMetadata metadata) {
         super("Dynamic error; Two pairs in an object have the same key name: " + keyName + ".",
                 ErrorCodes.DuplicatePairNameErrorCode, metadata);
     }

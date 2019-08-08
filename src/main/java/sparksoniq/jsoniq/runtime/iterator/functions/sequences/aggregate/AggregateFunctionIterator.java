@@ -28,6 +28,8 @@ import java.util.List;
 
 public abstract class AggregateFunctionIterator extends LocalFunctionCallIterator {
 
+	private static final long serialVersionUID = 1L;
+
     protected AggregateFunctionIterator(List<RuntimeIterator> arguments,
                                         AggregateFunctionOperator operator, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);

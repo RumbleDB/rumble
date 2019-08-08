@@ -27,7 +27,11 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import java.io.Serializable;
 
 public class OrderByClauseSparkIteratorExpression implements Serializable {
-    private final RuntimeIterator _expression;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private final RuntimeIterator _expression;
     private final boolean _ascending;
     private final String _uri;
     private final OrderByClauseExpr.EMPTY_ORDER _emptyOrder;

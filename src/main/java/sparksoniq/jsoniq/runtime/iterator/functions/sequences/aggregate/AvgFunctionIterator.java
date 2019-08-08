@@ -33,7 +33,11 @@ import java.util.List;
 
 public class AvgFunctionIterator extends AggregateFunctionIterator {
 
-    private RuntimeIterator _iterator;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private RuntimeIterator _iterator;
 
     public AvgFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, AggregateFunctionOperator.AVG, iteratorMetadata);

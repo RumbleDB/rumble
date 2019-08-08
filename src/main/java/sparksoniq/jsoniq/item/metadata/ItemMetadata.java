@@ -26,7 +26,11 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import java.io.Serializable;
 
 public class ItemMetadata implements Serializable {
-    private final ExpressionMetadata _expressionMetadata;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private final ExpressionMetadata _expressionMetadata;
 
 
     public ItemMetadata(ExpressionMetadata expressionMetadata) {

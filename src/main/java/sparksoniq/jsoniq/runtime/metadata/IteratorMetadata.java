@@ -27,7 +27,11 @@ import java.io.Serializable;
 public class IteratorMetadata implements Serializable {
 
 
-    private final ExpressionMetadata _expressionMetadata;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private final ExpressionMetadata _expressionMetadata;
 
     public IteratorMetadata(ExpressionMetadata expressionMetadata) {
         this._expressionMetadata = expressionMetadata;

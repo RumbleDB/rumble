@@ -33,7 +33,11 @@ import java.util.List;
 public class ArraySizeFunctionIterator extends ArrayFunctionIterator {
 
 
-    private RuntimeIterator arrayIterator;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private RuntimeIterator arrayIterator;
 
     public ArraySizeFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, ArrayFunctionOperators.SIZE, iteratorMetadata);

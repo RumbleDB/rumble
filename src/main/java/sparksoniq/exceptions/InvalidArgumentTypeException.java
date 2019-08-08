@@ -24,7 +24,12 @@ import sparksoniq.exceptions.codes.ErrorCodes;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class InvalidArgumentTypeException extends SparksoniqRuntimeException {
-    public InvalidArgumentTypeException(String message, IteratorMetadata metadata) {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public InvalidArgumentTypeException(String message, IteratorMetadata metadata) {
         super(message, ErrorCodes.InvalidArgumentType, metadata.getExpressionMetadata());
     }
 }

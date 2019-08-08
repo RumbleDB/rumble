@@ -34,7 +34,11 @@ import java.util.List;
 
 public class MaxFunctionIterator extends AggregateFunctionIterator {
 
-    private RuntimeIterator _iterator;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private RuntimeIterator _iterator;
 
     public MaxFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, AggregateFunctionOperator.MAX, iteratorMetadata);

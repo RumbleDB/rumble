@@ -59,7 +59,11 @@ import java.util.Map;
 import java.util.Set;
 
 public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
-    private final List<GroupByClauseSparkIteratorExpression> _expressions;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private final List<GroupByClauseSparkIteratorExpression> _expressions;
     private List<FlworTuple> _localTupleResults;
     private int _resultIndex;
     Set<String> _dependencies;

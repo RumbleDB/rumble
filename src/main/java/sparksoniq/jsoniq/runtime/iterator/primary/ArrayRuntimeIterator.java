@@ -32,7 +32,11 @@ import java.util.List;
 
 public class ArrayRuntimeIterator extends LocalRuntimeIterator {
 
-    private Item _item = null;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private Item _item = null;
 
     public ArrayRuntimeIterator(RuntimeIterator arrayItems, IteratorMetadata iteratorMetadata) {
         super(new ArrayList<>(), iteratorMetadata);

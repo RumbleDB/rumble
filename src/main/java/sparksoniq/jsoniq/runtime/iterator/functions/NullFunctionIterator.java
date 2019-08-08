@@ -30,7 +30,12 @@ import java.util.List;
 
 public class NullFunctionIterator extends LocalFunctionCallIterator {
 
-    protected NullFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	protected NullFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
     }
 

@@ -34,7 +34,12 @@ import java.math.BigDecimal;
 
 public class UnaryOperationIterator extends UnaryOperationBaseIterator {
 
-    public UnaryOperationIterator(RuntimeIterator child, OperationalExpressionBase.Operator operator,
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public UnaryOperationIterator(RuntimeIterator child, OperationalExpressionBase.Operator operator,
                                   IteratorMetadata iteratorMetadata) {
         super(child, operator, iteratorMetadata);
     }

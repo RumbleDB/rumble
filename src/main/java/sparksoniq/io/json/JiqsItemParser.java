@@ -36,7 +36,12 @@ import java.util.List;
 
 public class JiqsItemParser implements Serializable {
 
-    public static Item getItemFromObject(JsonIterator object, IteratorMetadata metadata) {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public static Item getItemFromObject(JsonIterator object, IteratorMetadata metadata) {
         try {
             if (object.whatIsNext().equals(ValueType.STRING))
                 return ItemFactory.getInstance().createStringItem(object.readString());

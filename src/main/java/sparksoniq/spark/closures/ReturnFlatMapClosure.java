@@ -39,7 +39,11 @@ import java.util.List;
 import java.util.Set;
 
 public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
-    RuntimeIterator _expression;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	RuntimeIterator _expression;
     StructType _oldSchema;
     
     private transient Kryo _kryo;

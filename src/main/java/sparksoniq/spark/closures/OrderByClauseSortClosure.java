@@ -29,7 +29,11 @@ import java.util.Comparator;
 import java.util.List;
 
 public class OrderByClauseSortClosure implements Comparator<FlworKey>, Serializable {
-    private final boolean _isStable;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private final boolean _isStable;
     private final List<OrderByClauseSparkIteratorExpression> _expressions;
 
     public OrderByClauseSortClosure(List<OrderByClauseSparkIteratorExpression> expressions, boolean isStable) {

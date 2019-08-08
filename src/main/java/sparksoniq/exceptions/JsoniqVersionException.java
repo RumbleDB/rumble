@@ -24,7 +24,12 @@ import sparksoniq.exceptions.codes.ErrorCodes;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 
 public class JsoniqVersionException extends ParsingException {
-    public JsoniqVersionException(ExpressionMetadata expressionMetadata) {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public JsoniqVersionException(ExpressionMetadata expressionMetadata) {
         super("Static error; The version number specified in a version declaration is not supported by the implementation.",
                 ErrorCodes.InvalidJsoniqVersionErrorCode, expressionMetadata);
     }

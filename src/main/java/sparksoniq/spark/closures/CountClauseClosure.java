@@ -27,7 +27,11 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
 public class CountClauseClosure implements Function<Tuple2<FlworTuple, Long>, FlworTuple> {
-    private String variableName;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private String variableName;
     private IteratorMetadata metadata;
 
     public CountClauseClosure(String variableName, IteratorMetadata metadata) {

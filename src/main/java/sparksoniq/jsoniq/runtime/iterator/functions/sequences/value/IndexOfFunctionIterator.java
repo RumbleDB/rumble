@@ -34,7 +34,11 @@ import java.util.List;
 
 public class IndexOfFunctionIterator extends LocalFunctionCallIterator {
 
-    private RuntimeIterator _sequenceIterator;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private RuntimeIterator _sequenceIterator;
     private Item _search;
     private Item _nextResult;
     private int _currentIndex;

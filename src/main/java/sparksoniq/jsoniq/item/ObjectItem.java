@@ -37,7 +37,11 @@ import java.util.Map;
 
 public class ObjectItem extends JsonItem {
 
-    private List<Item> _values;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private List<Item> _values;
     private List<String> _keys;
 
     public ObjectItem() {

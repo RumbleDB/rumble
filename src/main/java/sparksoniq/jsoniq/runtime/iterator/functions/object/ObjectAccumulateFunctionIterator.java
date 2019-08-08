@@ -31,7 +31,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 public class ObjectAccumulateFunctionIterator extends ObjectFunctionIterator {
-    public ObjectAccumulateFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public ObjectAccumulateFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, ObjectFunctionOperators.ACCUMULATE, iteratorMetadata);
     }
 

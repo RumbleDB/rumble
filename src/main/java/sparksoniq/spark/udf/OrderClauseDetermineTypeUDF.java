@@ -40,8 +40,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
-    private List<OrderByClauseSparkIteratorExpression> _expressions;
+public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List<String>> {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private List<OrderByClauseSparkIteratorExpression> _expressions;
     Set<String> _dependencies;
     List<String> _columnNames;
     private StructType _inputSchema;
@@ -78,7 +82,7 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
     }
 
     @Override
-    public List call(WrappedArray wrappedParameters) {
+    public List<String> call(WrappedArray wrappedParameters) {
         _deserializedParams.clear();
         _context.removeAllVariables();
         result.clear();

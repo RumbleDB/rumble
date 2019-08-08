@@ -26,7 +26,12 @@ import com.esotericsoftware.kryo.io.Output;
 
 public class NullItem extends AtomicItem {
 
-    public NullItem() {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public NullItem() {
         super();
     }
 

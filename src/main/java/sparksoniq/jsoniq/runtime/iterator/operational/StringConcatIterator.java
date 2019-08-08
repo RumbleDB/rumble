@@ -30,7 +30,12 @@ import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIt
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class StringConcatIterator extends BinaryOperationBaseIterator {
-    public StringConcatIterator(RuntimeIterator left, RuntimeIterator right, IteratorMetadata iteratorMetadata) {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public StringConcatIterator(RuntimeIterator left, RuntimeIterator right, IteratorMetadata iteratorMetadata) {
         super(left, right, OperationalExpressionBase.Operator.CONCAT, iteratorMetadata);
     }
 

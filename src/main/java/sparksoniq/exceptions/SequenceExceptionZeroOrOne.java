@@ -24,7 +24,12 @@ import sparksoniq.exceptions.codes.ErrorCodes;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class SequenceExceptionZeroOrOne extends SparksoniqRuntimeException {
-    public SequenceExceptionZeroOrOne(String message, IteratorMetadata metadata) {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public SequenceExceptionZeroOrOne(String message, IteratorMetadata metadata) {
         super(message, ErrorCodes.ZeroOrOneErrorCode, metadata.getExpressionMetadata());
     }
 }

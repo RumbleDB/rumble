@@ -56,7 +56,11 @@ import java.util.Set;
 import java.util.TreeMap;
 
 public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
-    private final boolean _isStable;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private final boolean _isStable;
     private final List<OrderByClauseSparkIteratorExpression> _expressions;
     Set<String> _dependencies;
 
@@ -232,7 +236,7 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         // Check that every column contains a matching atomic type in all rows (nulls and empty-sequences are allowed)
         Map<Integer, String> typesForAllColumns = new LinkedHashMap<>();
         for (Row columnTypesOfRow : columnTypesOfRows) {
-            List columnsTypesOfRowAsList = columnTypesOfRow.getList(0);
+        	List<Object> columnsTypesOfRowAsList = columnTypesOfRow.getList(0);
             for (int columnIndex = 0; columnIndex < columnsTypesOfRowAsList.size(); columnIndex++) {
                 String columnType = (String) columnsTypesOfRowAsList.get(columnIndex);
 

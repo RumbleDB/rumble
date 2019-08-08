@@ -35,7 +35,11 @@ import java.util.List;
 
 public class SubsequenceFunctionIterator extends LocalFunctionCallIterator {
 
-    private RuntimeIterator _sequenceIterator;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private RuntimeIterator _sequenceIterator;
     private Item _nextResult;
     private int _currentPosition;
     private int _startPosition;

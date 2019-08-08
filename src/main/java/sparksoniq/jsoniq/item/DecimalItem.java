@@ -31,7 +31,11 @@ import java.math.BigDecimal;
 
 public class DecimalItem extends AtomicItem {
 
-    private BigDecimal _value;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private BigDecimal _value;
 
     public DecimalItem() {
         super();

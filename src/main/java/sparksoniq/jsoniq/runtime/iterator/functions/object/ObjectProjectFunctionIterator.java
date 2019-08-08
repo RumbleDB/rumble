@@ -34,7 +34,11 @@ import java.util.List;
 
 public class ObjectProjectFunctionIterator extends ObjectFunctionIterator {
 
-    private RuntimeIterator _iterator;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private RuntimeIterator _iterator;
     private Item _nextResult;
     private List<Item> _projKeys;
 

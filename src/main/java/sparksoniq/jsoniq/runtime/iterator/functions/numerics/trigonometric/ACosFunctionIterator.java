@@ -33,6 +33,8 @@ import java.util.List;
 
 public class ACosFunctionIterator extends LocalFunctionCallIterator {
 
+	private static final long serialVersionUID = 1L;
+
     private RuntimeIterator _iterator;
 
     public ACosFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {

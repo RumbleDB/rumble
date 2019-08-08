@@ -33,7 +33,11 @@ import java.util.List;
 
 public class IfRuntimeIterator extends LocalRuntimeIterator {
 
-    private List<Item> result = null;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private List<Item> result = null;
     private int currentIndex;
 
     public IfRuntimeIterator(RuntimeIterator condition, RuntimeIterator branch, RuntimeIterator elseBranch,

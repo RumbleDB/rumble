@@ -36,7 +36,11 @@ import java.util.Arrays;
 
 public class ArrayLookupIterator extends HybridRuntimeIterator {
 
-    private RuntimeIterator _iterator;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private RuntimeIterator _iterator;
     private Integer _lookup;
     private Item _nextResult;
 

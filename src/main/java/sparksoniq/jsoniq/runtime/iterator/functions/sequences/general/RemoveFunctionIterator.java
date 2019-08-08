@@ -34,7 +34,11 @@ import java.util.List;
 
 public class RemoveFunctionIterator extends LocalFunctionCallIterator {
 
-    private RuntimeIterator _sequenceIterator;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private RuntimeIterator _sequenceIterator;
     private Item _nextResult;
     private int _removePosition;            // position to remove the item
     private int _currentPosition;           // current position

@@ -29,7 +29,12 @@ import java.util.List;
 
 public class ObjectValuesClosure implements FlatMapFunction<Item, Item> {
 
-    public ObjectValuesClosure() {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public ObjectValuesClosure() {
     }
 
     public Iterator<Item> call(Item arg0) throws Exception {

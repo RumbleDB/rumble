@@ -26,7 +26,12 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class EmptySequenceIterator extends LocalRuntimeIterator {
 
-    public EmptySequenceIterator(IteratorMetadata iteratorMetadata) {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public EmptySequenceIterator(IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
     }
 

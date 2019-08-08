@@ -34,7 +34,11 @@ import java.util.List;
 
 public class SumFunctionIterator extends AggregateFunctionIterator {
 
-    private RuntimeIterator _iterator;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private RuntimeIterator _iterator;
     private Item _zeroItem;
 
     public SumFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {

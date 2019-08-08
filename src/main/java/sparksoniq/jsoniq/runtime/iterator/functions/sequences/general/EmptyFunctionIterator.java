@@ -32,7 +32,11 @@ import java.util.List;
 
 public class EmptyFunctionIterator extends LocalFunctionCallIterator {
 
-    private RuntimeIterator _sequenceIterator ;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private RuntimeIterator _sequenceIterator ;
     
     public EmptyFunctionIterator(List<RuntimeIterator> parameters, IteratorMetadata iteratorMetadata) {
         super(parameters, iteratorMetadata);

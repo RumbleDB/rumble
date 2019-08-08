@@ -46,11 +46,15 @@ import java.util.Map;
 import java.util.Set;
 
 public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
-    private List<OrderByClauseSparkIteratorExpression> _expressions;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private List<OrderByClauseSparkIteratorExpression> _expressions;
     Set<String> _dependencies;
     List<String> _columnNames;
     private StructType _inputSchema;
-    private Map _allColumnTypes;
+    private Map<Integer, String> _allColumnTypes;
 
     private List<List<Item>> _deserializedParams;
     private DynamicContext _context;
@@ -62,7 +66,7 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
     public OrderClauseCreateColumnsUDF(
             List<OrderByClauseSparkIteratorExpression> expressions,
             StructType inputSchema,
-            Map allColumnTypes,
+            Map<Integer, String> allColumnTypes,
             List<String> columnNames) {
         _expressions = expressions;
         _inputSchema = inputSchema;
@@ -121,7 +125,7 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
                     _results.add(valueOrderIndex);
 
                     // extract type information for the sorting column
-                    String typeName = (String) _allColumnTypes.get(expressionIndex);
+                    String typeName = _allColumnTypes.get(expressionIndex);
 
                     if (typeName.equals("bool")) {
                         _results.add(nextItem.getBooleanValue());
