@@ -47,12 +47,11 @@ import sparksoniq.spark.SparkSessionManager;
 import sparksoniq.utils.FileUtils;
 
 import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.Charset;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
