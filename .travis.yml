@@ -1,4 +1,5 @@
 language: java
+dist: trusty
 sudo: false
 before_script:
   - _JAVA_OPTIONS="-Xmx8192m -Xms512m"
