@@ -35,7 +35,6 @@ public abstract class OperationalExpressionBase extends Expression {
     protected Expression _mainExpression;
     protected List<Operator> _multipleOperators;
     protected Operator _singleOperator;
-    private boolean _hasMultipleOperators;
 
 
     protected OperationalExpressionBase(Expression _mainExpression,
@@ -43,7 +42,6 @@ public abstract class OperationalExpressionBase extends Expression {
         super(metadata);
         this._mainExpression = _mainExpression;
         this._singleOperator = op;
-        this._hasMultipleOperators = false;
 
     }
 
@@ -52,7 +50,6 @@ public abstract class OperationalExpressionBase extends Expression {
         super(metadata);
         this._mainExpression = _mainExpression;
         this._multipleOperators = ops;
-        this._hasMultipleOperators = true;
 
     }
 

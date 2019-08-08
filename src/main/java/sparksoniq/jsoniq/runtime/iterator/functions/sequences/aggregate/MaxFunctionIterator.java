@@ -26,18 +26,19 @@ import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemComparatorForSequences;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.Collections;
 import java.util.List;
 
-public class MaxFunctionIterator extends AggregateFunctionIterator {
+public class MaxFunctionIterator extends LocalFunctionCallIterator {
 
     private RuntimeIterator _iterator;
 
     public MaxFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
-        super(arguments, AggregateFunctionOperator.MAX, iteratorMetadata);
+        super(arguments, iteratorMetadata);
     }
 
     @Override

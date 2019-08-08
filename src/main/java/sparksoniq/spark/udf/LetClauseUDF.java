@@ -21,8 +21,6 @@
 package sparksoniq.spark.udf;
 
 import org.apache.spark.sql.api.java.UDF1;
-import org.apache.spark.sql.types.StructType;
-
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -39,7 +37,6 @@ import java.util.List;
 
 public class LetClauseUDF implements UDF1<WrappedArray, byte[]> {
     private RuntimeIterator _expression;
-    private StructType _inputSchema;
     List<String> _columnNames;
 
     private List<List<Item>> _deserializedParams;
@@ -52,10 +49,8 @@ public class LetClauseUDF implements UDF1<WrappedArray, byte[]> {
     
     public LetClauseUDF(
             RuntimeIterator expression,
-            StructType inputSchema,
             List<String> columnNames) {
         _expression = expression;
-        _inputSchema = inputSchema;
 
         _deserializedParams = new ArrayList<>();
         _context = new DynamicContext();

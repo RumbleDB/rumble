@@ -26,19 +26,20 @@ import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.math.BigDecimal;
 import java.util.List;
 
-public class SumFunctionIterator extends AggregateFunctionIterator {
+public class SumFunctionIterator extends LocalFunctionCallIterator {
 
     private RuntimeIterator _iterator;
     private Item _zeroItem;
 
     public SumFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
-        super(arguments, AggregateFunctionOperator.SUM, iteratorMetadata);
+        super(arguments, iteratorMetadata);
     }
 
     @Override
