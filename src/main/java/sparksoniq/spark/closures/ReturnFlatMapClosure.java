@@ -69,7 +69,12 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
             if(dependencies.containsKey(field))
             {
                 List<Item> i = DataFrameUtils.deserializeRowField(row, columnIndex, _kryo, _input); //rowColumns.get(columnIndex);
-                context.addVariableValue(field, i);
+                if(dependencies.get(field).equals(DynamicContext.VariableDependency.COUNT))
+                {
+                	context.addVariableCount(field, i.get(0));
+                } else {
+                	context.addVariableValue(field, i);
+                }
             }
         }
 

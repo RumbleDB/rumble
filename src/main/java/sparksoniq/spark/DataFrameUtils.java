@@ -213,13 +213,7 @@ public class DataFrameUtils {
             boolean applyCount = false;
             if (dependencies.containsKey(columnName) && dependencies.get(columnName) == DynamicContext.VariableDependency.COUNT) {
                 applyCount = true;
-                System.out.println(columnName + " : a count.");
-            } else {
-                System.out.println(columnName + " : not a count.");
-                System.out.println(dependencies.containsKey(columnName));
-                if(dependencies.containsKey(columnName)) { System.out.println(dependencies.get(columnName)); }
             }
-
             if(applyCount) {
                 queryColumnString.append("count(`");
             } else {

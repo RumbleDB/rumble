@@ -356,7 +356,12 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
         Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
         for(GroupByClauseSparkIteratorExpression iterator : _expressions)
         {
-            result.putAll(iterator.getExpression().getVariableDependencies());
+        	if(iterator.getExpression() != null)
+        	{
+        		result.putAll(iterator.getExpression().getVariableDependencies());
+        	} else {
+        		result.put(iterator.getVariableReference().getVariableName(), DynamicContext.VariableDependency.FULL);
+        	}
         }
         for (String var : _child.getVariablesBoundInCurrentFLWORExpression())
         {
@@ -388,7 +393,10 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
             }
             buffer.append("Variable " + iterator.getVariableReference().getVariableName());
             buffer.append("\n");
-            iterator.getExpression().print(buffer, indent+1);
+            if(iterator.getExpression() != null)
+            {
+            	iterator.getExpression().print(buffer, indent+1);
+            }
         }
     }
     
