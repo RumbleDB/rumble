@@ -107,9 +107,16 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     public abstract JavaRDD<FlworTuple> getRDD(DynamicContext context);
 
     public abstract boolean isDataFrame();
-
-    public abstract Dataset<Row> getDataFrame(DynamicContext context, Map<String, DynamicContext.VariableDependency> parentProjection);
     
+    /*
+     * The second parameter gives information on the projection needed by the caller.
+     * Currently, this is used to inform a group by clause that only a count is needed for a specific variable, which allows projecting away the actual items.
+     */
+    public abstract Dataset<Row> getDataFrame(DynamicContext context, Map<String, DynamicContext.VariableDependency> parentProjection);
+
+    /*
+     * Returns the projection needed by this iterator. The result of this method is forwarded to the child clause so it can optimize some values away.
+     */
     public abstract Map<String, DynamicContext.VariableDependency> getProjection(Map<String, DynamicContext.VariableDependency> parentProjection);
 
     /*
