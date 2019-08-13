@@ -62,8 +62,6 @@ import static org.apache.spark.sql.functions.udf;
 
 public class DataFrameUtils {
 
-    private static KryoManager KM = KryoManager.getInstance();
-    
     private static ThreadLocal<byte[]> lastBytesCache = new ThreadLocal<byte[]>() {
         @Override
         protected byte[] initialValue() {

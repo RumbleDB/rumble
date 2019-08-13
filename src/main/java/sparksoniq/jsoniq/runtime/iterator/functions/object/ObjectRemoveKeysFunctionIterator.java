@@ -27,20 +27,21 @@ import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ObjectRemoveKeysFunctionIterator extends ObjectFunctionIterator {
+public class ObjectRemoveKeysFunctionIterator extends LocalFunctionCallIterator {
 
     private RuntimeIterator _iterator;
     private Item _nextResult;
     private List<String> _removalKeys;
 
     public ObjectRemoveKeysFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
-        super(arguments, ObjectFunctionOperators.REMOVEKEYS, iteratorMetadata);
+        super(arguments, iteratorMetadata);
     }
 
     @Override

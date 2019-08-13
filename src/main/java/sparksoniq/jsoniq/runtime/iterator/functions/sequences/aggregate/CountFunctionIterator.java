@@ -27,6 +27,7 @@ import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
@@ -34,9 +35,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class CountFunctionIterator extends AggregateFunctionIterator {
+public class CountFunctionIterator extends LocalFunctionCallIterator {
     public CountFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
-        super(arguments, AggregateFunctionOperator.COUNT, iteratorMetadata);
+        super(arguments, iteratorMetadata);
     }
 
     @Override

@@ -41,7 +41,6 @@ import java.util.Set;
 
 public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
     private RuntimeIterator _expression;
-    private StructType _inputSchema;
     Map<String, DynamicContext.VariableDependency> _dependencies;
     List<String> _columnNames;
 
@@ -56,7 +55,6 @@ public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
             StructType inputSchema,
             List<String> columnNames) {
         _expression = expression;
-        _inputSchema = inputSchema;
 
         _deserializedParams = new ArrayList<>();
         _context = new DynamicContext();

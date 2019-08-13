@@ -42,7 +42,6 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
             Operator.VC_GE, Operator.VC_GT, Operator.VC_EQ, Operator.VC_NE, Operator.VC_LE, Operator.VC_LT};
     public static final Operator[] generalComparisonOperators = new Operator[]{
             Operator.GC_GE, Operator.GC_GT, Operator.GC_EQ, Operator.GC_NE, Operator.GC_LE, Operator.GC_LT};
-    private Item _nextResult;
     private boolean _isValueComparison;
     private Item _left;
     private Item _right;

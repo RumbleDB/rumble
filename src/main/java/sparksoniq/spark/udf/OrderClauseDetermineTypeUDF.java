@@ -21,8 +21,6 @@
 package sparksoniq.spark.udf;
 
 import org.apache.spark.sql.api.java.UDF1;
-import org.apache.spark.sql.types.StructType;
-
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 
@@ -46,7 +44,6 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
     private List<OrderByClauseSparkIteratorExpression> _expressions;
     Map<String, DynamicContext.VariableDependency> _dependencies;
     List<String> _columnNames;
-    private StructType _inputSchema;
 
     private List<List<Item>> _deserializedParams;
     private DynamicContext _context;
@@ -58,10 +55,8 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
 
     public OrderClauseDetermineTypeUDF(
             List<OrderByClauseSparkIteratorExpression> expressions,
-            StructType inputSchema,
             List<String> columnNames) {
         _expressions = expressions;
-        _inputSchema = inputSchema;
 
         _deserializedParams = new ArrayList<>();
         _context = new DynamicContext();
