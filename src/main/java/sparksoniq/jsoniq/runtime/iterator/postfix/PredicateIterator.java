@@ -28,9 +28,9 @@ import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator.VariableDependency;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.semantics.DynamicContext.VariableDependency;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -149,9 +149,9 @@ public class PredicateIterator extends HybridRuntimeIterator {
         return this._iterator.isRDD();
     }
 
-    public Map<String, RuntimeIterator.VariableDependency> getVariableDependencies()
+    public Map<String, DynamicContext.VariableDependency> getVariableDependencies()
     {
-        Map<String, RuntimeIterator.VariableDependency> result = new TreeMap<String, RuntimeIterator.VariableDependency>();
+        Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
         result.putAll(_filter.getVariableDependencies());
         result.remove("$");
         result.putAll(_iterator.getVariableDependencies());

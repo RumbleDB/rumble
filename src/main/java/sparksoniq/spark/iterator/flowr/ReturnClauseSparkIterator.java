@@ -143,9 +143,9 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         setNextLocalResult();
     }
 
-    public Map<String, RuntimeIterator.VariableDependency> getVariableDependencies()
+    public Map<String, DynamicContext.VariableDependency> getVariableDependencies()
     {
-        Map<String, RuntimeIterator.VariableDependency> result = new TreeMap<String, RuntimeIterator.VariableDependency>();
+        Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
         result.putAll(_expression.getVariableDependencies());
         for (String var : _child.getVariablesBoundInCurrentFLWORExpression())
         {

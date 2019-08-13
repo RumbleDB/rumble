@@ -59,7 +59,7 @@ import java.util.TreeMap;
 public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
     private final boolean _isStable;
     private final List<OrderByClauseSparkIteratorExpression> _expressions;
-    Map<String, RuntimeIterator.VariableDependency> _dependencies;
+    Map<String, DynamicContext.VariableDependency> _dependencies;
 
     private List<FlworTuple> _localTupleResults;
     private int _resultIndex;
@@ -69,7 +69,7 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         super(child, iteratorMetadata);
         this._expressions = expressions;
         this._isStable = stable;
-        _dependencies = new TreeMap<String, RuntimeIterator.VariableDependency>();
+        _dependencies = new TreeMap<String, DynamicContext.VariableDependency>();
         for(OrderByClauseSparkIteratorExpression e : _expressions)
         {
             _dependencies.putAll(e.getExpression().getVariableDependencies());
@@ -338,9 +338,9 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         );
     }
 
-    public Map<String, RuntimeIterator.VariableDependency> getVariableDependencies()
+    public Map<String, DynamicContext.VariableDependency> getVariableDependencies()
     {
-        Map<String, RuntimeIterator.VariableDependency> result = new TreeMap<String, RuntimeIterator.VariableDependency>();
+        Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
         for(OrderByClauseSparkIteratorExpression iterator : _expressions)
         {
             result.putAll(iterator.getExpression().getVariableDependencies());
@@ -369,22 +369,22 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         }
     }
     
-    public void setParentDependencies(Map<String, RuntimeIterator.VariableDependency> parentDependencies)
+    public void setParentDependencies(Map<String, DynamicContext.VariableDependency> parentDependencies)
     {
         _parentDependencies = parentDependencies;
         
         // passing dependencies to parent
-        Map<String, RuntimeIterator.VariableDependency> recursiveDependencies = new TreeMap<String, RuntimeIterator.VariableDependency>();
+        Map<String, DynamicContext.VariableDependency> recursiveDependencies = new TreeMap<String, DynamicContext.VariableDependency>();
         recursiveDependencies.putAll(parentDependencies);
         for(OrderByClauseSparkIteratorExpression iterator : _expressions)
         {
-            Map<String, RuntimeIterator.VariableDependency> exprDependency = iterator.getExpression().getVariableDependencies();
+            Map<String, DynamicContext.VariableDependency> exprDependency = iterator.getExpression().getVariableDependencies();
             for(String k : exprDependency.keySet())
             {
                 if(recursiveDependencies.containsKey(k)) {
                     if(recursiveDependencies.get(k) != exprDependency.get(k))
                     {
-                        recursiveDependencies.put(k, RuntimeIterator.VariableDependency.FULL);
+                        recursiveDependencies.put(k, DynamicContext.VariableDependency.FULL);
                     }
                 } else {
                     recursiveDependencies.put(k, exprDependency.get(k));

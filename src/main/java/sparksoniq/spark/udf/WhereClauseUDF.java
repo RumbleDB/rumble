@@ -42,7 +42,7 @@ import java.util.Set;
 public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
     private RuntimeIterator _expression;
     private StructType _inputSchema;
-    Map<String, RuntimeIterator.VariableDependency> _dependencies;
+    Map<String, DynamicContext.VariableDependency> _dependencies;
     List<String> _columnNames;
 
     private List<List<Item>> _deserializedParams;

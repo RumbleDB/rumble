@@ -28,6 +28,7 @@ import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
 import java.util.Map;
@@ -35,7 +36,7 @@ import java.util.TreeMap;
 
 public class CountFunctionIterator extends AggregateFunctionIterator {
     public CountFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
-        super(arguments, AggregateFunctionIterator.AggregateFunctionOperator.COUNT, iteratorMetadata);
+        super(arguments, AggregateFunctionOperator.COUNT, iteratorMetadata);
     }
 
     @Override
@@ -67,13 +68,13 @@ public class CountFunctionIterator extends AggregateFunctionIterator {
                     getMetadata());
     }
 
-    public Map<String, RuntimeIterator.VariableDependency> getVariableDependencies()
+    public Map<String, DynamicContext.VariableDependency> getVariableDependencies()
     {
         if(_children.get(0) instanceof VariableReferenceIterator)
         {
             VariableReferenceIterator expr = (VariableReferenceIterator) _children.get(0);
-            Map<String, RuntimeIterator.VariableDependency> result = new TreeMap<String, RuntimeIterator.VariableDependency>();
-            result.put(expr.getVariableName(), RuntimeIterator.VariableDependency.COUNT);
+            Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
+            result.put(expr.getVariableName(), DynamicContext.VariableDependency.COUNT);
             return result;
         } else {
             return super.getVariableDependencies();

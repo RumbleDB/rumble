@@ -207,18 +207,9 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         return (T) result;
     }
     
-    public enum VariableDependency {
-        FULL,
-        COUNT,
-        SUM,
-        AVG,
-        MAX,
-        MIN
-    }
-
-    public Map<String, VariableDependency> getVariableDependencies()
+    public Map<String, DynamicContext.VariableDependency> getVariableDependencies()
     {
-        Map<String, VariableDependency> result = new TreeMap<String, VariableDependency>();
+        Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
         for(RuntimeIterator iterator : _children)
         {
             result.putAll(iterator.getVariableDependencies());
@@ -236,7 +227,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         buffer.append(" | ");
 
         buffer.append("Variable dependencies: ");
-        Map<String, VariableDependency> dependencies = getVariableDependencies();
+        Map<String, DynamicContext.VariableDependency> dependencies = getVariableDependencies();
         for(String v : dependencies.keySet())
         {
           buffer.append(v + "(" + dependencies.get(v) + ")"  + " ");

@@ -34,11 +34,10 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator.VariableDependency;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.semantics.DynamicContext.VariableDependency;
 
 public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterface, KryoSerializable {
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
@@ -47,7 +46,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     protected boolean _isOpen;
     protected RuntimeTupleIterator _child;
     protected DynamicContext _currentDynamicContext;
-    protected Map<String, RuntimeIterator.VariableDependency> _parentDependencies;
+    protected Map<String, DynamicContext.VariableDependency> _parentDependencies;
 
     protected RuntimeTupleIterator(RuntimeTupleIterator child, IteratorMetadata metadata) {
         this.metadata = metadata;
@@ -112,7 +111,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
 
     public abstract Dataset<Row> getDataFrame(DynamicContext context);
     
-    public abstract void setParentDependencies(Map<String, RuntimeIterator.VariableDependency> parentDependencies);
+    public abstract void setParentDependencies(Map<String, DynamicContext.VariableDependency> parentDependencies);
 
     /*
     * Variable dependencies are variables that MUST be provided in the dynamic context
@@ -124,9 +123,9 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     * 3. Plus (recursively calling getVariableDependencies) all the Variable Dependencies of the child clause if it exists.
     * 
     */
-    public Map<String, RuntimeIterator.VariableDependency> getVariableDependencies()
+    public Map<String, DynamicContext.VariableDependency> getVariableDependencies()
     {
-        Map<String, RuntimeIterator.VariableDependency> result = new TreeMap<String, RuntimeIterator.VariableDependency>();
+        Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
         result.putAll(_child.getVariableDependencies());
         return result;
     }
@@ -151,7 +150,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         buffer.append(" | ");
 
         buffer.append("Variable dependencies: ");
-        Map<String, VariableDependency> dependencies = getVariableDependencies();
+        Map<String, DynamicContext.VariableDependency> dependencies = getVariableDependencies();
         for(String v : dependencies.keySet())
         {
           buffer.append(v + "(" + dependencies.get(v) + ")"  + " ");

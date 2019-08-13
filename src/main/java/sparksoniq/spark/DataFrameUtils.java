@@ -42,7 +42,6 @@ import sparksoniq.jsoniq.item.KryoManager;
 import sparksoniq.jsoniq.item.NullItem;
 import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.item.StringItem;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
@@ -120,7 +119,7 @@ public class DataFrameUtils {
     public static List<String> getColumnNames(
             StructType inputSchema,
             int duplicateVariableIndex,
-            Map<String, RuntimeIterator.VariableDependency> dependencies) {
+            Map<String, DynamicContext.VariableDependency> dependencies) {
         List<String> result = new ArrayList<String>();
         String[] columnNames = inputSchema.fieldNames();
         for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
@@ -196,7 +195,7 @@ public class DataFrameUtils {
             boolean trailingComma,
             String serializerUdfName,
             List<String> groupbyVariableNames,
-            Map<String, RuntimeIterator.VariableDependency> dependencies
+            Map<String, DynamicContext.VariableDependency> dependencies
     ) {
         String[] columnNames = inputSchema.fieldNames();
         StringBuilder queryColumnString = new StringBuilder();
@@ -212,7 +211,7 @@ public class DataFrameUtils {
             }
 
             boolean applyCount = false;
-            if (dependencies.containsKey(columnName) && dependencies.get(columnName) == RuntimeIterator.VariableDependency.COUNT) {
+            if (dependencies.containsKey(columnName) && dependencies.get(columnName) == DynamicContext.VariableDependency.COUNT) {
                 applyCount = true;
                 System.out.println(columnName + " : a count.");
             } else {

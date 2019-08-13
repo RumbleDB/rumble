@@ -86,10 +86,10 @@ public class VariableReferenceIterator extends LocalRuntimeIterator {
         return _variableName;
     }
 
-    public Map<String, RuntimeIterator.VariableDependency> getVariableDependencies()
+    public Map<String, DynamicContext.VariableDependency> getVariableDependencies()
     {
-        Map<String, RuntimeIterator.VariableDependency> result = new TreeMap<String, RuntimeIterator.VariableDependency>();
-        result.put(_variableName, RuntimeIterator.VariableDependency.FULL);
+        Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
+        result.put(_variableName, DynamicContext.VariableDependency.FULL);
         return result;
     }
 }

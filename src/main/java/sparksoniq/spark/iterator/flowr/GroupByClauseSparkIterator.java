@@ -63,20 +63,20 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
     private final List<GroupByClauseSparkIteratorExpression> _expressions;
     private List<FlworTuple> _localTupleResults;
     private int _resultIndex;
-    Map<String, RuntimeIterator.VariableDependency> _dependencies;
+    Map<String, DynamicContext.VariableDependency> _dependencies;
 
     public GroupByClauseSparkIterator(RuntimeTupleIterator child, List<GroupByClauseSparkIteratorExpression> variables,
                                       IteratorMetadata iteratorMetadata) {
         super(child, iteratorMetadata);
         this._expressions = variables;
-        _dependencies = new TreeMap<String, RuntimeIterator.VariableDependency>();
+        _dependencies = new TreeMap<String, DynamicContext.VariableDependency>();
         for(GroupByClauseSparkIteratorExpression e : _expressions)
         {
             if(e.getExpression() != null)
             {
                 _dependencies.putAll(e.getExpression().getVariableDependencies());
             } else {
-                _dependencies.put(e.getVariableReference().getVariableName(), RuntimeIterator.VariableDependency.FULL);
+                _dependencies.put(e.getVariableReference().getVariableName(), DynamicContext.VariableDependency.FULL);
             }
         }
     }
@@ -289,7 +289,7 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
 
         // determine grouping data types after all variable introductions are completed
         inputSchema = df.schema();
-        Map<String, RuntimeIterator.VariableDependency> groupingVariables = new TreeMap<String, RuntimeIterator.VariableDependency>();
+        Map<String, DynamicContext.VariableDependency> groupingVariables = new TreeMap<String, DynamicContext.VariableDependency>();
 
         df.createOrReplaceTempView("input");
 
@@ -297,7 +297,7 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
         List<StructField> typedFields = new ArrayList<>();
         String appendedGroupingColumnsName = "grouping_columns";
         for (int columnIndex = 0; columnIndex < _expressions.size(); columnIndex++) {
-            groupingVariables.put(_expressions.get(columnIndex).getVariableReference().getVariableName(), RuntimeIterator.VariableDependency.FULL);
+            groupingVariables.put(_expressions.get(columnIndex).getVariableReference().getVariableName(), DynamicContext.VariableDependency.FULL);
             // every expression contains an int column for null/empty/true/false/string/double check
             String columnName = columnIndex + "-nullEmptyBooleanCheckField";
             typedFields.add(DataTypes.createStructField(columnName, DataTypes.IntegerType, false));
@@ -351,9 +351,9 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
         );
     }
 
-    public Map<String, RuntimeIterator.VariableDependency> getVariableDependencies()
+    public Map<String, DynamicContext.VariableDependency> getVariableDependencies()
     {
-        Map<String, RuntimeIterator.VariableDependency> result = new TreeMap<String, RuntimeIterator.VariableDependency>();
+        Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
         for(GroupByClauseSparkIteratorExpression iterator : _expressions)
         {
             result.putAll(iterator.getExpression().getVariableDependencies());
@@ -392,12 +392,12 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
         }
     }
     
-    public void setParentDependencies(Map<String, RuntimeIterator.VariableDependency> parentDependencies)
+    public void setParentDependencies(Map<String, DynamicContext.VariableDependency> parentDependencies)
     {
         _parentDependencies = parentDependencies;
         
         // passing dependencies to parent
-        Map<String, RuntimeIterator.VariableDependency> recursiveDependencies = new TreeMap<String, RuntimeIterator.VariableDependency>();
+        Map<String, DynamicContext.VariableDependency> recursiveDependencies = new TreeMap<String, DynamicContext.VariableDependency>();
         recursiveDependencies.putAll(parentDependencies);
         for(GroupByClauseSparkIteratorExpression iterator : _expressions)
         {
@@ -405,13 +405,19 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
         }
         for(GroupByClauseSparkIteratorExpression iterator : _expressions)
         {
-            Map<String, RuntimeIterator.VariableDependency> exprDependency = iterator.getExpression().getVariableDependencies();
+        	if(iterator.getExpression() == null)
+        	{
+        		String k = iterator.getVariableReference().getVariableName();
+                recursiveDependencies.put(k, DynamicContext.VariableDependency.FULL);
+                continue;
+        	}
+            Map<String, DynamicContext.VariableDependency> exprDependency = iterator.getExpression().getVariableDependencies();
             for(String k : exprDependency.keySet())
             {
                 if(recursiveDependencies.containsKey(k)) {
                     if(recursiveDependencies.get(k) != exprDependency.get(k))
                     {
-                        recursiveDependencies.put(k, RuntimeIterator.VariableDependency.FULL);
+                        recursiveDependencies.put(k, DynamicContext.VariableDependency.FULL);
                     }
                 } else {
                     recursiveDependencies.put(k, exprDependency.get(k));

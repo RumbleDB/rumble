@@ -54,7 +54,7 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
     private RuntimeIterator _expression;
     private DynamicContext _tupleContext;   // re-use same DynamicContext object for efficiency
     private FlworTuple _nextLocalTupleResult;
-    Map<String, RuntimeIterator.VariableDependency> _dependencies;
+    Map<String, DynamicContext.VariableDependency> _dependencies;
 
     public LetClauseSparkIterator(RuntimeTupleIterator child, VariableReferenceIterator variableReference, RuntimeIterator expression, IteratorMetadata iteratorMetadata) {
         super(child, iteratorMetadata);
@@ -190,9 +190,9 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
         throw new SparksoniqRuntimeException("Initial letClauses don't support DataFrames");
     }
 
-    public Map<String, RuntimeIterator.VariableDependency> getVariableDependencies()
+    public Map<String, DynamicContext.VariableDependency> getVariableDependencies()
     {
-        Map<String, RuntimeIterator.VariableDependency> result = new TreeMap<String, RuntimeIterator.VariableDependency>();
+        Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
         result.putAll(_expression.getVariableDependencies());
         if(_child != null)
         {
@@ -228,7 +228,7 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
         _expression.print(buffer, indent+1);
     }
     
-    public void setParentDependencies(Map<String, RuntimeIterator.VariableDependency> parentDependencies)
+    public void setParentDependencies(Map<String, DynamicContext.VariableDependency> parentDependencies)
     {
         _parentDependencies = parentDependencies;
         
@@ -238,16 +238,16 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
         }
 
         // passing dependencies to parent
-        Map<String, RuntimeIterator.VariableDependency> recursiveDependencies = new TreeMap<String, RuntimeIterator.VariableDependency>();
+        Map<String, DynamicContext.VariableDependency> recursiveDependencies = new TreeMap<String, DynamicContext.VariableDependency>();
         recursiveDependencies.putAll(parentDependencies);
         recursiveDependencies.remove(_variableName);
-        Map<String, RuntimeIterator.VariableDependency> exprDependency = _expression.getVariableDependencies();
+        Map<String, DynamicContext.VariableDependency> exprDependency = _expression.getVariableDependencies();
         for(String k : exprDependency.keySet())
         {
             if(recursiveDependencies.containsKey(k)) {
                 if(recursiveDependencies.get(k) != exprDependency.get(k))
                 {
-                    recursiveDependencies.put(k, RuntimeIterator.VariableDependency.FULL);
+                    recursiveDependencies.put(k, DynamicContext.VariableDependency.FULL);
                 }
             } else {
                 recursiveDependencies.put(k, exprDependency.get(k));

@@ -30,13 +30,13 @@ import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator.VariableDependency;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
 import sparksoniq.jsoniq.runtime.tupleiterator.SparkRuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.semantics.DynamicContext.VariableDependency;
 import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.closures.CountClauseClosure;
 import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
@@ -153,9 +153,9 @@ public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
         return dfWithIndex;
     }
 
-    public Map<String, RuntimeIterator.VariableDependency> getVariableDependencies()
+    public Map<String, DynamicContext.VariableDependency> getVariableDependencies()
     {
-        Map<String, RuntimeIterator.VariableDependency> result = new TreeMap<String, RuntimeIterator.VariableDependency>();
+        Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
         result.putAll(_child.getVariableDependencies());
         return result;
     }
@@ -179,12 +179,12 @@ public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
         buffer.append("\n");
     }
     
-    public void setParentDependencies(Map<String, RuntimeIterator.VariableDependency> parentDependencies)
+    public void setParentDependencies(Map<String, DynamicContext.VariableDependency> parentDependencies)
     {
         _parentDependencies = parentDependencies;
         
         // passing dependencies to parent
-        Map<String, RuntimeIterator.VariableDependency> recursiveDependencies = new TreeMap<String, RuntimeIterator.VariableDependency>();
+        Map<String, DynamicContext.VariableDependency> recursiveDependencies = new TreeMap<String, DynamicContext.VariableDependency>();
         recursiveDependencies.putAll(parentDependencies);
         recursiveDependencies.remove(_variableName);
         _child.setParentDependencies(recursiveDependencies);

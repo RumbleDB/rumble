@@ -60,7 +60,7 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
     @Override
     public Iterator<Item> call(Row row) {
         String[] columnNames = _oldSchema.fieldNames();
-        Map<String, RuntimeIterator.VariableDependency> dependencies = _expression.getVariableDependencies();
+        Map<String, DynamicContext.VariableDependency> dependencies = _expression.getVariableDependencies();
 
         // Create dynamic context with deserialized data but only with dependencies
         DynamicContext context = new DynamicContext();

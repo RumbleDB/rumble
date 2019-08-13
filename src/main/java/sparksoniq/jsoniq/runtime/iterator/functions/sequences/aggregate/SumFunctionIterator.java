@@ -102,13 +102,13 @@ public class SumFunctionIterator extends AggregateFunctionIterator {
                     getMetadata());
     }
 
-    public Map<String, RuntimeIterator.VariableDependency> getVariableDependencies()
+    public Map<String, DynamicContext.VariableDependency> getVariableDependencies()
     {
         if(_children.get(0) instanceof VariableReferenceIterator)
         {
             VariableReferenceIterator expr = (VariableReferenceIterator) _children.get(0);
-            Map<String, RuntimeIterator.VariableDependency> result = new TreeMap<String, RuntimeIterator.VariableDependency>();
-            result.put(expr.getVariableName(), RuntimeIterator.VariableDependency.SUM);
+            Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
+            result.put(expr.getVariableName(), DynamicContext.VariableDependency.SUM);
             return result;
         } else {
             return super.getVariableDependencies();
