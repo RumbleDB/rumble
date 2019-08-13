@@ -204,7 +204,8 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext context) {
+    public Dataset<Row> getDataFrame(DynamicContext context, Map<String, DynamicContext.VariableDependency> parentProjection)
+    {
         // if it's a starting clause
         if (this._child == null) {
             // create initial RDD from expression
@@ -223,7 +224,7 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
         }
 
         if (_child.isDataFrame()) {
-            Dataset<Row> df = this._child.getDataFrame(context);
+            Dataset<Row> df = this._child.getDataFrame(context, getProjection(parentProjection));
 
             StructType inputSchema = df.schema();
 
@@ -320,31 +321,29 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
         _expression.print(buffer, indent+1);
     }
     
-    public void setParentDependencies(Map<String, DynamicContext.VariableDependency> parentDependencies)
+    public Map<String, DynamicContext.VariableDependency> getProjection(Map<String, DynamicContext.VariableDependency> parentProjection)
     {
-        _parentDependencies = parentDependencies;
-        
         if(_child == null)
         {
-            return;
+            return null;
         }
 
         // passing dependencies to parent
-        Map<String, DynamicContext.VariableDependency> recursiveDependencies = new TreeMap<String, DynamicContext.VariableDependency>();
-        recursiveDependencies.putAll(parentDependencies);
-        recursiveDependencies.remove(_variableName);
+        Map<String, DynamicContext.VariableDependency> projection = new TreeMap<String, DynamicContext.VariableDependency>();
+        projection.putAll(parentProjection);
+        projection.remove(_variableName);
         Map<String, DynamicContext.VariableDependency> exprDependency = _expression.getVariableDependencies();
         for(String k : exprDependency.keySet())
         {
-            if(recursiveDependencies.containsKey(k)) {
-                if(recursiveDependencies.get(k) != exprDependency.get(k))
+            if(projection.containsKey(k)) {
+                if(projection.get(k) != exprDependency.get(k))
                 {
-                    recursiveDependencies.put(k, DynamicContext.VariableDependency.FULL);
+                    projection.put(k, DynamicContext.VariableDependency.FULL);
                 }
             } else {
-                recursiveDependencies.put(k, exprDependency.get(k));
+                projection.put(k, exprDependency.get(k));
             }
         }
-        _child.setParentDependencies(recursiveDependencies);
+        return projection;
     }
 }

@@ -46,7 +46,6 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     protected boolean _isOpen;
     protected RuntimeTupleIterator _child;
     protected DynamicContext _currentDynamicContext;
-    protected Map<String, DynamicContext.VariableDependency> _parentDependencies;
 
     protected RuntimeTupleIterator(RuntimeTupleIterator child, IteratorMetadata metadata) {
         this.metadata = metadata;
@@ -109,9 +108,9 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
 
     public abstract boolean isDataFrame();
 
-    public abstract Dataset<Row> getDataFrame(DynamicContext context);
+    public abstract Dataset<Row> getDataFrame(DynamicContext context, Map<String, DynamicContext.VariableDependency> parentProjection);
     
-    public abstract void setParentDependencies(Map<String, DynamicContext.VariableDependency> parentDependencies);
+    public abstract Map<String, DynamicContext.VariableDependency> getProjection(Map<String, DynamicContext.VariableDependency> parentProjection);
 
     /*
     * Variable dependencies are variables that MUST be provided in the dynamic context

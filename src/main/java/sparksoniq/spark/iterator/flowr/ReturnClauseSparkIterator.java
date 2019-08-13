@@ -61,8 +61,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDD(DynamicContext context) {
         RuntimeIterator expression = this._children.get(0);
-        _child.setParentDependencies(expression.getVariableDependencies());
-        Dataset<Row> df = this._child.getDataFrame(context);
+        Dataset<Row> df = this._child.getDataFrame(context, expression.getVariableDependencies());
         StructType oldSchema = df.schema();
         return df.javaRDD().flatMap(new ReturnFlatMapClosure(expression, oldSchema));
     }

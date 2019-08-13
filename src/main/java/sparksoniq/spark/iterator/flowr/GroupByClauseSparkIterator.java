@@ -239,11 +239,12 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext context) {
+    public Dataset<Row> getDataFrame(DynamicContext context, Map<String, DynamicContext.VariableDependency> parentProjection)
+    {
         if (this._child == null) {
             throw new SparksoniqRuntimeException("Invalid groupby clause.");
         }
-        Dataset<Row> df = _child.getDataFrame(context);
+        Dataset<Row> df = _child.getDataFrame(context, getProjection(parentProjection));
         StructType inputSchema;
         String[] columnNamesArray;
         List<String> columnNames;
@@ -340,7 +341,7 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
                 false,
                 serializerUDFName,
                 groupbyVariableNames,
-                _parentDependencies
+                parentProjection
         );
 
         return df.sparkSession().sql(
@@ -400,39 +401,37 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
         }
     }
     
-    public void setParentDependencies(Map<String, DynamicContext.VariableDependency> parentDependencies)
+    public Map<String, DynamicContext.VariableDependency> getProjection(Map<String, DynamicContext.VariableDependency> parentProjection)
     {
-        _parentDependencies = parentDependencies;
-        
         // passing dependencies to parent
-        Map<String, DynamicContext.VariableDependency> recursiveDependencies = new TreeMap<String, DynamicContext.VariableDependency>();
-        recursiveDependencies.putAll(parentDependencies);
+        Map<String, DynamicContext.VariableDependency> projection = new TreeMap<String, DynamicContext.VariableDependency>();
+        projection.putAll(parentProjection);
         for(GroupByClauseSparkIteratorExpression iterator : _expressions)
         {
-            recursiveDependencies.remove(iterator.getVariableReference().getVariableName());
+            projection.remove(iterator.getVariableReference().getVariableName());
         }
         for(GroupByClauseSparkIteratorExpression iterator : _expressions)
         {
         	if(iterator.getExpression() == null)
         	{
         		String k = iterator.getVariableReference().getVariableName();
-                recursiveDependencies.put(k, DynamicContext.VariableDependency.FULL);
+                projection.put(k, DynamicContext.VariableDependency.FULL);
                 continue;
         	}
             Map<String, DynamicContext.VariableDependency> exprDependency = iterator.getExpression().getVariableDependencies();
             for(String k : exprDependency.keySet())
             {
-                if(recursiveDependencies.containsKey(k)) {
-                    if(recursiveDependencies.get(k) != exprDependency.get(k))
+                if(projection.containsKey(k)) {
+                    if(projection.get(k) != exprDependency.get(k))
                     {
-                        recursiveDependencies.put(k, DynamicContext.VariableDependency.FULL);
+                        projection.put(k, DynamicContext.VariableDependency.FULL);
                     }
                 } else {
-                    recursiveDependencies.put(k, exprDependency.get(k));
+                    projection.put(k, exprDependency.get(k));
                 }
             }
         }
-        _child.setParentDependencies(recursiveDependencies);
+        return parentProjection;
     }
 
 }

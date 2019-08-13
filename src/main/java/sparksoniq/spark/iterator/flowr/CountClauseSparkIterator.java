@@ -128,11 +128,12 @@ public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext context) {
+    public Dataset<Row> getDataFrame(DynamicContext context, Map<String, DynamicContext.VariableDependency> parentProjection)
+    {
         if (this._child == null) {
             throw new SparksoniqRuntimeException("Invalid count clause.");
         }
-        Dataset<Row> df = _child.getDataFrame(context);
+        Dataset<Row> df = _child.getDataFrame(context, getProjection(parentProjection));
         StructType inputSchema = df.schema();
         int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(_variableName);
         
@@ -179,14 +180,12 @@ public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
         buffer.append("\n");
     }
     
-    public void setParentDependencies(Map<String, DynamicContext.VariableDependency> parentDependencies)
+    public Map<String, DynamicContext.VariableDependency> getProjection(Map<String, DynamicContext.VariableDependency> parentProjection)
     {
-        _parentDependencies = parentDependencies;
-        
         // passing dependencies to parent
-        Map<String, DynamicContext.VariableDependency> recursiveDependencies = new TreeMap<String, DynamicContext.VariableDependency>();
-        recursiveDependencies.putAll(parentDependencies);
-        recursiveDependencies.remove(_variableName);
-        _child.setParentDependencies(recursiveDependencies);
+        Map<String, DynamicContext.VariableDependency> projection = new TreeMap<String, DynamicContext.VariableDependency>();
+        projection.putAll(parentProjection);
+        projection.remove(_variableName);
+        return projection;
     }
 }
