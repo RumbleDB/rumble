@@ -105,7 +105,7 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
             // apply expression in the dynamic context
             expression.getExpression().open(_context);
             boolean isEmptySequence = true;
-            if (expression.getExpression().hasNext()) {
+            while (expression.getExpression().hasNext()) {
                 isEmptySequence = false;
                 Item nextItem = expression.getExpression().next();
                 if (nextItem instanceof NullItem) {
