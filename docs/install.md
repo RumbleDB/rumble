@@ -6,13 +6,11 @@ We show here how to install Rumble from the github repository if you wish to do 
 
 The following software is required:
 
-- [Java SE](http://www.oracle.com/technetwork/java/javase/downloads/index.html) 8 (last tested on 1.8.0_121). The JDK is needed here, but the JRE will be enough when the packaged JAR is available.
-- [Spark](https://spark.apache.org/), version 2.0.0 (for example)
+- [Java SE](http://www.oracle.com/technetwork/java/javase/downloads/index.html) 8+ (last tested on 8u221). The JDK is needed here, but the JRE is enough with the packaged jar file.
+- [Spark](https://spark.apache.org/), version 2.4.3 (for example)
 - [Ant](http://www.ant.org/), version 1.10.1
-- [ANTLR](http://www.ant.org/), version 4.7 (supplied in our repository, also 4.5.3)
-- [Maven](https://maven.apache.org/) 3.5.0
-
-Important: Java 9 is not supported by Spark. You specifically need Java 8. 
+- [ANTLR](http://www.ant.org/), version 4.7 (supplied in our repository)
+- [Maven](https://maven.apache.org/) 3.6.0
 
 Important: the ANTLR version varies with the Spark version, because Spark is also shipped with an ANTLR runtime (example: Spark 2.2.0 is with ANTLR 4.5.3, Spark 2.3.0 with ANTLR 4.7). The ANTLR runtime MUST match the ANTLR generator used to generate the Rumble jar file.
 
@@ -60,13 +58,13 @@ Once the ANTLR sources have been generated, you can compile the entire project l
 
     $ mvn clean compile assembly:single
     
-After successful completion, you can check the `target` directory, which should contain the compiled classes as well as the JAR file `spark-rumble-1.0-jar-with-dependencies.jar`.
+After successful completion, you can check the `target` directory, which should contain the compiled classes as well as the JAR file `spark-rumble-1.1-jar-with-dependencies.jar`.
     
 ## Running locally
 
 The most straightforward to test if the above steps were successful is to run the Rumble shell locally, like so:
 
-    $ spark-submit --master local[2] --deploy-mode client target/spark-rumble-1.0-jar-with-dependencies.jar --shell yes
+    $ spark-submit --master local[2] --deploy-mode client target/spark-rumble-1.1-jar-with-dependencies.jar --shell yes
 
 The Rumble shell should start:
 
@@ -115,6 +113,6 @@ This is it. Rumble is step and ready to go locally. You can now move on to a JSO
 
 You can also try to run the Rumble shell on a cluster if you have one available and configured -- this is done in the same way as any other `spark-submit` command:
 
-    $ spark-submit --master yarn --deploy-mode client --num-executors 40 spark-rumble-1.0-jar-with-dependencies.jar
+    $ spark-submit --master yarn --deploy-mode client --num-executors 40 spark-rumble-1.1-jar-with-dependencies.jar
     
 More details are provided in the rest of the documentation.

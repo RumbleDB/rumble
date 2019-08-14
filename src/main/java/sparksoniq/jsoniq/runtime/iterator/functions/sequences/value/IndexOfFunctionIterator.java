@@ -88,7 +88,7 @@ public class IndexOfFunctionIterator extends LocalFunctionCallIterator {
             if (!item.isAtomic()) {
                 throw new NonAtomicKeyException("Invalid args. index-of can't be performed with a non-atomic in the input sequence", getMetadata().getExpressionMetadata());
             } else {
-                if (Item.compareItems(item, _search) == 0) {
+                if (item.compareTo(_search) == 0) {
                     _nextResult = ItemFactory.getInstance().createIntegerItem(_currentIndex);
                     break;
                 }

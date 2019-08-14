@@ -265,7 +265,7 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
                 List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, _dependencies);
 
                 df.sparkSession().udf().register("letClauseUDF",
-                        new LetClauseUDF(newVariableExpression, inputSchema, UDFcolumns), DataTypes.BinaryType);
+                        new LetClauseUDF(newVariableExpression, UDFcolumns), DataTypes.BinaryType);
 
                 String selectSQL = DataFrameUtils.getSQL(allColumns, true);
                 String udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);

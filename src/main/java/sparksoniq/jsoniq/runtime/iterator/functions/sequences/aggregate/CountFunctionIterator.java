@@ -25,13 +25,14 @@ import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.List;
 
-public class CountFunctionIterator extends AggregateFunctionIterator {
+public class CountFunctionIterator extends LocalFunctionCallIterator {
     public CountFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
-        super(arguments, AggregateFunctionIterator.AggregateFunctionOperator.COUNT, iteratorMetadata);
+        super(arguments, iteratorMetadata);
     }
 
     @Override

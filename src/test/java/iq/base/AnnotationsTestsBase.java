@@ -20,7 +20,7 @@
 
 package iq.base;
 
-import org.antlr.v4.runtime.ANTLRInputStream;
+import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
@@ -72,7 +72,7 @@ public class AnnotationsTestsBase {
         }
 
         try {
-            context = this.parse(new FileReader(path), visitor);
+            context = this.parse(path, visitor);
 
             // generate static context and runtime iterators
             if (visitor instanceof JsoniqExpressionTreeVisitor) {
@@ -168,8 +168,8 @@ public class AnnotationsTestsBase {
         return context;
     }
 
-    private JsoniqParser.MainModuleContext parse(FileReader reader, JsoniqBaseVisitor visitor) throws IOException {
-        JsoniqLexer lexer = new JsoniqLexer(new ANTLRInputStream(reader));
+    private JsoniqParser.MainModuleContext parse(String path, JsoniqBaseVisitor visitor) throws IOException {
+        JsoniqLexer lexer = new JsoniqLexer(CharStreams.fromFileName(path));
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
 

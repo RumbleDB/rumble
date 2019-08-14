@@ -278,7 +278,7 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
 
         df.createOrReplaceTempView("input");
         df.sparkSession().udf().register("createOrderingColumns",
-                new OrderClauseCreateColumnsUDF(_expressions, inputSchema, UDFcolumns),
+                new OrderClauseCreateColumnsUDF(_expressions, UDFcolumns),
                 DataTypes.createStructType(typedFields));
 
         String selectSQL = DataFrameUtils.getSQL(allColumns, true);

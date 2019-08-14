@@ -24,7 +24,6 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-
 import org.apache.spark.api.java.JavaRDD;
 import sparksoniq.exceptions.InvalidArgumentTypeException;
 import sparksoniq.exceptions.IteratorFlowException;
@@ -38,8 +37,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import static sparksoniq.jsoniq.item.Item.isNumeric;
 
 public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoSerializable {
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
@@ -73,7 +70,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
             boolean result;
             if (item.isBoolean())
                 result = item.getBooleanValue();
-            else if (isNumeric(item)) {
+            else if (item.isNumeric()) {
                 if (item.isInteger())
                     result = item.getIntegerValue() != 0;
                 else if (item.isDouble())

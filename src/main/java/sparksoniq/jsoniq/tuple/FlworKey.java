@@ -86,7 +86,7 @@ public class FlworKey implements KryoSerializable {
             }
             if ((currentItem != null && comparisonItem != null)
                     && (!currentItem.getClass().getSimpleName().equals(comparisonItem.getClass().getSimpleName()))
-                    && ((!Item.isNumeric(comparisonItem) || !Item.isNumeric(currentItem)))) {
+                    && ((!comparisonItem.isNumeric() || !currentItem.isNumeric()))) {
                 throw new SparksoniqRuntimeException("Invalid sort key: Item types can't be different.");
             }
 
@@ -101,7 +101,7 @@ public class FlworKey implements KryoSerializable {
                     result = 1;
                 }
             } else {
-                result = Item.compareItems(currentItem, comparisonItem);
+                result = currentItem.compareTo(comparisonItem);
             }
 
             // Simplify comparison result to -1/0/1

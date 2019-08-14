@@ -25,18 +25,19 @@ import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
 
-public class ArraySizeFunctionIterator extends ArrayFunctionIterator {
+public class ArraySizeFunctionIterator extends LocalFunctionCallIterator {
 
 
     private RuntimeIterator arrayIterator;
 
     public ArraySizeFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
-        super(arguments, ArrayFunctionOperators.SIZE, iteratorMetadata);
+        super(arguments, iteratorMetadata);
     }
 
     @Override

@@ -73,7 +73,7 @@ public class SubsequenceFunctionIterator extends LocalFunctionCallIterator {
                 throw new NonAtomicKeyException(
                         "Invalid args. subsequence can't be performed with an object parameter as the length",
                         getMetadata().getExpressionMetadata());
-            } else if (!(Item.isNumeric(lengthItem))) {
+            } else if (!(lengthItem.isNumeric())) {
                 throw new UnexpectedTypeException(
                         "Invalid args. Length parameter should be an numeric(Integer/Decimal/Double)",
                         getMetadata());
@@ -81,7 +81,7 @@ public class SubsequenceFunctionIterator extends LocalFunctionCallIterator {
             lengthIterator.close();
             // round double to nearest int
             try {
-                _length = (int) Math.round((Item.getNumericValue(lengthItem, Double.class)));
+                _length = (int) Math.round((lengthItem.getNumericValue(Double.class)));
 
             } catch (IteratorFlowException e) {
                 throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
@@ -105,14 +105,14 @@ public class SubsequenceFunctionIterator extends LocalFunctionCallIterator {
             throw new NonAtomicKeyException(
                     "Invalid args. subsequence can't be performed with an object parameter as the position",
                     getMetadata().getExpressionMetadata());
-        } else if (!(Item.isNumeric(positionItem))) {
+        } else if (!(positionItem.isNumeric())) {
             throw new UnexpectedTypeException(
                     "Invalid args. Position parameter should be a numeric(Integer/Decimal/Double)",
                     getMetadata());
         }
         positionIterator.close();
         // round double to nearest int
-        _startPosition = (int) Math.round((Item.getNumericValue(positionItem, Double.class)));
+        _startPosition = (int) Math.round((positionItem.getNumericValue(Double.class)));
 
         // first, perform all parameter checks (above)
         // if length is 0, just return empty sequence

@@ -120,7 +120,7 @@ public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
         // zipWithIndex starts from 0, increment indices by 1 for jsoniq convention
         return _child.getRDD(context).zipWithIndex()
                 .mapValues(index -> index + 1)
-                .map(new CountClauseClosure(variableName, getMetadata()));
+                .map(new CountClauseClosure(variableName));
     }
 
     @Override
