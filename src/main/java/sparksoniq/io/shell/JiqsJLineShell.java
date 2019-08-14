@@ -33,6 +33,7 @@ import org.jline.terminal.TerminalBuilder;
 import sparksoniq.JsoniqQueryExecutor;
 import sparksoniq.Main;
 import sparksoniq.config.SparksoniqRuntimeConfiguration;
+import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.utils.FileUtils;
 
 import java.io.IOException;
@@ -133,8 +134,13 @@ public class JiqsJLineShell {
             } else if (ex instanceof SparkException) {
                 Throwable sparkExceptionCause = ex.getCause();
                 handleException(sparkExceptionCause);;
+            } else if (ex instanceof SparksoniqRuntimeException) {
+                System.err.println(ex.getMessage());
             } else if (!(ex instanceof UserInterruptException)) {
-                output(ERROR_MESSAGE_PROMPT + ex.getMessage().split("\n")[0]);
+            	System.out.println("An error has occured: " + ex.getMessage());
+                System.out.println("We should investigate this 🙈. Please contact us or file an issue on GitHub with your query.");
+                System.out.println("Link: https://github.com/RumbleDB/rumble/issues");
+                ex.printStackTrace();
             }
         }
     }
