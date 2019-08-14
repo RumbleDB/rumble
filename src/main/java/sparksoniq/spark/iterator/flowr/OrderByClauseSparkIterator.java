@@ -297,7 +297,7 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         
         // Check type compatibility.
         
-        for (int columnIndex = 0; columnIndex <  _expressions.size(); columnIndex++) {
+        /*for (int columnIndex = 0; columnIndex <  _expressions.size(); columnIndex++) {
             Dataset<Row> types = df.sparkSession().sql(
                     String.format(
                             "select distinct(`%s-nullEmptyBooleanCheckField`) from input",
@@ -317,7 +317,7 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
             {
                 throw new UnexpectedTypeException("Order by variable must contain values of a single type.", getMetadata());
             }
-        }
+        }*/
         
         // Project to output.
 
