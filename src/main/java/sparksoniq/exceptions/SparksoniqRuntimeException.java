@@ -32,13 +32,13 @@ public class SparksoniqRuntimeException extends RuntimeException {
     private ExpressionMetadata metadata;
 
     public SparksoniqRuntimeException(String message) {
-        super("Error [Code " + ErrorCodes.RuntimeExceptionErrorCode + "] " + message);
+        super("Error [err: " + ErrorCodes.RuntimeExceptionErrorCode + " ] " + message);
         this.errorCode = ErrorCodes.RuntimeExceptionErrorCode;
         this.errorMessage = message;
     }
 
     public SparksoniqRuntimeException(String message, String errorCode) {
-        super("Error [Code " + errorCode + "] " + message);
+        super("Error [err: " + errorCode + " ] " + message);
         if (!Arrays.asList(ErrorCodes.class.getFields()).stream().anyMatch(f -> {
             try {
                 return f.get(null).equals(errorCode);
@@ -54,9 +54,9 @@ public class SparksoniqRuntimeException extends RuntimeException {
 
 
     public SparksoniqRuntimeException(String message, String errorCode, ExpressionMetadata metadata) {
-        super("Error [Code " + errorCode + "] " + (metadata != null ?
-                "Line " + metadata.getTokenLineNumber() +
-                        ", Column " + metadata.getTokenColumnNumber() + ": " : "")
+        super("Error [err: " + errorCode + "]" + (metadata != null ?
+                "LINE:" + metadata.getTokenLineNumber() +
+                        ":COLUMN:" + metadata.getTokenColumnNumber() + ":" : "")
                 + message);
         if (!Arrays.asList(ErrorCodes.class.getFields()).stream().anyMatch(f -> {
             try {
@@ -73,9 +73,9 @@ public class SparksoniqRuntimeException extends RuntimeException {
     }
 
     public SparksoniqRuntimeException(String message, ExpressionMetadata metadata) {
-        super("Error [Code " + ErrorCodes.RuntimeExceptionErrorCode + "] " + (metadata != null ?
-                "Line " + metadata.getTokenLineNumber() +
-                        ",Column " + metadata.getTokenColumnNumber() + ": " : "")
+        super("Error [err: " + ErrorCodes.RuntimeExceptionErrorCode + "]" + (metadata != null ?
+                "LINE:" + metadata.getTokenLineNumber() +
+                        ";COLUMN:" + metadata.getTokenColumnNumber() + ";" : "")
                 + message);
         this.errorCode = ErrorCodes.RuntimeExceptionErrorCode;
         ;
