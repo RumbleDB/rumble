@@ -24,6 +24,7 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
+import org.apache.spark.SparkException;
 import org.junit.Assert;
 import sparksoniq.exceptions.ParsingException;
 import sparksoniq.exceptions.SemanticException;
@@ -82,50 +83,10 @@ public class AnnotationsTestsBase {
                 // generate iterators
                 runtimeIterator = new RuntimeIteratorVisitor().visit(completeVisitor.getQueryExpression(), null);
             }
-            // PARSING
-        } catch (ParsingException exception) {
-            String errorOutput = exception.getMessage();
-            checkErrorCode(errorOutput, currentAnnotation.getErrorCode(), currentAnnotation.getErrorMetadata());
-            if (currentAnnotation.shouldParse()) {
-                Assert.fail("Program did not parse when expected to.\nError output: " + errorOutput + "\n");
-                return context;
-            } else {
-                System.out.println(errorOutput);
-                Assert.assertTrue(true);
-                return context;
-            }
-
-            // SEMANTIC
-        } catch (SemanticException exception) {
-            String errorOutput = exception.getMessage();
-            checkErrorCode(errorOutput, currentAnnotation.getErrorCode(), currentAnnotation.getErrorMetadata());
-            try {
-                if (currentAnnotation.shouldCompile()) {
-                    Assert.fail("Program did not compile when expected to.\nError output: " + errorOutput + "\n");
-                    return context;
-                } else {
-                    System.out.println(errorOutput);
-                    Assert.assertTrue(true);
-                    return context;
-                }
-            } catch (Exception ex) {
-            }
-
-            // RUNTIME
-        } catch (SparksoniqRuntimeException exception) {
-            String errorOutput = exception.getMessage();
-            checkErrorCode(errorOutput, currentAnnotation.getErrorCode(), currentAnnotation.getErrorMetadata());
-            try {
-                if (currentAnnotation.shouldRun()) {
-                    Assert.fail("Program did not run when expected to.\nError output: " + errorOutput + "\n");
-                    return context;
-                } else {
-                    System.out.println(errorOutput);
-                    Assert.assertTrue(true);
-                    return context;
-                }
-            } catch (Exception ex) {
-            }
+        } catch (Exception e)
+        {
+        	handleException(e);
+        	return context;
         }
 
         try {
@@ -166,6 +127,62 @@ public class AnnotationsTestsBase {
             }
         }
         return context;
+    }
+    
+    private void handleException (Throwable exception) {
+        // PARSING
+    	if (exception instanceof SparkException) {
+	        Throwable e = exception.getCause();
+	        handleException(e);
+	    }
+
+        // SEMANTIC
+    	if (exception instanceof ParsingException) {
+	        String errorOutput = exception.getMessage();
+	        checkErrorCode(errorOutput, currentAnnotation.getErrorCode(), currentAnnotation.getErrorMetadata());
+	        if (currentAnnotation.shouldParse()) {
+	            Assert.fail("Program did not parse when expected to.\nError output: " + errorOutput + "\n");
+	            return;
+	        } else {
+	            System.out.println(errorOutput);
+	            Assert.assertTrue(true);
+	            return;
+	        }
+	    }
+
+        // SEMANTIC
+        else if (exception instanceof SemanticException ) {
+	        String errorOutput = exception.getMessage();
+	        checkErrorCode(errorOutput, currentAnnotation.getErrorCode(), currentAnnotation.getErrorMetadata());
+	        try {
+	            if (currentAnnotation.shouldCompile()) {
+	                Assert.fail("Program did not compile when expected to.\nError output: " + errorOutput + "\n");
+	                return;
+	            } else {
+	                System.out.println(errorOutput);
+	                Assert.assertTrue(true);
+	                return;
+	            }
+	        } catch (Exception ex) {
+	        }
+        }
+
+        // RUNTIME
+        else if (exception instanceof SparksoniqRuntimeException) {
+	        String errorOutput = exception.getMessage();
+	        checkErrorCode(errorOutput, currentAnnotation.getErrorCode(), currentAnnotation.getErrorMetadata());
+	        try {
+	            if (currentAnnotation.shouldRun()) {
+	                Assert.fail("Program did not run when expected to.\nError output: " + errorOutput + "\n");
+	                return;
+	            } else {
+	                System.out.println(errorOutput);
+	                Assert.assertTrue(true);
+	                return;
+	            }
+	        } catch (Exception ex) {
+	        }
+        }
     }
 
     private JsoniqParser.MainModuleContext parse(String path, JsoniqBaseVisitor visitor) throws IOException {
