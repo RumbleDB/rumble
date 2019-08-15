@@ -80,7 +80,7 @@ public class Main {
                 Throwable sparkExceptionCause = ex.getCause();
                 handleException(sparkExceptionCause);;
             } else if (ex instanceof SparksoniqRuntimeException) {
-                System.err.println("⚠  ️" + ex.getMessage());
+                System.err.println("⚠️  ️" + ex.getMessage());
             } else {
             	System.out.println("An error has occured: " + ex.getMessage());
                 System.out.println("We should investigate this 🙈. Please contact us or file an issue on GitHub with your query.");
