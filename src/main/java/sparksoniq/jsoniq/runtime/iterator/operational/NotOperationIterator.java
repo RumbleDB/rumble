@@ -29,9 +29,7 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class NotOperationIterator extends UnaryOperationBaseIterator {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 
 	public NotOperationIterator(RuntimeIterator child, IteratorMetadata iteratorMetadata) {

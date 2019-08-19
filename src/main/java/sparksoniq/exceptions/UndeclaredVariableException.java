@@ -24,9 +24,7 @@ import sparksoniq.exceptions.codes.ErrorCodes;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 
 public class UndeclaredVariableException extends SemanticException {
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 
 	public UndeclaredVariableException(String message, ExpressionMetadata metadata) {

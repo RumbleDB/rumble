@@ -27,9 +27,7 @@ import java.math.BigDecimal;
 import java.util.Comparator;
 
 public class ItemComparatorForSequences implements Comparator<Item>, Serializable {
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 
 	/**

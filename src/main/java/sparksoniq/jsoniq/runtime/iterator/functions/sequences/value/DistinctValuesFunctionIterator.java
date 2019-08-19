@@ -36,9 +36,7 @@ import org.apache.spark.api.java.function.Function;
 
 public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private RuntimeIterator _sequenceIterator;
     private Item _nextResult;

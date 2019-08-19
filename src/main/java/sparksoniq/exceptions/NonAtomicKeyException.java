@@ -25,9 +25,7 @@ import sparksoniq.exceptions.codes.ErrorCodes;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 
 public class NonAtomicKeyException extends SparksoniqRuntimeException {
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 
 	public NonAtomicKeyException(String message, ExpressionMetadata expressionMetadata) {

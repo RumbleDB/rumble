@@ -33,9 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ParallelizeFunctionIterator extends SparkFunctionCallIterator {
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 
 	public ParallelizeFunctionIterator(List<RuntimeIterator> parameters, IteratorMetadata iteratorMetadata) {

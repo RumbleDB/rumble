@@ -35,9 +35,7 @@ import java.util.List;
 
 public class ObjectProjectFunctionIterator extends LocalFunctionCallIterator {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private RuntimeIterator _iterator;
     private Item _nextResult;

@@ -31,9 +31,7 @@ import java.util.List;
 import java.util.Set;
 
 public class ContextExpressionIterator extends LocalRuntimeIterator {
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 
 	public ContextExpressionIterator(IteratorMetadata iteratorMetadata) {

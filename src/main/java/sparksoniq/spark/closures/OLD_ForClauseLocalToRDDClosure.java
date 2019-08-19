@@ -25,9 +25,7 @@ import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
 public class OLD_ForClauseLocalToRDDClosure implements Function<Item, FlworTuple> {
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private final String _variableName;
     private final FlworTuple _inputTuple;

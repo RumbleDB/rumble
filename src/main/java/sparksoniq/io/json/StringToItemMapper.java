@@ -30,9 +30,7 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import java.util.Iterator;
 
 public class StringToItemMapper implements FlatMapFunction<Iterator<String>, Item> {
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private final IteratorMetadata metadata;
 

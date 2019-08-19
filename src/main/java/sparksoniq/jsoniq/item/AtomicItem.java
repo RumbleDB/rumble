@@ -24,9 +24,7 @@ import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
 public abstract class AtomicItem extends Item {
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 
 	protected AtomicItem() {

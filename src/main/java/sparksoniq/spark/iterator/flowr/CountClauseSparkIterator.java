@@ -47,9 +47,7 @@ import java.util.List;
 import java.util.Set;
 
 public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private String _variableName;
     private FlworTuple _nextLocalTupleResult;

@@ -34,9 +34,7 @@ import java.util.List;
 
 public class OrderByMapToPairClosure implements PairFunction<FlworTuple, FlworKey, FlworTuple> {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	//TODO handle stablility
     private final boolean _isStable;

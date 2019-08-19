@@ -33,9 +33,7 @@ import java.util.List;
 
 public class InstanceOfIterator extends UnaryOperationIterator {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private final SequenceType _sequenceType;
 

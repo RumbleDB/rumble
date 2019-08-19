@@ -25,9 +25,7 @@ import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 
 public class ParsingException extends SparksoniqRuntimeException {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 
 	public ParsingException(String message, ExpressionMetadata metadata) {

@@ -30,9 +30,7 @@ import java.math.BigDecimal;
 
 public class DecimalRuntimeIterator extends AtomicRuntimeIterator {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private BigDecimal _item;
 

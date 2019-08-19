@@ -31,9 +31,7 @@ import java.util.List;
 
 public class OneOrMoreIterator extends CardinalityFunctionIterator {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private RuntimeIterator _iterator;
     private Item _nextResult;

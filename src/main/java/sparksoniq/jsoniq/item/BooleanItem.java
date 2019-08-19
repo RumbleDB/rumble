@@ -28,9 +28,7 @@ import sparksoniq.semantics.types.ItemTypes;
 
 public class BooleanItem extends AtomicItem {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private boolean _value;
 

@@ -30,9 +30,7 @@ import java.util.List;
 
 public class ObjectKeysClosure implements FlatMapFunction<Item, Item> {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 
 	public ObjectKeysClosure() {

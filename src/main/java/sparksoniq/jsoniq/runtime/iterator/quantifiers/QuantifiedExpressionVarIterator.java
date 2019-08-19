@@ -30,9 +30,7 @@ import sparksoniq.semantics.types.SequenceType;
 
 public class QuantifiedExpressionVarIterator extends LocalRuntimeIterator {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private final String _variableReference;
     private final SequenceType _sequenceType;

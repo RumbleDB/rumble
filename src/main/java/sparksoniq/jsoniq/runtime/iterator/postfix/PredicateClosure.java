@@ -29,9 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PredicateClosure implements Function<Item, Boolean> {
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private final RuntimeIterator _expression;
     private final DynamicContext _dynamicContext;

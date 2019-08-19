@@ -56,9 +56,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private final boolean _isStable;
     private final List<OrderByClauseSparkIteratorExpression> _expressions;

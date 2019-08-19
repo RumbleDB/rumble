@@ -32,9 +32,7 @@ import java.util.List;
 
 public class ReverseFunctionIterator extends LocalFunctionCallIterator {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private List<Item> results;
     private int _currentIndex = 0;

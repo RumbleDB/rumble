@@ -25,9 +25,7 @@ import sparksoniq.semantics.types.ItemTypes;
 
 public abstract class JsonItem extends Item {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 
 	protected JsonItem() {

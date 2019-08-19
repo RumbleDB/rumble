@@ -36,9 +36,7 @@ import java.util.List;
 
 public class GroupClauseSerializeAggregateResultsUDF implements UDF1<WrappedArray, byte[]> {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private List<Item> _nextResult;
     private List<List<Item>> _deserializedParams;

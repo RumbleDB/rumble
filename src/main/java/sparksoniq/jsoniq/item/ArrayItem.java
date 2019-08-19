@@ -32,9 +32,7 @@ import java.util.List;
 
 public class ArrayItem extends JsonItem {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private List<Item> _arrayItems;
     

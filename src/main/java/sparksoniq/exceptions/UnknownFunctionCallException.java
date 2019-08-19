@@ -24,9 +24,7 @@ import sparksoniq.exceptions.codes.ErrorCodes;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class UnknownFunctionCallException extends SparksoniqRuntimeException {
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 
 	public UnknownFunctionCallException(String fnName, int arity, IteratorMetadata iteratorMetadata) {

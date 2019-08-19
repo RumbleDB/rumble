@@ -29,9 +29,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class ArrayLookupClosure implements FlatMapFunction<Item, Item> {
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private final Integer _lookup;
 

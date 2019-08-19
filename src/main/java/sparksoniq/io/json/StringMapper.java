@@ -27,9 +27,7 @@ import java.util.Iterator;
 
 public class StringMapper implements FlatMapFunction<Iterator<String>, Item> {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 
 	public StringMapper() {

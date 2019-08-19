@@ -27,9 +27,7 @@ import java.util.Arrays;
 
 public class SparksoniqRuntimeException extends RuntimeException {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private final String errorCode;
     private final String errorMessage;

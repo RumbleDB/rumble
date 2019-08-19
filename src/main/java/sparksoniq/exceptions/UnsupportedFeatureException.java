@@ -24,9 +24,7 @@ import sparksoniq.exceptions.codes.ErrorCodes;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 
 public class UnsupportedFeatureException extends SparksoniqRuntimeException {
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 
 	public UnsupportedFeatureException(String message, ExpressionMetadata metadata) {

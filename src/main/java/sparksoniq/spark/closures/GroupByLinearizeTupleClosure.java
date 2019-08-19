@@ -32,9 +32,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class GroupByLinearizeTupleClosure implements Function<Tuple2<FlworKey, Iterable<FlworTuple>>, FlworTuple> {
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private final List<GroupByClauseSparkIteratorExpression> _groupVariables;
 

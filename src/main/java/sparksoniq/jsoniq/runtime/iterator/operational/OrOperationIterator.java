@@ -29,9 +29,7 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class OrOperationIterator extends BinaryOperationBaseIterator {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 
 	public OrOperationIterator(RuntimeIterator left, RuntimeIterator right, IteratorMetadata iteratorMetadata) {

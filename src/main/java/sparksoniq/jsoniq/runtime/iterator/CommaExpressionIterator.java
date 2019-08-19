@@ -28,9 +28,7 @@ import sparksoniq.semantics.DynamicContext;
 import java.util.List;
 
 public class CommaExpressionIterator extends LocalRuntimeIterator {
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private RuntimeIterator _currentChild;
     private Item _nextResult;

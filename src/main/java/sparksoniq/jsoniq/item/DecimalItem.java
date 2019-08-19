@@ -31,9 +31,7 @@ import java.math.BigDecimal;
 
 public class DecimalItem extends AtomicItem {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private BigDecimal _value;
 

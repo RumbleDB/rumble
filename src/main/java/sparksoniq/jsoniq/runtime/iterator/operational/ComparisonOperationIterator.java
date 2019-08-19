@@ -38,9 +38,7 @@ import java.util.Arrays;
 
 public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	public static final Operator[] valueComparisonOperators = new Operator[]{
             Operator.VC_GE, Operator.VC_GT, Operator.VC_EQ, Operator.VC_NE, Operator.VC_LE, Operator.VC_LT};

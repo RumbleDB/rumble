@@ -32,9 +32,7 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import java.util.List;
 
 public class StringJoinFunction extends LocalFunctionCallIterator {
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 
 	public StringJoinFunction(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {

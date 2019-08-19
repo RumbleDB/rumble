@@ -29,9 +29,7 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class StringRuntimeIterator extends AtomicRuntimeIterator {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private String _item;
 

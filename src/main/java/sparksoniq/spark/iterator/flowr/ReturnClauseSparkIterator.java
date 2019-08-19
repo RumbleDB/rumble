@@ -40,9 +40,7 @@ import java.util.Set;
 
 public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private RuntimeTupleIterator _child;
     private DynamicContext _tupleContext;   // re-use same DynamicContext object for efficiency

@@ -36,9 +36,7 @@ import java.util.List;
 
 public class ForClauseSerializeClosure implements Function<Item, Row> {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private transient Kryo _kryo;
     private transient Output _output;

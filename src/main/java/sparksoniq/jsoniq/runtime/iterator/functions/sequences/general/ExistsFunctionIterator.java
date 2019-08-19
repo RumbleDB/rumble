@@ -31,9 +31,7 @@ import java.util.List;
 
 public class ExistsFunctionIterator extends LocalFunctionCallIterator {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private RuntimeIterator _sequenceIterator;
     public ExistsFunctionIterator(List<RuntimeIterator> parameters, IteratorMetadata iteratorMetadata) {

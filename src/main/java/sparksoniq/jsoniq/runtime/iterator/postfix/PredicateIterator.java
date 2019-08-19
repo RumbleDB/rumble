@@ -39,9 +39,7 @@ import java.util.Set;
 
 public class PredicateIterator extends HybridRuntimeIterator {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private RuntimeIterator _iterator;
     private RuntimeIterator _filter;

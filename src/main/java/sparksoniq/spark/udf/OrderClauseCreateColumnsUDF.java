@@ -44,9 +44,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private List<OrderByClauseSparkIteratorExpression> _expressions;
     Set<String> _dependencies;

@@ -37,9 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private List<VariableReferenceIterator> _expressions;
     private List<String> _inputColumnNames;

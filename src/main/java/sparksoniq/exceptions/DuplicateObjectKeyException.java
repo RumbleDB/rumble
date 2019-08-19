@@ -24,9 +24,7 @@ import sparksoniq.exceptions.codes.ErrorCodes;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 
 public class DuplicateObjectKeyException extends SparksoniqRuntimeException {
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 
 	public DuplicateObjectKeyException(String keyName, ExpressionMetadata metadata) {

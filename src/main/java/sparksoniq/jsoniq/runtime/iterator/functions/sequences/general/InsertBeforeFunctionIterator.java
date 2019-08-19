@@ -34,9 +34,7 @@ import java.util.List;
 
 public class InsertBeforeFunctionIterator extends LocalFunctionCallIterator {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private RuntimeIterator _sequenceIterator;
     private RuntimeIterator _insertIterator;

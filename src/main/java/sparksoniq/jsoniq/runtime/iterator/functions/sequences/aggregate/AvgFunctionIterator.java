@@ -34,9 +34,7 @@ import java.util.List;
 
 public class AvgFunctionIterator extends LocalFunctionCallIterator {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private RuntimeIterator _iterator;
 

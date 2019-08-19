@@ -29,9 +29,7 @@ import java.io.Serializable;
 
 public class VariableReference extends PrimaryExpression implements Serializable {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private String name;
     private SequenceType _type;

@@ -34,9 +34,7 @@ import java.util.Set;
 
 public class VariableReferenceIterator extends LocalRuntimeIterator {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private SequenceType sequence;
     private String _variableName;

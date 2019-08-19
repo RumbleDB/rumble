@@ -43,9 +43,7 @@ import java.util.Arrays;
 
 public class ObjectLookupIterator extends HybridRuntimeIterator {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private RuntimeIterator _iterator;
     private Item _lookupKey;

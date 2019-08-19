@@ -38,9 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GroupClauseDetermineTypeUDF implements UDF1<WrappedArray, List<String>> {
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private List<VariableReferenceIterator> _expressions;
     private List<String> _inputColumnNames;

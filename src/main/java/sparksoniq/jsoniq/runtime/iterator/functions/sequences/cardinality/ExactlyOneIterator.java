@@ -32,9 +32,7 @@ import java.util.List;
 
 public class ExactlyOneIterator extends CardinalityFunctionIterator {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private Item _nextResult;
 

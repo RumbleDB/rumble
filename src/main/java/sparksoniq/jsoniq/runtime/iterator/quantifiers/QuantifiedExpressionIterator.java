@@ -35,9 +35,7 @@ import java.util.List;
 
 public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private final QuantifiedExpression.QuantifiedOperators _operator;
     private final RuntimeIterator _evaluationExpression;

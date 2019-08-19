@@ -34,9 +34,7 @@ import java.util.List;
 
 //TODO serialize with indentation
 public abstract class Item implements SerializableItem {
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 
 	protected Item() {

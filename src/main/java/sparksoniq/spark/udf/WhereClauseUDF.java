@@ -39,9 +39,7 @@ import java.util.List;
 import java.util.Set;
 
 public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private RuntimeIterator _expression;
 

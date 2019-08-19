@@ -35,9 +35,7 @@ import java.util.List;
 
 public class RoundHalfToEvenFunctionIterator extends LocalFunctionCallIterator {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private RuntimeIterator _iterator;
 

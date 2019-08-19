@@ -31,9 +31,7 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import java.util.List;
 
 public class StartsWithFunctionIterator extends LocalFunctionCallIterator {
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 
 	public StartsWithFunctionIterator(

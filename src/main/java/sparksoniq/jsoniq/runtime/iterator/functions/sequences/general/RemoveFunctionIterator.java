@@ -34,9 +34,7 @@ import java.util.List;
 
 public class RemoveFunctionIterator extends LocalFunctionCallIterator {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private RuntimeIterator _sequenceIterator;
     private Item _nextResult;

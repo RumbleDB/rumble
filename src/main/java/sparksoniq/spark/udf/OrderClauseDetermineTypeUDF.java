@@ -39,9 +39,7 @@ import java.util.List;
 import java.util.Set;
 
 public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List<String>> {
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private List<OrderByClauseSparkIteratorExpression> _expressions;
     Set<String> _dependencies;

@@ -31,9 +31,7 @@ import java.util.List;
 
 public class TailFunctionIterator extends LocalFunctionCallIterator {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private RuntimeIterator _iterator;
     private Item _nextResult;

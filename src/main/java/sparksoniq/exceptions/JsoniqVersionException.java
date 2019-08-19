@@ -24,9 +24,7 @@ import sparksoniq.exceptions.codes.ErrorCodes;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 
 public class JsoniqVersionException extends ParsingException {
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 
 	public JsoniqVersionException(ExpressionMetadata expressionMetadata) {

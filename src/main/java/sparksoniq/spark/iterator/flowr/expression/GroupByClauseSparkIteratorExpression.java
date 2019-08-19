@@ -29,9 +29,7 @@ import java.io.Serializable;
 
 public class GroupByClauseSparkIteratorExpression implements Serializable {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 	private final VariableReferenceIterator _variableReference;
     private final RuntimeIterator _expression;

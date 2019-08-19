@@ -26,9 +26,7 @@ import sparksoniq.jsoniq.item.Item;
 
 public class FilterNonAtomicClosure implements Function<Item, Boolean> {
 
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 
 	public FilterNonAtomicClosure() {

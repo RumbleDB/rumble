@@ -31,9 +31,7 @@ import sparksoniq.spark.SparkSessionManager;
 import java.util.List;
 
 public class ParseTextFunctionIterator extends SparkFunctionCallIterator {
-    /**
-	 * 
-	 */
+
 	private static final long serialVersionUID = 1L;
 
 	public ParseTextFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
