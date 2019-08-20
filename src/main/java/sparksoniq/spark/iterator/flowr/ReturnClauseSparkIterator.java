@@ -146,9 +146,9 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     {
         Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
         result.putAll(_expression.getVariableDependencies());
-        for (String var : _child.getVariablesBoundInCurrentFLWORExpression())
+        for (String variable : _child.getVariablesBoundInCurrentFLWORExpression())
         {
-            result.remove(var);
+            result.remove(variable);
         }
         result.putAll(_child.getVariableDependencies());
         return result;

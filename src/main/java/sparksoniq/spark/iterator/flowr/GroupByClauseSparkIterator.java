@@ -403,31 +403,37 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
     
     public Map<String, DynamicContext.VariableDependency> getProjection(Map<String, DynamicContext.VariableDependency> parentProjection)
     {
-        // passing dependencies to parent
+        // start with an empty projection.
         Map<String, DynamicContext.VariableDependency> projection = new TreeMap<String, DynamicContext.VariableDependency>();
+
+        // copy over the projection needed by the parent clause.
         projection.putAll(parentProjection);
+
+        // remove the variables that this clause binds.
         for(GroupByClauseSparkIteratorExpression iterator : _expressions)
         {
             projection.remove(iterator.getVariableReference().getVariableName());
         }
+
+        // add the variable dependencies needed by this for clause's expression.
         for(GroupByClauseSparkIteratorExpression iterator : _expressions)
         {
         	if(iterator.getExpression() == null)
         	{
-        		String k = iterator.getVariableReference().getVariableName();
-                projection.put(k, DynamicContext.VariableDependency.FULL);
+        		String variable = iterator.getVariableReference().getVariableName();
+                projection.put(variable, DynamicContext.VariableDependency.FULL);
                 continue;
         	}
             Map<String, DynamicContext.VariableDependency> exprDependency = iterator.getExpression().getVariableDependencies();
-            for(String k : exprDependency.keySet())
+            for(String variable : exprDependency.keySet())
             {
-                if(projection.containsKey(k)) {
-                    if(projection.get(k) != exprDependency.get(k))
+                if(projection.containsKey(variable)) {
+                    if(projection.get(variable) != exprDependency.get(variable))
                     {
-                        projection.put(k, DynamicContext.VariableDependency.FULL);
+                        projection.put(variable, DynamicContext.VariableDependency.FULL);
                     }
                 } else {
-                    projection.put(k, exprDependency.get(k));
+                    projection.put(variable, exprDependency.get(variable));
                 }
             }
         }

@@ -182,9 +182,13 @@ public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
     
     public Map<String, DynamicContext.VariableDependency> getProjection(Map<String, DynamicContext.VariableDependency> parentProjection)
     {
-        // passing dependencies to parent
+        // start with an empty projection.
         Map<String, DynamicContext.VariableDependency> projection = new TreeMap<String, DynamicContext.VariableDependency>();
+
+        // copy over the projection needed by the parent clause.
         projection.putAll(parentProjection);
+
+        // remove the variable that this clause binds.
         projection.remove(_variableName);
         return projection;
     }

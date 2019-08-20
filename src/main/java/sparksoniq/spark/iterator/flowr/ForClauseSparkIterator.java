@@ -339,16 +339,16 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
 
         // add the variable dependencies needed by this for clause's expression.
         Map<String, DynamicContext.VariableDependency> exprDependency = _expression.getVariableDependencies();
-        for(String k : exprDependency.keySet())
+        for(String variable : exprDependency.keySet())
         {
-            if(projection.containsKey(k)) {
-                if(projection.get(k) != exprDependency.get(k))
+            if(projection.containsKey(variable)) {
+                if(projection.get(variable) != exprDependency.get(variable))
                 {
                 	// If the projection already needed a different kind of dependency, we fall back to the full sequence of items.
-                    projection.put(k, DynamicContext.VariableDependency.FULL);
+                    projection.put(variable, DynamicContext.VariableDependency.FULL);
                 }
             } else {
-                projection.put(k, exprDependency.get(k));
+                projection.put(variable, exprDependency.get(variable));
             }
         }
         return projection;

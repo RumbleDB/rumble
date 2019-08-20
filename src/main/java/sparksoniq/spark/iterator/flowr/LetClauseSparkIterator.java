@@ -236,20 +236,26 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
             return null;
         }
 
-        // passing dependencies to parent
-        Map<String, DynamicContext.VariableDependency> projection = new TreeMap<String, DynamicContext.VariableDependency>();
+        // start with an empty projection.
+    	Map<String, DynamicContext.VariableDependency> projection = new TreeMap<String, DynamicContext.VariableDependency>();
+
+        // copy over the projection needed by the parent clause.
         projection.putAll(parentProjection);
+
+        // remove the variable that this clause binds.
         projection.remove(_variableName);
+
+        // add the variable dependencies needed by this for clause's expression.
         Map<String, DynamicContext.VariableDependency> exprDependency = _expression.getVariableDependencies();
-        for(String k : exprDependency.keySet())
+        for(String variable : exprDependency.keySet())
         {
-            if(projection.containsKey(k)) {
-                if(projection.get(k) != exprDependency.get(k))
+            if(projection.containsKey(variable)) {
+                if(projection.get(variable) != exprDependency.get(variable))
                 {
-                    projection.put(k, DynamicContext.VariableDependency.FULL);
+                    projection.put(variable, DynamicContext.VariableDependency.FULL);
                 }
             } else {
-                projection.put(k, exprDependency.get(k));
+                projection.put(variable, exprDependency.get(variable));
             }
         }
        return projection;
