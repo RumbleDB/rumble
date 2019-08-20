@@ -328,16 +328,23 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
             return null;
         }
 
-        // passing dependencies to parent
+        // start with an empty projection.
         Map<String, DynamicContext.VariableDependency> projection = new TreeMap<String, DynamicContext.VariableDependency>();
+
+        // copy over the projection needed by the parent clause.
         projection.putAll(parentProjection);
+
+        // remove the variable that this for clause binds.
         projection.remove(_variableName);
+
+        // add the variable dependencies needed by this for clause's expression.
         Map<String, DynamicContext.VariableDependency> exprDependency = _expression.getVariableDependencies();
         for(String k : exprDependency.keySet())
         {
             if(projection.containsKey(k)) {
                 if(projection.get(k) != exprDependency.get(k))
                 {
+                	// If the projection already needed a different kind of dependency, we fall back to the full sequence of items.
                     projection.put(k, DynamicContext.VariableDependency.FULL);
                 }
             } else {

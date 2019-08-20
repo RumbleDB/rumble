@@ -108,27 +108,37 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
 
     public abstract boolean isDataFrame();
     
-    /*
-     * The second parameter gives information on the projection needed by the caller.
-     * Currently, this is used to inform a group by clause that only a count is needed for a specific variable, which allows projecting away the actual items.
+    /**
+     * Obtains the dataframe from the child clause.
+     * It is possible, with the second parameter, to specify the variables it needs to project the others away,
+     * or that only a count is needed for a specific variable, which allows projecting away the actual items.
+     *
+     * @param context the dynamic context in which the evaluate the child clause's dataframe.
+     * @param parentProjection information on the projection needed by the caller.
+     * @return the DataFrame with the tuples returned by the child clause.
      */
     public abstract Dataset<Row> getDataFrame(DynamicContext context, Map<String, DynamicContext.VariableDependency> parentProjection);
 
-    /*
-     * Returns the projection needed by this iterator. The result of this method is forwarded to the child clause so it can optimize some values away.
+    /**
+     * Builds the DataFrame projection that this clause needs to receive from its child clause.
+     * The intent is that the result of this method is forwarded to the child clause in getDataFrame() so it can optimize some values away.
+     * 
+     * @parentProjection the projection needed by the parent clause.
+     * @return the projection needed by this clause.
      */
     public abstract Map<String, DynamicContext.VariableDependency> getProjection(Map<String, DynamicContext.VariableDependency> parentProjection);
 
-    /*
-    * Variable dependencies are variables that MUST be provided in the dynamic context
-    * for successful execution.
-    * 
-    * These variables are:
-    * 1. All variables that the expression of the clause depends on (recursive call of getVariableDependencies on the expression)
-    * 2. Except those variables bound in the current FLWOR (obtained from the auxiliary method getVariablesBoundInCurrentFLWORExpression), because those are provided in the Tuples
-    * 3. Plus (recursively calling getVariableDependencies) all the Variable Dependencies of the child clause if it exists.
-    * 
-    */
+    /**
+     * Variable dependencies are variables that MUST be provided by the parent clause in the dynamic context
+     * for successful execution of this clause.
+     * 
+     * These variables are:
+     * 1. All variables that the expression of the clause depends on (recursive call of getVariableDependencies on the expression)
+     * 2. Except those variables bound in the current FLWOR (obtained from the auxiliary method getVariablesBoundInCurrentFLWORExpression), because those are provided in the Tuples
+     * 3. Plus (recursively calling getVariableDependencies) all the Variable Dependencies of the child clause if it exists.
+     * 
+     * @return a map of variable names to dependencies (FULL, COUNT, ...) that this clause needs to obtain from the dynamic context.
+     */
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies()
     {
         Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
@@ -136,10 +146,12 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         return result;
     }
 
-    /*
-     * Returns the variables bound in previous clauses of the current FLWOR.
-     * These variables can be removed from the dependencies of expressions in subsequent clauses,
+    /**
+     * Returns the variables bound in descendant (previous) clauses of the current FLWOR.
+     * These variables can be removed from the dependencies of expressions in ascendent (subsequent) clauses,
      * because their values are provided in the tuples rather than the dynamic context object.
+     * 
+     * @return the set of variable names that are bound by descendant clauses.
      */
     public Set<String> getVariablesBoundInCurrentFLWORExpression()
     {
