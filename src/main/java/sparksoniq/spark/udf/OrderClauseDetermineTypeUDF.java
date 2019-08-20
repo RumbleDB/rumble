@@ -36,11 +36,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
     private List<OrderByClauseSparkIteratorExpression> _expressions;
-    Set<String> _dependencies;
+    Map<String, DynamicContext.VariableDependency> _dependencies;
     List<String> _columnNames;
 
     private List<List<Item>> _deserializedParams;
@@ -60,9 +62,9 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
         _context = new DynamicContext();
         result = new ArrayList<>();
         
-        _dependencies = new HashSet<String>();
+        _dependencies = new TreeMap<String, DynamicContext.VariableDependency>();
         for (OrderByClauseSparkIteratorExpression expression : _expressions) {
-            _dependencies.addAll(expression.getExpression().getVariableDependencies());
+            _dependencies.putAll(expression.getExpression().getVariableDependencies());
         }
         _columnNames = columnNames;
         

@@ -36,7 +36,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+
 
 public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
     RuntimeIterator _expression;
@@ -58,16 +60,21 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
     @Override
     public Iterator<Item> call(Row row) {
         String[] columnNames = _oldSchema.fieldNames();
-        Set<String> dependencies = _expression.getVariableDependencies();
+        Map<String, DynamicContext.VariableDependency> dependencies = _expression.getVariableDependencies();
 
         // Create dynamic context with deserialized data but only with dependencies
         DynamicContext context = new DynamicContext();
         for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
             String field = columnNames[columnIndex];
-            if(dependencies.contains(field))
+            if(dependencies.containsKey(field))
             {
                 List<Item> i = DataFrameUtils.deserializeRowField(row, columnIndex, _kryo, _input); //rowColumns.get(columnIndex);
-                context.addVariableValue(field, i);
+                if(dependencies.get(field).equals(DynamicContext.VariableDependency.COUNT))
+                {
+                	context.addVariableCount(field, i.get(0));
+                } else {
+                	context.addVariableValue(field, i);
+                }
             }
         }
 

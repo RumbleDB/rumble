@@ -36,11 +36,12 @@ import sparksoniq.spark.DataFrameUtils;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
     private RuntimeIterator _expression;
-    Set<String> _dependencies;
+    Map<String, DynamicContext.VariableDependency> _dependencies;
     List<String> _columnNames;
 
     private List<List<Item>> _deserializedParams;

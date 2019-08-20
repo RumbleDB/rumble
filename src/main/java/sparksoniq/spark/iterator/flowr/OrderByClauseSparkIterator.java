@@ -43,6 +43,7 @@ import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.closures.OrderByClauseSortClosure;
 import sparksoniq.spark.closures.OrderByMapToPairClosure;
+import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
 import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 import sparksoniq.spark.udf.OrderClauseCreateColumnsUDF;
 import sparksoniq.spark.udf.OrderClauseDetermineTypeUDF;
@@ -58,7 +59,7 @@ import java.util.TreeMap;
 public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
     private final boolean _isStable;
     private final List<OrderByClauseSparkIteratorExpression> _expressions;
-    Set<String> _dependencies;
+    Map<String, DynamicContext.VariableDependency> _dependencies;
 
     private List<FlworTuple> _localTupleResults;
     private int _resultIndex;
@@ -68,10 +69,10 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         super(child, iteratorMetadata);
         this._expressions = expressions;
         this._isStable = stable;
-        _dependencies = new HashSet<String>();
+        _dependencies = new TreeMap<String, DynamicContext.VariableDependency>();
         for(OrderByClauseSparkIteratorExpression e : _expressions)
         {
-            _dependencies.addAll(e.getExpression().getVariableDependencies());
+            _dependencies.putAll(e.getExpression().getVariableDependencies());
         }
     }
 
@@ -203,11 +204,12 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext context) {
+    public Dataset<Row> getDataFrame(DynamicContext context, Map<String, DynamicContext.VariableDependency> parentProjection)
+    {
         if (this._child == null) {
             throw new SparksoniqRuntimeException("Invalid orderby clause.");
         }
-        Dataset<Row> df = _child.getDataFrame(context);
+        Dataset<Row> df = _child.getDataFrame(context, getProjection(parentProjection));
         StructType inputSchema = df.schema();
 
         List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema);
@@ -337,15 +339,18 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         );
     }
 
-    public Set<String> getVariableDependencies()
+    public Map<String, DynamicContext.VariableDependency> getVariableDependencies()
     {
-        Set<String> result = new HashSet<String>();
+        Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
         for(OrderByClauseSparkIteratorExpression iterator : _expressions)
         {
-            result.addAll(iterator.getExpression().getVariableDependencies());
+            result.putAll(iterator.getExpression().getVariableDependencies());
         }
-        result.removeAll(_child.getVariablesBoundInCurrentFLWORExpression());
-        result.addAll(_child.getVariableDependencies());
+        for (String var : _child.getVariablesBoundInCurrentFLWORExpression())
+        {
+            result.remove(var);
+        }
+        result.putAll(_child.getVariableDependencies());
         return result;
     }
 
@@ -363,5 +368,30 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         {
             iterator.getExpression().print(buffer, indent+1);
         }
+    }
+    
+    public Map<String, DynamicContext.VariableDependency> getProjection(Map<String, DynamicContext.VariableDependency> parentProjection)
+    {
+        // start with an empty projection.
+        Map<String, DynamicContext.VariableDependency> projection = new TreeMap<String, DynamicContext.VariableDependency>();
+        projection.putAll(parentProjection);
+
+        // add the variable dependencies needed by this for clause's expression.
+        for(OrderByClauseSparkIteratorExpression iterator : _expressions)
+        {
+            Map<String, DynamicContext.VariableDependency> exprDependency = iterator.getExpression().getVariableDependencies();
+            for(String variable : exprDependency.keySet())
+            {
+                if(projection.containsKey(variable)) {
+                    if(projection.get(variable) != exprDependency.get(variable))
+                    {
+                        projection.put(variable, DynamicContext.VariableDependency.FULL);
+                    }
+                } else {
+                    projection.put(variable, exprDependency.get(variable));
+                }
+            }
+        }
+        return projection;
     }
 }
