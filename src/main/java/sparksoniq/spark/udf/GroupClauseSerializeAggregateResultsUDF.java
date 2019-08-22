@@ -34,7 +34,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GroupClauseSerializeAggregateResultsUDF implements UDF1<WrappedArray, byte[]> {
+public class GroupClauseSerializeAggregateResultsUDF implements UDF1<WrappedArray<byte[]>, byte[]> {
 
 
 	private static final long serialVersionUID = 1L;
@@ -57,7 +57,7 @@ public class GroupClauseSerializeAggregateResultsUDF implements UDF1<WrappedArra
     }
 
     @Override
-    public byte[] call(WrappedArray wrappedParameters) {
+    public byte[] call(WrappedArray<byte[]> wrappedParameters) {
         _nextResult.clear();
         _deserializedParams.clear();
         DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
