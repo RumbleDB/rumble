@@ -1,2 +1,2 @@
 (:JIQS: ShouldRun; Output="(foo, bar, foobar)" :)
-json-file("./src/main/resources/queries/file.txt", 10)
+text-file("./src/main/resources/queries/file.txt", 10)
