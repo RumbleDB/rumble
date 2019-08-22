@@ -33,7 +33,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 public class ObjectIntersectFunctionIterator extends LocalFunctionCallIterator {
-    public ObjectIntersectFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public ObjectIntersectFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
     }
 

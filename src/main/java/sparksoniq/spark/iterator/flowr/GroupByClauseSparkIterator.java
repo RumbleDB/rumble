@@ -60,7 +60,9 @@ import java.util.Set;
 import java.util.TreeMap;
 
 public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
-    private final List<GroupByClauseSparkIteratorExpression> _expressions;
+
+	private static final long serialVersionUID = 1L;
+	private final List<GroupByClauseSparkIteratorExpression> _expressions;
     private List<FlworTuple> _localTupleResults;
     private int _resultIndex;
     Map<String, DynamicContext.VariableDependency> _dependencies;

@@ -30,7 +30,9 @@ import java.math.BigDecimal;
 
 public class DoubleItem extends AtomicItem {
 
-    private double _value;
+
+	private static final long serialVersionUID = 1L;
+	private double _value;
 
     public DoubleItem() {
         super();

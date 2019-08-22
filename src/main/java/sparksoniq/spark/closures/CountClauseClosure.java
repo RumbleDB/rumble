@@ -26,7 +26,9 @@ import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
 public class CountClauseClosure implements Function<Tuple2<FlworTuple, Long>, FlworTuple> {
-    private String variableName;
+
+	private static final long serialVersionUID = 1L;
+	private String variableName;
 
     public CountClauseClosure(String variableName) {
         this.variableName = variableName;

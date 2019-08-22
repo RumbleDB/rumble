@@ -25,7 +25,10 @@ import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 
 public class SemanticException extends SparksoniqRuntimeException {
 
-    public SemanticException(String message, ExpressionMetadata metadata) {
+
+	private static final long serialVersionUID = 1L;
+
+	public SemanticException(String message, ExpressionMetadata metadata) {
         super(message, metadata);
     }
 

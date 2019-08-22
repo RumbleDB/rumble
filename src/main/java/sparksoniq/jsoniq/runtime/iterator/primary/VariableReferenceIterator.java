@@ -36,7 +36,9 @@ import java.util.TreeMap;
 
 public class VariableReferenceIterator extends LocalRuntimeIterator {
 
-    private SequenceType sequence;
+
+	private static final long serialVersionUID = 1L;
+	private SequenceType sequence;
     private String _variableName;
     private List<Item> items = null;
     private int currentIndex = 0;

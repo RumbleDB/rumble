@@ -25,6 +25,8 @@ package utils.annotations;
  */
 public class AnnotationParseException extends Exception {
 
+	private static final long serialVersionUID = 1L;
+
     public AnnotationParseException(String annotationText, String message) {
         super(formatMessage(annotationText, message));
     }

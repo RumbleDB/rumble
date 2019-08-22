@@ -33,7 +33,9 @@ import java.util.List;
 
 public class InstanceOfIterator extends UnaryOperationIterator {
 
-    private final SequenceType _sequenceType;
+
+	private static final long serialVersionUID = 1L;
+	private final SequenceType _sequenceType;
 
     public InstanceOfIterator(RuntimeIterator child, SequenceType sequenceType, IteratorMetadata iteratorMetadata) {
         super(child, OperationalExpressionBase.Operator.INSTANCE_OF, iteratorMetadata);

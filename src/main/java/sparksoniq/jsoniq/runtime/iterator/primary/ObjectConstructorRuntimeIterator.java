@@ -35,7 +35,9 @@ import java.util.List;
 
 public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
 
-    private List<RuntimeIterator> _keys;
+
+	private static final long serialVersionUID = 1L;
+	private List<RuntimeIterator> _keys;
     private List<RuntimeIterator> _values;
     private boolean _isMergedObject = false;
 

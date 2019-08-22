@@ -36,7 +36,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ForClauseLocalToRowClosure implements Function<Item, Row> {
-    private final FlworTuple _inputTuple;
+
+	private static final long serialVersionUID = 1L;
+
+	private final FlworTuple _inputTuple;
 
     private transient Kryo _kryo;
     private transient Output _output;

@@ -32,6 +32,8 @@ import sparksoniq.semantics.DynamicContext;
 import java.util.List;
 
 public class AbsFunctionIterator extends LocalFunctionCallIterator {
+	
+	private static final long serialVersionUID = 1L;
 
     private RuntimeIterator _iterator;
 
