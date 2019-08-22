@@ -27,7 +27,10 @@ import java.math.BigDecimal;
 import java.util.Comparator;
 
 public class ItemComparatorForSequences implements Comparator<Item>, Serializable {
-    /**
+
+	private static final long serialVersionUID = 1L;
+
+	/**
      * Comparator used for sequence aggregate functions and their  RDD evaluations
      * It compares 2 atomic items (non-null)
      * Non-atomics and nulls throw an exception

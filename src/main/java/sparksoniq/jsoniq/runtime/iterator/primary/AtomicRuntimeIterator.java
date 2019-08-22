@@ -29,7 +29,10 @@ import java.util.List;
 
 public abstract class AtomicRuntimeIterator extends LocalRuntimeIterator {
 
-    protected AtomicRuntimeIterator(List<RuntimeIterator> children, IteratorMetadata iteratorMetadata) {
+
+	private static final long serialVersionUID = 1L;
+
+	protected AtomicRuntimeIterator(List<RuntimeIterator> children, IteratorMetadata iteratorMetadata) {
         super(children, iteratorMetadata);
     }
 

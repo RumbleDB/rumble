@@ -29,7 +29,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OLD_LetClauseMapClosure implements Function<FlworTuple, FlworTuple> {
-    private final String _variableName;
+
+	private static final long serialVersionUID = 1L;
+	private final String _variableName;
     private final RuntimeIterator _expression;
 
     public OLD_LetClauseMapClosure(String variableName, RuntimeIterator expression) {

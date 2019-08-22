@@ -37,7 +37,9 @@ import java.util.List;
 
 public class GroupByToPairMapClosure implements PairFunction<FlworTuple, FlworKey, FlworTuple> {
 
-    private final List<GroupByClauseSparkIteratorExpression> _groupVariables;
+
+	private static final long serialVersionUID = 1L;
+	private final List<GroupByClauseSparkIteratorExpression> _groupVariables;
 
     public GroupByToPairMapClosure(List<GroupByClauseSparkIteratorExpression> variables) {
         this._groupVariables = variables;

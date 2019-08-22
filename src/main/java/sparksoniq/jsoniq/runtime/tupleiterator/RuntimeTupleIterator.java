@@ -40,7 +40,9 @@ import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.DynamicContext.VariableDependency;
 
 public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterface, KryoSerializable {
-    protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
+
+	private static final long serialVersionUID = 1L;
+	protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
     private final IteratorMetadata metadata;
     protected boolean _hasNext;
     protected boolean _isOpen;

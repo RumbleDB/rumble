@@ -39,7 +39,9 @@ import java.util.Iterator;
 import java.util.List;
 
 public class ForClauseFlatMapClosure implements FlatMapFunction<Row, Row> {
-    private RuntimeIterator _expression;
+
+	private static final long serialVersionUID = 1L;
+	private RuntimeIterator _expression;
     private StructType _inputSchema;
     private int _duplicateColumnIndex;
 

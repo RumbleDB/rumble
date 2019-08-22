@@ -31,7 +31,9 @@ import java.util.List;
 
 public class HeadFunctionIterator extends LocalFunctionCallIterator {
 
-    private RuntimeIterator _iterator;
+
+	private static final long serialVersionUID = 1L;
+	private RuntimeIterator _iterator;
     private Item _result;
 
     public HeadFunctionIterator(List<RuntimeIterator> parameters, IteratorMetadata iteratorMetadata) {

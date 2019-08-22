@@ -25,7 +25,9 @@ import java.io.Serializable;
 public class ExpressionMetadata implements Serializable {
 
 
-    private final int tokenLineNumber;
+
+	private static final long serialVersionUID = 1L;
+	private final int tokenLineNumber;
     private final int tokenColumnNumber;
 
     public ExpressionMetadata(int line, int column) {

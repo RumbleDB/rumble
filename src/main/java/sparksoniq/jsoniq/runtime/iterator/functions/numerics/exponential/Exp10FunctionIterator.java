@@ -33,7 +33,9 @@ import java.util.List;
 
 public class Exp10FunctionIterator extends LocalFunctionCallIterator {
 
-    private RuntimeIterator _iterator;
+
+	private static final long serialVersionUID = 1L;
+	private RuntimeIterator _iterator;
 
     public Exp10FunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);

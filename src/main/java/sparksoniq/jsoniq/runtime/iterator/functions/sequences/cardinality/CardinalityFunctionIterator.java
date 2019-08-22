@@ -28,7 +28,10 @@ import java.util.List;
 
 public abstract class CardinalityFunctionIterator extends LocalFunctionCallIterator {
 
-    protected CardinalityFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
+
+	private static final long serialVersionUID = 1L;
+
+	protected CardinalityFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
     }
 

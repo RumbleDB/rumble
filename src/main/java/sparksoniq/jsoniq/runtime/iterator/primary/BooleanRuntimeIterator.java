@@ -27,7 +27,9 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class BooleanRuntimeIterator extends AtomicRuntimeIterator {
-    private boolean _item;
+
+	private static final long serialVersionUID = 1L;
+	private boolean _item;
 
     public BooleanRuntimeIterator(boolean value, IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);

@@ -25,7 +25,9 @@ import java.io.Serializable;
 
 public class ItemType implements Serializable {
 
-    private final ItemTypes _type;
+
+	private static final long serialVersionUID = 1L;
+	private final ItemTypes _type;
 
     public ItemType(ItemTypes type) {
         this._type = type;

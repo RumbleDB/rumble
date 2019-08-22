@@ -32,7 +32,9 @@ import sparksoniq.semantics.DynamicContext;
 
 public class RangeOperationIterator extends BinaryOperationBaseIterator {
 
-    private int _left;
+
+	private static final long serialVersionUID = 1L;
+	private int _left;
     private int _right;
     private int _index;
 
