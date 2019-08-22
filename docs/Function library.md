@@ -4,6 +4,27 @@ We list here the functions supported by Rumble, and introduce them by means of e
 
 ## Sequence functions
 
+### distinct-values
+
+Eliminates duplicates from a sequence of atomic items.
+
+```
+distinct-values((1, 1, 4, 3, 1, 1, "foo", 4, "foo", true, 3, 1, true, 5, 3, 1, 1))
+```
+
+returns (1, 4, 3, "foo", true, 5).
+
+
+This is pushed down to Spark and works on big sequences.
+
+```
+distinct-values(json-file("file.json").foo)
+```
+
+```
+distinct-values(text-file("file.txt"))
+```
+
 ### empty
 
 Returns a boolean whether the input sequence is empty or not.
@@ -408,6 +429,22 @@ returns true.
 
 ```
 ends-with("foobar", "bar")
+```
+
+returns true.
+
+### matches
+
+Regular expression matching. The semantics of regular expressions are those of Java's Pattern class.
+
+```
+matches("foobar", "o+")
+```
+
+returns true.
+
+```
+matches("foobar", "^fo+.*")
 ```
 
 returns true.
