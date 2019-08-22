@@ -40,9 +40,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
-    private List<OrderByClauseSparkIteratorExpression> _expressions;
+public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List<String>> {
+    private static final long serialVersionUID = 1L;
+	  private List<OrderByClauseSparkIteratorExpression> _expressions;
     Map<String, DynamicContext.VariableDependency> _dependencies;
+
     List<String> _columnNames;
 
     private List<List<Item>> _deserializedParams;
@@ -75,7 +77,7 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List> {
     }
 
     @Override
-    public List call(WrappedArray wrappedParameters) {
+    public List<String> call(WrappedArray wrappedParameters) {
         _deserializedParams.clear();
         _context.removeAllVariables();
         result.clear();

@@ -32,7 +32,9 @@ import sparksoniq.semantics.DynamicContext;
 import java.util.List;
 
 public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
-    private String[] _results;
+
+	private static final long serialVersionUID = 1L;
+	private String[] _results;
     private Item _nextResult;
     private int _currentPosition;
     private boolean _lastEmptyString;

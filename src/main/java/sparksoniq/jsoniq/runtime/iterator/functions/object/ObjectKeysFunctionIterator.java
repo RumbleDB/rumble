@@ -38,7 +38,9 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 
 public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
 
-    private RuntimeIterator _iterator;
+
+	private static final long serialVersionUID = 1L;
+	private RuntimeIterator _iterator;
     private Queue<Item> _nextResults;   // queue that holds the results created by the current item in inspection
     private List<Item> _prevResults;
 

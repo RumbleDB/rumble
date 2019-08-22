@@ -23,7 +23,10 @@ package sparksoniq.exceptions;
 import sparksoniq.exceptions.codes.ErrorCodes;
 
 public class CliException extends SparksoniqRuntimeException {
-    public CliException(String message) {
+
+	private static final long serialVersionUID = 1L;
+
+	public CliException(String message) {
         super(message, ErrorCodes.CliErrorCode);
     }
 }

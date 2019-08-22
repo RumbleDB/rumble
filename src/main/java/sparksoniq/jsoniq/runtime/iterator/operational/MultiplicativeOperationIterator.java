@@ -38,7 +38,9 @@ import java.math.BigDecimal;
 
 public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator {
 
-    Item _left;
+
+	private static final long serialVersionUID = 1L;
+	Item _left;
     Item _right;
 
     public MultiplicativeOperationIterator(RuntimeIterator left, RuntimeIterator right,

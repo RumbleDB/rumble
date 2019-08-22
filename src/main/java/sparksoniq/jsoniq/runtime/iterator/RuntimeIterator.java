@@ -41,7 +41,9 @@ import java.util.Set;
 import java.util.TreeMap;
 
 public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoSerializable {
-    protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
+
+	private static final long serialVersionUID = 1L;
+	protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
     private final IteratorMetadata metadata;
     protected boolean _hasNext;
     protected boolean _isOpen;

@@ -36,7 +36,9 @@ import java.util.List;
 
 public class ObjectRemoveKeysFunctionIterator extends LocalFunctionCallIterator {
 
-    private RuntimeIterator _iterator;
+
+	private static final long serialVersionUID = 1L;
+	private RuntimeIterator _iterator;
     private Item _nextResult;
     private List<String> _removalKeys;
 

@@ -36,7 +36,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LetClauseUDF implements UDF1<WrappedArray, byte[]> {
-    private RuntimeIterator _expression;
+
+	private static final long serialVersionUID = 1L;
+	private RuntimeIterator _expression;
+
     List<String> _columnNames;
 
     private List<List<Item>> _deserializedParams;
