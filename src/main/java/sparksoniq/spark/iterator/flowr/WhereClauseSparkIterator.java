@@ -22,7 +22,9 @@ package sparksoniq.spark.iterator.flowr;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
@@ -39,6 +41,7 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.closures.OLD_WhereClauseClosure;
+import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
 import sparksoniq.spark.udf.WhereClauseUDF;
 
 public class WhereClauseSparkIterator extends SparkRuntimeTupleIterator {
@@ -49,7 +52,7 @@ public class WhereClauseSparkIterator extends SparkRuntimeTupleIterator {
     private DynamicContext _tupleContext;   // re-use same DynamicContext object for efficiency
     private FlworTuple _nextLocalTupleResult;
     private FlworTuple _inputTuple;     // tuple received from child, used for tuple creation
-    Set<String> _dependencies;
+    Map<String, DynamicContext.VariableDependency> _dependencies;
 
     public WhereClauseSparkIterator(RuntimeTupleIterator child, RuntimeIterator whereExpression, IteratorMetadata iteratorMetadata) {
         super(child, iteratorMetadata);
@@ -130,11 +133,12 @@ public class WhereClauseSparkIterator extends SparkRuntimeTupleIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext context) {
+    public Dataset<Row> getDataFrame(DynamicContext context, Map<String, DynamicContext.VariableDependency> parentProjection)
+    {
         if (this._child == null) {
             throw new SparksoniqRuntimeException("Invalid where clause.");
         }
-        Dataset<Row> df = _child.getDataFrame(context);
+        Dataset<Row> df = _child.getDataFrame(context, getProjection(parentProjection));
         StructType inputSchema = df.schema();
 
         List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, _dependencies);
@@ -152,12 +156,15 @@ public class WhereClauseSparkIterator extends SparkRuntimeTupleIterator {
         return df;
     }
 
-    public Set<String> getVariableDependencies()
+    public Map<String, DynamicContext.VariableDependency> getVariableDependencies()
     {
-        Set<String> result = new HashSet<String>();
-        result.addAll(_expression.getVariableDependencies());
-        result.removeAll(_child.getVariablesBoundInCurrentFLWORExpression());
-        result.addAll(_child.getVariableDependencies());
+        Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
+        result.putAll(_expression.getVariableDependencies());
+        for (String var : _child.getVariablesBoundInCurrentFLWORExpression())
+        {
+            result.remove(var);
+        }
+        result.putAll(_child.getVariableDependencies());
         return result;
     }
 
@@ -172,5 +179,29 @@ public class WhereClauseSparkIterator extends SparkRuntimeTupleIterator {
     {
         super.print(buffer,  indent);
         _expression.print(buffer, indent + 1);
+    }
+    
+    public Map<String, DynamicContext.VariableDependency> getProjection(Map<String, DynamicContext.VariableDependency> parentProjection)
+    {
+        // start with an empty projection.
+    	Map<String, DynamicContext.VariableDependency> projection = new TreeMap<String, DynamicContext.VariableDependency>();
+
+        // copy over the projection needed by the parent clause.
+        projection.putAll(parentProjection);
+
+        // add the variable dependencies needed by this for clause's expression.
+        Map<String, DynamicContext.VariableDependency> exprDependency = _expression.getVariableDependencies();
+        for(String variable : exprDependency.keySet())
+        {
+            if(projection.containsKey(variable)) {
+                if(projection.get(variable) != exprDependency.get(variable))
+                {
+                    projection.put(variable, DynamicContext.VariableDependency.FULL);
+                }
+            } else {
+                projection.put(variable, exprDependency.get(variable));
+            }
+        }
+        return projection;
     }
 }

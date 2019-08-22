@@ -25,12 +25,15 @@ import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class AvgFunctionIterator extends LocalFunctionCallIterator {
 
@@ -80,5 +83,18 @@ public class AvgFunctionIterator extends LocalFunctionCallIterator {
         }
         throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "AVG function",
                 getMetadata());
+    }
+
+    public Map<String, DynamicContext.VariableDependency> getVariableDependencies()
+    {
+        if(_children.get(0) instanceof VariableReferenceIterator)
+        {
+            VariableReferenceIterator expr = (VariableReferenceIterator) _children.get(0);
+            Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
+            result.put(expr.getVariableName(), DynamicContext.VariableDependency.AVG);
+            return result;
+        } else {
+            return super.getVariableDependencies();
+        }
     }
 }

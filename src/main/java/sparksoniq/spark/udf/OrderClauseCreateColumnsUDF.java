@@ -42,12 +42,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
 
-	private static final long serialVersionUID = 1L;
-	private List<OrderByClauseSparkIteratorExpression> _expressions;
-    Set<String> _dependencies;
+    private static final long serialVersionUID = 1L;
+    private List<OrderByClauseSparkIteratorExpression> _expressions;
+    Map<String, DynamicContext.VariableDependency> _dependencies;
+
     List<String> _columnNames;
     private Map<Integer, String> _allColumnTypes;
 
@@ -69,9 +71,9 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
         _context = new DynamicContext();
         _results = new ArrayList<>();
         
-        _dependencies = new HashSet<String>();
+        _dependencies = new TreeMap<String, DynamicContext.VariableDependency>();
         for (OrderByClauseSparkIteratorExpression expression : _expressions) {
-            _dependencies.addAll(expression.getExpression().getVariableDependencies());
+            _dependencies.putAll(expression.getExpression().getVariableDependencies());
         }
         _columnNames = columnNames;
         

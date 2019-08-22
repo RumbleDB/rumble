@@ -48,7 +48,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
 
@@ -56,7 +58,7 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
 	private static final long serialVersionUID = 1L;
 	private String _variableName;           // for efficient use in local iteration
     private RuntimeIterator _expression;
-    Set<String> _dependencies;
+    Map<String, DynamicContext.VariableDependency> _dependencies;
     private DynamicContext _tupleContext;   // re-use same DynamicContext object for efficiency
     private FlworTuple _nextLocalTupleResult;
     private FlworTuple _inputTuple;     // tuple received from child, used for tuple creation
@@ -204,7 +206,8 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext context) {
+    public Dataset<Row> getDataFrame(DynamicContext context, Map<String, DynamicContext.VariableDependency> parentProjection)
+    {
         // if it's a starting clause
         if (this._child == null) {
             // create initial RDD from expression
@@ -223,7 +226,7 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
         }
 
         if (_child.isDataFrame()) {
-            Dataset<Row> df = this._child.getDataFrame(context);
+            Dataset<Row> df = this._child.getDataFrame(context, getProjection(parentProjection));
 
             StructType inputSchema = df.schema();
 
@@ -282,14 +285,17 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
         return df;
     }
 
-    public Set<String> getVariableDependencies()
+    public Map<String, DynamicContext.VariableDependency> getVariableDependencies()
     {
-        Set<String> result = new HashSet<String>();
-        result.addAll(_expression.getVariableDependencies());
+        Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
+        result.putAll(_expression.getVariableDependencies());
         if(_child != null)
         {
-            result.removeAll(_child.getVariablesBoundInCurrentFLWORExpression());
-            result.addAll(_child.getVariableDependencies());
+            for (String var : _child.getVariablesBoundInCurrentFLWORExpression())
+            {
+                result.remove(var);
+            }
+            result.putAll(_child.getVariableDependencies());
         }
         return result;
     }
@@ -315,5 +321,38 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
         buffer.append("Variable " + _variableName);
         buffer.append("\n");
         _expression.print(buffer, indent+1);
+    }
+    
+    public Map<String, DynamicContext.VariableDependency> getProjection(Map<String, DynamicContext.VariableDependency> parentProjection)
+    {
+        if(_child == null)
+        {
+            return null;
+        }
+
+        // start with an empty projection.
+        Map<String, DynamicContext.VariableDependency> projection = new TreeMap<String, DynamicContext.VariableDependency>();
+
+        // copy over the projection needed by the parent clause.
+        projection.putAll(parentProjection);
+
+        // remove the variable that this for clause binds.
+        projection.remove(_variableName);
+
+        // add the variable dependencies needed by this for clause's expression.
+        Map<String, DynamicContext.VariableDependency> exprDependency = _expression.getVariableDependencies();
+        for(String variable : exprDependency.keySet())
+        {
+            if(projection.containsKey(variable)) {
+                if(projection.get(variable) != exprDependency.get(variable))
+                {
+                	// If the projection already needed a different kind of dependency, we fall back to the full sequence of items.
+                    projection.put(variable, DynamicContext.VariableDependency.FULL);
+                }
+            } else {
+                projection.put(variable, exprDependency.get(variable));
+            }
+        }
+        return projection;
     }
 }

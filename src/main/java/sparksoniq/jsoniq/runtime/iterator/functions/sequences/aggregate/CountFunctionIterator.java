@@ -22,13 +22,18 @@ package sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate;
 
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class CountFunctionIterator extends LocalFunctionCallIterator {
 	/**
@@ -45,6 +50,12 @@ public class CountFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             RuntimeIterator iterator = this._children.get(0);
             if (!iterator.isRDD()) {
+                if(_children.get(0) instanceof VariableReferenceIterator)
+                {
+                    VariableReferenceIterator expr = (VariableReferenceIterator) _children.get(0);
+                    this._hasNext = false;
+                    return _currentDynamicContext.getVariableCount(expr.getVariableName());
+                }
                 List<Item> results = getItemsFromIteratorWithCurrentContext(iterator);
                 this._hasNext = false;
                 return ItemFactory.getInstance().createIntegerItem(results.size());
@@ -61,5 +72,18 @@ public class CountFunctionIterator extends LocalFunctionCallIterator {
         } else
             throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + " count function",
                     getMetadata());
+    }
+
+    public Map<String, DynamicContext.VariableDependency> getVariableDependencies()
+    {
+        if(_children.get(0) instanceof VariableReferenceIterator)
+        {
+            VariableReferenceIterator expr = (VariableReferenceIterator) _children.get(0);
+            Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
+            result.put(expr.getVariableName(), DynamicContext.VariableDependency.COUNT);
+            return result;
+        } else {
+            return super.getVariableDependencies();
+        }
     }
 }
