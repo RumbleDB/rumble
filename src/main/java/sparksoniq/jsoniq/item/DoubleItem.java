@@ -57,14 +57,16 @@ public class DoubleItem extends AtomicItem {
         return this.getDoubleValue() != 0;
     }
 
-    @Override
-    public <T> T getNumericValue(Class<T> type) {
-        Double result = this.getDoubleValue();
-        if (type.equals(BigDecimal.class))
-            return (T) BigDecimal.valueOf(result);
-        if (type.equals(Integer.class))
-            return (T) new Integer(result.intValue());
-        return (T) result;
+    public double castToDoubleValue() {
+    	return getDoubleValue();
+    }
+
+    public BigDecimal castToDecimalValue() {
+        return BigDecimal.valueOf(getDoubleValue());
+    }
+
+    public int castToIntegerValue() {
+    	return new Double(getDoubleValue()).intValue();
     }
 
     @Override

@@ -33,11 +33,10 @@ import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 
 public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoSerializable {
@@ -80,7 +79,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 else if (item.isDouble())
                     result = item.getDoubleValue() != 0;
                 else if (item.isDecimal())
-                    result = !item.getDecimalValue().equals(0);
+                    result = !item.getDecimalValue().equals(BigDecimal.ZERO);
                 else {
                     throw new SparksoniqRuntimeException("Unexpected numeric type found while calculating effective boolean value.");
                 }
@@ -137,7 +136,8 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         kryo.writeObject(output, this._children);
     }
 
-    @Override
+    @SuppressWarnings("unchecked")
+	@Override
     public void read(Kryo kryo, Input input) {
         this._hasNext = input.readBoolean();
         this._isOpen = input.readBoolean();

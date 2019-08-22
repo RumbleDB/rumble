@@ -36,10 +36,8 @@ import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
 import sparksoniq.jsoniq.runtime.tupleiterator.SparkRuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.semantics.DynamicContext.VariableDependency;
 import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.closures.CountClauseClosure;
-import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
 import sparksoniq.spark.udf.CountClauseSerializeUDF;
 
 import java.util.ArrayList;

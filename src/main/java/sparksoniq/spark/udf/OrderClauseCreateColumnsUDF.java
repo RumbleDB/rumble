@@ -36,12 +36,9 @@ import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 
 public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
@@ -127,11 +124,11 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
                     } else if (typeName.equals("string")) {
                         _results.add(nextItem.getStringValue());
                     } else if (typeName.equals("integer")) {
-                        _results.add(nextItem.getNumericValue(Integer.class));
+                        _results.add(nextItem.castToIntegerValue());
                     } else if (typeName.equals("double")) {
-                        _results.add(nextItem.getNumericValue(Double.class));
+                        _results.add(nextItem.castToDoubleValue());
                     } else if (typeName.equals("decimal")) {
-                        _results.add(nextItem.getNumericValue(BigDecimal.class));
+                        _results.add(nextItem.castToDecimalValue());
                     } else {
                         throw new SparksoniqRuntimeException("Unexpected ordering type found while creating columns.");
                     }

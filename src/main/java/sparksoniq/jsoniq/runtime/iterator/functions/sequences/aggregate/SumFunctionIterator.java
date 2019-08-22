@@ -92,7 +92,7 @@ public class SumFunctionIterator extends LocalFunctionCallIterator {
                 // if input is empty sequence and _zeroItem is not given 0 is returned
                 BigDecimal sumResult = new BigDecimal(0);
                 for (Item r : results) {
-                    BigDecimal current = r.getNumericValue(BigDecimal.class);
+                    BigDecimal current = r.castToDecimalValue();
                     sumResult = sumResult.add(current);
                 }
                 return ItemFactory.getInstance().createDecimalItem(sumResult);

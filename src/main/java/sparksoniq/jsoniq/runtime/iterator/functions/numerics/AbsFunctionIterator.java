@@ -61,7 +61,7 @@ public class AbsFunctionIterator extends LocalFunctionCallIterator {
             Item value = this.getSingleItemOfTypeFromIterator(_iterator, Item.class);
             if (value.isNumeric()) {
                 try {
-                    Double result = Math.abs(value.getNumericValue(Double.class));
+                    Double result = Math.abs(value.castToDoubleValue());
                     return ItemFactory.getInstance().createDoubleItem(result);
                 } catch (IteratorFlowException e) {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());

@@ -20,6 +20,8 @@
 
 package sparksoniq.jsoniq.item;
 
+import java.math.BigDecimal;
+
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
@@ -48,6 +50,18 @@ public class StringItem extends AtomicItem {
     @Override
     public String getStringValue() {
         return _value;
+    }
+
+    public double castToDoubleValue() {
+    	return Double.parseDouble(_value);
+    }
+
+    public BigDecimal castToDecimalValue() {
+        return new BigDecimal(_value);
+    }
+
+    public int castToIntegerValue() {
+        return Integer.parseInt(_value);
     }
 
     @Override

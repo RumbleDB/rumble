@@ -91,7 +91,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
         }
         lookupIterator.close();
         try {
-            _lookup = lookupExpression.getNumericValue(Integer.class);
+            _lookup = lookupExpression.castToIntegerValue();
         } catch (IteratorFlowException e) {
             throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
         }

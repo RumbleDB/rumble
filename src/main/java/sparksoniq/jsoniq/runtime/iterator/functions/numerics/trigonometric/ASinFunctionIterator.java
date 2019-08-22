@@ -61,7 +61,7 @@ public class ASinFunctionIterator extends LocalFunctionCallIterator {
             Item radians = this.getSingleItemOfTypeFromIterator(_iterator, Item.class);
             if (radians.isNumeric()) {
                 try {
-                    Double result = Math.asin(radians.getNumericValue(Double.class));
+                    Double result = Math.asin(radians.castToDoubleValue());
                     return ItemFactory.getInstance().createDoubleItem(result);
 
                 } catch (IteratorFlowException e) {

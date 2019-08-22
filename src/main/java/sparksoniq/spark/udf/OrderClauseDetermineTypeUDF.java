@@ -34,10 +34,8 @@ import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpr
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 
 public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray, List<String>> {

@@ -37,7 +37,6 @@ import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.semantics.DynamicContext.VariableDependency;
 
 public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterface, KryoSerializable {
 
