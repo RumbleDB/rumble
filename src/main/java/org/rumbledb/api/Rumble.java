@@ -49,7 +49,6 @@ public class Rumble {
 	public Rumble(RumbleConf conf)
 	{
 		_conf = conf;
-        SparkSessionManager.getInstance().initializeConfigurationAndSession();
 	}
 	
 	/**
