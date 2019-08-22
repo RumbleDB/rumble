@@ -27,7 +27,10 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import java.util.List;
 
 public abstract class SparkFunctionCallIterator extends SparkRuntimeIterator {
-    protected SparkFunctionCallIterator(List<RuntimeIterator> parameters, IteratorMetadata iteratorMetadata) {
+
+	private static final long serialVersionUID = 1L;
+
+	protected SparkFunctionCallIterator(List<RuntimeIterator> parameters, IteratorMetadata iteratorMetadata) {
         super(parameters, iteratorMetadata);
     }
 }

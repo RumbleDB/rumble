@@ -51,7 +51,9 @@ import java.util.Set;
 import java.util.TreeMap;
 
 public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
-    private String _variableName;
+
+	private static final long serialVersionUID = 1L;
+	private String _variableName;
     private FlworTuple _nextLocalTupleResult;
     private int _currentCountIndex;
 

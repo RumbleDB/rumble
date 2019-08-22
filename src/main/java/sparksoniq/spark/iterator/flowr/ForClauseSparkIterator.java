@@ -54,7 +54,9 @@ import java.util.TreeMap;
 
 public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
 
-    private String _variableName;           // for efficient use in local iteration
+
+	private static final long serialVersionUID = 1L;
+	private String _variableName;           // for efficient use in local iteration
     private RuntimeIterator _expression;
     Map<String, DynamicContext.VariableDependency> _dependencies;
     private DynamicContext _tupleContext;   // re-use same DynamicContext object for efficiency

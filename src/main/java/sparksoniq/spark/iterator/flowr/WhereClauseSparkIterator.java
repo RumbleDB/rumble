@@ -46,7 +46,9 @@ import sparksoniq.spark.udf.WhereClauseUDF;
 
 public class WhereClauseSparkIterator extends SparkRuntimeTupleIterator {
 
-    private RuntimeIterator _expression;
+
+	private static final long serialVersionUID = 1L;
+	private RuntimeIterator _expression;
     private DynamicContext _tupleContext;   // re-use same DynamicContext object for efficiency
     private FlworTuple _nextLocalTupleResult;
     private FlworTuple _inputTuple;     // tuple received from child, used for tuple creation

@@ -28,7 +28,10 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class NullRuntimeIterator extends AtomicRuntimeIterator {
 
-    public NullRuntimeIterator(IteratorMetadata iteratorMetadata) {
+
+	private static final long serialVersionUID = 1L;
+
+	public NullRuntimeIterator(IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
     }
 

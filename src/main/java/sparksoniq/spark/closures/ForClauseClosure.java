@@ -31,7 +31,9 @@ import java.util.Iterator;
 import java.util.List;
 
 public class ForClauseClosure implements FlatMapFunction<FlworTuple, FlworTuple> {
-    private final String _variableName;
+
+	private static final long serialVersionUID = 1L;
+	private final String _variableName;
     private final RuntimeIterator _expression;
 
 

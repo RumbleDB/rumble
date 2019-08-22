@@ -37,18 +37,18 @@ import java.util.Map;
 
 public class DynamicContext implements Serializable, KryoSerializable {
 
-	private static final long serialVersionUID = 1L;
+  	private static final long serialVersionUID = 1L;
 
-	public enum VariableDependency {
+	  public enum VariableDependency {
 	    FULL,
 	    COUNT,
 	    SUM,
 	    AVG,
 	    MAX,
 	    MIN
-	}
+	  }
 
-	private Map<String, List<Item>> _variableValues;
+	  private Map<String, List<Item>> _variableValues;
     private Map<String, Item> _variableCounts;
     private DynamicContext _parent;
 

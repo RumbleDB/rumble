@@ -32,7 +32,9 @@ import java.util.List;
 
 public abstract class SparkRuntimeTupleIterator extends RuntimeTupleIterator {
 
-    protected JiqsItemParser parser;
+
+	private static final long serialVersionUID = 1L;
+	protected JiqsItemParser parser;
     protected JavaRDD<FlworTuple> _rdd;
     protected List<FlworTuple> result = null;
     protected int currentResultIndex = 0;

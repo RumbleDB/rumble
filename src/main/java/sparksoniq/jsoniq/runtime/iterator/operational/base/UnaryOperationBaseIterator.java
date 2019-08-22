@@ -29,7 +29,9 @@ import java.util.ArrayList;
 
 public abstract class UnaryOperationBaseIterator extends LocalRuntimeIterator {
 
-    protected final RuntimeIterator _child;
+
+	private static final long serialVersionUID = 1L;
+	protected final RuntimeIterator _child;
     protected final OperationalExpressionBase.Operator _operator;
 
     protected UnaryOperationBaseIterator(RuntimeIterator child, OperationalExpressionBase.Operator operator,
