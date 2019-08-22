@@ -2,7 +2,7 @@ package org.rumbledb.api;
 
 /**
  * The configuration of RUmble.
- * @author Ghislain Fourny
+ * @author Ghislain Fourny, Stefan Irimescu, Can Berker Cikis
  *
  */
 public class RumbleConf {
@@ -25,7 +25,7 @@ public class RumbleConf {
 	 * Gets the configured number of Items that should be collected in case of a forced materialization. This applies in particular to a local use of the ItemIterator.
 	 * @return the current number of Items to collect.
 	 */
-	int getResultsSizeCap(int cap)
+	int getResultsSizeCap()
 	{
 		return _resultsSizeCap;
 	}

@@ -37,7 +37,7 @@ import sparksoniq.spark.SparkSessionManager;
 /**
  * The entry point for Java applications that want to executed JSONiq queries with Rumble.
  * 
- * @author Ghislain Fourny
+ * @author Ghislain Fourny, Stefan Irimescu, Can Berker Cikis
  */
 public class Rumble {
 	
@@ -49,6 +49,7 @@ public class Rumble {
 	public Rumble(RumbleConf conf)
 	{
 		_conf = conf;
+        SparkSessionManager.COLLECT_ITEM_LIMIT = conf.getResultsSizeCap();
 	}
 	
 	/**

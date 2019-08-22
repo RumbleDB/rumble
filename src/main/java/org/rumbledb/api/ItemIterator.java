@@ -10,7 +10,7 @@ import sparksoniq.semantics.DynamicContext;
  * An ItemIterator iterates on a sequence of items, but it also allows obtaining this sequence as an RDD of Items if the sequence is too big
  * to be collected locally.
  * 
- * @author Ghislain Fourny
+ * @author Ghislain Fourny, Stefan Irimescu, Can Berker Cikis
  */
 public class ItemIterator {
 	
