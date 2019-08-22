@@ -42,7 +42,9 @@ import java.util.TreeMap;
 
 public class PredicateIterator extends HybridRuntimeIterator {
 
-    private RuntimeIterator _iterator;
+
+	private static final long serialVersionUID = 1L;
+	private RuntimeIterator _iterator;
     private RuntimeIterator _filter;
     private Item _nextResult;
 

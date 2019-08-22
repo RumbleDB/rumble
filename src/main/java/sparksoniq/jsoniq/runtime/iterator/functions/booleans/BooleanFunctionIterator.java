@@ -30,7 +30,10 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import java.util.List;
 
 public class BooleanFunctionIterator extends LocalFunctionCallIterator {
-    public BooleanFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
+
+	private static final long serialVersionUID = 1L;
+
+	public BooleanFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
     }
 

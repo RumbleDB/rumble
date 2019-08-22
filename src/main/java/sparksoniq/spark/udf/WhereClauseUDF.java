@@ -40,8 +40,10 @@ import java.util.Map;
 import java.util.Set;
 
 public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
+	  private static final long serialVersionUID = 1L;
     private RuntimeIterator _expression;
     Map<String, DynamicContext.VariableDependency> _dependencies;
+
     List<String> _columnNames;
 
     private List<List<Item>> _deserializedParams;

@@ -35,7 +35,9 @@ import java.util.Set;
 
 public class FlworTuple implements Serializable, KryoSerializable {
 
-    private LinkedHashMap<String, List<Item>> variables;
+
+	private static final long serialVersionUID = 1L;
+	private LinkedHashMap<String, List<Item>> variables;
 
     public FlworTuple() {
         variables = new LinkedHashMap<>(1, 1);

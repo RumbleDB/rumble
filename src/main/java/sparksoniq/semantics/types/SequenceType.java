@@ -24,7 +24,9 @@ import java.io.Serializable;
 
 public class SequenceType implements Serializable {
 
-    private Arity _arity;
+
+	private static final long serialVersionUID = 1L;
+	private Arity _arity;
     private ItemType _itemType;
     private boolean _isEmpty = false;
 

@@ -37,7 +37,9 @@ import java.util.TreeMap;
 
 public class AvgFunctionIterator extends LocalFunctionCallIterator {
 
-    private RuntimeIterator _iterator;
+
+	private static final long serialVersionUID = 1L;
+	private RuntimeIterator _iterator;
 
     public AvgFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);

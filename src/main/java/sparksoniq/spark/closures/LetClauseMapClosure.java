@@ -39,7 +39,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LetClauseMapClosure implements MapFunction<Row, Row> {
-    private final RuntimeIterator _expression;
+
+	private static final long serialVersionUID = 1L;
+	private final RuntimeIterator _expression;
     StructType _inputSchema;
     private int _duplicateColumnIndex;
 

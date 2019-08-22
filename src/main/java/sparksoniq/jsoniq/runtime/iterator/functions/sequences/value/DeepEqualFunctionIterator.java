@@ -32,7 +32,11 @@ import java.util.List;
 
 public class DeepEqualFunctionIterator extends LocalFunctionCallIterator {
 
-    public DeepEqualFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
+
+	private static final long serialVersionUID = 1L;
+
+
+	public DeepEqualFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
     }
 

@@ -61,7 +61,7 @@ public class AnnotationsTestsBase {
     /**
      * Tests annotations
      */
-    protected JsoniqParser.MainModuleContext testAnnotations(String path, JsoniqBaseVisitor visitor) throws IOException {
+    protected JsoniqParser.MainModuleContext testAnnotations(String path, JsoniqBaseVisitor<Void> visitor) throws IOException {
         JsoniqParser.MainModuleContext context = null;
         RuntimeIterator runtimeIterator = null;
         try {
@@ -168,7 +168,7 @@ public class AnnotationsTestsBase {
         return context;
     }
 
-    private JsoniqParser.MainModuleContext parse(String path, JsoniqBaseVisitor visitor) throws IOException {
+    private JsoniqParser.MainModuleContext parse(String path, JsoniqBaseVisitor<Void> visitor) throws IOException {
         JsoniqLexer lexer = new JsoniqLexer(CharStreams.fromFileName(path));
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());

@@ -25,7 +25,9 @@ import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
 public class InitialForClauseClosure implements Function<Item, FlworTuple> {
-    private final String _variableName;
+
+	private static final long serialVersionUID = 1L;
+	private final String _variableName;
 
     public InitialForClauseClosure(String variableName) {
         this._variableName = variableName;

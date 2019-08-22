@@ -36,7 +36,12 @@ import java.util.Map;
 import java.util.TreeMap;
 
 public class CountFunctionIterator extends LocalFunctionCallIterator {
-    public CountFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public CountFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
     }
 

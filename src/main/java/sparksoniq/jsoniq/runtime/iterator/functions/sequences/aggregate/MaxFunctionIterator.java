@@ -38,7 +38,9 @@ import java.util.TreeMap;
 
 public class MaxFunctionIterator extends LocalFunctionCallIterator {
 
-    private RuntimeIterator _iterator;
+
+	private static final long serialVersionUID = 1L;
+	private RuntimeIterator _iterator;
 
     public MaxFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);

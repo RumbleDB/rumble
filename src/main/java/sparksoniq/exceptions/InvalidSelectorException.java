@@ -24,7 +24,10 @@ import sparksoniq.exceptions.codes.ErrorCodes;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class InvalidSelectorException extends SparksoniqRuntimeException {
-    public InvalidSelectorException(String message, IteratorMetadata metadata) {
+
+	private static final long serialVersionUID = 1L;
+
+	public InvalidSelectorException(String message, IteratorMetadata metadata) {
         super(message, ErrorCodes.InvalidSelectorErrorCode, metadata.getExpressionMetadata());
     }
 }

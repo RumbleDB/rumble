@@ -35,7 +35,9 @@ import java.util.List;
 
 public class RoundFunctionIterator extends LocalFunctionCallIterator {
 
-    private RuntimeIterator _iterator;
+
+	private static final long serialVersionUID = 1L;
+	private RuntimeIterator _iterator;
 
     public RoundFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
