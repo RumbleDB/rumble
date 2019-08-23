@@ -38,11 +38,15 @@ public abstract class Item implements SerializableItem {
 
 	private static final long serialVersionUID = 1L;
 
-	protected Item() {
+	/**
+	 * Please do not use. Items are produced by a JSONiq query via the Rumble API.
+	 */
+    protected Item() {
     }
 
 	/**
 	 * @deprecated use isNumber()
+	 * @return true if the item is a number.
 	 */
     public boolean isNumeric() {
         return this.isInteger() || this.isDecimal() || this.isDouble();
@@ -84,7 +88,7 @@ public abstract class Item implements SerializableItem {
      * Items have to be of the same type or one them has to be null.
      *
      * @param other another item.
-     * @return -1 if this < other; 0 if this == other; 1 if this > other;
+     * @return -1 if this &lt; other; 0 if this == other; 1 if this &gt; other;
      */
     public int compareTo(Item other) {
         int result;
@@ -175,7 +179,7 @@ public abstract class Item implements SerializableItem {
      * Adds a key-value pair, if it is an object item.
      * 
      * @param key a key.
-     * @param item a value.
+     * @param value a value.
      */
     public void putItemByKey(String key, Item value) {
         throw new RuntimeException("Item is not an object.");
@@ -348,7 +352,7 @@ public abstract class Item implements SerializableItem {
 	 * @param other another item.
 	 * @return true it is equal to other, false otherwise.
 	 */
-    public abstract boolean equals(Object otherItem);
+    public abstract boolean equals(Object other);
 
     /**
 	 * Computes a hash code.
