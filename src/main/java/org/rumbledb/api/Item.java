@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigDecimal;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -44,9 +43,10 @@ public abstract class Item implements SerializableItem {
     protected Item() {
     }
 
-	/**
-	 * @deprecated use isNumber()
-	 * @return true if the item is a number.
+    /**
+	 * Tests whether the item is a number (integer, decimal or double).
+	 * 
+	 * @return true if it is a number, false otherwise.
 	 */
     public boolean isNumeric() {
         return this.isInteger() || this.isDecimal() || this.isDouble();
@@ -270,15 +270,6 @@ public abstract class Item implements SerializableItem {
 	 * @return true if it is an atomic item, false otherwise.
 	 */
     public boolean isAtomic() {
-        return false;
-    }
-
-    /**
-	 * Tests whether the item is a number (integer, decimal or double).
-	 * 
-	 * @return true if it is a number, false otherwise.
-	 */
-    public boolean isNumber() {
         return false;
     }
 
