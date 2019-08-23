@@ -1,34 +1,17 @@
 package org.rumbledb.api;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.lang.reflect.Type;
-import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
-import org.apache.spark.api.java.JavaRDD;
-
-import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.ParsingException;
 import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
 import sparksoniq.jsoniq.compiler.parser.JsoniqLexer;
 import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-import sparksoniq.jsoniq.item.DecimalItem;
-import sparksoniq.jsoniq.item.DoubleItem;
-import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.semantics.DynamicContext;
-import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.visitor.RuntimeIteratorVisitor;
 import sparksoniq.semantics.visitor.StaticContextVisitor;
 import sparksoniq.spark.SparkSessionManager;

@@ -14,23 +14,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
+ * Authors: Ghislain Fourny, Stefan Irimescu, Can Berker Cikis
  *
  */
 
 package org.rumbledb.api;
 
 import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.jsoniq.item.DecimalItem;
-import sparksoniq.jsoniq.item.DoubleItem;
-import sparksoniq.jsoniq.item.IntegerItem;
-import sparksoniq.jsoniq.item.base.SerializableItem;
 import sparksoniq.semantics.types.ItemType;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
@@ -51,20 +46,6 @@ public abstract class Item implements SerializableItem {
 	 */
     public boolean isNumeric() {
         return this.isInteger() || this.isDecimal() || this.isDouble();
-    }
-
-    //performs conversions for binary operations with a numeric return type
-    //(int,double) -> double
-    //(int,decimal) -> decimal
-    //(decimal,double) -> double
-    public static Type getNumericResultType(Item left, Item right) {
-        if (left.isDouble() || right.isDouble()) {
-            return DoubleItem.class;
-        }
-        if (left.isDecimal() || right.isDecimal()) {
-            return DecimalItem.class;
-        }
-        return IntegerItem.class;
     }
 
     /**
@@ -254,6 +235,11 @@ public abstract class Item implements SerializableItem {
         throw new RuntimeException("Item is not a big decimal.");
     }
 
+	/**
+	 * Please do not use, item type API not publicly released yet.
+	 * @param type an ItemType.
+	 * @return true if it matches the item type.
+	 */
     public abstract boolean isTypeOf(ItemType type);
 
     /**

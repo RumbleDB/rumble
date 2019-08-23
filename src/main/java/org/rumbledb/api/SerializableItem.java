@@ -18,7 +18,7 @@
  *
  */
 
-package sparksoniq.jsoniq.item.base;
+package org.rumbledb.api;
 
 import com.esotericsoftware.kryo.KryoSerializable;
 

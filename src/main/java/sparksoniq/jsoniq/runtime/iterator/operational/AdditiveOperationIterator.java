@@ -55,7 +55,7 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
         if (this._hasNext) {
             this._hasNext = false;
 
-            Type returnType = Item.getNumericResultType(_left, _right);
+            Type returnType = getNumericResultType(_left, _right);
             if (returnType.equals(IntegerItem.class)) {
                 try {
                     int l = _left.castToIntegerValue();
