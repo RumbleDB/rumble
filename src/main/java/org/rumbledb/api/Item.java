@@ -343,6 +343,7 @@ public abstract class Item implements SerializableItem {
 	 * @param other another item.
 	 * @return true it is equal to other, false otherwise.
 	 */
+    @Override
     public abstract boolean equals(Object other);
 
     /**
@@ -350,5 +351,6 @@ public abstract class Item implements SerializableItem {
 	 * 
 	 * @return a hash code as an int.
 	 */
+    @Override
     public abstract int hashCode();
 }
