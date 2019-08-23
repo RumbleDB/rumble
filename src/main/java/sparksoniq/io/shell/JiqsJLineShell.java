@@ -44,7 +44,6 @@ public class JiqsJLineShell {
     private static final String EXIT_COMMAND = "exit";
     private static final String PROMPT = "jiqs$ ";
     private static final String MID_QUERY_PROMPT = ">>> ";
-    private static final String ERROR_MESSAGE_PROMPT = "[ERROR] ";
     private final boolean _printTime;
     private final SparksoniqRuntimeConfiguration _configuration;
     private LineReader lineReader;
@@ -129,7 +128,7 @@ public class JiqsJLineShell {
     private void handleException(Throwable ex) {
         if (ex != null) {
             if (ex instanceof EndOfFileException) {
-                this.currentLine = this.EXIT_COMMAND;
+                this.currentLine = JiqsJLineShell.EXIT_COMMAND;
             } else if (ex instanceof SparkException) {
                 Throwable sparkExceptionCause = ex.getCause();
                 handleException(sparkExceptionCause);;

@@ -79,14 +79,14 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
             Type returnType = Item.getNumericResultType(_left, _right);
             if (returnType.equals(IntegerItem.class)) {
                 try {
-                    int l = _left.getNumericValue(Integer.class);
-                    int r = _right.getNumericValue(Integer.class);
+                    int l = _left.castToIntegerValue();
+                    int r = _right.castToIntegerValue();
                     switch (this._operator) {
                         case MUL:
                             return ItemFactory.getInstance().createIntegerItem(l * r);
                         case DIV:
-                            BigDecimal decLeft = _left.getNumericValue(BigDecimal.class);
-                            BigDecimal decRight = _right.getNumericValue(BigDecimal.class);
+                            BigDecimal decLeft = _left.castToDecimalValue();
+                            BigDecimal decRight = _right.castToDecimalValue();
                             BigDecimal bdResult = decLeft.divide(decRight, 10, BigDecimal.ROUND_HALF_UP);
                             // if the result contains no decimal part, convert to integer
                             if (bdResult.stripTrailingZeros().scale() <= 0) {
@@ -111,8 +111,8 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
                 }
             } else if (returnType.equals(DoubleItem.class)) {
-                double l = _left.getNumericValue(Double.class);
-                double r = _right.getNumericValue(Double.class);
+                double l = _left.castToDoubleValue();
+                double r = _right.castToDoubleValue();
                 switch (this._operator) {
                     case MUL:
                         return ItemFactory.getInstance().createDoubleItem(l * r);
@@ -126,8 +126,8 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
                         new IteratorFlowException("Non recognized multicative operator.", getMetadata());
                 }
             } else if (returnType.equals(DecimalItem.class)) {
-                BigDecimal l = _left.getNumericValue(BigDecimal.class);
-                BigDecimal r = _right.getNumericValue(BigDecimal.class);
+                BigDecimal l = _left.castToDecimalValue();
+                BigDecimal r = _right.castToDecimalValue();
                 switch (this._operator) {
                     case MUL:
                         return ItemFactory.getInstance().createDecimalItem(l.multiply(r));

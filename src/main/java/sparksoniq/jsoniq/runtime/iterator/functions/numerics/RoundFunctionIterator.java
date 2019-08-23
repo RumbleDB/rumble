@@ -78,8 +78,8 @@ public class RoundFunctionIterator extends LocalFunctionCallIterator {
             if (value.isNumeric() && precision.isNumeric()) {
                 try {
 
-                    Double val = value.getNumericValue(Double.class);
-                    Integer prec = precision.getNumericValue(Integer.class);
+                    Double val = value.castToDoubleValue();
+                    Integer prec = precision.castToIntegerValue();
 
                     BigDecimal bd = new BigDecimal(val);
                     bd = bd.setScale(prec, RoundingMode.HALF_UP);

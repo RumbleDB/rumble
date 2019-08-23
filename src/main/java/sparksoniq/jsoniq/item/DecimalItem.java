@@ -23,6 +23,7 @@ package sparksoniq.jsoniq.item;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
@@ -55,17 +56,19 @@ public class DecimalItem extends AtomicItem {
 
     @Override
     public boolean getEffectiveBooleanValue() {
-        return !this.getDecimalValue().equals(0);
+        return !this.getDecimalValue().equals(BigDecimal.ZERO);
     }
 
-    @Override
-    public <T> T getNumericValue(Class<T> type) {
-        BigDecimal result = this.getDecimalValue();
-        if (type.equals(Integer.class))
-            return (T) new Integer(result.intValue());
-        if (type.equals(Double.class))
-            return (T) new Double(result.doubleValue());
-        return (T) result;
+    public double castToDoubleValue() {
+    	return getDecimalValue().doubleValue();
+    }
+
+    public BigDecimal castToDecimalValue() {
+        return getDecimalValue();
+    }
+
+    public int castToIntegerValue() {
+    	return getDecimalValue().intValue();
     }
 
     @Override

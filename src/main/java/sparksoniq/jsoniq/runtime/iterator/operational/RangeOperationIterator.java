@@ -70,8 +70,8 @@ public class RangeOperationIterator extends BinaryOperationBaseIterator {
                 throw new UnexpectedTypeException("Range expression has non numeric args " +
                         left.serialize() + ", " + right.serialize(), getMetadata());
             try {
-                _left = left.getNumericValue(Integer.class);
-                _right = right.getNumericValue(Integer.class);
+                _left = left.castToIntegerValue();
+                _right = right.castToIntegerValue();
             } catch (IteratorFlowException e) {
                 throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
             }

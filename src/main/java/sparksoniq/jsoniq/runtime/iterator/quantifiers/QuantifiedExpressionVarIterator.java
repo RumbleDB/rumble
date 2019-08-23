@@ -33,7 +33,7 @@ public class QuantifiedExpressionVarIterator extends LocalRuntimeIterator {
 
 	private static final long serialVersionUID = 1L;
 	private final String _variableReference;
-    private final SequenceType _sequenceType;
+    //private final SequenceType _sequenceType;
     private RuntimeIterator _iterator;
     private Item _nextResult;
 
@@ -45,7 +45,7 @@ public class QuantifiedExpressionVarIterator extends LocalRuntimeIterator {
         super(null, iteratorMetadata);
         this._children.add(expression);
         this._variableReference = variableReference;
-        this._sequenceType = sequenceType;
+        //this._sequenceType = sequenceType;
     }
 
     public String getVariableReference() {

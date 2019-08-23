@@ -118,7 +118,8 @@ public class FlworTuple implements Serializable, KryoSerializable {
         kryo.writeObject(output, variables);
     }
 
-    @Override
+    @SuppressWarnings("unchecked")
+	@Override
     public void read(Kryo kryo, Input input) {
         variables = kryo.readObject(input, LinkedHashMap.class);
     }

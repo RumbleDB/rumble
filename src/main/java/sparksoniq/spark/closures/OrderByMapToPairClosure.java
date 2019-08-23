@@ -38,12 +38,12 @@ public class OrderByMapToPairClosure implements PairFunction<FlworTuple, FlworKe
 
 	private static final long serialVersionUID = 1L;
 	//TODO handle stablility
-    private final boolean _isStable;
+    //private final boolean _isStable;
     private final List<OrderByClauseSparkIteratorExpression> _expressions;
 
     public OrderByMapToPairClosure(List<OrderByClauseSparkIteratorExpression> expressions, boolean isStable) {
         this._expressions = expressions;
-        this._isStable = isStable;
+        //this._isStable = isStable;
     }
 
     @Override

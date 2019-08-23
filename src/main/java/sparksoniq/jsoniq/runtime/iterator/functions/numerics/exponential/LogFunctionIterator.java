@@ -61,7 +61,7 @@ public class LogFunctionIterator extends LocalFunctionCallIterator {
             Item value = this.getSingleItemOfTypeFromIterator(_iterator, Item.class);
             if (value.isNumeric()) {
                 try {
-                    Double result = Math.log(value.getNumericValue(Double.class));
+                    Double result = Math.log(value.castToDoubleValue());
                     return ItemFactory.getInstance().createDoubleItem(result);
 
                 } catch (IteratorFlowException e) {

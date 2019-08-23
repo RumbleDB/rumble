@@ -39,7 +39,6 @@ import sparksoniq.jsoniq.item.DoubleItem;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemFactory;
-import sparksoniq.jsoniq.item.KryoManager;
 import sparksoniq.jsoniq.item.NullItem;
 import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.item.StringItem;
@@ -50,8 +49,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.count;
 import static org.apache.spark.sql.functions.first;
@@ -261,10 +258,11 @@ public class DataFrameUtils {
         return kryo.readClassAndObject(input);
     }
 
-    public static void deserializeWrappedParameters(WrappedArray wrappedParameters, List<List<Item>> deserializedParams, Kryo kryo, Input input) {
+    public static void deserializeWrappedParameters(WrappedArray<byte[]> wrappedParameters, List<List<Item>> deserializedParams, Kryo kryo, Input input) {
         Object[] serializedParams = (Object[]) wrappedParameters.array();
         for (Object serializedParam: serializedParams) {
-            List<Item> deserializedParam = (List<Item>) deserializeByteArray((byte[]) serializedParam, kryo, input);
+            @SuppressWarnings("unchecked")
+			List<Item> deserializedParam = (List<Item>) deserializeByteArray((byte[]) serializedParam, kryo, input);
             deserializedParams.add(deserializedParam);
         }
     }
@@ -284,7 +282,8 @@ public class DataFrameUtils {
         return RowFactory.create(newRowColumns.toArray());
     }
 
-    public static List<Item> deserializeRowField(Row row, int columnIndex, Kryo kryo, Input input) {
+    @SuppressWarnings("unchecked")
+	public static List<Item> deserializeRowField(Row row, int columnIndex, Kryo kryo, Input input) {
         Object o = row.get(columnIndex);
         if(o instanceof Long)
         {

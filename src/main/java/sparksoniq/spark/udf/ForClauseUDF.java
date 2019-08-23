@@ -36,7 +36,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ForClauseUDF implements UDF1<WrappedArray, List> {
+public class ForClauseUDF implements UDF1<WrappedArray<byte[]>, List<byte[]>> {
 	/**
 	 * 
 	 */
@@ -73,7 +73,7 @@ public class ForClauseUDF implements UDF1<WrappedArray, List> {
 
 
     @Override
-    public List<byte[]> call(WrappedArray wrappedParameters) {
+    public List<byte[]> call(WrappedArray<byte[]> wrappedParameters) {
         _deserializedParams.clear();
         _context.removeAllVariables();
         _results.clear();
