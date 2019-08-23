@@ -24,9 +24,10 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.rumbledb</groupId>
-    <artifactId>spark-rumble</artifactId>
+    <groupId>com.github.mautini</groupId>
+    <artifactId>rumble</artifactId>
     <version>1.1</version>
+    <packaging>pom</packaging>
 
     <packaging>jar</packaging>
 
@@ -73,6 +74,19 @@
                     </descriptorRefs>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
@@ -96,9 +110,9 @@
             <version>4.7</version>
         </dependency>
         <dependency>
-          <groupId>com.jsoniter</groupId>
-          <artifactId>jsoniter</artifactId>
-          <version>0.9.19</version>
+            <groupId>com.jsoniter</groupId>
+            <artifactId>jsoniter</artifactId>
+            <version>0.9.19</version>
         </dependency>
         <dependency>
             <groupId>org.jline</groupId>
@@ -122,9 +136,9 @@
             <version>1.6</version>
         </dependency>
         <dependency>
-          <groupId>commons-io</groupId>
-          <artifactId>commons-io</artifactId>
-          <version>2.6</version>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.6</version>
         </dependency>
     </dependencies>
 
