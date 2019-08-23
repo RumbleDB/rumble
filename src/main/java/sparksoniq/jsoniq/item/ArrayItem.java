@@ -79,8 +79,12 @@ public class ArrayItem extends JsonItem {
     @Override
     public String serialize() {
         StringBuilder sb = new StringBuilder();
-        sb.append("[ ");
+        sb.append("[");
+        
+        String separator = " ";
         for (Item item : this._arrayItems) {
+            sb.append(separator);
+            separator = ", ";
             boolean isStringValue = item.isString();
             if (isStringValue) {
                 sb.append("\"");
@@ -89,13 +93,9 @@ public class ArrayItem extends JsonItem {
             } else {
                 sb.append(item.serialize());
             }
-            if (_arrayItems.indexOf(item) < _arrayItems.size() - 1) {
-                sb.append(", ");
-            } else {
-                sb.append(" ");
-            }
         }
-        sb.append("]");
+
+        sb.append(" ]");
         return sb.toString();
     }
 
