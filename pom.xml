@@ -156,9 +156,9 @@
     </licenses>
 
     <scm>
-        <url>https://github.com/mautini/schemaorg-java</url>
+        <url>https://github.com/RumbleDB/rumble</url>
         <connection>
-            scm:git:git://github.com/mautini/schemaorg-java.git
+            scm:git:git://github.com/RumbleDB/rumble.git
         </connection>
         <developerConnection>
             scm:git:ssh://git@github.com:mautini/schemaorg-java.git
