@@ -142,5 +142,33 @@
         </dependency>
     </dependencies>
 
+    <organization>
+        <name>com.github.rumbledb</name>
+        <url>https://github.com/RumbleDB</url>
+    </organization>
+
+    <licenses>
+        <license>
+            <name>Apache License 2.0</name>
+            <url>https://github.com/mautini/schemaorg-java/blob/master/LICENSE</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <scm>
+        <url>https://github.com/mautini/schemaorg-java</url>
+        <connection>
+            scm:git:git://github.com/mautini/schemaorg-java.git
+        </connection>
+        <developerConnection>
+            scm:git:ssh://git@github.com:mautini/schemaorg-java.git
+        </developerConnection>
+    </scm>
+    <developers>
+        <developer>
+            <name>Mautini</name>
+        </developer>
+    </developers>
+
 
 </project>
