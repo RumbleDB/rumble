@@ -22,6 +22,7 @@ package sparksoniq.jsoniq.runtime.iterator.postfix;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
+import org.rumbledb.api.Item;
 
 import sparksoniq.exceptions.InvalidSelectorException;
 import sparksoniq.exceptions.IteratorFlowException;
@@ -30,7 +31,6 @@ import sparksoniq.jsoniq.item.BooleanItem;
 import sparksoniq.jsoniq.item.DecimalItem;
 import sparksoniq.jsoniq.item.DoubleItem;
 import sparksoniq.jsoniq.item.IntegerItem;
-import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;

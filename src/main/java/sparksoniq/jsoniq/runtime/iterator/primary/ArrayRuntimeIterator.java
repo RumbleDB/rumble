@@ -21,7 +21,6 @@
 package sparksoniq.jsoniq.runtime.iterator.primary;
 
 import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -29,6 +28,8 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.rumbledb.api.Item;
 
 public class ArrayRuntimeIterator extends LocalRuntimeIterator {
 

@@ -26,7 +26,6 @@ import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.jsoniq.item.DecimalItem;
 import sparksoniq.jsoniq.item.DoubleItem;
 import sparksoniq.jsoniq.item.IntegerItem;
-import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.ItemType;

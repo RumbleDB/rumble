@@ -21,7 +21,6 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.object;
 
 import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
@@ -31,6 +30,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+
+import org.rumbledb.api.Item;
 
 public class ObjectIntersectFunctionIterator extends LocalFunctionCallIterator {
 	/**

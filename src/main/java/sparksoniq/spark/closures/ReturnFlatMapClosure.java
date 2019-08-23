@@ -23,11 +23,11 @@ package sparksoniq.spark.closures;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.StructType;
+import org.rumbledb.api.Item;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 
-import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;

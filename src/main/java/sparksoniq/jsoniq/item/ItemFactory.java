@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
+import org.rumbledb.api.Item;
+
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 
 public class ItemFactory {

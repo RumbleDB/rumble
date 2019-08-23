@@ -20,12 +20,13 @@
 
 package sparksoniq.jsoniq.runtime.iterator.primary;
 
-import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.List;
+
+import org.rumbledb.api.Item;
 
 public abstract class AtomicRuntimeIterator extends LocalRuntimeIterator {
 

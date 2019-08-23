@@ -25,12 +25,11 @@ import org.apache.spark.api.java.JavaRDD;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
+import org.rumbledb.api.Item;
 import org.rumbledb.api.ItemIterator;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.api.RumbleConf;
 
-import sparksoniq.jsoniq.item.Item;
 import sparksoniq.spark.SparkSessionManager;
 import java.util.List;
 

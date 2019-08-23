@@ -20,10 +20,11 @@
 
 package sparksoniq.jsoniq.runtime.iterator.operational;
 
+import org.rumbledb.api.Item;
+
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
-import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;

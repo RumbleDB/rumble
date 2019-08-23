@@ -20,8 +20,9 @@
 
 package sparksoniq.jsoniq.runtime.iterator;
 
+import org.rumbledb.api.Item;
+
 import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class EmptySequenceIterator extends LocalRuntimeIterator {

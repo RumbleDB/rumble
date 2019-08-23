@@ -20,10 +20,11 @@
 
 package sparksoniq.jsoniq.runtime.iterator;
 
-import sparksoniq.jsoniq.item.Item;
 import sparksoniq.semantics.DynamicContext;
 
 import java.io.Serializable;
+
+import org.rumbledb.api.Item;
 
 public interface RuntimeIteratorInterface extends Serializable {
     void open(DynamicContext context);

@@ -30,6 +30,7 @@ import org.apache.spark.sql.expressions.UserDefinedFunction;
 import org.apache.spark.sql.expressions.Window;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
+import org.rumbledb.api.Item;
 
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.jsoniq.item.ArrayItem;
@@ -37,7 +38,6 @@ import sparksoniq.jsoniq.item.BooleanItem;
 import sparksoniq.jsoniq.item.DecimalItem;
 import sparksoniq.jsoniq.item.DoubleItem;
 import sparksoniq.jsoniq.item.IntegerItem;
-import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.NullItem;
 import sparksoniq.jsoniq.item.ObjectItem;

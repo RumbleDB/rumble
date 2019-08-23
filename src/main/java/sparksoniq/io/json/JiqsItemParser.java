@@ -23,7 +23,6 @@ package sparksoniq.io.json;
 import com.jsoniter.JsonIterator;
 import com.jsoniter.ValueType;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
-import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -33,6 +32,8 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.rumbledb.api.Item;
 
 public class JiqsItemParser implements Serializable {
 

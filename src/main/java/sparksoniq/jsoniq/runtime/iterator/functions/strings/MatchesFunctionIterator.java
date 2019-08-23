@@ -22,7 +22,6 @@ package sparksoniq.jsoniq.runtime.iterator.functions.strings;
 
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.BooleanItem;
-import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -32,6 +31,8 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.rumbledb.api.Item;
 
 public class MatchesFunctionIterator extends LocalFunctionCallIterator {
     public MatchesFunctionIterator(

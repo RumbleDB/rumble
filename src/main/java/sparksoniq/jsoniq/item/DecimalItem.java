@@ -29,6 +29,8 @@ import sparksoniq.semantics.types.ItemTypes;
 
 import java.math.BigDecimal;
 
+import org.rumbledb.api.Item;
+
 
 public class DecimalItem extends AtomicItem {
 

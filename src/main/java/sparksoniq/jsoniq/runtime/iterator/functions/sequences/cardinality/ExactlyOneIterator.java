@@ -21,10 +21,10 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.sequences.cardinality;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.rumbledb.api.Item;
 
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SequenceExceptionExactlyOne;
-import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;

@@ -21,7 +21,6 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.object;
 
 import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -34,6 +33,8 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+
+import org.rumbledb.api.Item;
 
 public class ObjectDescendantPairsFunctionIterator extends LocalFunctionCallIterator {
 

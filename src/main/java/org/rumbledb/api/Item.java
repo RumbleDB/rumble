@@ -18,9 +18,12 @@
  *
  */
 
-package sparksoniq.jsoniq.item;
+package org.rumbledb.api;
 
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.item.DecimalItem;
+import sparksoniq.jsoniq.item.DoubleItem;
+import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.base.SerializableItem;
 import sparksoniq.semantics.types.ItemType;
 
@@ -32,7 +35,10 @@ import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.List;
 
-//TODO serialize with indentation
+/**
+ * An instance of this class is an item in the JSONiq data model.
+ * JSONiq manipulates sequences of items.
+ */
 public abstract class Item implements SerializableItem {
 
 	private static final long serialVersionUID = 1L;
@@ -40,6 +46,9 @@ public abstract class Item implements SerializableItem {
 	protected Item() {
     }
 
+	/**
+	 * @deprecated use isNumber()
+	 */
     public boolean isNumeric() {
         return this.isInteger() || this.isDecimal() || this.isDouble();
     }
@@ -58,19 +67,34 @@ public abstract class Item implements SerializableItem {
         return IntegerItem.class;
     }
 
+    /**
+     * Casts the item to a double value.
+     * @return the double value.
+     */
     public double castToDoubleValue() {
         throw new IteratorFlowException("Cannot call castToDouble on non numeric");
     }
 
+    /**
+     * Casts the item to a decimal value.
+     * @return the BigDecimal value.
+     */
     public BigDecimal castToDecimalValue() {
         throw new IteratorFlowException("Cannot call castToDouble on non numeric");
     }
 
+    /**
+     * Casts the item to an integer value.
+     * @return the int value.
+     */
     public int castToIntegerValue() {
         throw new IteratorFlowException("Cannot call castToDouble on non numeric");
     }
 
-    //returns an effective boolean value of any item type
+    /**
+     * Returns the effective boolean value of the item, if atomic.
+     * @return the effective boolean value.
+     */
     public abstract boolean getEffectiveBooleanValue();
 
     /**
@@ -78,6 +102,7 @@ public abstract class Item implements SerializableItem {
      * Non-atomics can't be compared.
      * Items have to be of the same type or one them has to be null.
      *
+     * @param other another item.
      * @return -1 if this < other; 0 if this == other; 1 if this > other;
      */
     public int compareTo(Item other) {
@@ -109,96 +134,214 @@ public abstract class Item implements SerializableItem {
         return result;
     }
 
+    /**
+     * Returns the members of the item if it is an array.
+     * 
+     * @return the list of the array members.
+     */
     public List<Item> getItems() {
         throw new RuntimeException("Item is not an array.");
     }
 
-    public Item getItemAt(int i) {
+    /**
+     * Returns the member of the item at the specified position if it is an array.
+     * 
+     * @param position a position.
+     * @return the member at position position.
+     */
+    public Item getItemAt(int position) {
         throw new RuntimeException("Item is not an array.");
     }
 
-    public void putItem(Item value) {
+    /**
+     * Appends an item, if it is an array.
+     * 
+     * @param item an item.
+     */
+    public void putItem(Item item) {
         throw new RuntimeException("Item is not an array.");
     }
 
+    /**
+     * Returns the keys of the item, if it is an object item.
+     * 
+     * @return the list of the keys.
+     */
     public List<String> getKeys() {
         throw new RuntimeException("Item is not an object.");
     }
 
+    /**
+     * Returns the values of the item, if it is an object item.
+     * 
+     * @return the list of the value items.
+     */
     public Collection<? extends Item> getValues() {
         throw new RuntimeException("Item is not an object.");
     }
 
-    public Item getItemByKey(String s) {
+    /**
+     * Returns the value associated with a specific key, if it is an object item.
+     * 
+     * @param key a key.
+     * @return the value associated with key.
+     */
+    public Item getItemByKey(String key) {
         throw new RuntimeException("Item is not an object.");
     }
 
-    public void putItemByKey(String s, Item value) {
+    /**
+     * Adds a key-value pair, if it is an object item.
+     * 
+     * @param key a key.
+     * @param item a value.
+     */
+    public void putItemByKey(String key, Item value) {
         throw new RuntimeException("Item is not an object.");
     }
 
+    /**
+     * Returns the size of the item, if it is an array item.
+     * 
+     * @return the size as an int.
+     */
     public int getSize() {
         throw new RuntimeException("Item is not an array.");
     }
 
+    /**
+     * Returns the string value of the item, if it is a atomic item of type string.
+     * 
+     * @return the string value.
+     */
     public String getStringValue() {
         throw new RuntimeException("Item is not a string.");
     }
 
+    /**
+     * Returns the boolean value of the item, if it is a atomic item of type boolean.
+     * 
+     * @return the boolean value.
+     */
     public boolean getBooleanValue() {
         throw new RuntimeException("Item is not a boolean.");
     }
 
+    /**
+     * Returns the double value of the item, if it is a atomic item of type double.
+     * 
+     * @return the double value.
+     */
     public double getDoubleValue() {
         throw new RuntimeException("Item is not a double.");
     }
 
+    /**
+     * Returns the integer value of the item, if it is a atomic item of type integer.
+     * 
+     * @return the integer value as an int.
+     */
     public int getIntegerValue() {
         throw new RuntimeException("Item is not an integer.");
     }
 
-    public BigDecimal getDecimalValue() {
+	/**
+	 * Returns the decimal value of the item, if it is a atomic item of type decimal.
+	 * 
+	 * @return the decimal value as a BigDecimal.
+	 */
+	public BigDecimal getDecimalValue() {
         throw new RuntimeException("Item is not a big decimal.");
     }
 
     public abstract boolean isTypeOf(ItemType type);
 
-    public boolean isArray() {
+    /**
+	 * Tests whether the item is an array.
+	 * 
+	 * @return true if it is an array, false otherwise.
+	 */
+	public boolean isArray() {
         return false;
     }
 
+    /**
+	 * Tests whether the item is an array.
+	 * 
+	 * @return true if it is an array, false otherwise.
+	 */
     public boolean isObject() {
         return false;
     }
 
+    /**
+	 * Tests whether the item is an atomic item.
+	 * 
+	 * @return true if it is an atomic item, false otherwise.
+	 */
     public boolean isAtomic() {
         return false;
     }
 
+    /**
+	 * Tests whether the item is a number (integer, decimal or double).
+	 * 
+	 * @return true if it is a number, false otherwise.
+	 */
     public boolean isNumber() {
         return false;
     }
 
+    /**
+	 * Tests whether the item is an atomic item of type string.
+	 * 
+	 * @return true if it is an atomic item of type string, false otherwise.
+	 */
     public boolean isString() {
         return false;
     }
 
+    /**
+	 * Tests whether the item is an atomic item of type boolean.
+	 * 
+	 * @return true if it is an atomic item of type boolean, false otherwise.
+	 */
     public boolean isBoolean() {
         return false;
     }
 
+    /**
+	 * Tests whether the item is the null item.
+	 * 
+	 * @return true if it is the null item, false otherwise.
+	 */
     public boolean isNull() {
         return false;
     }
 
+    /**
+	 * Tests whether the item is an atomic item of type integer.
+	 * 
+	 * @return true if it is an atomic item of type integer, false otherwise.
+	 */
     public boolean isInteger() {
         return false;
     }
 
+    /**
+	 * Tests whether the item is an atomic item of type double.
+	 * 
+	 * @return true if it is an atomic item of type double, false otherwise.
+	 */
     public boolean isDouble() {
         return false;
     }
 
+    /**
+	 * Tests whether the item is an atomic item of type decimal.
+	 * 
+	 * @return true if it is an atomic item of type decimal, false otherwise.
+	 */
     public boolean isDecimal() {
         return false;
     }
@@ -213,7 +356,18 @@ public abstract class Item implements SerializableItem {
         aOutputStream.defaultWriteObject();
     }
     
+    /**
+	 * Tests for logical equality.
+	 * 
+	 * @param other another item.
+	 * @return true it is equal to other, false otherwise.
+	 */
     public abstract boolean equals(Object otherItem);
 
+    /**
+	 * Computes a hash code.
+	 * 
+	 * @return a hash code as an int.
+	 */
     public abstract int hashCode();
 }

@@ -25,7 +25,6 @@ import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
-import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
@@ -33,6 +32,8 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.rumbledb.api.Item;
 
 public class DynamicContext implements Serializable, KryoSerializable {
 

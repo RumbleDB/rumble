@@ -23,7 +23,6 @@ package sparksoniq.jsoniq.runtime.iterator.quantifiers;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpression;
 import sparksoniq.jsoniq.item.BooleanItem;
-import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -32,6 +31,8 @@ import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.rumbledb.api.Item;
 
 public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
 

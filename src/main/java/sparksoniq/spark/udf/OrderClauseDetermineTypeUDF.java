@@ -21,6 +21,7 @@
 package sparksoniq.spark.udf;
 
 import org.apache.spark.sql.api.java.UDF1;
+import org.rumbledb.api.Item;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
@@ -28,7 +29,6 @@ import com.esotericsoftware.kryo.io.Input;
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnexpectedTypeException;
-import sparksoniq.jsoniq.item.Item;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
