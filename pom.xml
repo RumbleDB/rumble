@@ -161,10 +161,16 @@
             scm:git:git://github.com/RumbleDB/rumble.git
         </connection>
         <developerConnection>
-            scm:git:ssh://git@github.com:mautini/schemaorg-java.git
+            scm:git:ssh://git@github.com:RumbleDB/rumble.git
         </developerConnection>
     </scm>
     <developers>
+        <developer>
+            <name>wscsprint3r</name>
+        </developer>
+        <developer>
+            <name>Mautini</name>
+        </developer>
         <developer>
             <name>Mautini</name>
         </developer>
