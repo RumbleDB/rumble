@@ -24,12 +24,11 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.github.mautini</groupId>
+    <groupId>com.github.rumbledb</groupId>
     <artifactId>rumble</artifactId>
     <version>1.1</version>
     <packaging>pom</packaging>
 
-    <packaging>jar</packaging>
 
     <properties>
         <encoding>UTF-8</encoding>
@@ -77,6 +76,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
+                <version>1.6</version>
                 <executions>
                     <execution>
                         <id>sign-artifacts</id>
