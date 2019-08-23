@@ -161,7 +161,7 @@ public abstract class Item implements SerializableItem {
      * 
      * @return the list of the value items.
      */
-    public Collection<? extends Item> getValues() {
+    public List<Item> getValues() {
         throw new RuntimeException("Item is not an object.");
     }
 

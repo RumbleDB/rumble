@@ -92,7 +92,7 @@ public class ObjectItem extends JsonItem {
     }
 
     @Override
-    public Collection<? extends Item> getValues() {
+    public List<Item> getValues() {
         return _values;
     }
 
