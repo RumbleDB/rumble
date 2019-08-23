@@ -41,7 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
+public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, Row> {
 
     private static final long serialVersionUID = 1L;
     private List<OrderByClauseSparkIteratorExpression> _expressions;
@@ -81,7 +81,7 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
     }
 
     @Override
-    public Row call(WrappedArray wrappedParameters) {
+    public Row call(WrappedArray<byte[]> wrappedParameters) {
         _deserializedParams.clear();
         _context.removeAllVariables();
         _results.clear();

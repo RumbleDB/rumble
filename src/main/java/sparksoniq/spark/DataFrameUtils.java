@@ -257,10 +257,11 @@ public class DataFrameUtils {
         return kryo.readClassAndObject(input);
     }
 
-    public static void deserializeWrappedParameters(WrappedArray wrappedParameters, List<List<Item>> deserializedParams, Kryo kryo, Input input) {
+    public static void deserializeWrappedParameters(WrappedArray<byte[]> wrappedParameters, List<List<Item>> deserializedParams, Kryo kryo, Input input) {
         Object[] serializedParams = (Object[]) wrappedParameters.array();
         for (Object serializedParam: serializedParams) {
-            List<Item> deserializedParam = (List<Item>) deserializeByteArray((byte[]) serializedParam, kryo, input);
+            @SuppressWarnings("unchecked")
+			List<Item> deserializedParam = (List<Item>) deserializeByteArray((byte[]) serializedParam, kryo, input);
             deserializedParams.add(deserializedParam);
         }
     }
@@ -280,7 +281,8 @@ public class DataFrameUtils {
         return RowFactory.create(newRowColumns.toArray());
     }
 
-    public static List<Item> deserializeRowField(Row row, int columnIndex, Kryo kryo, Input input) {
+    @SuppressWarnings("unchecked")
+	public static List<Item> deserializeRowField(Row row, int columnIndex, Kryo kryo, Input input) {
         Object o = row.get(columnIndex);
         if(o instanceof Long)
         {
