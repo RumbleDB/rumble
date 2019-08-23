@@ -45,6 +45,8 @@ public class Rumble {
 	
 	/**
 	 * Creates a new Rumble instance.
+         *
+         * @param conf a RumbleConf object containing the configuration.
 	 */
 	public Rumble(RumbleConf conf)
 	{

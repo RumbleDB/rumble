@@ -21,6 +21,7 @@
 package sparksoniq.jsoniq.runtime.iterator.primary;
 
 import org.apache.commons.lang3.StringEscapeUtils;
+
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemFactory;

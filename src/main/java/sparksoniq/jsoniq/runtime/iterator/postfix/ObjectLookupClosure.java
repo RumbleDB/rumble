@@ -21,6 +21,7 @@
 package sparksoniq.jsoniq.runtime.iterator.postfix;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
+
 import sparksoniq.jsoniq.item.Item;
 
 import java.util.ArrayList;

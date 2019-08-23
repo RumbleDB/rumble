@@ -22,6 +22,7 @@ package sparksoniq.jsoniq.runtime.iterator.postfix;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
+
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.Item;

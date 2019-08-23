@@ -21,6 +21,7 @@
 package sparksoniq.spark.closures;
 
 import org.apache.spark.api.java.function.PairFunction;
+
 import scala.Tuple2;
 import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.jsoniq.item.Item;

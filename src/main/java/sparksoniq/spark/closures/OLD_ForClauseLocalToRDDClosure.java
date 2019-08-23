@@ -21,6 +21,7 @@
 package sparksoniq.spark.closures;
 
 import org.apache.spark.api.java.function.Function;
+
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 

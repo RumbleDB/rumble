@@ -25,6 +25,7 @@ import com.esotericsoftware.kryo.io.Input;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.api.java.UDF1;
+
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.Item;

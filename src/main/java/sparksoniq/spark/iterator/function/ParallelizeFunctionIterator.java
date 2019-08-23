@@ -21,6 +21,7 @@
 package sparksoniq.spark.iterator.function;
 
 import org.apache.spark.api.java.JavaRDD;
+
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.Item;

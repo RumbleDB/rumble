@@ -30,6 +30,7 @@ import org.apache.spark.sql.expressions.UserDefinedFunction;
 import org.apache.spark.sql.expressions.Window;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
+
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.BooleanItem;

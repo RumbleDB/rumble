@@ -21,6 +21,7 @@
 package sparksoniq.spark.iterator.function;
 
 import org.apache.spark.api.java.JavaRDD;
+
 import sparksoniq.io.json.StringMapper;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;

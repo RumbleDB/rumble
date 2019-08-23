@@ -21,6 +21,7 @@
 package sparksoniq.spark.closures;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
+
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
