@@ -26,9 +26,9 @@ public class Rumble {
 	private RumbleConf _conf;
 	
 	/**
-	 * Creates a new Rumble instance.
-         *
-         * @param conf a RumbleConf object containing the configuration.
+	 * Creates a new Rumble instance. This does NOT initialize Spark. You need to do so before instantiating Rumble.
+     *
+     * @param conf a RumbleConf object containing the configuration.
 	 */
 	public Rumble(RumbleConf conf)
 	{
