@@ -164,6 +164,7 @@
             scm:git:ssh://git@github.com:RumbleDB/rumble.git
         </developerConnection>
     </scm>
+
     <developers>
         <developer>
             <name>wscsprint3r</name>
@@ -175,6 +176,5 @@
             <name>CanBerker</name>
         </developer>
     </developers>
-
 
 </project>
