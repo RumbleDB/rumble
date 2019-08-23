@@ -61,7 +61,7 @@ public class CeilingFunctionIterator extends LocalFunctionCallIterator {
             Item value = this.getSingleItemOfTypeFromIterator(_iterator, Item.class);
             if (value.isNumeric()) {
                 try {
-                    Double result = Math.ceil(value.getNumericValue(Double.class));
+                    Double result = Math.ceil(value.castToDoubleValue());
                     return ItemFactory.getInstance().createDoubleItem(result);
 
                 } catch (IteratorFlowException e) {

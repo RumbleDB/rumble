@@ -122,7 +122,8 @@ public class FlworKey implements KryoSerializable {
         kryo.writeObject(output, keyItems);
     }
 
-    @Override
+    @SuppressWarnings("unchecked")
+	@Override
     public void read(Kryo kryo, Input input) {
         keyItems = kryo.readObject(input, ArrayList.class);
     }

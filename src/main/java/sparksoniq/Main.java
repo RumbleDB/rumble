@@ -28,8 +28,6 @@ import sparksoniq.spark.SparkSessionManager;
 import java.io.IOException;
 
 import org.apache.spark.SparkException;
-import org.jline.reader.EndOfFileException;
-import org.jline.reader.UserInterruptException;
 
 public class Main {
     public static JiqsJLineShell terminal = null;

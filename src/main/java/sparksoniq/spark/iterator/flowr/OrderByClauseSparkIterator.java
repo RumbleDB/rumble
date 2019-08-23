@@ -43,7 +43,6 @@ import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.closures.OrderByClauseSortClosure;
 import sparksoniq.spark.closures.OrderByMapToPairClosure;
-import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
 import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 import sparksoniq.spark.udf.OrderClauseCreateColumnsUDF;
 import sparksoniq.spark.udf.OrderClauseDetermineTypeUDF;

@@ -73,7 +73,7 @@ public class AvgFunctionIterator extends LocalFunctionCallIterator {
                 //TODO check numeric types conversions
                 BigDecimal sum = new BigDecimal(0);
                 for (Item r : results)
-                    sum = sum.add(r.getNumericValue(BigDecimal.class));
+                    sum = sum.add(r.castToDecimalValue());
 
                 return ItemFactory.getInstance().createDecimalItem(sum.divide(new BigDecimal(results.size())));
 

@@ -35,7 +35,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ForClauseUDF implements UDF1<WrappedArray<byte[]>, List> {
+public class ForClauseUDF implements UDF1<WrappedArray<byte[]>, List<byte[]>> {
 	/**
 	 * 
 	 */

@@ -58,8 +58,16 @@ public abstract class Item implements SerializableItem {
         return IntegerItem.class;
     }
 
-    public <T> T getNumericValue(Class<T> type) {
-        throw new IteratorFlowException("Cannot call getNumericValue on non numeric");
+    public double castToDoubleValue() {
+        throw new IteratorFlowException("Cannot call castToDouble on non numeric");
+    }
+
+    public BigDecimal castToDecimalValue() {
+        throw new IteratorFlowException("Cannot call castToDouble on non numeric");
+    }
+
+    public int castToIntegerValue() {
+        throw new IteratorFlowException("Cannot call castToDouble on non numeric");
     }
 
     //returns an effective boolean value of any item type
@@ -75,8 +83,8 @@ public abstract class Item implements SerializableItem {
     public int compareTo(Item other) {
         int result;
         if (this.isNumeric() && other.isNumeric()) {
-            BigDecimal value1 = this.getNumericValue(BigDecimal.class);
-            BigDecimal value2 = other.getNumericValue(BigDecimal.class);
+            BigDecimal value1 = this.castToDecimalValue();
+            BigDecimal value2 = other.castToDecimalValue();
             result = value1.compareTo(value2);
         } else if (this.isBoolean() && other.isBoolean()) {
             Boolean value1 = this.getBooleanValue();

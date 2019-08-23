@@ -37,7 +37,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class WhereClauseUDF implements UDF1<WrappedArray<byte[]>, Boolean> {
 	  private static final long serialVersionUID = 1L;

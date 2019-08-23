@@ -35,9 +35,7 @@ import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.closures.ReturnFlatMapClosure;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 
 public class ReturnClauseSparkIterator extends HybridRuntimeIterator {

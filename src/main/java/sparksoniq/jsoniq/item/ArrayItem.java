@@ -104,7 +104,8 @@ public class ArrayItem extends JsonItem {
         kryo.writeObject(output, this._arrayItems);
     }
 
-    @Override
+    @SuppressWarnings("unchecked")
+	@Override
     public void read(Kryo kryo, Input input) {
         this._arrayItems = kryo.readObject(input, ArrayList.class);
     }

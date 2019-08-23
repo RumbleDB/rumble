@@ -38,7 +38,6 @@ import sparksoniq.jsoniq.item.DoubleItem;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemFactory;
-import sparksoniq.jsoniq.item.KryoManager;
 import sparksoniq.jsoniq.item.NullItem;
 import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.item.StringItem;
@@ -49,8 +48,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.count;
 import static org.apache.spark.sql.functions.first;

@@ -31,11 +31,11 @@ import java.util.List;
 public class OrderByClauseSortClosure implements Comparator<FlworKey>, Serializable {
 
 	private static final long serialVersionUID = 1L;
-	private final boolean _isStable;
+	//private final boolean _isStable;
     private final List<OrderByClauseSparkIteratorExpression> _expressions;
 
     public OrderByClauseSortClosure(List<OrderByClauseSparkIteratorExpression> expressions, boolean isStable) {
-        this._isStable = isStable;
+        //this._isStable = isStable;
         this._expressions = expressions;
     }
 

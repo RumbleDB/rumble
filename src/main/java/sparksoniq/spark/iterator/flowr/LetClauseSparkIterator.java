@@ -37,7 +37,6 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.closures.OLD_LetClauseMapClosure;
-import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
 import sparksoniq.spark.udf.LetClauseUDF;
 
 import java.util.ArrayList;

@@ -41,7 +41,6 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.closures.OLD_WhereClauseClosure;
-import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
 import sparksoniq.spark.udf.WhereClauseUDF;
 
 public class WhereClauseSparkIterator extends SparkRuntimeTupleIterator {
