@@ -17,7 +17,7 @@ import sparksoniq.semantics.visitor.StaticContextVisitor;
 import sparksoniq.spark.SparkSessionManager;
 
 /**
- * The entry point for Java applications that want to executed JSONiq queries with Rumble.
+ * The entry point for Java applications that want to execute JSONiq queries with Rumble.
  * 
  * @author Ghislain Fourny, Stefan Irimescu, Can Berker Cikis
  */

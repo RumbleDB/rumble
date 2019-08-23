@@ -1,7 +1,7 @@
 package org.rumbledb.api;
 
 /**
- * The configuration of RUmble.
+ * The configuration of Rumble.
  * @author Ghislain Fourny, Stefan Irimescu, Can Berker Cikis
  *
  */
