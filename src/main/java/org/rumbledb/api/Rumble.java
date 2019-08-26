@@ -19,6 +19,10 @@ import sparksoniq.spark.SparkSessionManager;
 /**
  * The entry point for Java applications that want to execute JSONiq queries with Rumble.
  * 
+ * The query must be provided as a string and a sequence of items is returned.
+ * 
+ * It is possible for the queries to use the text-file() and json-file() functions if Spark and either the local file system or HDFS are properly configured.
+ * 
  * @author Ghislain Fourny, Stefan Irimescu, Can Berker Cikis
  */
 public class Rumble {
@@ -41,7 +45,7 @@ public class Rumble {
 	 * @param query the JSONiq query.
 	 * @return the resulting sequence as an ItemIterator.
 	 */
-	public ItemIterator runQuery(String query)
+	public SequenceOfItems runQuery(String query)
 	{
 		CharStream charStream = CharStreams.fromString(query);
 		JsoniqLexer lexer = new JsoniqLexer(charStream);
@@ -63,6 +67,6 @@ public class Rumble {
         new StaticContextVisitor().visit(expression, expression.getStaticContext());
 
         RuntimeIterator iterator = new RuntimeIteratorVisitor().visit(expression, null);
-        return new ItemIterator(iterator);
+        return new SequenceOfItems(iterator);
 	}
 }

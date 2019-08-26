@@ -26,7 +26,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.rumbledb.api.Item;
-import org.rumbledb.api.ItemIterator;
+import org.rumbledb.api.SequenceOfItems;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.api.RumbleConf;
 
@@ -52,7 +52,7 @@ public class JavaAPITest {
     @Test(timeout = 1000000)
     public void testLocal() throws Throwable {
         Rumble rumble = new Rumble (new RumbleConf());
-        ItemIterator iterator = rumble.runQuery("for $i in 1 to 5 return { \"foo\" : $i }");
+        SequenceOfItems iterator = rumble.runQuery("for $i in 1 to 5 return { \"foo\" : $i }");
         Assert.assertTrue(!iterator.isOpen());
         Assert.assertTrue(!iterator.availableAsRDD());
         iterator.open();
@@ -78,7 +78,7 @@ public class JavaAPITest {
     @Test(timeout = 1000000)
     public void testCollect() throws Throwable {
         Rumble rumble = new Rumble (new RumbleConf());
-        ItemIterator iterator = rumble.runQuery("for $i in parallelize(1 to 5) return { \"foo\" : $i }");
+        SequenceOfItems iterator = rumble.runQuery("for $i in parallelize(1 to 5) return { \"foo\" : $i }");
         Assert.assertTrue(!iterator.isOpen());
         Assert.assertTrue(iterator.availableAsRDD());
         iterator.open();
@@ -103,7 +103,7 @@ public class JavaAPITest {
     @Test(timeout = 1000000)
     public void testRDD() throws Throwable {
         Rumble rumble = new Rumble (new RumbleConf());
-        ItemIterator iterator = rumble.runQuery("for $i in parallelize(1 to 5) return { \"foo\" : $i }");
+        SequenceOfItems iterator = rumble.runQuery("for $i in parallelize(1 to 5) return { \"foo\" : $i }");
         Assert.assertTrue(!iterator.isOpen());
         Assert.assertTrue(iterator.availableAsRDD());
         JavaRDD<Item> items = iterator.getAsRDD();

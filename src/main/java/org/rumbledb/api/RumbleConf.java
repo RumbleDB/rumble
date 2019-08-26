@@ -2,6 +2,9 @@ package org.rumbledb.api;
 
 /**
  * The configuration of Rumble.
+ * 
+ * For the moment, it is only possible to configure the results size cap (which is forwarded to Spark's collect-item-limit).
+ * 
  * @author Ghislain Fourny, Stefan Irimescu, Can Berker Cikis
  *
  */

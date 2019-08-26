@@ -31,7 +31,20 @@ import java.util.List;
 
 /**
  * An instance of this class is an item in the JSONiq data model.
+ * 
  * JSONiq manipulates sequences of items.
+ * 
+ * An item can be structured or atomic.
+ * 
+ * Structured items include objects and arrays. Objects are mappings from strings (keys) to items. Arrays are ordered lists of items.
+ * 
+ * Atomic items have a lexical value and a type. Currently, Rumble only supports strings, numbers, booleans and null.
+ * 
+ * Numbers can be decimals, integers or doubles.
+ * 
+ * This class provides methods to identify what kind of item the instance is, and to access its properties.
+ *
+ * @author Ghislain Fourny, Stefan Irimescu, Can Berker Cikis
  */
 public abstract class Item implements SerializableItem {
 
