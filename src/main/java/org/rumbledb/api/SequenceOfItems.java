@@ -21,81 +21,81 @@ import sparksoniq.semantics.DynamicContext;
  * @author Ghislain Fourny, Stefan Irimescu, Can Berker Cikis
  */
 public class SequenceOfItems {
-	
-	private RuntimeIterator _iterator;
-	private boolean _isOpen;
-	
-	protected SequenceOfItems(RuntimeIterator iterator)
-	{
-		_iterator = iterator;
-		_isOpen = false;
-	}
-	
-	/**
-	 * Opens the iterator.
-	 */
-	public void open()
-	{
-		_iterator.open(new DynamicContext());
-		_isOpen = true;
-	}
-	
-	/**
-	 * Checks whether the iterator is open.
-	 * @return true if it is open, false if it is closed.
-	 */
-	public boolean isOpen() {
-		return _isOpen;
-	}
 
-	/**
-	 * Closes the iterator.
-	 */
-	public void close()
-	{
-		_iterator.close();
-		_isOpen = false;
-	}
+    private RuntimeIterator _iterator;
+    private boolean _isOpen;
 
-	/**
-	 * Checks whether there are more items.
-	 * @return true if there are more items, false otherwise.
-	 */
-	public boolean hasNext()
-	{
-		return _iterator.hasNext();
-	}
+    protected SequenceOfItems(RuntimeIterator iterator)
+    {
+        _iterator = iterator;
+        _isOpen = false;
+    }
 
-	/**
-	 * Returns the current item and moves on to the next one. The number of items the iterator can returned is capped by Spark's settings (collect-item-limit).
-	 * @return the next item.
-	 */
-	public Item next()
-	{
-		return _iterator.next();
-	}
-	
-	/**
-	 * Checks whether the iterator is available as an RDD of Items for further processing without having to collect.
-	 * @return true if it is available as an RDD of Items.
-	 */
-	public boolean availableAsRDD()
-	{
-		return _iterator.isRDD();
-	}
+    /**
+     * Opens the iterator.
+     */
+    public void open()
+    {
+        _iterator.open(new DynamicContext());
+        _isOpen = true;
+    }
 
-	/**
-	 * Returns the sequence of items as an RDD of Items rather than iterating over them locally.
-	 * It is not possible to do so if the iterator is open.
-	 * @return an RDD of Items.
-	 */
-	public JavaRDD<Item> getAsRDD()
-	{
-		if(_isOpen)
-		{
-			throw new RuntimeException("Cannot obtain an RDD if the iterator is open.");
-		}
-		return _iterator.getRDD(new DynamicContext());
-	}
+    /**
+     * Checks whether the iterator is open.
+     * @return true if it is open, false if it is closed.
+     */
+    public boolean isOpen() {
+        return _isOpen;
+    }
+
+    /**
+     * Closes the iterator.
+     */
+    public void close()
+    {
+        _iterator.close();
+        _isOpen = false;
+    }
+
+    /**
+     * Checks whether there are more items.
+     * @return true if there are more items, false otherwise.
+     */
+    public boolean hasNext()
+    {
+        return _iterator.hasNext();
+    }
+
+    /**
+     * Returns the current item and moves on to the next one. The number of items the iterator can returned is capped by Spark's settings (collect-item-limit).
+     * @return the next item.
+     */
+    public Item next()
+    {
+        return _iterator.next();
+    }
+
+    /**
+     * Checks whether the iterator is available as an RDD of Items for further processing without having to collect.
+     * @return true if it is available as an RDD of Items.
+     */
+    public boolean availableAsRDD()
+    {
+        return _iterator.isRDD();
+    }
+
+    /**
+     * Returns the sequence of items as an RDD of Items rather than iterating over them locally.
+     * It is not possible to do so if the iterator is open.
+     * @return an RDD of Items.
+     */
+    public JavaRDD<Item> getAsRDD()
+    {
+        if(_isOpen)
+        {
+            throw new RuntimeException("Cannot obtain an RDD if the iterator is open.");
+        }
+        return _iterator.getRDD(new DynamicContext());
+    }
 
 }
