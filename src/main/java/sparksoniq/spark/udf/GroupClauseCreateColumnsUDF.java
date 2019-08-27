@@ -36,8 +36,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
-    private List<VariableReferenceIterator> _expressions;
+public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, Row> {
+
+	private static final long serialVersionUID = 1L;
+	private List<VariableReferenceIterator> _expressions;
     private List<String> _inputColumnNames;
 
     private List<List<Item>> _deserializedParams;
@@ -64,7 +66,7 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
     }
 
     @Override
-    public Row call(WrappedArray wrappedParameters) {
+    public Row call(WrappedArray<byte[]> wrappedParameters) {
         _deserializedParams.clear();
         _results.clear();
 

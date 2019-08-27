@@ -35,8 +35,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LetClauseUDF implements UDF1<WrappedArray, byte[]> {
-    private RuntimeIterator _expression;
+public class LetClauseUDF implements UDF1<WrappedArray<byte[]>, byte[]> {
+
+	private static final long serialVersionUID = 1L;
+	private RuntimeIterator _expression;
+
     List<String> _columnNames;
 
     private List<List<Item>> _deserializedParams;
@@ -67,7 +70,7 @@ public class LetClauseUDF implements UDF1<WrappedArray, byte[]> {
 
 
     @Override
-    public byte[] call(WrappedArray wrappedParameters) {
+    public byte[] call(WrappedArray<byte[]> wrappedParameters) {
         _deserializedParams.clear();
         _context.removeAllVariables();
         _nextResult.clear();

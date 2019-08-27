@@ -30,6 +30,8 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class AndOperationIterator extends BinaryOperationBaseIterator {
 
+	private static final long serialVersionUID = 1L;
+
     public AndOperationIterator(RuntimeIterator left, RuntimeIterator right, IteratorMetadata iteratorMetadata) {
         super(left, right, OperationalExpressionBase.Operator.AND, iteratorMetadata);
     }

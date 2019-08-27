@@ -35,7 +35,10 @@ import java.util.List;
 
 public class CountClauseSerializeUDF implements UDF1<Long, byte[]> {
 
-    private List<Item> _nextResult;
+
+	private static final long serialVersionUID = 1L;
+
+	private List<Item> _nextResult;
     
     private transient Kryo _kryo;
     private transient Output _output;

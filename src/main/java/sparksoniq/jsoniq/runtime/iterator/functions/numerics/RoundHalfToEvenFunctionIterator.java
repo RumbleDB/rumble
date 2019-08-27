@@ -35,7 +35,9 @@ import java.util.List;
 
 public class RoundHalfToEvenFunctionIterator extends LocalFunctionCallIterator {
 
-    private RuntimeIterator _iterator;
+
+	private static final long serialVersionUID = 1L;
+	private RuntimeIterator _iterator;
 
     public RoundHalfToEvenFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
@@ -76,8 +78,8 @@ public class RoundHalfToEvenFunctionIterator extends LocalFunctionCallIterator {
             if (value.isNumeric() && precision.isNumeric()) {
 
                 try {
-                    Double val = value.getNumericValue(Double.class);
-                    Integer prec = precision.getNumericValue(Integer.class);
+                    Double val = value.castToDoubleValue();
+                    Integer prec = precision.castToIntegerValue();
 
                     BigDecimal bd = new BigDecimal(val);
                     bd = bd.setScale(prec, RoundingMode.HALF_EVEN);

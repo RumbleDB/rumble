@@ -33,7 +33,9 @@ import java.util.List;
 
 public class PowFunctionIterator extends LocalFunctionCallIterator {
 
-    private RuntimeIterator _iterator;
+
+	private static final long serialVersionUID = 1L;
+	private RuntimeIterator _iterator;
 
     public PowFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
@@ -66,8 +68,8 @@ public class PowFunctionIterator extends LocalFunctionCallIterator {
             }
             if (base.isNumeric() && exponent.isNumeric()) {
                 try {
-                    Double result = Math.pow(base.getNumericValue(Double.class)
-                            , exponent.getNumericValue(Double.class));
+                    Double result = Math.pow(base.castToDoubleValue()
+                            , exponent.castToDoubleValue());
                     this._hasNext = false;
                     return ItemFactory.getInstance().createDoubleItem(result);
                 } catch (IteratorFlowException e) {

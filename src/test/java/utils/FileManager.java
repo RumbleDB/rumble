@@ -27,7 +27,7 @@ import java.util.List;
 
 public class FileManager {
 
-    public static final String TEST_FILE_EXTENSION = ".iq";
+    public static final String TEST_FILE_EXTENSION = ".jq";
 
     public static List<File> loadJiqFiles(File directory) {
         List<File> files = new ArrayList<>();

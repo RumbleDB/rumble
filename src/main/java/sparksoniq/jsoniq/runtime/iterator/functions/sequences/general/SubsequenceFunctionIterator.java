@@ -35,7 +35,9 @@ import java.util.List;
 
 public class SubsequenceFunctionIterator extends LocalFunctionCallIterator {
 
-    private RuntimeIterator _sequenceIterator;
+
+	private static final long serialVersionUID = 1L;
+	private RuntimeIterator _sequenceIterator;
     private Item _nextResult;
     private int _currentPosition;
     private int _startPosition;
@@ -81,7 +83,7 @@ public class SubsequenceFunctionIterator extends LocalFunctionCallIterator {
             lengthIterator.close();
             // round double to nearest int
             try {
-                _length = (int) Math.round((lengthItem.getNumericValue(Double.class)));
+                _length = (int) Math.round((lengthItem.castToDoubleValue()));
 
             } catch (IteratorFlowException e) {
                 throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
@@ -112,7 +114,7 @@ public class SubsequenceFunctionIterator extends LocalFunctionCallIterator {
         }
         positionIterator.close();
         // round double to nearest int
-        _startPosition = (int) Math.round((positionItem.getNumericValue(Double.class)));
+        _startPosition = (int) Math.round((positionItem.castToDoubleValue()));
 
         // first, perform all parameter checks (above)
         // if length is 0, just return empty sequence

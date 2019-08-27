@@ -26,6 +26,7 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.Item;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.io.Serializable;
@@ -35,17 +36,31 @@ import java.util.Map;
 
 public class DynamicContext implements Serializable, KryoSerializable {
 
-    private Map<String, List<Item>> _variableValues;
+  	private static final long serialVersionUID = 1L;
+
+	  public enum VariableDependency {
+	    FULL,
+	    COUNT,
+	    SUM,
+	    AVG,
+	    MAX,
+	    MIN
+	  }
+
+	  private Map<String, List<Item>> _variableValues;
+    private Map<String, Item> _variableCounts;
     private DynamicContext _parent;
 
     public DynamicContext() {
         this._parent = null;
         this._variableValues = new HashMap<>();
+        this._variableCounts = new HashMap<>();
     }
 
     public DynamicContext(DynamicContext parent) {
         this._parent = parent;
         this._variableValues = new HashMap<>();
+        this._variableCounts = new HashMap<>();
     }
 
     public DynamicContext(FlworTuple tuple) {
@@ -56,6 +71,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
     public DynamicContext(DynamicContext parent, FlworTuple tuple) {
         this._parent = parent;
         this._variableValues = new HashMap<>();
+        this._variableCounts = new HashMap<>();
         setBindingsFromTuple(tuple);
     }
 
@@ -69,22 +85,48 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this._variableValues.put(varName, value);
     }
 
+    public void addVariableCount(String varName, Item count) {
+        this._variableCounts.put(varName, count);
+    }
+
     public List<Item> getVariableValue(String varName) {
         if (_variableValues.containsKey(varName))
             return _variableValues.get(varName);
-        else if (_parent != null)
+
+        if (_parent != null)
             return _parent.getVariableValue(varName);
-        else
-            throw new SparksoniqRuntimeException("Runtime error retrieving variable " +
-                    "" + varName + " value");
+
+        if(_variableCounts.containsKey(varName))
+            throw new SparksoniqRuntimeException("Runtime error retrieving variable " + varName + " value: only count available.");
+
+        throw new SparksoniqRuntimeException("Runtime error retrieving variable " + varName + " value");
+    }
+
+    public Item getVariableCount(String varName) {
+        if(_variableCounts.containsKey(varName))
+        {
+            return _variableCounts.get(varName);
+        }
+        if (_variableValues.containsKey(varName))
+        {
+            Item count = ItemFactory.getInstance().createIntegerItem(_variableValues.get(varName).size());
+            return count;
+        }
+        if (_parent != null)
+        {
+            return _parent.getVariableCount(varName);
+        }
+        throw new SparksoniqRuntimeException("Runtime error retrieving variable " + varName + " value");
     }
 
     public void removeVariable(String varName) {
         this._variableValues.remove(varName);
+        this._variableCounts.remove(varName);
     }
 
     public void removeAllVariables() {
         this._variableValues.clear();
+        this._variableCounts.clear();
     }
 
     @Override
@@ -93,7 +135,8 @@ public class DynamicContext implements Serializable, KryoSerializable {
         kryo.writeObject(output, _variableValues);
     }
 
-    @Override
+    @SuppressWarnings("unchecked")
+	@Override
     public void read(Kryo kryo, Input input) {
         _parent = kryo.readObjectOrNull(input, DynamicContext.class);
         _variableValues = kryo.readObject(input, HashMap.class);

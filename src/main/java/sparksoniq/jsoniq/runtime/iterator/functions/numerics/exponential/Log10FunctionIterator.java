@@ -33,7 +33,9 @@ import java.util.List;
 
 public class Log10FunctionIterator extends LocalFunctionCallIterator {
 
-    private RuntimeIterator _iterator;
+
+	private static final long serialVersionUID = 1L;
+	private RuntimeIterator _iterator;
 
     public Log10FunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
@@ -59,7 +61,7 @@ public class Log10FunctionIterator extends LocalFunctionCallIterator {
             Item value = this.getSingleItemOfTypeFromIterator(_iterator, Item.class);
             if (value.isNumeric()) {
                 try {
-                    Double result = Math.log10(value.getNumericValue(Double.class));
+                    Double result = Math.log10(value.castToDoubleValue());
 
                     return ItemFactory.getInstance().createDoubleItem(result);
 

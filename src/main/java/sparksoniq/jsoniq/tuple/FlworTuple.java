@@ -35,7 +35,9 @@ import java.util.Set;
 
 public class FlworTuple implements Serializable, KryoSerializable {
 
-    private LinkedHashMap<String, List<Item>> variables;
+
+	private static final long serialVersionUID = 1L;
+	private LinkedHashMap<String, List<Item>> variables;
 
     public FlworTuple() {
         variables = new LinkedHashMap<>(1, 1);
@@ -116,7 +118,8 @@ public class FlworTuple implements Serializable, KryoSerializable {
         kryo.writeObject(output, variables);
     }
 
-    @Override
+    @SuppressWarnings("unchecked")
+	@Override
     public void read(Kryo kryo, Input input) {
         variables = kryo.readObject(input, LinkedHashMap.class);
     }

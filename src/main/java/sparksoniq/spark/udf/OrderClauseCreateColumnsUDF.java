@@ -27,26 +27,25 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 
 import scala.collection.mutable.WrappedArray;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
 import sparksoniq.jsoniq.item.Item;
-import sparksoniq.jsoniq.item.NullItem;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.TreeMap;
 
-public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
+public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, Row> {
+
+    private static final long serialVersionUID = 1L;
     private List<OrderByClauseSparkIteratorExpression> _expressions;
-    Set<String> _dependencies;
+    Map<String, DynamicContext.VariableDependency> _dependencies;
+
     List<String> _columnNames;
 
     private List<List<Item>> _deserializedParams;
@@ -68,9 +67,9 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
         _context = new DynamicContext();
         _results = new ArrayList<>();
         
-        _dependencies = new HashSet<String>();
+        _dependencies = new TreeMap<String, DynamicContext.VariableDependency>();
         for (OrderByClauseSparkIteratorExpression expression : _expressions) {
-            _dependencies.addAll(expression.getExpression().getVariableDependencies());
+            _dependencies.putAll(expression.getExpression().getVariableDependencies());
         }
         _columnNames = columnNames;
         
@@ -83,7 +82,7 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
     }
 
     @Override
-    public Row call(WrappedArray wrappedParameters) {
+    public Row call(WrappedArray<byte[]> wrappedParameters) {
         _deserializedParams.clear();
         _context.removeAllVariables();
         _results.clear();
@@ -143,17 +142,17 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
                     _results.add(doubleGroupIndex);
                     _accumulator.add(numberFlag);
                     _results.add(null);
-                    _results.add(new Double(nextItem.getIntegerValue()));
+                    _results.add(nextItem.castToDoubleValue());
                 } else if (nextItem.isDecimal()) {
                     _results.add(doubleGroupIndex);
                     _accumulator.add(numberFlag);
                     _results.add(null);
-                    _results.add(new Double(nextItem.getDecimalValue().doubleValue()));
+                    _results.add(nextItem.castToDoubleValue());
                 } else if (nextItem.isDouble()) {
                     _results.add(doubleGroupIndex);
                     _accumulator.add(numberFlag);
                     _results.add(null);
-                    _results.add(new Double(nextItem.getDoubleValue()));
+                    _results.add(nextItem.castToDoubleValue());
                 } else {
                     throw new UnexpectedTypeException("Order by value can not contain arrays or objects.", expression.getExpression().getMetadata());
                 }

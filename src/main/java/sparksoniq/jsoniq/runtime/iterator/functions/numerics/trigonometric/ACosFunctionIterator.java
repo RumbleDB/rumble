@@ -33,6 +33,8 @@ import java.util.List;
 
 public class ACosFunctionIterator extends LocalFunctionCallIterator {
 
+	private static final long serialVersionUID = 1L;
+
     private RuntimeIterator _iterator;
 
     public ACosFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
@@ -59,7 +61,7 @@ public class ACosFunctionIterator extends LocalFunctionCallIterator {
             Item radians = this.getSingleItemOfTypeFromIterator(_iterator, Item.class);
             if (radians.isNumeric()) {
                 try {
-                    Double result = Math.acos(radians.getNumericValue(Double.class));
+                    Double result = Math.acos(radians.castToDoubleValue());
 
                     return ItemFactory.getInstance().createDoubleItem(result);
 

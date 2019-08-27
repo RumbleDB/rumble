@@ -31,7 +31,10 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import java.util.List;
 
 public class ATan2FunctionIterator extends LocalFunctionCallIterator {
-    public ATan2FunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
+
+	private static final long serialVersionUID = 1L;
+
+	public ATan2FunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
     }
 
@@ -58,8 +61,8 @@ public class ATan2FunctionIterator extends LocalFunctionCallIterator {
 
             if (y.isNumeric() && x.isNumeric()) {
                 try {
-                    Double result = Math.atan2(y.getNumericValue(Double.class)
-                            , x.getNumericValue(Double.class));
+                    Double result = Math.atan2(y.castToDoubleValue()
+                            , x.castToDoubleValue());
                     this._hasNext = false;
                     return ItemFactory.getInstance().createDoubleItem(result);
 

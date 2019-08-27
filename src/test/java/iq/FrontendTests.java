@@ -26,26 +26,9 @@ import org.junit.Assert;
 import org.junit.Test;
 import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
 import sparksoniq.jsoniq.compiler.parser.JsoniqBaseVisitor;
-import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
-import sparksoniq.jsoniq.compiler.translator.expr.flowr.FLWOR_CLAUSES;
-import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworExpression;
-import sparksoniq.jsoniq.compiler.translator.expr.flowr.ForClause;
-import sparksoniq.jsoniq.compiler.translator.expr.flowr.GroupByClause;
-import sparksoniq.jsoniq.compiler.translator.expr.flowr.LetClause;
-import sparksoniq.jsoniq.compiler.translator.expr.flowr.WhereClause;
-import sparksoniq.jsoniq.compiler.translator.expr.operational.NotExpression;
-import sparksoniq.jsoniq.compiler.translator.expr.operational.OrExpression;
-import sparksoniq.jsoniq.compiler.translator.expr.operational.RangeExpression;
-import sparksoniq.jsoniq.compiler.translator.expr.operational.UnaryExpression;
-import sparksoniq.jsoniq.compiler.translator.expr.postfix.PostFixExpression;
-import sparksoniq.jsoniq.compiler.translator.expr.primary.ArrayConstructor;
-import sparksoniq.jsoniq.compiler.translator.expr.primary.IntegerLiteral;
-import sparksoniq.jsoniq.compiler.translator.expr.primary.ObjectConstructor;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
 import sparksoniq.semantics.types.ItemTypes;
-import utils.AstSerialization;
-
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
@@ -59,7 +42,7 @@ public class FrontendTests extends AnnotationsTestsBase {
             "/src/main/resources/test_files/ast");
     public static final File semanticTestsDirectory = new File(System.getProperty("user.dir") +
             "/src/main/resources/test_files/semantics");
-    public static final String[] manualSemanticChecksFiles = new String[]{"TypesCheck.iq"};
+    public static final String[] manualSemanticChecksFiles = new String[]{"TypesCheck.jq"};
 
     /**
      * Tests Grammar, uses ANTLR generated visitor
@@ -72,7 +55,7 @@ public class FrontendTests extends AnnotationsTestsBase {
         for (File testFile : testFiles) {
             System.err.println(counter++ + " : " + testFile);
             //FileReader reader = getReaderForFile(testFile.getAbsolutePath());
-            testAnnotations(testFile.getAbsolutePath(), new JsoniqBaseVisitor());
+            testAnnotations(testFile.getAbsolutePath(), new JsoniqBaseVisitor<Void>());
         }
 
     }
@@ -112,7 +95,7 @@ public class FrontendTests extends AnnotationsTestsBase {
         }
     }
 
-    private void testAstGeneration(File testFile, JsoniqExpressionTreeVisitor visitor,
+/*    private void testAstGeneration(File testFile, JsoniqExpressionTreeVisitor visitor,
                                    JsoniqParser.MainModuleContext context) {
 
         //check serialization of ANTLR parse tree vs expression tree serialization
@@ -182,7 +165,7 @@ public class FrontendTests extends AnnotationsTestsBase {
             }
         }
 
-    }
+    }*/
 
     private void testVariableTypes(File testFile, JsoniqExpressionTreeVisitor visitor) {
 

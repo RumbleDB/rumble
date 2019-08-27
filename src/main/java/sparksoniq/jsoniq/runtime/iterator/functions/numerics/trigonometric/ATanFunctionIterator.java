@@ -33,7 +33,9 @@ import java.util.List;
 
 public class ATanFunctionIterator extends LocalFunctionCallIterator {
 
-    private RuntimeIterator _iterator;
+
+	private static final long serialVersionUID = 1L;
+	private RuntimeIterator _iterator;
 
     public ATanFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
@@ -59,7 +61,7 @@ public class ATanFunctionIterator extends LocalFunctionCallIterator {
             Item radians = this.getSingleItemOfTypeFromIterator(_iterator, Item.class);
             if (radians.isNumeric()) {
                 try {
-                    Double result = Math.atan(radians.getNumericValue(Double.class));
+                    Double result = Math.atan(radians.castToDoubleValue());
                     return ItemFactory.getInstance().createDoubleItem(result);
 
                 } catch (IteratorFlowException e) {

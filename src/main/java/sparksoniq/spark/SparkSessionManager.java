@@ -94,7 +94,7 @@ public class SparkSessionManager {
 
     private void initializeKryoSerialization() {
         configuration.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
-        Class[] serializedClasses = new Class[]{Item.class, ArrayItem.class, ObjectItem.class,
+        Class<?>[] serializedClasses = new Class[]{Item.class, ArrayItem.class, ObjectItem.class,
                 StringItem.class, IntegerItem.class, DoubleItem.class, DecimalItem.class, NullItem.class,
                 BooleanItem.class, DynamicContext.class, FlworTuple.class, FlworKey.class,
                 SparkRuntimeTupleIterator.class, RuntimeIterator.class, RuntimeTupleIterator.class};

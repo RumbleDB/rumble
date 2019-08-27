@@ -32,7 +32,9 @@ import java.util.List;
 
 public class ZeroOrOneIterator extends CardinalityFunctionIterator {
 
-    private Item _nextResult;
+
+	private static final long serialVersionUID = 1L;
+	private Item _nextResult;
 
     public ZeroOrOneIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);

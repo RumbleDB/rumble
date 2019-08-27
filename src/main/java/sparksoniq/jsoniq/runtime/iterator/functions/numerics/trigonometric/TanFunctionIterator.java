@@ -33,7 +33,9 @@ import java.util.List;
 
 public class TanFunctionIterator extends LocalFunctionCallIterator {
 
-    private RuntimeIterator _iterator;
+
+	private static final long serialVersionUID = 1L;
+	private RuntimeIterator _iterator;
 
     public TanFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
@@ -59,7 +61,7 @@ public class TanFunctionIterator extends LocalFunctionCallIterator {
             Item radians = this.getSingleItemOfTypeFromIterator(_iterator, Item.class);
             if (radians.isNumeric()) {
                 try {
-                    Double result = Math.tan(radians.getNumericValue(Double.class));
+                    Double result = Math.tan(radians.castToDoubleValue());
                     return ItemFactory.getInstance().createDoubleItem(result);
 
                 } catch (IteratorFlowException e) {

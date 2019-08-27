@@ -32,7 +32,9 @@ import java.util.List;
 
 public class ArrayItem extends JsonItem {
 
-    private List<Item> _arrayItems;
+
+	private static final long serialVersionUID = 1L;
+	private List<Item> _arrayItems;
     
     public ArrayItem() {
         super();
@@ -77,8 +79,12 @@ public class ArrayItem extends JsonItem {
     @Override
     public String serialize() {
         StringBuilder sb = new StringBuilder();
-        sb.append("[ ");
+        sb.append("[");
+        
+        String separator = " ";
         for (Item item : this._arrayItems) {
+            sb.append(separator);
+            separator = ", ";
             boolean isStringValue = item.isString();
             if (isStringValue) {
                 sb.append("\"");
@@ -87,13 +93,9 @@ public class ArrayItem extends JsonItem {
             } else {
                 sb.append(item.serialize());
             }
-            if (_arrayItems.indexOf(item) < _arrayItems.size() - 1) {
-                sb.append(", ");
-            } else {
-                sb.append(" ");
-            }
         }
-        sb.append("]");
+
+        sb.append(" ]");
         return sb.toString();
     }
 
@@ -102,7 +104,8 @@ public class ArrayItem extends JsonItem {
         kryo.writeObject(output, this._arrayItems);
     }
 
-    @Override
+    @SuppressWarnings("unchecked")
+	@Override
     public void read(Kryo kryo, Input input) {
         this._arrayItems = kryo.readObject(input, ArrayList.class);
     }

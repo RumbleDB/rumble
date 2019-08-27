@@ -36,7 +36,9 @@ import java.util.Arrays;
 
 public class ArrayLookupIterator extends HybridRuntimeIterator {
 
-    private RuntimeIterator _iterator;
+
+	private static final long serialVersionUID = 1L;
+	private RuntimeIterator _iterator;
     private Integer _lookup;
     private Item _nextResult;
 
@@ -89,7 +91,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
         }
         lookupIterator.close();
         try {
-            _lookup = lookupExpression.getNumericValue(Integer.class);
+            _lookup = lookupExpression.castToIntegerValue();
         } catch (IteratorFlowException e) {
             throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
         }

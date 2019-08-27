@@ -39,7 +39,9 @@ import java.math.BigDecimal;
 
 public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
 
-    Item _left;
+	private static final long serialVersionUID = 1L;
+	
+	Item _left;
     Item _right;
 
     public AdditiveOperationIterator(RuntimeIterator left, RuntimeIterator right,
@@ -55,8 +57,8 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
             Type returnType = Item.getNumericResultType(_left, _right);
             if (returnType.equals(IntegerItem.class)) {
                 try {
-                    int l = _left.getNumericValue(Integer.class);
-                    int r = _right.getNumericValue(Integer.class);
+                    int l = _left.castToIntegerValue();
+                    int r = _right.castToIntegerValue();
                     return this._operator == OperationalExpressionBase.Operator.PLUS ?
                             ItemFactory.getInstance().createIntegerItem(l + r) :
                             ItemFactory.getInstance().createIntegerItem(l - r);
@@ -66,8 +68,8 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
                 }
             } else if (returnType.equals(DoubleItem.class)) {
                 try {
-                    double l = _left.getNumericValue(Double.class);
-                    double r = _right.getNumericValue(Double.class);
+                    double l = _left.castToDoubleValue();
+                    double r = _right.castToDoubleValue();
                     return this._operator == OperationalExpressionBase.Operator.PLUS ?
                             ItemFactory.getInstance().createDoubleItem(l + r) :
                             ItemFactory.getInstance().createDoubleItem(l - r);
@@ -77,8 +79,8 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
                 }
             } else if (returnType.equals(DecimalItem.class)) {
                 try {
-                    BigDecimal l = _left.getNumericValue(BigDecimal.class);
-                    BigDecimal r = _right.getNumericValue(BigDecimal.class);
+                    BigDecimal l = _left.castToDecimalValue();
+                    BigDecimal r = _right.castToDecimalValue();
                     return this._operator == OperationalExpressionBase.Operator.PLUS ?
                             ItemFactory.getInstance().createDecimalItem(l.add(r)) :
                             ItemFactory.getInstance().createDecimalItem(l.subtract(r));

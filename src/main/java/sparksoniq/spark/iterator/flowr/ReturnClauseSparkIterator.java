@@ -35,12 +35,14 @@ import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.closures.ReturnFlatMapClosure;
 
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
-    private RuntimeTupleIterator _child;
+
+	private static final long serialVersionUID = 1L;
+	private RuntimeTupleIterator _child;
     private DynamicContext _tupleContext;   // re-use same DynamicContext object for efficiency
     private RuntimeIterator _expression;
     private Item _nextLocalResult;
@@ -59,7 +61,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDD(DynamicContext context) {
         RuntimeIterator expression = this._children.get(0);
-        Dataset<Row> df = this._child.getDataFrame(context);
+        Dataset<Row> df = this._child.getDataFrame(context, expression.getVariableDependencies());
         StructType oldSchema = df.schema();
         return df.javaRDD().flatMap(new ReturnFlatMapClosure(expression, oldSchema));
     }
@@ -140,12 +142,15 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         setNextLocalResult();
     }
 
-    public Set<String> getVariableDependencies()
+    public Map<String, DynamicContext.VariableDependency> getVariableDependencies()
     {
-        Set<String> result = new HashSet<String>();
-        result.addAll(_expression.getVariableDependencies());
-        result.removeAll(_child.getVariablesBoundInCurrentFLWORExpression());
-        result.addAll(_child.getVariableDependencies());
+        Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
+        result.putAll(_expression.getVariableDependencies());
+        for (String variable : _child.getVariablesBoundInCurrentFLWORExpression())
+        {
+            result.remove(variable);
+        }
+        result.putAll(_child.getVariableDependencies());
         return result;
     }
     

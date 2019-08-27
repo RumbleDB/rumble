@@ -33,7 +33,9 @@ import java.util.Map;
 
 public class SwitchRuntimeIterator extends LocalRuntimeIterator {
 
-    private final RuntimeIterator testField;
+
+	private static final long serialVersionUID = 1L;
+	private final RuntimeIterator testField;
     private final Map<RuntimeIterator, RuntimeIterator> cases;
     private final RuntimeIterator defaultReturn;
     private RuntimeIterator matchingIterator = null;

@@ -32,7 +32,9 @@ import sparksoniq.semantics.DynamicContext;
 
 public class RangeOperationIterator extends BinaryOperationBaseIterator {
 
-    private int _left;
+
+	private static final long serialVersionUID = 1L;
+	private int _left;
     private int _right;
     private int _index;
 
@@ -68,8 +70,8 @@ public class RangeOperationIterator extends BinaryOperationBaseIterator {
                 throw new UnexpectedTypeException("Range expression has non numeric args " +
                         left.serialize() + ", " + right.serialize(), getMetadata());
             try {
-                _left = left.getNumericValue(Integer.class);
-                _right = right.getNumericValue(Integer.class);
+                _left = left.castToIntegerValue();
+                _right = right.castToIntegerValue();
             } catch (IteratorFlowException e) {
                 throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
             }

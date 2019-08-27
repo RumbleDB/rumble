@@ -32,7 +32,9 @@ import sparksoniq.semantics.DynamicContext;
 import java.util.List;
 
 public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
-    private String[] _results;
+
+	private static final long serialVersionUID = 1L;
+	private String[] _results;
     private Item _nextResult;
     private int _currentPosition;
     private boolean _lastEmptyString;
@@ -107,7 +109,7 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
             }
             _results = input.split(separator);
             _currentPosition = 0;
-            if (_children.size() == 1 && _results[0].equals("")) {
+            if (_children.size() == 1 && _results.length != 0 && _results[0].equals("")) {
                 _currentPosition++;
             }
             if (_children.size() == 2 && input.matches(".*" + separator + "$")) {

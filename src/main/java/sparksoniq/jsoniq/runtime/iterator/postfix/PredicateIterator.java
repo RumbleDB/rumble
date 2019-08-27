@@ -30,16 +30,17 @@ import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
-
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class PredicateIterator extends HybridRuntimeIterator {
 
-    private RuntimeIterator _iterator;
+
+	private static final long serialVersionUID = 1L;
+	private RuntimeIterator _iterator;
     private RuntimeIterator _filter;
     private Item _nextResult;
 
@@ -146,12 +147,12 @@ public class PredicateIterator extends HybridRuntimeIterator {
         return this._iterator.isRDD();
     }
 
-    public Set<String> getVariableDependencies()
+    public Map<String, DynamicContext.VariableDependency> getVariableDependencies()
     {
-        Set<String> result = new HashSet<String>();
-        result.addAll(_filter.getVariableDependencies());
+        Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
+        result.putAll(_filter.getVariableDependencies());
         result.remove("$");
-        result.addAll(_iterator.getVariableDependencies());
+        result.putAll(_iterator.getVariableDependencies());
         return result;
     }
 }

@@ -33,13 +33,16 @@ import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
+import java.util.TreeMap;
 
 public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoSerializable {
-    protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
+
+	private static final long serialVersionUID = 1L;
+	protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
     private final IteratorMetadata metadata;
     protected boolean _hasNext;
     protected boolean _isOpen;
@@ -76,7 +79,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 else if (item.isDouble())
                     result = item.getDoubleValue() != 0;
                 else if (item.isDecimal())
-                    result = !item.getDecimalValue().equals(0);
+                    result = !item.getDecimalValue().equals(BigDecimal.ZERO);
                 else {
                     throw new SparksoniqRuntimeException("Unexpected numeric type found while calculating effective boolean value.");
                 }
@@ -133,7 +136,8 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         kryo.writeObject(output, this._children);
     }
 
-    @Override
+    @SuppressWarnings("unchecked")
+	@Override
     public void read(Kryo kryo, Input input) {
         this._hasNext = input.readBoolean();
         this._isOpen = input.readBoolean();
@@ -204,13 +208,13 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
             throw new UnexpectedTypeException("Invalid item type returned by iterator", iterator.getMetadata());
         return (T) result;
     }
-
-    public Set<String> getVariableDependencies()
+    
+    public Map<String, DynamicContext.VariableDependency> getVariableDependencies()
     {
-        Set<String> result = new HashSet<String>();
+        Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
         for(RuntimeIterator iterator : _children)
         {
-            result.addAll(iterator.getVariableDependencies());
+            result.putAll(iterator.getVariableDependencies());
         }
         return result;
     }
@@ -225,9 +229,10 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         buffer.append(" | ");
 
         buffer.append("Variable dependencies: ");
-        for(String v : getVariableDependencies())
+        Map<String, DynamicContext.VariableDependency> dependencies = getVariableDependencies();
+        for(String v : dependencies.keySet())
         {
-          buffer.append(v + " ");
+          buffer.append(v + "(" + dependencies.get(v) + ")"  + " ");
         }
         buffer.append("\n");
         for (RuntimeIterator iterator : this._children) {

@@ -36,11 +36,13 @@ import sparksoniq.spark.DataFrameUtils;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
-public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
+public class WhereClauseUDF implements UDF1<WrappedArray<byte[]>, Boolean> {
+	  private static final long serialVersionUID = 1L;
     private RuntimeIterator _expression;
-    Set<String> _dependencies;
+    Map<String, DynamicContext.VariableDependency> _dependencies;
+
     List<String> _columnNames;
 
     private List<List<Item>> _deserializedParams;
@@ -70,7 +72,7 @@ public class WhereClauseUDF implements UDF1<WrappedArray, Boolean> {
 
 
     @Override
-    public Boolean call(WrappedArray wrappedParameters) {
+    public Boolean call(WrappedArray<byte[]> wrappedParameters) {
         _deserializedParams.clear();
         _context.removeAllVariables();
 

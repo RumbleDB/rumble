@@ -26,16 +26,21 @@ import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class SumFunctionIterator extends LocalFunctionCallIterator {
 
-    private RuntimeIterator _iterator;
+
+	private static final long serialVersionUID = 1L;
+	private RuntimeIterator _iterator;
     private Item _zeroItem;
 
     public SumFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
@@ -87,7 +92,7 @@ public class SumFunctionIterator extends LocalFunctionCallIterator {
                 // if input is empty sequence and _zeroItem is not given 0 is returned
                 BigDecimal sumResult = new BigDecimal(0);
                 for (Item r : results) {
-                    BigDecimal current = r.getNumericValue(BigDecimal.class);
+                    BigDecimal current = r.castToDecimalValue();
                     sumResult = sumResult.add(current);
                 }
                 return ItemFactory.getInstance().createDecimalItem(sumResult);
@@ -98,5 +103,18 @@ public class SumFunctionIterator extends LocalFunctionCallIterator {
         } else
             throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "SUM function",
                     getMetadata());
+    }
+
+    public Map<String, DynamicContext.VariableDependency> getVariableDependencies()
+    {
+        if(_children.get(0) instanceof VariableReferenceIterator)
+        {
+            VariableReferenceIterator expr = (VariableReferenceIterator) _children.get(0);
+            Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
+            result.put(expr.getVariableName(), DynamicContext.VariableDependency.SUM);
+            return result;
+        } else {
+            return super.getVariableDependencies();
+        }
     }
 }

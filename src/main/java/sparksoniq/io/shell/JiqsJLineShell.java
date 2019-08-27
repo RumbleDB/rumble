@@ -33,10 +33,10 @@ import org.jline.terminal.TerminalBuilder;
 import sparksoniq.JsoniqQueryExecutor;
 import sparksoniq.Main;
 import sparksoniq.config.SparksoniqRuntimeConfiguration;
+import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.utils.FileUtils;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -44,7 +44,6 @@ public class JiqsJLineShell {
     private static final String EXIT_COMMAND = "exit";
     private static final String PROMPT = "jiqs$ ";
     private static final String MID_QUERY_PROMPT = ">>> ";
-    private static final String ERROR_MESSAGE_PROMPT = "[ERROR] ";
     private final boolean _printTime;
     private final SparksoniqRuntimeConfiguration _configuration;
     private LineReader lineReader;
@@ -129,12 +128,17 @@ public class JiqsJLineShell {
     private void handleException(Throwable ex) {
         if (ex != null) {
             if (ex instanceof EndOfFileException) {
-                this.currentLine = this.EXIT_COMMAND;
+                this.currentLine = JiqsJLineShell.EXIT_COMMAND;
             } else if (ex instanceof SparkException) {
                 Throwable sparkExceptionCause = ex.getCause();
                 handleException(sparkExceptionCause);;
+            } else if (ex instanceof SparksoniqRuntimeException) {
+                System.err.println(ex.getMessage());
             } else if (!(ex instanceof UserInterruptException)) {
-                output(ERROR_MESSAGE_PROMPT + ex.getMessage().split("\n")[0]);
+            	System.out.println("An error has occured: " + ex.getMessage());
+                System.out.println("We should investigate this 🙈. Please contact us or file an issue on GitHub with your query.");
+                System.out.println("Link: https://github.com/RumbleDB/rumble/issues");
+                ex.printStackTrace();
             }
         }
     }

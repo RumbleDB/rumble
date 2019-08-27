@@ -44,10 +44,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
-    private String _variableName;
+
+	private static final long serialVersionUID = 1L;
+	private String _variableName;
     private FlworTuple _nextLocalTupleResult;
     private int _currentCountIndex;
 
@@ -124,11 +128,12 @@ public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext context) {
+    public Dataset<Row> getDataFrame(DynamicContext context, Map<String, DynamicContext.VariableDependency> parentProjection)
+    {
         if (this._child == null) {
             throw new SparksoniqRuntimeException("Invalid count clause.");
         }
-        Dataset<Row> df = _child.getDataFrame(context);
+        Dataset<Row> df = _child.getDataFrame(context, getProjection(parentProjection));
         StructType inputSchema = df.schema();
         int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(_variableName);
         
@@ -149,10 +154,10 @@ public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
         return dfWithIndex;
     }
 
-    public Set<String> getVariableDependencies()
+    public Map<String, DynamicContext.VariableDependency> getVariableDependencies()
     {
-        Set<String> result = new HashSet<String>();
-        result.addAll(_child.getVariableDependencies());
+        Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
+        result.putAll(_child.getVariableDependencies());
         return result;
     }
 
@@ -173,5 +178,18 @@ public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
         }
         buffer.append("Variable " + _variableName);
         buffer.append("\n");
+    }
+    
+    public Map<String, DynamicContext.VariableDependency> getProjection(Map<String, DynamicContext.VariableDependency> parentProjection)
+    {
+        // start with an empty projection.
+        Map<String, DynamicContext.VariableDependency> projection = new TreeMap<String, DynamicContext.VariableDependency>();
+
+        // copy over the projection needed by the parent clause.
+        projection.putAll(parentProjection);
+
+        // remove the variable that this clause binds.
+        projection.remove(_variableName);
+        return projection;
     }
 }

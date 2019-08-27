@@ -33,7 +33,9 @@ import java.util.List;
 
 public class ExpFunctionIterator extends LocalFunctionCallIterator {
 
-    private RuntimeIterator _iterator;
+
+	private static final long serialVersionUID = 1L;
+	private RuntimeIterator _iterator;
 
     public ExpFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
@@ -59,7 +61,7 @@ public class ExpFunctionIterator extends LocalFunctionCallIterator {
             Item exponent = this.getSingleItemOfTypeFromIterator(_iterator, Item.class);
             if (exponent.isNumeric()) {
                 try {
-                    Double result = Math.exp(exponent.getNumericValue(Double.class));
+                    Double result = Math.exp(exponent.castToDoubleValue());
                     return ItemFactory.getInstance().createDoubleItem(result);
 
                 } catch (IteratorFlowException e) {

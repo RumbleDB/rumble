@@ -30,7 +30,9 @@ import java.math.BigDecimal;
 
 public class IntegerItem extends AtomicItem {
 
-    private int _value;
+
+	private static final long serialVersionUID = 1L;
+	private int _value;
 
     public IntegerItem() {
         super();
@@ -55,14 +57,16 @@ public class IntegerItem extends AtomicItem {
         return this.getIntegerValue() != 0;
     }
 
-    @Override
-    public <T> T getNumericValue(Class<T> type) {
-        Integer result = this.getIntegerValue();
-        if (type.equals(BigDecimal.class))
-            return (T) BigDecimal.valueOf(result);
-        if (type.equals(Double.class))
-            return (T) new Double(result.doubleValue());
-        return (T) result;
+    public double castToDoubleValue() {
+    	return new Integer(getIntegerValue()).doubleValue();
+    }
+
+    public BigDecimal castToDecimalValue() {
+        return BigDecimal.valueOf(getIntegerValue());
+    }
+
+    public int castToIntegerValue() {
+    	return getIntegerValue();
     }
 
     @Override

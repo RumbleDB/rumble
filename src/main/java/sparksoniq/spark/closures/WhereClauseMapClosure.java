@@ -36,7 +36,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class WhereClauseMapClosure implements FilterFunction<Row> {
-    private final RuntimeIterator _expression;
+
+	private static final long serialVersionUID = 1L;
+	private final RuntimeIterator _expression;
     StructType _inputSchema;
 
     private List<List<Item>> _rowColumns;
@@ -68,7 +70,8 @@ public class WhereClauseMapClosure implements FilterFunction<Row> {
         // Deserialize row
         List<Object> deserializedRow = DataFrameUtils.deserializeEntireRow(row, _kryo, _input);
         for (Object columnObject : deserializedRow) {
-            List<Item> column = (List<Item>) columnObject;
+            @SuppressWarnings("unchecked")
+			List<Item> column = (List<Item>) columnObject;
             _rowColumns.add(column);
         }
 

@@ -35,7 +35,9 @@ import java.util.List;
 
 public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
-    protected JiqsItemParser parser;
+
+	private static final long serialVersionUID = 1L;
+	protected JiqsItemParser parser;
     protected JavaRDD<Item> _rdd;
     protected boolean isRDDInitialized = false;
     protected boolean _isRDD;
