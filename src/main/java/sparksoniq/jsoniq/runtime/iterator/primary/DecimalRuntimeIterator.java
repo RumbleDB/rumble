@@ -21,12 +21,13 @@
 package sparksoniq.jsoniq.runtime.iterator.primary;
 
 import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.math.BigDecimal;
+
+import org.rumbledb.api.Item;
 
 public class DecimalRuntimeIterator extends AtomicRuntimeIterator {
 

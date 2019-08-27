@@ -21,10 +21,11 @@
 package sparksoniq.spark.closures;
 
 import org.apache.spark.api.java.function.PairFunction;
+import org.rumbledb.api.Item;
+
 import scala.Tuple2;
 import sparksoniq.exceptions.InvalidGroupVariableException;
 import sparksoniq.exceptions.NonAtomicKeyException;
-import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.tuple.FlworKey;

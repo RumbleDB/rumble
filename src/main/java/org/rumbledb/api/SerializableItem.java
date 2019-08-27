@@ -18,13 +18,19 @@
  *
  */
 
-package sparksoniq.jsoniq.item.base;
+package org.rumbledb.api;
 
 import com.esotericsoftware.kryo.KryoSerializable;
 
 import java.io.Serializable;
 
 
+/**
+ * Items support both Java and Kryo serialization.
+ * 
+ * @author Ghislain Fourny, Stefan Irimescu, Can Berker Cikis
+ *
+ */
 public interface SerializableItem extends Serializable, KryoSerializable {
     String serialize();
 }
