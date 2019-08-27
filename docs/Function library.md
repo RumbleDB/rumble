@@ -471,6 +471,22 @@ string-join(("foo", "bar", "foobar"), "-")
 
 returns "foo-bar-foobar"
 
+### string-length
+
+Returns the length of the supplied string, or 0 if the empty sequence is supplied.
+
+```
+string-length("foo")
+```
+
+returns 3.
+
+```
+string-length(())
+```
+
+returns 0.
+
 ### substring
 
 ```
