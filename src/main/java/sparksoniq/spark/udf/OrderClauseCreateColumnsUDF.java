@@ -55,10 +55,13 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
     
     private transient Kryo _kryo;
     private transient Input _input;
+    
+    private OrderByAccumulator _accumulator;
 
     public OrderClauseCreateColumnsUDF(
             List<OrderByClauseSparkIteratorExpression> expressions,
-            List<String> columnNames) {
+            List<String> columnNames,
+            OrderByAccumulator accumulator) {
         _expressions = expressions;
 
         _deserializedParams = new ArrayList<>();
@@ -75,6 +78,8 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
         _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _input = new Input();
+        
+        _accumulator = accumulator;
     }
 
     @Override
@@ -102,6 +107,11 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
             if (expression.getEmptyOrder() == OrderByClauseExpr.EMPTY_ORDER.LAST) {
                 emptySequenceOrderIndex = 7;
             }
+            
+            // for type checking
+            int booleanFlag = 0;
+            int stringFlag = 1;
+            int numberFlag = 2;
 
             // apply expression in the dynamic context
             expression.getExpression().open(_context);
@@ -117,25 +127,31 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray, Row> {
                     if(nextItem.getBooleanValue())
                     {
                         _results.add(booleanTrueOrderIndex);
+                        _accumulator.add(booleanFlag);
                     } else {
                         _results.add(booleanFalseOrderIndex);
+                        _accumulator.add(booleanFlag);
                     }                        
                     _results.add(null);
                     _results.add(null);
                 } else if (nextItem.isString()) {
                     _results.add(stringGroupIndex);
+                    _accumulator.add(stringFlag);
                     _results.add(nextItem.getStringValue());
                     _results.add(null);
                 } else if (nextItem.isInteger()) {
                     _results.add(doubleGroupIndex);
+                    _accumulator.add(numberFlag);
                     _results.add(null);
                     _results.add(new Double(nextItem.getIntegerValue()));
                 } else if (nextItem.isDecimal()) {
                     _results.add(doubleGroupIndex);
+                    _accumulator.add(numberFlag);
                     _results.add(null);
                     _results.add(new Double(nextItem.getDecimalValue().doubleValue()));
                 } else if (nextItem.isDouble()) {
                     _results.add(doubleGroupIndex);
+                    _accumulator.add(numberFlag);
                     _results.add(null);
                     _results.add(new Double(nextItem.getDoubleValue()));
                 } else {

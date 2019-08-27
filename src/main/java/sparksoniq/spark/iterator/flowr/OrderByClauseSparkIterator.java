@@ -44,6 +44,7 @@ import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.closures.OrderByClauseSortClosure;
 import sparksoniq.spark.closures.OrderByMapToPairClosure;
 import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
+import sparksoniq.spark.udf.OrderByAccumulator;
 import sparksoniq.spark.udf.OrderClauseCreateColumnsUDF;
 import sparksoniq.spark.udf.OrderClauseDetermineTypeUDF;
 
@@ -275,10 +276,13 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
 
         
         String udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
+        
+        OrderByAccumulator accumulator = new OrderByAccumulator(getMetadata());
+        df.sparkSession().sparkContext().register(accumulator);
 
         df.createOrReplaceTempView("input");
         df.sparkSession().udf().register("createOrderingColumns",
-                new OrderClauseCreateColumnsUDF(_expressions, UDFcolumns),
+                new OrderClauseCreateColumnsUDF(_expressions, UDFcolumns, accumulator),
                 DataTypes.createStructType(typedFields));
 
         String selectSQL = DataFrameUtils.getSQL(allColumns, true);
@@ -293,31 +297,6 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         );
 
         intermediateDF.createOrReplaceTempView("input");
-        intermediateDF.cache();
-        
-        // Check type compatibility.
-        
-        for (int columnIndex = 0; columnIndex <  _expressions.size(); columnIndex++) {
-            Dataset<Row> types = df.sparkSession().sql(
-                    String.format(
-                            "select distinct(`%s-nullEmptyBooleanCheckField`) from input",
-                            appendedOrderingColumnsName + "`.`" + columnIndex
-                    )
-            );
-            Object columnTypesObject = types.collect();
-            Row[] columnTypesOfRows = (Row[]) columnTypesObject;
-            List<Integer> allTypes = new ArrayList<Integer>();
-            for(Row r : columnTypesOfRows)
-            {
-                int i = r.getInt(0);
-                if(i == 3 || i == 4 || i == 5 || i == 6)
-                allTypes.add(i);
-            }
-            if(allTypes.size() > 1)
-            {
-                throw new UnexpectedTypeException("Order by variable must contain values of a single type.", getMetadata());
-            }
-        }
         
         // Project to output.
 
