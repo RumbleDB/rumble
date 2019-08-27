@@ -34,6 +34,7 @@ import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkSessionManager;
+import sparksoniq.spark.udf.OrderByAccumulator;
 import utils.FileManager;
 
 import java.io.File;
@@ -103,6 +104,7 @@ public class RuntimeTests extends AnnotationsTestsBase {
 
     protected String runIterators(RuntimeIterator iterator) {
         String actualOutput = getIteratorOutput(iterator);
+        OrderByAccumulator.checkForTypeErrors();
         return actualOutput;
     }
 
@@ -136,6 +138,7 @@ public class RuntimeTests extends AnnotationsTestsBase {
         JavaRDD<Item> rdd = runtimeIterator.getRDD(new DynamicContext());
         JavaRDD<String> output = rdd.map(o -> o.serialize());
         long resultCount = output.count();
+        OrderByAccumulator.checkForTypeErrors();
         if (resultCount == 0) {
             return "";
         }

@@ -44,6 +44,7 @@ import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.visitor.RuntimeIteratorVisitor;
 import sparksoniq.semantics.visitor.StaticContextVisitor;
 import sparksoniq.spark.SparkSessionManager;
+import sparksoniq.spark.udf.OrderByAccumulator;
 import sparksoniq.utils.FileUtils;
 
 import java.io.BufferedOutputStream;
@@ -105,6 +106,7 @@ public class JsoniqQueryExecutor {
             JavaRDD<Item> rdd = result.getRDD(new DynamicContext());
             JavaRDD<String> output = rdd.map(o -> o.serialize());
             output.saveAsTextFile(outputPath);
+            OrderByAccumulator.checkForTypeErrors();
         } else {
             String output = runIterators(result);
             if (outputPath != null) {
@@ -145,6 +147,7 @@ public class JsoniqQueryExecutor {
             JavaRDD<Item> rdd = result.getRDD(new DynamicContext());
             JavaRDD<String> output = rdd.map(o -> o.serialize());
             output.saveAsTextFile(outputPath);
+            OrderByAccumulator.checkForTypeErrors();
         }
         long endTime = System.currentTimeMillis();
         long totalTime = endTime - startTime;
@@ -245,6 +248,8 @@ public class JsoniqQueryExecutor {
 
     protected String runIterators(RuntimeIterator iterator) {
         String actualOutput = getIteratorOutput(iterator);
+        System.out.println("Check");
+        OrderByAccumulator.checkForTypeErrors();
         return actualOutput;
     }
 
@@ -281,6 +286,7 @@ public class JsoniqQueryExecutor {
         JavaRDD<Item> rdd = result.getRDD(new DynamicContext());
         JavaRDD<String> output = rdd.map(o -> o.serialize());
         long resultCount = output.count();
+        OrderByAccumulator.checkForTypeErrors();
         if (resultCount == 0) {
             return "";
         }

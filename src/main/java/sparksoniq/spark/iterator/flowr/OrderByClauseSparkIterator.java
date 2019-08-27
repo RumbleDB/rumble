@@ -282,7 +282,7 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         
         List<OrderByAccumulator> accumulators = new ArrayList<OrderByAccumulator>();
         for (int columnIndex = 0; columnIndex <  _expressions.size(); columnIndex++) {
-        	OrderByAccumulator accumulator = new OrderByAccumulator(getMetadata());
+        	OrderByAccumulator accumulator = OrderByAccumulator.createNewAccumulator(getMetadata());
         	accumulators.add(accumulator);
         	df.sparkSession().sparkContext().register(accumulator);
         }
