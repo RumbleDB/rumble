@@ -26,29 +26,29 @@ import sparksoniq.spark.SparkSessionManager;
  * @author Ghislain Fourny, Stefan Irimescu, Can Berker Cikis
  */
 public class Rumble {
-	
-	private RumbleConf _conf;
-	
-	/**
-	 * Creates a new Rumble instance. This does NOT initialize Spark. You need to do so before instantiating Rumble.
+
+    private RumbleConf _conf;
+
+    /**
+     * Creates a new Rumble instance. This does NOT initialize Spark. You need to do so before instantiating Rumble.
      *
      * @param conf a RumbleConf object containing the configuration.
-	 */
-	public Rumble(RumbleConf conf)
-	{
-		_conf = conf;
+     */
+    public Rumble(RumbleConf conf)
+    {
+        _conf = conf;
         SparkSessionManager.COLLECT_ITEM_LIMIT = conf.getResultsSizeCap();
-	}
-	
-	/**
-	 * Runs a query and returns an iterator over the resulting sequence of Items.
-	 * @param query the JSONiq query.
-	 * @return the resulting sequence as an ItemIterator.
-	 */
-	public SequenceOfItems runQuery(String query)
-	{
-		CharStream charStream = CharStreams.fromString(query);
-		JsoniqLexer lexer = new JsoniqLexer(charStream);
+    }
+
+    /**
+     * Runs a query and returns an iterator over the resulting sequence of Items.
+     * @param query the JSONiq query.
+     * @return the resulting sequence as an ItemIterator.
+     */
+    public SequenceOfItems runQuery(String query)
+    {
+        CharStream charStream = CharStreams.fromString(query);
+        JsoniqLexer lexer = new JsoniqLexer(charStream);
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
         JsoniqExpressionTreeVisitor visitor = new JsoniqExpressionTreeVisitor();
@@ -68,5 +68,5 @@ public class Rumble {
 
         RuntimeIterator iterator = new RuntimeIteratorVisitor().visit(expression, null);
         return new SequenceOfItems(iterator);
-	}
+    }
 }
