@@ -482,7 +482,7 @@ string-length("foo")
 returns 3.
 
 ```
-string-join(())
+string-length(())
 ```
 
 returns 0.
