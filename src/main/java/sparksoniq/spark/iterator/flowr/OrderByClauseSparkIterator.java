@@ -31,7 +31,6 @@ import org.apache.spark.sql.types.StructType;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
-import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -46,10 +45,7 @@ import sparksoniq.spark.closures.OrderByMapToPairClosure;
 import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 import sparksoniq.spark.udf.OrderByAccumulator;
 import sparksoniq.spark.udf.OrderClauseCreateColumnsUDF;
-import sparksoniq.spark.udf.OrderClauseDetermineTypeUDF;
-
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.HashSet;

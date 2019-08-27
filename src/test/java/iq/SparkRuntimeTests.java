@@ -24,8 +24,6 @@ import org.junit.Assert;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.spark.udf.OrderByAccumulator;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;

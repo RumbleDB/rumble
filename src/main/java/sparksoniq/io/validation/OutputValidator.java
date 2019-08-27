@@ -27,6 +27,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -44,8 +45,8 @@ public class OutputValidator {
             List<File> files = Arrays.asList(sparkDir.listFiles());
             files.sort(Comparator.comparing(File::getAbsolutePath));
             for (File f : files) {
-                String fileString = FileUtils.readFileToString(f);
-                FileUtils.write(merge, fileString, true);
+                String fileString = FileUtils.readFileToString(f, StandardCharsets.UTF_8);
+                FileUtils.write(merge, fileString, StandardCharsets.UTF_8, true);
             }
         }
 

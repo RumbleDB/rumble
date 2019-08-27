@@ -34,7 +34,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class MatchesFunctionIterator extends LocalFunctionCallIterator {
-    public MatchesFunctionIterator(
+
+	private static final long serialVersionUID = 1L;
+
+	public MatchesFunctionIterator(
             List<RuntimeIterator> arguments,
             IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
