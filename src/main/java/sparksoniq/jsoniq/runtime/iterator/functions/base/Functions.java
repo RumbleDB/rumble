@@ -81,6 +81,7 @@ import sparksoniq.jsoniq.runtime.iterator.functions.strings.EndsWithFunctionIter
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.MatchesFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.StartsWithFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.StringJoinFunction;
+import sparksoniq.jsoniq.runtime.iterator.functions.strings.StringLengthFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.SubstringFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.TokenizeFunctionIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -145,6 +146,7 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SQRT;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.STARTSWITH;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.STRINGJOIN;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.STRINGLENGTH;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SUBSEQUENCE;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SUBSTRING;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SUM;
@@ -225,6 +227,7 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(ENDSWITH, 2), EndsWithFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(STRINGJOIN, 1), StringJoinFunction.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(STRINGJOIN, 2), StringJoinFunction.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(STRINGLENGTH, 1), StringLengthFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(TOKENIZE, 1), TokenizeFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(TOKENIZE, 2), TokenizeFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(STARTSWITH, 2), StartsWithFunctionIterator.class);
@@ -453,6 +456,10 @@ public class Functions {
          * function that returns substrings
          */
         public static final String STRINGJOIN = "string-join";
+        /**
+         * function that returns the string length
+         */
+        public static final String STRINGLENGTH = "string-length";
         /**
          * function that returns tokens
          */
