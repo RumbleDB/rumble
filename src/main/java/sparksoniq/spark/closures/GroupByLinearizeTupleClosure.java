@@ -21,8 +21,9 @@
 package sparksoniq.spark.closures;
 
 import org.apache.spark.api.java.function.Function;
+import org.rumbledb.api.Item;
+
 import scala.Tuple2;
-import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;

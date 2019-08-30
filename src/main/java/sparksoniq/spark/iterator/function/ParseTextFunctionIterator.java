@@ -21,8 +21,9 @@
 package sparksoniq.spark.iterator.function;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.rumbledb.api.Item;
+
 import sparksoniq.io.json.StringMapper;
-import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;

@@ -21,8 +21,10 @@
 package sparksoniq.io.json;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
-import sparksoniq.jsoniq.item.Item;
+import org.rumbledb.api.Item;
+
 import sparksoniq.jsoniq.item.ItemFactory;
+
 import java.util.Iterator;
 
 public class StringMapper implements FlatMapFunction<Iterator<String>, Item> {

@@ -21,11 +21,12 @@
 package sparksoniq.jsoniq.runtime.iterator;
 
 import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
+
+import org.rumbledb.api.Item;
 
 public class CommaExpressionIterator extends LocalRuntimeIterator {
 

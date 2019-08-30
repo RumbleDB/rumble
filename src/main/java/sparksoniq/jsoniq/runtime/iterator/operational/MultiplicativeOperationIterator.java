@@ -26,7 +26,6 @@ import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalEx
 import sparksoniq.jsoniq.item.DecimalItem;
 import sparksoniq.jsoniq.item.DoubleItem;
 import sparksoniq.jsoniq.item.IntegerItem;
-import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
@@ -35,6 +34,8 @@ import sparksoniq.semantics.DynamicContext;
 
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
+
+import org.rumbledb.api.Item;
 
 public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator {
 
@@ -76,7 +77,7 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
         if (this._hasNext) {
             this._hasNext = false;
 
-            Type returnType = Item.getNumericResultType(_left, _right);
+            Type returnType = getNumericResultType(_left, _right);
             if (returnType.equals(IntegerItem.class)) {
                 try {
                     int l = _left.castToIntegerValue();

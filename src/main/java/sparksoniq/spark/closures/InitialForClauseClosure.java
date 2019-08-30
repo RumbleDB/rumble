@@ -21,7 +21,8 @@
 package sparksoniq.spark.closures;
 
 import org.apache.spark.api.java.function.Function;
-import sparksoniq.jsoniq.item.Item;
+import org.rumbledb.api.Item;
+
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
 public class InitialForClauseClosure implements Function<Item, FlworTuple> {

@@ -20,6 +20,8 @@
 
 package sparksoniq.jsoniq.item;
 
+import org.rumbledb.api.Item;
+
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 

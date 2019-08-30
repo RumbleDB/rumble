@@ -21,11 +21,17 @@
 package sparksoniq.jsoniq.runtime.iterator.operational.base;
 
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
+import sparksoniq.jsoniq.item.DecimalItem;
+import sparksoniq.jsoniq.item.DoubleItem;
+import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
+
+import org.rumbledb.api.Item;
 
 public abstract class BinaryOperationBaseIterator extends LocalRuntimeIterator {
 
@@ -44,5 +50,21 @@ public abstract class BinaryOperationBaseIterator extends LocalRuntimeIterator {
         this._rightIterator = right;
         this._operator = operator;
     }
+    
+    //performs conversions for binary operations with a numeric return type
+    //(int,double) -> double
+    //(int,decimal) -> decimal
+    //(decimal,double) -> double
+    public static Type getNumericResultType(Item left, Item right) {
+        if (left.isDouble() || right.isDouble()) {
+            return DoubleItem.class;
+        }
+        if (left.isDecimal() || right.isDecimal()) {
+            return DecimalItem.class;
+        }
+        return IntegerItem.class;
+    }
+
+    
 
 }

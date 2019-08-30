@@ -22,6 +22,8 @@ package sparksoniq.jsoniq.item;
 
 import java.math.BigDecimal;
 
+import org.rumbledb.api.Item;
+
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;

@@ -9,6 +9,8 @@ import com.esotericsoftware.kryo.util.Pool;
 
 import java.util.ArrayList;
 
+import org.rumbledb.api.Item;
+
 public class KryoManager {
 
     private static KryoManager _instance;

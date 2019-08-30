@@ -23,7 +23,6 @@ package sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate;
 import sparksoniq.exceptions.InvalidArgumentTypeException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
-import sparksoniq.jsoniq.item.Item;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
@@ -35,6 +34,8 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+
+import org.rumbledb.api.Item;
 
 public class SumFunctionIterator extends LocalFunctionCallIterator {
 

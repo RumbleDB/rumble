@@ -26,6 +26,8 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Comparator;
 
+import org.rumbledb.api.Item;
+
 public class ItemComparatorForSequences implements Comparator<Item>, Serializable {
 
 	private static final long serialVersionUID = 1L;

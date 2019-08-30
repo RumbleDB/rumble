@@ -24,13 +24,14 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.rumbledb.api.Item;
+
 import sparksoniq.exceptions.DuplicateObjectKeyException;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -90,7 +91,7 @@ public class ObjectItem extends JsonItem {
     }
 
     @Override
-    public Collection<? extends Item> getValues() {
+    public List<Item> getValues() {
         return _values;
     }
 

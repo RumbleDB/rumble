@@ -21,8 +21,7 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.sequences.value;
 
 import org.apache.spark.api.java.function.Function;
-
-import sparksoniq.jsoniq.item.Item;
+import org.rumbledb.api.Item;
 
 public class FilterNonAtomicClosure implements Function<Item, Boolean> {
 
