@@ -30,7 +30,7 @@
     <packaging>jar</packaging>
     <name>Rumble</name>
     <description>A JSONiq engine to query large-scale JSON datasets stored on HDFS. Spark under the hood.</description>
-    <url>https://github.com/rainerhahnekamp/superlib</url>
+    <url>http://rumbledb.org/</url>
     <properties>
         <encoding>UTF-8</encoding>
     </properties>
