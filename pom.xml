@@ -25,7 +25,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.github.rumbledb</groupId>
-    <artifactId>rumble</artifactId>
+    <artifactId>spark-rumble</artifactId>
     <version>1.1</version>
     <packaging>jar</packaging>
     <name>Rumble</name>
