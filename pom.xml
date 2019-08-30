@@ -27,9 +27,10 @@
     <groupId>com.github.rumbledb</groupId>
     <artifactId>rumble</artifactId>
     <version>1.1</version>
-    <packaging>pom</packaging>
-
-
+    <packaging>jar</packaging>
+    <name>Rumble</name>
+    <description>A JSONiq engine to query large-scale JSON datasets stored on HDFS. Spark under the hood.</description>
+    <url>https://github.com/rainerhahnekamp/superlib</url>
     <properties>
         <encoding>UTF-8</encoding>
     </properties>
