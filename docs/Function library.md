@@ -449,6 +449,16 @@ matches("foobar", "^fo+.*")
 
 returns true.
 
+###normalize-spaces
+
+Normalization of spaces in a string.
+
+```
+normalize-space(" The    wealthy curled darlings                                         of    our    nation. "),
+```
+
+returns "The wealthy curled darlings of our nation."
+
 ### starts-with
 
 ```
