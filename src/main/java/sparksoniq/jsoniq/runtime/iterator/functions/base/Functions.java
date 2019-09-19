@@ -79,6 +79,7 @@ import sparksoniq.jsoniq.runtime.iterator.functions.strings.ConcatFunctionIterat
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.ContainsFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.EndsWithFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.MatchesFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.strings.NormalizeSpaceFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.StartsWithFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.StringJoinFunction;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.StringLengthFunctionIterator;
@@ -130,6 +131,7 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MATCHES;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MEMBERS;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MIN;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.NORMALIZESPACE;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.NULL;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ONEORMORE;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.PARALLELIZE;
@@ -233,6 +235,7 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(STARTSWITH, 2), StartsWithFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(MATCHES, 2), MatchesFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(CONTAINS, 2), ContainsFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(NORMALIZESPACE, 1), NormalizeSpaceFunctionIterator.class);
 
         buildInFunctions.put(new SparksoniqFunctionSignature(KEYS, 1), ObjectKeysFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(MEMBERS, 1), ArrayMembersFunctionIterator.class);
@@ -480,6 +483,10 @@ public class Functions {
          * function that checks whether a string matches a regular expression
          */
         public static final String MATCHES = "matches";
+        /**
+         * function that normalizes spaces in a string
+         */
+        public static final String NORMALIZESPACE = "normalize-space";
 
 
         /**
