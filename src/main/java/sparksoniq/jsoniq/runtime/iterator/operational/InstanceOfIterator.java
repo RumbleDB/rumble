@@ -57,7 +57,8 @@ public class InstanceOfIterator extends UnaryOperationIterator {
                     _sequenceType.getArity() == SequenceType.Arity.OneOrMore)) {
                 return ItemFactory.getInstance().createBooleanItem(false);
             }
-            if (items.size() == 1 && _sequenceType.getArity() == SequenceType.Arity.ZeroOrMore) {
+            if (items.size() > 1 && _sequenceType.getArity()  == SequenceType.Arity.One ||
+                    _sequenceType.getArity() == SequenceType.Arity.OneOrZero) {
                 return ItemFactory.getInstance().createBooleanItem(false);
             }
             for (Item item : items) {
@@ -68,5 +69,14 @@ public class InstanceOfIterator extends UnaryOperationIterator {
             return ItemFactory.getInstance().createBooleanItem(true);
         } else
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
+    }
+
+    @Override
+    public Item getResultIfEmpty() {
+        if (_sequenceType.getArity() == SequenceType.Arity.OneOrZero ||
+                _sequenceType.getArity() == SequenceType.Arity.ZeroOrMore) {
+            return ItemFactory.getInstance().createBooleanItem(true);
+        }
+        return ItemFactory.getInstance().createBooleanItem(false);
     }
 }

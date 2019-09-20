@@ -73,9 +73,7 @@ public class StringItem extends AtomicItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        if (type.getType().equals(ItemTypes.StringItem) || super.isTypeOf(type))
-            return true;
-        return false;
+        return type.getType().equals(ItemTypes.StringItem) || super.isTypeOf(type);
     }
 
     @Override

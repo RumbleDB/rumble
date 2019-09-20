@@ -31,6 +31,7 @@ import sparksoniq.exceptions.InvalidArgumentTypeException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnexpectedTypeException;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
@@ -167,6 +168,8 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     public abstract boolean getDataFrame();
 
     public abstract Item next();
+
+    public Item getResultIfEmpty() { return ItemFactory.getInstance().createStringItem(""); }
 
     protected List<Item> runChildrenIterators(DynamicContext context) {
         List<Item> values = new ArrayList<>();

@@ -111,7 +111,8 @@ arrayUnboxing: '[' ']';
 predicate: '[' expr ']';
 objectLookup: '.' ( kw=keyWords | lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | ci=contextItemExpr );
 
-primaryExpr: Literal
+primaryExpr: NullLiteral
+           | Literal
            | stringLiteral
            | varRef
            | parenthesizedExpr
@@ -122,13 +123,13 @@ primaryExpr: Literal
            | unorderedExpr
            | arrayConstructor;
 
-Literal  : NumericLiteral | BooleanLiteral | NullLiteral;
+NullLiteral
+         : 'null';
+Literal  : NumericLiteral | BooleanLiteral;
 NumericLiteral
          : IntegerLiteral | DecimalLiteral | DoubleLiteral;
 BooleanLiteral
          : 'true' | 'false';
-NullLiteral
-         : 'null';
 
 
 varRef   : '$' (ns=NCName ':')? name=NCName;
@@ -168,7 +169,7 @@ keyWordBoolean
 
 atomicType
          : 'atomic' | 'string' | 'integer'
-         | 'decimal' | 'double' | keyWordBoolean | 'null';
+         | 'decimal' | 'double' | keyWordBoolean | NullLiteral;
 
 nCNameOrKeyWordBoolean
          : NCName | keyWordBoolean;
