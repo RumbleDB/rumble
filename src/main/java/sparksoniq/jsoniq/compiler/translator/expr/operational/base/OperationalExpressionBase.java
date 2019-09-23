@@ -108,6 +108,8 @@ public abstract class OperationalExpressionBase extends Expression {
                 return Operator.CONCAT;
             case "INSTANCE OF":
                 return Operator.INSTANCE_OF;
+            case "TREAT":
+                return Operator.TREAT;
         }
 
         return Operator.NONE;
@@ -126,6 +128,8 @@ public abstract class OperationalExpressionBase extends Expression {
                 return "||";
             case INSTANCE_OF:
                 return "instance of";
+            case TREAT:
+                return "treat as";
             default:
                 return operator.toString().toLowerCase();
         }
@@ -189,7 +193,7 @@ public abstract class OperationalExpressionBase extends Expression {
         CONCAT,
         INSTANCE_OF,
         COMMA,
-
+        TREAT,
 
         NONE,
 

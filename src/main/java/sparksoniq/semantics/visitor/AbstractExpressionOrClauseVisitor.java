@@ -46,6 +46,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.operational.NotExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.OrExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.RangeExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.StringConcatExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.TreatExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.UnaryExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.PostFixExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.ArrayConstructor;
@@ -229,6 +230,9 @@ public abstract class AbstractExpressionOrClauseVisitor<T> {
         return defaultAction(expression, argument);
     }
 
+    public T visitTreatExpression(TreatExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 
     public T visitIfExpression(IfExpression expression, T argument) {
         return defaultAction(expression, argument);
