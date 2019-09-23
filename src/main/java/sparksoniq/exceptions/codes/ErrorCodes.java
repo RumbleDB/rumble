@@ -37,7 +37,7 @@ public class ErrorCodes {
 
     public static final String UnknownCastTypeErrorCode = "XQST0052";
 
-    public static final String XsCastErrorCode = "XPST0080";
+    public static final String CastableErrorCode = "XPST0080";
 
     public static final String InvalidExceptionErrorCode = "XPST0081";
 

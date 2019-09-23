@@ -24,6 +24,8 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+import sparksoniq.semantics.types.AtomicType;
+import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
@@ -81,6 +83,11 @@ public class DecimalItem extends AtomicItem {
     @Override
     public boolean isTypeOf(ItemType type) {
         return type.getType().equals(ItemTypes.DecimalItem) || super.isTypeOf(type);
+    }
+
+    @Override
+    public boolean isCastableAs(AtomicType type) {
+        return type.getType() != AtomicTypes.AtomicItem;
     }
 
     @Override

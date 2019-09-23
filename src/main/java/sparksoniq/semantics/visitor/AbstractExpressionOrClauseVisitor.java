@@ -39,6 +39,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.flowr.ReturnClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.WhereClause;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.AdditiveExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.AndExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.CastableExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.ComparisonExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.InstanceOfExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.MultiplicativeExpression;
@@ -231,6 +232,10 @@ public abstract class AbstractExpressionOrClauseVisitor<T> {
     }
 
     public T visitTreatExpression(TreatExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitCastableExpression(CastableExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
