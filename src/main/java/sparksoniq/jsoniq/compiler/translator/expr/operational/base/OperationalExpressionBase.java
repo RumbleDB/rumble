@@ -112,6 +112,8 @@ public abstract class OperationalExpressionBase extends Expression {
                 return Operator.TREAT;
             case "CASTABLE":
                 return Operator.CASTABLE;
+            case "CAST":
+                return Operator.CAST;
         }
 
         return Operator.NONE;
@@ -134,6 +136,8 @@ public abstract class OperationalExpressionBase extends Expression {
                 return "treat as";
             case CASTABLE:
                 return "castable as";
+            case CAST:
+                return "cast as";
             default:
                 return operator.toString().toLowerCase();
         }
@@ -199,6 +203,7 @@ public abstract class OperationalExpressionBase extends Expression {
         COMMA,
         TREAT,
         CASTABLE,
+        CAST,
 
         NONE,
 

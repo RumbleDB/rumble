@@ -102,7 +102,7 @@ treatExpr
          : mainExpr=castableExpr ( Ktreat Kas seq=sequenceType )?;
 castableExpr
          : mainExpr=castExpr ( Kcastable Kas single=singleType )?;
-castExpr : mainExpr=unaryExpr ( Kcast Kas atomicType '?'? )?;
+castExpr : mainExpr=unaryExpr ( Kcast Kas single=singleType )?;
 unaryExpr: op+=('-' | '+')* mainExpr=simpleMapExpr;
 simpleMapExpr: mainExpr=postFixExpr ('!' postFixExpr)*;
 postFixExpr: mainExpr=primaryExpr (al=arrayLookup | pr=predicate | ol=objectLookup | au=arrayUnboxing)*;
@@ -168,7 +168,7 @@ keyWordBoolean
          : 'boolean';
 
 singleType
-         : item=simpleType (question +='?')?;
+         : item=simpleType (question+='?')?;
 
 simpleType
          : 'atomic' | 'string' | 'integer'

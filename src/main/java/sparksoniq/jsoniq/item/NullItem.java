@@ -26,7 +26,6 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import sparksoniq.semantics.types.AtomicType;
-import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
@@ -52,6 +51,11 @@ public class NullItem extends AtomicItem {
     @Override
     public boolean isCastableAs(AtomicType type) {
         return false;
+    }
+
+    @Override
+    public AtomicItem castAs(AtomicItem atomicItem) {
+        return null;
     }
 
     @Override

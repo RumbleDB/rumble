@@ -41,8 +41,18 @@ public abstract class AtomicItem extends Item {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.getType().equals(ItemTypes.AtomicItem) || type.getType().equals(ItemTypes.Item);
+        if (type.getType().equals(ItemTypes.AtomicItem) || type.getType().equals(ItemTypes.Item))
+            return true;
+        return false;
     }
 
     public abstract boolean isCastableAs(AtomicType type);
+
+    public abstract AtomicItem castAs(AtomicItem atomicItem);
+
+    public AtomicItem createFromBoolean(BooleanItem booleanItem) {return null;}
+    public AtomicItem createFromString(StringItem stringItem) {return null;}
+    public AtomicItem createFromInteger(IntegerItem integerItem) {return null;}
+    public AtomicItem createFromDecimal(DecimalItem decimalItem) {return null;}
+    public AtomicItem createFromDouble(DoubleItem doubleItem) {return null;}
 }

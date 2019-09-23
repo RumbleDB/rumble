@@ -8,4 +8,6 @@ public enum AtomicTypes {
     DecimalItem,
     DoubleItem,
     BooleanItem,
+
+    NullItem,
 }

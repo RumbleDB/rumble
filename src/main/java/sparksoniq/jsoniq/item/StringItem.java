@@ -105,6 +105,36 @@ public class StringItem extends AtomicItem {
     }
 
     @Override
+    public AtomicItem castAs(AtomicItem atomicItem) {
+        return atomicItem.createFromString(this);
+    }
+
+    @Override
+    public AtomicItem createFromBoolean(BooleanItem booleanItem) {
+        return ItemFactory.getInstance().createStringItem(String.valueOf(booleanItem.getBooleanValue()));
+    }
+
+    @Override
+    public AtomicItem createFromString(StringItem stringItem) {
+        return stringItem;
+    }
+
+    @Override
+    public AtomicItem createFromInteger(IntegerItem integerItem) {
+        return ItemFactory.getInstance().createStringItem(String.valueOf(integerItem.getIntegerValue()));
+    }
+
+    @Override
+    public AtomicItem createFromDecimal(DecimalItem decimalItem) {
+        return ItemFactory.getInstance().createStringItem(String.valueOf(decimalItem.getDecimalValue()));
+    }
+
+    @Override
+    public AtomicItem createFromDouble(DoubleItem doubleItem) {
+        return ItemFactory.getInstance().createStringItem(String.valueOf(doubleItem.getDoubleValue()));
+    }
+
+    @Override
     public String serialize() {
         return _value;
     }

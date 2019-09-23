@@ -5,12 +5,16 @@ import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.exceptions.CastableException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
-import sparksoniq.jsoniq.item.*;
+import sparksoniq.jsoniq.item.AtomicItem;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.types.AtomicType;
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemTypes;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class CastableIterator extends UnaryOperationIterator{
@@ -25,18 +29,16 @@ public class CastableIterator extends UnaryOperationIterator{
     @Override
     public Item next() {
         if (this._hasNext) {
-            Item item = null;
-
+            List<Item> items = new ArrayList<>();
             _child.open(_currentDynamicContext);
-            if (_child.hasNext()) {
-                item = _child.next();
-            }
+            while (_child.hasNext())
+                items.add(_child.next());
             _child.close();
             this._hasNext = false;
 
-            if (item == null) return ItemFactory.getInstance().createBooleanItem(false);
+            if (items.size() != 1 || items.get(0) == null) return ItemFactory.getInstance().createBooleanItem(false);
 
-            AtomicItem atomicItem = checkInvalidCastable(item, getMetadata(), _atomicType);
+            AtomicItem atomicItem = checkInvalidCastable(items.get(0), getMetadata(), _atomicType);
 
             boolean result = atomicItem.isCastableAs(_atomicType);
 
