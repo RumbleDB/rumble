@@ -36,6 +36,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.flowr.CountClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworVarSequenceType;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworVarSingleType;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.ForClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.ForClauseVar;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.GroupByClause;
@@ -48,6 +49,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.flowr.ReturnClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.WhereClause;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.AdditiveExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.AndExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.CastableExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.ComparisonExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.InstanceOfExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.MultiplicativeExpression;
@@ -75,6 +77,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpressionVar;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
 
@@ -574,11 +577,11 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
 
     @Override
     public Void visitTreatExpr(JsoniqParser.TreatExprContext ctx) {
-        UnaryExpression mainExpression;
+        CastableExpression mainExpression;
         FlworVarSequenceType sequenceType;
         TreatExpression node;
         this.visitCastableExpr(ctx.mainExpr);
-        mainExpression = (UnaryExpression) this.currentExpression;
+        mainExpression = (CastableExpression) this.currentExpression;
         if (ctx.seq != null && !ctx.seq.isEmpty()) {
             JsoniqParser.SequenceTypeContext child = ctx.seq;
             this.visitSequenceType(child);
@@ -586,6 +589,25 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
             node = new TreatExpression(mainExpression, sequenceType, createMetadataFromContext(ctx));
         } else {
             node = new TreatExpression(mainExpression, createMetadataFromContext(ctx));
+        }
+        this.currentExpression = node;
+        return null;
+    }
+
+    @Override
+    public Void visitCastableExpr(JsoniqParser.CastableExprContext ctx) {
+        UnaryExpression mainExpression;
+        FlworVarSingleType singleType;
+        CastableExpression node;
+        this.visitCastExpr(ctx.mainExpr);
+        mainExpression = (UnaryExpression) this.currentExpression;
+        if (ctx.single != null && !ctx.single.isEmpty()) {
+            JsoniqParser.SingleTypeContext child = ctx.single;
+            this.visitSingleType(child);
+            singleType = (FlworVarSingleType) this.currentExpression;
+            node = new CastableExpression(mainExpression, singleType, createMetadataFromContext(ctx));
+        } else {
+            node = new CastableExpression(mainExpression, createMetadataFromContext(ctx));
         }
         this.currentExpression = node;
         return null;
@@ -846,6 +868,23 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
                 node = new FlworVarSequenceType(item, SequenceType.Arity.OneOrMore, createMetadataFromContext(ctx));
             else
                 node = new FlworVarSequenceType(item, createMetadataFromContext(ctx));
+        }
+        this.currentExpression = node;
+        return null;
+    }
+
+
+    @Override
+    public Void visitSingleType(JsoniqParser.SingleTypeContext ctx) {
+        FlworVarSingleType node;
+        if (ctx.item == null)
+            node = new FlworVarSingleType(createMetadataFromContext(ctx));
+        else {
+            AtomicTypes item = FlworVarSingleType.getAtomicType(ctx.item.getText());
+            if (ctx.question.size() > 0)
+                node = new FlworVarSingleType(item, true, createMetadataFromContext(ctx));
+            else
+                node = new FlworVarSingleType(item, createMetadataFromContext(ctx));
         }
         this.currentExpression = node;
         return null;

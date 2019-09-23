@@ -27,6 +27,8 @@ import org.rumbledb.api.Item;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import sparksoniq.semantics.types.AtomicType;
+import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
@@ -66,6 +68,8 @@ public class StringItem extends AtomicItem {
         return Integer.parseInt(_value);
     }
 
+    private boolean isBooleanLiteral(String value) { return "true".equals(value) || "false".equals(value); }
+
     @Override
     public boolean getEffectiveBooleanValue() {
         return !this.getStringValue().isEmpty();
@@ -74,6 +78,25 @@ public class StringItem extends AtomicItem {
     @Override
     public boolean isTypeOf(ItemType type) {
         return type.getType().equals(ItemTypes.StringItem) || super.isTypeOf(type);
+    }
+
+    @Override
+    public boolean isCastableAs(AtomicType type) {
+        if (type.getType() == AtomicTypes.StringItem)
+            return true;
+        try {
+            if (type.getType() == AtomicTypes.IntegerItem)
+                Integer.parseInt(this._value);
+            else if (type.getType() == AtomicTypes.DecimalItem) {
+                if (this._value.contains("e") || this._value.contains("E")) return false;
+                Float.parseFloat(this._value);
+            } else if (type.getType() == AtomicTypes.DoubleItem)
+                Double.parseDouble(this._value);
+            else return isBooleanLiteral(this._value);
+        } catch (NumberFormatException e) {
+            return false;
+        }
+        return true;
     }
 
     @Override
