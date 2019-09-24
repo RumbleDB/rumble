@@ -29,6 +29,7 @@ import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayFlattenFunctionI
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayMembersFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArraySizeFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.booleans.BooleanFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.durations.DurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.AbsFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.CeilingFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.FloorFunctionIterator;
@@ -131,6 +132,7 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MATCHES;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MEMBERS;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MIN;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DURATION;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.NORMALIZESPACE;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.NULL;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ONEORMORE;
@@ -235,6 +237,7 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(STARTSWITH, 2), StartsWithFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(MATCHES, 2), MatchesFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(CONTAINS, 2), ContainsFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(DURATION, 1), DurationFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(NORMALIZESPACE, 1), NormalizeSpaceFunctionIterator.class);
 
         buildInFunctions.put(new SparksoniqFunctionSignature(KEYS, 1), ObjectKeysFunctionIterator.class);
@@ -250,7 +253,6 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(PROJECT, 2), ObjectProjectFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(REMOVEKEYS, 2), ObjectRemoveKeysFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(VALUES, 1), ObjectValuesFunctionIterator.class);
-
     }
 
     public static Class<? extends RuntimeIterator> getFunctionIteratorClass(FunctionCall expression, List<RuntimeIterator> arguments) {
@@ -484,10 +486,13 @@ public class Functions {
          */
         public static final String MATCHES = "matches";
         /**
+         * function that returns the duration item from the supplied string
+         */
+        public static final String DURATION = "duration";
+        /**
          * function that normalizes spaces in a string
          */
         public static final String NORMALIZESPACE = "normalize-space";
-
 
         /**
          * function that returns the keys of a Json Object

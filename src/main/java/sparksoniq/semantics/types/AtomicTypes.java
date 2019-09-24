@@ -9,5 +9,7 @@ public enum AtomicTypes {
     DoubleItem,
     BooleanItem,
 
+    DurationItem,
+
     NullItem,
 }

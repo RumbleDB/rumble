@@ -96,6 +96,8 @@ public class StringItem extends AtomicItem {
                 Float.parseFloat(this._value);
             } else if (type.getType() == AtomicTypes.DoubleItem) {
                 Double.parseDouble(this._value);
+            } else if (type.getType() == AtomicTypes.DurationItem) {
+                DurationItem.getDurationFromString(this._value, AtomicTypes.DurationItem);
             }
             else return isBooleanLiteral(this._value);
         } catch (IllegalArgumentException e) {
@@ -137,6 +139,11 @@ public class StringItem extends AtomicItem {
     @Override
     public AtomicItem createFromDouble(DoubleItem doubleItem) {
         return ItemFactory.getInstance().createStringItem(String.valueOf(doubleItem.getDoubleValue()));
+    }
+
+    @Override
+    public AtomicItem createFromDuration(DurationItem durationItem) {
+        return ItemFactory.getInstance().createStringItem(durationItem.serialize());
     }
 
     @Override

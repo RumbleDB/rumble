@@ -142,7 +142,7 @@ orderedExpr
 unorderedExpr
          : 'unordered' '{' expr '}';
 functionCall
-         : ((ns=NCName | kw=keyWords |  )':')? (fcnName=nCNameOrKeyWordBoolean | kw = keyWords) argumentList;
+         : ((ns=NCName | kw=keyWords |  )':')? (fcnName=nCNameOrKeyWord | kw = keyWords) argumentList;
 
 argumentList : '('  (args+=argument ','?)* ')';
 argument : exprSingle | '?';
@@ -167,18 +167,21 @@ jSONItemTest
 keyWordBoolean
          : 'boolean';
 
+keyWordDuration
+         : 'duration';
+
 singleType
-         : item=simpleType (question+='?')?;
+         : item=simpleType (question +='?')?;
 
 simpleType
          : 'atomic' | 'string' | 'integer'
-         | 'decimal' | 'double' | keyWordBoolean;
+         | 'decimal' | 'double' | keyWordBoolean | keyWordDuration;
 
 atomicType
          : simpleType | NullLiteral;
 
-nCNameOrKeyWordBoolean
-         : NCName | keyWordBoolean;
+nCNameOrKeyWord
+         : NCName | keyWordBoolean | keyWordDuration;
 
 pairConstructor
          :  ( lhs=exprSingle | name=NCName ) (':' | '?') rhs=exprSingle;

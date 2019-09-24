@@ -313,6 +313,15 @@ public abstract class Item implements SerializableItem {
     }
 
     /**
+     * Tests whether the item is an atomic item of type duration.
+     *
+     * @return true if it is an atomic item of type duration, false otherwise.
+     */
+    public boolean isDuration() {
+        return false;
+    }
+
+    /**
      * Tests whether the item is an atomic item of type double.
      * 
      * @return true if it is an atomic item of type double, false otherwise.

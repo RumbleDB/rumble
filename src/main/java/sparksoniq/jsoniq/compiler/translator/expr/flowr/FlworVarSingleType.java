@@ -3,8 +3,7 @@ package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-import sparksoniq.semantics.types.AtomicType;
-import sparksoniq.semantics.types.AtomicTypes;
+import sparksoniq.semantics.types.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,8 +43,8 @@ public class FlworVarSingleType extends Expression {
                 return AtomicTypes.DoubleItem;
             case "boolean":
                 return AtomicTypes.BooleanItem;
-            case "null":
-                return AtomicTypes.NullItem;
+            case "duration":
+                return AtomicTypes.DurationItem;
             default:
                 return AtomicTypes.AtomicItem;
         }
@@ -85,8 +84,6 @@ public class FlworVarSingleType extends Expression {
                 return "(atomicType string)";
             case BooleanItem:
                 return "(atomicType boolean)";
-            case NullItem:
-                return "(atomicType null)";
             default:
                 return "item";
         }

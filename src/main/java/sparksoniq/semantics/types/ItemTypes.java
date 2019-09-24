@@ -35,6 +35,8 @@ public enum ItemTypes {
     DoubleItem,
     BooleanItem,
 
+    DurationItem,
+
     NullItem;
 
     public static String getItemTypeName(String fullTypeName){
