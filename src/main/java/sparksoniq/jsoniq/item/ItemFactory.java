@@ -12,9 +12,9 @@ import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 public class ItemFactory {
 
     private static ItemFactory _instance;
-    private AtomicItem _nullItem;
-    private AtomicItem _trueBooleanItem;
-    private AtomicItem _falseBooleanItem;
+    private NullItem _nullItem;
+    private BooleanItem _trueBooleanItem;
+    private BooleanItem _falseBooleanItem;
 
     public static ItemFactory getInstance() {
         if(_instance == null)
@@ -27,31 +27,41 @@ public class ItemFactory {
         return _instance;
     }
 
-    public AtomicItem createStringItem(String s) {
+    public StringItem createStringItem(String s) {
         return new StringItem(s);
     }
 
-    public AtomicItem createBooleanItem(boolean b) {
+    public BooleanItem createBooleanItem(boolean b) {
         return b?_trueBooleanItem:_falseBooleanItem;
     }
 
-    public AtomicItem createNullItem() {
+    public NullItem createNullItem() {
         return _nullItem;
     }
 
-    public AtomicItem createIntegerItem(int i) {
+    public IntegerItem createIntegerItem(int i) {
         return new IntegerItem(i);
     }
 
-    public AtomicItem createDecimalItem(BigDecimal d) {
+    public DecimalItem createDecimalItem(BigDecimal d) {
         return new DecimalItem(d);
     }
 
-    public AtomicItem createDoubleItem(double d) {
+    public DoubleItem createDoubleItem(double d) {
         return new DoubleItem(d);
     }
 
-    public AtomicItem createDurationItem(Period p) { return new DurationItem(p); }
+    public DurationItem createDurationItem(Period p) {
+        return new DurationItem(p);
+    }
+
+    public YearMonthDurationItem createYearMonthDurationItem(Period p) {
+        return new YearMonthDurationItem(p);
+    }
+
+    public DayTimeDurationItem createDayTimeDurationItem(Period p) {
+        return new DayTimeDurationItem(p);
+    }
 
     public Item createObjectItem() {
         return new ObjectItem();

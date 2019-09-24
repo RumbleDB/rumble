@@ -12,6 +12,7 @@ import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
+import sparksoniq.jsoniq.runtime.iterator.operational.ComparisonOperationIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.types.AtomicType;
 import sparksoniq.semantics.types.AtomicTypes;
@@ -36,8 +37,8 @@ public class DurationItem extends AtomicItem {
             "(" + duMinuteFrag + "(" + duSecondFrag + ")?)|" + duSecondFrag + ")";
     private static final String duDayTimeFrag = "((" + duDayFrag + "(" + duTimeFrag + ")?)|" + duTimeFrag + ")";
     private static final String durationLiteral = prefix + "((" + duYearMonthFrag + "(" + duDayTimeFrag + ")?)|" + duDayTimeFrag +")";
-    private static final Pattern pattern = Pattern.compile(durationLiteral);
-
+    private static final String yearMonthDurationLiteral = prefix + duYearMonthFrag;
+    private static final String dayTimeDurationLiteral = prefix + duDayTimeFrag;
 
     private static final long serialVersionUID = 1L;
     private Period _value;
@@ -79,7 +80,7 @@ public class DurationItem extends AtomicItem {
         Instant now = new Instant();
         if (otherItem.isDuration()) {
             DurationItem otherDuration = (DurationItem) otherItem;
-            return this._value.toDurationFrom(now).isEqual(otherDuration.getValue().toDurationFrom(now));
+            return this.getValue().toDurationFrom(now).isEqual(otherDuration.getValue().toDurationFrom(now));
         }
         return false;
 
@@ -87,7 +88,7 @@ public class DurationItem extends AtomicItem {
 
     @Override
     public int hashCode() {
-        return this._value.hashCode();
+        return this.getValue().hashCode();
     }
 
     @Override
@@ -97,8 +98,18 @@ public class DurationItem extends AtomicItem {
 
     @Override
     public boolean isCastableAs(AtomicType type) {
-        return type.getType().equals(AtomicTypes.DurationItem) ||
-                type.getType().equals(AtomicTypes.StringItem);
+        if (type.getType().equals(AtomicTypes.DurationItem) ||
+                type.getType().equals(AtomicTypes.StringItem)) return true;
+        try {
+            if (type.getType() == AtomicTypes.YearMonthDurationItem) {
+                DurationItem.getDurationFromString(this._value.toString(), AtomicTypes.YearMonthDurationItem);
+            } else if (type.getType() == AtomicTypes.DayTimeDurationItem) {
+                DurationItem.getDurationFromString(this._value.toString(), AtomicTypes.DayTimeDurationItem);
+            }
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+        return true;
     }
 
     @Override
@@ -112,18 +123,28 @@ public class DurationItem extends AtomicItem {
     }
 
     @Override
+    public AtomicItem createFromYearMonthDuration(YearMonthDurationItem yearMonthDurationItem) {
+        return ItemFactory.getInstance().createDurationItem(getDurationFromString(yearMonthDurationItem.serialize(), AtomicTypes.DurationItem));
+    }
+
+    @Override
+    public AtomicItem createFromDayTimeDuration(DayTimeDurationItem dayTimeDurationItem) {
+        return ItemFactory.getInstance().createDurationItem(getDurationFromString(dayTimeDurationItem.serialize(), AtomicTypes.DurationItem));
+    }
+
+    @Override
     public AtomicItem createFromString(StringItem stringItem) {
         return ItemFactory.getInstance().createDurationItem(getDurationFromString(stringItem.getStringValue(), AtomicTypes.DurationItem));
     }
 
     @Override
     public String serialize() {
-        return this._value.toString();
+        return this.getValue().toString();
     }
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this._value);
+        kryo.writeObject(output, this.getValue());
     }
 
     @Override
@@ -135,17 +156,33 @@ public class DurationItem extends AtomicItem {
         switch (durationType) {
             case DurationItem:
                 return ISOPeriodFormat.standard();
+            case YearMonthDurationItem:
+                return new PeriodFormatterBuilder().
+                        appendLiteral("P").appendYears().appendSuffix("Y").appendMonths().appendSuffix("M").toFormatter();
+            case DayTimeDurationItem:
+                return new PeriodFormatterBuilder().
+                        appendLiteral("P").appendDays().appendSuffix("D").appendSeparatorIfFieldsAfter("T").
+                        appendHours().appendSuffix("H").appendMinutes().appendSuffix("M")
+                        .appendSecondsWithOptionalMillis().appendSuffix("S").toFormatter();
             default:
                 throw new IllegalArgumentException();
         }
     }
 
-    private static boolean checkInvalidDurationFormat(String duration) {
-        return pattern.matcher(duration).matches();
+    private static boolean checkInvalidDurationFormat(String duration, AtomicTypes durationType) {
+        switch (durationType) {
+            case DurationItem:
+                return Pattern.compile(durationLiteral).matcher(duration).matches();
+            case YearMonthDurationItem:
+                return Pattern.compile(yearMonthDurationLiteral).matcher(duration).matches();
+            case DayTimeDurationItem:
+                return Pattern.compile(dayTimeDurationLiteral).matcher(duration).matches();
+        }
+        throw new IllegalArgumentException();
     }
 
     public static Period getDurationFromString(String duration, AtomicTypes durationType) throws IllegalArgumentException{
-        if (!checkInvalidDurationFormat(duration) || durationType == null) throw new IllegalArgumentException();
+        if (durationType == null || !checkInvalidDurationFormat(duration, durationType)) throw new IllegalArgumentException();
         boolean isNegative = false;
         if (duration.charAt(0) == '-') {
             isNegative = true;
@@ -161,27 +198,28 @@ public class DurationItem extends AtomicItem {
         Instant now = new Instant();
         if (other.isDuration()) {
             DurationItem otherDuration = (DurationItem) other;
-            return this._value.toDurationFrom(now).compareTo(otherDuration.getValue().toDurationFrom(now));
+            return this.getValue().toDurationFrom(now).compareTo(otherDuration.getValue().toDurationFrom(now));
         }
-        throw new IteratorFlowException("Cannot compare item of type duration with item of type " +
-                ItemTypes.getItemTypeName(other.getClass().getSimpleName()));
+        throw new IteratorFlowException("Cannot compare item of type " + ItemTypes.getItemTypeName(this.getClass().getSimpleName()) +
+                " with item of type " + ItemTypes.getItemTypeName(other.getClass().getSimpleName()));
     }
 
     @Override
     public Item compareItem(Item other, OperationalExpressionBase.Operator operator, IteratorMetadata metadata) {
         if (!other.isDuration()) {
-            throw new UnexpectedTypeException("Invalid args for duration comparison " + this.serialize() +
-                    ", " + other.serialize(), metadata);
+            throw new UnexpectedTypeException("\"" + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                    + "\": invalid type: can not compare for equality to type \""
+                    + ItemTypes.getItemTypeName(other.getClass().getSimpleName()) + "\"", metadata);
         }
         switch (operator) {
             case VC_EQ:
             case GC_EQ:
-                return ItemFactory.getInstance().createBooleanItem(this.equals(other));
             case VC_NE:
             case GC_NE:
-                return ItemFactory.getInstance().createBooleanItem(!this.equals(other));
+                return operator.apply(this, other);
         }
-        throw new UnexpectedTypeException("Invalid args for duration comparison " + this.serialize() +
-                ", " + other.serialize(), metadata);
+        throw new UnexpectedTypeException("\"" + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                + "\": invalid type: can not compare for equality to type \""
+                + ItemTypes.getItemTypeName(other.getClass().getSimpleName()) + "\"", metadata);
     }
 }

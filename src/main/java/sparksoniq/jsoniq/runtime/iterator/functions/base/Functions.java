@@ -29,7 +29,9 @@ import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayFlattenFunctionI
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayMembersFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArraySizeFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.booleans.BooleanFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.durations.DayTimeDurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.DurationFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.durations.YearMonthDurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.AbsFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.CeilingFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.FloorFunctionIterator;
@@ -133,6 +135,8 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MEMBERS;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MIN;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DURATION;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.YEARMONTHDURATION;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DAYTIMEDURATION;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.NORMALIZESPACE;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.NULL;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ONEORMORE;
@@ -160,6 +164,7 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.TOKENIZE;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.VALUES;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ZEROORONE;
+
 
 public class Functions {
     private static HashMap<SparksoniqFunctionSignature, Class<? extends RuntimeIterator>> buildInFunctions;
@@ -238,6 +243,8 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(MATCHES, 2), MatchesFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(CONTAINS, 2), ContainsFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(DURATION, 1), DurationFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(YEARMONTHDURATION, 1), YearMonthDurationFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(DAYTIMEDURATION, 1), DayTimeDurationFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(NORMALIZESPACE, 1), NormalizeSpaceFunctionIterator.class);
 
         buildInFunctions.put(new SparksoniqFunctionSignature(KEYS, 1), ObjectKeysFunctionIterator.class);
@@ -490,9 +497,18 @@ public class Functions {
          */
         public static final String DURATION = "duration";
         /**
+         * function that returns the yearMonthDuration item from the supplied string
+         */
+        public static final String YEARMONTHDURATION = "yearMonthDuration";
+        /**
+         * function that returns the dayTimeDuration item from the supplied string
+         */
+        public static final String DAYTIMEDURATION = "dayTimeDuration";
+        /**
          * function that normalizes spaces in a string
          */
         public static final String NORMALIZESPACE = "normalize-space";
+
 
         /**
          * function that returns the keys of a Json Object

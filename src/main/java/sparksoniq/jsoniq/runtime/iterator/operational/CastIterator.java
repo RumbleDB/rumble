@@ -32,6 +32,8 @@ public class CastIterator extends UnaryOperationIterator{
         PRIMITIVE_NAME_TYPE_MAP.put("BooleanItem", BooleanItem.class);
         PRIMITIVE_NAME_TYPE_MAP.put("NullItem", NullItem.class);
         PRIMITIVE_NAME_TYPE_MAP.put("DurationItem", DurationItem.class);
+        PRIMITIVE_NAME_TYPE_MAP.put("YearMonthDurationItem", YearMonthDurationItem.class);
+        PRIMITIVE_NAME_TYPE_MAP.put("DayTimeDurationItem", DayTimeDurationItem.class);
     }
 
     public CastIterator(RuntimeIterator child, AtomicType atomicType, IteratorMetadata iteratorMetadata) {

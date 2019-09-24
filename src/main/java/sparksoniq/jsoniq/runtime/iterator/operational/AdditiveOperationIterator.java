@@ -21,6 +21,7 @@
 package sparksoniq.jsoniq.runtime.iterator.operational;
 
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.item.DecimalItem;
@@ -36,6 +37,7 @@ import java.lang.reflect.Type;
 import java.math.BigDecimal;
 
 import org.rumbledb.api.Item;
+import sparksoniq.semantics.types.ItemTypes;
 
 
 public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
@@ -54,45 +56,13 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-
-            Type returnType = getNumericResultType(_left, _right);
-            if (returnType.equals(IntegerItem.class)) {
-                try {
-                    int l = _left.castToIntegerValue();
-                    int r = _right.castToIntegerValue();
-                    return this._operator == OperationalExpressionBase.Operator.PLUS ?
-                            ItemFactory.getInstance().createIntegerItem(l + r) :
-                            ItemFactory.getInstance().createIntegerItem(l - r);
-
-                } catch (IteratorFlowException e) {
-                    throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-                }
-            } else if (returnType.equals(DoubleItem.class)) {
-                try {
-                    double l = _left.castToDoubleValue();
-                    double r = _right.castToDoubleValue();
-                    return this._operator == OperationalExpressionBase.Operator.PLUS ?
-                            ItemFactory.getInstance().createDoubleItem(l + r) :
-                            ItemFactory.getInstance().createDoubleItem(l - r);
-
-                } catch (IteratorFlowException e) {
-                    throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-                }
-            } else if (returnType.equals(DecimalItem.class)) {
-                try {
-                    BigDecimal l = _left.castToDecimalValue();
-                    BigDecimal r = _right.castToDecimalValue();
-                    return this._operator == OperationalExpressionBase.Operator.PLUS ?
-                            ItemFactory.getInstance().createDecimalItem(l.add(r)) :
-                            ItemFactory.getInstance().createDecimalItem(l.subtract(r));
-
-                } catch (IteratorFlowException e) {
-                    throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-                }
-            } else {
-                throw new IteratorFlowException("Additive expression has non numeric args", getMetadata());
+            try {
+                return _operator.apply(_left, _right);
+            } catch (ClassCastException | IteratorFlowException e) {
+                throw new UnexpectedTypeException(" \"add\": operation not possible with parameters of type \""
+                        + ItemTypes.getItemTypeName(_left.getClass().getSimpleName()) + "\" and \""
+                        + ItemTypes.getItemTypeName(_right.getClass().getSimpleName()) + "\"", getMetadata());
             }
-
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
     }
@@ -109,11 +79,11 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
         } else {
             _left = _leftIterator.next();
             _right = _rightIterator.next();
-            if (_leftIterator.hasNext() || _rightIterator.hasNext() || !_left.isNumeric() || !_right.isNumeric())
-                throw new UnexpectedTypeException("Additive expression has non numeric args " +
-                        _left.serialize() + ", " + _right.serialize(), getMetadata());
-
+            this.checkBinaryOperation(_left, _right, _operator);
             this._hasNext = true;
+            if (_leftIterator.hasNext() || _rightIterator.hasNext())
+                throw new UnexpectedTypeException("Sequence of more than one item can not be promoted to " +
+                        "parameter type atomic of function add()", getMetadata());
         }
         _leftIterator.close();
         _rightIterator.close();

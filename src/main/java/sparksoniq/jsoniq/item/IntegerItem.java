@@ -165,4 +165,46 @@ public class IntegerItem extends AtomicItem {
         }
         return operator.apply(this, other);
     }
+
+
+    @Override
+    public Item add(Item other) {
+        if (other.isDouble() || other.isDecimal()) return other.add(this);
+        return ItemFactory.getInstance().createIntegerItem(this.getIntegerValue() + other.castToIntegerValue());
+    }
+
+    @Override
+    public Item subtract(Item other, boolean inverted) {
+        if (other.isDouble() || other.isDecimal()) return other.subtract(this, true);
+        return ItemFactory.getInstance().createIntegerItem(this.getIntegerValue() - other.castToIntegerValue());
+    }
+
+    @Override
+    public Item multiply(Item other) {
+        if (other.isDouble() || other.isDecimal() || other.isYearMonthDuration() || other.isDayTimeDuration()) return other.multiply(this);
+        return ItemFactory.getInstance().createIntegerItem(this.getIntegerValue() * other.castToIntegerValue());
+    }
+
+    @Override
+    public Item divide(Item other, boolean inverted) {
+        if (other.isDouble() || other.isDecimal()) return other.divide(this, true);
+        BigDecimal bdResult = this.castToDecimalValue().divide(other.castToDecimalValue(), 10, BigDecimal.ROUND_HALF_UP);
+        if (bdResult.stripTrailingZeros().scale() <= 0) {
+            return ItemFactory.getInstance().createIntegerItem(bdResult.intValueExact());
+        } else {
+            return ItemFactory.getInstance().createDecimalItem(bdResult);
+        }
+    }
+
+    @Override
+    public Item modulo(Item other, boolean inverted) {
+        if (other.isDouble() || other.isDecimal()) return other.modulo(this, true);
+        return ItemFactory.getInstance().createIntegerItem(this.getIntegerValue() % other.castToIntegerValue());
+    }
+
+    @Override
+    public Item idivide(Item other, boolean inverted) {
+        if (other.isDouble() || other.isDecimal()) return other.idivide(this, true);
+        return ItemFactory.getInstance().createIntegerItem(this.getIntegerValue() / other.castToIntegerValue());
+    }
 }

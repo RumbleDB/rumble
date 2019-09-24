@@ -98,6 +98,10 @@ public class StringItem extends AtomicItem {
                 Double.parseDouble(this._value);
             } else if (type.getType() == AtomicTypes.DurationItem) {
                 DurationItem.getDurationFromString(this._value, AtomicTypes.DurationItem);
+            } else if (type.getType() == AtomicTypes.YearMonthDurationItem) {
+                DurationItem.getDurationFromString(this._value, AtomicTypes.YearMonthDurationItem);
+            } else if (type.getType() == AtomicTypes.DayTimeDurationItem) {
+                DurationItem.getDurationFromString(this._value, AtomicTypes.DayTimeDurationItem);
             }
             else return isBooleanLiteral(this._value);
         } catch (IllegalArgumentException e) {

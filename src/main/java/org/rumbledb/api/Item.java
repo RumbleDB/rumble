@@ -313,15 +313,6 @@ public abstract class Item implements SerializableItem {
     }
 
     /**
-     * Tests whether the item is an atomic item of type duration.
-     *
-     * @return true if it is an atomic item of type duration, false otherwise.
-     */
-    public boolean isDuration() {
-        return false;
-    }
-
-    /**
      * Tests whether the item is an atomic item of type double.
      * 
      * @return true if it is an atomic item of type double, false otherwise.
@@ -336,6 +327,33 @@ public abstract class Item implements SerializableItem {
      * @return true if it is an atomic item of type decimal, false otherwise.
      */
     public boolean isDecimal() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an atomic item of type duration.
+     *
+     * @return true if it is an atomic item of type duration, false otherwise.
+     */
+    public boolean isDuration() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an atomic item of type yearMonthDuration.
+     *
+     * @return true if it is an atomic item of type yearMonthDuration, false otherwise.
+     */
+    public boolean isYearMonthDuration() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an atomic item of type dayTimeDuration.
+     *
+     * @return true if it is an atomic item of type dayTimeDuration, false otherwise.
+     */
+    public boolean isDayTimeDuration() {
         return false;
     }
 
@@ -365,4 +383,12 @@ public abstract class Item implements SerializableItem {
      */
     @Override
     public abstract int hashCode();
+
+
+    public Item add(Item other) { throw new IteratorFlowException("Operation not defined"); }
+    public Item subtract(Item other, boolean negated) { throw new IteratorFlowException("Operation not defined"); }
+    public Item multiply(Item other) { throw new IteratorFlowException("Operation not defined"); }
+    public Item divide(Item other, boolean inverted) { throw new IteratorFlowException("Operation not defined"); }
+    public Item modulo(Item other, boolean inverted) { throw new IteratorFlowException("Operation not defined"); }
+    public Item idivide(Item other, boolean inverted) { throw new IteratorFlowException("Operation not defined"); }
 }

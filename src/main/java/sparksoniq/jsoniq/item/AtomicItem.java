@@ -54,4 +54,7 @@ public abstract class AtomicItem extends Item {
     public AtomicItem createFromDecimal(DecimalItem decimalItem) {return null;}
     public AtomicItem createFromDouble(DoubleItem doubleItem) {return null;}
     public AtomicItem createFromDuration(DurationItem durationItem) {return null;}
+    public AtomicItem createFromYearMonthDuration(YearMonthDurationItem yearMonthDurationItem) {return null;}
+    public AtomicItem createFromDayTimeDuration(DayTimeDurationItem dayTimeDurationItem) {return null;}
+
 }

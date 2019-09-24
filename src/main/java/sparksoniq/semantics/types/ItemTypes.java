@@ -36,13 +36,16 @@ public enum ItemTypes {
     BooleanItem,
 
     DurationItem,
+    YearMonthDurationItem,
+    DayTimeDurationItem,
 
     NullItem;
 
     public static String getItemTypeName(String fullTypeName){
         String itemPostfix = "Item";
         if (fullTypeName.endsWith("Item")) {
-            return fullTypeName.toLowerCase().substring(0, fullTypeName.length()-itemPostfix.length());
+            return Character.toLowerCase(fullTypeName.charAt(0)) +
+                    fullTypeName.substring(1, fullTypeName.length()-itemPostfix.length());
         }
         return fullTypeName;
     }
