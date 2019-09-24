@@ -23,6 +23,11 @@ package sparksoniq.jsoniq.item;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.UnexpectedTypeException;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
+import sparksoniq.jsoniq.runtime.iterator.operational.ComparisonOperationIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.types.AtomicType;
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemType;
@@ -142,28 +147,30 @@ public class DoubleItem extends AtomicItem {
     
     public boolean equals(Object otherItem)
     {
-        if(!(otherItem instanceof Item))
-        {
+        try {
+            return (otherItem instanceof Item) &&
+                    (this.getDoubleValue() == ((Item) otherItem).castToDoubleValue());
+        } catch(IteratorFlowException e) {
             return false;
         }
-        Item o = (Item)otherItem;
-        if(o.isInteger())
-        {
-            return (getDoubleValue() == (double)o.getIntegerValue());
-        }
-        if(o.isDecimal())
-        {
-            return (getDoubleValue() == o.getDecimalValue().doubleValue());
-        }
-        if(o.isDouble())
-        {
-            return (getDoubleValue() == o.getDoubleValue());
-        }
-        return false;
     }
     
     public int hashCode()
     {
         return (int)Math.round(getDoubleValue());
+    }
+
+    @Override
+    public int compareTo(Item other) {
+        return other.isNull() ? 1 : this.castToDecimalValue().compareTo(other.castToDecimalValue());
+    }
+
+    @Override
+    public Item compareItem(Item other, OperationalExpressionBase.Operator operator, IteratorMetadata metadata) {
+        if (!other.isNumeric()) {
+            throw new UnexpectedTypeException("Invalid args for numerics comparison " + this.serialize() +
+                    ", " + other.serialize(), metadata);
+        }
+        return operator.apply(this, other);
     }
 }

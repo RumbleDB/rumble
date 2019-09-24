@@ -24,6 +24,11 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.UnexpectedTypeException;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
+import sparksoniq.jsoniq.runtime.iterator.operational.ComparisonOperationIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.types.AtomicType;
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemType;
@@ -136,23 +141,12 @@ public class DecimalItem extends AtomicItem {
     }
 
     public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item)) {
+        try {
+            return (otherItem instanceof Item) &&
+                    (this.getDecimalValue().equals(((Item) otherItem).castToDecimalValue()));
+        } catch(IteratorFlowException e) {
             return false;
         }
-        Item o = (Item) otherItem;
-        if (o.isInteger()) {
-            if (getDecimalValue().stripTrailingZeros().scale() > 0) {
-                return false;
-            }
-            return getDecimalValue().intValueExact() == o.getIntegerValue();
-        }
-        if (o.isDecimal()) {
-            return (getDecimalValue().equals(o.getDecimalValue()));
-        }
-        if (o.isDouble()) {
-            return (o.getDoubleValue() == getDecimalValue().doubleValue());
-        }
-        return false;
     }
 
     public int hashCode() {
@@ -161,4 +155,19 @@ public class DecimalItem extends AtomicItem {
         }
         return getDecimalValue().hashCode();
     }
+
+    @Override
+    public int compareTo(Item other) {
+        return other.isNull() ? 1 : this.castToDecimalValue().compareTo(other.castToDecimalValue());
+    }
+
+    @Override
+    public Item compareItem(Item other, OperationalExpressionBase.Operator operator, IteratorMetadata metadata) {
+        if (!other.isNumeric()) {
+            throw new UnexpectedTypeException("Invalid args for numerics comparison " + this.serialize() +
+                    ", " + other.serialize(), metadata);
+        }
+        return operator.apply(this, other);
+    }
+
 }

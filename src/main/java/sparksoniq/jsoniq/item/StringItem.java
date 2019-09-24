@@ -27,6 +27,10 @@ import org.rumbledb.api.Item;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import sparksoniq.exceptions.UnexpectedTypeException;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
+import sparksoniq.jsoniq.runtime.iterator.operational.ComparisonOperationIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.types.AtomicType;
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemType;
@@ -90,10 +94,11 @@ public class StringItem extends AtomicItem {
             else if (type.getType() == AtomicTypes.DecimalItem) {
                 if (this._value.contains("e") || this._value.contains("E")) return false;
                 Float.parseFloat(this._value);
-            } else if (type.getType() == AtomicTypes.DoubleItem)
+            } else if (type.getType() == AtomicTypes.DoubleItem) {
                 Double.parseDouble(this._value);
+            }
             else return isBooleanLiteral(this._value);
-        } catch (NumberFormatException e) {
+        } catch (IllegalArgumentException e) {
             return false;
         }
         return true;
@@ -166,5 +171,20 @@ public class StringItem extends AtomicItem {
     public int hashCode()
     {
         return getStringValue().hashCode();
+    }
+
+
+    @Override
+    public int compareTo(Item other) {
+        return other.isNull() ? 1 : this.getStringValue().compareTo(other.getStringValue());
+    }
+
+    @Override
+    public Item compareItem(Item other, OperationalExpressionBase.Operator operator, IteratorMetadata metadata) {
+        if (!other.isString()) {
+            throw new UnexpectedTypeException("Invalid args for string comparison " + this.serialize() +
+                    ", " + other.serialize(), metadata);
+        }
+        return operator.apply(this, other);
     }
 }

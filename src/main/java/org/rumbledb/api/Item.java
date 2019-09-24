@@ -21,6 +21,9 @@
 package org.rumbledb.api;
 
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
+import sparksoniq.jsoniq.runtime.iterator.operational.ComparisonOperationIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.types.ItemType;
 
 import java.io.IOException;
@@ -104,32 +107,19 @@ public abstract class Item implements SerializableItem {
      * @return -1 if this &lt; other; 0 if this == other; 1 if this &gt; other;
      */
     public int compareTo(Item other) {
-        int result;
-        if (this.isNumeric() && other.isNumeric()) {
-            BigDecimal value1 = this.castToDecimalValue();
-            BigDecimal value2 = other.castToDecimalValue();
-            result = value1.compareTo(value2);
-        } else if (this.isBoolean() && other.isBoolean()) {
-            Boolean value1 = this.getBooleanValue();
-            Boolean value2 = other.getBooleanValue();
-            result = value1.compareTo(value2);
-        } else if (this.isString() && other.isString()) {
-            String value1 = this.getStringValue();
-            String value2 = other.getStringValue();
-            result = value1.compareTo(value2);
-        } else if (this.isNull() || other.isNull()) {
-            // null equals null
-            if (this.isNull() && other.isNull()) {
-                result = 0;
-            } else if (this.isNull()) {
-                result = -1;
-            } else {
-                result = 1;
-            }
-        } else {
-            result = this.serialize().compareTo(other.serialize());
-        }
-        return result;
+        if (other.isNull()) return 1;
+        return this.serialize().compareTo(other.serialize());
+    }
+
+    /**
+     * Function that compare two items according to the operator defined for the comparison.
+     * @param other another Item
+     * @param operator the operator used for the comparison
+     * @param metadata Metadata useful for throwing exceptions
+     * @return BooleanItem result of the comparison
+     */
+    public Item compareItem(Item other, OperationalExpressionBase.Operator operator, IteratorMetadata metadata) {
+        return operator.apply(this, other);
     }
 
     /**
@@ -269,9 +259,9 @@ public abstract class Item implements SerializableItem {
     }
 
     /**
-     * Tests whether the item is an array.
+     * Tests whether the item is an object.
      *
-     * @return true if it is an array, false otherwise.
+     * @return true if it is an object, false otherwise.
      */
     public boolean isObject() {
         return false;

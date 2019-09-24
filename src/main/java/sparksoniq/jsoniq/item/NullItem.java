@@ -25,6 +25,9 @@ import org.rumbledb.api.Item;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
+import sparksoniq.jsoniq.runtime.iterator.operational.ComparisonOperationIterator;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.types.AtomicType;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
@@ -41,6 +44,11 @@ public class NullItem extends AtomicItem {
     @Override
     public boolean isNull() {
         return true;
+    }
+
+    @Override
+    public boolean getEffectiveBooleanValue() {
+        return false;
     }
 
     @Override
@@ -61,11 +69,6 @@ public class NullItem extends AtomicItem {
     @Override
     public String serialize() {
         return "null";
-    }
-
-    @Override
-    public boolean getEffectiveBooleanValue() {
-        return false;
     }
 
     @Override
@@ -93,4 +96,15 @@ public class NullItem extends AtomicItem {
     {
         return 0;
     }
+
+    @Override
+    public int compareTo(Item other) {
+        if (other.isNull()) return 0;
+        return -1;
+    }
+
+    @Override
+    public Item compareItem(Item other, OperationalExpressionBase.Operator operator, IteratorMetadata metadata) {
+        return operator.apply(this, other);
+	}
 }
