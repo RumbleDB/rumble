@@ -83,7 +83,6 @@ public class DurationItem extends AtomicItem {
             return this.getValue().toDurationFrom(now).isEqual(otherDuration.getValue().toDurationFrom(now));
         }
         return false;
-
     }
 
     @Override
@@ -102,9 +101,9 @@ public class DurationItem extends AtomicItem {
                 type.getType().equals(AtomicTypes.StringItem)) return true;
         try {
             if (type.getType() == AtomicTypes.YearMonthDurationItem) {
-                DurationItem.getDurationFromString(this._value.toString(), AtomicTypes.YearMonthDurationItem);
+                getDurationFromString(this.getValue().toString(), AtomicTypes.YearMonthDurationItem);
             } else if (type.getType() == AtomicTypes.DayTimeDurationItem) {
-                DurationItem.getDurationFromString(this._value.toString(), AtomicTypes.DayTimeDurationItem);
+                getDurationFromString(this.getValue().toString(), AtomicTypes.DayTimeDurationItem);
             }
         } catch (IllegalArgumentException e) {
             return false;

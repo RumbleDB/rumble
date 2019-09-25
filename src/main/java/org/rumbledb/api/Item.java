@@ -357,6 +357,15 @@ public abstract class Item implements SerializableItem {
         return false;
     }
 
+    /**
+     * Tests whether the item is an atomic item of type dateTime.
+     *
+     * @return true if it is an atomic item of type dateTime, false otherwise.
+     */
+    public boolean isDateTime() {
+        return false;
+    }
+
     private void readObject(ObjectInputStream aInputStream)
             throws ClassNotFoundException, IOException {
         aInputStream.defaultReadObject();

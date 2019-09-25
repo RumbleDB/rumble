@@ -90,20 +90,22 @@ public class StringItem extends AtomicItem {
             return true;
         try {
             if (type.getType() == AtomicTypes.IntegerItem)
-                Integer.parseInt(this._value);
+                Integer.parseInt(this.getValue());
             else if (type.getType() == AtomicTypes.DecimalItem) {
-                if (this._value.contains("e") || this._value.contains("E")) return false;
-                Float.parseFloat(this._value);
+                if (this.getValue().contains("e") || this.getValue().contains("E")) return false;
+                Float.parseFloat(this.getValue());
             } else if (type.getType() == AtomicTypes.DoubleItem) {
-                Double.parseDouble(this._value);
+                Double.parseDouble(this.getValue());
             } else if (type.getType() == AtomicTypes.DurationItem) {
-                DurationItem.getDurationFromString(this._value, AtomicTypes.DurationItem);
+                DurationItem.getDurationFromString(this.getValue(), AtomicTypes.DurationItem);
             } else if (type.getType() == AtomicTypes.YearMonthDurationItem) {
-                DurationItem.getDurationFromString(this._value, AtomicTypes.YearMonthDurationItem);
+                DurationItem.getDurationFromString(this.getValue(), AtomicTypes.YearMonthDurationItem);
             } else if (type.getType() == AtomicTypes.DayTimeDurationItem) {
-                DurationItem.getDurationFromString(this._value, AtomicTypes.DayTimeDurationItem);
+                DurationItem.getDurationFromString(this.getValue(), AtomicTypes.DayTimeDurationItem);
+            } else if (type.getType() == AtomicTypes.DateTimeItem) {
+                DateTimeItem.getDateTimeFromString(this.getValue());
             }
-            else return isBooleanLiteral(this._value);
+            else return isBooleanLiteral(this.getValue());
         } catch (IllegalArgumentException e) {
             return false;
         }
@@ -151,13 +153,27 @@ public class StringItem extends AtomicItem {
     }
 
     @Override
+    public AtomicItem createFromDayTimeDuration(DayTimeDurationItem dayTimeDurationItem) {
+        return ItemFactory.getInstance().createStringItem(dayTimeDurationItem.serialize());
+    }
+
+    @Override
+    public AtomicItem createFromYearMonthDuration(YearMonthDurationItem yearMonthDurationItem) {
+        return ItemFactory.getInstance().createStringItem(yearMonthDurationItem.serialize());
+    }
+
+    public AtomicItem createFromDateTime(DateTimeItem dateTimeItem) {
+        return ItemFactory.getInstance().createStringItem(dateTimeItem.serialize());
+    }
+
+    @Override
     public String serialize() {
-        return _value;
+        return getValue();
     }
 
     @Override
     public void write(Kryo kryo, Output output) {
-        output.writeString(this._value);
+        output.writeString(this.getValue());
     }
 
     @Override

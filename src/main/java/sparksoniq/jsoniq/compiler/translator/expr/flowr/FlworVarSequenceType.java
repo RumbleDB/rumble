@@ -86,6 +86,8 @@ public class FlworVarSequenceType extends Expression {
                 return ItemTypes.YearMonthDurationItem;
             case "daytimeduration":
                 return ItemTypes.DayTimeDurationItem;
+            case "datetime":
+                return ItemTypes.DateTimeItem;
 
             default:
                 return ItemTypes.Item;

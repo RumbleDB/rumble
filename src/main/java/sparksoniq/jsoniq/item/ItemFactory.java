@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
+import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.rumbledb.api.Item;
 
@@ -62,6 +63,8 @@ public class ItemFactory {
     public DayTimeDurationItem createDayTimeDurationItem(Period p) {
         return new DayTimeDurationItem(p);
     }
+
+    public DateTimeItem createDateTimeItem(DateTime dt) { return new DateTimeItem(dt);}
 
     public Item createObjectItem() {
         return new ObjectItem();

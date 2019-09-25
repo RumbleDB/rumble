@@ -503,6 +503,13 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
+	@Override public T visitKeyWorkDateTime(JsoniqParser.KeyWorkDateTimeContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
 	@Override public T visitKeyWordDayTimeDuration(JsoniqParser.KeyWordDayTimeDurationContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
