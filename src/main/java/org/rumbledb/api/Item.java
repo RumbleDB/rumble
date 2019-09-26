@@ -376,6 +376,15 @@ public abstract class Item implements SerializableItem {
     }
 
     /**
+     * Tests whether the item is an atomic item of type time.
+     *
+     * @return true if it is an atomic item of type time, false otherwise.
+     */
+    public boolean isTime() {
+        return false;
+    }
+
+    /**
      * Tests whether the item contains a representation of date or time (or both).
      *
      * @return true if it is an atomic item of type time, date or dateTime, false otherwise.

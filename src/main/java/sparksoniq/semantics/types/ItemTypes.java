@@ -41,6 +41,7 @@ public enum ItemTypes {
 
     DateTimeItem,
     DateItem,
+    TimeItem,
 
     NullItem;
 

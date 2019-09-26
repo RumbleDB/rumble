@@ -440,6 +440,12 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitKeyWordDate(JsoniqParser.KeyWordDateContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#keyWordTime}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitKeyWordTime(JsoniqParser.KeyWordTimeContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#keyWordDayTimeDuration}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

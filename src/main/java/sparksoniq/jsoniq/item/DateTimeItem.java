@@ -39,6 +39,7 @@ public class DateTimeItem extends AtomicItem {
     private static final String timeFrag = "((" + hourFrag + ":" + minuteFrag + ":" + secondFrag + ")|(" + endOfDayFrag + "))";
 
     private static final String dateLexicalRep = "(" + dateFrag + "(" + timezoneFrag +")?)";
+    private static final String timeLexicalRep = "(" + timeFrag + "(" + timezoneFrag + ")?)";
     private static final String dateTimeLexicalRep = dateFrag + "T" + timeFrag+ "(" + timezoneFrag + ")?";
 
     private static final long serialVersionUID = 1L;
@@ -74,6 +75,7 @@ public class DateTimeItem extends AtomicItem {
     public boolean isCastableAs(AtomicType type) {
         return type.getType().equals(AtomicTypes.DateTimeItem) ||
                 type.getType().equals(AtomicTypes.DateItem) ||
+                type.getType().equals(AtomicTypes.TimeItem) ||
                 type.getType().equals(AtomicTypes.StringItem);
     }
 
@@ -148,6 +150,8 @@ public class DateTimeItem extends AtomicItem {
                 DateTimeParser dtParser = new DateTimeFormatterBuilder().appendOptional(
                         ((new DateTimeFormatterBuilder()).appendTimeZoneOffset("Z", true, 2, 4).toFormatter()).getParser()).toParser();
                 return (new DateTimeFormatterBuilder()).append(dateElementParser()).appendOptional(dtParser).toFormatter().withOffsetParsed();
+            case TimeItem:
+                return ISODateTimeFormat.timeParser().withOffsetParsed();
             default:
                 throw new IllegalArgumentException();
         }
@@ -159,6 +163,8 @@ public class DateTimeItem extends AtomicItem {
                 return Pattern.compile(dateTimeLexicalRep).matcher(dateTime).matches();
             case DateItem:
                 return Pattern.compile(dateLexicalRep).matcher(dateTime).matches();
+            case TimeItem:
+                return Pattern.compile(timeLexicalRep).matcher(dateTime).matches();
         }
         return false;
     }

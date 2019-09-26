@@ -179,6 +179,9 @@ keyWordDateTime
 keyWordDate
          : 'date';
 
+keyWordTime
+         : 'time';
+
 keyWordDayTimeDuration
        : 'dayTimeDuration';
 
@@ -189,14 +192,14 @@ simpleType
          : 'atomic' | 'string' | 'integer'
          | 'decimal' | 'double' | keyWordBoolean | keyWordDuration
          | keyWordYearMonthDuration | keyWordDayTimeDuration
-         | keyWordDateTime | keyWordDate;
+         | keyWordDateTime | keyWordDate | keyWordTime;
 
 atomicType
          : simpleType | NullLiteral;
 
 nCNameOrKeyWord
          : NCName | keyWordBoolean | keyWordDuration | keyWordYearMonthDuration
-         | keyWordDayTimeDuration | keyWordDateTime | keyWordDate;
+         | keyWordDayTimeDuration | keyWordDateTime | keyWordDate | keyWordTime;
 
 pairConstructor
          :  ( lhs=exprSingle | name=NCName ) (':' | '?') rhs=exprSingle;

@@ -106,6 +106,8 @@ public class StringItem extends AtomicItem {
                 DateTimeItem.getDateTimeFromString(this.getValue(), AtomicTypes.DateTimeItem);
             } else if (type.getType() == AtomicTypes.DateItem) {
                 DateTimeItem.getDateTimeFromString(this.getValue(), AtomicTypes.DateItem);
+            } else if (type.getType() == AtomicTypes.TimeItem) {
+                DateTimeItem.getDateTimeFromString(this.getValue(), AtomicTypes.TimeItem);
             }
             else return isBooleanLiteral(this.getValue());
         } catch (IllegalArgumentException e) {
@@ -172,6 +174,11 @@ public class StringItem extends AtomicItem {
     @Override
     public AtomicItem createFromDate(DateItem dateItem) {
         return ItemFactory.getInstance().createStringItem(dateItem.serialize());
+    }
+
+    @Override
+    public AtomicItem createFromTime(TimeItem timeItem) {
+        return ItemFactory.getInstance().createStringItem(timeItem.serialize());
     }
 
     @Override

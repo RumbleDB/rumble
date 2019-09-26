@@ -68,6 +68,8 @@ public class ItemFactory {
 
     public DateItem createDateItem(DateTime dt) {return new DateItem(dt);}
 
+    public TimeItem createTimeItem(DateTime dt) {return new TimeItem(dt);}
+
     public Item createObjectItem() {
         return new ObjectItem();
     }
