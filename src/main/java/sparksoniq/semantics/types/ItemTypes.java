@@ -40,6 +40,7 @@ public enum ItemTypes {
     DayTimeDurationItem,
 
     DateTimeItem,
+    DateItem,
 
     NullItem;
 

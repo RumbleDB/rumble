@@ -35,6 +35,7 @@ public class CastIterator extends UnaryOperationIterator{
         PRIMITIVE_NAME_TYPE_MAP.put("YearMonthDurationItem", YearMonthDurationItem.class);
         PRIMITIVE_NAME_TYPE_MAP.put("DayTimeDurationItem", DayTimeDurationItem.class);
         PRIMITIVE_NAME_TYPE_MAP.put("DateTimeItem", DateTimeItem.class);
+        PRIMITIVE_NAME_TYPE_MAP.put("DateItem", DateItem.class);
     }
 
     public CastIterator(RuntimeIterator child, AtomicType atomicType, IteratorMetadata iteratorMetadata) {
@@ -75,7 +76,7 @@ public class CastIterator extends UnaryOperationIterator{
             if (atomicItem.isCastableAs(_atomicType)) {
                 try {
                     return atomicItem.castAs((AtomicItem) classToLoad.newInstance());
-                } catch (InstantiationException | IllegalAccessException e) {
+                } catch (InstantiationException | IllegalAccessException | IllegalArgumentException e) {
                     throw new CastException(message, getMetadata());
                 }
 

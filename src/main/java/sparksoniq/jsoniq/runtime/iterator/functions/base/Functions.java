@@ -30,6 +30,7 @@ import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayMembersFunctionI
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArraySizeFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.booleans.BooleanFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.datetime.DateTimeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.DateFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.DayTimeDurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.DurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.YearMonthDurationFunctionIterator;
@@ -139,6 +140,7 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.YEARMONTHDURATION;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DAYTIMEDURATION;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DATETIME;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DATE;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.NORMALIZESPACE;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.NULL;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ONEORMORE;
@@ -248,6 +250,7 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(YEARMONTHDURATION, 1), YearMonthDurationFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(DAYTIMEDURATION, 1), DayTimeDurationFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(DATETIME, 1), DateTimeFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(DATE, 1), DateFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(NORMALIZESPACE, 1), NormalizeSpaceFunctionIterator.class);
 
         buildInFunctions.put(new SparksoniqFunctionSignature(KEYS, 1), ObjectKeysFunctionIterator.class);
@@ -511,6 +514,10 @@ public class Functions {
          * function that returns the dateTime item from the supplied string
          */
         public static final String DATETIME = "dateTime";
+        /**
+         * function that returns the date item from the supplied string
+         */
+        public static final String DATE = "date";
         /**
          * function that normalizes spaces in a string
          */

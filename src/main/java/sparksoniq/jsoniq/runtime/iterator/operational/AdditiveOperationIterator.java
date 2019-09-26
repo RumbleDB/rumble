@@ -59,7 +59,8 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
             try {
                 return _operator.apply(_left, _right);
             } catch (ClassCastException | IteratorFlowException e) {
-                throw new UnexpectedTypeException(" \"add\": operation not possible with parameters of type \""
+                throw new UnexpectedTypeException(" \"" + _operator.name().toLowerCase() +
+                        "\": operation not possible with parameters of type \""
                         + ItemTypes.getItemTypeName(_left.getClass().getSimpleName()) + "\" and \""
                         + ItemTypes.getItemTypeName(_right.getClass().getSimpleName()) + "\"", getMetadata());
             }

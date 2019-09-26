@@ -103,7 +103,9 @@ public class StringItem extends AtomicItem {
             } else if (type.getType() == AtomicTypes.DayTimeDurationItem) {
                 DurationItem.getDurationFromString(this.getValue(), AtomicTypes.DayTimeDurationItem);
             } else if (type.getType() == AtomicTypes.DateTimeItem) {
-                DateTimeItem.getDateTimeFromString(this.getValue());
+                DateTimeItem.getDateTimeFromString(this.getValue(), AtomicTypes.DateTimeItem);
+            } else if (type.getType() == AtomicTypes.DateItem) {
+                DateTimeItem.getDateTimeFromString(this.getValue(), AtomicTypes.DateItem);
             }
             else return isBooleanLiteral(this.getValue());
         } catch (IllegalArgumentException e) {
@@ -162,8 +164,14 @@ public class StringItem extends AtomicItem {
         return ItemFactory.getInstance().createStringItem(yearMonthDurationItem.serialize());
     }
 
+    @Override
     public AtomicItem createFromDateTime(DateTimeItem dateTimeItem) {
         return ItemFactory.getInstance().createStringItem(dateTimeItem.serialize());
+    }
+
+    @Override
+    public AtomicItem createFromDate(DateItem dateItem) {
+        return ItemFactory.getInstance().createStringItem(dateItem.serialize());
     }
 
     @Override

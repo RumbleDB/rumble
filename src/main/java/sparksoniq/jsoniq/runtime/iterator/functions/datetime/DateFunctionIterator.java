@@ -13,14 +13,13 @@ import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterat
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.types.AtomicTypes;
 
-
 import java.util.List;
 
-public class DateTimeFunctionIterator extends LocalFunctionCallIterator {
+public class DateFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
 
-    public DateTimeFunctionIterator(
+    public DateFunctionIterator(
             List<RuntimeIterator> arguments,
             IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
@@ -36,20 +35,20 @@ public class DateTimeFunctionIterator extends LocalFunctionCallIterator {
                     StringItem.class);
 
             if (stringItem == null) {
-                throw new UnknownFunctionCallException("dateTime", 0, getMetadata());
+                throw new UnknownFunctionCallException("date", 0, getMetadata());
             }
 
             try {
-                DateTime dateTime = DateTimeItem.getDateTimeFromString(stringItem.getStringValue(), AtomicTypes.DateTimeItem);
-                return ItemFactory.getInstance().createDateTimeItem(dateTime);
+                DateTime dateTime = DateTimeItem.getDateTimeFromString(stringItem.getStringValue(), AtomicTypes.DateItem);
+                return ItemFactory.getInstance().createDateItem(dateTime);
             } catch (IllegalArgumentException e) {
                 String message = String.format("\"%s\": value of type %s is not castable to type %s",
-                        stringItem.serialize(), "string", "dateTime");
+                        stringItem.serialize(), "string", "date");
                 throw new CastException(message, getMetadata());
             }
         } else
             throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " dateTime function",
+                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " date function",
                     getMetadata());
     }
 }

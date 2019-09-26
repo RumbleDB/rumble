@@ -57,4 +57,5 @@ public abstract class AtomicItem extends Item {
     public AtomicItem createFromYearMonthDuration(YearMonthDurationItem yearMonthDurationItem) {return null;}
     public AtomicItem createFromDayTimeDuration(DayTimeDurationItem dayTimeDurationItem) {return null;}
     public AtomicItem createFromDateTime(DateTimeItem dateTimeItem) {return null;}
+    public AtomicItem createFromDate(DateItem dateItem) {return null;}
 }

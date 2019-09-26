@@ -85,7 +85,7 @@ public class YearMonthDurationItem extends DurationItem {
 
     @Override
     public Item add(Item other) {
-        if (other.isDateTime()) return other.add(this);
+        if (other.hasDateOrTime()) return other.add(this);
         return ItemFactory.getInstance().createYearMonthDurationItem(this.getValue().plus(((YearMonthDurationItem) other).getValue()));
     }
 

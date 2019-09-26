@@ -64,7 +64,9 @@ public class ItemFactory {
         return new DayTimeDurationItem(p);
     }
 
-    public DateTimeItem createDateTimeItem(DateTime dt) { return new DateTimeItem(dt);}
+    public DateTimeItem createDateTimeItem(DateTime dt) {return new DateTimeItem(dt);}
+
+    public DateItem createDateItem(DateTime dt) {return new DateItem(dt);}
 
     public Item createObjectItem() {
         return new ObjectItem();
