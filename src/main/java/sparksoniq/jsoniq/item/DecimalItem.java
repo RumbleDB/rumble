@@ -163,7 +163,7 @@ public class DecimalItem extends AtomicItem {
 
     @Override
     public Item compareItem(Item other, OperationalExpressionBase.Operator operator, IteratorMetadata metadata) {
-        if (!other.isNumeric()) {
+        if (!other.isNumeric() && !other.isNull()) {
             throw new UnexpectedTypeException("Invalid args for numerics comparison " + this.serialize() +
                     ", " + other.serialize(), metadata);
         }

@@ -158,6 +158,7 @@ public class DurationItem extends AtomicItem {
 
     @Override
     public int compareTo(Item other) {
+        if (other.isNull()) return 1;
         Instant now = new Instant();
         if (other.isDuration()) {
             DurationItem otherDuration = (DurationItem) other;
@@ -169,17 +170,17 @@ public class DurationItem extends AtomicItem {
 
     @Override
     public Item compareItem(Item other, OperationalExpressionBase.Operator operator, IteratorMetadata metadata) {
-        if (!other.isDuration()) {
+        if (!other.isDuration() && !other.isNull()) {
             throw new UnexpectedTypeException("Invalid args for duration comparison " + this.serialize() +
                     ", " + other.serialize(), metadata);
         }
+        if (other.isNull()) return operator.apply(this, other);
         switch (operator) {
             case VC_EQ:
             case GC_EQ:
-                return ItemFactory.getInstance().createBooleanItem(this.equals(other));
             case VC_NE:
             case GC_NE:
-                return ItemFactory.getInstance().createBooleanItem(!this.equals(other));
+                return operator.apply(this, other);
         }
         throw new UnexpectedTypeException("Invalid args for duration comparison " + this.serialize() +
                 ", " + other.serialize(), metadata);

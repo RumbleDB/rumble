@@ -188,7 +188,7 @@ public class StringItem extends AtomicItem {
 
     @Override
     public Item compareItem(Item other, OperationalExpressionBase.Operator operator, IteratorMetadata metadata) {
-        if (!other.isString()) {
+        if (!other.isString() && !other.isNull()) {
             throw new UnexpectedTypeException("Invalid args for string comparison " + this.serialize() +
                     ", " + other.serialize(), metadata);
         }
