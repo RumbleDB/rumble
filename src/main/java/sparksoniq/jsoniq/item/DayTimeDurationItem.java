@@ -78,7 +78,7 @@ public class DayTimeDurationItem extends DurationItem {
 
     @Override
     public Item compareItem(Item other, OperationalExpressionBase.Operator operator, IteratorMetadata metadata) {
-        if (!other.isDayTimeDuration() && (!other.isDuration() || other.isYearMonthDuration())) {
+        if (!other.isDayTimeDuration() && (!other.isDuration() || other.isYearMonthDuration()) && !other.isNull()) {
             throw new UnexpectedTypeException("\"" + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
                     + "\": invalid type: can not compare for equality to type \""
                     + ItemTypes.getItemTypeName(other.getClass().getSimpleName()) + "\"", metadata);

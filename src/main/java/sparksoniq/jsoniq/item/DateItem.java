@@ -125,6 +125,7 @@ public class DateItem extends AtomicItem {
 
     @Override
     public int compareTo(Item other) {
+        if (other.isNull()) return 1;
         if (other.isDate()) {
             DateItem otherDuration = (DateItem) other;
             return this.getValue().compareTo(otherDuration.getValue());
@@ -135,7 +136,7 @@ public class DateItem extends AtomicItem {
 
     @Override
     public Item compareItem(Item other, OperationalExpressionBase.Operator operator, IteratorMetadata metadata) {
-        if (!other.isDate()) {
+        if (!other.isDate() && !other.isNull()) {
             throw new UnexpectedTypeException("\"" + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
                     + "\": invalid type: can not compare for equality to type \""
                     + ItemTypes.getItemTypeName(other.getClass().getSimpleName()) + "\"", metadata);

@@ -194,6 +194,7 @@ public class DurationItem extends AtomicItem {
 
     @Override
     public int compareTo(Item other) {
+        if (other.isNull()) return 1;
         Instant now = new Instant();
         if (other.isDuration()) {
             DurationItem otherDuration = (DurationItem) other;
@@ -205,11 +206,12 @@ public class DurationItem extends AtomicItem {
 
     @Override
     public Item compareItem(Item other, OperationalExpressionBase.Operator operator, IteratorMetadata metadata) {
-        if (!other.isDuration()) {
+        if (!other.isDuration() && !other.isNull()) {
             throw new UnexpectedTypeException("\"" + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
                     + "\": invalid type: can not compare for equality to type \""
                     + ItemTypes.getItemTypeName(other.getClass().getSimpleName()) + "\"", metadata);
         }
+        if (other.isNull()) return operator.apply(this, other);
         switch (operator) {
             case VC_EQ:
             case GC_EQ:

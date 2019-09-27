@@ -151,7 +151,7 @@ public class BooleanItem extends AtomicItem {
 
     @Override
     public Item compareItem(Item other, OperationalExpressionBase.Operator operator, IteratorMetadata metadata) {
-        if (!other.isBoolean()) {
+        if (!other.isBoolean() && !other.isNull()) {
             throw new UnexpectedTypeException("Invalid args for boolean comparison " + this.serialize() +
                     ", " + other.serialize(), metadata);
         }
