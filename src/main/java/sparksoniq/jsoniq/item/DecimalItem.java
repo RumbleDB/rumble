@@ -142,8 +142,7 @@ public class DecimalItem extends AtomicItem {
 
     public boolean equals(Object otherItem) {
         try {
-            return (otherItem instanceof Item) &&
-                    (this.getDecimalValue().equals(((Item) otherItem).castToDecimalValue()));
+            return (otherItem instanceof Item) && this.compareTo((Item) otherItem) == 0;
         } catch(IteratorFlowException e) {
             return false;
         }
@@ -158,7 +157,7 @@ public class DecimalItem extends AtomicItem {
 
     @Override
     public int compareTo(Item other) {
-        return other.isNull() ? 1 : this.castToDecimalValue().compareTo(other.castToDecimalValue());
+        return other.isNull() ? 1 : this.getDecimalValue().compareTo(other.castToDecimalValue());
     }
 
     @Override

@@ -141,8 +141,7 @@ public class IntegerItem extends AtomicItem {
 
     public boolean equals(Object otherItem) {
         try {
-            return (otherItem instanceof Item) &&
-                    (this.getIntegerValue() == ((Item) otherItem).castToIntegerValue());
+            return (otherItem instanceof Item) && this.compareTo((Item) otherItem) == 0;
         } catch(IteratorFlowException e) {
             return false;
         }
@@ -154,7 +153,7 @@ public class IntegerItem extends AtomicItem {
 
     @Override
     public int compareTo(Item other) {
-        return other.isNull() ? 1 : this.castToDecimalValue().compareTo(other.castToDecimalValue());
+        return other.isNull() ? 1 : Integer.compare(this.getIntegerValue(), other.castToIntegerValue());
     }
 
     @Override
