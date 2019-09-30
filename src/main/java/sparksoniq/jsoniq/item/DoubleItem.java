@@ -71,6 +71,7 @@ public class DoubleItem extends AtomicItem {
     }
 
     public BigDecimal castToDecimalValue() {
+        if (Double.isNaN(this.getDoubleValue()) || Double.isInfinite(this.getDoubleValue())) return super.castToDecimalValue();
         return BigDecimal.valueOf(getDoubleValue());
     }
 
@@ -132,7 +133,11 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public String serialize() {
-        return String.valueOf(_value);
+        if (Double.isNaN(this.getDoubleValue()) || Double.isInfinite(this.getDoubleValue()))
+            return String.valueOf(this.getDoubleValue());
+        boolean negativeZero = this.getDoubleValue() == 0 && String.valueOf(this.getDoubleValue()).charAt(0) == ('-');
+        String doubleString = String.valueOf(this.castToDecimalValue().stripTrailingZeros().toPlainString());
+        return negativeZero ? '-'+doubleString : doubleString;
     }
 
     @Override
@@ -148,8 +153,7 @@ public class DoubleItem extends AtomicItem {
     public boolean equals(Object otherItem)
     {
         try {
-            return (otherItem instanceof Item) &&
-                    (this.getDoubleValue() == ((Item) otherItem).castToDoubleValue());
+            return (otherItem instanceof Item) && this.compareTo((Item) otherItem) == 0;
         } catch(IteratorFlowException e) {
             return false;
         }
@@ -162,7 +166,7 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public int compareTo(Item other) {
-        return other.isNull() ? 1 : this.castToDecimalValue().compareTo(other.castToDecimalValue());
+        return other.isNull() ? 1 : Double.compare(this.getDoubleValue(), ((Item)other).castToDoubleValue());
     }
 
     @Override

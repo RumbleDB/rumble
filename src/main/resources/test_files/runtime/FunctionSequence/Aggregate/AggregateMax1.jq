@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(4, 4.0, 4.0, 4.0, 4, 4.0, 300.0, 5)" :)
+(:JIQS: ShouldRun; Output="(4, 4, 4, 4, 4, 4, 300, 5)" :)
 max((2, 4)),
 max((2, 4.0)),
 max((2, 4e+0)),

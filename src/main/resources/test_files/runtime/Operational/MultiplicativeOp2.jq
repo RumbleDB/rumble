@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(2, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0)" :)
+(:JIQS: ShouldRun; Output="(2, 2, 2, 2, 2, 2, 2)" :)
 1 * 2,
 1 * 2.0,
 1 * 2e0,

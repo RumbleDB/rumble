@@ -109,7 +109,7 @@ postFixExpr: mainExpr=primaryExpr (al=arrayLookup | pr=predicate | ol=objectLook
 arrayLookup: '[' '[' expr ']' ']';
 arrayUnboxing: '[' ']';
 predicate: '[' expr ']';
-objectLookup: '.' ( kw=keyWords | lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | ci=contextItemExpr );
+objectLookup: '.' ( kw=keyWords | lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | ci=contextItemExpr | tkw=typeKeyWords);
 
 primaryExpr: NullLiteral
            | Literal
@@ -183,16 +183,18 @@ keyWordTime
          : 'time';
 
 keyWordDayTimeDuration
-       : 'dayTimeDuration';
+         : 'dayTimeDuration';
+
+typeKeyWords
+         : | keyWordBoolean | keyWordDuration | keyWordYearMonthDuration | keyWordDayTimeDuration
+          | keyWordDateTime | keyWordDate  | keyWordTime;
 
 singleType
          : item=simpleType (question +='?')?;
 
 simpleType
          : 'atomic' | 'string' | 'integer'
-         | 'decimal' | 'double' | keyWordBoolean | keyWordDuration
-         | keyWordYearMonthDuration | keyWordDayTimeDuration
-         | keyWordDateTime | keyWordDate | keyWordTime;
+         | 'decimal' | 'double' | typeKeyWords;
 
 atomicType
          : simpleType | NullLiteral;
