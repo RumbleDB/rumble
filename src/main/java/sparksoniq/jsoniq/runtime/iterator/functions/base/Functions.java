@@ -83,6 +83,7 @@ import sparksoniq.jsoniq.runtime.iterator.functions.strings.NormalizeSpaceFuncti
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.StartsWithFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.StringJoinFunction;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.StringLengthFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.strings.SubstringAfterFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.SubstringBeforeFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.SubstringFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.TokenizeFunctionIterator;
@@ -153,6 +154,7 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SUBSEQUENCE;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SUBSTRING;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SUBSTRING_BEFORE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SUBSTRING_AFTER;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SUM;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.TAIL;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.TAN;
@@ -226,6 +228,7 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(SUBSTRING, 2), SubstringFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(SUBSTRING, 3), SubstringFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(SUBSTRING_BEFORE, 2), SubstringBeforeFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(SUBSTRING_AFTER, 2), SubstringAfterFunctionIterator.class);
         for (int i = 0; i <= 100; i++)
             buildInFunctions.put(new SparksoniqFunctionSignature(CONCAT, i), ConcatFunctionIterator.class);
 
@@ -458,6 +461,10 @@ public class Functions {
          * function that returns the part of the first variable that precedes the first occurrence of the second vairable.
          */
         public static final String SUBSTRING_BEFORE = "substring-before";
+        /**
+         * function that returns the part of the first variable that follows the first occurrence of the second vairable.
+         */
+        public static final String SUBSTRING_AFTER = "substring-after";
         /**
          * function that returns substrings
          */
