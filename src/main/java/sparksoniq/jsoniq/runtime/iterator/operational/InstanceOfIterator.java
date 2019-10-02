@@ -54,7 +54,7 @@ public class InstanceOfIterator extends UnaryOperationIterator {
             this._hasNext = false;
 
             //... instance of ()
-            if (_sequenceType.isEmpty()) return ItemFactory.getInstance().createBooleanItem(false);
+            if (!items.isEmpty() && _sequenceType.isEmptySequence()) return ItemFactory.getInstance().createBooleanItem(false);
 
             //Empty sequence, more items
             if (items.isEmpty() && (_sequenceType.getArity() == SequenceType.Arity.One ||
@@ -73,14 +73,5 @@ public class InstanceOfIterator extends UnaryOperationIterator {
             return ItemFactory.getInstance().createBooleanItem(true);
         } else
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-    }
-
-    @Override
-    public Item getResultIfEmpty() {
-        if (_sequenceType.getArity() == SequenceType.Arity.OneOrZero ||
-                _sequenceType.getArity() == SequenceType.Arity.ZeroOrMore) {
-            return ItemFactory.getInstance().createBooleanItem(true);
-        }
-        return ItemFactory.getInstance().createBooleanItem(false);
     }
 }
