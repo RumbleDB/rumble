@@ -52,13 +52,17 @@ public class InstanceOfIterator extends UnaryOperationIterator {
                 items.add(_child.next());
             _child.close();
             this._hasNext = false;
+
+            //... instance of ()
+            if (_sequenceType.isEmpty()) return ItemFactory.getInstance().createBooleanItem(false);
+
             //Empty sequence, more items
             if (items.isEmpty() && (_sequenceType.getArity() == SequenceType.Arity.One ||
                     _sequenceType.getArity() == SequenceType.Arity.OneOrMore)) {
                 return ItemFactory.getInstance().createBooleanItem(false);
             }
-            if (items.size() > 1 && _sequenceType.getArity()  == SequenceType.Arity.One ||
-                    _sequenceType.getArity() == SequenceType.Arity.OneOrZero) {
+            if (items.size() > 1 && (_sequenceType.getArity()  == SequenceType.Arity.One ||
+                    _sequenceType.getArity() == SequenceType.Arity.OneOrZero)) {
                 return ItemFactory.getInstance().createBooleanItem(false);
             }
             for (Item item : items) {

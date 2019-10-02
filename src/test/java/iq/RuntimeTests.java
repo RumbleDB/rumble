@@ -114,7 +114,7 @@ public class RuntimeTests extends AnnotationsTestsBase {
             result = iterator.next();
         }
         if (result == null) {
-            return "";
+            return iterator.getResultIfEmpty().serialize();
         }
         String singleOutput = result.serialize();
         if (!iterator.hasNext())
