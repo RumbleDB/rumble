@@ -48,13 +48,9 @@ public class UnaryOperationIterator extends UnaryOperationBaseIterator {
         if (this._hasNext) {
             this._hasNext = false;
             _child.open(_currentDynamicContext);
-            Item child = null;
-            if (_child.hasNext()) {
-                child = _child.next();
-            }
+            Item child = _child.next();
             _child.close();
-            if (child == null)
-                return null;
+
             if (this._operator == OperationalExpressionBase.Operator.MINUS) {
                 if (child.isNumeric()) {
                     if (child.isInteger())
@@ -71,5 +67,16 @@ public class UnaryOperationIterator extends UnaryOperationBaseIterator {
             }
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
+
     }
+
+    @Override
+    public void open(DynamicContext context) {
+        super.open(context);
+
+        _child.open(_currentDynamicContext);
+        this._hasNext = _child.hasNext();
+        _child.close();
+    }
+
 }

@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(true, true, true, false, false, true, true, true, true, false, false, true, false, false, false, true, true, false, true, true, false, true, false, true)" :)
+(:JIQS: ShouldRun; Output="(true, true, true, false, false, true, true, true, true, false, false, true, false, false, false, true, true, false, true, true, false, true, true, false, false, true)" :)
 1 instance of integer,
 2.14 instance of decimal,
 1 instance of decimal,
@@ -21,6 +21,8 @@ null instance of null?,
 ({"aa": "bb"}, {"cc": "dd"}) instance of json-item+,
 3 instance of (),
 () instance of string?,
+() instance of string*,
+() instance of string+,
 () instance of string,
 () instance of ()
 
