@@ -8,6 +8,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalEx
 import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.operational.base.UnaryOperationBaseIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.types.AtomicType;
 import sparksoniq.semantics.types.AtomicTypes;
@@ -17,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class CastableIterator extends UnaryOperationIterator{
+public class CastableIterator extends UnaryOperationBaseIterator {
     private static final long serialVersionUID = 1L;
     private final AtomicType _atomicType;
 
@@ -36,26 +37,17 @@ public class CastableIterator extends UnaryOperationIterator{
             _child.close();
             this._hasNext = false;
 
+            if (items.isEmpty())
+                return ItemFactory.getInstance().createBooleanItem(_atomicType.getZeroOrOne());
+
             if (items.size() != 1 || items.get(0) == null) return ItemFactory.getInstance().createBooleanItem(false);
 
             AtomicItem atomicItem = checkInvalidCastable(items.get(0), getMetadata(), _atomicType);
 
-            boolean result = atomicItem.isCastableAs(_atomicType);
-
-            return ItemFactory.getInstance().createBooleanItem(result);
+            return ItemFactory.getInstance().createBooleanItem(atomicItem.isCastableAs(_atomicType));
         } else
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
     }
-
-
-    @Override
-    public Item getResultIfEmpty() {
-        if (_atomicType.getZeroOrOne()) {
-            return ItemFactory.getInstance().createBooleanItem(true);
-        }
-        return ItemFactory.getInstance().createBooleanItem(false);
-    }
-
 
     static AtomicItem checkInvalidCastable(Item item, IteratorMetadata metadata, AtomicType atomicType) {
         if (atomicType.getType() == AtomicTypes.AtomicItem) {
