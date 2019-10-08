@@ -28,7 +28,7 @@ public class SequenceType implements Serializable {
 	private static final long serialVersionUID = 1L;
 	private Arity _arity;
     private ItemType _itemType;
-    private boolean _isEmpty = false;
+    private boolean _isEmptySequence = false;
 
 
     public SequenceType(ItemType itemType, Arity arity) {
@@ -46,11 +46,11 @@ public class SequenceType implements Serializable {
     public SequenceType() {
         this._itemType = new ItemType(ItemTypes.Item);
         this._arity = Arity.ZeroOrMore;
-        this._isEmpty = true;
+        this._isEmptySequence = true;
     }
 
-    public boolean isEmpty() {
-        return _isEmpty;
+    public boolean isEmptySequence() {
+        return _isEmptySequence;
     }
 
     public ItemType getItemType() {

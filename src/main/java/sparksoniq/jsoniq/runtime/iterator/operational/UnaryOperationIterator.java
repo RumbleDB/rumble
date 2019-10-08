@@ -75,11 +75,7 @@ public class UnaryOperationIterator extends UnaryOperationBaseIterator {
         super.open(context);
 
         _child.open(_currentDynamicContext);
-        if (_child.hasNext()) {
-            this._hasNext = true;
-        } else {
-            this._hasNext = false;
-        }
+        this._hasNext = _child.hasNext();
         _child.close();
     }
 

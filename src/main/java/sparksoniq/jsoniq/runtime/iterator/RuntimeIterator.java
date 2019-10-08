@@ -169,8 +169,6 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
 
     public abstract Item next();
 
-    public Item getResultIfEmpty() { return ItemFactory.getInstance().createStringItem(""); }
-
     protected List<Item> runChildrenIterators(DynamicContext context) {
         List<Item> values = new ArrayList<>();
         for (RuntimeIterator iterator : this._children) {
