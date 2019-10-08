@@ -4,7 +4,6 @@ import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.TreatException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
-import sparksoniq.jsoniq.item.*;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
@@ -51,16 +50,21 @@ public class TreatIterator extends UnaryOperationIterator {
             items.add(_child.next());
         _child.close();
 
+        //... treat as ()
+        if (!items.isEmpty() && _sequenceType.isEmptySequence())
+            throw new TreatException(" " + ItemTypes.getItemTypeName(items.get(0).getClass().getSimpleName()) + " cannot be treated as type empty-sequence()", getMetadata());
+
         ItemType itemType = _sequenceType.getItemType();
         String sequenceTypeName = ItemTypes.getItemTypeName(itemType.getType().toString());
+
         //Empty sequence, more items
         if (items.isEmpty() && (_sequenceType.getArity() == SequenceType.Arity.One ||
                 _sequenceType.getArity() == SequenceType.Arity.OneOrMore)) {
-            throw new TreatException(" Empty list cannot be treated as type " + sequenceTypeName, getMetadata());
+            throw new TreatException(" Empty sequence cannot be treated as type " + sequenceTypeName + _sequenceType.getArity().getSymbol(), getMetadata());
         }
         if (items.size() > 1 && (_sequenceType.getArity() == SequenceType.Arity.One ||
                 _sequenceType.getArity() == SequenceType.Arity.OneOrZero)) {
-            throw new TreatException(" Sequences of more than one item cannot be treated as type " + sequenceTypeName, getMetadata());
+            throw new TreatException(" Sequences of more than one item cannot be treated as type " + sequenceTypeName + _sequenceType.getArity().getSymbol(), getMetadata());
         }
 
         results = new ArrayList<>();
@@ -70,7 +74,7 @@ public class TreatIterator extends UnaryOperationIterator {
                 results.add(item);
             } else {
                 results.clear();
-                throw new TreatException(" " + ItemTypes.getItemTypeName(item.getClass().getSimpleName()) + " cannot be treated as type " + sequenceTypeName, getMetadata());
+                throw new TreatException(" " + ItemTypes.getItemTypeName(item.getClass().getSimpleName()) + " cannot be treated as type " + sequenceTypeName + _sequenceType.getArity().getSymbol(), getMetadata());
             }
         }
     }
