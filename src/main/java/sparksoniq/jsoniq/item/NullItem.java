@@ -25,6 +25,8 @@ import org.rumbledb.api.Item;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import sparksoniq.semantics.types.ItemType;
+import sparksoniq.semantics.types.ItemTypes;
 
 public class NullItem extends AtomicItem {
 
@@ -38,6 +40,11 @@ public class NullItem extends AtomicItem {
     @Override
     public boolean isNull() {
         return true;
+    }
+
+    @Override
+    public boolean isTypeOf(ItemType type) {
+        return type.getType().equals(ItemTypes.NullItem) || super.isTypeOf(type);
     }
 
     @Override

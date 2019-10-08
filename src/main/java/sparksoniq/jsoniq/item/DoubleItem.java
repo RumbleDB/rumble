@@ -78,9 +78,7 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        if (type.getType().equals(ItemTypes.DoubleItem) || super.isTypeOf(type))
-            return true;
-        return false;
+        return type.getType().equals(ItemTypes.DoubleItem) || super.isTypeOf(type);
     }
 
     @Override

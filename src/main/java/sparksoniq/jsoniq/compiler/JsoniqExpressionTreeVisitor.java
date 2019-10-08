@@ -818,11 +818,11 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
             node = new FlworVarSequenceType(createMetadataFromContext(ctx));
         else {
             ItemTypes item = FlworVarSequenceType.getItemType(ctx.item.getText());
-            if (ctx.question.size() >= 0)
+            if (ctx.question.size() > 0)
                 node = new FlworVarSequenceType(item, SequenceType.Arity.OneOrZero, createMetadataFromContext(ctx));
-            else if (ctx.star.size() >= 0)
+            else if (ctx.star.size() > 0)
                 node = new FlworVarSequenceType(item, SequenceType.Arity.ZeroOrMore, createMetadataFromContext(ctx));
-            else if (ctx.plus.size() >= 0)
+            else if (ctx.plus.size() > 0)
                 node = new FlworVarSequenceType(item, SequenceType.Arity.OneOrMore, createMetadataFromContext(ctx));
             else
                 node = new FlworVarSequenceType(item, createMetadataFromContext(ctx));
