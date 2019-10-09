@@ -10,22 +10,22 @@ import java.util.List;
 
 public class FlworVarSingleType extends Expression {
 
-    private AtomicType _atomicType;
+    private SingleType _singleType;
     private boolean isEmpty;
 
     public FlworVarSingleType(ExpressionMetadata metadata) {
         super(metadata);
-        this._atomicType = new AtomicType(AtomicTypes.AtomicItem);
+        this._singleType = new SingleType(AtomicTypes.AtomicItem);
         this.isEmpty = true;
     }
     public FlworVarSingleType(AtomicTypes atomicType, ExpressionMetadata metadata) {
         super(metadata);
-        this._atomicType = new AtomicType(atomicType);
+        this._singleType = new SingleType(atomicType);
     }
 
     public FlworVarSingleType(AtomicTypes atomicType, boolean zeroOrOne, ExpressionMetadata metadata) {
         super(metadata);
-        this._atomicType = new AtomicType(atomicType, zeroOrOne);
+        this._singleType = new SingleType(atomicType, zeroOrOne);
         this.isEmpty = false;
 
     }
@@ -43,6 +43,8 @@ public class FlworVarSingleType extends Expression {
                 return AtomicTypes.DoubleItem;
             case "boolean":
                 return AtomicTypes.BooleanItem;
+            case "null":
+                return AtomicTypes.NullItem;
 
             default:
                 return AtomicTypes.AtomicItem;
@@ -53,8 +55,8 @@ public class FlworVarSingleType extends Expression {
         return isEmpty;
     }
 
-    public AtomicType getAtomicType() {
-        return _atomicType;
+    public SingleType getSingleType() {
+        return _singleType;
     }
 
     @Override
@@ -66,7 +68,7 @@ public class FlworVarSingleType extends Expression {
     public String serializationString(boolean prefix) {
         String result = "(atomicType ";
         result += "(itemType ";
-        result += getSerializationOfAtomicType(this._atomicType.getType());
+        result += getSerializationOfAtomicType(this._singleType.getType());
         result += "))";
         return result;
     }
@@ -83,6 +85,8 @@ public class FlworVarSingleType extends Expression {
                 return "(atomicType string)";
             case BooleanItem:
                 return "(atomicType boolean)";
+            case NullItem:
+                return "(atomicType null)";
             default:
                 return "item";
         }

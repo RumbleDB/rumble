@@ -422,12 +422,6 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitSingleType(JsoniqParser.SingleTypeContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#simpleType}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitSimpleType(JsoniqParser.SimpleTypeContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#atomicType}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

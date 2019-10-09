@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(true, true, true, true, true, true, false, true, false, true, true, false, true, false, true, true, true, true, true)" :)
+(:JIQS: ShouldRun; Output="(true, true, true, true, true, true, false, true, false, true, true, true, true, false, true, true, true, true, true, true, true, true, true, false, true, false, false)" :)
 1 castable as integer,
 2.14 castable as decimal,
 1 castable as decimal,
@@ -17,6 +17,14 @@ null castable as string?,
 "3e4" castable as double,
 "3" castable as decimal,
 3 castable as string,
-3.4 castable as boolean
+3.4 castable as boolean,
+null castable as null,
+null castable as null?,
+"null" castable as null,
+"null" castable as null?,
+3 castable as null,
+null castable as string,
+null castable as integer?,
+"foo" castable as null
 
 (: general tests :)

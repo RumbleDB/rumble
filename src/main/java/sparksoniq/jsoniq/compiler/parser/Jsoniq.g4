@@ -168,14 +168,11 @@ keyWordBoolean
          : 'boolean';
 
 singleType
-         : item=simpleType (question +='?')?;
-
-simpleType
-         : 'atomic' | 'string' | 'integer'
-         | 'decimal' | 'double' | keyWordBoolean;
+         : item=atomicType (question +='?')?;
 
 atomicType
-         : simpleType | NullLiteral;
+         : 'atomic' | 'string' | 'integer'
+         | 'decimal' | 'double' | keyWordBoolean | NullLiteral;
 
 nCNameOrKeyWordBoolean
          : NCName | keyWordBoolean;

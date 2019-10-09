@@ -25,7 +25,7 @@ import org.rumbledb.api.Item;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import sparksoniq.semantics.types.AtomicType;
+import sparksoniq.semantics.types.SingleType;
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
@@ -70,8 +70,9 @@ public class BooleanItem extends AtomicItem {
     }
 
     @Override
-    public boolean isCastableAs(AtomicType type) {
-        return type.getType() != AtomicTypes.AtomicItem;
+    public boolean isCastableAs(SingleType type) {
+        return type.getType() != AtomicTypes.AtomicItem &&
+                type.getType() != AtomicTypes.NullItem;
     }
 
     @Override
