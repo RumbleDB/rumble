@@ -55,6 +55,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.operational.NotExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.OrExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.RangeExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.StringConcatExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.TreatExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.UnaryExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.PostFixExpression;
@@ -554,11 +555,11 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
 
     @Override
     public Void visitInstanceOfExpr(JsoniqParser.InstanceOfExprContext ctx) {
-        UnaryExpression mainExpression;
+        TreatExpression mainExpression;
         FlworVarSequenceType sequenceType;
         InstanceOfExpression node;
         this.visitTreatExpr(ctx.mainExpr);
-        mainExpression = (UnaryExpression) this.currentExpression;
+        mainExpression = (TreatExpression) this.currentExpression;
         if (ctx.seq != null && !ctx.seq.isEmpty()) {
             JsoniqParser.SequenceTypeContext child = ctx.seq;
             this.visitSequenceType(child);
@@ -566,6 +567,25 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
             node = new InstanceOfExpression(mainExpression, sequenceType, createMetadataFromContext(ctx));
         } else {
             node = new InstanceOfExpression(mainExpression, createMetadataFromContext(ctx));
+        }
+        this.currentExpression = node;
+        return null;
+    }
+
+    @Override
+    public Void visitTreatExpr(JsoniqParser.TreatExprContext ctx) {
+        UnaryExpression mainExpression;
+        FlworVarSequenceType sequenceType;
+        TreatExpression node;
+        this.visitCastableExpr(ctx.mainExpr);
+        mainExpression = (UnaryExpression) this.currentExpression;
+        if (ctx.seq != null && !ctx.seq.isEmpty()) {
+            JsoniqParser.SequenceTypeContext child = ctx.seq;
+            this.visitSequenceType(child);
+            sequenceType = (FlworVarSequenceType) this.currentExpression;
+            node = new TreatExpression(mainExpression, sequenceType, createMetadataFromContext(ctx));
+        } else {
+            node = new TreatExpression(mainExpression, createMetadataFromContext(ctx));
         }
         this.currentExpression = node;
         return null;

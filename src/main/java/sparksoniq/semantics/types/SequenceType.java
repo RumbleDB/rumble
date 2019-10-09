@@ -66,9 +66,31 @@ public class SequenceType implements Serializable {
                 this._arity == superType._arity;
     }
     public enum Arity {
-        OneOrZero,
-        OneOrMore,
-        ZeroOrMore,
-        One
+        OneOrZero {
+            @Override
+            public String getSymbol() {
+                return "?";
+            }
+        },
+        OneOrMore {
+            @Override
+            public String getSymbol() {
+                return "+";
+            }
+        },
+        ZeroOrMore {
+            @Override
+            public String getSymbol() {
+                return "*";
+            }
+        },
+        One {
+            @Override
+            public String getSymbol() {
+                return "";
+            }
+        };
+
+        public abstract String getSymbol();
     }
 }

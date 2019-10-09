@@ -35,5 +35,13 @@ public enum ItemTypes {
     DoubleItem,
     BooleanItem,
 
-    NullItem
+    NullItem;
+
+    public static String getItemTypeName(String fullTypeName){
+        String itemPostfix = "Item";
+        if (fullTypeName.endsWith("Item")) {
+            return fullTypeName.toLowerCase().substring(0, fullTypeName.length()-itemPostfix.length());
+        }
+        return fullTypeName;
+    }
 }

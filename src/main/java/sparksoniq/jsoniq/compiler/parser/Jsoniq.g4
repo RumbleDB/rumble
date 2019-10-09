@@ -99,7 +99,7 @@ multiplicativeExpr
 instanceOfExpr
          : mainExpr=treatExpr ( Kinstance Kof seq=sequenceType)?;
 treatExpr
-         : mainExpr=castableExpr ( Ktreat Kas sequenceType )?;
+         : mainExpr=castableExpr ( Ktreat Kas seq=sequenceType )?;
 castableExpr
          : mainExpr=castExpr ( Kcastable Kas atomicType '?'? )?;
 castExpr : mainExpr=unaryExpr ( Kcast Kas atomicType '?'? )?;

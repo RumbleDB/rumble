@@ -50,6 +50,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.operational.NotExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.OrExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.RangeExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.StringConcatExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.TreatExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.UnaryExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.PostFixExpression;
@@ -87,6 +88,7 @@ import sparksoniq.jsoniq.runtime.iterator.operational.NotOperationIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.OrOperationIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.RangeOperationIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.StringConcatIterator;
+import sparksoniq.jsoniq.runtime.iterator.operational.TreatIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.UnaryOperationIterator;
 import sparksoniq.jsoniq.runtime.iterator.postfix.ArrayLookupIterator;
 import sparksoniq.jsoniq.runtime.iterator.postfix.ArrayUnboxingIterator;
@@ -518,6 +520,16 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         if (expression.isActive()) {
             RuntimeIterator childExpression = this.visit(expression.getMainExpression(), argument);
             return new InstanceOfIterator(childExpression, expression.getsequenceType().getSequence(),
+                    createIteratorMetadata(expression));
+        } else
+            return defaultAction(expression, argument);
+    }
+
+    @Override
+    public RuntimeIterator visitTreatExpression(TreatExpression expression, RuntimeIterator argument) {
+        if (expression.isActive()) {
+            RuntimeIterator childExpression = this.visit(expression.getMainExpression(), argument);
+            return new TreatIterator(childExpression, expression.getsequenceType().getSequence(),
                     createIteratorMetadata(expression));
         } else
             return defaultAction(expression, argument);
