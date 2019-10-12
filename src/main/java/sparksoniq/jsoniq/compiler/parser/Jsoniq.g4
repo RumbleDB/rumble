@@ -101,7 +101,7 @@ instanceOfExpr
 treatExpr
          : mainExpr=castableExpr ( Ktreat Kas seq=sequenceType )?;
 castableExpr
-         : mainExpr=castExpr ( Kcastable Kas atomicType '?'? )?;
+         : mainExpr=castExpr ( Kcastable Kas single=singleType )?;
 castExpr : mainExpr=unaryExpr ( Kcast Kas atomicType '?'? )?;
 unaryExpr: op+=('-' | '+')* mainExpr=simpleMapExpr;
 simpleMapExpr: mainExpr=postFixExpr ('!' postFixExpr)*;
@@ -166,6 +166,9 @@ jSONItemTest
 
 keyWordBoolean
          : 'boolean';
+
+singleType
+         : item=atomicType (question +='?')?;
 
 atomicType
          : 'atomic' | 'string' | 'integer'
