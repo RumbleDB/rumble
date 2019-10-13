@@ -25,6 +25,7 @@ import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase.Operator;
+import sparksoniq.jsoniq.item.BooleanItem;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
@@ -41,9 +42,9 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
 
 
 	private static final long serialVersionUID = 1L;
-	public static final Operator[] valueComparisonOperators = new Operator[]{
+	private static final Operator[] valueComparisonOperators = new Operator[]{
             Operator.VC_GE, Operator.VC_GT, Operator.VC_EQ, Operator.VC_NE, Operator.VC_LE, Operator.VC_LT};
-    public static final Operator[] generalComparisonOperators = new Operator[]{
+    private static final Operator[] generalComparisonOperators = new Operator[]{
             Operator.GC_GE, Operator.GC_GT, Operator.GC_EQ, Operator.GC_NE, Operator.GC_LE, Operator.GC_LT};
     private boolean _isValueComparison;
     private Item _left;
@@ -122,69 +123,32 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
      * @param right item list of right iterator
      * @return true if a single match is found, false if no matches. Given an empty sequence, false is returned.
      */
-    public Item compareAllPairs(ArrayList<Item> left, ArrayList<Item> right) {
+    private Item compareAllPairs(ArrayList<Item> left, ArrayList<Item> right) {
         for (Item l : left) {
             for (Item r : right) {
                 Item result = comparePair(l, r);
-                if (result.getBooleanValue() == true)
+                if (result.getBooleanValue())
                     return result;
             }
         }
         return ItemFactory.getInstance().createBooleanItem(false);
     }
 
-    public Item comparePair(Item left, Item right) {
+    private Item comparePair(Item left, Item right) {
 
         if (left.isArray() || right.isArray()) {
             throw new NonAtomicKeyException("Invalid args. Comparison can't be performed on array type", getMetadata().getExpressionMetadata());
-        } else if (left.isObject() || right.isObject()) {
+        }
+        else if (left.isObject() || right.isObject()) {
             throw new NonAtomicKeyException("Invalid args. Comparison can't be performed on object type", getMetadata().getExpressionMetadata());
         }
-        if (left.isNull() || right.isNull()) {
-            return compareItems(left, right);
-        } else if (left.isNumeric()) {
-            if (!right.isNumeric())
-                throw new UnexpectedTypeException("Invalid args for numerics comparison " + left.serialize() +
-                        ", " + right.serialize(), getMetadata());
-            return compareItems(left, right);
-        } else if (left.isString()) {
-            if (!(right.isString()))
-                throw new UnexpectedTypeException("Invalid args for string comparison " + left.serialize() +
-                        ", " + right.serialize(), getMetadata());
-            return compareItems(left, right);
-        } else if (left.isBoolean()) {
-            if (!right.isBoolean())
-                throw new UnexpectedTypeException("Invalid args for boolean comparison " + left.serialize() +
-                        ", " + right.serialize(), getMetadata());
-            return compareItems(left, right);
-        } else {
+        if (left.isAtomic()) {
+            Item comparisonResult = left.compareItem(right, this._operator, getMetadata());
+            if (comparisonResult != null) return comparisonResult;
+            throw new IteratorFlowException("Unrecognized operator found", getMetadata());
+        }
+        else {
             throw new IteratorFlowException("Invalid comparison expression", getMetadata());
         }
-    }
-
-    public Item compareItems(Item left, Item right) {
-        int comparison = left.compareTo(right);
-        switch (this._operator) {
-            case VC_EQ:
-            case GC_EQ:
-                return ItemFactory.getInstance().createBooleanItem(comparison == 0);
-            case VC_NE:
-            case GC_NE:
-                return ItemFactory.getInstance().createBooleanItem(comparison != 0);
-            case VC_LT:
-            case GC_LT:
-                return ItemFactory.getInstance().createBooleanItem(comparison < 0);
-            case VC_LE:
-            case GC_LE:
-                return ItemFactory.getInstance().createBooleanItem(comparison < 0 || comparison == 0);
-            case VC_GT:
-            case GC_GT:
-                return ItemFactory.getInstance().createBooleanItem(comparison > 0);
-            case VC_GE:
-            case GC_GE:
-                return ItemFactory.getInstance().createBooleanItem(comparison > 0 || comparison == 0);
-            default:
-        }
-        throw new IteratorFlowException("Unrecognized operator found", getMetadata());
     }
 }
