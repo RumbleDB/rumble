@@ -34,7 +34,6 @@ import org.rumbledb.api.Item;
 
 public class DoubleItem extends AtomicItem {
 
-
 	private static final long serialVersionUID = 1L;
 	private double _value;
 
@@ -81,6 +80,36 @@ public class DoubleItem extends AtomicItem {
     @Override
     public boolean isTypeOf(ItemType type) {
         return type.getType().equals(ItemTypes.DoubleItem) || super.isTypeOf(type);
+    }
+
+    @Override
+    public AtomicItem castAs(AtomicItem atomicItem) {
+        return atomicItem.createFromDouble(this);
+    }
+
+    @Override
+    public AtomicItem createFromBoolean(BooleanItem booleanItem) {
+        return ItemFactory.getInstance().createDoubleItem(booleanItem.hashCode());
+    }
+
+    @Override
+    public AtomicItem createFromString(StringItem stringItem) {
+        return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(stringItem.getStringValue()));
+    }
+
+    @Override
+    public AtomicItem createFromInteger(IntegerItem integerItem) {
+        return ItemFactory.getInstance().createDoubleItem(integerItem.castToDoubleValue());
+    }
+
+    @Override
+    public AtomicItem createFromDecimal(DecimalItem decimalItem) {
+        return ItemFactory.getInstance().createDoubleItem(decimalItem.castToDoubleValue());
+    }
+
+    @Override
+    public AtomicItem createFromDouble(DoubleItem doubleItem) {
+        return doubleItem;
     }
 
     @Override

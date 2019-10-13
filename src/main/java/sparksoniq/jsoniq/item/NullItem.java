@@ -56,6 +56,21 @@ public class NullItem extends AtomicItem {
     }
 
     @Override
+    public AtomicItem castAs(AtomicItem atomicItem) {
+        return atomicItem.createFromNull(this);
+    }
+
+    @Override
+    public AtomicItem createFromString(StringItem stringItem) {
+        return ItemFactory.getInstance().createNullItem();
+    }
+
+    @Override
+    public AtomicItem createFromNull(NullItem nullItem) {
+        return this;
+    }
+
+    @Override
     public String serialize() {
         return "null";
     }

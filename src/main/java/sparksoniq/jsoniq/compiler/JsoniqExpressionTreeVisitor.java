@@ -49,6 +49,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.flowr.ReturnClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.WhereClause;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.AdditiveExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.AndExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.CastExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.CastableExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.ComparisonExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.InstanceOfExpression;
@@ -596,11 +597,11 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
 
     @Override
     public Void visitCastableExpr(JsoniqParser.CastableExprContext ctx) {
-        UnaryExpression mainExpression;
+        CastExpression mainExpression;
         FlworVarSingleType singleType;
         CastableExpression node;
         this.visitCastExpr(ctx.mainExpr);
-        mainExpression = (UnaryExpression) this.currentExpression;
+        mainExpression = (CastExpression) this.currentExpression;
         if (ctx.single != null && !ctx.single.isEmpty()) {
             JsoniqParser.SingleTypeContext child = ctx.single;
             this.visitSingleType(child);
@@ -608,6 +609,25 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
             node = new CastableExpression(mainExpression, singleType, createMetadataFromContext(ctx));
         } else {
             node = new CastableExpression(mainExpression, createMetadataFromContext(ctx));
+        }
+        this.currentExpression = node;
+        return null;
+    }
+
+    @Override
+    public Void visitCastExpr(JsoniqParser.CastExprContext ctx) {
+        UnaryExpression mainExpression;
+        FlworVarSingleType singleType;
+        CastExpression node;
+        this.visitUnaryExpr(ctx.mainExpr);
+        mainExpression = (UnaryExpression) this.currentExpression;
+        if (ctx.single != null && !ctx.single.isEmpty()) {
+            JsoniqParser.SingleTypeContext child = ctx.single;
+            this.visitSingleType(child);
+            singleType = (FlworVarSingleType) this.currentExpression;
+            node = new CastExpression(mainExpression, singleType, createMetadataFromContext(ctx));
+        } else {
+            node = new CastExpression(mainExpression, createMetadataFromContext(ctx));
         }
         this.currentExpression = node;
         return null;

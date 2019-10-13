@@ -66,10 +66,6 @@ Prologs are not supported. This includes user-defined functions, global variable
 
 Try/catch expressions. Exceptions raised remotely may not be displayed in a user-friendly way yet, but we are working on it.
 
-### Unsupported cast/treat-as
-
-Cast/treat-as expressions.
-
 ### Unsupported nested expressions in object lookups (rhs)
 
 Nested object lookup keys: nested expressions on the rhs of the dot syntax are not supported yet.

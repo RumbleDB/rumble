@@ -73,6 +73,45 @@ public class StringItem extends AtomicItem {
     private boolean isNullLiteral(String value) { return "null".equals(value); }
 
     @Override
+    public boolean isString() {
+        return true;
+    }
+
+    @Override
+    public AtomicItem castAs(AtomicItem atomicItem) {
+        return atomicItem.createFromString(this);
+    }
+
+    @Override
+    public AtomicItem createFromBoolean(BooleanItem booleanItem) {
+        return ItemFactory.getInstance().createStringItem(String.valueOf(booleanItem.getBooleanValue()));
+    }
+
+    @Override
+    public AtomicItem createFromString(StringItem stringItem) {
+        return stringItem;
+    }
+
+    @Override
+    public AtomicItem createFromInteger(IntegerItem integerItem) {
+        return ItemFactory.getInstance().createStringItem(String.valueOf(integerItem.getIntegerValue()));
+    }
+
+    @Override
+    public AtomicItem createFromDecimal(DecimalItem decimalItem) {
+        return ItemFactory.getInstance().createStringItem(String.valueOf(decimalItem.getDecimalValue()));
+    }
+
+    @Override
+    public AtomicItem createFromDouble(DoubleItem doubleItem) {
+        return ItemFactory.getInstance().createStringItem(String.valueOf(doubleItem.getDoubleValue()));
+    }
+
+    @Override
+    public AtomicItem createFromNull(NullItem nullItem) {
+        return ItemFactory.getInstance().createStringItem(nullItem.serialize());
+    }
+
     public boolean getEffectiveBooleanValue() {
         return !this.getStringValue().isEmpty();
     }
@@ -101,11 +140,6 @@ public class StringItem extends AtomicItem {
         } catch (NumberFormatException e) {
             return false;
         }
-        return true;
-    }
-
-    @Override
-    public boolean isString() {
         return true;
     }
 
