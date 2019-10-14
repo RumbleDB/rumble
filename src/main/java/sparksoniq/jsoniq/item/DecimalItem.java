@@ -96,6 +96,36 @@ public class DecimalItem extends AtomicItem {
     }
 
     @Override
+    public AtomicItem castAs(AtomicItem atomicItem) {
+        return atomicItem.createFromDecimal(this);
+    }
+
+    @Override
+    public AtomicItem createFromBoolean(BooleanItem booleanItem) {
+        return ItemFactory.getInstance().createDecimalItem(BigDecimal.valueOf(booleanItem.hashCode()));
+    }
+
+    @Override
+    public AtomicItem createFromString(StringItem stringItem) {
+        return ItemFactory.getInstance().createDecimalItem(new BigDecimal(stringItem.getStringValue()));
+    }
+
+    @Override
+    public AtomicItem createFromInteger(IntegerItem integerItem) {
+        return ItemFactory.getInstance().createDecimalItem(integerItem.castToDecimalValue());
+    }
+
+    @Override
+    public AtomicItem createFromDecimal(DecimalItem decimalItem) {
+        return decimalItem;
+    }
+
+    @Override
+    public AtomicItem createFromDouble(DoubleItem doubleItem) {
+        return ItemFactory.getInstance().createDecimalItem(doubleItem.castToDecimalValue());
+    }
+
+    @Override
     public String serialize() {
         return String.valueOf(_value);
     }

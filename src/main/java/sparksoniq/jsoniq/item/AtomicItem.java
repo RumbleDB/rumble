@@ -45,4 +45,13 @@ public abstract class AtomicItem extends Item {
     }
 
     public abstract boolean isCastableAs(SingleType type);
+
+    public abstract AtomicItem castAs(AtomicItem atomicItem);
+
+    public AtomicItem createFromBoolean(BooleanItem booleanItem) {return null;}
+    public AtomicItem createFromString(StringItem stringItem) {return null;}
+    public AtomicItem createFromInteger(IntegerItem integerItem) {return null;}
+    public AtomicItem createFromDecimal(DecimalItem decimalItem) {return null;}
+    public AtomicItem createFromDouble(DoubleItem doubleItem) {return null;}
+    public AtomicItem createFromDuration(DurationItem durationItem) {return null;}
 }

@@ -47,6 +47,11 @@ public class NullItem extends AtomicItem {
     }
 
     @Override
+    public boolean getEffectiveBooleanValue() {
+        return false;
+    }
+
+    @Override
     public boolean isTypeOf(ItemType type) {
         return type.getType().equals(ItemTypes.NullItem) || super.isTypeOf(type);
     }
@@ -63,8 +68,8 @@ public class NullItem extends AtomicItem {
     }
 
     @Override
-    public boolean getEffectiveBooleanValue() {
-        return false;
+    public AtomicItem castAs(AtomicItem atomicItem) {
+        return null;
     }
 
     @Override

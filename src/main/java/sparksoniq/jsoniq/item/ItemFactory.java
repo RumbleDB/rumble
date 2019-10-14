@@ -4,17 +4,18 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
+import org.joda.time.Period;
 import org.rumbledb.api.Item;
 
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 
 public class ItemFactory {
-    
+
     private static ItemFactory _instance;
-    private Item _nullItem;
-    private Item _trueBooleanItem;
-    private Item _falseBooleanItem;
-    
+    private AtomicItem _nullItem;
+    private AtomicItem _trueBooleanItem;
+    private AtomicItem _falseBooleanItem;
+
     public static ItemFactory getInstance() {
         if(_instance == null)
         {
@@ -25,31 +26,33 @@ public class ItemFactory {
         }
         return _instance;
     }
-    
-    public Item createStringItem(String s) {
+
+    public AtomicItem createStringItem(String s) {
         return new StringItem(s);
     }
 
-    public Item createBooleanItem(boolean b) {
+    public AtomicItem createBooleanItem(boolean b) {
         return b?_trueBooleanItem:_falseBooleanItem;
     }
 
-    public Item createNullItem() {
+    public AtomicItem createNullItem() {
         return _nullItem;
     }
 
-    public Item createIntegerItem(int i) {
+    public AtomicItem createIntegerItem(int i) {
         return new IntegerItem(i);
     }
 
-    public Item createDecimalItem(BigDecimal d) {
+    public AtomicItem createDecimalItem(BigDecimal d) {
         return new DecimalItem(d);
     }
 
-    public Item createDoubleItem(double d) {
+    public AtomicItem createDoubleItem(double d) {
         return new DoubleItem(d);
     }
-    
+
+    public AtomicItem createDurationItem(Period p) { return new DurationItem(p); }
+
     public Item createObjectItem() {
         return new ObjectItem();
     }
@@ -61,15 +64,14 @@ public class ItemFactory {
     public Item createArrayItem(List<Item> items) {
         return new ArrayItem(items);
     }
-    
+
     public Item createObjectItem(List<String> keys, List<Item> values, ItemMetadata itemMetadata)
     {
         return new ObjectItem(keys, values, itemMetadata);
     }
-    
+
     public Item createObjectItem(Map<String, List<Item>> keyValuePairs)
     {
         return new ObjectItem(keyValuePairs);
     }
-
 }

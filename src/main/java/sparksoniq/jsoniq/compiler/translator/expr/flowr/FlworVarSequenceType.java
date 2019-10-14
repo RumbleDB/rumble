@@ -79,6 +79,8 @@ public class FlworVarSequenceType extends Expression {
                 return ItemTypes.ArrayItem;
             case "json-item":
                 return ItemTypes.JSONItem;
+            case "duration":
+                return ItemTypes.DurationItem;
 
             default:
                 return ItemTypes.Item;

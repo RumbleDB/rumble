@@ -102,7 +102,7 @@ treatExpr
          : mainExpr=castableExpr ( Ktreat Kas seq=sequenceType )?;
 castableExpr
          : mainExpr=castExpr ( Kcastable Kas single=singleType )?;
-castExpr : mainExpr=unaryExpr ( Kcast Kas atomicType '?'? )?;
+castExpr : mainExpr=unaryExpr ( Kcast Kas single=singleType )?;
 unaryExpr: op+=('-' | '+')* mainExpr=simpleMapExpr;
 simpleMapExpr: mainExpr=postFixExpr ('!' postFixExpr)*;
 postFixExpr: mainExpr=primaryExpr (al=arrayLookup | pr=predicate | ol=objectLookup | au=arrayUnboxing)*;
@@ -142,7 +142,7 @@ orderedExpr
 unorderedExpr
          : 'unordered' '{' expr '}';
 functionCall
-         : ((ns=NCName | kw=keyWords |  )':')? (fcnName=nCNameOrKeyWordBoolean | kw = keyWords) argumentList;
+         : ((ns=NCName | kw=keyWords |  )':')? (fcnName=nCNameOrKeyWord | kw = keyWords) argumentList;
 
 argumentList : '('  (args+=argument ','?)* ')';
 argument : exprSingle | '?';
@@ -170,12 +170,15 @@ keyWordBoolean
 singleType
          : item=atomicType (question +='?')?;
 
+keyWordDuration
+         : 'duration';
+
 atomicType
          : 'atomic' | 'string' | 'integer'
-         | 'decimal' | 'double' | keyWordBoolean | NullLiteral;
+         | 'decimal' | 'double' | keyWordBoolean | keyWordDuration | NullLiteral;
 
-nCNameOrKeyWordBoolean
-         : NCName | keyWordBoolean;
+nCNameOrKeyWord
+         : NCName | keyWordBoolean | keyWordDuration;
 
 pairConstructor
          :  ( lhs=exprSingle | name=NCName ) (':' | '?') rhs=exprSingle;
