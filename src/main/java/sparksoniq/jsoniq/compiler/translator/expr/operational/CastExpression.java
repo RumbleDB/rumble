@@ -8,16 +8,16 @@ import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 public class CastExpression extends UnaryExpressionBase {
 
-    private FlworVarSingleType _atomicType;
+    private FlworVarSingleType _singleType;
 
     public CastExpression(Expression _mainExpression, ExpressionMetadata metadata) {
         super(_mainExpression, metadata);
         this._isActive = false;
     }
 
-    public CastExpression(Expression _mainExpression, FlworVarSingleType atomicType, ExpressionMetadata metadata) {
+    public CastExpression(Expression _mainExpression, FlworVarSingleType singleType, ExpressionMetadata metadata) {
         super(_mainExpression, Operator.CAST, true, metadata);
-        this._atomicType = atomicType;
+        this._singleType = singleType;
     }
 
 
@@ -35,12 +35,12 @@ public class CastExpression extends UnaryExpressionBase {
     public String serializationString(boolean prefix) {
         String result = "(castExpr ";
         result += _mainExpression.serializationString(true);
-        result += _atomicType != null ? " cast as" + _atomicType.serializationString(prefix) : "";
+        result += _singleType != null ? " cast as" + _singleType.serializationString(prefix) : "";
         result += ")";
         return result;
     }
 
-    public FlworVarSingleType get_atomicType() {
-        return _atomicType;
+    public FlworVarSingleType getFlworVarSingleType() {
+        return _singleType;
     }
 }

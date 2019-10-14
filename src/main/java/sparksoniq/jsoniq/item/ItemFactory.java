@@ -9,12 +9,12 @@ import org.rumbledb.api.Item;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 
 public class ItemFactory {
-
+    
     private static ItemFactory _instance;
-    private NullItem _nullItem;
-    private BooleanItem _trueBooleanItem;
-    private BooleanItem _falseBooleanItem;
-
+    private Item _nullItem;
+    private Item _trueBooleanItem;
+    private Item _falseBooleanItem;
+    
     public static ItemFactory getInstance() {
         if(_instance == null)
         {
@@ -25,48 +25,50 @@ public class ItemFactory {
         }
         return _instance;
     }
-
-    public StringItem createStringItem(String s) {
+    
+    public Item createStringItem(String s) {
         return new StringItem(s);
     }
 
-    public BooleanItem createBooleanItem(boolean b) {
+    public Item createBooleanItem(boolean b) {
         return b?_trueBooleanItem:_falseBooleanItem;
     }
 
-    public NullItem createNullItem() {
+    public Item createNullItem() {
         return _nullItem;
     }
 
-    public IntegerItem createIntegerItem(int i) {
+    public Item createIntegerItem(int i) {
         return new IntegerItem(i);
     }
 
-    public DecimalItem createDecimalItem(BigDecimal d) {
+    public Item createDecimalItem(BigDecimal d) {
         return new DecimalItem(d);
     }
 
-    public DoubleItem createDoubleItem(double d) {
+    public Item createDoubleItem(double d) {
         return new DoubleItem(d);
     }
-
-    public ObjectItem createObjectItem() {
+    
+    public Item createObjectItem() {
         return new ObjectItem();
     }
 
-    public ArrayItem createArrayItem() {
+    public Item createArrayItem() {
         return new ArrayItem();
     }
 
-    public ArrayItem createArrayItem(List<Item> items) {
+    public Item createArrayItem(List<Item> items) {
         return new ArrayItem(items);
     }
-
-    public ObjectItem createObjectItem(List<String> keys, List<Item> values, ItemMetadata itemMetadata) {
+    
+    public Item createObjectItem(List<String> keys, List<Item> values, ItemMetadata itemMetadata)
+    {
         return new ObjectItem(keys, values, itemMetadata);
     }
-
-    public ObjectItem createObjectItem(Map<String, List<Item>> keyValuePairs) {
+    
+    public Item createObjectItem(Map<String, List<Item>> keyValuePairs)
+    {
         return new ObjectItem(keyValuePairs);
     }
 

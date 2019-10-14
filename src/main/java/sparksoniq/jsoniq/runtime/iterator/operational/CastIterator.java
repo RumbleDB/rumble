@@ -33,21 +33,6 @@ public class CastIterator extends UnaryOperationIterator {
     private static final long serialVersionUID = 1L;
     private final SingleType _singleType;
 
-    private static final Map<String, Class> PRIMITIVE_NAME_TYPE_MAP = new HashMap<>();
-
-    static {
-        PRIMITIVE_NAME_TYPE_MAP.put("JSONItem", JsonItem.class);
-        PRIMITIVE_NAME_TYPE_MAP.put("ObjectItem", ObjectItem.class);
-        PRIMITIVE_NAME_TYPE_MAP.put("ArrayItem", ArrayItem.class);
-        PRIMITIVE_NAME_TYPE_MAP.put("AtomicItem", AtomicItem.class);
-        PRIMITIVE_NAME_TYPE_MAP.put("StringItem", StringItem.class);
-        PRIMITIVE_NAME_TYPE_MAP.put("IntegerItem", IntegerItem.class);
-        PRIMITIVE_NAME_TYPE_MAP.put("DecimalItem", DecimalItem.class);
-        PRIMITIVE_NAME_TYPE_MAP.put("DoubleItem", DoubleItem.class);
-        PRIMITIVE_NAME_TYPE_MAP.put("BooleanItem", BooleanItem.class);
-        PRIMITIVE_NAME_TYPE_MAP.put("NullItem", NullItem.class);
-    }
-
     public CastIterator(RuntimeIterator child, SingleType singleType, IteratorMetadata iteratorMetadata) {
         super(child, OperationalExpressionBase.Operator.CAST, iteratorMetadata);
         this._singleType = singleType;
@@ -82,13 +67,10 @@ public class CastIterator extends UnaryOperationIterator {
 
             AtomicItem atomicItem = CastableIterator.checkInvalidCastable(item, getMetadata(), _singleType);
 
-            Class classToLoad = PRIMITIVE_NAME_TYPE_MAP.get(_singleType.getType().toString());
-            assert classToLoad != null;
-
-            if (atomicItem.isCastableAs(_singleType)) {
+            if (atomicItem.isCastableAs(_singleType.getType())) {
                 try {
-                    return atomicItem.castAs((AtomicItem) classToLoad.newInstance());
-                } catch (InstantiationException | IllegalAccessException e) {
+                    return atomicItem.castAs(_singleType.getType());
+                } catch (ClassCastException e) {
                     throw new CastException(message, getMetadata());
                 }
 

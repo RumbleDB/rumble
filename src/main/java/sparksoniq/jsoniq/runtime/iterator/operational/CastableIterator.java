@@ -50,7 +50,7 @@ public class CastableIterator extends UnaryOperationBaseIterator {
 
             AtomicItem atomicItem = checkInvalidCastable(items.get(0), getMetadata(), _singleType);
 
-            return ItemFactory.getInstance().createBooleanItem(atomicItem.isCastableAs(_singleType));
+            return ItemFactory.getInstance().createBooleanItem(atomicItem.isCastableAs(_singleType.getType()));
         } else
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
     }
