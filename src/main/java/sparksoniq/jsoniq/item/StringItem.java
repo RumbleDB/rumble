@@ -27,7 +27,6 @@ import org.rumbledb.api.Item;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import sparksoniq.semantics.types.SingleType;
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
@@ -53,19 +52,19 @@ public class StringItem extends AtomicItem {
 
     @Override
     public String getStringValue() {
-        return _value;
+        return this.getValue();
     }
 
     public double castToDoubleValue() {
-    	return Double.parseDouble(_value);
+        return Double.parseDouble(this.getValue());
     }
 
     public BigDecimal castToDecimalValue() {
-        return new BigDecimal(_value);
+        return new BigDecimal(this.getValue());
     }
 
     public int castToIntegerValue() {
-        return Integer.parseInt(_value);
+        return Integer.parseInt(this.getValue());
     }
 
     private boolean isBooleanLiteral(String value) { return "true".equals(value) || "false".equals(value); }
@@ -73,6 +72,30 @@ public class StringItem extends AtomicItem {
     private boolean isNullLiteral(String value) { return "null".equals(value); }
 
     @Override
+    public boolean isString() {
+        return true;
+    }
+
+    @Override
+    public Item castAs(AtomicTypes itemType) {
+        switch (itemType) {
+            case BooleanItem:
+                return ItemFactory.getInstance().createBooleanItem(Boolean.parseBoolean(this.getStringValue()));
+            case DoubleItem:
+                return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(this.getStringValue()));
+            case DecimalItem:
+                return ItemFactory.getInstance().createDecimalItem(new BigDecimal(this.getStringValue()));
+            case IntegerItem:
+                return ItemFactory.getInstance().createIntegerItem(Integer.parseInt(this.getStringValue()));
+            case NullItem:
+                return ItemFactory.getInstance().createNullItem();
+            case StringItem:
+                return this;
+            default:
+                throw new ClassCastException();
+        }
+    }
+
     public boolean getEffectiveBooleanValue() {
         return !this.getStringValue().isEmpty();
     }
@@ -83,21 +106,21 @@ public class StringItem extends AtomicItem {
     }
 
     @Override
-    public boolean isCastableAs(SingleType type) {
-        if (type.getType() == AtomicTypes.StringItem)
+    public boolean isCastableAs(AtomicTypes itemType) {
+        if (itemType == AtomicTypes.StringItem)
             return true;
         try {
-            if (type.getType() == AtomicTypes.IntegerItem) {
-                Integer.parseInt(this._value);
-            } else if (type.getType() == AtomicTypes.DecimalItem) {
-                if (this._value.contains("e") || this._value.contains("E")) return false;
-                Float.parseFloat(this._value);
-            } else if (type.getType() == AtomicTypes.DoubleItem) {
-                Double.parseDouble(this._value);
-            } else if (type.getType() == AtomicTypes.NullItem) {
-                return isNullLiteral(this._value);
+            if (itemType == AtomicTypes.IntegerItem) {
+                Integer.parseInt(this.getValue());
+            } else if (itemType == AtomicTypes.DecimalItem) {
+                if (this.getValue().contains("e") || this.getValue().contains("E")) return false;
+                Float.parseFloat(this.getValue());
+            } else if (itemType == AtomicTypes.DoubleItem) {
+                Double.parseDouble(this.getValue());
+            } else if (itemType == AtomicTypes.NullItem) {
+                return isNullLiteral(this.getValue());
             }
-            else return isBooleanLiteral(this._value);
+            else return isBooleanLiteral(this.getValue());
         } catch (NumberFormatException e) {
             return false;
         }
@@ -105,18 +128,13 @@ public class StringItem extends AtomicItem {
     }
 
     @Override
-    public boolean isString() {
-        return true;
-    }
-
-    @Override
     public String serialize() {
-        return _value;
+        return this.getValue();
     }
 
     @Override
     public void write(Kryo kryo, Output output) {
-        output.writeString(this._value);
+        output.writeString(this.getValue());
     }
 
     @Override

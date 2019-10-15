@@ -26,6 +26,4 @@ public class SingleType implements Serializable {
     public boolean getZeroOrOne() {
         return _zeroOrOne;
     }
-
-
 }

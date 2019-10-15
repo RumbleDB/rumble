@@ -23,7 +23,6 @@ package sparksoniq.jsoniq.item;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import sparksoniq.semantics.types.SingleType;
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
@@ -53,7 +52,7 @@ public class IntegerItem extends AtomicItem {
 
     @Override
     public int getIntegerValue() {
-        return _value;
+        return getValue();
     }
 
     @Override
@@ -85,19 +84,37 @@ public class IntegerItem extends AtomicItem {
     }
 
     @Override
-    public boolean isCastableAs(SingleType type) {
-        return type.getType() != AtomicTypes.AtomicItem &&
-                type.getType() != AtomicTypes.NullItem;
+    public Item castAs(AtomicTypes itemType) {
+        switch (itemType) {
+            case BooleanItem:
+                return ItemFactory.getInstance().createBooleanItem(this.getIntegerValue() != 0);
+            case DoubleItem:
+                return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue());
+            case DecimalItem:
+                return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue());
+            case IntegerItem:
+                return this;
+            case StringItem:
+                return ItemFactory.getInstance().createStringItem(String.valueOf(this.getIntegerValue()));
+            default:
+                throw new ClassCastException();
+        }
+    }
+
+    @Override
+    public boolean isCastableAs(AtomicTypes itemType) {
+        return itemType != AtomicTypes.AtomicItem &&
+                itemType != AtomicTypes.NullItem;
     }
 
     @Override
     public String serialize() {
-        return String.valueOf(_value);
+        return String.valueOf(this.getValue());
     }
 
     @Override
     public void write(Kryo kryo, Output output) {
-        output.writeInt(this._value);
+        output.writeInt(this.getValue());
     }
 
     @Override

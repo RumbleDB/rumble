@@ -26,7 +26,6 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import sparksoniq.semantics.types.AtomicTypes;
-import sparksoniq.semantics.types.SingleType;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
@@ -50,9 +49,21 @@ public class NullItem extends AtomicItem {
     }
 
     @Override
-    public boolean isCastableAs(SingleType type) {
-        return type.getType() == AtomicTypes.NullItem ||
-                type.getType() == AtomicTypes.StringItem;
+    public boolean isCastableAs(AtomicTypes itemType) {
+        return itemType == AtomicTypes.NullItem ||
+                itemType == AtomicTypes.StringItem;
+    }
+
+    @Override
+    public Item castAs(AtomicTypes itemType) {
+        switch (itemType) {
+            case NullItem:
+                return this;
+            case StringItem:
+                return ItemFactory.getInstance().createStringItem(this.serialize());
+            default:
+                throw new ClassCastException();
+        }
     }
 
     @Override
