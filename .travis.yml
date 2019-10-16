@@ -10,5 +10,7 @@ script:
   - mvn -Dtest=RuntimeTests test
   - mvn -Dtest=SparkRuntimeTests test
   - mvn -Dtest=JavaAPITest test
-
+cache:
+  directories:
+    - $HOME/.m2
 
