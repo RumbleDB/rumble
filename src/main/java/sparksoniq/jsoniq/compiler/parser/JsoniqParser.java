@@ -2382,7 +2382,7 @@ public class JsoniqParser extends Parser {
 	public static class SwitchExprContext extends ParserRuleContext {
 		public ExprContext cond;
 		public SwitchCaseClauseContext switchCaseClause;
-		public List<SwitchCaseClauseContext> cses = new ArrayList<SwitchCaseClauseContext>();
+		public List<SwitchCaseClauseContext> cases = new ArrayList<SwitchCaseClauseContext>();
 		public ExprSingleContext def;
 		public TerminalNode Kswitch() { return getToken(JsoniqParser.Kswitch, 0); }
 		public TerminalNode Kdefault() { return getToken(JsoniqParser.Kdefault, 0); }
@@ -2433,7 +2433,7 @@ public class JsoniqParser extends Parser {
 				{
 				setState(474);
 				((SwitchExprContext)_localctx).switchCaseClause = switchCaseClause();
-				((SwitchExprContext)_localctx).cses.add(((SwitchExprContext)_localctx).switchCaseClause);
+				((SwitchExprContext)_localctx).cases.add(((SwitchExprContext)_localctx).switchCaseClause);
 				}
 				}
 				setState(477); 

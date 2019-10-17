@@ -95,7 +95,7 @@ quantifiedExpr          : (so=Ksome | ev=Kevery)
 
 quantifiedExprVar       : varRef (Kas sequenceType)? Kin exprSingle;
 
-switchExpr              : Kswitch '(' cond=expr ')' cses+=switchCaseClause+ Kdefault Kreturn def=exprSingle;
+switchExpr              : Kswitch '(' cond=expr ')' cases+=switchCaseClause+ Kdefault Kreturn def=exprSingle;
 
 switchCaseClause        : (Kcase cond+=exprSingle)+ Kreturn ret=exprSingle;
 
