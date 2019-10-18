@@ -961,7 +961,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         this.visitExpr(ctx.cond);
         condition = this.currentExpression;
         List<SwitchCaseExpression> cases = new ArrayList<>();
-        for (JsoniqParser.SwitchCaseClauseContext expr : ctx.cses) {
+        for (JsoniqParser.SwitchCaseClauseContext expr : ctx.cases) {
             this.visitSwitchCaseClause(expr);
             cases.add((SwitchCaseExpression) this.currentExpression);
         }
