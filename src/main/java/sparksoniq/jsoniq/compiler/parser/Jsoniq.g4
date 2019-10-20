@@ -58,7 +58,7 @@ exprSingle              : flowrExpr
 
 flowrExpr               : (start_for=forClause| start_let=letClause)
                           (forClause | whereClause | letClause | groupByClause | orderByClause | countClause)*
-                          Kreturn return_Expr=exprSingle;
+                          Kreturn return_expr=exprSingle;
 
 forClause               : Kfor vars+=forVar (',' vars+=forVar)*;
 
@@ -103,46 +103,46 @@ typeSwitchExpr          : Ktypeswitch '(' expr ')' caseClause+ Kdefault (varRef)
 
 caseClause              : Kcase (varRef Kas)? sequenceType ('|' sequenceType)* Kreturn exprSingle;
 
-ifExpr                  : Kif '(' testCondition=expr ')'
+ifExpr                  : Kif '(' test_condition=expr ')'
                           Kthen branch=exprSingle
-                          Kelse elseBranch=exprSingle;
+                          Kelse else_branch=exprSingle;
 
 tryCatchExpr            : Ktry '{' expr '}'
                           Kcatch '*' '{' expr '}';
 
 ///////////////////////// expression
 
-orExpr                  : mainExpr=andExpr ( Kor rhs+=andExpr )*;
+orExpr                  : main_expr=andExpr ( Kor rhs+=andExpr )*;
 
-andExpr                 : mainExpr=notExpr ( Kand rhs+=notExpr )*;
+andExpr                 : main_expr=notExpr ( Kand rhs+=notExpr )*;
 
-notExpr                 : op+=Knot ? mainExpr=comparisonExpr;
+notExpr                 : op+=Knot ? main_expr=comparisonExpr;
 
-comparisonExpr          : mainExpr=stringConcatExpr
+comparisonExpr          : main_expr=stringConcatExpr
                           ( op+=('eq' | 'ne' | 'lt' | 'le' | 'gt' | 'ge'
                           | '=' | '!=' | '<' | '<=' | '>' | '>=') rhs+=stringConcatExpr )?;
 
-stringConcatExpr        : mainExpr=rangeExpr ( '||' rhs+=rangeExpr )* ;
+stringConcatExpr        : main_expr=rangeExpr ( '||' rhs+=rangeExpr )* ;
 
-rangeExpr               : mainExpr=additiveExpr ( Kto rhs+=additiveExpr )?;
+rangeExpr               : main_expr=additiveExpr ( Kto rhs+=additiveExpr )?;
 
-additiveExpr            : mainExpr=multiplicativeExpr ( op+=('+' | '-') rhs+=multiplicativeExpr )*;
+additiveExpr            : main_expr=multiplicativeExpr ( op+=('+' | '-') rhs+=multiplicativeExpr )*;
 
-multiplicativeExpr      : mainExpr=instanceOfExpr ( op+=('*' | 'div' | 'idiv' | 'mod') rhs+=instanceOfExpr )*;
+multiplicativeExpr      : main_expr=instanceOfExpr ( op+=('*' | 'div' | 'idiv' | 'mod') rhs+=instanceOfExpr )*;
 
-instanceOfExpr          : mainExpr=treatExpr ( Kinstance Kof seq=sequenceType)?;
+instanceOfExpr          : main_expr=treatExpr ( Kinstance Kof seq=sequenceType)?;
 
-treatExpr               : mainExpr=castableExpr ( Ktreat Kas seq=sequenceType )?;
+treatExpr               : main_expr=castableExpr ( Ktreat Kas seq=sequenceType )?;
 
-castableExpr            : mainExpr=castExpr ( Kcastable Kas single=singleType )?;
+castableExpr            : main_expr=castExpr ( Kcastable Kas single=singleType )?;
 
-castExpr                : mainExpr=unaryExpr ( Kcast Kas single=singleType )?;
+castExpr                : main_expr=unaryExpr ( Kcast Kas single=singleType )?;
 
-unaryExpr               : op+=('-' | '+')* mainExpr=simpleMapExpr;
+unaryExpr               : op+=('-' | '+')* main_expr=simpleMapExpr;
 
-simpleMapExpr           : mainExpr=postFixExpr ('!' postFixExpr)*;
+simpleMapExpr           : main_expr=postFixExpr ('!' postFixExpr)*;
 
-postFixExpr             : mainExpr=primaryExpr (al=arrayLookup | pr=predicate | ol=objectLookup | au=arrayUnboxing)*;
+postFixExpr             : main_expr=primaryExpr (al=arrayLookup | pr=predicate | ol=objectLookup | au=arrayUnboxing)*;
 
 arrayLookup             : '[' '[' expr ']' ']';
 
@@ -176,7 +176,7 @@ orderedExpr             : 'ordered' '{' expr '}';
 unorderedExpr           : 'unordered' '{' expr '}';
 
 functionCall            : ((ns=NCName | kw=keyWords |  )':')?
-                          (fcnName=nCNameOrKeyWordBoolean | kw = keyWords) argumentList;
+                          (fn_name=nCNameOrKeyWordBoolean | kw = keyWords) argumentList;
 
 argumentList            : '('  (args+=argument ','?)* ')';
 
@@ -189,7 +189,7 @@ sequenceType            : '(' ')'
                         | item=itemType (question+='?' | star+='*' | plus+='+')?;
 
 objectConstructor       : '{' ( pairConstructor (',' pairConstructor)* )? '}'
-                        | mergeOperator+='{|' expr '|}';
+                        | merge_operator+='{|' expr '|}';
 
 itemType                : 'item'
                         | jSONItemTest
