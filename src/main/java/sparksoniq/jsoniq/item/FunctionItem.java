@@ -25,6 +25,7 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
@@ -38,9 +39,7 @@ import java.util.Map;
 public class FunctionItem extends Item {
 
     private static final long serialVersionUID = 1L;
-    // name and arity uniquely defines a function item
-    private String name;
-    private int arity;
+    private FunctionIdentifier identifier;
     private List<String> parameterNames;
 
     // signature contains sequence types of all parameters and the return type
@@ -54,64 +53,32 @@ public class FunctionItem extends Item {
         super();
     }
 
-    public FunctionItem(
-            String name,
-            List<String> parameterNames,
-            List<SequenceType> signature,
-            RuntimeIterator implementation,
-            Map<String, Item> nonLocalVariableBindings) {
-        super();
-        this.name = name;
+    public FunctionItem(FunctionIdentifier identifier, List<String> parameterNames, List<SequenceType> signature, RuntimeIterator implementation, Map<String, Item> nonLocalVariableBindings) {
+        this.identifier = identifier;
         this.parameterNames = parameterNames;
-        this.arity = this.parameterNames.size();
         this.signature = signature;
         this.implementation = implementation;
         this.nonLocalVariableBindings = nonLocalVariableBindings;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public int getArity() {
-        return arity;
+    public FunctionIdentifier getIdentifier() {
+        return identifier;
     }
 
     public List<String> getParameterNames() {
         return parameterNames;
     }
 
-    public void setParameterNames(List<String> parameterNames) {
-        this.parameterNames = parameterNames;
-        this.arity = this.parameterNames.size();
-    }
-
     public List<SequenceType> getSignature() {
         return signature;
-    }
-
-    public void setSignature(List<SequenceType> signature) {
-        this.signature = signature;
     }
 
     public RuntimeIterator getImplementation() {
         return implementation;
     }
 
-    public void setImplementation(RuntimeIterator implementation) {
-        this.implementation = implementation;
-    }
-
     public Map<String, Item> getNonLocalVariableBindings() {
         return nonLocalVariableBindings;
-    }
-
-    public void setNonLocalVariableBindings(Map<String, Item> nonLocalVariableBindings) {
-        this.nonLocalVariableBindings = nonLocalVariableBindings;
     }
 
     @Override
@@ -142,14 +109,12 @@ public class FunctionItem extends Item {
 
     @Override
     public int hashCode() {
-        return this.name.concat(
-                String.join("", this.parameterNames)
-        ).hashCode();
+        return this.identifier.hashCode() + String.join("", this.parameterNames).hashCode();
     }
 
     @Override
     public void write(Kryo kryo, Output output) {
-        output.writeString(this.name);
+        kryo.writeObject(output, this.identifier);
         kryo.writeObject(output, this.parameterNames);
         kryo.writeObject(output, this.signature);
         kryo.writeObject(output, this.implementation);
@@ -159,7 +124,7 @@ public class FunctionItem extends Item {
     @SuppressWarnings("unchecked")
     @Override
     public void read(Kryo kryo, Input input) {
-        this.name = input.readString();
+        this.identifier = kryo.readObject(input, FunctionIdentifier.class);
         this.parameterNames = kryo.readObject(input, ArrayList.class);
         this.signature = kryo.readObject(input, ArrayList.class);
         this.implementation = kryo.readObject(input, RuntimeIterator.class);
