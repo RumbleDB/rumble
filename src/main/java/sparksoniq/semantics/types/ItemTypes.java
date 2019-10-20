@@ -28,7 +28,6 @@ public enum ItemTypes {
     ArrayItem,
 
     AtomicItem,
-
     StringItem,
     IntegerItem,
     DecimalItem,
@@ -36,6 +35,7 @@ public enum ItemTypes {
     BooleanItem,
 
     HexBinaryItem,
+    FunctionItem,
 
     NullItem;
 
