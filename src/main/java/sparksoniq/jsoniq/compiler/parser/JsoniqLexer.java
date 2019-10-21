@@ -1,4 +1,4 @@
-// Generated from ./src/main/java/sparksoniq/jsoniq/compiler/parser/Jsoniq.g4 by ANTLR 4.7
+// Generated from ./src/main/java/sparksoniq/jsoniq/compiler/parser/Jsoniq.g4 by ANTLR 4.5.3
 
 // Java header
 package sparksoniq.jsoniq.compiler.parser;
@@ -14,7 +14,7 @@ import org.antlr.v4.runtime.misc.*;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class JsoniqLexer extends Lexer {
-	static { RuntimeMetaData.checkVersion("4.7", RuntimeMetaData.VERSION); }
+	static { RuntimeMetaData.checkVersion("4.5.3", RuntimeMetaData.VERSION); }
 
 	protected static final DFA[] _decisionToDFA;
 	protected static final PredictionContextCache _sharedContextCache =
@@ -29,19 +29,15 @@ public class JsoniqLexer extends Lexer {
 		T__45=46, T__46=47, T__47=48, T__48=49, T__49=50, T__50=51, T__51=52, 
 		T__52=53, T__53=54, T__54=55, T__55=56, T__56=57, T__57=58, T__58=59, 
 		T__59=60, T__60=61, T__61=62, T__62=63, T__63=64, T__64=65, T__65=66, 
-		T__66=67, NullLiteral=68, Literal=69, NumericLiteral=70, BooleanLiteral=71, 
-		Kfor=72, Klet=73, Kwhere=74, Kgroup=75, Kby=76, Korder=77, Kreturn=78, 
-		Kif=79, Kin=80, Kas=81, Kat=82, Kallowing=83, Kempty=84, Kcount=85, Kstable=86, 
-		Kascending=87, Kdescending=88, Ksome=89, Kevery=90, Ksatisfies=91, Kcollation=92, 
-		Kgreatest=93, Kleast=94, Kswitch=95, Kcase=96, Ktry=97, Kcatch=98, Kdefault=99, 
-		Kthen=100, Kelse=101, Ktypeswitch=102, Kor=103, Kand=104, Knot=105, Kto=106, 
-		Kinstance=107, Kof=108, Ktreat=109, Kcast=110, Kcastable=111, Kversion=112, 
-		Kjsoniq=113, Kjson=114, STRING=115, IntegerLiteral=116, DecimalLiteral=117, 
-		DoubleLiteral=118, WS=119, NCName=120, XQComment=121, ContentChar=122;
-	public static String[] channelNames = {
-		"DEFAULT_TOKEN_CHANNEL", "HIDDEN"
-	};
-
+		T__66=67, Kfor=68, Klet=69, Kwhere=70, Kgroup=71, Kby=72, Korder=73, Kreturn=74, 
+		Kif=75, Kin=76, Kas=77, Kat=78, Kallowing=79, Kempty=80, Kcount=81, Kstable=82, 
+		Kascending=83, Kdescending=84, Ksome=85, Kevery=86, Ksatisfies=87, Kcollation=88, 
+		Kgreatest=89, Kleast=90, Kswitch=91, Kcase=92, Ktry=93, Kcatch=94, Kdefault=95, 
+		Kthen=96, Kelse=97, Ktypeswitch=98, Kor=99, Kand=100, Knot=101, Kto=102, 
+		Kinstance=103, Kof=104, Ktreat=105, Kcast=106, Kcastable=107, Kversion=108, 
+		Kjsoniq=109, Kjson=110, STRING=111, NullLiteral=112, Literal=113, NumericLiteral=114, 
+		BooleanLiteral=115, IntegerLiteral=116, DecimalLiteral=117, DoubleLiteral=118, 
+		WS=119, NCName=120, XQComment=121, ContentChar=122;
 	public static String[] modeNames = {
 		"DEFAULT_MODE"
 	};
@@ -55,15 +51,16 @@ public class JsoniqLexer extends Lexer {
 		"T__41", "T__42", "T__43", "T__44", "T__45", "T__46", "T__47", "T__48", 
 		"T__49", "T__50", "T__51", "T__52", "T__53", "T__54", "T__55", "T__56", 
 		"T__57", "T__58", "T__59", "T__60", "T__61", "T__62", "T__63", "T__64", 
-		"T__65", "T__66", "NullLiteral", "Literal", "NumericLiteral", "BooleanLiteral", 
-		"Kfor", "Klet", "Kwhere", "Kgroup", "Kby", "Korder", "Kreturn", "Kif", 
-		"Kin", "Kas", "Kat", "Kallowing", "Kempty", "Kcount", "Kstable", "Kascending", 
-		"Kdescending", "Ksome", "Kevery", "Ksatisfies", "Kcollation", "Kgreatest", 
-		"Kleast", "Kswitch", "Kcase", "Ktry", "Kcatch", "Kdefault", "Kthen", "Kelse", 
-		"Ktypeswitch", "Kor", "Kand", "Knot", "Kto", "Kinstance", "Kof", "Ktreat", 
-		"Kcast", "Kcastable", "Kversion", "Kjsoniq", "Kjson", "STRING", "ESC", 
-		"UNICODE", "HEX", "IntegerLiteral", "DecimalLiteral", "DoubleLiteral", 
-		"Digits", "WS", "NCName", "NameStartChar", "NameChar", "XQComment", "ContentChar"
+		"T__65", "T__66", "Kfor", "Klet", "Kwhere", "Kgroup", "Kby", "Korder", 
+		"Kreturn", "Kif", "Kin", "Kas", "Kat", "Kallowing", "Kempty", "Kcount", 
+		"Kstable", "Kascending", "Kdescending", "Ksome", "Kevery", "Ksatisfies", 
+		"Kcollation", "Kgreatest", "Kleast", "Kswitch", "Kcase", "Ktry", "Kcatch", 
+		"Kdefault", "Kthen", "Kelse", "Ktypeswitch", "Kor", "Kand", "Knot", "Kto", 
+		"Kinstance", "Kof", "Ktreat", "Kcast", "Kcastable", "Kversion", "Kjsoniq", 
+		"Kjson", "STRING", "ESC", "UNICODE", "HEX", "NullLiteral", "Literal", 
+		"NumericLiteral", "BooleanLiteral", "IntegerLiteral", "DecimalLiteral", 
+		"DoubleLiteral", "Digits", "WS", "NCName", "NameStartChar", "NameChar", 
+		"XQComment", "ContentChar"
 	};
 
 	private static final String[] _LITERAL_NAMES = {
@@ -74,16 +71,15 @@ public class JsoniqLexer extends Lexer {
 		"','", "'variable'", "':='", "'external'", "'function'", "'('", "')'", 
 		"'{'", "'}'", "'$'", "'|'", "'*'", "'eq'", "'ne'", "'lt'", "'le'", "'gt'", 
 		"'ge'", "'!='", "'<'", "'<='", "'>'", "'>='", "'||'", "'+'", "'-'", "'div'", 
-		"'idiv'", "'mod'", "'?'", "'!'", "'['", "']'", "'.'", "'$$'", "'{|'", 
+		"'idiv'", "'mod'", "'!'", "'['", "']'", "'.'", "'$$'", "'?'", "'{|'", 
 		"'|}'", "'item'", "'object'", "'array'", "'boolean'", "'atomic'", "'string'", 
-		"'integer'", "'decimal'", "'double'", "'null'", null, null, null, "'for'", 
-		"'let'", "'where'", "'group'", "'by'", "'order'", "'return'", "'if'", 
-		"'in'", "'as'", "'at'", "'allowing'", "'empty'", "'count'", "'stable'", 
-		"'ascending'", "'descending'", "'some'", "'every'", "'satisfies'", "'collation'", 
-		"'greatest'", "'least'", "'switch'", "'case'", "'try'", "'catch'", "'default'", 
-		"'then'", "'else'", "'typeswitch'", "'or'", "'and'", "'not'", "'to'", 
-		"'instance'", "'of'", "'treat'", "'cast'", "'castable'", "'version'", 
-		"'jsoniq'", "'json-item'"
+		"'integer'", "'decimal'", "'double'", "'for'", "'let'", "'where'", "'group'", 
+		"'by'", "'order'", "'return'", "'if'", "'in'", "'as'", "'at'", "'allowing'", 
+		"'empty'", "'count'", "'stable'", "'ascending'", "'descending'", "'some'", 
+		"'every'", "'satisfies'", "'collation'", "'greatest'", "'least'", "'switch'", 
+		"'case'", "'try'", "'catch'", "'default'", "'then'", "'else'", "'typeswitch'", 
+		"'or'", "'and'", "'not'", "'to'", "'instance'", "'of'", "'treat'", "'cast'", 
+		"'castable'", "'version'", "'jsoniq'", "'json-item'", null, "'null'"
 	};
 	private static final String[] _SYMBOLIC_NAMES = {
 		null, null, null, null, null, null, null, null, null, null, null, null, 
@@ -91,14 +87,14 @@ public class JsoniqLexer extends Lexer {
 		null, null, null, null, null, null, null, null, null, null, null, null, 
 		null, null, null, null, null, null, null, null, null, null, null, null, 
 		null, null, null, null, null, null, null, null, null, null, null, null, 
-		null, null, null, null, null, null, null, null, "NullLiteral", "Literal", 
-		"NumericLiteral", "BooleanLiteral", "Kfor", "Klet", "Kwhere", "Kgroup", 
-		"Kby", "Korder", "Kreturn", "Kif", "Kin", "Kas", "Kat", "Kallowing", "Kempty", 
-		"Kcount", "Kstable", "Kascending", "Kdescending", "Ksome", "Kevery", "Ksatisfies", 
-		"Kcollation", "Kgreatest", "Kleast", "Kswitch", "Kcase", "Ktry", "Kcatch", 
-		"Kdefault", "Kthen", "Kelse", "Ktypeswitch", "Kor", "Kand", "Knot", "Kto", 
-		"Kinstance", "Kof", "Ktreat", "Kcast", "Kcastable", "Kversion", "Kjsoniq", 
-		"Kjson", "STRING", "IntegerLiteral", "DecimalLiteral", "DoubleLiteral", 
+		null, null, null, null, null, null, null, null, "Kfor", "Klet", "Kwhere", 
+		"Kgroup", "Kby", "Korder", "Kreturn", "Kif", "Kin", "Kas", "Kat", "Kallowing", 
+		"Kempty", "Kcount", "Kstable", "Kascending", "Kdescending", "Ksome", "Kevery", 
+		"Ksatisfies", "Kcollation", "Kgreatest", "Kleast", "Kswitch", "Kcase", 
+		"Ktry", "Kcatch", "Kdefault", "Kthen", "Kelse", "Ktypeswitch", "Kor", 
+		"Kand", "Knot", "Kto", "Kinstance", "Kof", "Ktreat", "Kcast", "Kcastable", 
+		"Kversion", "Kjsoniq", "Kjson", "STRING", "NullLiteral", "Literal", "NumericLiteral", 
+		"BooleanLiteral", "IntegerLiteral", "DecimalLiteral", "DoubleLiteral", 
 		"WS", "NCName", "XQComment", "ContentChar"
 	};
 	public static final Vocabulary VOCABULARY = new VocabularyImpl(_LITERAL_NAMES, _SYMBOLIC_NAMES);
@@ -150,16 +146,13 @@ public class JsoniqLexer extends Lexer {
 	public String getSerializedATN() { return _serializedATN; }
 
 	@Override
-	public String[] getChannelNames() { return channelNames; }
-
-	@Override
 	public String[] getModeNames() { return modeNames; }
 
 	@Override
 	public ATN getATN() { return _ATN; }
 
 	public static final String _serializedATN =
-		"\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\2|\u0402\b\1\4\2\t"+
+		"\3\u0430\ud6d1\u8206\uad2d\u4417\uaef1\u8d80\uaadd\2|\u0402\b\1\4\2\t"+
 		"\2\4\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\4\b\t\b\4\t\t\t\4\n\t\n\4\13"+
 		"\t\13\4\f\t\f\4\r\t\r\4\16\t\16\4\17\t\17\4\20\t\20\4\21\t\21\4\22\t\22"+
 		"\4\23\t\23\4\24\t\24\4\25\t\25\4\26\t\26\4\27\t\27\4\30\t\30\4\31\t\31"+
@@ -192,24 +185,24 @@ public class JsoniqLexer extends Lexer {
 		"\3%\3%\3&\3&\3&\3\'\3\'\3\'\3(\3(\3(\3)\3)\3)\3*\3*\3+\3+\3+\3,\3,\3-"+
 		"\3-\3-\3.\3.\3.\3/\3/\3\60\3\60\3\61\3\61\3\61\3\61\3\62\3\62\3\62\3\62"+
 		"\3\62\3\63\3\63\3\63\3\63\3\64\3\64\3\65\3\65\3\66\3\66\3\67\3\67\38\3"+
-		"8\39\39\39\3:\3:\3:\3;\3;\3;\3<\3<\3<\3<\3<\3=\3=\3=\3=\3=\3=\3=\3>\3"+
+		"8\38\39\39\3:\3:\3:\3;\3;\3;\3<\3<\3<\3<\3<\3=\3=\3=\3=\3=\3=\3=\3>\3"+
 		">\3>\3>\3>\3>\3?\3?\3?\3?\3?\3?\3?\3?\3@\3@\3@\3@\3@\3@\3@\3A\3A\3A\3"+
 		"A\3A\3A\3A\3B\3B\3B\3B\3B\3B\3B\3B\3C\3C\3C\3C\3C\3C\3C\3C\3D\3D\3D\3"+
-		"D\3D\3D\3D\3E\3E\3E\3E\3E\3F\3F\5F\u0280\nF\3G\3G\3G\5G\u0285\nG\3H\3"+
-		"H\3H\3H\3H\3H\3H\3H\3H\5H\u0290\nH\3I\3I\3I\3I\3J\3J\3J\3J\3K\3K\3K\3"+
-		"K\3K\3K\3L\3L\3L\3L\3L\3L\3M\3M\3M\3N\3N\3N\3N\3N\3N\3O\3O\3O\3O\3O\3"+
-		"O\3O\3P\3P\3P\3Q\3Q\3Q\3R\3R\3R\3S\3S\3S\3T\3T\3T\3T\3T\3T\3T\3T\3T\3"+
-		"U\3U\3U\3U\3U\3U\3V\3V\3V\3V\3V\3V\3W\3W\3W\3W\3W\3W\3W\3X\3X\3X\3X\3"+
-		"X\3X\3X\3X\3X\3X\3Y\3Y\3Y\3Y\3Y\3Y\3Y\3Y\3Y\3Y\3Y\3Z\3Z\3Z\3Z\3Z\3[\3"+
-		"[\3[\3[\3[\3[\3\\\3\\\3\\\3\\\3\\\3\\\3\\\3\\\3\\\3\\\3]\3]\3]\3]\3]\3"+
-		"]\3]\3]\3]\3]\3^\3^\3^\3^\3^\3^\3^\3^\3^\3_\3_\3_\3_\3_\3_\3`\3`\3`\3"+
-		"`\3`\3`\3`\3a\3a\3a\3a\3a\3b\3b\3b\3b\3c\3c\3c\3c\3c\3c\3d\3d\3d\3d\3"+
-		"d\3d\3d\3d\3e\3e\3e\3e\3e\3f\3f\3f\3f\3f\3g\3g\3g\3g\3g\3g\3g\3g\3g\3"+
-		"g\3g\3h\3h\3h\3i\3i\3i\3i\3j\3j\3j\3j\3k\3k\3k\3l\3l\3l\3l\3l\3l\3l\3"+
-		"l\3l\3m\3m\3m\3n\3n\3n\3n\3n\3n\3o\3o\3o\3o\3o\3p\3p\3p\3p\3p\3p\3p\3"+
-		"p\3p\3q\3q\3q\3q\3q\3q\3q\3q\3r\3r\3r\3r\3r\3r\3r\3s\3s\3s\3s\3s\3s\3"+
-		"s\3s\3s\3s\3t\3t\3t\7t\u039e\nt\ft\16t\u03a1\13t\3t\3t\3u\3u\3u\5u\u03a8"+
-		"\nu\3v\3v\3v\3v\3v\3v\3w\3w\3x\3x\3y\3y\3y\3y\3y\7y\u03b9\ny\fy\16y\u03bc"+
+		"D\3D\3D\3D\3E\3E\3E\3E\3F\3F\3F\3F\3G\3G\3G\3G\3G\3G\3H\3H\3H\3H\3H\3"+
+		"H\3I\3I\3I\3J\3J\3J\3J\3J\3J\3K\3K\3K\3K\3K\3K\3K\3L\3L\3L\3M\3M\3M\3"+
+		"N\3N\3N\3O\3O\3O\3P\3P\3P\3P\3P\3P\3P\3P\3P\3Q\3Q\3Q\3Q\3Q\3Q\3R\3R\3"+
+		"R\3R\3R\3R\3S\3S\3S\3S\3S\3S\3S\3T\3T\3T\3T\3T\3T\3T\3T\3T\3T\3U\3U\3"+
+		"U\3U\3U\3U\3U\3U\3U\3U\3U\3V\3V\3V\3V\3V\3W\3W\3W\3W\3W\3W\3X\3X\3X\3"+
+		"X\3X\3X\3X\3X\3X\3X\3Y\3Y\3Y\3Y\3Y\3Y\3Y\3Y\3Y\3Y\3Z\3Z\3Z\3Z\3Z\3Z\3"+
+		"Z\3Z\3Z\3[\3[\3[\3[\3[\3[\3\\\3\\\3\\\3\\\3\\\3\\\3\\\3]\3]\3]\3]\3]\3"+
+		"^\3^\3^\3^\3_\3_\3_\3_\3_\3_\3`\3`\3`\3`\3`\3`\3`\3`\3a\3a\3a\3a\3a\3"+
+		"b\3b\3b\3b\3b\3c\3c\3c\3c\3c\3c\3c\3c\3c\3c\3c\3d\3d\3d\3e\3e\3e\3e\3"+
+		"f\3f\3f\3f\3g\3g\3g\3h\3h\3h\3h\3h\3h\3h\3h\3h\3i\3i\3i\3j\3j\3j\3j\3"+
+		"j\3j\3k\3k\3k\3k\3k\3l\3l\3l\3l\3l\3l\3l\3l\3l\3m\3m\3m\3m\3m\3m\3m\3"+
+		"m\3n\3n\3n\3n\3n\3n\3n\3o\3o\3o\3o\3o\3o\3o\3o\3o\3o\3p\3p\3p\7p\u0385"+
+		"\np\fp\16p\u0388\13p\3p\3p\3q\3q\3q\5q\u038f\nq\3r\3r\3r\3r\3r\3r\3s\3"+
+		"s\3t\3t\3t\3t\3t\3u\3u\5u\u03a0\nu\3v\3v\3v\5v\u03a5\nv\3w\3w\3w\3w\3"+
+		"w\3w\3w\3w\3w\5w\u03b0\nw\3x\3x\3y\3y\3y\3y\3y\7y\u03b9\ny\fy\16y\u03bc"+
 		"\13y\5y\u03be\ny\3z\3z\3z\3z\3z\7z\u03c5\nz\fz\16z\u03c8\13z\5z\u03ca"+
 		"\nz\5z\u03cc\nz\3z\3z\5z\u03d0\nz\3z\3z\3{\6{\u03d5\n{\r{\16{\u03d6\3"+
 		"|\3|\3|\3|\3}\3}\7}\u03df\n}\f}\16}\u03e2\13}\3~\5~\u03e5\n~\3\177\3\177"+
@@ -224,13 +217,13 @@ public class JsoniqLexer extends Lexer {
 		"M\u0099N\u009bO\u009dP\u009fQ\u00a1R\u00a3S\u00a5T\u00a7U\u00a9V\u00ab"+
 		"W\u00adX\u00afY\u00b1Z\u00b3[\u00b5\\\u00b7]\u00b9^\u00bb_\u00bd`\u00bf"+
 		"a\u00c1b\u00c3c\u00c5d\u00c7e\u00c9f\u00cbg\u00cdh\u00cfi\u00d1j\u00d3"+
-		"k\u00d5l\u00d7m\u00d9n\u00dbo\u00ddp\u00dfq\u00e1r\u00e3s\u00e5t\u00e7"+
-		"u\u00e9\2\u00eb\2\u00ed\2\u00efv\u00f1w\u00f3x\u00f5\2\u00f7y\u00f9z\u00fb"+
+		"k\u00d5l\u00d7m\u00d9n\u00dbo\u00ddp\u00dfq\u00e1\2\u00e3\2\u00e5\2\u00e7"+
+		"r\u00e9s\u00ebt\u00edu\u00efv\u00f1w\u00f3x\u00f5\2\u00f7y\u00f9z\u00fb"+
 		"\2\u00fd\2\u00ff{\u0101|\3\2\17\4\2$$^^\n\2$$\61\61^^ddhhppttvv\5\2\62"+
 		";CHch\3\2\62;\4\2GGgg\4\2--//\5\2\13\f\17\17\"\"\20\2C\\aac|\u00c2\u00d8"+
 		"\u00da\u00f8\u00fa\u0301\u0372\u037f\u0381\u2001\u200e\u200f\u2072\u2191"+
 		"\u2c02\u2ff1\u3003\ud801\uf902\ufdd1\ufdf2\uffff\7\2//\62;\u00b9\u00b9"+
-		"\u0302\u0371\u2041\u2042\3\2<<\3\2++\4\2**<<\7\2$$()>>}}\177\177\2\u0410"+
+		"\u0302\u0371\u2041\u2042\3\2<<\3\2++\4\2**<<\7\2$$()>>}}\177\177\u0410"+
 		"\2\3\3\2\2\2\2\5\3\2\2\2\2\7\3\2\2\2\2\t\3\2\2\2\2\13\3\2\2\2\2\r\3\2"+
 		"\2\2\2\17\3\2\2\2\2\21\3\2\2\2\2\23\3\2\2\2\2\25\3\2\2\2\2\27\3\2\2\2"+
 		"\2\31\3\2\2\2\2\33\3\2\2\2\2\35\3\2\2\2\2\37\3\2\2\2\2!\3\2\2\2\2#\3\2"+
@@ -252,7 +245,7 @@ public class JsoniqLexer extends Lexer {
 		"\2\2\u00c5\3\2\2\2\2\u00c7\3\2\2\2\2\u00c9\3\2\2\2\2\u00cb\3\2\2\2\2\u00cd"+
 		"\3\2\2\2\2\u00cf\3\2\2\2\2\u00d1\3\2\2\2\2\u00d3\3\2\2\2\2\u00d5\3\2\2"+
 		"\2\2\u00d7\3\2\2\2\2\u00d9\3\2\2\2\2\u00db\3\2\2\2\2\u00dd\3\2\2\2\2\u00df"+
-		"\3\2\2\2\2\u00e1\3\2\2\2\2\u00e3\3\2\2\2\2\u00e5\3\2\2\2\2\u00e7\3\2\2"+
+		"\3\2\2\2\2\u00e7\3\2\2\2\2\u00e9\3\2\2\2\2\u00eb\3\2\2\2\2\u00ed\3\2\2"+
 		"\2\2\u00ef\3\2\2\2\2\u00f1\3\2\2\2\2\u00f3\3\2\2\2\2\u00f7\3\2\2\2\2\u00f9"+
 		"\3\2\2\2\2\u00ff\3\2\2\2\2\u0101\3\2\2\2\3\u0103\3\2\2\2\5\u0105\3\2\2"+
 		"\2\7\u010c\3\2\2\2\t\u0116\3\2\2\2\13\u0118\3\2\2\2\r\u0120\3\2\2\2\17"+
@@ -266,24 +259,24 @@ public class JsoniqLexer extends Lexer {
 		"\2\2O\u0202\3\2\2\2Q\u0205\3\2\2\2S\u0208\3\2\2\2U\u020a\3\2\2\2W\u020d"+
 		"\3\2\2\2Y\u020f\3\2\2\2[\u0212\3\2\2\2]\u0215\3\2\2\2_\u0217\3\2\2\2a"+
 		"\u0219\3\2\2\2c\u021d\3\2\2\2e\u0222\3\2\2\2g\u0226\3\2\2\2i\u0228\3\2"+
-		"\2\2k\u022a\3\2\2\2m\u022c\3\2\2\2o\u022e\3\2\2\2q\u0230\3\2\2\2s\u0233"+
+		"\2\2k\u022a\3\2\2\2m\u022c\3\2\2\2o\u022e\3\2\2\2q\u0231\3\2\2\2s\u0233"+
 		"\3\2\2\2u\u0236\3\2\2\2w\u0239\3\2\2\2y\u023e\3\2\2\2{\u0245\3\2\2\2}"+
 		"\u024b\3\2\2\2\177\u0253\3\2\2\2\u0081\u025a\3\2\2\2\u0083\u0261\3\2\2"+
-		"\2\u0085\u0269\3\2\2\2\u0087\u0271\3\2\2\2\u0089\u0278\3\2\2\2\u008b\u027f"+
-		"\3\2\2\2\u008d\u0284\3\2\2\2\u008f\u028f\3\2\2\2\u0091\u0291\3\2\2\2\u0093"+
-		"\u0295\3\2\2\2\u0095\u0299\3\2\2\2\u0097\u029f\3\2\2\2\u0099\u02a5\3\2"+
-		"\2\2\u009b\u02a8\3\2\2\2\u009d\u02ae\3\2\2\2\u009f\u02b5\3\2\2\2\u00a1"+
-		"\u02b8\3\2\2\2\u00a3\u02bb\3\2\2\2\u00a5\u02be\3\2\2\2\u00a7\u02c1\3\2"+
-		"\2\2\u00a9\u02ca\3\2\2\2\u00ab\u02d0\3\2\2\2\u00ad\u02d6\3\2\2\2\u00af"+
-		"\u02dd\3\2\2\2\u00b1\u02e7\3\2\2\2\u00b3\u02f2\3\2\2\2\u00b5\u02f7\3\2"+
-		"\2\2\u00b7\u02fd\3\2\2\2\u00b9\u0307\3\2\2\2\u00bb\u0311\3\2\2\2\u00bd"+
-		"\u031a\3\2\2\2\u00bf\u0320\3\2\2\2\u00c1\u0327\3\2\2\2\u00c3\u032c\3\2"+
-		"\2\2\u00c5\u0330\3\2\2\2\u00c7\u0336\3\2\2\2\u00c9\u033e\3\2\2\2\u00cb"+
-		"\u0343\3\2\2\2\u00cd\u0348\3\2\2\2\u00cf\u0353\3\2\2\2\u00d1\u0356\3\2"+
-		"\2\2\u00d3\u035a\3\2\2\2\u00d5\u035e\3\2\2\2\u00d7\u0361\3\2\2\2\u00d9"+
-		"\u036a\3\2\2\2\u00db\u036d\3\2\2\2\u00dd\u0373\3\2\2\2\u00df\u0378\3\2"+
-		"\2\2\u00e1\u0381\3\2\2\2\u00e3\u0389\3\2\2\2\u00e5\u0390\3\2\2\2\u00e7"+
-		"\u039a\3\2\2\2\u00e9\u03a4\3\2\2\2\u00eb\u03a9\3\2\2\2\u00ed\u03af\3\2"+
+		"\2\u0085\u0269\3\2\2\2\u0087\u0271\3\2\2\2\u0089\u0278\3\2\2\2\u008b\u027c"+
+		"\3\2\2\2\u008d\u0280\3\2\2\2\u008f\u0286\3\2\2\2\u0091\u028c\3\2\2\2\u0093"+
+		"\u028f\3\2\2\2\u0095\u0295\3\2\2\2\u0097\u029c\3\2\2\2\u0099\u029f\3\2"+
+		"\2\2\u009b\u02a2\3\2\2\2\u009d\u02a5\3\2\2\2\u009f\u02a8\3\2\2\2\u00a1"+
+		"\u02b1\3\2\2\2\u00a3\u02b7\3\2\2\2\u00a5\u02bd\3\2\2\2\u00a7\u02c4\3\2"+
+		"\2\2\u00a9\u02ce\3\2\2\2\u00ab\u02d9\3\2\2\2\u00ad\u02de\3\2\2\2\u00af"+
+		"\u02e4\3\2\2\2\u00b1\u02ee\3\2\2\2\u00b3\u02f8\3\2\2\2\u00b5\u0301\3\2"+
+		"\2\2\u00b7\u0307\3\2\2\2\u00b9\u030e\3\2\2\2\u00bb\u0313\3\2\2\2\u00bd"+
+		"\u0317\3\2\2\2\u00bf\u031d\3\2\2\2\u00c1\u0325\3\2\2\2\u00c3\u032a\3\2"+
+		"\2\2\u00c5\u032f\3\2\2\2\u00c7\u033a\3\2\2\2\u00c9\u033d\3\2\2\2\u00cb"+
+		"\u0341\3\2\2\2\u00cd\u0345\3\2\2\2\u00cf\u0348\3\2\2\2\u00d1\u0351\3\2"+
+		"\2\2\u00d3\u0354\3\2\2\2\u00d5\u035a\3\2\2\2\u00d7\u035f\3\2\2\2\u00d9"+
+		"\u0368\3\2\2\2\u00db\u0370\3\2\2\2\u00dd\u0377\3\2\2\2\u00df\u0381\3\2"+
+		"\2\2\u00e1\u038b\3\2\2\2\u00e3\u0390\3\2\2\2\u00e5\u0396\3\2\2\2\u00e7"+
+		"\u0398\3\2\2\2\u00e9\u039f\3\2\2\2\u00eb\u03a4\3\2\2\2\u00ed\u03af\3\2"+
 		"\2\2\u00ef\u03b1\3\2\2\2\u00f1\u03bd\3\2\2\2\u00f3\u03cb\3\2\2\2\u00f5"+
 		"\u03d4\3\2\2\2\u00f7\u03d8\3\2\2\2\u00f9\u03dc\3\2\2\2\u00fb\u03e4\3\2"+
 		"\2\2\u00fd\u03e8\3\2\2\2\u00ff\u03ea\3\2\2\2\u0101\u0400\3\2\2\2\u0103"+
@@ -362,11 +355,11 @@ public class JsoniqLexer extends Lexer {
 		"\7/\2\2\u0218`\3\2\2\2\u0219\u021a\7f\2\2\u021a\u021b\7k\2\2\u021b\u021c"+
 		"\7x\2\2\u021cb\3\2\2\2\u021d\u021e\7k\2\2\u021e\u021f\7f\2\2\u021f\u0220"+
 		"\7k\2\2\u0220\u0221\7x\2\2\u0221d\3\2\2\2\u0222\u0223\7o\2\2\u0223\u0224"+
-		"\7q\2\2\u0224\u0225\7f\2\2\u0225f\3\2\2\2\u0226\u0227\7A\2\2\u0227h\3"+
-		"\2\2\2\u0228\u0229\7#\2\2\u0229j\3\2\2\2\u022a\u022b\7]\2\2\u022bl\3\2"+
-		"\2\2\u022c\u022d\7_\2\2\u022dn\3\2\2\2\u022e\u022f\7\60\2\2\u022fp\3\2"+
-		"\2\2\u0230\u0231\7&\2\2\u0231\u0232\7&\2\2\u0232r\3\2\2\2\u0233\u0234"+
-		"\7}\2\2\u0234\u0235\7~\2\2\u0235t\3\2\2\2\u0236\u0237\7~\2\2\u0237\u0238"+
+		"\7q\2\2\u0224\u0225\7f\2\2\u0225f\3\2\2\2\u0226\u0227\7#\2\2\u0227h\3"+
+		"\2\2\2\u0228\u0229\7]\2\2\u0229j\3\2\2\2\u022a\u022b\7_\2\2\u022bl\3\2"+
+		"\2\2\u022c\u022d\7\60\2\2\u022dn\3\2\2\2\u022e\u022f\7&\2\2\u022f\u0230"+
+		"\7&\2\2\u0230p\3\2\2\2\u0231\u0232\7A\2\2\u0232r\3\2\2\2\u0233\u0234\7"+
+		"}\2\2\u0234\u0235\7~\2\2\u0235t\3\2\2\2\u0236\u0237\7~\2\2\u0237\u0238"+
 		"\7\177\2\2\u0238v\3\2\2\2\u0239\u023a\7k\2\2\u023a\u023b\7v\2\2\u023b"+
 		"\u023c\7g\2\2\u023c\u023d\7o\2\2\u023dx\3\2\2\2\u023e\u023f\7q\2\2\u023f"+
 		"\u0240\7d\2\2\u0240\u0241\7l\2\2\u0241\u0242\7g\2\2\u0242\u0243\7e\2\2"+
@@ -384,124 +377,124 @@ public class JsoniqLexer extends Lexer {
 		"\u026d\7k\2\2\u026d\u026e\7o\2\2\u026e\u026f\7c\2\2\u026f\u0270\7n\2\2"+
 		"\u0270\u0086\3\2\2\2\u0271\u0272\7f\2\2\u0272\u0273\7q\2\2\u0273\u0274"+
 		"\7w\2\2\u0274\u0275\7d\2\2\u0275\u0276\7n\2\2\u0276\u0277\7g\2\2\u0277"+
-		"\u0088\3\2\2\2\u0278\u0279\7p\2\2\u0279\u027a\7w\2\2\u027a\u027b\7n\2"+
-		"\2\u027b\u027c\7n\2\2\u027c\u008a\3\2\2\2\u027d\u0280\5\u008dG\2\u027e"+
-		"\u0280\5\u008fH\2\u027f\u027d\3\2\2\2\u027f\u027e\3\2\2\2\u0280\u008c"+
-		"\3\2\2\2\u0281\u0285\5\u00efx\2\u0282\u0285\5\u00f1y\2\u0283\u0285\5\u00f3"+
-		"z\2\u0284\u0281\3\2\2\2\u0284\u0282\3\2\2\2\u0284\u0283\3\2\2\2\u0285"+
-		"\u008e\3\2\2\2\u0286\u0287\7v\2\2\u0287\u0288\7t\2\2\u0288\u0289\7w\2"+
-		"\2\u0289\u0290\7g\2\2\u028a\u028b\7h\2\2\u028b\u028c\7c\2\2\u028c\u028d"+
-		"\7n\2\2\u028d\u028e\7u\2\2\u028e\u0290\7g\2\2\u028f\u0286\3\2\2\2\u028f"+
-		"\u028a\3\2\2\2\u0290\u0090\3\2\2\2\u0291\u0292\7h\2\2\u0292\u0293\7q\2"+
-		"\2\u0293\u0294\7t\2\2\u0294\u0092\3\2\2\2\u0295\u0296\7n\2\2\u0296\u0297"+
-		"\7g\2\2\u0297\u0298\7v\2\2\u0298\u0094\3\2\2\2\u0299\u029a\7y\2\2\u029a"+
-		"\u029b\7j\2\2\u029b\u029c\7g\2\2\u029c\u029d\7t\2\2\u029d\u029e\7g\2\2"+
-		"\u029e\u0096\3\2\2\2\u029f\u02a0\7i\2\2\u02a0\u02a1\7t\2\2\u02a1\u02a2"+
-		"\7q\2\2\u02a2\u02a3\7w\2\2\u02a3\u02a4\7r\2\2\u02a4\u0098\3\2\2\2\u02a5"+
-		"\u02a6\7d\2\2\u02a6\u02a7\7{\2\2\u02a7\u009a\3\2\2\2\u02a8\u02a9\7q\2"+
-		"\2\u02a9\u02aa\7t\2\2\u02aa\u02ab\7f\2\2\u02ab\u02ac\7g\2\2\u02ac\u02ad"+
-		"\7t\2\2\u02ad\u009c\3\2\2\2\u02ae\u02af\7t\2\2\u02af\u02b0\7g\2\2\u02b0"+
-		"\u02b1\7v\2\2\u02b1\u02b2\7w\2\2\u02b2\u02b3\7t\2\2\u02b3\u02b4\7p\2\2"+
-		"\u02b4\u009e\3\2\2\2\u02b5\u02b6\7k\2\2\u02b6\u02b7\7h\2\2\u02b7\u00a0"+
-		"\3\2\2\2\u02b8\u02b9\7k\2\2\u02b9\u02ba\7p\2\2\u02ba\u00a2\3\2\2\2\u02bb"+
-		"\u02bc\7c\2\2\u02bc\u02bd\7u\2\2\u02bd\u00a4\3\2\2\2\u02be\u02bf\7c\2"+
-		"\2\u02bf\u02c0\7v\2\2\u02c0\u00a6\3\2\2\2\u02c1\u02c2\7c\2\2\u02c2\u02c3"+
-		"\7n\2\2\u02c3\u02c4\7n\2\2\u02c4\u02c5\7q\2\2\u02c5\u02c6\7y\2\2\u02c6"+
-		"\u02c7\7k\2\2\u02c7\u02c8\7p\2\2\u02c8\u02c9\7i\2\2\u02c9\u00a8\3\2\2"+
-		"\2\u02ca\u02cb\7g\2\2\u02cb\u02cc\7o\2\2\u02cc\u02cd\7r\2\2\u02cd\u02ce"+
-		"\7v\2\2\u02ce\u02cf\7{\2\2\u02cf\u00aa\3\2\2\2\u02d0\u02d1\7e\2\2\u02d1"+
-		"\u02d2\7q\2\2\u02d2\u02d3\7w\2\2\u02d3\u02d4\7p\2\2\u02d4\u02d5\7v\2\2"+
-		"\u02d5\u00ac\3\2\2\2\u02d6\u02d7\7u\2\2\u02d7\u02d8\7v\2\2\u02d8\u02d9"+
-		"\7c\2\2\u02d9\u02da\7d\2\2\u02da\u02db\7n\2\2\u02db\u02dc\7g\2\2\u02dc"+
-		"\u00ae\3\2\2\2\u02dd\u02de\7c\2\2\u02de\u02df\7u\2\2\u02df\u02e0\7e\2"+
-		"\2\u02e0\u02e1\7g\2\2\u02e1\u02e2\7p\2\2\u02e2\u02e3\7f\2\2\u02e3\u02e4"+
-		"\7k\2\2\u02e4\u02e5\7p\2\2\u02e5\u02e6\7i\2\2\u02e6\u00b0\3\2\2\2\u02e7"+
-		"\u02e8\7f\2\2\u02e8\u02e9\7g\2\2\u02e9\u02ea\7u\2\2\u02ea\u02eb\7e\2\2"+
-		"\u02eb\u02ec\7g\2\2\u02ec\u02ed\7p\2\2\u02ed\u02ee\7f\2\2\u02ee\u02ef"+
-		"\7k\2\2\u02ef\u02f0\7p\2\2\u02f0\u02f1\7i\2\2\u02f1\u00b2\3\2\2\2\u02f2"+
-		"\u02f3\7u\2\2\u02f3\u02f4\7q\2\2\u02f4\u02f5\7o\2\2\u02f5\u02f6\7g\2\2"+
-		"\u02f6\u00b4\3\2\2\2\u02f7\u02f8\7g\2\2\u02f8\u02f9\7x\2\2\u02f9\u02fa"+
-		"\7g\2\2\u02fa\u02fb\7t\2\2\u02fb\u02fc\7{\2\2\u02fc\u00b6\3\2\2\2\u02fd"+
-		"\u02fe\7u\2\2\u02fe\u02ff\7c\2\2\u02ff\u0300\7v\2\2\u0300\u0301\7k\2\2"+
-		"\u0301\u0302\7u\2\2\u0302\u0303\7h\2\2\u0303\u0304\7k\2\2\u0304\u0305"+
-		"\7g\2\2\u0305\u0306\7u\2\2\u0306\u00b8\3\2\2\2\u0307\u0308\7e\2\2\u0308"+
-		"\u0309\7q\2\2\u0309\u030a\7n\2\2\u030a\u030b\7n\2\2\u030b\u030c\7c\2\2"+
-		"\u030c\u030d\7v\2\2\u030d\u030e\7k\2\2\u030e\u030f\7q\2\2\u030f\u0310"+
-		"\7p\2\2\u0310\u00ba\3\2\2\2\u0311\u0312\7i\2\2\u0312\u0313\7t\2\2\u0313"+
-		"\u0314\7g\2\2\u0314\u0315\7c\2\2\u0315\u0316\7v\2\2\u0316\u0317\7g\2\2"+
-		"\u0317\u0318\7u\2\2\u0318\u0319\7v\2\2\u0319\u00bc\3\2\2\2\u031a\u031b"+
-		"\7n\2\2\u031b\u031c\7g\2\2\u031c\u031d\7c\2\2\u031d\u031e\7u\2\2\u031e"+
-		"\u031f\7v\2\2\u031f\u00be\3\2\2\2\u0320\u0321\7u\2\2\u0321\u0322\7y\2"+
-		"\2\u0322\u0323\7k\2\2\u0323\u0324\7v\2\2\u0324\u0325\7e\2\2\u0325\u0326"+
-		"\7j\2\2\u0326\u00c0\3\2\2\2\u0327\u0328\7e\2\2\u0328\u0329\7c\2\2\u0329"+
-		"\u032a\7u\2\2\u032a\u032b\7g\2\2\u032b\u00c2\3\2\2\2\u032c\u032d\7v\2"+
-		"\2\u032d\u032e\7t\2\2\u032e\u032f\7{\2\2\u032f\u00c4\3\2\2\2\u0330\u0331"+
-		"\7e\2\2\u0331\u0332\7c\2\2\u0332\u0333\7v\2\2\u0333\u0334\7e\2\2\u0334"+
-		"\u0335\7j\2\2\u0335\u00c6\3\2\2\2\u0336\u0337\7f\2\2\u0337\u0338\7g\2"+
-		"\2\u0338\u0339\7h\2\2\u0339\u033a\7c\2\2\u033a\u033b\7w\2\2\u033b\u033c"+
-		"\7n\2\2\u033c\u033d\7v\2\2\u033d\u00c8\3\2\2\2\u033e\u033f\7v\2\2\u033f"+
-		"\u0340\7j\2\2\u0340\u0341\7g\2\2\u0341\u0342\7p\2\2\u0342\u00ca\3\2\2"+
-		"\2\u0343\u0344\7g\2\2\u0344\u0345\7n\2\2\u0345\u0346\7u\2\2\u0346\u0347"+
-		"\7g\2\2\u0347\u00cc\3\2\2\2\u0348\u0349\7v\2\2\u0349\u034a\7{\2\2\u034a"+
-		"\u034b\7r\2\2\u034b\u034c\7g\2\2\u034c\u034d\7u\2\2\u034d\u034e\7y\2\2"+
-		"\u034e\u034f\7k\2\2\u034f\u0350\7v\2\2\u0350\u0351\7e\2\2\u0351\u0352"+
-		"\7j\2\2\u0352\u00ce\3\2\2\2\u0353\u0354\7q\2\2\u0354\u0355\7t\2\2\u0355"+
-		"\u00d0\3\2\2\2\u0356\u0357\7c\2\2\u0357\u0358\7p\2\2\u0358\u0359\7f\2"+
-		"\2\u0359\u00d2\3\2\2\2\u035a\u035b\7p\2\2\u035b\u035c\7q\2\2\u035c\u035d"+
-		"\7v\2\2\u035d\u00d4\3\2\2\2\u035e\u035f\7v\2\2\u035f\u0360\7q\2\2\u0360"+
-		"\u00d6\3\2\2\2\u0361\u0362\7k\2\2\u0362\u0363\7p\2\2\u0363\u0364\7u\2"+
-		"\2\u0364\u0365\7v\2\2\u0365\u0366\7c\2\2\u0366\u0367\7p\2\2\u0367\u0368"+
-		"\7e\2\2\u0368\u0369\7g\2\2\u0369\u00d8\3\2\2\2\u036a\u036b\7q\2\2\u036b"+
-		"\u036c\7h\2\2\u036c\u00da\3\2\2\2\u036d\u036e\7v\2\2\u036e\u036f\7t\2"+
-		"\2\u036f\u0370\7g\2\2\u0370\u0371\7c\2\2\u0371\u0372\7v\2\2\u0372\u00dc"+
-		"\3\2\2\2\u0373\u0374\7e\2\2\u0374\u0375\7c\2\2\u0375\u0376\7u\2\2\u0376"+
-		"\u0377\7v\2\2\u0377\u00de\3\2\2\2\u0378\u0379\7e\2\2\u0379\u037a\7c\2"+
-		"\2\u037a\u037b\7u\2\2\u037b\u037c\7v\2\2\u037c\u037d\7c\2\2\u037d\u037e"+
-		"\7d\2\2\u037e\u037f\7n\2\2\u037f\u0380\7g\2\2\u0380\u00e0\3\2\2\2\u0381"+
-		"\u0382\7x\2\2\u0382\u0383\7g\2\2\u0383\u0384\7t\2\2\u0384\u0385\7u\2\2"+
-		"\u0385\u0386\7k\2\2\u0386\u0387\7q\2\2\u0387\u0388\7p\2\2\u0388\u00e2"+
-		"\3\2\2\2\u0389\u038a\7l\2\2\u038a\u038b\7u\2\2\u038b\u038c\7q\2\2\u038c"+
-		"\u038d\7p\2\2\u038d\u038e\7k\2\2\u038e\u038f\7s\2\2\u038f\u00e4\3\2\2"+
-		"\2\u0390\u0391\7l\2\2\u0391\u0392\7u\2\2\u0392\u0393\7q\2\2\u0393\u0394"+
-		"\7p\2\2\u0394\u0395\7/\2\2\u0395\u0396\7k\2\2\u0396\u0397\7v\2\2\u0397"+
-		"\u0398\7g\2\2\u0398\u0399\7o\2\2\u0399\u00e6\3\2\2\2\u039a\u039f\7$\2"+
-		"\2\u039b\u039e\5\u00e9u\2\u039c\u039e\n\2\2\2\u039d\u039b\3\2\2\2\u039d"+
-		"\u039c\3\2\2\2\u039e\u03a1\3\2\2\2\u039f\u039d\3\2\2\2\u039f\u03a0\3\2"+
-		"\2\2\u03a0\u03a2\3\2\2\2\u03a1\u039f\3\2\2\2\u03a2\u03a3\7$\2\2\u03a3"+
-		"\u00e8\3\2\2\2\u03a4\u03a7\7^\2\2\u03a5\u03a8\t\3\2\2\u03a6\u03a8\5\u00eb"+
-		"v\2\u03a7\u03a5\3\2\2\2\u03a7\u03a6\3\2\2\2\u03a8\u00ea\3\2\2\2\u03a9"+
-		"\u03aa\7w\2\2\u03aa\u03ab\5\u00edw\2\u03ab\u03ac\5\u00edw\2\u03ac\u03ad"+
-		"\5\u00edw\2\u03ad\u03ae\5\u00edw\2\u03ae\u00ec\3\2\2\2\u03af\u03b0\t\4"+
-		"\2\2\u03b0\u00ee\3\2\2\2\u03b1\u03b2\5\u00f5{\2\u03b2\u00f0\3\2\2\2\u03b3"+
-		"\u03b4\7\60\2\2\u03b4\u03be\5\u00f5{\2\u03b5\u03b6\5\u00f5{\2\u03b6\u03ba"+
-		"\7\60\2\2\u03b7\u03b9\t\5\2\2\u03b8\u03b7\3\2\2\2\u03b9\u03bc\3\2\2\2"+
-		"\u03ba\u03b8\3\2\2\2\u03ba\u03bb\3\2\2\2\u03bb\u03be\3\2\2\2\u03bc\u03ba"+
-		"\3\2\2\2\u03bd\u03b3\3\2\2\2\u03bd\u03b5\3\2\2\2\u03be\u00f2\3\2\2\2\u03bf"+
-		"\u03c0\7\60\2\2\u03c0\u03cc\5\u00f5{\2\u03c1\u03c9\5\u00f5{\2\u03c2\u03c6"+
-		"\7\60\2\2\u03c3\u03c5\t\5\2\2\u03c4\u03c3\3\2\2\2\u03c5\u03c8\3\2\2\2"+
-		"\u03c6\u03c4\3\2\2\2\u03c6\u03c7\3\2\2\2\u03c7\u03ca\3\2\2\2\u03c8\u03c6"+
-		"\3\2\2\2\u03c9\u03c2\3\2\2\2\u03c9\u03ca\3\2\2\2\u03ca\u03cc\3\2\2\2\u03cb"+
-		"\u03bf\3\2\2\2\u03cb\u03c1\3\2\2\2\u03cc\u03cd\3\2\2\2\u03cd\u03cf\t\6"+
-		"\2\2\u03ce\u03d0\t\7\2\2\u03cf\u03ce\3\2\2\2\u03cf\u03d0\3\2\2\2\u03d0"+
-		"\u03d1\3\2\2\2\u03d1\u03d2\5\u00f5{\2\u03d2\u00f4\3\2\2\2\u03d3\u03d5"+
-		"\t\5\2\2\u03d4\u03d3\3\2\2\2\u03d5\u03d6\3\2\2\2\u03d6\u03d4\3\2\2\2\u03d6"+
-		"\u03d7\3\2\2\2\u03d7\u00f6\3\2\2\2\u03d8\u03d9\t\b\2\2\u03d9\u03da\3\2"+
-		"\2\2\u03da\u03db\b|\2\2\u03db\u00f8\3\2\2\2\u03dc\u03e0\5\u00fb~\2\u03dd"+
-		"\u03df\5\u00fd\177\2\u03de\u03dd\3\2\2\2\u03df\u03e2\3\2\2\2\u03e0\u03de"+
-		"\3\2\2\2\u03e0\u03e1\3\2\2\2\u03e1\u00fa\3\2\2\2\u03e2\u03e0\3\2\2\2\u03e3"+
-		"\u03e5\t\t\2\2\u03e4\u03e3\3\2\2\2\u03e5\u00fc\3\2\2\2\u03e6\u03e9\5\u00fb"+
-		"~\2\u03e7\u03e9\t\n\2\2\u03e8\u03e6\3\2\2\2\u03e8\u03e7\3\2\2\2\u03e9"+
-		"\u00fe\3\2\2\2\u03ea\u03eb\7*\2\2\u03eb\u03f4\7<\2\2\u03ec\u03f3\5\u00ff"+
-		"\u0080\2\u03ed\u03ee\7*\2\2\u03ee\u03f3\n\13\2\2\u03ef\u03f0\7<\2\2\u03f0"+
-		"\u03f3\n\f\2\2\u03f1\u03f3\n\r\2\2\u03f2\u03ec\3\2\2\2\u03f2\u03ed\3\2"+
-		"\2\2\u03f2\u03ef\3\2\2\2\u03f2\u03f1\3\2\2\2\u03f3\u03f6\3\2\2\2\u03f4"+
-		"\u03f2\3\2\2\2\u03f4\u03f5\3\2\2\2\u03f5\u03f8\3\2\2\2\u03f6\u03f4\3\2"+
-		"\2\2\u03f7\u03f9\7<\2\2\u03f8\u03f7\3\2\2\2\u03f9\u03fa\3\2\2\2\u03fa"+
-		"\u03f8\3\2\2\2\u03fa\u03fb\3\2\2\2\u03fb\u03fc\3\2\2\2\u03fc\u03fd\7+"+
-		"\2\2\u03fd\u03fe\3\2\2\2\u03fe\u03ff\b\u0080\2\2\u03ff\u0100\3\2\2\2\u0400"+
-		"\u0401\n\16\2\2\u0401\u0102\3\2\2\2\26\2\u027f\u0284\u028f\u039d\u039f"+
-		"\u03a7\u03ba\u03bd\u03c6\u03c9\u03cb\u03cf\u03d6\u03e0\u03e4\u03e8\u03f2"+
-		"\u03f4\u03fa\3\2\3\2";
+		"\u0088\3\2\2\2\u0278\u0279\7h\2\2\u0279\u027a\7q\2\2\u027a\u027b\7t\2"+
+		"\2\u027b\u008a\3\2\2\2\u027c\u027d\7n\2\2\u027d\u027e\7g\2\2\u027e\u027f"+
+		"\7v\2\2\u027f\u008c\3\2\2\2\u0280\u0281\7y\2\2\u0281\u0282\7j\2\2\u0282"+
+		"\u0283\7g\2\2\u0283\u0284\7t\2\2\u0284\u0285\7g\2\2\u0285\u008e\3\2\2"+
+		"\2\u0286\u0287\7i\2\2\u0287\u0288\7t\2\2\u0288\u0289\7q\2\2\u0289\u028a"+
+		"\7w\2\2\u028a\u028b\7r\2\2\u028b\u0090\3\2\2\2\u028c\u028d\7d\2\2\u028d"+
+		"\u028e\7{\2\2\u028e\u0092\3\2\2\2\u028f\u0290\7q\2\2\u0290\u0291\7t\2"+
+		"\2\u0291\u0292\7f\2\2\u0292\u0293\7g\2\2\u0293\u0294\7t\2\2\u0294\u0094"+
+		"\3\2\2\2\u0295\u0296\7t\2\2\u0296\u0297\7g\2\2\u0297\u0298\7v\2\2\u0298"+
+		"\u0299\7w\2\2\u0299\u029a\7t\2\2\u029a\u029b\7p\2\2\u029b\u0096\3\2\2"+
+		"\2\u029c\u029d\7k\2\2\u029d\u029e\7h\2\2\u029e\u0098\3\2\2\2\u029f\u02a0"+
+		"\7k\2\2\u02a0\u02a1\7p\2\2\u02a1\u009a\3\2\2\2\u02a2\u02a3\7c\2\2\u02a3"+
+		"\u02a4\7u\2\2\u02a4\u009c\3\2\2\2\u02a5\u02a6\7c\2\2\u02a6\u02a7\7v\2"+
+		"\2\u02a7\u009e\3\2\2\2\u02a8\u02a9\7c\2\2\u02a9\u02aa\7n\2\2\u02aa\u02ab"+
+		"\7n\2\2\u02ab\u02ac\7q\2\2\u02ac\u02ad\7y\2\2\u02ad\u02ae\7k\2\2\u02ae"+
+		"\u02af\7p\2\2\u02af\u02b0\7i\2\2\u02b0\u00a0\3\2\2\2\u02b1\u02b2\7g\2"+
+		"\2\u02b2\u02b3\7o\2\2\u02b3\u02b4\7r\2\2\u02b4\u02b5\7v\2\2\u02b5\u02b6"+
+		"\7{\2\2\u02b6\u00a2\3\2\2\2\u02b7\u02b8\7e\2\2\u02b8\u02b9\7q\2\2\u02b9"+
+		"\u02ba\7w\2\2\u02ba\u02bb\7p\2\2\u02bb\u02bc\7v\2\2\u02bc\u00a4\3\2\2"+
+		"\2\u02bd\u02be\7u\2\2\u02be\u02bf\7v\2\2\u02bf\u02c0\7c\2\2\u02c0\u02c1"+
+		"\7d\2\2\u02c1\u02c2\7n\2\2\u02c2\u02c3\7g\2\2\u02c3\u00a6\3\2\2\2\u02c4"+
+		"\u02c5\7c\2\2\u02c5\u02c6\7u\2\2\u02c6\u02c7\7e\2\2\u02c7\u02c8\7g\2\2"+
+		"\u02c8\u02c9\7p\2\2\u02c9\u02ca\7f\2\2\u02ca\u02cb\7k\2\2\u02cb\u02cc"+
+		"\7p\2\2\u02cc\u02cd\7i\2\2\u02cd\u00a8\3\2\2\2\u02ce\u02cf\7f\2\2\u02cf"+
+		"\u02d0\7g\2\2\u02d0\u02d1\7u\2\2\u02d1\u02d2\7e\2\2\u02d2\u02d3\7g\2\2"+
+		"\u02d3\u02d4\7p\2\2\u02d4\u02d5\7f\2\2\u02d5\u02d6\7k\2\2\u02d6\u02d7"+
+		"\7p\2\2\u02d7\u02d8\7i\2\2\u02d8\u00aa\3\2\2\2\u02d9\u02da\7u\2\2\u02da"+
+		"\u02db\7q\2\2\u02db\u02dc\7o\2\2\u02dc\u02dd\7g\2\2\u02dd\u00ac\3\2\2"+
+		"\2\u02de\u02df\7g\2\2\u02df\u02e0\7x\2\2\u02e0\u02e1\7g\2\2\u02e1\u02e2"+
+		"\7t\2\2\u02e2\u02e3\7{\2\2\u02e3\u00ae\3\2\2\2\u02e4\u02e5\7u\2\2\u02e5"+
+		"\u02e6\7c\2\2\u02e6\u02e7\7v\2\2\u02e7\u02e8\7k\2\2\u02e8\u02e9\7u\2\2"+
+		"\u02e9\u02ea\7h\2\2\u02ea\u02eb\7k\2\2\u02eb\u02ec\7g\2\2\u02ec\u02ed"+
+		"\7u\2\2\u02ed\u00b0\3\2\2\2\u02ee\u02ef\7e\2\2\u02ef\u02f0\7q\2\2\u02f0"+
+		"\u02f1\7n\2\2\u02f1\u02f2\7n\2\2\u02f2\u02f3\7c\2\2\u02f3\u02f4\7v\2\2"+
+		"\u02f4\u02f5\7k\2\2\u02f5\u02f6\7q\2\2\u02f6\u02f7\7p\2\2\u02f7\u00b2"+
+		"\3\2\2\2\u02f8\u02f9\7i\2\2\u02f9\u02fa\7t\2\2\u02fa\u02fb\7g\2\2\u02fb"+
+		"\u02fc\7c\2\2\u02fc\u02fd\7v\2\2\u02fd\u02fe\7g\2\2\u02fe\u02ff\7u\2\2"+
+		"\u02ff\u0300\7v\2\2\u0300\u00b4\3\2\2\2\u0301\u0302\7n\2\2\u0302\u0303"+
+		"\7g\2\2\u0303\u0304\7c\2\2\u0304\u0305\7u\2\2\u0305\u0306\7v\2\2\u0306"+
+		"\u00b6\3\2\2\2\u0307\u0308\7u\2\2\u0308\u0309\7y\2\2\u0309\u030a\7k\2"+
+		"\2\u030a\u030b\7v\2\2\u030b\u030c\7e\2\2\u030c\u030d\7j\2\2\u030d\u00b8"+
+		"\3\2\2\2\u030e\u030f\7e\2\2\u030f\u0310\7c\2\2\u0310\u0311\7u\2\2\u0311"+
+		"\u0312\7g\2\2\u0312\u00ba\3\2\2\2\u0313\u0314\7v\2\2\u0314\u0315\7t\2"+
+		"\2\u0315\u0316\7{\2\2\u0316\u00bc\3\2\2\2\u0317\u0318\7e\2\2\u0318\u0319"+
+		"\7c\2\2\u0319\u031a\7v\2\2\u031a\u031b\7e\2\2\u031b\u031c\7j\2\2\u031c"+
+		"\u00be\3\2\2\2\u031d\u031e\7f\2\2\u031e\u031f\7g\2\2\u031f\u0320\7h\2"+
+		"\2\u0320\u0321\7c\2\2\u0321\u0322\7w\2\2\u0322\u0323\7n\2\2\u0323\u0324"+
+		"\7v\2\2\u0324\u00c0\3\2\2\2\u0325\u0326\7v\2\2\u0326\u0327\7j\2\2\u0327"+
+		"\u0328\7g\2\2\u0328\u0329\7p\2\2\u0329\u00c2\3\2\2\2\u032a\u032b\7g\2"+
+		"\2\u032b\u032c\7n\2\2\u032c\u032d\7u\2\2\u032d\u032e\7g\2\2\u032e\u00c4"+
+		"\3\2\2\2\u032f\u0330\7v\2\2\u0330\u0331\7{\2\2\u0331\u0332\7r\2\2\u0332"+
+		"\u0333\7g\2\2\u0333\u0334\7u\2\2\u0334\u0335\7y\2\2\u0335\u0336\7k\2\2"+
+		"\u0336\u0337\7v\2\2\u0337\u0338\7e\2\2\u0338\u0339\7j\2\2\u0339\u00c6"+
+		"\3\2\2\2\u033a\u033b\7q\2\2\u033b\u033c\7t\2\2\u033c\u00c8\3\2\2\2\u033d"+
+		"\u033e\7c\2\2\u033e\u033f\7p\2\2\u033f\u0340\7f\2\2\u0340\u00ca\3\2\2"+
+		"\2\u0341\u0342\7p\2\2\u0342\u0343\7q\2\2\u0343\u0344\7v\2\2\u0344\u00cc"+
+		"\3\2\2\2\u0345\u0346\7v\2\2\u0346\u0347\7q\2\2\u0347\u00ce\3\2\2\2\u0348"+
+		"\u0349\7k\2\2\u0349\u034a\7p\2\2\u034a\u034b\7u\2\2\u034b\u034c\7v\2\2"+
+		"\u034c\u034d\7c\2\2\u034d\u034e\7p\2\2\u034e\u034f\7e\2\2\u034f\u0350"+
+		"\7g\2\2\u0350\u00d0\3\2\2\2\u0351\u0352\7q\2\2\u0352\u0353\7h\2\2\u0353"+
+		"\u00d2\3\2\2\2\u0354\u0355\7v\2\2\u0355\u0356\7t\2\2\u0356\u0357\7g\2"+
+		"\2\u0357\u0358\7c\2\2\u0358\u0359\7v\2\2\u0359\u00d4\3\2\2\2\u035a\u035b"+
+		"\7e\2\2\u035b\u035c\7c\2\2\u035c\u035d\7u\2\2\u035d\u035e\7v\2\2\u035e"+
+		"\u00d6\3\2\2\2\u035f\u0360\7e\2\2\u0360\u0361\7c\2\2\u0361\u0362\7u\2"+
+		"\2\u0362\u0363\7v\2\2\u0363\u0364\7c\2\2\u0364\u0365\7d\2\2\u0365\u0366"+
+		"\7n\2\2\u0366\u0367\7g\2\2\u0367\u00d8\3\2\2\2\u0368\u0369\7x\2\2\u0369"+
+		"\u036a\7g\2\2\u036a\u036b\7t\2\2\u036b\u036c\7u\2\2\u036c\u036d\7k\2\2"+
+		"\u036d\u036e\7q\2\2\u036e\u036f\7p\2\2\u036f\u00da\3\2\2\2\u0370\u0371"+
+		"\7l\2\2\u0371\u0372\7u\2\2\u0372\u0373\7q\2\2\u0373\u0374\7p\2\2\u0374"+
+		"\u0375\7k\2\2\u0375\u0376\7s\2\2\u0376\u00dc\3\2\2\2\u0377\u0378\7l\2"+
+		"\2\u0378\u0379\7u\2\2\u0379\u037a\7q\2\2\u037a\u037b\7p\2\2\u037b\u037c"+
+		"\7/\2\2\u037c\u037d\7k\2\2\u037d\u037e\7v\2\2\u037e\u037f\7g\2\2\u037f"+
+		"\u0380\7o\2\2\u0380\u00de\3\2\2\2\u0381\u0386\7$\2\2\u0382\u0385\5\u00e1"+
+		"q\2\u0383\u0385\n\2\2\2\u0384\u0382\3\2\2\2\u0384\u0383\3\2\2\2\u0385"+
+		"\u0388\3\2\2\2\u0386\u0384\3\2\2\2\u0386\u0387\3\2\2\2\u0387\u0389\3\2"+
+		"\2\2\u0388\u0386\3\2\2\2\u0389\u038a\7$\2\2\u038a\u00e0\3\2\2\2\u038b"+
+		"\u038e\7^\2\2\u038c\u038f\t\3\2\2\u038d\u038f\5\u00e3r\2\u038e\u038c\3"+
+		"\2\2\2\u038e\u038d\3\2\2\2\u038f\u00e2\3\2\2\2\u0390\u0391\7w\2\2\u0391"+
+		"\u0392\5\u00e5s\2\u0392\u0393\5\u00e5s\2\u0393\u0394\5\u00e5s\2\u0394"+
+		"\u0395\5\u00e5s\2\u0395\u00e4\3\2\2\2\u0396\u0397\t\4\2\2\u0397\u00e6"+
+		"\3\2\2\2\u0398\u0399\7p\2\2\u0399\u039a\7w\2\2\u039a\u039b\7n\2\2\u039b"+
+		"\u039c\7n\2\2\u039c\u00e8\3\2\2\2\u039d\u03a0\5\u00ebv\2\u039e\u03a0\5"+
+		"\u00edw\2\u039f\u039d\3\2\2\2\u039f\u039e\3\2\2\2\u03a0\u00ea\3\2\2\2"+
+		"\u03a1\u03a5\5\u00efx\2\u03a2\u03a5\5\u00f1y\2\u03a3\u03a5\5\u00f3z\2"+
+		"\u03a4\u03a1\3\2\2\2\u03a4\u03a2\3\2\2\2\u03a4\u03a3\3\2\2\2\u03a5\u00ec"+
+		"\3\2\2\2\u03a6\u03a7\7v\2\2\u03a7\u03a8\7t\2\2\u03a8\u03a9\7w\2\2\u03a9"+
+		"\u03b0\7g\2\2\u03aa\u03ab\7h\2\2\u03ab\u03ac\7c\2\2\u03ac\u03ad\7n\2\2"+
+		"\u03ad\u03ae\7u\2\2\u03ae\u03b0\7g\2\2\u03af\u03a6\3\2\2\2\u03af\u03aa"+
+		"\3\2\2\2\u03b0\u00ee\3\2\2\2\u03b1\u03b2\5\u00f5{\2\u03b2\u00f0\3\2\2"+
+		"\2\u03b3\u03b4\7\60\2\2\u03b4\u03be\5\u00f5{\2\u03b5\u03b6\5\u00f5{\2"+
+		"\u03b6\u03ba\7\60\2\2\u03b7\u03b9\t\5\2\2\u03b8\u03b7\3\2\2\2\u03b9\u03bc"+
+		"\3\2\2\2\u03ba\u03b8\3\2\2\2\u03ba\u03bb\3\2\2\2\u03bb\u03be\3\2\2\2\u03bc"+
+		"\u03ba\3\2\2\2\u03bd\u03b3\3\2\2\2\u03bd\u03b5\3\2\2\2\u03be\u00f2\3\2"+
+		"\2\2\u03bf\u03c0\7\60\2\2\u03c0\u03cc\5\u00f5{\2\u03c1\u03c9\5\u00f5{"+
+		"\2\u03c2\u03c6\7\60\2\2\u03c3\u03c5\t\5\2\2\u03c4\u03c3\3\2\2\2\u03c5"+
+		"\u03c8\3\2\2\2\u03c6\u03c4\3\2\2\2\u03c6\u03c7\3\2\2\2\u03c7\u03ca\3\2"+
+		"\2\2\u03c8\u03c6\3\2\2\2\u03c9\u03c2\3\2\2\2\u03c9\u03ca\3\2\2\2\u03ca"+
+		"\u03cc\3\2\2\2\u03cb\u03bf\3\2\2\2\u03cb\u03c1\3\2\2\2\u03cc\u03cd\3\2"+
+		"\2\2\u03cd\u03cf\t\6\2\2\u03ce\u03d0\t\7\2\2\u03cf\u03ce\3\2\2\2\u03cf"+
+		"\u03d0\3\2\2\2\u03d0\u03d1\3\2\2\2\u03d1\u03d2\5\u00f5{\2\u03d2\u00f4"+
+		"\3\2\2\2\u03d3\u03d5\t\5\2\2\u03d4\u03d3\3\2\2\2\u03d5\u03d6\3\2\2\2\u03d6"+
+		"\u03d4\3\2\2\2\u03d6\u03d7\3\2\2\2\u03d7\u00f6\3\2\2\2\u03d8\u03d9\t\b"+
+		"\2\2\u03d9\u03da\3\2\2\2\u03da\u03db\b|\2\2\u03db\u00f8\3\2\2\2\u03dc"+
+		"\u03e0\5\u00fb~\2\u03dd\u03df\5\u00fd\177\2\u03de\u03dd\3\2\2\2\u03df"+
+		"\u03e2\3\2\2\2\u03e0\u03de\3\2\2\2\u03e0\u03e1\3\2\2\2\u03e1\u00fa\3\2"+
+		"\2\2\u03e2\u03e0\3\2\2\2\u03e3\u03e5\t\t\2\2\u03e4\u03e3\3\2\2\2\u03e5"+
+		"\u00fc\3\2\2\2\u03e6\u03e9\5\u00fb~\2\u03e7\u03e9\t\n\2\2\u03e8\u03e6"+
+		"\3\2\2\2\u03e8\u03e7\3\2\2\2\u03e9\u00fe\3\2\2\2\u03ea\u03eb\7*\2\2\u03eb"+
+		"\u03f4\7<\2\2\u03ec\u03f3\5\u00ff\u0080\2\u03ed\u03ee\7*\2\2\u03ee\u03f3"+
+		"\n\13\2\2\u03ef\u03f0\7<\2\2\u03f0\u03f3\n\f\2\2\u03f1\u03f3\n\r\2\2\u03f2"+
+		"\u03ec\3\2\2\2\u03f2\u03ed\3\2\2\2\u03f2\u03ef\3\2\2\2\u03f2\u03f1\3\2"+
+		"\2\2\u03f3\u03f6\3\2\2\2\u03f4\u03f2\3\2\2\2\u03f4\u03f5\3\2\2\2\u03f5"+
+		"\u03f8\3\2\2\2\u03f6\u03f4\3\2\2\2\u03f7\u03f9\7<\2\2\u03f8\u03f7\3\2"+
+		"\2\2\u03f9\u03fa\3\2\2\2\u03fa\u03f8\3\2\2\2\u03fa\u03fb\3\2\2\2\u03fb"+
+		"\u03fc\3\2\2\2\u03fc\u03fd\7+\2\2\u03fd\u03fe\3\2\2\2\u03fe\u03ff\b\u0080"+
+		"\2\2\u03ff\u0100\3\2\2\2\u0400\u0401\n\16\2\2\u0401\u0102\3\2\2\2\26\2"+
+		"\u0384\u0386\u038e\u039f\u03a4\u03af\u03ba\u03bd\u03c6\u03c9\u03cb\u03cf"+
+		"\u03d6\u03e0\u03e4\u03e8\u03f2\u03f4\u03fa\3\2\3\2";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {

@@ -11,7 +11,6 @@ import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
 
-import java.util.*;
 
 public class TreatIterator extends UnaryOperationIterator {
 

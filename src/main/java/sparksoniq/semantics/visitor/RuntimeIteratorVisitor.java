@@ -43,6 +43,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.flowr.ReturnClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.WhereClause;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.AdditiveExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.AndExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.CastExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.CastableExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.ComparisonExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.InstanceOfExpression;
@@ -82,6 +83,7 @@ import sparksoniq.jsoniq.runtime.iterator.control.SwitchRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 import sparksoniq.jsoniq.runtime.iterator.operational.AdditiveOperationIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.AndOperationIterator;
+import sparksoniq.jsoniq.runtime.iterator.operational.CastIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.CastableIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.ComparisonOperationIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.InstanceOfIterator;
@@ -542,6 +544,16 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         if (expression.isActive()) {
             RuntimeIterator childExpression = this.visit(expression.getMainExpression(), argument);
             return new CastableIterator(childExpression, expression.get_atomicType().getSingleType(),
+                    createIteratorMetadata(expression));
+        } else
+            return defaultAction(expression, argument);
+    }
+
+    @Override
+    public RuntimeIterator visitCastExpression(CastExpression expression, RuntimeIterator argument) {
+        if (expression.isActive()) {
+            RuntimeIterator childExpression = this.visit(expression.getMainExpression(), argument);
+            return new CastIterator(childExpression, expression.getFlworVarSingleType().getSingleType(),
                     createIteratorMetadata(expression));
         } else
             return defaultAction(expression, argument);
