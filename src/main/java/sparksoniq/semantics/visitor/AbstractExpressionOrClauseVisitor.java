@@ -37,6 +37,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.ReturnClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.WhereClause;
+import sparksoniq.jsoniq.compiler.translator.expr.module.FunctionDeclarationExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.AdditiveExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.AndExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.CastExpression;
@@ -84,6 +85,18 @@ public abstract class AbstractExpressionOrClauseVisitor<T> {
         return visitDescendants(expression, argument);
     }
 
+    public T visitCommaExpression(CommaExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    // region module
+    public T visitFunctionDeclarationExpression(FunctionDeclarationExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    // endregion
+
+    // region flwor
     public T visitFlowrExpression(FlworExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
@@ -135,6 +148,7 @@ public abstract class AbstractExpressionOrClauseVisitor<T> {
     public T visitReturnClause(ReturnClause expression, T argument) {
         return defaultAction(expression, argument);
     }
+    // endregion
 
     //region primary
     public T visitPostfixExpression(PostFixExpression expression, T argument) {
@@ -150,6 +164,14 @@ public abstract class AbstractExpressionOrClauseVisitor<T> {
     }
 
     public abstract T visitContextExpr(ContextExpression expression, T argument);
+
+    public T visitFunctionCall(FunctionCall expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitParenthesizedExpression(ParenthesizedExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
     //endregion
 
     //region literal
@@ -215,19 +237,6 @@ public abstract class AbstractExpressionOrClauseVisitor<T> {
         return defaultAction(expression, argument);
     }
 
-    //endregion
-    public T visitCommaExpression(CommaExpression expression, T argument) {
-        return defaultAction(expression, argument);
-    }
-
-    public T visitParenthesizedExpression(ParenthesizedExpression expression, T argument) {
-        return defaultAction(expression, argument);
-    }
-
-    public T visitFunctionCall(FunctionCall expression, T argument) {
-        return defaultAction(expression, argument);
-    }
-
     public T visitInstanceOfExpression(InstanceOfExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
@@ -243,16 +252,20 @@ public abstract class AbstractExpressionOrClauseVisitor<T> {
     public T visitCastExpression(CastExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
+    //endregion
 
-    public T visitIfExpression(IfExpression expression, T argument) {
-        return defaultAction(expression, argument);
-    }
-
+    // region quantifiers
     public T visitQuantifiedExpression(QuantifiedExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
     public T visitQuantifiedExpressionVar(QuantifiedExpressionVar expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+    // endregion
+
+    // region control
+    public T visitIfExpression(IfExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
@@ -263,4 +276,5 @@ public abstract class AbstractExpressionOrClauseVisitor<T> {
     public T visitSwitchCaseExpression(SwitchCaseExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
+    // endregion
 }

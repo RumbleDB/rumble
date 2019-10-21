@@ -47,6 +47,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.ReturnClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.WhereClause;
+import sparksoniq.jsoniq.compiler.translator.expr.module.FunctionDeclarationExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.AdditiveExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.AndExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.CastExpression;
@@ -83,7 +84,9 @@ import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 
 //used to build AST, will override methods
@@ -94,6 +97,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
     private PrimaryExpression currentPrimaryExpression;
     private PostfixExtension currentPostFixExtension;
     private FlworClause currentFlworClause;
+    private FunctionDeclarationExpression currentFunctionDeclaration;
 
     public JsoniqExpressionTreeVisitor() {
     }
@@ -101,6 +105,10 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
 
     public Expression getQueryExpression() {
         return queryExpression;
+    }
+
+    public Expression getCurrentFunctionDeclaration() {
+        return currentFunctionDeclaration;
     }
 
     @Override
@@ -114,6 +122,34 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
     @Override
     public Void visitModuleImport(JsoniqParser.ModuleImportContext ctx) {
         throw new ModuleDeclarationException("Modules are not supported in Sparksoniq", createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Void visitFunctionDecl(JsoniqParser.FunctionDeclContext ctx) {
+        String fnName = ctx.fn_name.getText();
+        Map<String, FlworVarSequenceType> fnParams = new LinkedHashMap<>();
+        FlworVarSequenceType fnReturnType;
+        CommaExpression fnBody;
+        FunctionDeclarationExpression node;
+
+        for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
+            this.visitSequenceType(param.sequenceType());
+            fnParams.put(
+                    param.NCName().getText(),
+                    (FlworVarSequenceType) this.currentExpression
+            );
+        }
+
+        this.visitSequenceType(ctx.return_type);
+        fnReturnType = (FlworVarSequenceType) this.currentExpression;
+
+        this.visitExpr(ctx.fn_body);
+        fnBody = (CommaExpression) this.currentExpression;
+
+        node = new FunctionDeclarationExpression(fnName, fnParams, fnReturnType, fnBody, createMetadataFromContext(ctx));
+        this.currentExpression = node;
+        this.currentFunctionDeclaration = node;
+        return null;
     }
 
     //region expr
@@ -130,8 +166,9 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         }
         node = new CommaExpression(expressions, createMetadataFromContext(ctx));
         this.currentExpression = node;
-        if (getDepthLevel(ctx) == 3)
+        if (getDepthLevel(ctx) == 3) {  // module, mainModule, expr -> depth = 3
             queryExpression = node;
+        }
         return null;
     }
 

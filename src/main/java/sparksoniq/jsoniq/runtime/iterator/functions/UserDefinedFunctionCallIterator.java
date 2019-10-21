@@ -42,7 +42,7 @@ import java.util.Queue;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class UserDefinedFunctionIterator extends HybridRuntimeIterator {
+public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
 
 	private static final long serialVersionUID = 1L;
 	private String _fnName;
@@ -51,7 +51,7 @@ public class UserDefinedFunctionIterator extends HybridRuntimeIterator {
     private List<String> _fnArgumentNames;
     private Item _nextLocalResult;
 
-    public UserDefinedFunctionIterator(
+    public UserDefinedFunctionCallIterator(
             String fnName,
             List<RuntimeIterator> argumentsAndBody,
             List<String> argumentNames,
@@ -82,7 +82,7 @@ public class UserDefinedFunctionIterator extends HybridRuntimeIterator {
             argName = _fnArgumentNames.get(i);
 
             argValue = getItemsFromIteratorWithCurrentContext(arg);
-            context.addVariableValue(argName, argValue);
+            context.addVariableValue("$" + argName, argValue);
         }
     }
 

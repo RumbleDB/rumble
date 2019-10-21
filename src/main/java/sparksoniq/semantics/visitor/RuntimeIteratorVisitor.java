@@ -31,6 +31,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.control.SwitchExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.CountClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworVarSequenceType;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.ForClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.ForClauseVar;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.GroupByClause;
@@ -41,6 +42,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.ReturnClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.WhereClause;
+import sparksoniq.jsoniq.compiler.translator.expr.module.FunctionDeclarationExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.AdditiveExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.AndExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.CastExpression;
@@ -75,11 +77,13 @@ import sparksoniq.jsoniq.compiler.translator.expr.primary.StringLiteral;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpressionVar;
+import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.CommaExpressionIterator;
 import sparksoniq.jsoniq.runtime.iterator.EmptySequenceIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.control.IfRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.control.SwitchRuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.UserDefinedFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 import sparksoniq.jsoniq.runtime.iterator.operational.AdditiveOperationIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.AndOperationIterator;
@@ -112,6 +116,7 @@ import sparksoniq.jsoniq.runtime.iterator.quantifiers.QuantifiedExpressionIterat
 import sparksoniq.jsoniq.runtime.iterator.quantifiers.QuantifiedExpressionVarIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
+import sparksoniq.semantics.types.SequenceType;
 import sparksoniq.spark.iterator.flowr.CountClauseSparkIterator;
 import sparksoniq.spark.iterator.flowr.ForClauseSparkIterator;
 import sparksoniq.spark.iterator.flowr.GroupByClauseSparkIterator;
@@ -143,6 +148,34 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         }
         return result;
     }
+
+    @Override
+    public RuntimeIterator visitCommaExpression(CommaExpression expression, RuntimeIterator argument) {
+        List<RuntimeIterator> result = new ArrayList<>();
+        for (Expression childExpr : expression.getExpressions())
+            result.add(this.visit(childExpr, argument));
+        if (result.size() == 1)
+            return result.get(0);
+        else
+            return new CommaExpressionIterator(result, createIteratorMetadata(expression));
+    }
+
+    //region module
+    @Override
+    public RuntimeIterator visitFunctionDeclarationExpression(FunctionDeclarationExpression expression, RuntimeIterator argument) {
+        Map<String, SequenceType> paramNameToSequenceTypes= new LinkedHashMap<>();
+        for (Map.Entry<String, FlworVarSequenceType> paramEntry : expression.get_params().entrySet()) {
+            paramNameToSequenceTypes.put(paramEntry.getKey(), paramEntry.getValue().getSequence());
+        }
+        SequenceType returnType = expression.get_returnType().getSequence();
+        RuntimeIterator bodyIterator = this.visit(expression.get_body(), argument);
+
+        FunctionItem fn = new FunctionItem(expression.get_name(),paramNameToSequenceTypes, returnType, bodyIterator);
+        Functions.addUserDefinedFunction(fn);
+
+        return defaultAction(expression, argument);
+    }
+    //endregion
 
     //region FLOWR
     @Override
@@ -219,6 +252,40 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
 
     //region primary
     @Override
+    public RuntimeIterator visitParenthesizedExpression(ParenthesizedExpression expression, RuntimeIterator argument) {
+        if (expression.getExpression() != null)
+            return defaultAction(expression, argument);
+        return new EmptySequenceIterator(createIteratorMetadata(expression));
+    }
+
+    @Override
+    public RuntimeIterator visitFunctionCall(FunctionCall expression, RuntimeIterator argument) {
+        List<RuntimeIterator> arguments = new ArrayList<>();
+        IteratorMetadata iteratorMetadata = createIteratorMetadata(expression);
+        for (Expression arg : expression.getParameters())
+            arguments.add(this.visit(arg, argument));
+
+        try {
+            Class<? extends RuntimeIterator> functionClass = Functions.getBuiltInFunction(expression, arguments);
+            Constructor<? extends RuntimeIterator> ctor = functionClass.getConstructor(List.class, IteratorMetadata.class);
+            return ctor.newInstance(arguments, iteratorMetadata);
+        } catch (Exception ex1) {
+            if (ex1 instanceof UnknownFunctionCallException) {
+                FunctionItem fn =  Functions.getUserDefinedFunction(expression, arguments);
+                arguments.add(fn.getBodyIterator());
+                return new UserDefinedFunctionCallIterator(
+                        fn.getIdentifier().getName(),
+                        arguments,
+                        fn.getParameterNames(),
+                        iteratorMetadata
+                );
+            } else {
+                throw new RuntimeException(ex1.getMessage());
+            }
+        }
+    }
+
+    @Override
     public RuntimeIterator visitPostfixExpression(PostFixExpression expression, RuntimeIterator argument) {
         if (expression.isPrimary()) {
             return defaultAction(expression, argument);
@@ -285,7 +352,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
     }
     //endregion
 
-    //region literals
+    //region literal
     @Override
     public RuntimeIterator visitInteger(IntegerLiteral expression, RuntimeIterator argument) {
         return new IntegerRuntimeIterator(expression.getValue(), createIteratorMetadata(expression));
@@ -460,41 +527,6 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
             return defaultAction(expression, argument);
     }
 
-    //endregion
-    @Override
-    public RuntimeIterator visitCommaExpression(CommaExpression expression, RuntimeIterator argument) {
-        List<RuntimeIterator> result = new ArrayList<>();
-        for (Expression childExpr : expression.getExpressions())
-            result.add(this.visit(childExpr, argument));
-        if (result.size() == 1)
-            return result.get(0);
-        else
-            return new CommaExpressionIterator(result, createIteratorMetadata(expression));
-    }
-
-    @Override
-    public RuntimeIterator visitParenthesizedExpression(ParenthesizedExpression expression, RuntimeIterator argument) {
-        if (expression.getExpression() != null)
-            return defaultAction(expression, argument);
-        return new EmptySequenceIterator(createIteratorMetadata(expression));
-    }
-
-    @Override
-    public RuntimeIterator visitFunctionCall(FunctionCall expression, RuntimeIterator argument) {
-        List<RuntimeIterator> arguments = new ArrayList<>();
-        IteratorMetadata iteratorMetadata = createIteratorMetadata(expression);
-        for (Expression arg : expression.getParameters())
-            arguments.add(this.visit(arg, argument));
-
-        try {
-            Class<? extends RuntimeIterator> functionClass = Functions.getFunctionIteratorClass(expression, arguments);
-            Constructor<? extends RuntimeIterator> ctor = functionClass.getConstructor(List.class, IteratorMetadata.class);
-            return ctor.newInstance(arguments, iteratorMetadata);
-        } catch (Exception e) {
-            throw new UnknownFunctionCallException(expression.getFunctionName(), arguments.size(), createIteratorMetadata(expression));
-        }
-    }
-
     @Override
     public RuntimeIterator visitStringConcatExpr(StringConcatExpression expression, RuntimeIterator argument) {
         if (expression.isActive()) {
@@ -558,15 +590,9 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         } else
             return defaultAction(expression, argument);
     }
+    //endregion
 
-    @Override
-    public RuntimeIterator visitIfExpression(IfExpression expression, RuntimeIterator argument) {
-        return new IfRuntimeIterator(this.visit(expression.getCondition(), argument),
-                this.visit(expression.getBranch(), argument),
-                this.visit(expression.getElseBranch(), argument),
-                createIteratorMetadata(expression));
-    }
-
+    //region quantifiers
     @Override
     public RuntimeIterator visitQuantifiedExpression(QuantifiedExpression expression, RuntimeIterator argument) {
         List<QuantifiedExpressionVarIterator> variables = new ArrayList<>();
@@ -584,6 +610,16 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 createIteratorMetadata(expression));
         return iterator;
     }
+    //endregion
+
+    //region control
+    @Override
+    public RuntimeIterator visitIfExpression(IfExpression expression, RuntimeIterator argument) {
+        return new IfRuntimeIterator(this.visit(expression.getCondition(), argument),
+                this.visit(expression.getBranch(), argument),
+                this.visit(expression.getElseBranch(), argument),
+                createIteratorMetadata(expression));
+    }
 
     @Override
     public RuntimeIterator visitSwitchExpression(SwitchExpression expression, RuntimeIterator argument) {
@@ -595,6 +631,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 cases, this.visit(expression.getDefaultExpression(), argument),
                 createIteratorMetadata(expression));
     }
+    //endregion
 
     private IteratorMetadata createIteratorMetadata(ExpressionOrClause expression) {
         return new IteratorMetadata(expression.getMetadata());

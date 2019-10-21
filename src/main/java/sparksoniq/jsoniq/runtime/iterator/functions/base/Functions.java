@@ -22,6 +22,7 @@ package sparksoniq.jsoniq.runtime.iterator.functions.base;
 
 import sparksoniq.exceptions.UnknownFunctionCallException;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionCall;
+import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.NullFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayDescendantFunctionIterator;
@@ -167,9 +168,12 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 
 public class Functions {
     private static HashMap<FunctionIdentifier, Class<? extends RuntimeIterator>> builtInFunctions;
+    private static HashMap<FunctionIdentifier, FunctionItem> userDefinedFunctions;
 
     static {
+        userDefinedFunctions = new HashMap<>();
         builtInFunctions = new HashMap<>();
+
         builtInFunctions.put(new FunctionIdentifier(JSON_FILE, 1), ParseJsonFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(JSON_FILE, 2), ParseJsonFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(TEXT_FILE, 1), ParseTextFunctionIterator.class);
@@ -261,14 +265,29 @@ public class Functions {
         builtInFunctions.put(new FunctionIdentifier(VALUES, 1), ObjectValuesFunctionIterator.class);
     }
 
-    public static Class<? extends RuntimeIterator> getFunctionIteratorClass(FunctionCall expression, List<RuntimeIterator> arguments) {
+    public static void addUserDefinedFunction(FunctionItem function) {
+        userDefinedFunctions.put(function.getIdentifier(), function);
+    }
+
+    public static Class<? extends RuntimeIterator> getBuiltInFunction(FunctionCall expression, List<RuntimeIterator> arguments) {
         String fnName = expression.getFunctionName();
         int arity = arguments.size();
-        FunctionIdentifier functionSignature = new FunctionIdentifier(fnName, arity);
-        if (builtInFunctions.containsKey(functionSignature))
-            return builtInFunctions.get(functionSignature);
+        FunctionIdentifier identifier = new FunctionIdentifier(fnName, arity);
+        if (builtInFunctions.containsKey(identifier))
+            return builtInFunctions.get(identifier);
         throw new UnknownFunctionCallException(fnName, arity, new IteratorMetadata(expression.getMetadata()));
     }
+
+    public static FunctionItem getUserDefinedFunction(FunctionCall expression, List<RuntimeIterator> arguments) {
+        String fnName = expression.getFunctionName();
+        int arity = arguments.size();
+        FunctionIdentifier identifier = new FunctionIdentifier(fnName, arity);
+        if (userDefinedFunctions.containsKey(identifier))
+            return userDefinedFunctions.get(identifier);
+        throw new UnknownFunctionCallException(fnName, arity, new IteratorMetadata(expression.getMetadata()));
+    }
+
+
 
     public static class FunctionNames {
 

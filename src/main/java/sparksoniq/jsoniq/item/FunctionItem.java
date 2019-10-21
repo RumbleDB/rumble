@@ -30,7 +30,6 @@ import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
 
-import javax.sound.midi.Sequence;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -46,7 +45,7 @@ public class FunctionItem extends Item {
     private List<SequenceType> signature;
 
     // Implementation is the RuntimeIterator of the comma expression located in function's body
-    private RuntimeIterator implementation;
+    private RuntimeIterator bodyIterator;
     private Map<String, Item> nonLocalVariableBindings;
 
     protected FunctionItem() {
@@ -57,8 +56,24 @@ public class FunctionItem extends Item {
         this.identifier = identifier;
         this.parameterNames = parameterNames;
         this.signature = signature;
-        this.implementation = implementation;
+        this.bodyIterator = implementation;
         this.nonLocalVariableBindings = nonLocalVariableBindings;
+    }
+
+    public FunctionItem(String name, Map<String, SequenceType> paramNameToSequenceTypes, SequenceType returnType, RuntimeIterator bodyIterator) {
+        List<String> paramNames = new ArrayList<>();
+        List<SequenceType> signature = new ArrayList<>();
+        for (Map.Entry<String, SequenceType> paramEntry : paramNameToSequenceTypes.entrySet()) {
+            paramNames.add(paramEntry.getKey());
+            signature.add(paramEntry.getValue());
+        }
+        signature.add(returnType);
+
+        this.identifier = new FunctionIdentifier(name, paramNames.size());
+        this.parameterNames = paramNames;
+        this.signature = signature;
+        this.bodyIterator = bodyIterator;
+        this.nonLocalVariableBindings = new HashMap<>();
     }
 
     public FunctionIdentifier getIdentifier() {
@@ -73,8 +88,8 @@ public class FunctionItem extends Item {
         return signature;
     }
 
-    public RuntimeIterator getImplementation() {
-        return implementation;
+    public RuntimeIterator getBodyIterator() {
+        return bodyIterator;
     }
 
     public Map<String, Item> getNonLocalVariableBindings() {
@@ -117,7 +132,7 @@ public class FunctionItem extends Item {
         kryo.writeObject(output, this.identifier);
         kryo.writeObject(output, this.parameterNames);
         kryo.writeObject(output, this.signature);
-        kryo.writeObject(output, this.implementation);
+        kryo.writeObject(output, this.bodyIterator);
         kryo.writeObject(output, this.nonLocalVariableBindings);
     }
 
@@ -127,7 +142,7 @@ public class FunctionItem extends Item {
         this.identifier = kryo.readObject(input, FunctionIdentifier.class);
         this.parameterNames = kryo.readObject(input, ArrayList.class);
         this.signature = kryo.readObject(input, ArrayList.class);
-        this.implementation = kryo.readObject(input, RuntimeIterator.class);
+        this.bodyIterator = kryo.readObject(input, RuntimeIterator.class);
         this.nonLocalVariableBindings = kryo.readObject(input, HashMap.class);
     }
 }
