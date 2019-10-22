@@ -169,7 +169,6 @@ public class DecimalItem extends AtomicItem {
 
     @Override
     public Item multiply(Item other) {
-        if (other.isYearMonthDuration() || other.isDayTimeDuration()) return other.multiply(this);
         return ItemFactory.getInstance().createDecimalItem(this.getDecimalValue().multiply(other.castToDecimalValue()));
     }
 
