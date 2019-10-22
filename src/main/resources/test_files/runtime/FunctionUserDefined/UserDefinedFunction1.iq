@@ -1,0 +1,5 @@
+(:JIQS: ShouldRun; Output="(true, false)" :)
+declare function test ($i as integer) as boolean {
+    1 < $i
+};
+test(3), test(0)
