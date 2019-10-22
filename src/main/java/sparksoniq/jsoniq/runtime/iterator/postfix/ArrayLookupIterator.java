@@ -23,7 +23,6 @@ package sparksoniq.jsoniq.runtime.iterator.postfix;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
-
 import sparksoniq.exceptions.InvalidSelectorException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
@@ -38,8 +37,8 @@ import java.util.Arrays;
 public class ArrayLookupIterator extends HybridRuntimeIterator {
 
 
-	private static final long serialVersionUID = 1L;
-	private RuntimeIterator _iterator;
+    private static final long serialVersionUID = 1L;
+    private RuntimeIterator _iterator;
     private Integer _lookup;
     private Item _nextResult;
 
@@ -99,11 +98,8 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public void openLocal(DynamicContext context) {
-        this._currentDynamicContext = context;
-
+    public void openLocal() {
         initLookupPosition();
-
         _iterator.open(_currentDynamicContext);
         setNextResult();
     }

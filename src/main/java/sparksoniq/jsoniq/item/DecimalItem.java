@@ -28,7 +28,6 @@ import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
-import sparksoniq.semantics.types.SingleType;
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
@@ -59,7 +58,7 @@ public class DecimalItem extends AtomicItem {
 
     @Override
     public BigDecimal getDecimalValue() {
-        return _value;
+        return this.getValue();
     }
 
     @Override
@@ -90,49 +89,37 @@ public class DecimalItem extends AtomicItem {
     }
 
     @Override
-    public boolean isCastableAs(SingleType type) {
-        return type.getType() != AtomicTypes.AtomicItem &&
-                type.getType() != AtomicTypes.NullItem;
+    public Item castAs(AtomicTypes itemType) {
+        switch (itemType) {
+            case BooleanItem:
+                return ItemFactory.getInstance().createBooleanItem(!this.getDecimalValue().equals(BigDecimal.ZERO));
+            case DoubleItem:
+                return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue());
+            case DecimalItem:
+                return this;
+            case IntegerItem:
+                return ItemFactory.getInstance().createIntegerItem(this.castToIntegerValue());
+            case StringItem:
+                return ItemFactory.getInstance().createStringItem(String.valueOf(this.getDecimalValue()));
+            default:
+                throw new ClassCastException();
+        }
     }
 
     @Override
-    public AtomicItem castAs(AtomicItem atomicItem) {
-        return atomicItem.createFromDecimal(this);
-    }
-
-    @Override
-    public AtomicItem createFromBoolean(BooleanItem booleanItem) {
-        return ItemFactory.getInstance().createDecimalItem(BigDecimal.valueOf(booleanItem.hashCode()));
-    }
-
-    @Override
-    public AtomicItem createFromString(StringItem stringItem) {
-        return ItemFactory.getInstance().createDecimalItem(new BigDecimal(stringItem.getStringValue()));
-    }
-
-    @Override
-    public AtomicItem createFromInteger(IntegerItem integerItem) {
-        return ItemFactory.getInstance().createDecimalItem(integerItem.castToDecimalValue());
-    }
-
-    @Override
-    public AtomicItem createFromDecimal(DecimalItem decimalItem) {
-        return decimalItem;
-    }
-
-    @Override
-    public AtomicItem createFromDouble(DoubleItem doubleItem) {
-        return ItemFactory.getInstance().createDecimalItem(doubleItem.castToDecimalValue());
+    public boolean isCastableAs(AtomicTypes itemType) {
+        return itemType != AtomicTypes.AtomicItem &&
+                itemType != AtomicTypes.NullItem;
     }
 
     @Override
     public String serialize() {
-        return String.valueOf(_value);
+        return String.valueOf(this.getValue());
     }
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this._value);
+        kryo.writeObject(output, this.getValue());
     }
 
     @Override

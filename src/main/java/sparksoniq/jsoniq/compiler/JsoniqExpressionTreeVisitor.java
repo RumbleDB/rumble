@@ -199,7 +199,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         }
 
         //visit return
-        this.visitExprSingle(ctx.return_Expr);
+        this.visitExprSingle(ctx.return_expr);
         Expression returnExpr = this.currentExpression;
         returnClause = new ReturnClause(returnExpr, new ExpressionMetadata(ctx.getStop().getLine(),
                 ctx.getStop().getCharPositionInLine()));
@@ -398,7 +398,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         AndExpression mainExpression, childExpression;
         OrExpression node;
         List<Expression> rhs = new ArrayList<>();
-        this.visitAndExpr(ctx.mainExpr);
+        this.visitAndExpr(ctx.main_expr);
         mainExpression = (AndExpression) this.currentExpression;
         if (!(ctx.rhs == null) && !ctx.rhs.isEmpty()) {
             for (JsoniqParser.AndExprContext child : ctx.rhs) {
@@ -420,7 +420,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         NotExpression mainExpression, childExpression;
         AndExpression node;
         List<Expression> rhs = new ArrayList<>();
-        this.visitNotExpr(ctx.mainExpr);
+        this.visitNotExpr(ctx.main_expr);
         mainExpression = (NotExpression) this.currentExpression;
         if (!(ctx.rhs == null) && !ctx.rhs.isEmpty()) {
             for (JsoniqParser.NotExprContext child : ctx.rhs) {
@@ -440,7 +440,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
     public Void visitNotExpr(JsoniqParser.NotExprContext ctx) {
         ComparisonExpression mainExpression;
         NotExpression node;
-        this.visitComparisonExpr(ctx.mainExpr);
+        this.visitComparisonExpr(ctx.main_expr);
         mainExpression = (ComparisonExpression) this.currentExpression;
         node = new NotExpression(mainExpression, !(ctx.op == null || ctx.op.isEmpty()),
                 createMetadataFromContext(ctx));
@@ -452,7 +452,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
     public Void visitComparisonExpr(JsoniqParser.ComparisonExprContext ctx) {
         StringConcatExpression mainExpression, childExpression;
         ComparisonExpression node;
-        this.visitStringConcatExpr(ctx.mainExpr);
+        this.visitStringConcatExpr(ctx.main_expr);
         mainExpression = (StringConcatExpression) this.currentExpression;
         if (ctx.rhs != null && !ctx.rhs.isEmpty()) {
             JsoniqParser.StringConcatExprContext child = ctx.rhs.get(0);
@@ -474,7 +474,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         RangeExpression mainExpression, childExpression;
         StringConcatExpression node;
         List<Expression> rhs = new ArrayList<>();
-        this.visitRangeExpr(ctx.mainExpr);
+        this.visitRangeExpr(ctx.main_expr);
         mainExpression = (RangeExpression) this.currentExpression;
         if (!(ctx.rhs == null) && !ctx.rhs.isEmpty()) {
             for (JsoniqParser.RangeExprContext child : ctx.rhs) {
@@ -496,7 +496,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
 
         AdditiveExpression mainExpression, childExpression;
         RangeExpression node;
-        this.visitAdditiveExpr(ctx.mainExpr);
+        this.visitAdditiveExpr(ctx.main_expr);
         mainExpression = (AdditiveExpression) this.currentExpression;
         if (ctx.rhs != null && !ctx.rhs.isEmpty()) {
             JsoniqParser.AdditiveExprContext child = ctx.rhs.get(0);
@@ -516,7 +516,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         MultiplicativeExpression mainExpression, childExpression;
         AdditiveExpression node;
         List<Expression> rhs = new ArrayList<>();
-        this.visitMultiplicativeExpr(ctx.mainExpr);
+        this.visitMultiplicativeExpr(ctx.main_expr);
         mainExpression = (MultiplicativeExpression) this.currentExpression;
         if (ctx.rhs != null && !ctx.rhs.isEmpty()) {
             for (JsoniqParser.MultiplicativeExprContext child : ctx.rhs) {
@@ -539,7 +539,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         InstanceOfExpression mainExpression, childExpression;
         MultiplicativeExpression node;
         List<Expression> rhs = new ArrayList<>();
-        this.visitInstanceOfExpr(ctx.mainExpr);
+        this.visitInstanceOfExpr(ctx.main_expr);
         mainExpression = (InstanceOfExpression) this.currentExpression;
         if (ctx.rhs != null && !ctx.rhs.isEmpty()) {
             for (JsoniqParser.InstanceOfExprContext child : ctx.rhs) {
@@ -562,7 +562,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         TreatExpression mainExpression;
         FlworVarSequenceType sequenceType;
         InstanceOfExpression node;
-        this.visitTreatExpr(ctx.mainExpr);
+        this.visitTreatExpr(ctx.main_expr);
         mainExpression = (TreatExpression) this.currentExpression;
         if (ctx.seq != null && !ctx.seq.isEmpty()) {
             JsoniqParser.SequenceTypeContext child = ctx.seq;
@@ -581,7 +581,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         CastableExpression mainExpression;
         FlworVarSequenceType sequenceType;
         TreatExpression node;
-        this.visitCastableExpr(ctx.mainExpr);
+        this.visitCastableExpr(ctx.main_expr);
         mainExpression = (CastableExpression) this.currentExpression;
         if (ctx.seq != null && !ctx.seq.isEmpty()) {
             JsoniqParser.SequenceTypeContext child = ctx.seq;
@@ -600,7 +600,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         CastExpression mainExpression;
         FlworVarSingleType singleType;
         CastableExpression node;
-        this.visitCastExpr(ctx.mainExpr);
+        this.visitCastExpr(ctx.main_expr);
         mainExpression = (CastExpression) this.currentExpression;
         if (ctx.single != null && !ctx.single.isEmpty()) {
             JsoniqParser.SingleTypeContext child = ctx.single;
@@ -619,7 +619,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         UnaryExpression mainExpression;
         FlworVarSingleType singleType;
         CastExpression node;
-        this.visitUnaryExpr(ctx.mainExpr);
+        this.visitUnaryExpr(ctx.main_expr);
         mainExpression = (UnaryExpression) this.currentExpression;
         if (ctx.single != null && !ctx.single.isEmpty()) {
             JsoniqParser.SingleTypeContext child = ctx.single;
@@ -638,7 +638,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         //TODO [EXPRVISITOR] jump from unary to postfix
         PostFixExpression mainExpression;
         UnaryExpression node;
-        this.visitSimpleMapExpr(ctx.mainExpr);
+        this.visitSimpleMapExpr(ctx.main_expr);
         mainExpression = (PostFixExpression) this.currentExpression;
         if (ctx.op == null || ctx.op.isEmpty())
             node = new UnaryExpression(mainExpression, createMetadataFromContext(ctx));
@@ -657,7 +657,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         PrimaryExpression mainExpression;
         PostFixExpression node;
         List<PostfixExtension> rhs = new ArrayList<>();
-        this.visitPrimaryExpr(ctx.mainExpr);
+        this.visitPrimaryExpr(ctx.main_expr);
         mainExpression = this.currentPrimaryExpression;
         for (ParseTree child : ctx.children.subList(1, ctx.children.size())) {
             if (child instanceof JsoniqParser.PredicateContext) {
@@ -780,8 +780,8 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
     public Void visitObjectConstructor(JsoniqParser.ObjectConstructorContext ctx) {
         ObjectConstructor node;
         //no merging constructor, just visit the k/v pairs
-        if (ctx.mergeOperator == null || ctx.mergeOperator.size() == 0 ||
-                ctx.mergeOperator.get(0).getText().isEmpty()) {
+        if (ctx.merge_operator == null || ctx.merge_operator.size() == 0 ||
+                ctx.merge_operator.get(0).getText().isEmpty()) {
             List<Expression> keys = new ArrayList<>();
             List<Expression> values = new ArrayList<>();
             ObjectConstructor.PairConstructor pair;
@@ -915,8 +915,8 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
     public Void visitFunctionCall(JsoniqParser.FunctionCallContext ctx) {
         FunctionCall node;
         String name;
-        if (ctx.fcnName != null)
-            name = ctx.fcnName.getText();
+        if (ctx.fn_name != null)
+            name = ctx.fn_name.getText();
         else
             name = ctx.kw.getText();
         if (ctx.ns != null)
@@ -942,14 +942,14 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
     @Override
     public Void visitIfExpr(JsoniqParser.IfExprContext ctx) {
         IfExpression node;
-        Expression condition, branch, elseBranch;
-        this.visitExpr(ctx.testCondition);
+        Expression condition, branch, else_branch;
+        this.visitExpr(ctx.test_condition);
         condition = this.currentExpression;
         this.visitExprSingle(ctx.branch);
         branch = this.currentExpression;
-        this.visitExprSingle(ctx.elseBranch);
-        elseBranch = this.currentExpression;
-        node = new IfExpression(condition, branch, elseBranch, createMetadataFromContext(ctx));
+        this.visitExprSingle(ctx.else_branch);
+        else_branch = this.currentExpression;
+        node = new IfExpression(condition, branch, else_branch, createMetadataFromContext(ctx));
         this.currentExpression = node;
         return null;
     }
@@ -961,7 +961,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         this.visitExpr(ctx.cond);
         condition = this.currentExpression;
         List<SwitchCaseExpression> cases = new ArrayList<>();
-        for (JsoniqParser.SwitchCaseClauseContext expr : ctx.cses) {
+        for (JsoniqParser.SwitchCaseClauseContext expr : ctx.cases) {
             this.visitSwitchCaseClause(expr);
             cases.add((SwitchCaseExpression) this.currentExpression);
         }

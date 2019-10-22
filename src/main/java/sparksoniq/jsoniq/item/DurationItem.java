@@ -99,24 +99,21 @@ public class DurationItem extends AtomicItem {
     }
 
     @Override
-    public boolean isCastableAs(SingleType type) {
-        return type.getType().equals(AtomicTypes.DurationItem) ||
-                type.getType().equals(AtomicTypes.StringItem);
+    public boolean isCastableAs(AtomicTypes itemType) {
+        return itemType.equals(AtomicTypes.DurationItem) ||
+                itemType.equals(AtomicTypes.StringItem);
     }
 
     @Override
-    public AtomicItem castAs(AtomicItem atomicItem) {
-        return atomicItem.createFromDuration(this);
-    }
-
-    @Override
-    public AtomicItem createFromDuration(DurationItem durationItem) {
-        return durationItem;
-    }
-
-    @Override
-    public AtomicItem createFromString(StringItem stringItem) {
-        return ItemFactory.getInstance().createDurationItem(getDurationFromString(stringItem.getStringValue(), AtomicTypes.DurationItem));
+    public Item castAs(AtomicTypes itemType) {
+        switch (itemType) {
+            case DurationItem:
+                return this;
+            case StringItem:
+                return ItemFactory.getInstance().createStringItem(this.serialize());
+            default:
+                throw new ClassCastException();
+        }
     }
 
     @Override

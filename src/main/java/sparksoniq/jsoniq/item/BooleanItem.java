@@ -28,7 +28,6 @@ import com.esotericsoftware.kryo.io.Output;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
-import sparksoniq.semantics.types.SingleType;
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
@@ -56,7 +55,7 @@ public class BooleanItem extends AtomicItem {
 
     @Override
     public boolean getBooleanValue() {
-        return _value;
+        return this.getValue();
     }
 
     @Override
@@ -75,49 +74,37 @@ public class BooleanItem extends AtomicItem {
     }
 
     @Override
-    public boolean isCastableAs(SingleType type) {
-        return type.getType() != AtomicTypes.AtomicItem &&
-                type.getType() != AtomicTypes.NullItem;
+    public Item castAs(AtomicTypes itemType) {
+        switch (itemType) {
+            case BooleanItem:
+                return this;
+            case DoubleItem:
+                return ItemFactory.getInstance().createDoubleItem(this.hashCode());
+            case DecimalItem:
+                return ItemFactory.getInstance().createDecimalItem(BigDecimal.valueOf(this.hashCode()));
+            case IntegerItem:
+                return ItemFactory.getInstance().createIntegerItem(this.hashCode());
+            case StringItem:
+                return ItemFactory.getInstance().createStringItem(String.valueOf(this.getBooleanValue()));
+            default:
+                throw new ClassCastException();
+        }
     }
 
     @Override
-    public AtomicItem castAs(AtomicItem atomicItem) {
-        return atomicItem.createFromBoolean(this);
-    }
-
-    @Override
-    public AtomicItem createFromBoolean(BooleanItem booleanItem) {
-        return booleanItem;
-    }
-
-    @Override
-    public AtomicItem createFromString(StringItem stringItem) {
-        return ItemFactory.getInstance().createBooleanItem(Boolean.parseBoolean(stringItem.getStringValue()));
-    }
-
-    @Override
-    public AtomicItem createFromInteger(IntegerItem integerItem) {
-        return ItemFactory.getInstance().createBooleanItem(integerItem.getIntegerValue() != 0);
-    }
-
-    @Override
-    public AtomicItem createFromDecimal(DecimalItem decimalItem) {
-        return ItemFactory.getInstance().createBooleanItem(!decimalItem.getDecimalValue().equals(BigDecimal.ZERO));
-    }
-
-    @Override
-    public AtomicItem createFromDouble(DoubleItem doubleItem) {
-        return ItemFactory.getInstance().createBooleanItem(doubleItem.getDoubleValue() != 0);
+    public boolean isCastableAs(AtomicTypes itemType) {
+        return itemType != AtomicTypes.AtomicItem &&
+                itemType != AtomicTypes.NullItem;
     }
 
     @Override
     public String serialize() {
-        return String.valueOf(_value);
+        return String.valueOf(this.getValue());
     }
 
     @Override
     public void write(Kryo kryo, Output output) {
-        output.writeBoolean(this._value);
+        output.writeBoolean(this.getValue());
     }
 
     @Override

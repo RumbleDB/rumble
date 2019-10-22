@@ -22,7 +22,7 @@ package sparksoniq.jsoniq.item;
 
 import org.rumbledb.api.Item;
 
-import sparksoniq.semantics.types.SingleType;
+import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
@@ -44,14 +44,7 @@ public abstract class AtomicItem extends Item {
         return type.getType().equals(ItemTypes.AtomicItem) || type.getType().equals(ItemTypes.Item);
     }
 
-    public abstract boolean isCastableAs(SingleType type);
+    public abstract Item castAs(AtomicTypes itemType);
 
-    public abstract AtomicItem castAs(AtomicItem atomicItem);
-
-    public AtomicItem createFromBoolean(BooleanItem booleanItem) {return null;}
-    public AtomicItem createFromString(StringItem stringItem) {return null;}
-    public AtomicItem createFromInteger(IntegerItem integerItem) {return null;}
-    public AtomicItem createFromDecimal(DecimalItem decimalItem) {return null;}
-    public AtomicItem createFromDouble(DoubleItem doubleItem) {return null;}
-    public AtomicItem createFromDuration(DurationItem durationItem) {return null;}
+    public abstract boolean isCastableAs(AtomicTypes itemType);
 }

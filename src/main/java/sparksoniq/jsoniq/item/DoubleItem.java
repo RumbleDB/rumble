@@ -27,7 +27,6 @@ import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
-import sparksoniq.semantics.types.SingleType;
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
@@ -37,7 +36,6 @@ import java.math.BigDecimal;
 import org.rumbledb.api.Item;
 
 public class DoubleItem extends AtomicItem {
-
 
 	private static final long serialVersionUID = 1L;
 	private double _value;
@@ -57,7 +55,7 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public double getDoubleValue() {
-        return _value;
+        return this.getValue();
     }
 
     @Override
@@ -88,55 +86,43 @@ public class DoubleItem extends AtomicItem {
     }
 
     @Override
-    public boolean isCastableAs(SingleType type) {
-        if (type.getType() == AtomicTypes.AtomicItem || type.getType() == AtomicTypes.NullItem) return false;
-        else if (type.getType() == AtomicTypes.DecimalItem) {
-            return !Double.isInfinite(_value);
+    public Item castAs(AtomicTypes itemType) {
+        switch (itemType) {
+            case BooleanItem:
+                return ItemFactory.getInstance().createBooleanItem(this.getDoubleValue() != 0);
+            case DoubleItem:
+                return this;
+            case DecimalItem:
+                return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue());
+            case IntegerItem:
+                return ItemFactory.getInstance().createIntegerItem(this.castToIntegerValue());
+            case StringItem:
+                return ItemFactory.getInstance().createStringItem(String.valueOf(this.getDoubleValue()));
+            default:
+                throw new ClassCastException();
         }
-        else if (type.getType() == AtomicTypes.IntegerItem) {
-            return !(Integer.MAX_VALUE < _value) && !(Integer.MIN_VALUE > _value);
+    }
+
+    @Override
+    public boolean isCastableAs(AtomicTypes itemType) {
+        if (itemType == AtomicTypes.AtomicItem || itemType == AtomicTypes.NullItem) return false;
+        else if (itemType == AtomicTypes.DecimalItem) {
+            return !Double.isInfinite(this.getValue());
+        }
+        else if (itemType == AtomicTypes.IntegerItem) {
+            return !(Integer.MAX_VALUE < this.getValue()) && !(Integer.MIN_VALUE > this.getValue());
         }
         return true;
     }
 
     @Override
-    public AtomicItem castAs(AtomicItem atomicItem) {
-        return atomicItem.createFromDouble(this);
-    }
-
-    @Override
-    public AtomicItem createFromBoolean(BooleanItem booleanItem) {
-        return ItemFactory.getInstance().createDoubleItem(booleanItem.hashCode());
-    }
-
-    @Override
-    public AtomicItem createFromString(StringItem stringItem) {
-        return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(stringItem.getStringValue()));
-    }
-
-    @Override
-    public AtomicItem createFromInteger(IntegerItem integerItem) {
-        return ItemFactory.getInstance().createDoubleItem(integerItem.castToDoubleValue());
-    }
-
-    @Override
-    public AtomicItem createFromDecimal(DecimalItem decimalItem) {
-        return ItemFactory.getInstance().createDoubleItem(decimalItem.castToDoubleValue());
-    }
-
-    @Override
-    public AtomicItem createFromDouble(DoubleItem doubleItem) {
-        return doubleItem;
-    }
-
-    @Override
     public String serialize() {
-        return String.valueOf(_value);
+        return String.valueOf(this.getValue());
     }
 
     @Override
     public void write(Kryo kryo, Output output) {
-        output.writeDouble(this._value);
+        output.writeDouble(this.getValue());
     }
 
     @Override

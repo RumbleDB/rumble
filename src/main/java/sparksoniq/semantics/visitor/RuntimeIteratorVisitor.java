@@ -553,7 +553,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
     public RuntimeIterator visitCastExpression(CastExpression expression, RuntimeIterator argument) {
         if (expression.isActive()) {
             RuntimeIterator childExpression = this.visit(expression.getMainExpression(), argument);
-            return new CastIterator(childExpression, expression.get_atomicType().getSingleType(),
+            return new CastIterator(childExpression, expression.getFlworVarSingleType().getSingleType(),
                     createIteratorMetadata(expression));
         } else
             return defaultAction(expression, argument);

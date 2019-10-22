@@ -22,7 +22,6 @@ package sparksoniq.jsoniq.runtime.iterator;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
-
 import sparksoniq.Main;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparkRuntimeException;
@@ -35,9 +34,8 @@ import java.util.List;
 
 public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
-
-	private static final long serialVersionUID = 1L;
-	protected JiqsItemParser parser;
+    private static final long serialVersionUID = 1L;
+    protected JiqsItemParser parser;
     protected JavaRDD<Item> _rdd;
     protected boolean isRDDInitialized = false;
     protected boolean _isRDD;
@@ -69,10 +67,10 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     }
 
     @Override
-    public void open(DynamicContext context){
+    public void open(DynamicContext context) {
         super.open(context);
         if (!isRDD()) {
-            openLocal(context);
+            openLocal();
         }
     }
 
@@ -144,7 +142,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
     protected abstract boolean initIsRDD();
 
-    protected abstract void openLocal(DynamicContext context);
+    protected abstract void openLocal();
 
     protected abstract void closeLocal();
 
