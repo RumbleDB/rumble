@@ -24,7 +24,7 @@ public class YearMonthDurationItem extends DurationItem {
 
     public YearMonthDurationItem(Period value) {
         super();
-        this._value = value;
+        this._value = value.normalizedStandard(PeriodType.forFields(new DurationFieldType[]{DurationFieldType.years(), DurationFieldType.months()}));;
     }
 
     @Override

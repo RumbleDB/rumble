@@ -1,5 +1,6 @@
 package sparksoniq.jsoniq.item;
 
+import org.joda.time.DurationFieldType;
 import org.joda.time.Period;
 import org.joda.time.PeriodType;
 import org.rumbledb.api.Item;
@@ -23,7 +24,7 @@ public class DayTimeDurationItem extends DurationItem {
 
     public DayTimeDurationItem(Period value) {
         super();
-        this._value = value;
+        this._value = value.normalizedStandard(PeriodType.dayTime());
     }
 
     @Override

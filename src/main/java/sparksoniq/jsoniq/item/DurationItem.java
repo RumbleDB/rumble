@@ -3,6 +3,7 @@ package sparksoniq.jsoniq.item;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import org.joda.time.DurationFieldType;
 import org.joda.time.Instant;
 import org.joda.time.Period;
 import org.joda.time.PeriodType;
@@ -157,6 +158,19 @@ public class DurationItem extends AtomicItem {
         }
     }
 
+    private static PeriodType getPeriodType(AtomicTypes durationType) {
+        switch (durationType) {
+            case DurationItem:
+                return PeriodType.yearMonthDayTime();
+            case YearMonthDurationItem:
+                return PeriodType.forFields(new DurationFieldType[]{DurationFieldType.years(), DurationFieldType.months()});
+            case DayTimeDurationItem:
+                return PeriodType.dayTime();
+            default:
+                throw new IllegalArgumentException();
+        }
+    }
+
     private static boolean checkInvalidDurationFormat(String duration, AtomicTypes durationType) {
         switch (durationType) {
             case DurationItem:
@@ -178,7 +192,9 @@ public class DurationItem extends AtomicItem {
         }
         PeriodFormatter pf = getPeriodFormatter(durationType);
         Period period = Period.parse(duration, pf);
-        return isNegative ? period.negated().normalizedStandard(PeriodType.yearMonthDayTime()) : period.normalizedStandard(PeriodType.yearMonthDayTime());
+        return isNegative ?
+                period.negated().normalizedStandard(getPeriodType(durationType)) :
+                period.normalizedStandard(getPeriodType(durationType));
     }
 
     @Override
