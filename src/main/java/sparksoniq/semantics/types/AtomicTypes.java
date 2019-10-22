@@ -10,6 +10,8 @@ public enum AtomicTypes {
     BooleanItem,
 
     DurationItem,
+    YearMonthDurationItem,
+    DayTimeDurationItem,
 
     NullItem,
 }

@@ -203,6 +203,10 @@ keyWordBoolean          : 'boolean';
 
 keyWordDuration         : 'duration';
 
+keyWordYearMonthDuration: 'yearMonthDuration';
+
+keyWordDayTimeDuration  : 'dayTimeDuration';
+
 singleType              : item=atomicType (question +='?')?;
 
 atomicType              : 'atomic'
@@ -211,11 +215,15 @@ atomicType              : 'atomic'
                         | 'decimal'
                         | 'double'
                         | keyWordDuration
+                        | keyWordYearMonthDuration
+                        | keyWordDayTimeDuration
                         | keyWordBoolean
                         | NullLiteral;
 
 nCNameOrKeyWord         : NCName
                         | keyWordDuration
+                        | keyWordYearMonthDuration
+                        | keyWordDayTimeDuration
                         | keyWordBoolean;
 
 pairConstructor         :  ( lhs=exprSingle | name=NCName ) (':' | '?') rhs=exprSingle;

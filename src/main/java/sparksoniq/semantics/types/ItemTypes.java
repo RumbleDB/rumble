@@ -36,6 +36,8 @@ public enum ItemTypes {
     BooleanItem,
 
     DurationItem,
+    YearMonthDurationItem,
+    DayTimeDurationItem,
 
     NullItem;
 

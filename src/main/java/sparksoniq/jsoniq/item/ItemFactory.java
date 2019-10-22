@@ -51,7 +51,17 @@ public class ItemFactory {
         return new DoubleItem(d);
     }
 
-    public Item createDurationItem(Period p) { return new DurationItem(p); }
+    public Item createDurationItem(Period p) {
+        return new DurationItem(p);
+    }
+
+    public Item createYearMonthDurationItem(Period p) {
+        return new YearMonthDurationItem(p);
+    }
+
+    public Item createDayTimeDurationItem(Period p) {
+        return new DayTimeDurationItem(p);
+    }
 
     public Item createObjectItem() {
         return new ObjectItem();

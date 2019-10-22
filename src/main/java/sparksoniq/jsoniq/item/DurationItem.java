@@ -8,6 +8,7 @@ import org.joda.time.Period;
 import org.joda.time.PeriodType;
 import org.joda.time.format.ISOPeriodFormat;
 import org.joda.time.format.PeriodFormatter;
+import org.joda.time.format.PeriodFormatterBuilder;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
@@ -34,8 +35,8 @@ public class DurationItem extends AtomicItem {
             "(" + duMinuteFrag + "(" + duSecondFrag + ")?)|" + duSecondFrag + ")";
     private static final String duDayTimeFrag = "((" + duDayFrag + "(" + duTimeFrag + ")?)|" + duTimeFrag + ")";
     private static final String durationLiteral = prefix + "((" + duYearMonthFrag + "(" + duDayTimeFrag + ")?)|" + duDayTimeFrag +")";
-    private static final Pattern pattern = Pattern.compile(durationLiteral);
-
+    private static final String yearMonthDurationLiteral = prefix + duYearMonthFrag;
+    private static final String dayTimeDurationLiteral = prefix + duDayTimeFrag;
 
     private static final long serialVersionUID = 1L;
     private Period _value;
@@ -77,15 +78,14 @@ public class DurationItem extends AtomicItem {
         Instant now = new Instant();
         if (otherItem.isDuration()) {
             DurationItem otherDuration = (DurationItem) otherItem;
-            return this._value.toDurationFrom(now).isEqual(otherDuration.getValue().toDurationFrom(now));
+            return this.getValue().toDurationFrom(now).isEqual(otherDuration.getValue().toDurationFrom(now));
         }
         return false;
-
     }
 
     @Override
     public int hashCode() {
-        return this._value.hashCode();
+        return this.getValue().hashCode();
     }
 
     @Override
@@ -95,8 +95,18 @@ public class DurationItem extends AtomicItem {
 
     @Override
     public boolean isCastableAs(AtomicTypes itemType) {
-        return itemType.equals(AtomicTypes.DurationItem) ||
-                itemType.equals(AtomicTypes.StringItem);
+        if (itemType.equals(AtomicTypes.DurationItem) ||
+                itemType.equals(AtomicTypes.StringItem)) return true;
+        try {
+            if (itemType == AtomicTypes.YearMonthDurationItem) {
+                getDurationFromString(this.getValue().toString(), AtomicTypes.YearMonthDurationItem);
+            } else if (itemType == AtomicTypes.DayTimeDurationItem) {
+                getDurationFromString(this.getValue().toString(), AtomicTypes.DayTimeDurationItem);
+            }
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+        return true;
     }
 
     @Override
@@ -104,6 +114,10 @@ public class DurationItem extends AtomicItem {
         switch (itemType) {
             case DurationItem:
                 return this;
+            case YearMonthDurationItem:
+                return ItemFactory.getInstance().createYearMonthDurationItem(getDurationFromString(this.serialize(), AtomicTypes.YearMonthDurationItem));
+            case DayTimeDurationItem:
+                return ItemFactory.getInstance().createDayTimeDurationItem(getDurationFromString(this.serialize(), AtomicTypes.DayTimeDurationItem));
             case StringItem:
                 return ItemFactory.getInstance().createStringItem(this.serialize());
             default:
@@ -113,7 +127,7 @@ public class DurationItem extends AtomicItem {
 
     @Override
     public String serialize() {
-        return this._value.toString();
+        return this.getValue().toString();
     }
 
     @Override
@@ -130,17 +144,33 @@ public class DurationItem extends AtomicItem {
         switch (durationType) {
             case DurationItem:
                 return ISOPeriodFormat.standard();
+            case YearMonthDurationItem:
+                return new PeriodFormatterBuilder().
+                        appendLiteral("P").appendYears().appendSuffix("Y").appendMonths().appendSuffix("M").toFormatter();
+            case DayTimeDurationItem:
+                return new PeriodFormatterBuilder().
+                        appendLiteral("P").appendDays().appendSuffix("D").appendSeparatorIfFieldsAfter("T").
+                        appendHours().appendSuffix("H").appendMinutes().appendSuffix("M")
+                        .appendSecondsWithOptionalMillis().appendSuffix("S").toFormatter();
             default:
                 throw new IllegalArgumentException();
         }
     }
 
-    private static boolean checkInvalidDurationFormat(String duration) {
-        return pattern.matcher(duration).matches();
+    private static boolean checkInvalidDurationFormat(String duration, AtomicTypes durationType) {
+        switch (durationType) {
+            case DurationItem:
+                return Pattern.compile(durationLiteral).matcher(duration).matches();
+            case YearMonthDurationItem:
+                return Pattern.compile(yearMonthDurationLiteral).matcher(duration).matches();
+            case DayTimeDurationItem:
+                return Pattern.compile(dayTimeDurationLiteral).matcher(duration).matches();
+        }
+        throw new IllegalArgumentException();
     }
 
-    public static Period getDurationFromString(String duration, AtomicTypes durationType) throws IllegalArgumentException{
-        if (!checkInvalidDurationFormat(duration) || durationType == null) throw new IllegalArgumentException();
+    public static Period getDurationFromString(String duration, AtomicTypes durationType) throws UnsupportedOperationException, IllegalArgumentException {
+        if (durationType == null || !checkInvalidDurationFormat(duration, durationType)) throw new IllegalArgumentException();
         boolean isNegative = false;
         if (duration.charAt(0) == '-') {
             isNegative = true;
@@ -157,17 +187,18 @@ public class DurationItem extends AtomicItem {
         Instant now = new Instant();
         if (other.isDuration()) {
             DurationItem otherDuration = (DurationItem) other;
-            return this._value.toDurationFrom(now).compareTo(otherDuration.getValue().toDurationFrom(now));
+            return this.getValue().toDurationFrom(now).compareTo(otherDuration.getValue().toDurationFrom(now));
         }
-        throw new IteratorFlowException("Cannot compare item of type duration with item of type " +
-                ItemTypes.getItemTypeName(other.getClass().getSimpleName()));
+        throw new IteratorFlowException("Cannot compare item of type " + ItemTypes.getItemTypeName(this.getClass().getSimpleName()) +
+                " with item of type " + ItemTypes.getItemTypeName(other.getClass().getSimpleName()));
     }
 
     @Override
     public Item compareItem(Item other, OperationalExpressionBase.Operator operator, IteratorMetadata metadata) {
         if (!other.isDuration() && !other.isNull()) {
-            throw new UnexpectedTypeException("Invalid args for duration comparison " + this.serialize() +
-                    ", " + other.serialize(), metadata);
+            throw new UnexpectedTypeException("\"" + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                    + "\": invalid type: can not compare for equality to type \""
+                    + ItemTypes.getItemTypeName(other.getClass().getSimpleName()) + "\"", metadata);
         }
         if (other.isNull()) return operator.apply(this, other);
         switch (operator) {
@@ -177,7 +208,8 @@ public class DurationItem extends AtomicItem {
             case GC_NE:
                 return operator.apply(this, other);
         }
-        throw new UnexpectedTypeException("Invalid args for duration comparison " + this.serialize() +
-                ", " + other.serialize(), metadata);
+        throw new UnexpectedTypeException("\"" + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                + "\": invalid type: can not compare for equality to type \""
+                + ItemTypes.getItemTypeName(other.getClass().getSimpleName()) + "\"", metadata);
     }
 }
