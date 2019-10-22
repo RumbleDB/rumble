@@ -23,7 +23,6 @@ package sparksoniq.jsoniq.runtime.iterator.postfix;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
-
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.IntegerItem;
@@ -31,6 +30,7 @@ import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -39,9 +39,8 @@ import java.util.TreeMap;
 
 public class PredicateIterator extends HybridRuntimeIterator {
 
-
-	private static final long serialVersionUID = 1L;
-	private RuntimeIterator _iterator;
+    private static final long serialVersionUID = 1L;
+    private RuntimeIterator _iterator;
     private RuntimeIterator _filter;
     private Item _nextResult;
 
@@ -79,13 +78,11 @@ public class PredicateIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void openLocal(DynamicContext context) {
+    protected void openLocal() {
         if (this._children.size() < 2) {
             throw new SparksoniqRuntimeException("Invalid Predicate! Must initialize filter before calling next");
         }
-
         _iterator.open(_currentDynamicContext);
-
         setNextResult();
     }
 
@@ -148,8 +145,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
         return this._iterator.isRDD();
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies()
-    {
+    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
         result.putAll(_filter.getVariableDependencies());
         result.remove("$");
