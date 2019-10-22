@@ -27,6 +27,9 @@ import org.rumbledb.api.Item;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import sparksoniq.exceptions.UnexpectedTypeException;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
@@ -159,5 +162,19 @@ public class StringItem extends AtomicItem {
     public int hashCode()
     {
         return getStringValue().hashCode();
+    }
+
+    @Override
+    public int compareTo(Item other) {
+        return other.isNull() ? 1 : this.getStringValue().compareTo(other.getStringValue());
+    }
+
+    @Override
+    public Item compareItem(Item other, OperationalExpressionBase.Operator operator, IteratorMetadata metadata) {
+        if (!other.isString() && !other.isNull()) {
+            throw new UnexpectedTypeException("Invalid args for string comparison " + this.serialize() +
+                    ", " + other.serialize(), metadata);
+        }
+        return operator.apply(this, other);
     }
 }

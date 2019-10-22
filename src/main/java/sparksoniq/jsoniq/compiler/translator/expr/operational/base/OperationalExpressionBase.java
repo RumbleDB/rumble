@@ -21,9 +21,11 @@
 package sparksoniq.jsoniq.compiler.translator.expr.operational.base;
 
 import org.antlr.v4.runtime.Token;
+import org.rumbledb.api.Item;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import sparksoniq.jsoniq.item.ItemFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -175,20 +177,92 @@ public abstract class OperationalExpressionBase extends Expression {
         NOT,
 
         // Value Comparison -- 0 or 1 item with compatible types are compared
-        VC_EQ,
-        VC_NE,
-        VC_LT,
-        VC_LE,
-        VC_GT,
-        VC_GE,
+        VC_EQ{
+            @Override
+            public Item apply(Item left, Item right) {
+                int comparison = left.compareTo(right);
+                return ItemFactory.getInstance().createBooleanItem(comparison == 0);
+            }
+        },
+        VC_NE{
+            @Override
+            public Item apply(Item left, Item right) {
+                int comparison = left.compareTo(right);
+                return ItemFactory.getInstance().createBooleanItem(comparison != 0);
+            }
+        },
+        VC_LT{
+            @Override
+            public Item apply(Item left, Item right) {
+                int comparison = left.compareTo(right);
+                return ItemFactory.getInstance().createBooleanItem(comparison < 0);
+            }
+        },
+        VC_LE{
+            @Override
+            public Item apply(Item left, Item right) {
+                int comparison = left.compareTo(right);
+                return ItemFactory.getInstance().createBooleanItem(comparison < 0 || comparison == 0);
+            }
+        },
+        VC_GT{
+            @Override
+            public Item apply(Item left, Item right) {
+                int comparison = left.compareTo(right);
+                return ItemFactory.getInstance().createBooleanItem(comparison > 0);
+            }
+        },
+        VC_GE{
+            @Override
+            public Item apply(Item left, Item right) {
+                int comparison = left.compareTo(right);
+                return ItemFactory.getInstance().createBooleanItem(comparison > 0 || comparison == 0);
+            }
+        },
 
         // general Comparison -- sequences are compared
-        GC_EQ,
-        GC_NE,
-        GC_LT,
-        GC_LE,
-        GC_GT,
-        GC_GE,
+        GC_EQ{
+            @Override
+            public Item apply(Item left, Item right) {
+                int comparison = left.compareTo(right);
+                return ItemFactory.getInstance().createBooleanItem(comparison == 0);
+            }
+        },
+        GC_NE{
+            @Override
+            public Item apply(Item left, Item right) {
+                int comparison = left.compareTo(right);
+                return ItemFactory.getInstance().createBooleanItem(comparison != 0);
+            }
+        },
+        GC_LT{
+            @Override
+            public Item apply(Item left, Item right) {
+                int comparison = left.compareTo(right);
+                return ItemFactory.getInstance().createBooleanItem(comparison < 0);
+            }
+        },
+        GC_LE{
+            @Override
+            public Item apply(Item left, Item right) {
+                int comparison = left.compareTo(right);
+                return ItemFactory.getInstance().createBooleanItem(comparison < 0 || comparison == 0);
+            }
+        },
+        GC_GT{
+            @Override
+            public Item apply(Item left, Item right) {
+                int comparison = left.compareTo(right);
+                return ItemFactory.getInstance().createBooleanItem(comparison > 0);
+            }
+        },
+        GC_GE{
+            @Override
+            public Item apply(Item left, Item right) {
+                int comparison = left.compareTo(right);
+                return ItemFactory.getInstance().createBooleanItem(comparison > 0 || comparison == 0);
+            }
+        },
 
         PLUS,
         MINUS,
@@ -205,7 +279,11 @@ public abstract class OperationalExpressionBase extends Expression {
         CASTABLE,
         CAST,
 
-        NONE,
+        NONE;
+
+        public Item apply(Item left, Item right) {
+            return null;
+        }
 
     }
 }
