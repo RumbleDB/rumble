@@ -1370,7 +1370,7 @@ public class JsoniqParser extends Parser {
 	public static class FlowrExprContext extends ParserRuleContext {
 		public ForClauseContext start_for;
 		public LetClauseContext start_let;
-		public ExprSingleContext return_Expr;
+		public ExprSingleContext return_expr;
 		public TerminalNode Kreturn() { return getToken(JsoniqParser.Kreturn, 0); }
 		public ExprSingleContext exprSingle() {
 			return getRuleContext(ExprSingleContext.class,0);
@@ -1501,7 +1501,7 @@ public class JsoniqParser extends Parser {
 			setState(342);
 			match(Kreturn);
 			setState(343);
-			((FlowrExprContext)_localctx).return_Expr = exprSingle();
+			((FlowrExprContext)_localctx).return_expr = exprSingle();
 			}
 		}
 		catch (RecognitionException re) {
@@ -2696,9 +2696,9 @@ public class JsoniqParser extends Parser {
 	}
 
 	public static class IfExprContext extends ParserRuleContext {
-		public ExprContext testCondition;
+		public ExprContext test_condition;
 		public ExprSingleContext branch;
-		public ExprSingleContext elseBranch;
+		public ExprSingleContext else_branch;
 		public TerminalNode Kif() { return getToken(JsoniqParser.Kif, 0); }
 		public TerminalNode Kthen() { return getToken(JsoniqParser.Kthen, 0); }
 		public TerminalNode Kelse() { return getToken(JsoniqParser.Kelse, 0); }
@@ -2733,7 +2733,7 @@ public class JsoniqParser extends Parser {
 			setState(526);
 			match(T__26);
 			setState(527);
-			((IfExprContext)_localctx).testCondition = expr();
+			((IfExprContext)_localctx).test_condition = expr();
 			setState(528);
 			match(T__27);
 			setState(529);
@@ -2743,7 +2743,7 @@ public class JsoniqParser extends Parser {
 			setState(531);
 			match(Kelse);
 			setState(532);
-			((IfExprContext)_localctx).elseBranch = exprSingle();
+			((IfExprContext)_localctx).else_branch = exprSingle();
 			}
 		}
 		catch (RecognitionException re) {
@@ -2815,7 +2815,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public static class OrExprContext extends ParserRuleContext {
-		public AndExprContext mainExpr;
+		public AndExprContext main_expr;
 		public AndExprContext andExpr;
 		public List<AndExprContext> rhs = new ArrayList<AndExprContext>();
 		public List<AndExprContext> andExpr() {
@@ -2847,7 +2847,7 @@ public class JsoniqParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(544);
-			((OrExprContext)_localctx).mainExpr = andExpr();
+			((OrExprContext)_localctx).main_expr = andExpr();
 			setState(549);
 			_errHandler.sync(this);
 			_alt = getInterpreter().adaptivePredict(_input,52,_ctx);
@@ -2881,7 +2881,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public static class AndExprContext extends ParserRuleContext {
-		public NotExprContext mainExpr;
+		public NotExprContext main_expr;
 		public NotExprContext notExpr;
 		public List<NotExprContext> rhs = new ArrayList<NotExprContext>();
 		public List<NotExprContext> notExpr() {
@@ -2913,7 +2913,7 @@ public class JsoniqParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(552);
-			((AndExprContext)_localctx).mainExpr = notExpr();
+			((AndExprContext)_localctx).main_expr = notExpr();
 			setState(557);
 			_errHandler.sync(this);
 			_alt = getInterpreter().adaptivePredict(_input,53,_ctx);
@@ -2949,7 +2949,7 @@ public class JsoniqParser extends Parser {
 	public static class NotExprContext extends ParserRuleContext {
 		public Token Knot;
 		public List<Token> op = new ArrayList<Token>();
-		public ComparisonExprContext mainExpr;
+		public ComparisonExprContext main_expr;
 		public ComparisonExprContext comparisonExpr() {
 			return getRuleContext(ComparisonExprContext.class,0);
 		}
@@ -2983,7 +2983,7 @@ public class JsoniqParser extends Parser {
 				break;
 			}
 			setState(563);
-			((NotExprContext)_localctx).mainExpr = comparisonExpr();
+			((NotExprContext)_localctx).main_expr = comparisonExpr();
 			}
 		}
 		catch (RecognitionException re) {
@@ -2998,7 +2998,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public static class ComparisonExprContext extends ParserRuleContext {
-		public StringConcatExprContext mainExpr;
+		public StringConcatExprContext main_expr;
 		public Token s34;
 		public List<Token> op = new ArrayList<Token>();
 		public Token s35;
@@ -3040,7 +3040,7 @@ public class JsoniqParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(565);
-			((ComparisonExprContext)_localctx).mainExpr = stringConcatExpr();
+			((ComparisonExprContext)_localctx).main_expr = stringConcatExpr();
 			setState(568);
 			_la = _input.LA(1);
 			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__3) | (1L << T__33) | (1L << T__34) | (1L << T__35) | (1L << T__36) | (1L << T__37) | (1L << T__38) | (1L << T__39) | (1L << T__40) | (1L << T__41) | (1L << T__42) | (1L << T__43))) != 0)) {
@@ -3074,7 +3074,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public static class StringConcatExprContext extends ParserRuleContext {
-		public RangeExprContext mainExpr;
+		public RangeExprContext main_expr;
 		public RangeExprContext rangeExpr;
 		public List<RangeExprContext> rhs = new ArrayList<RangeExprContext>();
 		public List<RangeExprContext> rangeExpr() {
@@ -3102,7 +3102,7 @@ public class JsoniqParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(570);
-			((StringConcatExprContext)_localctx).mainExpr = rangeExpr();
+			((StringConcatExprContext)_localctx).main_expr = rangeExpr();
 			setState(575);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
@@ -3134,7 +3134,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public static class RangeExprContext extends ParserRuleContext {
-		public AdditiveExprContext mainExpr;
+		public AdditiveExprContext main_expr;
 		public AdditiveExprContext additiveExpr;
 		public List<AdditiveExprContext> rhs = new ArrayList<AdditiveExprContext>();
 		public List<AdditiveExprContext> additiveExpr() {
@@ -3162,7 +3162,7 @@ public class JsoniqParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(578);
-			((RangeExprContext)_localctx).mainExpr = additiveExpr();
+			((RangeExprContext)_localctx).main_expr = additiveExpr();
 			setState(581);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,57,_ctx) ) {
@@ -3190,7 +3190,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public static class AdditiveExprContext extends ParserRuleContext {
-		public MultiplicativeExprContext mainExpr;
+		public MultiplicativeExprContext main_expr;
 		public Token s46;
 		public List<Token> op = new ArrayList<Token>();
 		public Token s47;
@@ -3223,7 +3223,7 @@ public class JsoniqParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(583);
-			((AdditiveExprContext)_localctx).mainExpr = multiplicativeExpr();
+			((AdditiveExprContext)_localctx).main_expr = multiplicativeExpr();
 			setState(588);
 			_errHandler.sync(this);
 			_alt = getInterpreter().adaptivePredict(_input,58,_ctx);
@@ -3264,7 +3264,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public static class MultiplicativeExprContext extends ParserRuleContext {
-		public InstanceOfExprContext mainExpr;
+		public InstanceOfExprContext main_expr;
 		public Token s33;
 		public List<Token> op = new ArrayList<Token>();
 		public Token s48;
@@ -3298,7 +3298,7 @@ public class JsoniqParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(591);
-			((MultiplicativeExprContext)_localctx).mainExpr = instanceOfExpr();
+			((MultiplicativeExprContext)_localctx).main_expr = instanceOfExpr();
 			setState(596);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
@@ -3337,7 +3337,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public static class InstanceOfExprContext extends ParserRuleContext {
-		public TreatExprContext mainExpr;
+		public TreatExprContext main_expr;
 		public SequenceTypeContext seq;
 		public TreatExprContext treatExpr() {
 			return getRuleContext(TreatExprContext.class,0);
@@ -3365,7 +3365,7 @@ public class JsoniqParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(599);
-			((InstanceOfExprContext)_localctx).mainExpr = treatExpr();
+			((InstanceOfExprContext)_localctx).main_expr = treatExpr();
 			setState(603);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,60,_ctx) ) {
@@ -3394,7 +3394,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public static class TreatExprContext extends ParserRuleContext {
-		public CastableExprContext mainExpr;
+		public CastableExprContext main_expr;
 		public SequenceTypeContext seq;
 		public CastableExprContext castableExpr() {
 			return getRuleContext(CastableExprContext.class,0);
@@ -3422,7 +3422,7 @@ public class JsoniqParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(605);
-			((TreatExprContext)_localctx).mainExpr = castableExpr();
+			((TreatExprContext)_localctx).main_expr = castableExpr();
 			setState(609);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,61,_ctx) ) {
@@ -3451,7 +3451,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public static class CastableExprContext extends ParserRuleContext {
-		public CastExprContext mainExpr;
+		public CastExprContext main_expr;
 		public SingleTypeContext single;
 		public CastExprContext castExpr() {
 			return getRuleContext(CastExprContext.class,0);
@@ -3479,7 +3479,7 @@ public class JsoniqParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(611);
-			((CastableExprContext)_localctx).mainExpr = castExpr();
+			((CastableExprContext)_localctx).main_expr = castExpr();
 			setState(615);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,62,_ctx) ) {
@@ -3508,7 +3508,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public static class CastExprContext extends ParserRuleContext {
-		public UnaryExprContext mainExpr;
+		public UnaryExprContext main_expr;
 		public SingleTypeContext single;
 		public UnaryExprContext unaryExpr() {
 			return getRuleContext(UnaryExprContext.class,0);
@@ -3536,7 +3536,7 @@ public class JsoniqParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(617);
-			((CastExprContext)_localctx).mainExpr = unaryExpr();
+			((CastExprContext)_localctx).main_expr = unaryExpr();
 			setState(621);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,63,_ctx) ) {
@@ -3569,7 +3569,7 @@ public class JsoniqParser extends Parser {
 		public List<Token> op = new ArrayList<Token>();
 		public Token s46;
 		public Token _tset1279;
-		public SimpleMapExprContext mainExpr;
+		public SimpleMapExprContext main_expr;
 		public SimpleMapExprContext simpleMapExpr() {
 			return getRuleContext(SimpleMapExprContext.class,0);
 		}
@@ -3613,7 +3613,7 @@ public class JsoniqParser extends Parser {
 				_la = _input.LA(1);
 			}
 			setState(629);
-			((UnaryExprContext)_localctx).mainExpr = simpleMapExpr();
+			((UnaryExprContext)_localctx).main_expr = simpleMapExpr();
 			}
 		}
 		catch (RecognitionException re) {
@@ -3628,7 +3628,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public static class SimpleMapExprContext extends ParserRuleContext {
-		public PostFixExprContext mainExpr;
+		public PostFixExprContext main_expr;
 		public List<PostFixExprContext> postFixExpr() {
 			return getRuleContexts(PostFixExprContext.class);
 		}
@@ -3654,7 +3654,7 @@ public class JsoniqParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(631);
-			((SimpleMapExprContext)_localctx).mainExpr = postFixExpr();
+			((SimpleMapExprContext)_localctx).main_expr = postFixExpr();
 			setState(636);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
@@ -3685,7 +3685,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public static class PostFixExprContext extends ParserRuleContext {
-		public PrimaryExprContext mainExpr;
+		public PrimaryExprContext main_expr;
 		public ArrayLookupContext al;
 		public PredicateContext pr;
 		public ObjectLookupContext ol;
@@ -3736,7 +3736,7 @@ public class JsoniqParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(639);
-			((PostFixExprContext)_localctx).mainExpr = primaryExpr();
+			((PostFixExprContext)_localctx).main_expr = primaryExpr();
 			setState(646);
 			_errHandler.sync(this);
 			_alt = getInterpreter().adaptivePredict(_input,67,_ctx);
@@ -4363,7 +4363,7 @@ public class JsoniqParser extends Parser {
 	public static class FunctionCallContext extends ParserRuleContext {
 		public Token ns;
 		public KeyWordsContext kw;
-		public NCNameOrKeyWordBooleanContext fcnName;
+		public NCNameOrKeyWordBooleanContext fn_name;
 		public ArgumentListContext argumentList() {
 			return getRuleContext(ArgumentListContext.class,0);
 		}
@@ -4430,7 +4430,7 @@ public class JsoniqParser extends Parser {
 			case NCName:
 				{
 				setState(717);
-				((FunctionCallContext)_localctx).fcnName = nCNameOrKeyWordBoolean();
+				((FunctionCallContext)_localctx).fn_name = nCNameOrKeyWordBoolean();
 				}
 				break;
 			case T__26:
@@ -4772,7 +4772,7 @@ public class JsoniqParser extends Parser {
 
 	public static class ObjectConstructorContext extends ParserRuleContext {
 		public Token s57;
-		public List<Token> mergeOperator = new ArrayList<Token>();
+		public List<Token> merge_operator = new ArrayList<Token>();
 		public List<PairConstructorContext> pairConstructor() {
 			return getRuleContexts(PairConstructorContext.class);
 		}
@@ -4839,7 +4839,7 @@ public class JsoniqParser extends Parser {
 				{
 				setState(761);
 				((ObjectConstructorContext)_localctx).s57 = match(T__56);
-				((ObjectConstructorContext)_localctx).mergeOperator.add(((ObjectConstructorContext)_localctx).s57);
+				((ObjectConstructorContext)_localctx).merge_operator.add(((ObjectConstructorContext)_localctx).s57);
 				setState(762);
 				expr();
 				setState(763);

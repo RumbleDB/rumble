@@ -20,6 +20,9 @@
 
 package sparksoniq.jsoniq.runtime.iterator.functions.object;
 
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.FlatMapFunction;
+import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -30,15 +33,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.function.FlatMapFunction;
-import org.rumbledb.api.Item;
-
 public class ObjectValuesFunctionIterator extends HybridRuntimeIterator {
 
-
-	private static final long serialVersionUID = 1L;
-	private RuntimeIterator _iterator;
+    private static final long serialVersionUID = 1L;
+    private RuntimeIterator _iterator;
     private Queue<Item> _nextResults;   // queue that holds the results created by the current item in inspection
 
     public ObjectValuesFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
@@ -47,8 +45,8 @@ public class ObjectValuesFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public void openLocal(DynamicContext context) {
-        _iterator.open(context);
+    public void openLocal() {
+        _iterator.open(_currentDynamicContext);
         _nextResults = new LinkedList<>();
 
         setNextResult();

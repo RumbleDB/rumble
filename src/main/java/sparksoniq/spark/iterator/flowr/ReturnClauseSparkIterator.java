@@ -25,7 +25,6 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
-
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -42,8 +41,8 @@ import java.util.TreeMap;
 public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
 
-	private static final long serialVersionUID = 1L;
-	private RuntimeTupleIterator _child;
+    private static final long serialVersionUID = 1L;
+    private RuntimeTupleIterator _child;
     private DynamicContext _tupleContext;   // re-use same DynamicContext object for efficiency
     private RuntimeIterator _expression;
     private Item _nextLocalResult;
@@ -83,8 +82,8 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void openLocal(DynamicContext context) {
-        _child.open(context);
+    protected void openLocal() {
+        _child.open(_currentDynamicContext);
         _tupleContext = new DynamicContext(_currentDynamicContext);     // assign current context as parent
         setNextLocalResult();
     }
@@ -143,22 +142,18 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         setNextLocalResult();
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies()
-    {
+    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
         result.putAll(_expression.getVariableDependencies());
-        for (String variable : _child.getVariablesBoundInCurrentFLWORExpression())
-        {
+        for (String variable : _child.getVariablesBoundInCurrentFLWORExpression()) {
             result.remove(variable);
         }
         result.putAll(_child.getVariableDependencies());
         return result;
     }
-    
-    public void print(StringBuffer buffer, int indent)
-    {
-        for (int i = 0; i < indent; ++i)
-        {
+
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
         buffer.append(getClass().getName());
