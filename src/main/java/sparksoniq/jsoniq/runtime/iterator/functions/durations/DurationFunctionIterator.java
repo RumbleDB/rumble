@@ -37,7 +37,7 @@ public class DurationFunctionIterator extends LocalFunctionCallIterator {
             try {
                 Period period = DurationItem.getDurationFromString(_durationStringItem.getStringValue(), AtomicTypes.DurationItem);
                 return ItemFactory.getInstance().createDurationItem(period);
-            } catch (IllegalArgumentException e) {
+            } catch (UnsupportedOperationException | IllegalArgumentException e) {
                 String message = String.format("\"%s\": value of type %s is not castable to type %s",
                         _durationStringItem.serialize(), "string", "duration");
                 throw new CastException(message, getMetadata());

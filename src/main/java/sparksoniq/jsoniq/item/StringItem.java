@@ -128,7 +128,7 @@ public class StringItem extends AtomicItem {
                 DurationItem.getDurationFromString(this._value, AtomicTypes.DurationItem);
             }
             else return isBooleanLiteral(this.getValue());
-        } catch (NumberFormatException e) {
+        } catch (UnsupportedOperationException | IllegalArgumentException e) {
             return false;
         }
         return true;

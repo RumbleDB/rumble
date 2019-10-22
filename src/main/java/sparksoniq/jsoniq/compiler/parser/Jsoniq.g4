@@ -176,7 +176,7 @@ orderedExpr             : 'ordered' '{' expr '}';
 unorderedExpr           : 'unordered' '{' expr '}';
 
 functionCall            : ((ns=NCName | kw=keyWords |  )':')?
-                          (fn_name=nCNameOrKeyWordBoolean | kw = keyWords) argumentList;
+                          (fn_name=nCNameOrKeyWord | kw = keyWords) argumentList;
 
 argumentList            : '('  (args+=argument ','?)* ')';
 
@@ -201,6 +201,8 @@ jSONItemTest            : 'object'
 
 keyWordBoolean          : 'boolean';
 
+keyWordDuration         : 'duration';
+
 singleType              : item=atomicType (question +='?')?;
 
 atomicType              : 'atomic'
@@ -208,10 +210,12 @@ atomicType              : 'atomic'
                         | 'integer'
                         | 'decimal'
                         | 'double'
+                        | keyWordDuration
                         | keyWordBoolean
                         | NullLiteral;
 
-nCNameOrKeyWordBoolean  : NCName
+nCNameOrKeyWord         : NCName
+                        | keyWordDuration
                         | keyWordBoolean;
 
 pairConstructor         :  ( lhs=exprSingle | name=NCName ) (':' | '?') rhs=exprSingle;

@@ -3,25 +3,20 @@ package sparksoniq.jsoniq.item;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import org.joda.time.DurationFieldType;
 import org.joda.time.Instant;
 import org.joda.time.Period;
 import org.joda.time.PeriodType;
 import org.joda.time.format.ISOPeriodFormat;
 import org.joda.time.format.PeriodFormatter;
-import org.joda.time.format.PeriodFormatterBuilder;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
-import sparksoniq.semantics.types.AtomicType;
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
-import sparksoniq.semantics.types.SingleType;
 
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DurationItem extends AtomicItem {
@@ -123,12 +118,12 @@ public class DurationItem extends AtomicItem {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this._value);
+        kryo.writeObject(output, this.serialize());
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this._value = kryo.readObject(input, Period.class);
+        this._value = Period.parse(kryo.readObject(input, String.class), DurationItem.getPeriodFormatter(AtomicTypes.DurationItem));
     }
 
     private static PeriodFormatter getPeriodFormatter(AtomicTypes durationType) {
