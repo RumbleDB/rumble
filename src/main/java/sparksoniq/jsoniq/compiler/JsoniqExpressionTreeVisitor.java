@@ -124,10 +124,14 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
     public Void visitProlog(JsoniqParser.PrologContext ctx) {
         List<FunctionDeclarationExpression> functionDeclarations = new ArrayList<>();
         PrologExpression node;
-        for (JsoniqParser.FunctionDeclContext fnDecl: ctx.functionDecl()) {
-            this.visitFunctionDecl(fnDecl);
+        for (JsoniqParser.FunctionDeclContext function: ctx.functionDecl()) {
+            this.visitFunctionDecl(function);
             functionDeclarations.add((FunctionDeclarationExpression) this.currentExpression);
         }
+        for (JsoniqParser.ModuleImportContext module: ctx.moduleImport()) {
+            this.visitModuleImport(module);
+        }
+
         node = new PrologExpression(functionDeclarations, createMetadataFromContext(ctx));
         this.currentExpression = node;
         this.currentProlog = node;
