@@ -48,6 +48,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.ReturnClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.WhereClause;
 import sparksoniq.jsoniq.compiler.translator.expr.module.FunctionDeclarationExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.module.PrologExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.AdditiveExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.AndExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.CastExpression;
@@ -97,7 +98,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
     private PrimaryExpression currentPrimaryExpression;
     private PostfixExtension currentPostFixExtension;
     private FlworClause currentFlworClause;
-    private FunctionDeclarationExpression currentFunctionDeclaration;
+    private PrologExpression currentProlog;
 
     public JsoniqExpressionTreeVisitor() {
     }
@@ -107,8 +108,8 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         return queryExpression;
     }
 
-    public Expression getCurrentFunctionDeclaration() {
-        return currentFunctionDeclaration;
+    public PrologExpression getCurrentProlog() {
+        return currentProlog;
     }
 
     @Override
@@ -116,6 +117,20 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         if (!(ctx.vers == null) && !ctx.vers.isEmpty() && !ctx.vers.getText().trim().equals("1.0"))
             throw new JsoniqVersionException(createMetadataFromContext(ctx));
         this.visitMainModule(ctx.mainModule());
+        return null;
+    }
+
+    @Override
+    public Void visitProlog(JsoniqParser.PrologContext ctx) {
+        List<FunctionDeclarationExpression> functionDeclarations = new ArrayList<>();
+        PrologExpression node;
+        for (JsoniqParser.FunctionDeclContext fnDecl: ctx.functionDecl()) {
+            this.visitFunctionDecl(fnDecl);
+            functionDeclarations.add((FunctionDeclarationExpression) this.currentExpression);
+        }
+        node = new PrologExpression(functionDeclarations, createMetadataFromContext(ctx));
+        this.currentExpression = node;
+        this.currentProlog = node;
         return null;
     }
 
@@ -148,7 +163,6 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
 
         node = new FunctionDeclarationExpression(fnName, fnParams, fnReturnType, fnBody, createMetadataFromContext(ctx));
         this.currentExpression = node;
-        this.currentFunctionDeclaration = node;
         return null;
     }
 

@@ -183,7 +183,7 @@ public class JsoniqQueryExecutor {
         // generate static context
         generateStaticContext(visitor.getQueryExpression());
         // generate iterators
-        generateRuntimeIterators(visitor.getCurrentFunctionDeclaration());
+        generateRuntimeIterators(visitor.getCurrentProlog());
         RuntimeIterator runtimeIterator = generateRuntimeIterators(visitor.getQueryExpression());
         // execute locally for simple expressions
         if (!runtimeIterator.isRDD()) {
