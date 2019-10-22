@@ -264,12 +264,38 @@ public abstract class OperationalExpressionBase extends Expression {
             }
         },
 
-        PLUS,
-        MINUS,
-        MUL,
-        DIV,
-        MOD,
-        IDIV,
+        PLUS{
+            @Override
+            public Item apply(Item left, Item right) { return left.add(right); }
+        },
+        MINUS{
+            @Override
+            public Item apply(Item left, Item right) { return left.subtract(right, false); }
+        },
+        MUL{
+            @Override
+            public Item apply(Item left, Item right) {
+                return left.multiply(right);
+            }
+        },
+        DIV{
+            @Override
+            public Item apply(Item left, Item right) {
+                return left.divide(right, false);
+            }
+        },
+        MOD{
+            @Override
+            public Item apply(Item left, Item right) {
+                return left.modulo(right, false);
+            }
+        },
+        IDIV{
+            @Override
+            public Item apply(Item left, Item right) {
+                return left.idivide(right, false);
+            }
+        },
 
         TO,
         CONCAT,
