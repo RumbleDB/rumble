@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(1, 2.14, 1, 3.4, 230004.0, 30000, aa, false, true, null, false, 30000.0, 3, 3, true, null, null, null, null, null)" :)
+(:JIQS: ShouldRun; Output="(1, 2.14, 1, 3.4, 230004, 30000, aa, false, true, null, false, 30000, 3, 3, true, null, null, null, null, null)" :)
 1 cast as integer,
 2.14 cast as decimal,
 1 cast as decimal,

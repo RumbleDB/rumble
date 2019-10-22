@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="2.0" :)
+(:JIQS: ShouldRun; Output="2" :)
 () - 5,
 3.0 - 1.0
 

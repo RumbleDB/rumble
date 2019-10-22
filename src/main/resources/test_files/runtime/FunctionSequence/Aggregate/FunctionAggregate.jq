@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(4, 1, 0, 2.75, 100.0, 6)" :)
+(:JIQS: ShouldRun; Output="(4, 1, 0, 2.75, 100, 6)" :)
 max((1,2,3,4)),
 min(1 to 10),
 min((0)),
