@@ -34,6 +34,7 @@ import sparksoniq.jsoniq.runtime.iterator.functions.booleans.BooleanFunctionIter
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.DayTimeDurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.DurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.YearMonthDurationFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.DateTimeFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.AbsFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.CeilingFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.FloorFunctionIterator;
@@ -143,6 +144,7 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DAYTIMEDURATION;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.HEXBINARY;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.BASE64BINARY;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DATETIME;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.NORMALIZESPACE;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.NULL;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ONEORMORE;
@@ -257,6 +259,8 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(DURATION, 1), DurationFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(YEARMONTHDURATION, 1), YearMonthDurationFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(DAYTIMEDURATION, 1), DayTimeDurationFunctionIterator.class);
+
+        buildInFunctions.put(new SparksoniqFunctionSignature(DATETIME, 1), DateTimeFunctionIterator.class);
 
         buildInFunctions.put(new SparksoniqFunctionSignature(HEXBINARY, 1), HexBinaryFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(BASE64BINARY, 1), Base64BinaryFunctionIterator.class);
@@ -515,6 +519,11 @@ public class Functions {
          */
         public static final String MATCHES = "matches";
         /**
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+>>>>>>> 1da726a... Implementation of the dateTime type
          * function that returns the duration item from the supplied string
          */
         public static final String DURATION = "duration";
@@ -527,6 +536,7 @@ public class Functions {
          */
         public static final String DAYTIMEDURATION = "dayTimeDuration";
         /**
+<<<<<<< HEAD
          * function that returns the hexBinary item from the supplied string
          */
         public static final String HEXBINARY = "hexBinary";
@@ -535,6 +545,13 @@ public class Functions {
          */
         public static final String BASE64BINARY = "base64Binary";
         /**
+=======
+         * function that returns the dateTime item from the supplied string
+         */
+        public static final String DATETIME = "dateTime";
+        /**
+>>>>>>> 9ab0bff... DateTime type with additive and comparison operators implemented. Also casting between dateTime and string is implemented.
+>>>>>>> 1da726a... Implementation of the dateTime type
          * function that normalizes spaces in a string
          */
         public static final String NORMALIZESPACE = "normalize-space";

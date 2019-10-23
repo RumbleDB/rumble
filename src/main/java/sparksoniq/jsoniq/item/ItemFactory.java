@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.joda.time.Period;
+import org.joda.time.DateTime;
 import org.rumbledb.api.Item;
 
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
@@ -61,6 +62,10 @@ public class ItemFactory {
 
     public Item createDayTimeDurationItem(Period p) {
         return new DayTimeDurationItem(p);
+    }
+
+    public Item createDateTimeItem(DateTime dt) {
+        return new DateTimeItem(dt);
     }
 
     public Item createHexBinaryItem(String s) {
