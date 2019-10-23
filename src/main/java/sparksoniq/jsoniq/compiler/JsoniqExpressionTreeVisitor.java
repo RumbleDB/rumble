@@ -23,6 +23,7 @@ package sparksoniq.jsoniq.compiler;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import sparksoniq.exceptions.DuplicateParamNameException;
 import sparksoniq.exceptions.JsoniqVersionException;
 import sparksoniq.exceptions.ModuleDeclarationException;
 import sparksoniq.exceptions.UnsupportedFeatureException;
@@ -150,11 +151,19 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         FlworVarSequenceType fnReturnType;
         CommaExpression fnBody;
         FunctionDeclarationExpression node;
-
+        String paramName;
         for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
+            paramName = param.NCName().getText();
             this.visitSequenceType(param.sequenceType());
+            if (fnParams.containsKey(paramName)) {
+                throw new DuplicateParamNameException(
+                        fnName,
+                        paramName,
+                        createMetadataFromContext(param)
+                );
+            }
             fnParams.put(
-                    param.NCName().getText(),
+                    paramName,
                     (FlworVarSequenceType) this.currentExpression
             );
         }

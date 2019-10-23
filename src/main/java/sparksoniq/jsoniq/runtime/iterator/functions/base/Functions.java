@@ -20,8 +20,10 @@
 
 package sparksoniq.jsoniq.runtime.iterator.functions.base;
 
+import sparksoniq.exceptions.DuplicateFunctionIdentifierException;
 import sparksoniq.exceptions.UnknownFunctionCallException;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionCall;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.NullFunctionIterator;
@@ -265,7 +267,11 @@ public class Functions {
         builtInFunctions.put(new FunctionIdentifier(VALUES, 1), ObjectValuesFunctionIterator.class);
     }
 
-    public static void addUserDefinedFunction(FunctionItem function) {
+    public static void addUserDefinedFunction(FunctionItem function, ExpressionMetadata meta) {
+        if (builtInFunctions.containsKey(function.getIdentifier())
+                || userDefinedFunctions.containsKey(function.getIdentifier())) {
+            throw new DuplicateFunctionIdentifierException(function.getIdentifier(), meta);
+        }
         userDefinedFunctions.put(function.getIdentifier(), function);
     }
 

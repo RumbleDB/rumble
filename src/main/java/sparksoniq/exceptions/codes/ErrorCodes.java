@@ -33,6 +33,10 @@ public class ErrorCodes {
 
     public static final String InvalidJsoniqVersionErrorCode = "XQST0031";
 
+    public static final String DuplicateFunctionIdentifier = "XQST0034";
+
+    public static final String DuplicateParamName = "XQST0039";
+
     public static final String DynamicTypeTreatErrorCode = "XPDY0050";
 
     public static final String UnknownCastTypeErrorCode = "XQST0052";

@@ -171,7 +171,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         RuntimeIterator bodyIterator = this.visit(expression.get_body(), argument);
 
         FunctionItem fn = new FunctionItem(expression.get_name(),paramNameToSequenceTypes, returnType, bodyIterator);
-        Functions.addUserDefinedFunction(fn);
+        Functions.addUserDefinedFunction(fn, expression.getMetadata());
 
         return defaultAction(expression, argument);
     }
@@ -262,8 +262,9 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
     public RuntimeIterator visitFunctionCall(FunctionCall expression, RuntimeIterator argument) {
         List<RuntimeIterator> arguments = new ArrayList<>();
         IteratorMetadata iteratorMetadata = createIteratorMetadata(expression);
-        for (Expression arg : expression.getParameters())
+        for (Expression arg : expression.getParameters()) {
             arguments.add(this.visit(arg, argument));
+        }
 
         try {
             Class<? extends RuntimeIterator> functionClass = Functions.getBuiltInFunction(expression, arguments);
