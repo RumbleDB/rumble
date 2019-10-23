@@ -168,9 +168,8 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
             paramNameToSequenceTypes.put(paramEntry.getKey(), paramEntry.getValue().getSequence());
         }
         SequenceType returnType = expression.get_returnType().getSequence();
-        RuntimeIterator bodyIterator = this.visit(expression.get_body(), argument);
 
-        FunctionItem fn = new FunctionItem(expression.get_name(),paramNameToSequenceTypes, returnType, bodyIterator);
+        FunctionItem fn = new FunctionItem(expression.get_name(),paramNameToSequenceTypes, returnType, expression.get_body());
         Functions.addUserDefinedFunction(fn, expression.getMetadata());
 
         return defaultAction(expression, argument);
@@ -273,9 +272,9 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         } catch (Exception ex1) {
             if (ex1 instanceof UnknownFunctionCallException) {
                 FunctionItem fn =  Functions.getUserDefinedFunction(expression, arguments);
-                arguments.add(fn.getBodyIterator());
                 return new UserDefinedFunctionCallIterator(
                         fn.getIdentifier().getName(),
+                        fn.getBodyExpression(),
                         arguments,
                         fn.getParameterNames(),
                         iteratorMetadata

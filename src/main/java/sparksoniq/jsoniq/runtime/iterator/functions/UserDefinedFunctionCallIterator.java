@@ -25,12 +25,14 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 import scala.Dynamic;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectKeysClosure;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.semantics.visitor.RuntimeIteratorVisitor;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -46,20 +48,22 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
 
 	private static final long serialVersionUID = 1L;
 	private String _fnName;
-	private RuntimeIterator _fnBody;
+	private Expression _fnBody;
+	private RuntimeIterator _fnBodyIterator;
 	private List<RuntimeIterator> _fnArguments;
     private List<String> _fnArgumentNames;
     private Item _nextLocalResult;
 
     public UserDefinedFunctionCallIterator(
             String fnName,
-            List<RuntimeIterator> argumentsAndBody,
+            Expression fnBody,
+            List<RuntimeIterator> arguments,
             List<String> argumentNames,
             IteratorMetadata iteratorMetadata) {
-        super(argumentsAndBody, iteratorMetadata);
+        super(arguments, iteratorMetadata);
         _fnName = fnName;
-        _fnBody = argumentsAndBody.remove(argumentsAndBody.size()-1);
-        _fnArguments = argumentsAndBody;
+        _fnBody = fnBody;
+        _fnArguments = arguments;
         _fnArgumentNames = argumentNames;
 
     }
@@ -69,8 +73,12 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
         DynamicContext dc = new DynamicContext(_currentDynamicContext);
         putArgumentValuesInDynamicContext(dc);
         _currentDynamicContext = dc;
-        _fnBody.open(this._currentDynamicContext);
+        _fnBodyIterator.open(_currentDynamicContext);
         setNextLocalResult();
+    }
+
+    private void initializeFunctionBodyIterator() {
+        _fnBodyIterator = new RuntimeIteratorVisitor().visit(_fnBody, null);
     }
 
     private void putArgumentValuesInDynamicContext(DynamicContext context) {
@@ -105,24 +113,28 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
 
     @Override
     protected void resetLocal(DynamicContext context) {
-        _fnBody.reset(_currentDynamicContext);
+        _fnBodyIterator.reset(_currentDynamicContext);
         setNextLocalResult();
     }
 
     @Override
     protected void closeLocal() {
-        _fnBody.close();
+        // ensure that recursive function calls terminate gracefully
+        // the function call in the body of the deepest recursion call is never visited, never opened and never closed
+        if (this.isOpen()) {
+            _fnBodyIterator.close();
+        }
     }
 
     public void setNextLocalResult() {
         _nextLocalResult = null;
-        while (_fnBody.hasNext()) {
-            _nextLocalResult = _fnBody.next();
+        while (_fnBodyIterator.hasNext()) {
+            _nextLocalResult = _fnBodyIterator.next();
         }
 
         if (_nextLocalResult == null) {
             this._hasNext = false;
-            _fnBody.close();
+            _fnBodyIterator.close();
         } else {
             this._hasNext = true;
         }
@@ -133,11 +145,12 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
         DynamicContext dc = new DynamicContext(_currentDynamicContext);
         putArgumentValuesInDynamicContext(dc);
         _currentDynamicContext = dc;
-        return _fnBody.getRDD(_currentDynamicContext);
+        return _fnBodyIterator.getRDD(_currentDynamicContext);
     }
 
     @Override
     public boolean initIsRDD() {
-        return _fnBody.isRDD();
+        initializeFunctionBodyIterator();
+        return _fnBodyIterator.isRDD();
     }
 }

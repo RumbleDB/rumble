@@ -80,6 +80,7 @@ public class AnnotationsTestsBase {
                 // generate static context
                 new StaticContextVisitor().visit(completeVisitor.getQueryExpression(), completeVisitor.getQueryExpression().getStaticContext());
                 // generate iterators
+                new RuntimeIteratorVisitor().visit(completeVisitor.getCurrentProlog(), null);
                 runtimeIterator = new RuntimeIteratorVisitor().visit(completeVisitor.getQueryExpression(), null);
             }
             // PARSING
