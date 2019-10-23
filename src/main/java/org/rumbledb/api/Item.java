@@ -20,9 +20,9 @@
 
 package org.rumbledb.api;
 
+import org.joda.time.Period;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
-import sparksoniq.jsoniq.runtime.iterator.operational.ComparisonOperationIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.types.ItemType;
 
@@ -240,6 +240,15 @@ public abstract class Item implements SerializableItem {
      */
     public BigDecimal getDecimalValue() {
         throw new RuntimeException("Item is not a big decimal.");
+    }
+
+    /**
+     * Returns the period value of the item, if it is a atomic item of type duration.
+     *
+     * @return the period value as a DurationItem.
+     */
+    public Period getDurationValue() {
+        throw new RuntimeException("Item is not a duration.");
     }
 
     /**
