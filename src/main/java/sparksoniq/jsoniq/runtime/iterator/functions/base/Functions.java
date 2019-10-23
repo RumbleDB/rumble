@@ -267,6 +267,10 @@ public class Functions {
         builtInFunctions.put(new FunctionIdentifier(VALUES, 1), ObjectValuesFunctionIterator.class);
     }
 
+    public static void clearUserDefinedFunctions() {
+        userDefinedFunctions.clear();
+    }
+
     public static void addUserDefinedFunction(FunctionItem function, ExpressionMetadata meta) {
         if (builtInFunctions.containsKey(function.getIdentifier())
                 || userDefinedFunctions.containsKey(function.getIdentifier())) {

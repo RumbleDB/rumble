@@ -34,6 +34,7 @@ import sparksoniq.jsoniq.compiler.parser.JsoniqLexer;
 import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 import sparksoniq.semantics.visitor.RuntimeIteratorVisitor;
 import sparksoniq.semantics.visitor.StaticContextVisitor;
 import utils.FileManager;
@@ -80,6 +81,7 @@ public class AnnotationsTestsBase {
                 // generate static context
                 new StaticContextVisitor().visit(completeVisitor.getQueryExpression(), completeVisitor.getQueryExpression().getStaticContext());
                 // generate iterators
+                Functions.clearUserDefinedFunctions();
                 new RuntimeIteratorVisitor().visit(completeVisitor.getCurrentProlog(), null);
                 runtimeIterator = new RuntimeIteratorVisitor().visit(completeVisitor.getQueryExpression(), null);
             }
