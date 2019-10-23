@@ -24,7 +24,7 @@ import sparksoniq.exceptions.codes.ErrorCodes;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 
-public class DuplicateFunctionIdentifierException extends ParsingException {
+public class DuplicateFunctionIdentifierException extends SparksoniqRuntimeException {
 
 	private static final long serialVersionUID = 1L;
 

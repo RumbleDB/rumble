@@ -23,7 +23,7 @@ package sparksoniq.exceptions;
 import sparksoniq.exceptions.codes.ErrorCodes;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 
-public class DuplicateParamNameException extends ParsingException {
+public class DuplicateParamNameException extends SparksoniqRuntimeException {
 
 	private static final long serialVersionUID = 1L;
 
