@@ -330,6 +330,15 @@ public abstract class Item implements SerializableItem {
         return false;
     }
 
+    /**
+     * Tests whether the item is an atomic item of type hexBinary.
+     *
+     * @return true if it is an atomic item of type hexBinary, false otherwise.
+     */
+    public boolean isHexBinary() {
+        return false;
+    }
+
     private void readObject(ObjectInputStream aInputStream)
             throws ClassNotFoundException, IOException {
         aInputStream.defaultReadObject();

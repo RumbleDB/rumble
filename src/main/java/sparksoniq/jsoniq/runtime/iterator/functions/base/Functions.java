@@ -28,6 +28,7 @@ import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayDescendantFuncti
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayFlattenFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayMembersFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArraySizeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.binaries.HexBinaryFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.booleans.BooleanFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.AbsFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.CeilingFunctionIterator;
@@ -133,6 +134,7 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MAX;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MEMBERS;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MIN;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.HEXBINARY;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.NORMALIZESPACE;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.NULL;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ONEORMORE;
@@ -241,6 +243,7 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(STARTSWITH, 2), StartsWithFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(MATCHES, 2), MatchesFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(CONTAINS, 2), ContainsFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(HEXBINARY, 1), HexBinaryFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(NORMALIZESPACE, 1), NormalizeSpaceFunctionIterator.class);
 
         buildInFunctions.put(new SparksoniqFunctionSignature(KEYS, 1), ObjectKeysFunctionIterator.class);
@@ -498,6 +501,37 @@ public class Functions {
          */
         public static final String MATCHES = "matches";
         /**
+<<<<<<< HEAD
+=======
+         * function that returns the duration item from the supplied string
+         */
+        public static final String DURATION = "duration";
+        /**
+         * function that returns the yearMonthDuration item from the supplied string
+         */
+        public static final String YEARMONTHDURATION = "yearMonthDuration";
+        /**
+         * function that returns the dayTimeDuration item from the supplied string
+         */
+        public static final String DAYTIMEDURATION = "dayTimeDuration";
+        /**
+         * function that returns the dateTime item from the supplied string
+         */
+        public static final String DATETIME = "dateTime";
+        /**
+         * function that returns the date item from the supplied string
+         */
+        public static final String DATE = "date";
+        /**
+         * function that returns the time item from the supplied string
+         */
+        public static final String TIME = "time";
+        /**
+         * function that returns the hexBinary item from the supplied string
+         */
+        public static final String HEXBINARY = "hexBinary";
+        /**
+>>>>>>> ea0bef0... Implementation of hexBinary type with corresponding comparison and casting operators
          * function that normalizes spaces in a string
          */
         public static final String NORMALIZESPACE = "normalize-space";
