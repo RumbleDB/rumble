@@ -166,7 +166,9 @@ primaryExpr             : NullLiteral
                         | functionCall
                         | orderedExpr
                         | unorderedExpr
-                        | arrayConstructor;
+                        | arrayConstructor
+                        | functionItemExpr
+                        ;
 
 
 varRef                  : '$' (ns=NCName ':')? name=NCName;
@@ -186,6 +188,13 @@ argumentList            : '('  (args+=argument ','?)* ')';
 
 argument                : exprSingle | '?';
 
+functionItemExpr        : namedFunctionRef | inlineFunctionExpr;
+
+namedFunctionRef        : fn_name=NCName '#' arity=IntegerLiteral;
+
+inlineFunctionExpr      : 'function(' paramList? ')'
+                           (Kas return_type=sequenceType)?
+                           ('{' fn_body=expr '}');
 
 ///////////////////////// Types
 
