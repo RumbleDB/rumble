@@ -83,6 +83,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpressi
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpressionVar;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.types.AtomicTypes;
+import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
 
@@ -157,14 +158,23 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
     public Void visitFunctionDecl(JsoniqParser.FunctionDeclContext ctx) {
         String fnName = ctx.fn_name.getText();
         Map<String, FlworVarSequenceType> fnParams = new LinkedHashMap<>();
-        FlworVarSequenceType fnReturnType;
+        FlworVarSequenceType fnReturnType = new FlworVarSequenceType(
+                ItemTypes.Item,
+                SequenceType.Arity.ZeroOrMore,
+                createMetadataFromContext(ctx)
+        );
         CommaExpression fnBody;
         FunctionDeclarationExpression node;
         String paramName;
+        FlworVarSequenceType paramType;
         if (ctx.paramList() != null) {
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
                 paramName = param.NCName().getText();
-                this.visitSequenceType(param.sequenceType());
+                paramType = new FlworVarSequenceType(
+                        ItemTypes.Item,
+                        SequenceType.Arity.ZeroOrMore,
+                        createMetadataFromContext(ctx)
+                );
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
                             fnName,
@@ -172,15 +182,18 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
                             createMetadataFromContext(param)
                     );
                 }
-                fnParams.put(
-                        paramName,
-                        (FlworVarSequenceType) this.currentExpression
-                );
+                if (param.sequenceType() != null) {
+                    this.visitSequenceType(param.sequenceType());
+                    paramType = (FlworVarSequenceType) this.currentExpression;
+                }
+                fnParams.put(paramName, paramType);
             }
         }
 
-        this.visitSequenceType(ctx.return_type);
-        fnReturnType = (FlworVarSequenceType) this.currentExpression;
+        if (ctx.return_type != null) {
+            this.visitSequenceType(ctx.return_type);
+            fnReturnType = (FlworVarSequenceType) this.currentExpression;
+        }
 
         this.visitExpr(ctx.fn_body);
         fnBody = (CommaExpression) this.currentExpression;
