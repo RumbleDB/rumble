@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(1, 2.14, 1, aa, 1, { "a" : "b" }, 1, 2, 3, false, null, [ 1, 2, 3 ], { "aa" : "bb" }, { "cc" : "dd" }, AABBCC)" :)
+(:JIQS: ShouldRun; Output="(1, 2.14, 1, aa, 1, { "a" : "b" }, 1, 2, 3, false, null, [ 1, 2, 3 ], { "aa" : "bb" }, { "cc" : "dd" }, AABBCC, 0 FB8 0F+9, Q Q = =)" :)
 1 treat as integer,
 2.14 treat as decimal,
 1 treat as decimal,
@@ -13,7 +13,9 @@ null treat as null,
 () treat as string?,
 () treat as string*,
 () treat as (),
-hexBinary("aabbCC") treat as hexBinary
+hexBinary("aabbCC") treat as hexBinary,
+base64Binary("0 FB8 0F+9") treat as base64Binary,
+base64Binary("Q Q = =") treat as base64Binary
 
 (: general tests :)
 
