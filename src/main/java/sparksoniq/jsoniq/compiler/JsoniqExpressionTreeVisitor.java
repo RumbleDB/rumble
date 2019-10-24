@@ -49,6 +49,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.ReturnClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.WhereClause;
 import sparksoniq.jsoniq.compiler.translator.expr.module.FunctionDeclarationExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.module.MainModuleExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.module.PrologExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.AdditiveExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.AndExpression;
@@ -94,23 +95,19 @@ import java.util.Map;
 //used to build AST, will override methods
 public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.parser.JsoniqBaseVisitor<Void> {
 
-    private CommaExpression queryExpression;
+    private MainModuleExpression mainModuleExpression;
+
     private Expression currentExpression;
     private PrimaryExpression currentPrimaryExpression;
     private PostfixExtension currentPostFixExtension;
     private FlworClause currentFlworClause;
-    private PrologExpression currentProlog;
 
     public JsoniqExpressionTreeVisitor() {
     }
     //endregion expr
 
-    public Expression getQueryExpression() {
-        return queryExpression;
-    }
-
-    public PrologExpression getCurrentProlog() {
-        return currentProlog;
+    public MainModuleExpression getMainModuleExpression() {
+        return mainModuleExpression;
     }
 
     @Override
@@ -118,6 +115,19 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         if (!(ctx.vers == null) && !ctx.vers.isEmpty() && !ctx.vers.getText().trim().equals("1.0"))
             throw new JsoniqVersionException(createMetadataFromContext(ctx));
         this.visitMainModule(ctx.mainModule());
+        return null;
+    }
+
+    @Override
+    public Void visitMainModule(JsoniqParser.MainModuleContext ctx) {
+        MainModuleExpression node;
+        this.visitProlog(ctx.prolog());
+        PrologExpression prolog = (PrologExpression) this.currentExpression;
+        this.visitExpr(ctx.expr());
+        CommaExpression commaExpression = (CommaExpression) this.currentExpression;
+        node = new MainModuleExpression(prolog, commaExpression, createMetadataFromContext(ctx));
+        this.currentExpression = node;
+        this.mainModuleExpression = node;
         return null;
     }
 
@@ -135,7 +145,6 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
 
         node = new PrologExpression(functionDeclarations, createMetadataFromContext(ctx));
         this.currentExpression = node;
-        this.currentProlog = node;
         return null;
     }
 
@@ -193,9 +202,6 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         }
         node = new CommaExpression(expressions, createMetadataFromContext(ctx));
         this.currentExpression = node;
-        if (getDepthLevel(ctx) == 3) {  // module, mainModule, expr -> depth = 3
-            queryExpression = node;
-        }
         return null;
     }
 

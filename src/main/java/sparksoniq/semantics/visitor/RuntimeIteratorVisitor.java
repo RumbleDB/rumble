@@ -43,6 +43,8 @@ import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.ReturnClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.WhereClause;
 import sparksoniq.jsoniq.compiler.translator.expr.module.FunctionDeclarationExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.module.MainModuleExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.module.PrologExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.AdditiveExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.AndExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.CastExpression;
@@ -161,6 +163,18 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
     }
 
     //region module
+
+
+    @Override
+    public RuntimeIterator visitMainModuleExpression(MainModuleExpression expression, RuntimeIterator argument) {
+        return super.visitMainModuleExpression(expression, argument);
+    }
+
+    @Override
+    public RuntimeIterator visitPrologExpression(PrologExpression expression, RuntimeIterator argument) {
+        return super.visitPrologExpression(expression, argument);
+    }
+
     @Override
     public RuntimeIterator visitFunctionDeclarationExpression(FunctionDeclarationExpression expression, RuntimeIterator argument) {
         Map<String, SequenceType> paramNameToSequenceTypes= new LinkedHashMap<>();

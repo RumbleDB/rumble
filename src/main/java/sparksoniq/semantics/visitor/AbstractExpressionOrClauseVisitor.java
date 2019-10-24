@@ -38,6 +38,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.ReturnClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.WhereClause;
 import sparksoniq.jsoniq.compiler.translator.expr.module.FunctionDeclarationExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.module.MainModuleExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.module.PrologExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.AdditiveExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.AndExpression;
@@ -91,6 +92,10 @@ public abstract class AbstractExpressionOrClauseVisitor<T> {
     }
 
     // region module
+    public T visitMainModuleExpression(MainModuleExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
     public T visitPrologExpression(PrologExpression expression, T argument) {
         return defaultAction(expression, argument);
     }

@@ -79,11 +79,13 @@ public class AnnotationsTestsBase {
             if (visitor instanceof JsoniqExpressionTreeVisitor) {
                 JsoniqExpressionTreeVisitor completeVisitor = ((JsoniqExpressionTreeVisitor) visitor);
                 // generate static context
-                new StaticContextVisitor().visit(completeVisitor.getQueryExpression(), completeVisitor.getQueryExpression().getStaticContext());
+                new StaticContextVisitor().visit(
+                        completeVisitor.getMainModuleExpression(),
+                        completeVisitor.getMainModuleExpression().getStaticContext()
+                );
                 // generate iterators
                 Functions.clearUserDefinedFunctions();
-                new RuntimeIteratorVisitor().visit(completeVisitor.getCurrentProlog(), null);
-                runtimeIterator = new RuntimeIteratorVisitor().visit(completeVisitor.getQueryExpression(), null);
+                runtimeIterator = new RuntimeIteratorVisitor().visit(completeVisitor.getMainModuleExpression(), null);
             }
             // PARSING
         } catch (ParsingException exception) {

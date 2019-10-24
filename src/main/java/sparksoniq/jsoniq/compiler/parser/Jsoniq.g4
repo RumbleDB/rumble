@@ -50,7 +50,7 @@ param                   : '$' NCName (Kas sequenceType)?;
 
 ///////////////////////// constructs, expression
 
-expr                    : exprSingle (',' exprSingle)*;
+expr                    : exprSingle (',' exprSingle)*;     // expr -> CommaExpression in visitor
 
 exprSingle              : flowrExpr
                         | quantifiedExpr
