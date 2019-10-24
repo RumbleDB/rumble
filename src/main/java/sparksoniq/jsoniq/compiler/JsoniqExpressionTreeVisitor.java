@@ -161,20 +161,22 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         CommaExpression fnBody;
         FunctionDeclarationExpression node;
         String paramName;
-        for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
-            paramName = param.NCName().getText();
-            this.visitSequenceType(param.sequenceType());
-            if (fnParams.containsKey(paramName)) {
-                throw new DuplicateParamNameException(
-                        fnName,
+        if (ctx.paramList() != null) {
+            for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
+                paramName = param.NCName().getText();
+                this.visitSequenceType(param.sequenceType());
+                if (fnParams.containsKey(paramName)) {
+                    throw new DuplicateParamNameException(
+                            fnName,
+                            paramName,
+                            createMetadataFromContext(param)
+                    );
+                }
+                fnParams.put(
                         paramName,
-                        createMetadataFromContext(param)
+                        (FlworVarSequenceType) this.currentExpression
                 );
             }
-            fnParams.put(
-                    paramName,
-                    (FlworVarSequenceType) this.currentExpression
-            );
         }
 
         this.visitSequenceType(ctx.return_type);
