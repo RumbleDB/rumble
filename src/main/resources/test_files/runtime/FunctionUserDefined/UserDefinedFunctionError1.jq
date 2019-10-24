@@ -1,7 +1,7 @@
-(:JIQS: ShouldCrash; ErrorCode="XPST0017"; ErrorMetadata="LINE:2:COLUMN:0:" :)
-udf1(1),
-udf2(2),
-udf3(3),
-factorial(4)
+(:JIQS: ShouldCrash; ErrorCode="XQST0039"; ErrorMetadata="LINE:2:COLUMN:38:" :)
+declare function udf1 ($i as integer, $i as integer) as boolean {
+    1 < $i
+};
+udf1(3), udf1(0)
 
-(: Invalid function call - should fail at the first expression, fn declarations should not persist between tests :)
+(: Duplicate function param :)
