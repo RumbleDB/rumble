@@ -22,55 +22,42 @@ package sparksoniq.exceptions.codes;
 
 public class ErrorCodes {
 
-    //tested
-    public static final String ParsingErrorCode = "XPST0003";
-
-    public static final String UnexpectedTypeErrorCode = "XPTY0004";
-
-    public static final String ModuleDeclarationErrorCode = "XQST0016";
-
-    public static final String InvalidFunctionCallErrorCode = "XPST0017";
-
-    public static final String InvalidJsoniqVersionErrorCode = "XQST0031";
-
-    public static final String DuplicateFunctionIdentifier = "XQST0034";
-
-    public static final String DuplicateParamName = "XQST0039";
-
-    public static final String DynamicTypeTreatErrorCode = "XPDY0050";
-
-    public static final String UnknownCastTypeErrorCode = "XQST0052";
-
-    public static final String CastableErrorCode = "XPST0080";
-
-    public static final String InvalidExceptionErrorCode = "XPST0081";
-
-    public static final String InvalidGroupVariableErrorCode = "XQST0094";
-
-    //tested
-    public static final String DuplicatePairNameErrorCode = "JNDY0003";
-    //tested
-    public static final String NonAtomicElementErrorCode = "JNTY0004";
-
-    public static final String InvalidSelectorErrorCode = "JNTY0018";
-
-    public static final String RuntimeExceptionErrorCode = "XPDY0130";
-
-    public static final String UnimplementedErrorCode = "SPRKIQ0002";
-    //tested
-    public static final String UndeclaredVariableErrorCode = "XPST0008";
-
-    public static final String CliErrorCode = "SPRKIQ0001";
-
     public static final String CastErrorCode = "FORG0001";
-
     public static final String ZeroOrOneErrorCode = "FORG0003";
-
     public static final String OneOrMoreErrorCode = "FORG0004";
-
     public static final String ExactlyOneErrorCode = "FORG0005";
-
     public static final String InvalidArgumentType = "FORG0006";
 
 
+    public static final String DuplicatePairNameErrorCode = "JNDY0003";
+
+
+    public static final String NonAtomicElementErrorCode = "JNTY0004";
+    public static final String InvalidSelectorErrorCode = "JNTY0018";
+
+
+    public static final String CliErrorCode = "SPRKIQ0001";
+    public static final String UnimplementedErrorCode = "SPRKIQ0002";
+
+
+    public static final String DynamicTypeTreatErrorCode = "XPDY0050";
+    public static final String RuntimeExceptionErrorCode = "XPDY0130";
+
+
+    public static final String ParsingErrorCode = "XPST0003";
+    public static final String UndeclaredVariableErrorCode = "XPST0008";
+    public static final String InvalidFunctionCallErrorCode = "XPST0017";
+    public static final String CastableErrorCode = "XPST0080";
+    public static final String InvalidExceptionErrorCode = "XPST0081";
+
+
+    public static final String UnexpectedTypeErrorCode = "XPTY0004";
+
+
+    public static final String ModuleDeclarationErrorCode = "XQST0016";
+    public static final String InvalidJsoniqVersionErrorCode = "XQST0031";
+    public static final String DuplicateFunctionIdentifier = "XQST0034";
+    public static final String DuplicateParamName = "XQST0039";
+    public static final String UnknownCastTypeErrorCode = "XQST0052";
+    public static final String InvalidGroupVariableErrorCode = "XQST0094";
 }
