@@ -42,10 +42,9 @@ public class FunctionItem extends Item {
     private FunctionIdentifier identifier;
     private List<String> parameterNames;
 
-    // signature contains sequence types of all parameters and the return type
+    // signature contains type information for all parameters and the return value
     private List<SequenceType> signature;
 
-    // Implementation is the RuntimeIterator of the comma expression located in function's body
     private Expression bodyExpression;
     private Map<String, Item> nonLocalVariableBindings;
 
