@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(1, 2.14, 1, 3.4, 230004, 30000, aa, false, true, null, false, 30000, 3, 3, true, null, null, null, null, null)" :)
+(:JIQS: ShouldRun; Output="(1, 2.14, 1, 3.4, 230004, 30000, aa, false, true, null, false, 30000, 3, 3, true, null, null, null, null, null, AABBCC)" :)
 1 cast as integer,
 2.14 cast as decimal,
 1 cast as decimal,
@@ -19,6 +19,7 @@ null cast as null,
 null cast as null?,
 "null" cast as null,
 "null" cast as null?,
-null cast as string
+null cast as string,
+"aabbCC" cast as hexBinary
 
 (: general tests :)

@@ -49,7 +49,9 @@ public class ItemFactory {
     public Item createDoubleItem(double d) {
         return new DoubleItem(d);
     }
-    
+
+    public Item createHexBinaryItem(String s) {return new HexBinaryItem(s);}
+
     public Item createObjectItem() {
         return new ObjectItem();
     }

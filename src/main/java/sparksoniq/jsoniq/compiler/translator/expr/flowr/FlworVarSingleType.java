@@ -45,7 +45,8 @@ public class FlworVarSingleType extends Expression {
                 return AtomicTypes.BooleanItem;
             case "null":
                 return AtomicTypes.NullItem;
-
+            case "hexbinary":
+                return AtomicTypes.HexBinaryItem;
             default:
                 return AtomicTypes.AtomicItem;
         }

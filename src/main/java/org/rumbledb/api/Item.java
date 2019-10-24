@@ -242,6 +242,15 @@ public abstract class Item implements SerializableItem {
     }
 
     /**
+     * Returns the byte[] value of the item, if it is a atomic item of type hexBinary.
+     *
+     * @return the hexBinary value as an array of bytes.
+     */
+    public byte[] getBinaryValue() {
+        throw new RuntimeException("Item is not a hexBinary.");
+    }
+
+    /**
      * Please do not use, item type API not publicly released yet.
      * @param type an ItemType.
      * @return true if it matches the item type.
@@ -326,6 +335,15 @@ public abstract class Item implements SerializableItem {
      * @return true if it is an atomic item of type decimal, false otherwise.
      */
     public boolean isDecimal() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an atomic item of type hexBinary.
+     *
+     * @return true if it is an atomic item of type hexBinary, false otherwise.
+     */
+    public boolean isHexBinary() {
         return false;
     }
 
