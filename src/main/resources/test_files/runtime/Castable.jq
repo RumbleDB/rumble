@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(true, true, true, true, true, true, false, true, false, true, true, true, true, false, true, true, true, true, true, true, true, true, true, false, true, false, false)" :)
+(:JIQS: ShouldRun; Output="(true, true, true, true, true, true, false, true, false, true, true, true, true, false, true, true, true, true, true, true, true, true, true, false, true, false, false, true, false, false)" :)
 1 castable as integer,
 2.14 castable as decimal,
 1 castable as decimal,
@@ -25,6 +25,9 @@ null castable as null?,
 3 castable as null,
 null castable as string,
 null castable as integer?,
-"foo" castable as null
+"foo" castable as null,
+"aabbCC" castable as hexBinary,
+"123" castable as hexBinary,
+"lmno" castable as hexBinary
 
 (: general tests :)

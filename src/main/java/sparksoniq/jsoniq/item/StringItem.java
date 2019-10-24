@@ -92,6 +92,8 @@ public class StringItem extends AtomicItem {
                 return ItemFactory.getInstance().createIntegerItem(Integer.parseInt(this.getStringValue()));
             case NullItem:
                 return ItemFactory.getInstance().createNullItem();
+            case HexBinaryItem:
+                return ItemFactory.getInstance().createHexBinaryItem(this.getStringValue());
             case StringItem:
                 return this;
             default:
@@ -122,15 +124,16 @@ public class StringItem extends AtomicItem {
                 Double.parseDouble(this.getValue());
             } else if (itemType == AtomicTypes.NullItem) {
                 return isNullLiteral(this.getValue());
+            } else if (itemType == AtomicTypes.HexBinaryItem) {
+                HexBinaryItem.parseHexBinaryString(this.getValue());
             }
             else return isBooleanLiteral(this.getValue());
-        } catch (NumberFormatException e) {
+        } catch (UnsupportedOperationException | IllegalArgumentException e) {
             return false;
         }
         return true;
     }
 
-    @Override
     public String serialize() {
         return this.getValue();
     }

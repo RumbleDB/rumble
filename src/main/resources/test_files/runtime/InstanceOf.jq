@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(true, true, true, false, false, true, true, true, true, false, false, true, false, false, false, true, true, false, true, true, false, true, true, false, false, true)" :)
+(:JIQS: ShouldRun; Output="(true, true, true, false, false, true, true, true, true, false, false, true, false, false, false, true, true, false, true, true, false, true, true, false, false, true, true)" :)
 1 instance of integer,
 2.14 instance of decimal,
 1 instance of decimal,
@@ -24,7 +24,8 @@ null instance of null?,
 () instance of string*,
 () instance of string+,
 () instance of string,
-() instance of ()
+() instance of (),
+hexBinary("aabbCC") instance of hexBinary
 
 (: general tests :)
 
