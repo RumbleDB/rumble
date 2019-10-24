@@ -203,6 +203,8 @@ keyWordBoolean          : 'boolean';
 
 keyWordHexBinary        : 'hexBinary';
 
+keyWordBase64Binary     : 'base64Binary';
+
 singleType              : item=atomicType (question +='?')?;
 
 atomicType              : 'atomic'
@@ -212,11 +214,13 @@ atomicType              : 'atomic'
                         | 'double'
                         | keyWordBoolean
                         | keyWordHexBinary
+                        | keyWordBase64Binary
                         | NullLiteral;
 
 nCNameOrKeyWord         : NCName
                         | keyWordBoolean
-                        | keyWordHexBinary;
+                        | keyWordHexBinary
+                        | keyWordBase64Binary;
 
 pairConstructor         :  ( lhs=exprSingle | name=NCName ) (':' | '?') rhs=exprSingle;
 

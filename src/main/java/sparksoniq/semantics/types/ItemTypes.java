@@ -36,6 +36,7 @@ public enum ItemTypes {
     BooleanItem,
 
     HexBinaryItem,
+    Base64BinaryItem,
 
     NullItem;
 

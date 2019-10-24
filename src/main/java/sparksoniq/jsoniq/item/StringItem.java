@@ -94,6 +94,8 @@ public class StringItem extends AtomicItem {
                 return ItemFactory.getInstance().createNullItem();
             case HexBinaryItem:
                 return ItemFactory.getInstance().createHexBinaryItem(this.getStringValue());
+            case Base64BinaryItem:
+                return ItemFactory.getInstance().createBase64BinaryItem(this.getStringValue());
             case StringItem:
                 return this;
             default:
@@ -126,6 +128,8 @@ public class StringItem extends AtomicItem {
                 return isNullLiteral(this.getValue());
             } else if (itemType == AtomicTypes.HexBinaryItem) {
                 HexBinaryItem.parseHexBinaryString(this.getValue());
+            } else if (itemType == AtomicTypes.Base64BinaryItem) {
+                Base64BinaryItem.parseBase64BinaryString(this.getValue());
             }
             else return isBooleanLiteral(this.getValue());
         } catch (UnsupportedOperationException | IllegalArgumentException e) {
