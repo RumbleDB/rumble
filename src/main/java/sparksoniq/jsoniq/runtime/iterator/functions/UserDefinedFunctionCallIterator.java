@@ -21,28 +21,16 @@
 package sparksoniq.jsoniq.runtime.iterator.functions;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
-import scala.Dynamic;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
-import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectKeysClosure;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.visitor.RuntimeIteratorVisitor;
 
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
 
@@ -52,7 +40,7 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
 	private RuntimeIterator _fnBodyIterator;
 	private List<RuntimeIterator> _fnArguments;
     private List<String> _fnArgumentNames;
-    private Item _nextLocalResult;
+    private Item _nextResult;
 
     public UserDefinedFunctionCallIterator(
             String fnName,
@@ -74,7 +62,7 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
         putArgumentValuesInDynamicContext(dc);
         _currentDynamicContext = dc;
         _fnBodyIterator.open(_currentDynamicContext);
-        setNextLocalResult();
+        setNextResult();
     }
 
     private void initializeFunctionBodyIterator() {
@@ -98,8 +86,8 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
     @Override
     public Item nextLocal() {
         if (this._hasNext) {
-            Item result = _nextLocalResult;
-            setNextLocalResult();
+            Item result = _nextResult;
+            setNextResult();
             return result;
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in "+ _fnName + "  function",
@@ -114,7 +102,7 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
     @Override
     protected void resetLocal(DynamicContext context) {
         _fnBodyIterator.reset(_currentDynamicContext);
-        setNextLocalResult();
+        setNextResult();
     }
 
     @Override
@@ -126,13 +114,13 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
         }
     }
 
-    public void setNextLocalResult() {
-        _nextLocalResult = null;
-        while (_fnBodyIterator.hasNext()) {
-            _nextLocalResult = _fnBodyIterator.next();
+    public void setNextResult() {
+        _nextResult = null;
+        if (_fnBodyIterator.hasNext()) {
+            _nextResult = _fnBodyIterator.next();
         }
 
-        if (_nextLocalResult == null) {
+        if (_nextResult == null) {
             this._hasNext = false;
             _fnBodyIterator.close();
         } else {
