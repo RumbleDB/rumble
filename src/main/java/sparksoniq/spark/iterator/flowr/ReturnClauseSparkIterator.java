@@ -45,7 +45,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     private RuntimeTupleIterator _child;
     private DynamicContext _tupleContext;   // re-use same DynamicContext object for efficiency
     private RuntimeIterator _expression;
-    private Item _nextLocalResult;
+    private Item _nextResult;
 
     public ReturnClauseSparkIterator(RuntimeTupleIterator child, RuntimeIterator expression, IteratorMetadata iteratorMetadata) {
         super(Arrays.asList(expression), iteratorMetadata);
@@ -74,8 +74,8 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     @Override
     protected Item nextLocal() {
         if (_hasNext == true) {
-            Item result = _nextLocalResult;  // save the result to be returned
-            setNextLocalResult();            // calculate and store the next result
+            Item result = _nextResult;  // save the result to be returned
+            setNextResult();            // calculate and store the next result
             return result;
         }
         throw new IteratorFlowException("Invalid next() call in Object Lookup", getMetadata());
@@ -85,10 +85,10 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     protected void openLocal() {
         _child.open(_currentDynamicContext);
         _tupleContext = new DynamicContext(_currentDynamicContext);     // assign current context as parent
-        setNextLocalResult();
+        setNextResult();
     }
 
-    private void setNextLocalResult() {
+    private void setNextResult() {
         if (_expression.isOpen()) {
             boolean isResultSet = setResultFromExpression();
             if (isResultSet) {
@@ -116,11 +116,11 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     /**
      * _expression has to be open prior to call.
      *
-     * @return true if _nextLocalResult is set and _hasNext is true, false otherwise
+     * @return true if _nextResult is set and _hasNext is true, false otherwise
      */
     private boolean setResultFromExpression() {
         if (_expression.hasNext()) {        // if expression returns a value, set it as next
-            _nextLocalResult = _expression.next();
+            _nextResult = _expression.next();
             this._hasNext = true;
             return true;
         } else {    // if not, keep iterating
@@ -139,7 +139,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     protected void resetLocal(DynamicContext context) {
         _child.reset(_currentDynamicContext);
         _expression.close();
-        setNextLocalResult();
+        setNextResult();
     }
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
