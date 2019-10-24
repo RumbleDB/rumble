@@ -162,9 +162,8 @@ public class DecimalItem extends AtomicItem {
     }
 
     @Override
-    public Item subtract(Item other, boolean negated) {
-        BigDecimal abs_result = this.getDecimalValue().subtract(other.castToDecimalValue());
-        return ItemFactory.getInstance().createDecimalItem(negated ? abs_result.negate() : abs_result);
+    public Item subtract(Item other) {
+        return ItemFactory.getInstance().createDecimalItem(this.getDecimalValue().subtract(other.castToDecimalValue()));
     }
 
     @Override
@@ -173,23 +172,17 @@ public class DecimalItem extends AtomicItem {
     }
 
     @Override
-    public Item divide(Item other, boolean inverted) {
-        BigDecimal result = inverted ? other.castToDecimalValue().divide(this.getDecimalValue(), 10, BigDecimal.ROUND_HALF_UP) :
-                this.getDecimalValue().divide(other.castToDecimalValue(), 10, BigDecimal.ROUND_HALF_UP);
-        return ItemFactory.getInstance().createDecimalItem(result);
+    public Item divide(Item other) {
+        return ItemFactory.getInstance().createDecimalItem(this.getDecimalValue().divide(other.castToDecimalValue(), 10, BigDecimal.ROUND_HALF_UP));
     }
 
     @Override
-    public Item modulo(Item other, boolean inverted) {
-        BigDecimal result = inverted ? other.castToDecimalValue().remainder(this.getDecimalValue()) :
-                this.getDecimalValue().remainder(other.castToDecimalValue());
-        return ItemFactory.getInstance().createDecimalItem(result);
+    public Item modulo(Item other) {
+        return ItemFactory.getInstance().createDecimalItem(this.getDecimalValue().remainder(other.castToDecimalValue()));
     }
 
     @Override
-    public Item idivide(Item other, boolean inverted) {
-        int result = inverted ? other.castToDecimalValue().divideToIntegralValue(this.getDecimalValue()).intValueExact() :
-                this.getDecimalValue().divideToIntegralValue(other.castToDecimalValue()).intValueExact();
-        return ItemFactory.getInstance().createIntegerItem(result);
+    public Item idivide(Item other) {
+        return ItemFactory.getInstance().createIntegerItem(this.getDecimalValue().divideToIntegralValue(other.castToDecimalValue()).intValueExact());
     }
 }

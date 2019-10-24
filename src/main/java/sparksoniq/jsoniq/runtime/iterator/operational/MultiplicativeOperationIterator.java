@@ -77,8 +77,19 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
         if (this._hasNext) {
             this._hasNext = false;
             try {
-                return _operator.apply(_left, _right);
-            } catch (ClassCastException | IteratorFlowException e) {
+                switch(_operator) {
+                    case MUL:
+                        return _left.multiply(_right);
+                    case DIV:
+                        return _left.divide(_right);
+                    case IDIV:
+                        return _left.idivide(_right);
+                    case MOD:
+                        return _left.modulo(_right);
+                    default:
+                        throw new IteratorFlowException("Non recognized multiplicative operator.", getMetadata());
+                }
+            } catch (ClassCastException | UnsupportedOperationException e) {
                 throw new UnexpectedTypeException(" \"" + _operator.name().toLowerCase() + "\": operation not possible with parameters of type \""
                         + ItemTypes.getItemTypeName(_left.getClass().getSimpleName()) + "\" and \""
                         + ItemTypes.getItemTypeName(_right.getClass().getSimpleName()) + "\"", getMetadata());

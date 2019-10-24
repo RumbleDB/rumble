@@ -22,7 +22,6 @@ package org.rumbledb.api;
 
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
-import sparksoniq.jsoniq.runtime.iterator.operational.ComparisonOperationIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.types.ItemType;
 
@@ -358,10 +357,10 @@ public abstract class Item implements SerializableItem {
     public abstract int hashCode();
 
 
-    public Item add(Item other) { throw new IteratorFlowException("Operation not defined"); }
-    public Item subtract(Item other, boolean negated) { throw new IteratorFlowException("Operation not defined"); }
-    public Item multiply(Item other) { throw new IteratorFlowException("Operation not defined"); }
-    public Item divide(Item other, boolean inverted) { throw new IteratorFlowException("Operation not defined"); }
-    public Item modulo(Item other, boolean inverted) { throw new IteratorFlowException("Operation not defined"); }
-    public Item idivide(Item other, boolean inverted) { throw new IteratorFlowException("Operation not defined"); }
+    public Item add(Item other) { throw new UnsupportedOperationException("Operation not defined"); }
+    public Item subtract(Item other) { throw new UnsupportedOperationException("Operation not defined"); }
+    public Item multiply(Item other) { throw new UnsupportedOperationException("Operation not defined"); }
+    public Item divide(Item other) { throw new UnsupportedOperationException("Operation not defined"); }
+    public Item modulo(Item other) { throw new UnsupportedOperationException("Operation not defined"); }
+    public Item idivide(Item other) { throw new UnsupportedOperationException("Operation not defined"); }
 }

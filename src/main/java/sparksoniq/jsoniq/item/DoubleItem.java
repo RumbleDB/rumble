@@ -165,41 +165,41 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public Item add(Item other) {
-        if (other.isDecimal()) return other.add(this);
+        if (other.isDecimal())
+            return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue().add(other.getDecimalValue()));
         return ItemFactory.getInstance().createDoubleItem(this.getDoubleValue() + other.castToDoubleValue());
     }
 
     @Override
-    public Item subtract(Item other, boolean negated) {
-        if (other.isDecimal()) return other.subtract(this, true);
-        double result = negated ? other.castToDoubleValue() - this.getDoubleValue() : this.getDoubleValue() - other.castToDoubleValue();
-        return ItemFactory.getInstance().createDoubleItem(result);
+    public Item subtract(Item other) {
+        if (other.isDecimal())
+            return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue().subtract(other.getDecimalValue()));
+        return ItemFactory.getInstance().createDoubleItem(this.getDoubleValue() - other.castToDoubleValue());
     }
 
     @Override
     public Item multiply(Item other) {
-        if (other.isDecimal()) return other.multiply(this);
+        if (other.isDecimal())
+            return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue().multiply(other.getDecimalValue()));
         return ItemFactory.getInstance().createDoubleItem(this.getDoubleValue() * other.castToDoubleValue());
     }
 
     @Override
-    public Item divide(Item other, boolean inverted) {
-        if (other.isDecimal()) return other.divide(this, true);
-        double result = inverted ? other.castToDoubleValue() / this.getDoubleValue() : this.getDoubleValue() / other.castToDoubleValue();
-        return ItemFactory.getInstance().createDoubleItem(result);
+    public Item divide(Item other) {
+        if (other.isDecimal())
+            return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue().divide(other.getDecimalValue(), 10, BigDecimal.ROUND_HALF_UP));
+        return ItemFactory.getInstance().createDoubleItem(this.getDoubleValue() / other.castToDoubleValue());
     }
 
     @Override
-    public Item modulo(Item other, boolean inverted) {
-        if (other.isDecimal()) return other.modulo(this, true);
-        double result = inverted ? other.castToDoubleValue() % this.getDoubleValue() : this.getDoubleValue() % other.castToDoubleValue();
-        return ItemFactory.getInstance().createDoubleItem(result);
+    public Item modulo(Item other) {
+        if (other.isDecimal())
+            return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue().remainder(other.getDecimalValue()));
+        return ItemFactory.getInstance().createDoubleItem(this.getDoubleValue() % other.castToDoubleValue());
     }
 
     @Override
-    public Item idivide(Item other, boolean inverted) {
-        if (other.isDecimal()) return other.idivide(this, true);
-        double result = inverted ? other.castToDoubleValue() / this.getDoubleValue() : this.getDoubleValue() / other.castToDoubleValue();
-        return ItemFactory.getInstance().createIntegerItem((int) result);
+    public Item idivide(Item other) {
+        return ItemFactory.getInstance().createIntegerItem((int) (this.getDoubleValue() / other.castToDoubleValue()));
     }
 }
