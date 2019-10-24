@@ -58,7 +58,7 @@ public class DecimalItem extends AtomicItem {
 
     @Override
     public BigDecimal getDecimalValue() {
-        return this.getValue();
+        return _value;
     }
 
     @Override
@@ -158,26 +158,36 @@ public class DecimalItem extends AtomicItem {
 
     @Override
     public Item add(Item other) {
+        if (other.isDouble())
+            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() + (other.getDoubleValue()));
         return ItemFactory.getInstance().createDecimalItem(this.getDecimalValue().add(other.castToDecimalValue()));
     }
 
     @Override
     public Item subtract(Item other) {
+        if (other.isDouble())
+            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() - (other.getDoubleValue()));
         return ItemFactory.getInstance().createDecimalItem(this.getDecimalValue().subtract(other.castToDecimalValue()));
     }
 
     @Override
     public Item multiply(Item other) {
+        if (other.isDouble())
+            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() * (other.getDoubleValue()));
         return ItemFactory.getInstance().createDecimalItem(this.getDecimalValue().multiply(other.castToDecimalValue()));
     }
 
     @Override
     public Item divide(Item other) {
+        if (other.isDouble())
+            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() / (other.getDoubleValue()));
         return ItemFactory.getInstance().createDecimalItem(this.getDecimalValue().divide(other.castToDecimalValue(), 10, BigDecimal.ROUND_HALF_UP));
     }
 
     @Override
     public Item modulo(Item other) {
+        if (other.isDouble())
+            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() % (other.getDoubleValue()));
         return ItemFactory.getInstance().createDecimalItem(this.getDecimalValue().remainder(other.castToDecimalValue()));
     }
 

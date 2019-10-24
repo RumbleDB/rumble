@@ -32,6 +32,8 @@ import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 
 import org.rumbledb.api.Item;
 
@@ -55,7 +57,7 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public double getDoubleValue() {
-        return this.getValue();
+        return _value;
     }
 
     @Override
@@ -151,7 +153,7 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public int compareTo(Item other) {
-        return other.isNull() ? 1 : Double.compare(this.getDoubleValue(), ((Item)other).castToDoubleValue());
+        return other.isNull() ? 1 : Double.compare(this.getDoubleValue(), other.castToDoubleValue());
     }
 
     @Override
@@ -165,36 +167,26 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public Item add(Item other) {
-        if (other.isDecimal())
-            return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue().add(other.getDecimalValue()));
         return ItemFactory.getInstance().createDoubleItem(this.getDoubleValue() + other.castToDoubleValue());
     }
 
     @Override
     public Item subtract(Item other) {
-        if (other.isDecimal())
-            return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue().subtract(other.getDecimalValue()));
         return ItemFactory.getInstance().createDoubleItem(this.getDoubleValue() - other.castToDoubleValue());
     }
 
     @Override
     public Item multiply(Item other) {
-        if (other.isDecimal())
-            return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue().multiply(other.getDecimalValue()));
         return ItemFactory.getInstance().createDoubleItem(this.getDoubleValue() * other.castToDoubleValue());
     }
 
     @Override
     public Item divide(Item other) {
-        if (other.isDecimal())
-            return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue().divide(other.getDecimalValue(), 10, BigDecimal.ROUND_HALF_UP));
         return ItemFactory.getInstance().createDoubleItem(this.getDoubleValue() / other.castToDoubleValue());
     }
 
     @Override
     public Item modulo(Item other) {
-        if (other.isDecimal())
-            return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue().remainder(other.getDecimalValue()));
         return ItemFactory.getInstance().createDoubleItem(this.getDoubleValue() % other.castToDoubleValue());
     }
 

@@ -56,7 +56,7 @@ public class IntegerItem extends AtomicItem {
 
     @Override
     public int getIntegerValue() {
-        return getValue();
+        return _value;
     }
 
     @Override
