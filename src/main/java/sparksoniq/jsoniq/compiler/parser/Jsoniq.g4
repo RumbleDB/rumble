@@ -203,6 +203,8 @@ keyWordBoolean          : 'boolean';
 
 keyWordDuration         : 'duration';
 
+keyWordHexBinary        : 'hexBinary';
+
 singleType              : item=atomicType (question +='?')?;
 
 atomicType              : 'atomic'
@@ -212,11 +214,13 @@ atomicType              : 'atomic'
                         | 'double'
                         | keyWordDuration
                         | keyWordBoolean
+                        | keyWordHexBinary
                         | NullLiteral;
 
 nCNameOrKeyWord         : NCName
+                        | keyWordBoolean
                         | keyWordDuration
-                        | keyWordBoolean;
+                        | keyWordHexBinary;
 
 pairConstructor         :  ( lhs=exprSingle | name=NCName ) (':' | '?') rhs=exprSingle;
 

@@ -81,6 +81,8 @@ public class FlworVarSequenceType extends Expression {
                 return ItemTypes.JSONItem;
             case "duration":
                 return ItemTypes.DurationItem;
+            case "hexbinary":
+                return ItemTypes.HexBinaryItem;
 
             default:
                 return ItemTypes.Item;

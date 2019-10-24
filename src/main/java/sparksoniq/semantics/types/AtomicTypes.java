@@ -11,5 +11,7 @@ public enum AtomicTypes {
 
     DurationItem,
 
+    HexBinaryItem,
+
     NullItem,
 }

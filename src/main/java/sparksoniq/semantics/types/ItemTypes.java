@@ -37,6 +37,8 @@ public enum ItemTypes {
 
     DurationItem,
 
+    HexBinaryItem,
+
     NullItem;
 
     public static String getItemTypeName(String fullTypeName){

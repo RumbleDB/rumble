@@ -245,10 +245,18 @@ public abstract class Item implements SerializableItem {
     /**
      * Returns the period value of the item, if it is a atomic item of type duration.
      *
-     * @return the period value as a DurationItem.
+     * @return the period value as a Period.
      */
     public Period getDurationValue() {
         throw new RuntimeException("Item is not a duration.");
+    }
+    /**
+     * Returns the byte[] value of the item, if it is a atomic item of type hexBinary.
+     *
+     * @return the hexBinary value as an array of bytes.
+     */
+    public byte[] getBinaryValue() {
+        throw new RuntimeException("Item is not a hexBinary.");
     }
 
     /**
@@ -345,6 +353,15 @@ public abstract class Item implements SerializableItem {
      * @return true if it is an atomic item of type decimal, false otherwise.
      */
     public boolean isDecimal() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an atomic item of type hexBinary.
+     *
+     * @return true if it is an atomic item of type hexBinary, false otherwise.
+     */
+    public boolean isHexBinary() {
         return false;
     }
 

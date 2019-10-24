@@ -51,7 +51,13 @@ public class ItemFactory {
         return new DoubleItem(d);
     }
 
-    public Item createDurationItem(Period p) { return new DurationItem(p); }
+    public Item createDurationItem(Period p) {
+        return new DurationItem(p);
+    }
+
+    public Item createHexBinaryItem(String s) {
+        return new HexBinaryItem(s);
+    }
 
     public Item createObjectItem() {
         return new ObjectItem();

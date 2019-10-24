@@ -94,6 +94,8 @@ public class StringItem extends AtomicItem {
                 return ItemFactory.getInstance().createNullItem();
             case DurationItem:
                 return ItemFactory.getInstance().createDurationItem(DurationItem.getDurationFromString(this.getStringValue(), AtomicTypes.DurationItem));
+            case HexBinaryItem:
+                return ItemFactory.getInstance().createHexBinaryItem(this.getStringValue());
             case StringItem:
                 return this;
             default:
@@ -126,6 +128,8 @@ public class StringItem extends AtomicItem {
                 return isNullLiteral(this.getValue());
             } else if (itemType == AtomicTypes.DurationItem) {
                 DurationItem.getDurationFromString(this._value, AtomicTypes.DurationItem);
+            } else if (itemType == AtomicTypes.HexBinaryItem) {
+                HexBinaryItem.parseHexBinaryString(this.getValue());
             }
             else return isBooleanLiteral(this.getValue());
         } catch (UnsupportedOperationException | IllegalArgumentException e) {
