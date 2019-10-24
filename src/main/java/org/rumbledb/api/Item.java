@@ -22,7 +22,6 @@ package org.rumbledb.api;
 
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
-import sparksoniq.jsoniq.runtime.iterator.operational.ComparisonOperationIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.types.ItemType;
 
@@ -247,7 +246,7 @@ public abstract class Item implements SerializableItem {
      *
      * @return the hexBinary value as an array of bytes.
      */
-    public byte[] getHexBinaryValue() {
+    public byte[] getBinaryValue() {
         throw new RuntimeException("Item is not a hexBinary.");
     }
 

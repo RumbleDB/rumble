@@ -501,8 +501,6 @@ public class Functions {
          */
         public static final String MATCHES = "matches";
         /**
-<<<<<<< HEAD
-=======
          * function that returns the duration item from the supplied string
          */
         public static final String DURATION = "duration";
@@ -531,7 +529,6 @@ public class Functions {
          */
         public static final String HEXBINARY = "hexBinary";
         /**
->>>>>>> ea0bef0... Implementation of hexBinary type with corresponding comparison and casting operators
          * function that normalizes spaces in a string
          */
         public static final String NORMALIZESPACE = "normalize-space";

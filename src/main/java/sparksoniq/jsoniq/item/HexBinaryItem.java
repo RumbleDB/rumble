@@ -41,7 +41,7 @@ public class HexBinaryItem extends AtomicItem {
     }
 
     @Override
-    public byte[] getHexBinaryValue() {
+    public byte[] getBinaryValue() {
         return _value;
     }
 
@@ -103,7 +103,7 @@ public class HexBinaryItem extends AtomicItem {
         }
         Item otherItem = (Item) otherObject;
         if (otherItem.isHexBinary()) {
-            return Arrays.equals(this.getHexBinaryValue(), otherItem.getHexBinaryValue());
+            return Arrays.equals(this.getBinaryValue(), otherItem.getBinaryValue());
         }
         return false;
     }
@@ -112,7 +112,7 @@ public class HexBinaryItem extends AtomicItem {
     public int compareTo(Item other) {
         if (other.isNull()) return 1;
         if (other.isHexBinary()) {
-            return this.serializeValue().compareTo(Arrays.toString(other.getHexBinaryValue()));
+            return this.serializeValue().compareTo(Arrays.toString(other.getBinaryValue()));
         }
         throw new IteratorFlowException("Cannot compare item of type " + ItemTypes.getItemTypeName(this.getClass().getSimpleName()) +
                 " with item of type " + ItemTypes.getItemTypeName(other.getClass().getSimpleName()));
