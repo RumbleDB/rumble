@@ -18,57 +18,42 @@
  *
  */
 
-package sparksoniq.jsoniq.compiler.translator.expr.module;
+package sparksoniq.jsoniq.compiler.translator.expr.primary;
 
-
-import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
-import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionDeclarationExpression;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class PrologExpression extends Expression {
+public class NamedFunctionRef extends PrimaryExpression {
 
-    private final List<FunctionDeclarationExpression> _functionDeclarationExpressions;
+    private final FunctionIdentifier identifier;
 
-    public PrologExpression(List<FunctionDeclarationExpression> functionDeclarations, ExpressionMetadata metadata) {
+    public NamedFunctionRef(FunctionIdentifier identifier, ExpressionMetadata metadata) {
         super(metadata);
-        this._functionDeclarationExpressions = functionDeclarations;
+        this.identifier = identifier;
     }
 
-    public List<FunctionDeclarationExpression> getFunctionDeclarationExpressions() {
-        return _functionDeclarationExpressions;
+    public FunctionIdentifier getIdentifier() {
+        return identifier;
     }
 
     @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
         List<ExpressionOrClause> result = new ArrayList<>();
-        if (this._functionDeclarationExpressions != null)
-            _functionDeclarationExpressions.forEach(e -> {
-                if (e != null)
-                    result.add(e);
-            });
         return getDescendantsFromChildren(result, depthSearch);
     }
 
     @Override
     public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
-        return visitor.visitPrologExpression(this, argument);
+        return visitor.visitNamedFunctionRef(this, argument);
     }
 
     @Override
     public String serializationString(boolean prefix) {
-        String result = "(prolog ";
-        result += " (functionDecl ";
-        for (FunctionDeclarationExpression func : _functionDeclarationExpressions) {
-            result += "(" + func.serializationString(false) + ") , ";
-        }
-        result = result.substring(0, result.length() - 1);    // remove last comma
-        result += "))";
-        return result;
+        return "(namedFunctionRef(NCName " + identifier.getName() + ") (IntegerLiteral " + identifier.getArity() + "))";
     }
 }
-

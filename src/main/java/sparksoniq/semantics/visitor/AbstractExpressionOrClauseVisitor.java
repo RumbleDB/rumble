@@ -37,7 +37,6 @@ import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.ReturnClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.WhereClause;
-import sparksoniq.jsoniq.compiler.translator.expr.module.FunctionDeclarationExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.module.MainModuleExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.module.PrologExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.AdditiveExpression;
@@ -60,7 +59,9 @@ import sparksoniq.jsoniq.compiler.translator.expr.primary.ContextExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.DecimalLiteral;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.DoubleLiteral;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionCall;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionDeclarationExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.IntegerLiteral;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.NamedFunctionRef;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.NullLiteral;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.ObjectConstructor;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.ParenthesizedExpression;
@@ -97,10 +98,6 @@ public abstract class AbstractExpressionOrClauseVisitor<T> {
     }
 
     public T visitPrologExpression(PrologExpression expression, T argument) {
-        return defaultAction(expression, argument);
-    }
-
-    public T visitFunctionDeclarationExpression(FunctionDeclarationExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
@@ -182,6 +179,15 @@ public abstract class AbstractExpressionOrClauseVisitor<T> {
     public T visitParenthesizedExpression(ParenthesizedExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
+
+    public T visitFunctionDeclarationExpression(FunctionDeclarationExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitNamedFunctionRef(NamedFunctionRef expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
     //endregion
 
     //region literal

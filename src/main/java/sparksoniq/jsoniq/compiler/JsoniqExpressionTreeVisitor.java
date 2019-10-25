@@ -48,7 +48,6 @@ import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.ReturnClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.WhereClause;
-import sparksoniq.jsoniq.compiler.translator.expr.module.FunctionDeclarationExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.module.MainModuleExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.module.PrologExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.AdditiveExpression;
@@ -74,6 +73,9 @@ import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.PredicateEx
 import sparksoniq.jsoniq.compiler.translator.expr.primary.ArrayConstructor;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.ContextExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionCall;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionDeclarationExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.IntegerLiteral;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.NamedFunctionRef;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.ObjectConstructor;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.ParenthesizedExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.PrimaryExpression;
@@ -82,8 +84,8 @@ import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpressionVar;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.semantics.types.AtomicTypes;
-import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
 
@@ -826,35 +828,37 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
     @Override
     public Void visitPrimaryExpr(JsoniqParser.PrimaryExprContext ctx) {
         PrimaryExpression node = null;
-
-        for (ParseTree child : ctx.children) {
-            if (child instanceof JsoniqParser.VarRefContext) {
-                this.visitVarRef((JsoniqParser.VarRefContext) child);
-                node = this.currentPrimaryExpression;
-            } else if (child instanceof JsoniqParser.ObjectConstructorContext) {
-                this.visitObjectConstructor((JsoniqParser.ObjectConstructorContext) child);
-                node = this.currentPrimaryExpression;
-            } else if (child instanceof JsoniqParser.ArrayConstructorContext) {
-                this.visitArrayConstructor((JsoniqParser.ArrayConstructorContext) child);
-                node = this.currentPrimaryExpression;
-            } else if (child instanceof JsoniqParser.ParenthesizedExprContext) {
-                this.visitParenthesizedExpr((JsoniqParser.ParenthesizedExprContext) child);
-                node = this.currentPrimaryExpression;
-            } else if (child instanceof JsoniqParser.StringLiteralContext) {
-                node = new StringLiteral(ValueTypeHandler.
-                        getStringValue((JsoniqParser.StringLiteralContext) child), createMetadataFromContext(ctx));
-            } else if (child instanceof TerminalNode) {
-                node = ValueTypeHandler.getValueType(child.getText(), createMetadataFromContext(ctx));
-            } else if (child instanceof JsoniqParser.ContextItemExprContext) {
-                this.visitContextItemExpr((JsoniqParser.ContextItemExprContext) child);
-                node = this.currentPrimaryExpression;
-            } else if (child instanceof JsoniqParser.FunctionCallContext) {
-                this.visitFunctionCall((JsoniqParser.FunctionCallContext) child);
-                node = this.currentPrimaryExpression;
-            } else
-                throw new UnsupportedFeatureException("Primary expression not yet implemented",
-                        createMetadataFromContext(ctx));
-        }
+        
+        ParseTree child = ctx.children.get(0);
+        if (child instanceof JsoniqParser.VarRefContext) {
+            this.visitVarRef((JsoniqParser.VarRefContext) child);
+            node = this.currentPrimaryExpression;
+        } else if (child instanceof JsoniqParser.ObjectConstructorContext) {
+            this.visitObjectConstructor((JsoniqParser.ObjectConstructorContext) child);
+            node = this.currentPrimaryExpression;
+        } else if (child instanceof JsoniqParser.ArrayConstructorContext) {
+            this.visitArrayConstructor((JsoniqParser.ArrayConstructorContext) child);
+            node = this.currentPrimaryExpression;
+        } else if (child instanceof JsoniqParser.ParenthesizedExprContext) {
+            this.visitParenthesizedExpr((JsoniqParser.ParenthesizedExprContext) child);
+            node = this.currentPrimaryExpression;
+        } else if (child instanceof JsoniqParser.StringLiteralContext) {
+            node = new StringLiteral(ValueTypeHandler.
+                    getStringValue((JsoniqParser.StringLiteralContext) child), createMetadataFromContext(ctx));
+        } else if (child instanceof TerminalNode) {
+            node = ValueTypeHandler.getValueType(child.getText(), createMetadataFromContext(ctx));
+        } else if (child instanceof JsoniqParser.ContextItemExprContext) {
+            this.visitContextItemExpr((JsoniqParser.ContextItemExprContext) child);
+            node = this.currentPrimaryExpression;
+        } else if (child instanceof JsoniqParser.FunctionCallContext) {
+            this.visitFunctionCall((JsoniqParser.FunctionCallContext) child);
+            node = this.currentPrimaryExpression;
+        } else if (child instanceof JsoniqParser.FunctionItemExprContext) {
+            this.visitFunctionItemExpr((JsoniqParser.FunctionItemExprContext) child);
+            node = this.currentPrimaryExpression;
+        } else
+            throw new UnsupportedFeatureException("Primary expression not yet implemented",
+                    createMetadataFromContext(ctx));
 
         this.currentPrimaryExpression = node;
         return null;
@@ -1021,6 +1025,86 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
     @Override
     public Void visitArgument(JsoniqParser.ArgumentContext ctx) {
         this.visitExprSingle(ctx.exprSingle());
+        return null;
+    }
+
+    @Override
+    public Void visitFunctionItemExpr(JsoniqParser.FunctionItemExprContext ctx) {
+        Expression node;
+
+        ParseTree child = ctx.children.get(0);
+        if (child instanceof JsoniqParser.NamedFunctionRefContext) {
+            this.visitNamedFunctionRef((JsoniqParser.NamedFunctionRefContext) child);
+            node = this.currentExpression;
+        } else if (child instanceof JsoniqParser.InlineFunctionExprContext) {
+            this.visitInlineFunctionExpr((JsoniqParser.InlineFunctionExprContext) child);
+            node = this.currentExpression;
+        } else {
+            throw new UnsupportedFeatureException("Function item expression not yet implemented",
+                    createMetadataFromContext(ctx));
+        }
+        this.currentExpression = node;
+        return null;
+    }
+
+    @Override
+    public Void visitNamedFunctionRef(JsoniqParser.NamedFunctionRefContext ctx) {
+        NamedFunctionRef node;
+        String name = ctx.fn_name.getText();
+        int arity = ((IntegerLiteral) ValueTypeHandler.getValueType(
+                ctx.arity.getText(),
+                createMetadataFromContext(ctx)
+        )).getValue();
+        node = new NamedFunctionRef(new FunctionIdentifier(name, arity), createMetadataFromContext(ctx));
+        this.currentExpression = node;
+        return null;
+    }
+
+    @Override
+    public Void visitInlineFunctionExpr(JsoniqParser.InlineFunctionExprContext ctx) {
+        Map<String, FlworVarSequenceType> fnParams = new LinkedHashMap<>();
+        FlworVarSequenceType fnReturnType = new FlworVarSequenceType(
+                ItemTypes.Item,
+                SequenceType.Arity.ZeroOrMore,
+                createMetadataFromContext(ctx)
+        );
+        CommaExpression fnBody;
+        FunctionDeclarationExpression node;
+        String paramName;
+        FlworVarSequenceType paramType;
+        if (ctx.paramList() != null) {
+            for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
+                paramName = param.NCName().getText();
+                paramType = new FlworVarSequenceType(
+                        ItemTypes.Item,
+                        SequenceType.Arity.ZeroOrMore,
+                        createMetadataFromContext(ctx)
+                );
+                if (fnParams.containsKey(paramName)) {
+                    throw new DuplicateParamNameException(
+                            "inline-function`",
+                            paramName,
+                            createMetadataFromContext(param)
+                    );
+                }
+                if (param.sequenceType() != null) {
+                    this.visitSequenceType(param.sequenceType());
+                    paramType = (FlworVarSequenceType) this.currentExpression;
+                }
+                fnParams.put(paramName, paramType);
+            }
+        }
+
+        if (ctx.return_type != null) {
+            this.visitSequenceType(ctx.return_type);
+            fnReturnType = (FlworVarSequenceType) this.currentExpression;
+        }
+
+        this.visitExpr(ctx.fn_body);
+        fnBody = (CommaExpression) this.currentExpression;
+
+        node = new FunctionDeclarationExpression("", fnParams, fnReturnType, fnBody, createMetadataFromContext(ctx));
+        this.currentExpression = node;
         return null;
     }
 

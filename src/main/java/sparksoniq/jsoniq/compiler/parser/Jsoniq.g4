@@ -192,7 +192,7 @@ functionItemExpr        : namedFunctionRef | inlineFunctionExpr;
 
 namedFunctionRef        : fn_name=NCName '#' arity=IntegerLiteral;
 
-inlineFunctionExpr      : 'function(' paramList? ')'
+inlineFunctionExpr      : 'function' '(' paramList? ')'
                            (Kas return_type=sequenceType)?
                            ('{' fn_body=expr '}');
 
