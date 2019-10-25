@@ -52,11 +52,11 @@ public class DurationItem extends AtomicItem {
     }
 
     public Period getValue() {
-        return _value;
+        return this._value;
     }
 
     public Period getDurationValue() {
-        return _value;
+        return this.getValue();
     }
 
     @Override
