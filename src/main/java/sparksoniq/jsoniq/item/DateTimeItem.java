@@ -49,7 +49,7 @@ public class DateTimeItem extends AtomicItem {
 
     @Override
     public DateTime getDateTimeValue() {
-        return _value;
+        return this.getValue();
     }
 
     @Override
@@ -159,8 +159,7 @@ public class DateTimeItem extends AtomicItem {
     @Override
     public Item add(Item other) {
         Period period;
-        if (other.isYearMonthDuration()) period = ((YearMonthDurationItem)other).getValue();
-        else if (other.isDayTimeDuration()) period = ((DayTimeDurationItem)other).getValue();
+        if (other.isYearMonthDuration() || other.isDayTimeDuration()) period = other.getDurationValue();
         else throw new ClassCastException();
         return ItemFactory.getInstance().createDateTimeItem(this.getValue().plus(period));
     }
@@ -172,8 +171,8 @@ public class DateTimeItem extends AtomicItem {
             period = new Period(other.getDateTimeValue(), this.getValue(), PeriodType.dayTime());
             return ItemFactory.getInstance().createDayTimeDurationItem(period);
         }
-        if (other.isYearMonthDuration()) period = ((YearMonthDurationItem)other).getValue();
-        else period = ((DayTimeDurationItem)other).getValue();
+        if (other.isYearMonthDuration() || other.isDayTimeDuration()) period = other.getDurationValue();
+        else throw new ClassCastException();
         return ItemFactory.getInstance().createDateTimeItem(this.getValue().minus(period));
     }
 

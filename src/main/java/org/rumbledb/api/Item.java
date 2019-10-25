@@ -377,7 +377,6 @@ public abstract class Item implements SerializableItem {
     }
 
     /**
-<<<<<<< HEAD
      * Tests whether the item is an atomic item of type duration.
      *
      * @return true if it is an atomic item of type duration, false otherwise.
