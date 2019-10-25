@@ -57,8 +57,15 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
         if (this._hasNext) {
             this._hasNext = false;
             try {
-                return _operator.apply(_left, _right);
-            } catch (ClassCastException | IteratorFlowException e) {
+                switch(_operator) {
+                    case PLUS:
+                        return _left.add(_right);
+                    case MINUS:
+                        return _left.subtract(_right);
+                    default:
+                        throw new IteratorFlowException("Non recognized additive operator.", getMetadata());
+                }
+            } catch (ClassCastException | UnsupportedOperationException e) {
                 throw new UnexpectedTypeException(" \"add\": operation not possible with parameters of type \""
                         + ItemTypes.getItemTypeName(_left.getClass().getSimpleName()) + "\" and \""
                         + ItemTypes.getItemTypeName(_right.getClass().getSimpleName()) + "\"", getMetadata());

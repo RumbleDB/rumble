@@ -32,6 +32,8 @@ import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 
 import org.rumbledb.api.Item;
 
@@ -55,7 +57,7 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public double getDoubleValue() {
-        return this.getValue();
+        return _value;
     }
 
     @Override
@@ -151,7 +153,7 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public int compareTo(Item other) {
-        return other.isNull() ? 1 : Double.compare(this.getDoubleValue(), ((Item)other).castToDoubleValue());
+        return other.isNull() ? 1 : Double.compare(this.getDoubleValue(), other.castToDoubleValue());
     }
 
     @Override
@@ -165,41 +167,31 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public Item add(Item other) {
-        if (other.isDecimal()) return other.add(this);
         return ItemFactory.getInstance().createDoubleItem(this.getDoubleValue() + other.castToDoubleValue());
     }
 
     @Override
-    public Item subtract(Item other, boolean negated) {
-        if (other.isDecimal()) return other.subtract(this, true);
-        double result = negated ? other.castToDoubleValue() - this.getDoubleValue() : this.getDoubleValue() - other.castToDoubleValue();
-        return ItemFactory.getInstance().createDoubleItem(result);
+    public Item subtract(Item other) {
+        return ItemFactory.getInstance().createDoubleItem(this.getDoubleValue() - other.castToDoubleValue());
     }
 
     @Override
     public Item multiply(Item other) {
-        if (other.isDecimal()) return other.multiply(this);
         return ItemFactory.getInstance().createDoubleItem(this.getDoubleValue() * other.castToDoubleValue());
     }
 
     @Override
-    public Item divide(Item other, boolean inverted) {
-        if (other.isDecimal()) return other.divide(this, true);
-        double result = inverted ? other.castToDoubleValue() / this.getDoubleValue() : this.getDoubleValue() / other.castToDoubleValue();
-        return ItemFactory.getInstance().createDoubleItem(result);
+    public Item divide(Item other) {
+        return ItemFactory.getInstance().createDoubleItem(this.getDoubleValue() / other.castToDoubleValue());
     }
 
     @Override
-    public Item modulo(Item other, boolean inverted) {
-        if (other.isDecimal()) return other.modulo(this, true);
-        double result = inverted ? other.castToDoubleValue() % this.getDoubleValue() : this.getDoubleValue() % other.castToDoubleValue();
-        return ItemFactory.getInstance().createDoubleItem(result);
+    public Item modulo(Item other) {
+        return ItemFactory.getInstance().createDoubleItem(this.getDoubleValue() % other.castToDoubleValue());
     }
 
     @Override
-    public Item idivide(Item other, boolean inverted) {
-        if (other.isDecimal()) return other.idivide(this, true);
-        double result = inverted ? other.castToDoubleValue() / this.getDoubleValue() : this.getDoubleValue() / other.castToDoubleValue();
-        return ItemFactory.getInstance().createIntegerItem((int) result);
+    public Item idivide(Item other) {
+        return ItemFactory.getInstance().createIntegerItem((int) (this.getDoubleValue() / other.castToDoubleValue()));
     }
 }

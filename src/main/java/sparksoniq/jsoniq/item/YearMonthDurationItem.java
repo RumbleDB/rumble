@@ -81,7 +81,7 @@ public class YearMonthDurationItem extends DurationItem {
     }
 
     @Override
-    public Item subtract(Item other, boolean negated) {
+    public Item subtract(Item other) {
         return ItemFactory.getInstance().createYearMonthDurationItem(this.getValue().minus(other.getYearMonthDurationValue()));
     }
 
@@ -100,7 +100,7 @@ public class YearMonthDurationItem extends DurationItem {
     }
 
     @Override
-    public Item divide(Item other, boolean inverted) {
+    public Item divide(Item other) {
         BigDecimal otherBd;
         if (other.isYearMonthDuration()) {
             otherBd = BigDecimal.valueOf((other.getYearMonthDurationValue().toStandardDuration().getMillis()));

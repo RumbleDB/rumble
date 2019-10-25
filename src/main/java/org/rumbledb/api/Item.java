@@ -270,9 +270,9 @@ public abstract class Item implements SerializableItem {
     }
 
     /**
-     * Returns the byte[] value of the item, if it is a atomic item of type hexBinary.
+     * Returns the byte[] value of the item, if it is a atomic item of type hexBinary or Base64Binary.
      *
-     * @return the hexBinary value as an array of bytes.
+     * @return the binary value as an array of bytes.
      */
     public byte[] getBinaryValue() {
         throw new RuntimeException("Item is not a hexBinary.");
@@ -439,10 +439,10 @@ public abstract class Item implements SerializableItem {
     public abstract int hashCode();
 
 
-    public Item add(Item other) { throw new IteratorFlowException("Operation not defined"); }
-    public Item subtract(Item other, boolean negated) { throw new IteratorFlowException("Operation not defined"); }
-    public Item multiply(Item other) { throw new IteratorFlowException("Operation not defined"); }
-    public Item divide(Item other, boolean inverted) { throw new IteratorFlowException("Operation not defined"); }
-    public Item modulo(Item other, boolean inverted) { throw new IteratorFlowException("Operation not defined"); }
-    public Item idivide(Item other, boolean inverted) { throw new IteratorFlowException("Operation not defined"); }
+    public Item add(Item other) { throw new UnsupportedOperationException("Operation not defined"); }
+    public Item subtract(Item other) { throw new UnsupportedOperationException("Operation not defined"); }
+    public Item multiply(Item other) { throw new UnsupportedOperationException("Operation not defined"); }
+    public Item divide(Item other) { throw new UnsupportedOperationException("Operation not defined"); }
+    public Item modulo(Item other) { throw new UnsupportedOperationException("Operation not defined"); }
+    public Item idivide(Item other) { throw new UnsupportedOperationException("Operation not defined"); }
 }

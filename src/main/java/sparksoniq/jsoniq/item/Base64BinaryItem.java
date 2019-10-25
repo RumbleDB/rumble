@@ -147,7 +147,7 @@ public class Base64BinaryItem extends AtomicItem {
 
     @Override
     public String serialize() {
-        return this.getStringValue().toUpperCase();
+        return this.getStringValue();
     }
 
     private String serializeValue() {

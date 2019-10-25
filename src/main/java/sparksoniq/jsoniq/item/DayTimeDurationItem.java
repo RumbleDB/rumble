@@ -86,7 +86,7 @@ public class DayTimeDurationItem extends DurationItem {
     }
 
     @Override
-    public Item subtract(Item other, boolean negated) {
+    public Item subtract(Item other) {
         return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue().minus(other.getDayTimeDurationValue()));
     }
 
@@ -107,7 +107,7 @@ public class DayTimeDurationItem extends DurationItem {
     }
 
     @Override
-    public Item divide(Item other, boolean inverted) {
+    public Item divide(Item other) {
         BigDecimal otherBd;
         if (other.isDayTimeDuration()) {
             otherBd = BigDecimal.valueOf(other.getDayTimeDurationValue().toStandardDuration().getMillis());

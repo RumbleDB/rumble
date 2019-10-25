@@ -232,7 +232,8 @@ nCNameOrKeyWord         : NCName
                         | keyWordYearMonthDuration
                         | keyWordDayTimeDuration
                         | keyWordHexBinary
-                        | keyWordBase64Binary;
+                        | keyWordBase64Binary
+                        | keyWordHexBinary;
 
 pairConstructor         :  ( lhs=exprSingle | name=NCName ) (':' | '?') rhs=exprSingle;
 

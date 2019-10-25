@@ -252,12 +252,14 @@ public class Functions {
         buildInFunctions.put(new SparksoniqFunctionSignature(STARTSWITH, 2), StartsWithFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(MATCHES, 2), MatchesFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(CONTAINS, 2), ContainsFunctionIterator.class);
+        buildInFunctions.put(new SparksoniqFunctionSignature(NORMALIZESPACE, 1), NormalizeSpaceFunctionIterator.class);
+
         buildInFunctions.put(new SparksoniqFunctionSignature(DURATION, 1), DurationFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(YEARMONTHDURATION, 1), YearMonthDurationFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(DAYTIMEDURATION, 1), DayTimeDurationFunctionIterator.class);
+
         buildInFunctions.put(new SparksoniqFunctionSignature(HEXBINARY, 1), HexBinaryFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(BASE64BINARY, 1), Base64BinaryFunctionIterator.class);
-        buildInFunctions.put(new SparksoniqFunctionSignature(NORMALIZESPACE, 1), NormalizeSpaceFunctionIterator.class);
 
         buildInFunctions.put(new SparksoniqFunctionSignature(KEYS, 1), ObjectKeysFunctionIterator.class);
         buildInFunctions.put(new SparksoniqFunctionSignature(MEMBERS, 1), ArrayMembersFunctionIterator.class);
