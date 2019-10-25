@@ -26,6 +26,7 @@ public class HexBinaryItem extends AtomicItem {
     private final static String hexDigit = "[\\da-fA-F]";
     private final static String hexOctet = "(" + hexDigit + hexDigit + ")";
     private final static String hexBinary = hexOctet + "*";
+    private final static Pattern hexBinaryPattern = Pattern.compile(hexBinary);
 
     public HexBinaryItem() {
         super();
@@ -51,7 +52,7 @@ public class HexBinaryItem extends AtomicItem {
     }
 
     private static boolean checkInvalidHexBinaryFormat(String hexBinaryString) {
-        return Pattern.compile(hexBinary).matcher(hexBinaryString).matches();
+        return hexBinaryPattern.matcher(hexBinaryString).matches();
     }
 
     static byte[] parseHexBinaryString(String hexBinaryString) throws IllegalArgumentException{

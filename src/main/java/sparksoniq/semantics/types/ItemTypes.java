@@ -42,8 +42,9 @@ public enum ItemTypes {
 
     public static String getItemTypeName(String fullTypeName){
         String itemPostfix = "Item";
-        if (fullTypeName.endsWith("Item")) {
-            return fullTypeName.toLowerCase().substring(0, fullTypeName.length()-itemPostfix.length());
+        if (!itemPostfix.equals(fullTypeName) && fullTypeName.endsWith("Item")) {
+            return Character.toLowerCase(fullTypeName.charAt(0)) +
+                    fullTypeName.substring(1, fullTypeName.length()-itemPostfix.length());
         }
         return fullTypeName;
     }

@@ -20,10 +20,10 @@
 
 package sparksoniq.jsoniq.runtime.iterator.operational.base;
 
+import sparksoniq.exceptions.NonAtomicKeyException;
+import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
-import sparksoniq.jsoniq.item.DecimalItem;
-import sparksoniq.jsoniq.item.DoubleItem;
-import sparksoniq.jsoniq.item.IntegerItem;
+import sparksoniq.jsoniq.item.*;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -32,6 +32,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 
 import org.rumbledb.api.Item;
+import sparksoniq.semantics.types.ItemTypes;
 
 public abstract class BinaryOperationBaseIterator extends LocalRuntimeIterator {
 
@@ -50,21 +51,24 @@ public abstract class BinaryOperationBaseIterator extends LocalRuntimeIterator {
         this._rightIterator = right;
         this._operator = operator;
     }
-    
-    //performs conversions for binary operations with a numeric return type
-    //(int,double) -> double
-    //(int,decimal) -> decimal
-    //(decimal,double) -> double
-    public static Type getNumericResultType(Item left, Item right) {
-        if (left.isDouble() || right.isDouble()) {
-            return DoubleItem.class;
+
+    protected void checkBinaryOperation(Item left, Item right, OperationalExpressionBase.Operator operator) {
+        if (!left.isAtomic()) {
+            String message = String.format("Can not atomize an %1$s item: an %1$s has probably been passed where " +
+                            "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
+                    ItemTypes.getItemTypeName(left.getClass().getSimpleName()));
+            throw new NonAtomicKeyException(message, getMetadata().getExpressionMetadata());
         }
-        if (left.isDecimal() || right.isDecimal()) {
-            return DecimalItem.class;
+        if (!right.isAtomic()) {
+            String message = String.format("Can not atomize an %1$s item: an %1$s has probably been passed where " +
+                            "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
+                    ItemTypes.getItemTypeName(right.getClass().getSimpleName()));
+            throw new NonAtomicKeyException(message, getMetadata().getExpressionMetadata());
         }
-        return IntegerItem.class;
+        if (!left.isNumeric() || !right.isNumeric()) {
+            throw new UnexpectedTypeException(" \"" + operator.name().toLowerCase() + "\": operation not possible with parameters of type \""
+                    + ItemTypes.getItemTypeName(left.getClass().getSimpleName()) + "\" and \""
+                    + ItemTypes.getItemTypeName(right.getClass().getSimpleName()) + "\"", getMetadata());
+        }
     }
-
-    
-
 }

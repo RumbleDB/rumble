@@ -30,6 +30,7 @@ public class Base64BinaryItem extends AtomicItem {
     private static final String b64final = "(" + b64finalQuad + "|" + padded16 + "|" + padded8 + ")";
     private static final String b64quad = "(" + b64 + b64 + b64 + b64 + ")";
     private static final String base64Binary = "((" + b64quad + ")*" + "(" + b64final +"))?";
+    private static final Pattern base64BinaryPattern = Pattern.compile(base64Binary);
 
     private static final long serialVersionUID = 1L;
     private byte[] _value;
@@ -57,7 +58,7 @@ public class Base64BinaryItem extends AtomicItem {
     }
 
     private static boolean checkInvalidBase64BinaryFormat(String base64BinaryString) {
-        return Pattern.compile(base64Binary).matcher(base64BinaryString).matches();
+        return base64BinaryPattern.matcher(base64BinaryString).matches();
     }
 
     static byte[] parseBase64BinaryString(String base64BinaryString) throws IllegalArgumentException {
@@ -147,7 +148,7 @@ public class Base64BinaryItem extends AtomicItem {
 
     @Override
     public String serialize() {
-        return this.getStringValue().toUpperCase();
+        return this.getStringValue();
     }
 
     private String serializeValue() {
