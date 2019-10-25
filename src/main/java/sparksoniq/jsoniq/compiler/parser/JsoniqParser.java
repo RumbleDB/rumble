@@ -4867,7 +4867,7 @@ public class JsoniqParser extends Parser {
 		public Token fn_name;
 		public Token arity;
 		public TerminalNode NCName() { return getToken(JsoniqParser.NCName, 0); }
-		public TerminalNode IntegerLiteral() { return getToken(JsoniqParser.IntegerLiteral, 0); }
+		public TerminalNode Literal() { return getToken(JsoniqParser.Literal, 0); }
 		public NamedFunctionRefContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
@@ -4890,7 +4890,7 @@ public class JsoniqParser extends Parser {
 			setState(757);
 			match(T__56);
 			setState(758);
-			((NamedFunctionRefContext)_localctx).arity = match(IntegerLiteral);
+			((NamedFunctionRefContext)_localctx).arity = match(Literal);
 			}
 		}
 		catch (RecognitionException re) {
@@ -6225,7 +6225,7 @@ public class JsoniqParser extends Parser {
 		"\u02f0\u02ee\3\2\2\2\u02f0\u02ef\3\2\2\2\u02f1\177\3\2\2\2\u02f2\u02f5"+
 		"\5\u0082B\2\u02f3\u02f5\5\u0084C\2\u02f4\u02f2\3\2\2\2\u02f4\u02f3\3\2"+
 		"\2\2\u02f5\u0081\3\2\2\2\u02f6\u02f7\7~\2\2\u02f7\u02f8\7;\2\2\u02f8\u02f9"+
-		"\7z\2\2\u02f9\u0083\3\2\2\2\u02fa\u02fb\7\34\2\2\u02fb\u02fd\7\35\2\2"+
+		"\7w\2\2\u02f9\u0083\3\2\2\2\u02fa\u02fb\7\34\2\2\u02fb\u02fd\7\35\2\2"+
 		"\u02fc\u02fe\5\32\16\2\u02fd\u02fc\3\2\2\2\u02fd\u02fe\3\2\2\2\u02fe\u02ff"+
 		"\3\2\2\2\u02ff\u0302\7\36\2\2\u0300\u0301\7S\2\2\u0301\u0303\5\u0086D"+
 		"\2\u0302\u0300\3\2\2\2\u0302\u0303\3\2\2\2\u0303\u0304\3\2\2\2\u0304\u0305"+

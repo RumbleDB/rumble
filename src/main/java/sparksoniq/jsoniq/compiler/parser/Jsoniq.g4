@@ -190,7 +190,7 @@ argument                : exprSingle | '?';
 
 functionItemExpr        : namedFunctionRef | inlineFunctionExpr;
 
-namedFunctionRef        : fn_name=NCName '#' arity=IntegerLiteral;
+namedFunctionRef        : fn_name=NCName '#' arity=Literal;
 
 inlineFunctionExpr      : 'function' '(' paramList? ')'
                            (Kas return_type=sequenceType)?

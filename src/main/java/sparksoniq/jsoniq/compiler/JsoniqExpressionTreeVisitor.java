@@ -26,6 +26,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import sparksoniq.exceptions.DuplicateParamNameException;
 import sparksoniq.exceptions.JsoniqVersionException;
 import sparksoniq.exceptions.ModuleDeclarationException;
+import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnsupportedFeatureException;
 import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
 import sparksoniq.jsoniq.compiler.translator.expr.CommaExpression;
@@ -1050,11 +1051,16 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
     @Override
     public Void visitNamedFunctionRef(JsoniqParser.NamedFunctionRefContext ctx) {
         NamedFunctionRef node;
-        String name = ctx.fn_name.getText();
-        int arity = ((IntegerLiteral) ValueTypeHandler.getValueType(
+        PrimaryExpression literal = ValueTypeHandler.getValueType(
                 ctx.arity.getText(),
                 createMetadataFromContext(ctx)
-        )).getValue();
+        );
+        if (!(literal instanceof IntegerLiteral)) {
+            throw new SparksoniqRuntimeException("Parser error: In a named function reference, arity must be an integer.");
+        }
+
+        String name = ctx.fn_name.getText();
+        int arity = ((IntegerLiteral) literal).getValue();
         node = new NamedFunctionRef(new FunctionIdentifier(name, arity), createMetadataFromContext(ctx));
         this.currentPrimaryExpression = node;
         return null;

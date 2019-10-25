@@ -20,6 +20,7 @@
 
 package sparksoniq.semantics.visitor;
 
+import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnknownFunctionCallException;
 import sparksoniq.exceptions.UnsupportedFeatureException;
 import sparksoniq.jsoniq.compiler.translator.expr.CommaExpression;
@@ -382,14 +383,15 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         FunctionIdentifier identifier = expression.getIdentifier();
 
         try {
+            // as of 2019-10-25: this line should cause an unknown function call exception
             Class<? extends RuntimeIterator> functionClass = Functions.getBuiltInFunction(identifier, createIteratorMetadata(expression));
-            throw new RuntimeException("Higher order functions using builtin functions are not supported");
+            throw new SparksoniqRuntimeException("Higher order functions using builtin functions are not supported.");
         } catch (Exception ex1) {
             if (ex1 instanceof UnknownFunctionCallException) {
                 FunctionItem function = Functions.getUserDefinedFunction(identifier, createIteratorMetadata(expression));
                 return new FunctionItemIterator(function, createIteratorMetadata(expression));
             } else {
-                throw new RuntimeException(ex1.getMessage());
+                throw new SparksoniqRuntimeException(ex1.getMessage());
             }
         }
     }
