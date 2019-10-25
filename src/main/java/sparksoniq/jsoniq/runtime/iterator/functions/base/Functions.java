@@ -504,30 +504,6 @@ public class Functions {
          */
         public static final String MATCHES = "matches";
         /**
-         * function that returns the duration item from the supplied string
-         */
-        public static final String DURATION = "duration";
-        /**
-         * function that returns the yearMonthDuration item from the supplied string
-         */
-        public static final String YEARMONTHDURATION = "yearMonthDuration";
-        /**
-         * function that returns the dayTimeDuration item from the supplied string
-         */
-        public static final String DAYTIMEDURATION = "dayTimeDuration";
-        /**
-         * function that returns the dateTime item from the supplied string
-         */
-        public static final String DATETIME = "dateTime";
-        /**
-         * function that returns the date item from the supplied string
-         */
-        public static final String DATE = "date";
-        /**
-         * function that returns the time item from the supplied string
-         */
-        public static final String TIME = "time";
-        /**
          * function that returns the hexBinary item from the supplied string
          */
         public static final String HEXBINARY = "hexBinary";

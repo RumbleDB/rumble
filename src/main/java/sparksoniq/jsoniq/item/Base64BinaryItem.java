@@ -60,7 +60,7 @@ public class Base64BinaryItem extends AtomicItem {
         return Pattern.compile(base64Binary).matcher(base64BinaryString).matches();
     }
 
-    static byte[] parseBase64BinaryString(String base64BinaryString) {
+    static byte[] parseBase64BinaryString(String base64BinaryString) throws IllegalArgumentException {
         if (base64BinaryString == null || !checkInvalidBase64BinaryFormat(base64BinaryString)) throw new IllegalArgumentException();
         return DatatypeConverter.parseBase64Binary(base64BinaryString);
     }
