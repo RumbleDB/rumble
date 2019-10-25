@@ -56,7 +56,7 @@ public class IntegerItem extends AtomicItem {
 
     @Override
     public int getIntegerValue() {
-        return getValue();
+        return _value;
     }
 
     @Override
@@ -150,5 +150,59 @@ public class IntegerItem extends AtomicItem {
                     ", " + other.serialize(), metadata);
         }
         return operator.apply(this, other);
+    }
+
+
+    @Override
+    public Item add(Item other) {
+        if (other.isDouble())
+            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() + other.getDoubleValue());
+        if (other.isDecimal())
+            return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue().add(other.getDecimalValue()));
+        return ItemFactory.getInstance().createIntegerItem(this.getIntegerValue() + other.castToIntegerValue());
+    }
+
+    @Override
+    public Item subtract(Item other) {
+        if (other.isDouble())
+            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() - other.getDoubleValue());
+        if (other.isDecimal())
+            return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue().subtract(other.getDecimalValue()));
+        return ItemFactory.getInstance().createIntegerItem(this.getIntegerValue() - other.castToIntegerValue());
+    }
+
+    @Override
+    public Item multiply(Item other) {
+        if (other.isDouble())
+            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() * other.getDoubleValue());
+        if (other.isDecimal())
+            return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue().multiply(other.getDecimalValue()));
+        return ItemFactory.getInstance().createIntegerItem(this.getIntegerValue() * other.castToIntegerValue());
+    }
+
+    @Override
+    public Item divide(Item other) {
+        if (other.isDouble())
+            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() / other.getDoubleValue());
+        BigDecimal bdResult = this.castToDecimalValue().divide(other.castToDecimalValue(), 10, BigDecimal.ROUND_HALF_UP);
+        if (bdResult.stripTrailingZeros().scale() <= 0) {
+            return ItemFactory.getInstance().createIntegerItem(bdResult.intValueExact());
+        } else {
+            return ItemFactory.getInstance().createDecimalItem(bdResult);
+        }
+    }
+
+    @Override
+    public Item modulo(Item other) {
+        if (other.isDouble())
+            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() % other.getDoubleValue());
+        if (other.isDecimal())
+            return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue().remainder(other.getDecimalValue()));
+        return ItemFactory.getInstance().createIntegerItem(this.getIntegerValue() % other.castToIntegerValue());
+    }
+
+    @Override
+    public Item idivide(Item other) {
+        return ItemFactory.getInstance().createIntegerItem(this.getIntegerValue() / other.castToIntegerValue());
     }
 }

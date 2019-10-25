@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(11.0, -10.0)" :)
+(:JIQS: ShouldRun; Output="(11, -10)" :)
 ceiling(10.5),
 ceiling(-10.5),
 ceiling(())

@@ -36,6 +36,7 @@ import java.lang.reflect.Type;
 import java.math.BigDecimal;
 
 import org.rumbledb.api.Item;
+import sparksoniq.semantics.types.ItemTypes;
 
 public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator {
 
@@ -62,11 +63,10 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
         } else {
             _left = _leftIterator.next();
             _right = _rightIterator.next();
-            if (_leftIterator.hasNext() || _rightIterator.hasNext() || !_left.isNumeric() || !_right.isNumeric())
-                throw new UnexpectedTypeException("Multiplicative expression has non numeric args " +
-                        _left.serialize() + ", " + _right.serialize(), getMetadata());
-
+            this.checkBinaryOperation(_left, _right, _operator);
             this._hasNext = true;
+            if (_leftIterator.hasNext() || _rightIterator.hasNext())
+                throw new UnexpectedTypeException("Sequence of more than one item can not be promoted to parameter type atomic of function add()", getMetadata());
         }
         _leftIterator.close();
         _rightIterator.close();
@@ -76,71 +76,23 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-
-            Type returnType = getNumericResultType(_left, _right);
-            if (returnType.equals(IntegerItem.class)) {
-                try {
-                    int l = _left.castToIntegerValue();
-                    int r = _right.castToIntegerValue();
-                    switch (this._operator) {
-                        case MUL:
-                            return ItemFactory.getInstance().createIntegerItem(l * r);
-                        case DIV:
-                            BigDecimal decLeft = _left.castToDecimalValue();
-                            BigDecimal decRight = _right.castToDecimalValue();
-                            BigDecimal bdResult = decLeft.divide(decRight, 10, BigDecimal.ROUND_HALF_UP);
-                            // if the result contains no decimal part, convert to integer
-                            if (bdResult.stripTrailingZeros().scale() <= 0) {
-                                try {
-                                    // exception is thrown if information is lost during conversion to integer
-                                    // this happens if the bigdecimal has a decimal part, or if it can't be fit to an integer
-                                    return ItemFactory.getInstance().createIntegerItem(bdResult.intValueExact());
-                                } catch (ArithmeticException e) {
-                                    e.printStackTrace();
-                                }
-                            } else {
-                                return ItemFactory.getInstance().createDecimalItem(bdResult);
-                            }
-                        case MOD:
-                            return ItemFactory.getInstance().createIntegerItem(l % r);
-                        case IDIV:
-                            return ItemFactory.getInstance().createIntegerItem(l / r);
-                        default:
-                            new IteratorFlowException("Non recognized multicative operator.", getMetadata());
-                    }
-                } catch (IteratorFlowException e) {
-                    throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-                }
-            } else if (returnType.equals(DoubleItem.class)) {
-                double l = _left.castToDoubleValue();
-                double r = _right.castToDoubleValue();
-                switch (this._operator) {
+            try {
+                switch(_operator) {
                     case MUL:
-                        return ItemFactory.getInstance().createDoubleItem(l * r);
+                        return _left.multiply(_right);
                     case DIV:
-                        return ItemFactory.getInstance().createDoubleItem(l / r);
-                    case MOD:
-                        return ItemFactory.getInstance().createDoubleItem(l % r);
+                        return _left.divide(_right);
                     case IDIV:
-                        return ItemFactory.getInstance().createIntegerItem((int) (l / r));
-                    default:
-                        new IteratorFlowException("Non recognized multicative operator.", getMetadata());
-                }
-            } else if (returnType.equals(DecimalItem.class)) {
-                BigDecimal l = _left.castToDecimalValue();
-                BigDecimal r = _right.castToDecimalValue();
-                switch (this._operator) {
-                    case MUL:
-                        return ItemFactory.getInstance().createDecimalItem(l.multiply(r));
-                    case DIV:
-                        return ItemFactory.getInstance().createDecimalItem(l.divide(r, 10, BigDecimal.ROUND_HALF_UP));
+                        return _left.idivide(_right);
                     case MOD:
-                        return ItemFactory.getInstance().createDecimalItem(l.remainder(r));
-                    case IDIV:
-                        return ItemFactory.getInstance().createIntegerItem(l.divideToIntegralValue(r).intValueExact());
+                        return _left.modulo(_right);
                     default:
-                        new IteratorFlowException("Non recognized multicative operator.", getMetadata());
+                        throw new IteratorFlowException("Non recognized multiplicative operator.", getMetadata());
                 }
+            } catch (ClassCastException | UnsupportedOperationException e) {
+                throw new UnexpectedTypeException(" \"" + _operator.name().toLowerCase() + "\": operation not possible with parameters of type \""
+                        + ItemTypes.getItemTypeName(_left.getClass().getSimpleName()) + "\" and \""
+                        + ItemTypes.getItemTypeName(_right.getClass().getSimpleName()) + "\"", getMetadata());
             }
         }
         throw new IteratorFlowException("Multiplicative expression has non numeric args", getMetadata());

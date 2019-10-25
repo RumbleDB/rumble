@@ -32,6 +32,8 @@ import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 
 import org.rumbledb.api.Item;
 
@@ -55,7 +57,7 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public double getDoubleValue() {
-        return this.getValue();
+        return _value;
     }
 
     @Override
@@ -68,6 +70,7 @@ public class DoubleItem extends AtomicItem {
     }
 
     public BigDecimal castToDecimalValue() {
+        if (Double.isNaN(this.getDoubleValue()) || Double.isInfinite(this.getDoubleValue())) return super.castToDecimalValue();
         return BigDecimal.valueOf(getDoubleValue());
     }
 
@@ -117,7 +120,11 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public String serialize() {
-        return String.valueOf(this.getValue());
+        if (Double.isNaN(this.getDoubleValue()) || Double.isInfinite(this.getDoubleValue()))
+            return String.valueOf(this.getDoubleValue());
+        boolean negativeZero = this.getDoubleValue() == 0 && String.valueOf(this.getDoubleValue()).charAt(0) == ('-');
+        String doubleString = String.valueOf(this.castToDecimalValue().stripTrailingZeros().toPlainString());
+        return negativeZero ? '-'+doubleString : doubleString;
     }
 
     @Override
@@ -146,7 +153,7 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public int compareTo(Item other) {
-        return other.isNull() ? 1 : Double.compare(this.getDoubleValue(), ((Item)other).castToDoubleValue());
+        return other.isNull() ? 1 : Double.compare(this.getDoubleValue(), other.castToDoubleValue());
     }
 
     @Override
@@ -156,5 +163,35 @@ public class DoubleItem extends AtomicItem {
                     ", " + other.serialize(), metadata);
         }
         return operator.apply(this, other);
+    }
+
+    @Override
+    public Item add(Item other) {
+        return ItemFactory.getInstance().createDoubleItem(this.getDoubleValue() + other.castToDoubleValue());
+    }
+
+    @Override
+    public Item subtract(Item other) {
+        return ItemFactory.getInstance().createDoubleItem(this.getDoubleValue() - other.castToDoubleValue());
+    }
+
+    @Override
+    public Item multiply(Item other) {
+        return ItemFactory.getInstance().createDoubleItem(this.getDoubleValue() * other.castToDoubleValue());
+    }
+
+    @Override
+    public Item divide(Item other) {
+        return ItemFactory.getInstance().createDoubleItem(this.getDoubleValue() / other.castToDoubleValue());
+    }
+
+    @Override
+    public Item modulo(Item other) {
+        return ItemFactory.getInstance().createDoubleItem(this.getDoubleValue() % other.castToDoubleValue());
+    }
+
+    @Override
+    public Item idivide(Item other) {
+        return ItemFactory.getInstance().createIntegerItem((int) (this.getDoubleValue() / other.castToDoubleValue()));
     }
 }

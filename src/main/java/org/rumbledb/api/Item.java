@@ -373,4 +373,12 @@ public abstract class Item implements SerializableItem {
      */
     @Override
     public abstract int hashCode();
+
+
+    public Item add(Item other) { throw new UnsupportedOperationException("Operation not defined"); }
+    public Item subtract(Item other) { throw new UnsupportedOperationException("Operation not defined"); }
+    public Item multiply(Item other) { throw new UnsupportedOperationException("Operation not defined"); }
+    public Item divide(Item other) { throw new UnsupportedOperationException("Operation not defined"); }
+    public Item modulo(Item other) { throw new UnsupportedOperationException("Operation not defined"); }
+    public Item idivide(Item other) { throw new UnsupportedOperationException("Operation not defined"); }
 }
