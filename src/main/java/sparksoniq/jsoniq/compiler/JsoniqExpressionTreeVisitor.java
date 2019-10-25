@@ -1030,20 +1030,20 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
 
     @Override
     public Void visitFunctionItemExpr(JsoniqParser.FunctionItemExprContext ctx) {
-        Expression node;
+        PrimaryExpression node;
 
         ParseTree child = ctx.children.get(0);
         if (child instanceof JsoniqParser.NamedFunctionRefContext) {
             this.visitNamedFunctionRef((JsoniqParser.NamedFunctionRefContext) child);
-            node = this.currentExpression;
+            node = this.currentPrimaryExpression;
         } else if (child instanceof JsoniqParser.InlineFunctionExprContext) {
             this.visitInlineFunctionExpr((JsoniqParser.InlineFunctionExprContext) child);
-            node = this.currentExpression;
+            node = this.currentPrimaryExpression;
         } else {
             throw new UnsupportedFeatureException("Function item expression not yet implemented",
                     createMetadataFromContext(ctx));
         }
-        this.currentExpression = node;
+        this.currentPrimaryExpression = node;
         return null;
     }
 
@@ -1056,7 +1056,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
                 createMetadataFromContext(ctx)
         )).getValue();
         node = new NamedFunctionRef(new FunctionIdentifier(name, arity), createMetadataFromContext(ctx));
-        this.currentExpression = node;
+        this.currentPrimaryExpression = node;
         return null;
     }
 
@@ -1104,7 +1104,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         fnBody = (CommaExpression) this.currentExpression;
 
         node = new FunctionDeclarationExpression("", fnParams, fnReturnType, fnBody, createMetadataFromContext(ctx));
-        this.currentExpression = node;
+        this.currentPrimaryExpression = node;
         return null;
     }
 
