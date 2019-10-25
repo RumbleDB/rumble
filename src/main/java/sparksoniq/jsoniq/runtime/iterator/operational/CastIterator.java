@@ -3,7 +3,6 @@ package sparksoniq.jsoniq.runtime.iterator.operational;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.CastException;
 import sparksoniq.exceptions.IteratorFlowException;
-
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.item.AtomicItem;
@@ -43,6 +42,7 @@ public class CastIterator extends UnaryOperationIterator {
             }
             _child.close();
             this._hasNext = false;
+
             Item item = items.get(0);
             String itemType = ItemTypes.getItemTypeName(item.getClass().getSimpleName());
 
@@ -52,6 +52,7 @@ public class CastIterator extends UnaryOperationIterator {
                     item.serialize(), itemType, targetType);
 
             AtomicItem atomicItem = CastableIterator.checkInvalidCastable(item, getMetadata(), _singleType);
+
             if (atomicItem.isCastableAs(_singleType.getType())) {
                 try {
                     return atomicItem.castAs(_singleType.getType());

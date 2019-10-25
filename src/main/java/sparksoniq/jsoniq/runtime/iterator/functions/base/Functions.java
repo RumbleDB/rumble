@@ -507,33 +507,10 @@ public class Functions {
          */
         public static final String DURATION = "duration";
         /**
-<<<<<<< HEAD
-=======
-         * function that returns the yearMonthDuration item from the supplied string
-         */
-        public static final String YEARMONTHDURATION = "yearMonthDuration";
-        /**
-         * function that returns the dayTimeDuration item from the supplied string
-         */
-        public static final String DAYTIMEDURATION = "dayTimeDuration";
-        /**
-         * function that returns the dateTime item from the supplied string
-         */
-        public static final String DATETIME = "dateTime";
-        /**
-         * function that returns the date item from the supplied string
-         */
-        public static final String DATE = "date";
-        /**
-         * function that returns the time item from the supplied string
-         */
-        public static final String TIME = "time";
-        /**
          * function that returns the hexBinary item from the supplied string
          */
         public static final String HEXBINARY = "hexBinary";
         /**
->>>>>>> e1b52db598dfd888c67de03cde56d9e0332d8547
          * function that normalizes spaces in a string
          */
         public static final String NORMALIZESPACE = "normalize-space";
