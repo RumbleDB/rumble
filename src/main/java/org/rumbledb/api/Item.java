@@ -252,24 +252,6 @@ public abstract class Item implements SerializableItem {
     }
 
     /**
-     * Returns the period value of the item, if it is a atomic item of type yearMonthDuration.
-     *
-     * @return the period value as a Period.
-     */
-    public Period getYearMonthDurationValue() {
-        throw new RuntimeException("Item is not a YearMonthDuration.");
-    }
-
-    /**
-     * Returns the period value of the item, if it is a atomic item of type dayTimeDuration.
-     *
-     * @return the period value as a Period.
-     */
-    public Period getDayTimeDurationValue() {
-        throw new RuntimeException("Item is not a DayTimeDuration.");
-    }
-
-    /**
      * Returns the byte[] value of the item, if it is a atomic item of type hexBinary or Base64Binary.
      *
      * @return the binary value as an array of bytes.

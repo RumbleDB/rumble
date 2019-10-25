@@ -70,24 +70,25 @@ public class DayTimeDurationItem extends DurationItem {
 
     @Override
     public Item compareItem(Item other, OperationalExpressionBase.Operator operator, IteratorMetadata metadata) {
-        if (!other.isDayTimeDuration() && (!other.isDuration() || other.isYearMonthDuration()) && !other.isNull()) {
+        if (other.isDuration() && !other.isDayTimeDuration() && !other.isYearMonthDuration()) {
+            return other.compareItem(this, operator, metadata);
+        }
+        else if (!other.isDayTimeDuration() && !other.isNull()) {
             throw new UnexpectedTypeException("\"" + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
                     + "\": invalid type: can not compare for equality to type \""
                     + ItemTypes.getItemTypeName(other.getClass().getSimpleName()) + "\"", metadata);
-        } else if (!other.isDayTimeDuration() && !other.isYearMonthDuration() && other.isDuration()) {
-            return super.compareItem(other, operator, metadata);
         }
         return operator.apply(this, other);
     }
 
     @Override
     public Item add(Item other) {
-        return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue().plus(other.getDayTimeDurationValue()));
+        return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue().plus(other.getDurationValue()));
     }
 
     @Override
     public Item subtract(Item other) {
-        return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue().minus(other.getDayTimeDurationValue()));
+        return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue().minus(other.getDurationValue()));
     }
 
     @Override
@@ -110,7 +111,7 @@ public class DayTimeDurationItem extends DurationItem {
     public Item divide(Item other) {
         BigDecimal otherBd;
         if (other.isDayTimeDuration()) {
-            otherBd = BigDecimal.valueOf(other.getDayTimeDurationValue().toStandardDuration().getMillis());
+            otherBd = BigDecimal.valueOf(other.getDurationValue().toStandardDuration().getMillis());
         } else {
             otherBd = other.castToDecimalValue();
         }
