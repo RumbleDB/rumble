@@ -39,6 +39,9 @@ public enum ItemTypes {
     YearMonthDurationItem,
     DayTimeDurationItem,
 
+    HexBinaryItem,
+    Base64BinaryItem,
+
     NullItem;
 
     public static String getItemTypeName(String fullTypeName){

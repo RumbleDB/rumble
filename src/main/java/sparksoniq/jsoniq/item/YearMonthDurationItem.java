@@ -77,12 +77,12 @@ public class YearMonthDurationItem extends DurationItem {
 
     @Override
     public Item add(Item other) {
-        return ItemFactory.getInstance().createYearMonthDurationItem(this.getValue().plus(((YearMonthDurationItem) other).getValue()));
+        return ItemFactory.getInstance().createYearMonthDurationItem(this.getValue().plus(other.getYearMonthDurationValue()));
     }
 
     @Override
     public Item subtract(Item other, boolean negated) {
-        return ItemFactory.getInstance().createYearMonthDurationItem(this.getValue().minus(((YearMonthDurationItem) other).getValue()));
+        return ItemFactory.getInstance().createYearMonthDurationItem(this.getValue().minus(other.getYearMonthDurationValue()));
     }
 
     @Override
@@ -103,7 +103,7 @@ public class YearMonthDurationItem extends DurationItem {
     public Item divide(Item other, boolean inverted) {
         BigDecimal otherBd;
         if (other.isYearMonthDuration()) {
-            otherBd = BigDecimal.valueOf(((YearMonthDurationItem) other).getValue().toStandardDuration().getMillis());
+            otherBd = BigDecimal.valueOf((other.getYearMonthDurationValue().toStandardDuration().getMillis()));
         } else {
             otherBd = other.castToDecimalValue();
         }

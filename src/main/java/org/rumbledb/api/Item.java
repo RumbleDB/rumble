@@ -20,9 +20,9 @@
 
 package org.rumbledb.api;
 
+import org.joda.time.Period;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
-import sparksoniq.jsoniq.runtime.iterator.operational.ComparisonOperationIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.types.ItemType;
 
@@ -243,6 +243,42 @@ public abstract class Item implements SerializableItem {
     }
 
     /**
+     * Returns the period value of the item, if it is a atomic item of type duration.
+     *
+     * @return the period value as a Period.
+     */
+    public Period getDurationValue() {
+        throw new RuntimeException("Item is not a duration.");
+    }
+
+    /**
+     * Returns the period value of the item, if it is a atomic item of type yearMonthDuration.
+     *
+     * @return the period value as a Period.
+     */
+    public Period getYearMonthDurationValue() {
+        throw new RuntimeException("Item is not a YearMonthDuration.");
+    }
+
+    /**
+     * Returns the period value of the item, if it is a atomic item of type dayTimeDuration.
+     *
+     * @return the period value as a Period.
+     */
+    public Period getDayTimeDurationValue() {
+        throw new RuntimeException("Item is not a DayTimeDuration.");
+    }
+
+    /**
+     * Returns the byte[] value of the item, if it is a atomic item of type hexBinary.
+     *
+     * @return the hexBinary value as an array of bytes.
+     */
+    public byte[] getBinaryValue() {
+        throw new RuntimeException("Item is not a hexBinary.");
+    }
+
+    /**
      * Please do not use, item type API not publicly released yet.
      * @param type an ItemType.
      * @return true if it matches the item type.
@@ -354,6 +390,24 @@ public abstract class Item implements SerializableItem {
      * @return true if it is an atomic item of type dayTimeDuration, false otherwise.
      */
     public boolean isDayTimeDuration() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an atomic item of type hexBinary.
+     *
+     * @return true if it is an atomic item of type hexBinary, false otherwise.
+     */
+    public boolean isHexBinary() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an atomic item of type base64Binary.
+     *
+     * @return true if it is an atomic item of type base64Binary, false otherwise.
+     */
+    public boolean isBase64Binary() {
         return false;
     }
 

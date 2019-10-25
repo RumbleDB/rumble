@@ -55,6 +55,10 @@ public class DurationItem extends AtomicItem {
         return _value;
     }
 
+    public Period getDurationValue() {
+        return _value;
+    }
+
     @Override
     public boolean isAtomic() {
         return true;
@@ -78,8 +82,7 @@ public class DurationItem extends AtomicItem {
         Item otherItem = (Item) otherObject;
         Instant now = new Instant();
         if (otherItem.isDuration()) {
-            DurationItem otherDuration = (DurationItem) otherItem;
-            return this.getValue().toDurationFrom(now).isEqual(otherDuration.getValue().toDurationFrom(now));
+            return this.getDurationValue().toDurationFrom(now).isEqual(otherItem.getDurationValue().toDurationFrom(now));
         }
         return false;
     }
@@ -202,8 +205,7 @@ public class DurationItem extends AtomicItem {
         if (other.isNull()) return 1;
         Instant now = new Instant();
         if (other.isDuration()) {
-            DurationItem otherDuration = (DurationItem) other;
-            return this.getValue().toDurationFrom(now).compareTo(otherDuration.getValue().toDurationFrom(now));
+            return this.getDurationValue().toDurationFrom(now).compareTo(other.getDurationValue().toDurationFrom(now));
         }
         throw new IteratorFlowException("Cannot compare item of type " + ItemTypes.getItemTypeName(this.getClass().getSimpleName()) +
                 " with item of type " + ItemTypes.getItemTypeName(other.getClass().getSimpleName()));

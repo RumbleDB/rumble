@@ -13,5 +13,8 @@ public enum AtomicTypes {
     YearMonthDurationItem,
     DayTimeDurationItem,
 
+    HexBinaryItem,
+    Base64BinaryItem,
+
     NullItem,
 }

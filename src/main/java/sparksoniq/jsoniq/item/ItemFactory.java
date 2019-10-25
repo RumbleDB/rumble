@@ -63,6 +63,12 @@ public class ItemFactory {
         return new DayTimeDurationItem(p);
     }
 
+    public Item createHexBinaryItem(String s) {
+        return new HexBinaryItem(s);
+    }
+
+    public Base64BinaryItem createBase64BinaryItem(String s) {return new Base64BinaryItem(s);}
+
     public Item createObjectItem() {
         return new ObjectItem();
     }

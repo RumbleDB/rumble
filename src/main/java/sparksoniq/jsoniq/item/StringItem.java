@@ -98,6 +98,10 @@ public class StringItem extends AtomicItem {
                 return ItemFactory.getInstance().createYearMonthDurationItem(DurationItem.getDurationFromString(this.getStringValue(), AtomicTypes.YearMonthDurationItem));
             case DayTimeDurationItem:
                 return ItemFactory.getInstance().createDayTimeDurationItem(DurationItem.getDurationFromString(this.getStringValue(), AtomicTypes.DayTimeDurationItem));
+            case HexBinaryItem:
+                return ItemFactory.getInstance().createHexBinaryItem(this.getStringValue());
+            case Base64BinaryItem:
+                return ItemFactory.getInstance().createBase64BinaryItem(this.getStringValue());
             case StringItem:
                 return this;
             default:
@@ -134,6 +138,10 @@ public class StringItem extends AtomicItem {
                 DurationItem.getDurationFromString(this.getValue(), AtomicTypes.YearMonthDurationItem);
             } else if (itemType == AtomicTypes.DayTimeDurationItem) {
                 DurationItem.getDurationFromString(this.getValue(), AtomicTypes.DayTimeDurationItem);
+            } else if (itemType == AtomicTypes.HexBinaryItem) {
+                HexBinaryItem.parseHexBinaryString(this.getValue());
+            } else if (itemType == AtomicTypes.Base64BinaryItem) {
+                Base64BinaryItem.parseBase64BinaryString(this.getValue());
             }
             else return isBooleanLiteral(this.getValue());
         } catch (UnsupportedOperationException | IllegalArgumentException e) {
@@ -142,7 +150,6 @@ public class StringItem extends AtomicItem {
         return true;
     }
 
-    @Override
     public String serialize() {
         return this.getValue();
     }
