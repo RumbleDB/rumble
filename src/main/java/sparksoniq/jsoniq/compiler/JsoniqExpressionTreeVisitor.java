@@ -1195,17 +1195,6 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
     }
     //endregion
 
-    private int getDepthLevel(JsoniqParser.ExprContext ctx) {
-        int count = 0;
-        ParseTree level = ctx;
-        while (level != null) {
-            level = level.getParent();
-            count++;
-        }
-
-        return count;
-    }
-
     private ExpressionMetadata createMetadataFromContext(ParserRuleContext ctx) {
         int tokenLineNumber = ctx.getStart().getLine();
         int tokenColumnNumber = ctx.getStart().getCharPositionInLine();
