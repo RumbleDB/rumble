@@ -241,7 +241,6 @@ keyWords                : Kjsoniq
                         | Kinstance
                         | Kof
                         | Ktreat
-                        |
                         | Kcast
                         | Kcastable
                         | Kdefault
