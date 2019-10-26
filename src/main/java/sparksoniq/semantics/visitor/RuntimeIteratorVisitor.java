@@ -351,7 +351,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
     public RuntimeIterator visitFunctionCall(FunctionCall expression, RuntimeIterator argument) {
         List<RuntimeIterator> arguments = new ArrayList<>();
         IteratorMetadata iteratorMetadata = createIteratorMetadata(expression);
-        for (Expression arg : expression.getParameters()) {
+        for (Expression arg : expression.getArguments()) {
             arguments.add(this.visit(arg, argument));
         }
         String fnName = expression.getFunctionName();

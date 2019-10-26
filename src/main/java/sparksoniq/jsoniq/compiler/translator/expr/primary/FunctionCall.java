@@ -33,17 +33,17 @@ import java.util.List;
 public class FunctionCall extends PrimaryExpression {
 
     private final String _functionName;
-    private final List<Expression> _parameters;
+    private final List<Expression> _arguments;
 
 
-    public FunctionCall(String functionName, List<Expression> parameters, ExpressionMetadata metadata) {
+    public FunctionCall(String functionName, List<Expression> arguments, ExpressionMetadata metadata) {
         super(metadata);
         this._functionName = functionName;
-        this._parameters = parameters;
+        this._arguments = arguments;
     }
 
-    public List<Expression> getParameters() {
-        return _parameters;
+    public List<Expression> getArguments() {
+        return _arguments;
     }
 
     public String getFunctionName() {
@@ -53,7 +53,7 @@ public class FunctionCall extends PrimaryExpression {
     @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
         List<ExpressionOrClause> result = new ArrayList<>();
-        result.addAll(this._parameters);
+        result.addAll(this._arguments);
         return getDescendantsFromChildren(result, depthSearch);
     }
 
@@ -64,11 +64,11 @@ public class FunctionCall extends PrimaryExpression {
         Collections.reverse(names);
         for (String name : names)
             result += name + (names.indexOf(name) < names.size() - 1 ? " : " : " ");
-        if (this._parameters.size() > 0)
+        if (this._arguments.size() > 0)
             result += "(argumentList ( ";
-        for (Expression arg : this._parameters)
+        for (Expression arg : this._arguments)
             result += "(argument (exprSingle " + arg.serializationString(false) +
-                    (_parameters.indexOf(arg) < _parameters.size() - 1 ? ")) , " : ")) ");
+                    (_arguments.indexOf(arg) < _arguments.size() - 1 ? ")) , " : ")) ");
         result += "))))";
         return result;
 

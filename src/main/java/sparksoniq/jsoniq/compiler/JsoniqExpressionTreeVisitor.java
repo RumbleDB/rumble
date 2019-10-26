@@ -1011,14 +1011,14 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
             name = ctx.kw.getText();
         if (ctx.ns != null)
             name = name + ":" + ctx.ns.getText();
-        List<Expression> parameters = new ArrayList<>();
+        List<Expression> arguments = new ArrayList<>();
         if (ctx.argumentList().args != null)
             for (JsoniqParser.ArgumentContext arg : ctx.argumentList().args) {
                 this.visitArgument(arg);
                 Expression currentArg = this.currentExpression;
-                parameters.add(currentArg);
+                arguments.add(currentArg);
             }
-        node = new FunctionCall(name, parameters, createMetadataFromContext(ctx));
+        node = new FunctionCall(name, arguments, createMetadataFromContext(ctx));
         this.currentPrimaryExpression = node;
         return null;
     }
