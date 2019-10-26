@@ -1008,16 +1008,24 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
             name = ctx.kw.getText();
         if (ctx.ns != null)
             name = name + ":" + ctx.ns.getText();
+        node = new FunctionCall(
+                name,
+                getArgumentsFromArgumentListContext(ctx.argumentList()),
+                createMetadataFromContext(ctx));
+        this.currentPrimaryExpression = node;
+        return null;
+    }
+
+    private List<Expression> getArgumentsFromArgumentListContext(JsoniqParser.ArgumentListContext ctx) {
         List<Expression> arguments = new ArrayList<>();
-        if (ctx.argumentList().args != null)
-            for (JsoniqParser.ArgumentContext arg : ctx.argumentList().args) {
+        if (ctx.args != null) {
+            for (JsoniqParser.ArgumentContext arg : ctx.args) {
                 this.visitArgument(arg);
                 Expression currentArg = this.currentExpression;
                 arguments.add(currentArg);
             }
-        node = new FunctionCall(name, arguments, createMetadataFromContext(ctx));
-        this.currentPrimaryExpression = node;
-        return null;
+        }
+        return arguments;
     }
 
     @Override
