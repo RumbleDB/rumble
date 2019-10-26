@@ -146,7 +146,7 @@ unaryExpr               : op+=('-' | '+')* main_expr=simpleMapExpr;
 
 simpleMapExpr           : main_expr=postFixExpr ('!' postFixExpr)*;
 
-postFixExpr             : main_expr=primaryExpr (al=arrayLookup | pr=predicate | ol=objectLookup | au=arrayUnboxing)*;
+postFixExpr             : main_expr=primaryExpr (arrayLookup | predicate | objectLookup | arrayUnboxing | argumentList)*;
 
 arrayLookup             : '[' '[' expr ']' ']';
 

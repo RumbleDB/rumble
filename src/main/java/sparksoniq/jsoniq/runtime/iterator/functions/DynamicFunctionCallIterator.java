@@ -23,7 +23,8 @@ package sparksoniq.jsoniq.runtime.iterator.functions;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.jsoniq.compiler.translator.expr.Expression;
+import sparksoniq.exceptions.UnexpectedTypeException;
+import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -32,29 +33,27 @@ import sparksoniq.semantics.visitor.RuntimeIteratorVisitor;
 
 import java.util.List;
 
-public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
+public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
 
-	private static final long serialVersionUID = 1L;
-	private String _fnName;
-	private Expression _fnBody;
-	private List<RuntimeIterator> _fnArguments;
-    private List<String> _fnArgumentNames;
+    private static final long serialVersionUID = 1L;
+    private RuntimeIterator _fnItemIterator;
+    private List<RuntimeIterator> _fnArguments;
 
+    private FunctionItem _fnItem;
     private RuntimeIterator _fnBodyIterator;
+
     private Item _nextResult;
 
-    public UserDefinedFunctionCallIterator(
-            String fnName,
-            Expression fnBody,
-            List<RuntimeIterator> arguments,
-            List<String> argumentNames,
+    public DynamicFunctionCallIterator(
+            RuntimeIterator fnItemIterator,
+            List<RuntimeIterator> fnArguments,
             IteratorMetadata iteratorMetadata) {
-        super(arguments, iteratorMetadata);
-        _fnName = fnName;
-        _fnBody = fnBody;
-        _fnArguments = arguments;
-        _fnArgumentNames = argumentNames;
-
+        super(fnArguments, iteratorMetadata);
+        if (!_children.contains(fnItemIterator)) {
+            _children.add(fnItemIterator);
+        }
+        _fnItemIterator = fnItemIterator;
+        _fnArguments = fnArguments;
     }
 
     @Override
@@ -70,9 +69,20 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
         RuntimeIterator arg;
         String argName;
         List<Item> argValue;
+        if (_fnItem.getParameterNames().size() != _fnArguments.size()) {
+            String formattedName = (!_fnItem.getIdentifier().getName().equals(""))
+                    ? _fnItem.getIdentifier().getName() + " "
+                    : "";
+            throw new UnexpectedTypeException(
+                    "Dynamic function " + formattedName
+                    + "invoked with incorrect number of arguments. Expected: " + _fnItem.getParameterNames().size()
+                    + ", Found: " + _fnArguments.size()
+                    , getMetadata()
+            );
+        }
         for (int i = 0; i < _fnArguments.size(); i++) {
             arg = _fnArguments.get(i);
-            argName = _fnArgumentNames.get(i);
+            argName = _fnItem.getParameterNames().get(i);
 
             argValue = getItemsFromIteratorWithCurrentContext(arg);
             context.addVariableValue("$" + argName, argValue);
@@ -87,7 +97,8 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
             setNextResult();
             return result;
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in "+ _fnName + "  function",
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in "
+                + _fnItem.getIdentifier().getName() + "  function",
                 getMetadata());
     }
 
@@ -140,6 +151,7 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
     }
 
     private void initializeFunctionBodyIterator() {
-        _fnBodyIterator = new RuntimeIteratorVisitor().visit(_fnBody, null);
+        _fnItem = getSingleItemOfTypeFromIterator(_fnItemIterator, FunctionItem.class);
+        _fnBodyIterator = new RuntimeIteratorVisitor().visit(_fnItem.getBodyExpression(), null);
     }
 }

@@ -62,6 +62,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalEx
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.PostFixExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.ArrayLookupExtension;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.ArrayUnboxingExtension;
+import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.DynamicFunctionCallExtension;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.ObjectLookupExtension;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.PostfixExtension;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.PredicateExtension;
@@ -87,6 +88,7 @@ import sparksoniq.jsoniq.runtime.iterator.EmptySequenceIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.control.IfRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.control.SwitchRuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.DynamicFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.FunctionItemIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.UserDefinedFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
@@ -273,19 +275,22 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                         RuntimeIterator iterator =
                                 this.visit(((ArrayLookupExtension) extension).getExpression(), argument);
                         previous = new ArrayLookupIterator(previous, iterator, createIteratorMetadata(expression));
-                    }
-                    if (extension instanceof ObjectLookupExtension) {
+                    } else if (extension instanceof ObjectLookupExtension) {
                         RuntimeIterator iterator =
                                 this.visit(((ObjectLookupExtension) extension).getExpression(), argument);
                         previous = new ObjectLookupIterator(previous, iterator, createIteratorMetadata(expression));
-                    }
-                    if (extension instanceof ArrayUnboxingExtension) {
+                    } else if (extension instanceof ArrayUnboxingExtension) {
                         previous = new ArrayUnboxingIterator(previous, createIteratorMetadata(expression));
-                    }
-                    if (extension instanceof PredicateExtension) {
+                    } else if (extension instanceof PredicateExtension) {
                         RuntimeIterator filterExpression = //pass the predicate as argument for $$ expresions
                                 this.visit(((PredicateExtension) extension).getExpression(), argument);
                         previous = new PredicateIterator(previous, filterExpression, createIteratorMetadata(expression));
+                    } else if (extension instanceof DynamicFunctionCallExtension) {
+                        List<RuntimeIterator> arguments = new ArrayList<>();
+                        for (Expression arg : ((DynamicFunctionCallExtension) extension).getArguments()) {
+                            arguments.add(this.visit(arg, argument));
+                        }
+                        previous = new DynamicFunctionCallIterator(previous, arguments, createIteratorMetadata(expression));
                     }
                 } catch (Exception ex) {
                     ex.printStackTrace();

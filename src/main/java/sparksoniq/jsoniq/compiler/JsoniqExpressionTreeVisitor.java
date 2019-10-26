@@ -23,6 +23,7 @@ package sparksoniq.jsoniq.compiler;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.jline.reader.impl.DefaultParser;
 import sparksoniq.exceptions.DuplicateParamNameException;
 import sparksoniq.exceptions.JsoniqVersionException;
 import sparksoniq.exceptions.ModuleDeclarationException;
@@ -68,6 +69,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalEx
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.PostFixExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.ArrayLookupExtension;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.ArrayUnboxingExtension;
+import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.DynamicFunctionCallExtension;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.ObjectLookupExtension;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.PostfixExtension;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.PredicateExtension;
@@ -761,6 +763,9 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
             } else if (child instanceof JsoniqParser.ArrayUnboxingContext) {
                 this.visitArrayUnboxing((JsoniqParser.ArrayUnboxingContext) child);
                 childExpression = this.currentPostFixExtension;
+            } else if (child instanceof JsoniqParser.ArgumentListContext) {
+                List<Expression> arguments = getArgumentsFromArgumentListContext((JsoniqParser.ArgumentListContext) child);
+                childExpression = new DynamicFunctionCallExtension(arguments, createMetadataFromContext(ctx));
             }
             rhs.add(childExpression);
         }
