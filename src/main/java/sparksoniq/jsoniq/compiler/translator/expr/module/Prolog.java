@@ -30,11 +30,11 @@ import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PrologExpression extends Expression {
+public class Prolog extends Expression {
 
     private final List<FunctionDeclarationExpression> _functionDeclarationExpressions;
 
-    public PrologExpression(List<FunctionDeclarationExpression> functionDeclarations, ExpressionMetadata metadata) {
+    public Prolog(List<FunctionDeclarationExpression> functionDeclarations, ExpressionMetadata metadata) {
         super(metadata);
         this._functionDeclarationExpressions = functionDeclarations;
     }

@@ -30,19 +30,19 @@ import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainModuleExpression extends Expression {
+public class MainModule extends Expression {
 
-    private final PrologExpression _prologExpression;
+    private final Prolog _prolog;
     private final CommaExpression _commaExpression;
 
-    public MainModuleExpression(PrologExpression _prologExpression, CommaExpression _commaExpression, ExpressionMetadata metadata) {
+    public MainModule(Prolog _prolog, CommaExpression _commaExpression, ExpressionMetadata metadata) {
         super(metadata);
-        this._prologExpression = _prologExpression;
+        this._prolog = _prolog;
         this._commaExpression = _commaExpression;
     }
 
-    public PrologExpression get_prologExpression() {
-        return _prologExpression;
+    public Prolog get_prolog() {
+        return _prolog;
     }
 
     public CommaExpression get_commaExpression() {
@@ -52,8 +52,8 @@ public class MainModuleExpression extends Expression {
     @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
         List<ExpressionOrClause> result = new ArrayList<>();
-        if (_prologExpression != null) {
-            result.add(_prologExpression);
+        if (_prolog != null) {
+            result.add(_prolog);
         }
         if (_commaExpression != null) {
             result.add(_commaExpression);
@@ -69,7 +69,7 @@ public class MainModuleExpression extends Expression {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(mainModule ";
-        result += " (prolog " + _prologExpression.serializationString(false) + "), ";
+        result += " (prolog " + _prolog.serializationString(false) + "), ";
         result += " (expr " + _commaExpression.serializationString(false) + ") ";
         result += ")";
         return result;

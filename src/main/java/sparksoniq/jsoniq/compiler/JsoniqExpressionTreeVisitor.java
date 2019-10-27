@@ -23,7 +23,6 @@ package sparksoniq.jsoniq.compiler;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
-import org.jline.reader.impl.DefaultParser;
 import sparksoniq.exceptions.DuplicateParamNameException;
 import sparksoniq.exceptions.JsoniqVersionException;
 import sparksoniq.exceptions.ModuleDeclarationException;
@@ -50,8 +49,8 @@ import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.ReturnClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.WhereClause;
-import sparksoniq.jsoniq.compiler.translator.expr.module.MainModuleExpression;
-import sparksoniq.jsoniq.compiler.translator.expr.module.PrologExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.module.MainModule;
+import sparksoniq.jsoniq.compiler.translator.expr.module.Prolog;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.AdditiveExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.AndExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.CastExpression;
@@ -101,7 +100,7 @@ import java.util.Map;
 //used to build AST, will override methods
 public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.parser.JsoniqBaseVisitor<Void> {
 
-    private MainModuleExpression mainModuleExpression;
+    private MainModule mainModuleExpression;
 
     private Expression currentExpression;
     private PrimaryExpression currentPrimaryExpression;
@@ -113,7 +112,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
     //endregion expr
 
     //region module
-    public MainModuleExpression getMainModuleExpression() {
+    public MainModule getMainModuleExpression() {
         return mainModuleExpression;
     }
 
@@ -127,12 +126,12 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
 
     @Override
     public Void visitMainModule(JsoniqParser.MainModuleContext ctx) {
-        MainModuleExpression node;
+        MainModule node;
         this.visitProlog(ctx.prolog());
-        PrologExpression prolog = (PrologExpression) this.currentExpression;
+        Prolog prolog = (Prolog) this.currentExpression;
         this.visitExpr(ctx.expr());
         CommaExpression commaExpression = (CommaExpression) this.currentExpression;
-        node = new MainModuleExpression(prolog, commaExpression, createMetadataFromContext(ctx));
+        node = new MainModule(prolog, commaExpression, createMetadataFromContext(ctx));
         this.currentExpression = node;
         this.mainModuleExpression = node;
         return null;
@@ -141,7 +140,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
     @Override
     public Void visitProlog(JsoniqParser.PrologContext ctx) {
         List<FunctionDeclarationExpression> functionDeclarations = new ArrayList<>();
-        PrologExpression node;
+        Prolog node;
         for (JsoniqParser.FunctionDeclContext function: ctx.functionDecl()) {
             this.visitFunctionDecl(function);
             functionDeclarations.add((FunctionDeclarationExpression) this.currentExpression);
@@ -150,7 +149,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
             this.visitModuleImport(module);
         }
 
-        node = new PrologExpression(functionDeclarations, createMetadataFromContext(ctx));
+        node = new Prolog(functionDeclarations, createMetadataFromContext(ctx));
         this.currentExpression = node;
         return null;
     }
