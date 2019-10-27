@@ -18,41 +18,19 @@
  *
  */
 
-package sparksoniq.semantics.types;
+package sparksoniq.exceptions;
 
-public enum ItemTypes {
-    Item,
+import sparksoniq.exceptions.codes.ErrorCodes;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 
-    JSONItem,
-    ObjectItem,
-    ArrayItem,
+public class DuplicateParamNameException extends SparksoniqRuntimeException {
 
-    AtomicItem,
-    StringItem,
-    IntegerItem,
-    DecimalItem,
-    DoubleItem,
-    BooleanItem,
+	private static final long serialVersionUID = 1L;
 
-    DurationItem,
-    YearMonthDurationItem,
-    DayTimeDurationItem,
-
-    DateTimeItem,
-
-    HexBinaryItem,
-    Base64BinaryItem,
-
-    FunctionItem,
-
-    NullItem;
-
-    public static String getItemTypeName(String fullTypeName){
-        String itemPostfix = "Item";
-        if (!itemPostfix.equals(fullTypeName) && fullTypeName.endsWith("Item")) {
-            return Character.toLowerCase(fullTypeName.charAt(0)) +
-                    fullTypeName.substring(1, fullTypeName.length()-itemPostfix.length());
-        }
-        return fullTypeName;
+	public DuplicateParamNameException(String fnName, String message, ExpressionMetadata metadata) {
+        super(
+                "Duplicate parameter name; Function: " + fnName + " - parameter name: " + message,
+                ErrorCodes.DuplicateParamName, metadata
+        );
     }
 }
