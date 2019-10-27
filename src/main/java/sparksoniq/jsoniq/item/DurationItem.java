@@ -41,6 +41,7 @@ public class DurationItem extends AtomicItem {
 
     private static final long serialVersionUID = 1L;
     private Period _value;
+    boolean isNegative;
 
     public DurationItem() {
         super();
@@ -49,6 +50,7 @@ public class DurationItem extends AtomicItem {
     public DurationItem(Period value) {
         super();
         this._value = value.normalizedStandard(PeriodType.yearMonthDayTime());
+        isNegative = this._value.toString().charAt(1) == '-';
     }
 
     public Period getValue() {
@@ -57,6 +59,10 @@ public class DurationItem extends AtomicItem {
 
     public Period getDurationValue() {
         return this.getValue();
+    }
+
+    public boolean hasNegativeDuration() {
+        return isNegative;
     }
 
     @Override
@@ -131,6 +137,9 @@ public class DurationItem extends AtomicItem {
 
     @Override
     public String serialize() {
+        if (this.hasNegativeDuration()) {
+            return '-' + this.getValue().negated().toString();
+        }
         return this.getValue().toString();
     }
 
@@ -188,11 +197,9 @@ public class DurationItem extends AtomicItem {
 
     public static Period getDurationFromString(String duration, AtomicTypes durationType) throws UnsupportedOperationException, IllegalArgumentException {
         if (durationType == null || !checkInvalidDurationFormat(duration, durationType)) throw new IllegalArgumentException();
-        boolean isNegative = false;
-        if (duration.charAt(0) == '-') {
-            isNegative = true;
+        boolean isNegative = duration.charAt(0) == '-';
+        if (isNegative)
             duration = duration.substring(1);
-        }
         PeriodFormatter pf = getPeriodFormatter(durationType);
         Period period = Period.parse(duration, pf);
         return isNegative ?

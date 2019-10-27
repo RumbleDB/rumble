@@ -24,7 +24,8 @@ public class YearMonthDurationItem extends DurationItem {
 
     public YearMonthDurationItem(Period value) {
         super();
-        this._value = value.normalizedStandard(PeriodType.forFields(new DurationFieldType[]{DurationFieldType.years(), DurationFieldType.months()}));;
+        this._value = value.normalizedStandard(PeriodType.forFields(new DurationFieldType[]{DurationFieldType.years(), DurationFieldType.months()}));
+        isNegative = this._value.toString().charAt(1) == '-';
     }
 
     @Override

@@ -25,6 +25,7 @@ public class DayTimeDurationItem extends DurationItem {
     public DayTimeDurationItem(Period value) {
         super();
         this._value = value.normalizedStandard(PeriodType.dayTime());
+        isNegative = this._value.toString().charAt(1) == '-';
     }
 
     @Override

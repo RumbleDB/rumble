@@ -177,6 +177,10 @@ public class IntegerItem extends AtomicItem {
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() * other.getDoubleValue());
         if (other.isDecimal())
             return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue().multiply(other.getDecimalValue()));
+        if (other.isYearMonthDuration())
+            return ItemFactory.getInstance().createYearMonthDurationItem(other.getDurationValue().multipliedBy(this.getIntegerValue()));
+        if (other.isDayTimeDuration())
+            return ItemFactory.getInstance().createDayTimeDurationItem(other.getDurationValue().multipliedBy(this.getIntegerValue()));
         return ItemFactory.getInstance().createIntegerItem(this.getIntegerValue() * other.castToIntegerValue());
     }
 
