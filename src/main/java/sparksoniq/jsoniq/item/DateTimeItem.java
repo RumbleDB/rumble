@@ -70,6 +70,11 @@ public class DateTimeItem extends AtomicItem {
     }
 
     @Override
+    public boolean hasDateOrTime() {
+        return true;
+    }
+
+    @Override
     public Item castAs(AtomicTypes itemType) {
         switch (itemType) {
             case StringItem:

@@ -33,6 +33,11 @@ public class DateItem extends AtomicItem {
     }
 
     @Override
+    public DateTime getDateValue() {
+        return this._value;
+    }
+
+    @Override
     public boolean isDate() {
         return true;
     }
@@ -54,8 +59,7 @@ public class DateItem extends AtomicItem {
         }
         Item otherItem = (Item) otherObject;
         if (otherItem.isDate()) {
-            DateItem otherDate = (DateItem) otherItem;
-            return this.getValue().isEqual(otherDate.getValue());
+            return this.getValue().isEqual(otherItem.getDateValue());
         }
         return false;
     }
@@ -105,7 +109,7 @@ public class DateItem extends AtomicItem {
     public Item subtract(Item other) {
         Period period;
         if (other.isDate()) {
-            period = new Period(((DateItem)other).getValue(), this.getValue(), PeriodType.dayTime());
+            period = new Period(other.getDateValue(), this.getValue(), PeriodType.dayTime());
             return ItemFactory.getInstance().createDayTimeDurationItem(period);
         }
         if (other.isYearMonthDuration()) period = ((YearMonthDurationItem)other).getValue();
@@ -115,9 +119,9 @@ public class DateItem extends AtomicItem {
 
     @Override
     public int compareTo(Item other) {
+        if (other.isNull()) return 1;
         if (other.isDate()) {
-            DateItem otherDuration = (DateItem) other;
-            return this.getValue().compareTo(otherDuration.getValue());
+            return this.getValue().compareTo(other.getDateValue());
         }
         throw new IteratorFlowException("Cannot compare item of type " + ItemTypes.getItemTypeName(this.getClass().getSimpleName()) +
                 " with item of type " + ItemTypes.getItemTypeName(other.getClass().getSimpleName()));
@@ -125,7 +129,7 @@ public class DateItem extends AtomicItem {
 
     @Override
     public Item compareItem(Item other, OperationalExpressionBase.Operator operator, IteratorMetadata metadata) {
-        if (!other.isDate()) {
+        if (!other.isDate() && !other.isNull()) {
             throw new UnexpectedTypeException("\"" + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
                     + "\": invalid type: can not compare for equality to type \""
                     + ItemTypes.getItemTypeName(other.getClass().getSimpleName()) + "\"", metadata);

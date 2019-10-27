@@ -154,7 +154,7 @@ arrayUnboxing           : '[' ']';
 
 predicate               : '[' expr ']';
 
-objectLookup            : '.' ( kw=keyWords | lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | ci=contextItemExpr );
+objectLookup            : '.' ( kw=keyWords | lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | ci=contextItemExpr | tkw = typesKeywords);
 
 primaryExpr             : NullLiteral
                         | Literal
@@ -219,6 +219,15 @@ keyWordDateTime         : 'dateTime';
 
 keyWordDate             : 'date';
 
+typesKeywords           : keyWordBoolean
+                        | keyWordDuration
+                        | keyWordYearMonthDuration
+                        | keyWordDayTimeDuration
+                        | keyWordDateTime
+                        | keyWordDate
+                        | keyWordHexBinary
+                        | keyWordBase64Binary;
+
 singleType              : item=atomicType (question +='?')?;
 
 atomicType              : 'atomic'
@@ -226,26 +235,11 @@ atomicType              : 'atomic'
                         | 'integer'
                         | 'decimal'
                         | 'double'
-                        | keyWordBoolean
-                        | keyWordDuration
-                        | keyWordYearMonthDuration
-                        | keyWordDayTimeDuration
-                        | keyWordDateTime
-                        | keyWordDate
-                        | keyWordHexBinary
-                        | keyWordBase64Binary
+                        | typesKeywords
                         | NullLiteral;
 
 nCNameOrKeyWord         : NCName
-                        | keyWordBoolean
-                        | keyWordDuration
-                        | keyWordYearMonthDuration
-                        | keyWordDayTimeDuration
-                        | keyWordDateTime
-                        | keyWordDate
-                        | keyWordHexBinary
-                        | keyWordBase64Binary
-                        | keyWordHexBinary;
+                        | typesKeywords;
 
 pairConstructor         :  ( lhs=exprSingle | name=NCName ) (':' | '?') rhs=exprSingle;
 
