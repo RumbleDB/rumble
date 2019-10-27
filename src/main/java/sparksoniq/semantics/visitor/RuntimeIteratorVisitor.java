@@ -66,6 +66,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.DynamicFunc
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.ObjectLookupExtension;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.PostfixExtension;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.PredicateExtension;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.ArgumentPlaceholder;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.ArrayConstructor;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.BooleanLiteral;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.ContextExpression;
@@ -288,7 +289,11 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                     } else if (extension instanceof DynamicFunctionCallExtension) {
                         List<RuntimeIterator> arguments = new ArrayList<>();
                         for (Expression arg : ((DynamicFunctionCallExtension) extension).getArguments()) {
-                            arguments.add(this.visit(arg, argument));
+                            if (arg == null) {  // check ArgumentPlaceholder
+                                arguments.add(null);
+                            } else {
+                                arguments.add(this.visit(arg, argument));
+                            }
                         }
                         previous = new DynamicFunctionCallIterator(previous, arguments, createIteratorMetadata(expression));
                     }
@@ -357,7 +362,11 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         List<RuntimeIterator> arguments = new ArrayList<>();
         IteratorMetadata iteratorMetadata = createIteratorMetadata(expression);
         for (Expression arg : expression.getArguments()) {
-            arguments.add(this.visit(arg, argument));
+            if (arg instanceof ArgumentPlaceholder) {
+                arguments.add(null);
+            } else {
+                arguments.add(this.visit(arg, argument));
+            }
         }
         String fnName = expression.getFunctionName();
         int arity = arguments.size();
@@ -371,10 +380,8 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
             if (ex1 instanceof UnknownFunctionCallException) {
                 FunctionItem fn = Functions.getUserDefinedFunction(identifier, createIteratorMetadata(expression));
                 return new UserDefinedFunctionCallIterator(
-                        fn.getIdentifier().getName(),
-                        fn.getBodyExpression(),
+                        fn,
                         arguments,
-                        fn.getParameterNames(),
                         iteratorMetadata
                 );
             } else {

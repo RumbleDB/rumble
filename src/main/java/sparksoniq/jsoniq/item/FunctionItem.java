@@ -49,13 +49,13 @@ public class FunctionItem extends Item {
     private List<SequenceType> signature;
 
     private Expression bodyExpression;
-    private Map<String, Item> nonLocalVariableBindings;
+    private Map<String, List<Item>> nonLocalVariableBindings;
 
     protected FunctionItem() {
         super();
     }
 
-    public FunctionItem(FunctionIdentifier identifier, List<String> parameterNames, List<SequenceType> signature, Expression bodyExpression, Map<String, Item> nonLocalVariableBindings) {
+    public FunctionItem(FunctionIdentifier identifier, List<String> parameterNames, List<SequenceType> signature, Expression bodyExpression, Map<String, List<Item>> nonLocalVariableBindings) {
         this.identifier = identifier;
         this.parameterNames = parameterNames;
         this.signature = signature;
@@ -95,7 +95,7 @@ public class FunctionItem extends Item {
         return bodyExpression;
     }
 
-    public Map<String, Item> getNonLocalVariableBindings() {
+    public Map<String, List<Item>> getNonLocalVariableBindings() {
         return nonLocalVariableBindings;
     }
 
