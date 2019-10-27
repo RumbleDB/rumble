@@ -68,6 +68,10 @@ public class ItemFactory {
         return new DateTimeItem(dt);
     }
 
+    public Item createDateItem(DateTime dt) {
+        return new DateItem(dt);
+    }
+
     public Item createHexBinaryItem(String s) {
         return new HexBinaryItem(s);
     }

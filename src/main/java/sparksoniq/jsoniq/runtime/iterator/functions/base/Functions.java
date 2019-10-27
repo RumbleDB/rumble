@@ -34,10 +34,11 @@ import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArraySizeFunctionIter
 import sparksoniq.jsoniq.runtime.iterator.functions.binaries.HexBinaryFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.binaries.Base64BinaryFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.booleans.BooleanFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.DateTimeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.DateFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.DayTimeDurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.DurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.YearMonthDurationFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.datetime.DateTimeFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.AbsFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.CeilingFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.FloorFunctionIterator;
@@ -148,6 +149,7 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.HEXBINARY;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.BASE64BINARY;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DATETIME;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DATE;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.NORMALIZESPACE;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.NULL;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ONEORMORE;
@@ -267,6 +269,7 @@ public class Functions {
         builtInFunctions.put(new FunctionIdentifier(DAYTIMEDURATION, 1), DayTimeDurationFunctionIterator.class);
 
         builtInFunctions.put(new FunctionIdentifier(DATETIME, 1), DateTimeFunctionIterator.class);
+        builtInFunctions.put(new FunctionIdentifier(DATE, 1), DateFunctionIterator.class);
 
         builtInFunctions.put(new FunctionIdentifier(HEXBINARY, 1), HexBinaryFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(BASE64BINARY, 1), Base64BinaryFunctionIterator.class);
@@ -579,8 +582,15 @@ public class Functions {
          */
         public static final String DATETIME = "dateTime";
         /**
+<<<<<<< HEAD
 >>>>>>> 9ab0bff... DateTime type with additive and comparison operators implemented. Also casting between dateTime and string is implemented.
 >>>>>>> 1da726a... Implementation of the dateTime type
+=======
+         * function that returns the date item from the supplied string
+         */
+        public static final String DATE = "date";
+        /**
+>>>>>>> cc0ad76... Implementation of date type, with corresponding arithmetic and comparison operators, and casting
          * function that normalizes spaces in a string
          */
         public static final String NORMALIZESPACE = "normalize-space";

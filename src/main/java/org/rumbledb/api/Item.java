@@ -404,11 +404,29 @@ public abstract class Item implements SerializableItem {
     }
 
     /**
+     * Tests whether the item is an atomic item of type date.
+     *
+     * @return true if it is an atomic item of type date, false otherwise.
+     */
+    public boolean isDate() {
+        return false;
+    }
+
+    /**
      * Tests whether the item is an atomic item of type base64Binary.
      *
      * @return true if it is an atomic item of type base64Binary, false otherwise.
      */
     public boolean isBase64Binary() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an atomic item of type base64Binary.
+     *
+     * @return true if it is an atomic item of type base64Binary, false otherwise.
+     */
+    public boolean hasDateOrTime() {
         return false;
     }
 

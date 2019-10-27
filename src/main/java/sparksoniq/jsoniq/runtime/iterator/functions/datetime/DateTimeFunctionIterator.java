@@ -13,6 +13,7 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.semantics.types.AtomicTypes;
 
 
 import java.util.List;
@@ -33,7 +34,7 @@ public class DateTimeFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             this._hasNext = false;
             try {
-                DateTime dateTime = DateTimeItem.getDateTimeFromString(_dateTimeStringItem.getStringValue());
+                DateTime dateTime = DateTimeItem.getDateTimeFromString(_dateTimeStringItem.getStringValue(), AtomicTypes.DateTimeItem);
                 return ItemFactory.getInstance().createDateTimeItem(dateTime);
             } catch (UnsupportedOperationException | IllegalArgumentException e) {
                 String message = String.format("\"%s\": value of type %s is not castable to type %s",
