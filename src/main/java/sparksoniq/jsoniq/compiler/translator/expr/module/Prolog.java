@@ -23,7 +23,7 @@ package sparksoniq.jsoniq.compiler.translator.expr.module;
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
-import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionDeclarationExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionDeclaration;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
@@ -32,22 +32,22 @@ import java.util.List;
 
 public class Prolog extends Expression {
 
-    private final List<FunctionDeclarationExpression> _functionDeclarationExpressions;
+    private final List<FunctionDeclaration> _functionDeclaration;
 
-    public Prolog(List<FunctionDeclarationExpression> functionDeclarations, ExpressionMetadata metadata) {
+    public Prolog(List<FunctionDeclaration> functionDeclarations, ExpressionMetadata metadata) {
         super(metadata);
-        this._functionDeclarationExpressions = functionDeclarations;
+        this._functionDeclaration = functionDeclarations;
     }
 
-    public List<FunctionDeclarationExpression> getFunctionDeclarationExpressions() {
-        return _functionDeclarationExpressions;
+    public List<FunctionDeclaration> getFunctionDeclaration() {
+        return _functionDeclaration;
     }
 
     @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
         List<ExpressionOrClause> result = new ArrayList<>();
-        if (this._functionDeclarationExpressions != null)
-            _functionDeclarationExpressions.forEach(e -> {
+        if (this._functionDeclaration != null)
+            _functionDeclaration.forEach(e -> {
                 if (e != null)
                     result.add(e);
             });
@@ -56,14 +56,14 @@ public class Prolog extends Expression {
 
     @Override
     public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
-        return visitor.visitPrologExpression(this, argument);
+        return visitor.visitProlog(this, argument);
     }
 
     @Override
     public String serializationString(boolean prefix) {
         String result = "(prolog ";
         result += " (functionDecl ";
-        for (FunctionDeclarationExpression func : _functionDeclarationExpressions) {
+        for (FunctionDeclaration func : _functionDeclaration) {
             result += "(" + func.serializationString(false) + ") , ";
         }
         result = result.substring(0, result.length() - 1);    // remove last comma

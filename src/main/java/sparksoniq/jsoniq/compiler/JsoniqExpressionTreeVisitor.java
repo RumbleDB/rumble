@@ -75,7 +75,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.PredicateEx
 import sparksoniq.jsoniq.compiler.translator.expr.primary.ArrayConstructor;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.ContextExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionCall;
-import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionDeclarationExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionDeclaration;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.IntegerLiteral;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.NamedFunctionRef;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.ObjectConstructor;
@@ -100,7 +100,7 @@ import java.util.Map;
 //used to build AST, will override methods
 public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.parser.JsoniqBaseVisitor<Void> {
 
-    private MainModule mainModuleExpression;
+    private MainModule mainModule;
 
     private Expression currentExpression;
     private PrimaryExpression currentPrimaryExpression;
@@ -112,8 +112,8 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
     //endregion expr
 
     //region module
-    public MainModule getMainModuleExpression() {
-        return mainModuleExpression;
+    public MainModule getMainModule() {
+        return mainModule;
     }
 
     @Override
@@ -133,17 +133,17 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         CommaExpression commaExpression = (CommaExpression) this.currentExpression;
         node = new MainModule(prolog, commaExpression, createMetadataFromContext(ctx));
         this.currentExpression = node;
-        this.mainModuleExpression = node;
+        this.mainModule = node;
         return null;
     }
 
     @Override
     public Void visitProlog(JsoniqParser.PrologContext ctx) {
-        List<FunctionDeclarationExpression> functionDeclarations = new ArrayList<>();
+        List<FunctionDeclaration> functionDeclarations = new ArrayList<>();
         Prolog node;
         for (JsoniqParser.FunctionDeclContext function: ctx.functionDecl()) {
             this.visitFunctionDecl(function);
-            functionDeclarations.add((FunctionDeclarationExpression) this.currentExpression);
+            functionDeclarations.add((FunctionDeclaration) this.currentExpression);
         }
         for (JsoniqParser.ModuleImportContext module: ctx.moduleImport()) {
             this.visitModuleImport(module);
@@ -169,7 +169,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
                 createMetadataFromContext(ctx)
         );
         CommaExpression fnBody;
-        FunctionDeclarationExpression node;
+        FunctionDeclaration node;
         String paramName;
         FlworVarSequenceType paramType;
         if (ctx.paramList() != null) {
@@ -203,7 +203,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         this.visitExpr(ctx.fn_body);
         fnBody = (CommaExpression) this.currentExpression;
 
-        node = new FunctionDeclarationExpression(fnName, fnParams, fnReturnType, fnBody, createMetadataFromContext(ctx));
+        node = new FunctionDeclaration(fnName, fnParams, fnReturnType, fnBody, createMetadataFromContext(ctx));
         this.currentExpression = node;
         return null;
     }
@@ -1084,7 +1084,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
                 createMetadataFromContext(ctx)
         );
         CommaExpression fnBody;
-        FunctionDeclarationExpression node;
+        FunctionDeclaration node;
         String paramName;
         FlworVarSequenceType paramType;
         if (ctx.paramList() != null) {
@@ -1118,7 +1118,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         this.visitExpr(ctx.fn_body);
         fnBody = (CommaExpression) this.currentExpression;
 
-        node = new FunctionDeclarationExpression("", fnParams, fnReturnType, fnBody, createMetadataFromContext(ctx));
+        node = new FunctionDeclaration("", fnParams, fnReturnType, fnBody, createMetadataFromContext(ctx));
         this.currentPrimaryExpression = node;
         return null;
     }

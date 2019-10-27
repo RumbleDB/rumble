@@ -169,20 +169,20 @@ public class FrontendTests extends AnnotationsTestsBase {
 
     private void testVariableTypes(File testFile, JsoniqExpressionTreeVisitor visitor) {
 
-        List<ExpressionOrClause> vars = visitor.getMainModuleExpression().getDescendantsOfType(d -> d instanceof VariableReference
+        List<ExpressionOrClause> vars = visitor.getMainModule().getDescendantsOfType(d -> d instanceof VariableReference
                 && ((VariableReference) d).getVariableName().equals("var"), true);
         vars.forEach(var -> Assert.assertTrue(((VariableReference) var).getType().getItemType().getType().equals(ItemTypes.IntegerItem)));
 
-        List<ExpressionOrClause> js = visitor.getMainModuleExpression().getDescendantsOfType(d -> d instanceof VariableReference
+        List<ExpressionOrClause> js = visitor.getMainModule().getDescendantsOfType(d -> d instanceof VariableReference
                 && ((VariableReference) d).getVariableName().equals("j"), true);
         js.forEach(j -> Assert.assertTrue(((VariableReference) j).getType().getItemType().getType().equals(ItemTypes.Item) ||
                 ((VariableReference) j).getType().getItemType().getType().equals(ItemTypes.StringItem)));
 
-        List<ExpressionOrClause> internals = visitor.getMainModuleExpression().getDescendantsOfType(d -> d instanceof VariableReference
+        List<ExpressionOrClause> internals = visitor.getMainModule().getDescendantsOfType(d -> d instanceof VariableReference
                 && ((VariableReference) d).getVariableName().equals("internal"), true);
         internals.forEach(j -> Assert.assertTrue(((VariableReference) j).getType().getItemType().getType().equals(ItemTypes.IntegerItem)));
 
-        List<ExpressionOrClause> arry = visitor.getMainModuleExpression().getDescendantsOfType(d -> d instanceof VariableReference
+        List<ExpressionOrClause> arry = visitor.getMainModule().getDescendantsOfType(d -> d instanceof VariableReference
                 && ((VariableReference) d).getVariableName().equals("arry"), true);
         arry.forEach(j -> Assert.assertTrue(((VariableReference) j).getType().getItemType().getType().equals(ItemTypes.ArrayItem)));
 

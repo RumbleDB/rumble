@@ -59,7 +59,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.primary.ContextExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.DecimalLiteral;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.DoubleLiteral;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionCall;
-import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionDeclarationExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionDeclaration;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.IntegerLiteral;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.NamedFunctionRef;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.NullLiteral;
@@ -93,11 +93,11 @@ public abstract class AbstractExpressionOrClauseVisitor<T> {
     }
 
     // region module
-    public T visitMainModuleExpression(MainModule expression, T argument) {
+    public T visitMainModule(MainModule expression, T argument) {
         return defaultAction(expression, argument);
     }
 
-    public T visitPrologExpression(Prolog expression, T argument) {
+    public T visitProlog(Prolog expression, T argument) {
         return defaultAction(expression, argument);
     }
 
@@ -180,7 +180,7 @@ public abstract class AbstractExpressionOrClauseVisitor<T> {
         return defaultAction(expression, argument);
     }
 
-    public T visitFunctionDeclarationExpression(FunctionDeclarationExpression expression, T argument) {
+    public T visitFunctionDeclaration(FunctionDeclaration expression, T argument) {
         return defaultAction(expression, argument);
     }
 

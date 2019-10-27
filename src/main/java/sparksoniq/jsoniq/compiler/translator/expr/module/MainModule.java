@@ -63,7 +63,7 @@ public class MainModule extends Expression {
 
     @Override
     public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
-        return visitor.visitMainModuleExpression(this, argument);
+        return visitor.visitMainModule(this, argument);
     }
 
     @Override

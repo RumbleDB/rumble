@@ -72,7 +72,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.primary.ContextExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.DecimalLiteral;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.DoubleLiteral;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionCall;
-import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionDeclarationExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionDeclaration;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.IntegerLiteral;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.NamedFunctionRef;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.NullLiteral;
@@ -172,13 +172,13 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
 
 
     @Override
-    public RuntimeIterator visitMainModuleExpression(MainModule expression, RuntimeIterator argument) {
-        return super.visitMainModuleExpression(expression, argument);
+    public RuntimeIterator visitMainModule(MainModule expression, RuntimeIterator argument) {
+        return super.visitMainModule(expression, argument);
     }
 
     @Override
-    public RuntimeIterator visitPrologExpression(Prolog expression, RuntimeIterator argument) {
-        return super.visitPrologExpression(expression, argument);
+    public RuntimeIterator visitProlog(Prolog expression, RuntimeIterator argument) {
+        return super.visitProlog(expression, argument);
     }
     //endregion
 
@@ -333,7 +333,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
     }
 
     @Override
-    public RuntimeIterator visitFunctionDeclarationExpression(FunctionDeclarationExpression expression, RuntimeIterator argument) {
+    public RuntimeIterator visitFunctionDeclaration(FunctionDeclaration expression, RuntimeIterator argument) {
         Map<String, SequenceType> paramNameToSequenceTypes = new LinkedHashMap<>();
         for (Map.Entry<String, FlworVarSequenceType> paramEntry : expression.get_params().entrySet()) {
             paramNameToSequenceTypes.put(paramEntry.getKey(), paramEntry.getValue().getSequence());
