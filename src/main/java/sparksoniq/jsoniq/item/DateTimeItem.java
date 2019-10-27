@@ -158,22 +158,19 @@ public class DateTimeItem extends AtomicItem {
 
     @Override
     public Item add(Item other) {
-        Period period;
-        if (other.isYearMonthDuration() || other.isDayTimeDuration()) period = other.getDurationValue();
+        if (other.isYearMonthDuration() || other.isDayTimeDuration())
+            return ItemFactory.getInstance().createDateTimeItem(this.getValue().plus(other.getDurationValue()));
         else throw new ClassCastException();
-        return ItemFactory.getInstance().createDateTimeItem(this.getValue().plus(period));
     }
 
     @Override
     public Item subtract(Item other) {
-        Period period;
         if (other.isDateTime()) {
-            period = new Period(other.getDateTimeValue(), this.getValue(), PeriodType.dayTime());
-            return ItemFactory.getInstance().createDayTimeDurationItem(period);
+            return ItemFactory.getInstance().createDayTimeDurationItem(new Period(other.getDateTimeValue(), this.getValue(), PeriodType.dayTime()));
         }
-        if (other.isYearMonthDuration() || other.isDayTimeDuration()) period = other.getDurationValue();
+        if (other.isYearMonthDuration() || other.isDayTimeDuration())
+            return ItemFactory.getInstance().createDateTimeItem(this.getValue().minus(other.getDurationValue()));
         else throw new ClassCastException();
-        return ItemFactory.getInstance().createDateTimeItem(this.getValue().minus(period));
     }
 
     @Override
