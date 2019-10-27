@@ -61,7 +61,7 @@ public class AstSerialization {
 
         String antlrSerializedTree = context.expr().toStringTree(Arrays.asList(SERIALIZATION_RULES_PARTIAL));
         antlrSerializedTree = filterNotSupportedFeatures(antlrSerializedTree);
-        String expressionTree = visitor.getQueryExpression().serializationString(true);
+        String expressionTree = visitor.getMainModuleExpression().serializationString(true);
         boolean isEqual = antlrSerializedTree.equals(expressionTree);
         if (!isEqual)
             System.out.println("Expected :" + antlrSerializedTree + ";ACTUAL: " + expressionTree);

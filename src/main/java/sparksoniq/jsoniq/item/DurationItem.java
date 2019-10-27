@@ -3,11 +3,13 @@ package sparksoniq.jsoniq.item;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import org.joda.time.DurationFieldType;
 import org.joda.time.Instant;
 import org.joda.time.Period;
 import org.joda.time.PeriodType;
 import org.joda.time.format.ISOPeriodFormat;
 import org.joda.time.format.PeriodFormatter;
+import org.joda.time.format.PeriodFormatterBuilder;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
@@ -39,6 +41,7 @@ public class DurationItem extends AtomicItem {
 
     private static final long serialVersionUID = 1L;
     private Period _value;
+    boolean isNegative;
 
     public DurationItem() {
         super();
@@ -47,14 +50,19 @@ public class DurationItem extends AtomicItem {
     public DurationItem(Period value) {
         super();
         this._value = value.normalizedStandard(PeriodType.yearMonthDayTime());
+        isNegative = this._value.toString().charAt(1) == '-';
     }
 
     public Period getValue() {
-        return _value;
+        return this._value;
     }
 
     public Period getDurationValue() {
-        return _value;
+        return this.getValue();
+    }
+
+    boolean hasNegativeDuration() {
+        return isNegative;
     }
 
     @Override
@@ -83,12 +91,11 @@ public class DurationItem extends AtomicItem {
             return this.getDurationValue().toDurationFrom(now).isEqual(otherItem.getDurationValue().toDurationFrom(now));
         }
         return false;
-
     }
 
     @Override
     public int hashCode() {
-        return this._value.hashCode();
+        return this.getValue().hashCode();
     }
 
     @Override
@@ -116,7 +123,10 @@ public class DurationItem extends AtomicItem {
 
     @Override
     public String serialize() {
-        return this._value.toString();
+        if (this.hasNegativeDuration()) {
+            return '-' + this.getValue().negated().toString();
+        }
+        return this.getValue().toString();
     }
 
     @Override
@@ -138,20 +148,33 @@ public class DurationItem extends AtomicItem {
         }
     }
 
-    private static boolean checkInvalidDurationFormat(String duration) {
-        return pattern.matcher(duration).matches();
+    private static PeriodType getPeriodType(AtomicTypes durationType) {
+        switch (durationType) {
+            case DurationItem:
+                return PeriodType.yearMonthDayTime();
+            default:
+                throw new IllegalArgumentException();
+        }
     }
 
-    public static Period getDurationFromString(String duration, AtomicTypes durationType) throws IllegalArgumentException{
-        if (!checkInvalidDurationFormat(duration) || durationType == null) throw new IllegalArgumentException();
-        boolean isNegative = false;
-        if (duration.charAt(0) == '-') {
-            isNegative = true;
-            duration = duration.substring(1);
+    private static boolean checkInvalidDurationFormat(String duration, AtomicTypes durationType) {
+        switch (durationType) {
+            case DurationItem:
+                return pattern.matcher(duration).matches();
         }
+        throw new IllegalArgumentException();
+    }
+
+    public static Period getDurationFromString(String duration, AtomicTypes durationType) throws UnsupportedOperationException, IllegalArgumentException {
+        if (durationType == null || !checkInvalidDurationFormat(duration, durationType)) throw new IllegalArgumentException();
+        boolean isNegative = duration.charAt(0) == '-';
+        if (isNegative)
+            duration = duration.substring(1);
         PeriodFormatter pf = getPeriodFormatter(durationType);
         Period period = Period.parse(duration, pf);
-        return isNegative ? period.negated().normalizedStandard(PeriodType.yearMonthDayTime()) : period.normalizedStandard(PeriodType.yearMonthDayTime());
+        return isNegative ?
+                period.negated().normalizedStandard(getPeriodType(durationType)) :
+                period.normalizedStandard(getPeriodType(durationType));
     }
 
     @Override
@@ -168,8 +191,9 @@ public class DurationItem extends AtomicItem {
     @Override
     public Item compareItem(Item other, OperationalExpressionBase.Operator operator, IteratorMetadata metadata) {
         if (!other.isDuration() && !other.isNull()) {
-            throw new UnexpectedTypeException("Invalid args for duration comparison " + this.serialize() +
-                    ", " + other.serialize(), metadata);
+            throw new UnexpectedTypeException("\"" + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                    + "\": invalid type: can not compare for equality to type \""
+                    + ItemTypes.getItemTypeName(other.getClass().getSimpleName()) + "\"", metadata);
         }
         if (other.isNull()) return operator.apply(this, other);
         switch (operator) {
@@ -179,7 +203,8 @@ public class DurationItem extends AtomicItem {
             case GC_NE:
                 return operator.apply(this, other);
         }
-        throw new UnexpectedTypeException("Invalid args for duration comparison " + this.serialize() +
-                ", " + other.serialize(), metadata);
+        throw new UnexpectedTypeException("\"" + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                + "\": invalid type: can not compare for equality to type \""
+                + ItemTypes.getItemTypeName(other.getClass().getSimpleName()) + "\"", metadata);
     }
 }
