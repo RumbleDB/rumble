@@ -40,13 +40,17 @@ moduleImport            : 'import' 'module' ('namespace' NCName '=')? uriLiteral
 
 varDecl                 : 'declare' 'variable' varRef (Kas sequenceType)? ((':=' exprSingle) | ('external' (':=' exprSingle)?));
 
-functionDecl            : 'declare' 'function' (NCName ':')? NCName '(' paramList? ')' (Kas sequenceType)? ('{' expr '}' | 'external');
+functionDecl            : 'declare' 'function' (namespace=NCName ':')? fn_name=NCName '(' paramList? ')'
+                          (Kas return_type=sequenceType)?
+                          ('{' fn_body=expr '}' | 'external');
 
-paramList               : '$' NCName (Kas sequenceType)? (',' '$' NCName (Kas sequenceType)?)*;
+paramList               : param (',' param)*;
+
+param                   : '$' NCName (Kas sequenceType)?;
 
 ///////////////////////// constructs, expression
 
-expr                    : exprSingle (',' exprSingle)*;
+expr                    : exprSingle (',' exprSingle)*;     // expr -> CommaExpression in visitor
 
 exprSingle              : flowrExpr
                         | quantifiedExpr
@@ -237,7 +241,6 @@ keyWords                : Kjsoniq
                         | Kinstance
                         | Kof
                         | Ktreat
-                        |
                         | Kcast
                         | Kcastable
                         | Kdefault
