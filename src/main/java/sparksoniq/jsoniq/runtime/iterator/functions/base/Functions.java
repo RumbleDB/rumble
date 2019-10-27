@@ -36,6 +36,7 @@ import sparksoniq.jsoniq.runtime.iterator.functions.binaries.Base64BinaryFunctio
 import sparksoniq.jsoniq.runtime.iterator.functions.booleans.BooleanFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.datetime.DateTimeFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.datetime.DateFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.TimeFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.DayTimeDurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.DurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.YearMonthDurationFunctionIterator;
@@ -150,6 +151,7 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.BASE64BINARY;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DATETIME;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DATE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.TIME;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.NORMALIZESPACE;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.NULL;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ONEORMORE;
@@ -270,6 +272,7 @@ public class Functions {
 
         builtInFunctions.put(new FunctionIdentifier(DATETIME, 1), DateTimeFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(DATE, 1), DateFunctionIterator.class);
+        builtInFunctions.put(new FunctionIdentifier(TIME, 1), TimeFunctionIterator.class);
 
         builtInFunctions.put(new FunctionIdentifier(HEXBINARY, 1), HexBinaryFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(BASE64BINARY, 1), Base64BinaryFunctionIterator.class);
@@ -569,6 +572,7 @@ public class Functions {
         public static final String DAYTIMEDURATION = "dayTimeDuration";
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * function that returns the hexBinary item from the supplied string
          */
         public static final String HEXBINARY = "hexBinary";
@@ -578,19 +582,31 @@ public class Functions {
         public static final String BASE64BINARY = "base64Binary";
         /**
 =======
+=======
+>>>>>>> f5cbc28c87ae16ead4d8d1278f0174427ae83622
          * function that returns the dateTime item from the supplied string
          */
         public static final String DATETIME = "dateTime";
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> 9ab0bff... DateTime type with additive and comparison operators implemented. Also casting between dateTime and string is implemented.
 >>>>>>> 1da726a... Implementation of the dateTime type
 =======
+=======
+>>>>>>> f5cbc28c87ae16ead4d8d1278f0174427ae83622
          * function that returns the date item from the supplied string
          */
         public static final String DATE = "date";
         /**
+<<<<<<< HEAD
 >>>>>>> cc0ad76... Implementation of date type, with corresponding arithmetic and comparison operators, and casting
+=======
+         * function that returns the time item from the supplied string
+         */
+        public static final String TIME = "time";
+        /**
+>>>>>>> f5cbc28c87ae16ead4d8d1278f0174427ae83622
          * function that normalizes spaces in a string
          */
         public static final String NORMALIZESPACE = "normalize-space";

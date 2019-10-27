@@ -43,6 +43,7 @@ public enum ItemTypes {
 
     HexBinaryItem,
     Base64BinaryItem,
+    TimeItem,
 
     FunctionItem,
 

@@ -177,6 +177,7 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public Item multiply(Item other) {
+        if (other.isYearMonthDuration() || other.isDayTimeDuration()) return other.multiply(this);
         return ItemFactory.getInstance().createDoubleItem(this.getDoubleValue() * other.castToDoubleValue());
     }
 

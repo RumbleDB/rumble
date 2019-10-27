@@ -177,6 +177,7 @@ public class IntegerItem extends AtomicItem {
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() * other.getDoubleValue());
         if (other.isDecimal())
             return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue().multiply(other.getDecimalValue()));
+        if (other.isYearMonthDuration() || other.isDayTimeDuration()) return other.multiply(this);
         return ItemFactory.getInstance().createIntegerItem(this.getIntegerValue() * other.castToIntegerValue());
     }
 

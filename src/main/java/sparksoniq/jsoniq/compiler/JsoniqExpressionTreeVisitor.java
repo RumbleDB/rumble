@@ -797,6 +797,8 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         } else if (ctx.ci != null) {
             this.visitContextItemExpr(ctx.ci);
             expr = this.currentPrimaryExpression;
+        } else if (ctx.tkw != null) {
+            expr = new StringLiteral(ctx.tkw.getText(), createMetadataFromContext(ctx));
         }
 
         node = new ObjectLookupExtension(expr, createMetadataFromContext(ctx));

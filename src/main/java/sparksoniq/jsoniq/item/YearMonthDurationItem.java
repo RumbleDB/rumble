@@ -33,6 +33,11 @@ public class YearMonthDurationItem extends DurationItem {
     }
 
     @Override
+    public Period getDurationValue() {
+        return this._value;
+    }
+
+    @Override
     public boolean isYearMonthDuration() {
         return true;
     }

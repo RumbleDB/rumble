@@ -90,6 +90,8 @@ public class FlworVarSequenceType extends Expression {
                 return ItemTypes.DateTimeItem;
             case "date":
                 return ItemTypes.DateItem;
+            case "time":
+                return ItemTypes.TimeItem;
             case "hexbinary":
                 return ItemTypes.HexBinaryItem;
             case "base64binary":

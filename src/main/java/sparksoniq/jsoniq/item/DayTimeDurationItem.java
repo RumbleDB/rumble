@@ -1,6 +1,5 @@
 package sparksoniq.jsoniq.item;
 
-import org.joda.time.DurationFieldType;
 import org.joda.time.Period;
 import org.joda.time.PeriodType;
 import org.rumbledb.api.Item;
@@ -33,6 +32,11 @@ public class DayTimeDurationItem extends DurationItem {
     }
 
     @Override
+    public Period getDurationValue() {
+        return this._value;
+    }
+
+    @Override
     public boolean isAtomic() {
         return true;
     }
@@ -58,7 +62,7 @@ public class DayTimeDurationItem extends DurationItem {
     public Item castAs(AtomicTypes itemType) {
         switch (itemType) {
             case DurationItem:
-                return ItemFactory.getInstance().createDurationItem(getDurationFromString(this.serialize(), AtomicTypes.DurationItem));
+                return ItemFactory.getInstance().createDurationItem(DurationItem.getDurationFromString(this.serialize(), AtomicTypes.DurationItem));
             case DayTimeDurationItem:
                 return this;
             case StringItem:
