@@ -75,8 +75,8 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
                     : "";
             throw new UnexpectedTypeException(
                     "Dynamic function " + formattedName
-                    + "invoked with incorrect number of arguments. Expected: " + _fnItem.getParameterNames().size()
-                    + ", Found: " + _fnArguments.size()
+                            + "invoked with incorrect number of arguments. Expected: " + _fnItem.getParameterNames().size()
+                            + ", Found: " + _fnArguments.size()
                     , getMetadata()
             );
         }
@@ -151,6 +151,12 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
     }
 
     private void initializeFunctionBodyIterator() {
+        if (!(_fnItemIterator instanceof FunctionItemIterator)) {
+            throw new UnexpectedTypeException(
+                    "Dynamic function call can only be performed on functions."
+                    , getMetadata()
+            );
+        }
         _fnItem = getSingleItemOfTypeFromIterator(_fnItemIterator, FunctionItem.class);
         _fnBodyIterator = new RuntimeIteratorVisitor().visit(_fnItem.getBodyExpression(), null);
     }
