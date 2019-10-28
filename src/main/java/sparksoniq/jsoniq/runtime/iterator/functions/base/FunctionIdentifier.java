@@ -20,12 +20,12 @@
 
 package sparksoniq.jsoniq.runtime.iterator.functions.base;
 
-public class SparksoniqFunctionSignature {
+public class FunctionIdentifier {
     private final int arity;
-    private final String functionName;
+    private final String name;
 
-    public SparksoniqFunctionSignature(String functionName, int arity) {
-        this.functionName = functionName;
+    public FunctionIdentifier(String functionName, int arity) {
+        this.name = functionName;
         this.arity = arity;
     }
 
@@ -33,19 +33,19 @@ public class SparksoniqFunctionSignature {
         return arity;
     }
 
-    public String getFunctionName() {
-        return functionName;
+    public String getName() {
+        return name;
     }
 
     @Override
     public boolean equals(Object instance) {
-        return instance instanceof SparksoniqFunctionSignature
-                && this.functionName.equals(((SparksoniqFunctionSignature) instance).getFunctionName())
-                && this.arity == ((SparksoniqFunctionSignature) instance).getArity();
+        return instance instanceof FunctionIdentifier
+                && this.name.equals(((FunctionIdentifier) instance).getName())
+                && this.arity == ((FunctionIdentifier) instance).getArity();
     }
 
     @Override
     public int hashCode() {
-        return functionName.hashCode() + arity;
+        return name.hashCode() + arity;
     }
 }

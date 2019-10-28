@@ -65,7 +65,7 @@ public class DurationItem extends AtomicItem {
         return this.getValue();
     }
 
-    public boolean hasNegativeDuration() {
+    boolean hasNegativeDuration() {
         return isNegative;
     }
 

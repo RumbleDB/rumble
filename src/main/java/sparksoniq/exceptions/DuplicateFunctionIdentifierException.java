@@ -18,39 +18,20 @@
  *
  */
 
-package sparksoniq.semantics.types;
+package sparksoniq.exceptions;
 
-public enum ItemTypes {
-    Item,
+import sparksoniq.exceptions.codes.ErrorCodes;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 
-    JSONItem,
-    ObjectItem,
-    ArrayItem,
+public class DuplicateFunctionIdentifierException extends SparksoniqRuntimeException {
 
-    AtomicItem,
-    StringItem,
-    IntegerItem,
-    DecimalItem,
-    DoubleItem,
-    BooleanItem,
+	private static final long serialVersionUID = 1L;
 
-    DurationItem,
-    YearMonthDurationItem,
-    DayTimeDurationItem,
-
-    HexBinaryItem,
-    Base64BinaryItem,
-
-    FunctionItem,
-
-    NullItem;
-
-    public static String getItemTypeName(String fullTypeName){
-        String itemPostfix = "Item";
-        if (!itemPostfix.equals(fullTypeName) && fullTypeName.endsWith("Item")) {
-            return Character.toLowerCase(fullTypeName.charAt(0)) +
-                    fullTypeName.substring(1, fullTypeName.length()-itemPostfix.length());
-        }
-        return fullTypeName;
+	public DuplicateFunctionIdentifierException(FunctionIdentifier identifier, ExpressionMetadata metadata) {
+        super(
+                "Function already exists; \"" + identifier.getName() + "\" with arity: " +  identifier.getArity(),
+                ErrorCodes.DuplicateFunctionIdentifier, metadata
+        );
     }
 }

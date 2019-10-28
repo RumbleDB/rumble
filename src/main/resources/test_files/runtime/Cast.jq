@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(1, 2.14, 1, 3.4, 230004, 30000, aa, false, true, null, false, 30000, 3, 3, true, null, null, null, null, null, P3Y5M, P2Y4M, P10Y3M, P3DT5H6.001S, P21D, AABBCC, 0 FB8 0F+9, Q Q = =)" :)
+(:JIQS: ShouldRun; Output="(1, 2.14, 1, 3.4, 230004, 30000, aa, false, true, null, false, 30000, 3, 3, true, null, null, null, null, null, P3Y5M, P2Y4M, P10Y3M, P3DT5H6.001S, P21D, AABBCC, 0 FB8 0F+9, Q Q = =, D05FB8D0, r44=)" :)
 1 cast as integer,
 2.14 cast as decimal,
 1 cast as decimal,
@@ -27,7 +27,8 @@ dayTimeDuration("P3DT5H6.001S") cast as string,
 dayTimeDuration("P3DT432H") cast as duration,
 "aabbCC" cast as hexBinary,
 "0 FB8 0F+9" cast as base64Binary,
-"Q Q = =" cast as base64Binary
-
+"Q Q = =" cast as base64Binary,
+base64Binary("0F+40A==") cast as hexBinary,
+hexBinary("AF8e") cast as base64Binary
 
 (: general tests :)
