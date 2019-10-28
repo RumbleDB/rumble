@@ -3,6 +3,7 @@ package sparksoniq.jsoniq.item;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import org.apache.commons.codec.binary.Hex;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
@@ -84,16 +85,19 @@ public class Base64BinaryItem extends AtomicItem {
     @Override
     public boolean isCastableAs(AtomicTypes itemType) {
         return itemType.equals(AtomicTypes.Base64BinaryItem) ||
+                itemType.equals(AtomicTypes.HexBinaryItem) ||
                 itemType.equals(AtomicTypes.StringItem);
     }
 
     @Override
-    public AtomicItem castAs(AtomicTypes itemType) {
+    public Item castAs(AtomicTypes itemType) {
         switch (itemType) {
             case StringItem:
-                ItemFactory.getInstance().createStringItem(this.getStringValue());
+                return ItemFactory.getInstance().createStringItem(this.getStringValue());
             case Base64BinaryItem:
                 return this;
+            case HexBinaryItem:
+                return ItemFactory.getInstance().createHexBinaryItem(Hex.encodeHexString(this._value));
             default:
                 throw new ClassCastException();
         }

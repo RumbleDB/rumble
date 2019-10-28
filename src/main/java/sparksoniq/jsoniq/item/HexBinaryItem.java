@@ -5,6 +5,7 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.binary.Base64;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
@@ -82,6 +83,7 @@ public class HexBinaryItem extends AtomicItem {
     @Override
     public boolean isCastableAs(AtomicTypes itemType) {
         return itemType.equals(AtomicTypes.HexBinaryItem) ||
+                itemType.equals(AtomicTypes.Base64BinaryItem) ||
                 itemType.equals(AtomicTypes.StringItem);
     }
 
@@ -92,6 +94,8 @@ public class HexBinaryItem extends AtomicItem {
                 return this;
             case StringItem:
                 return ItemFactory.getInstance().createStringItem(this.getStringValue());
+            case Base64BinaryItem:
+                return ItemFactory.getInstance().createBase64BinaryItem(Base64.encodeBase64String(this._value));
             default:
                 throw new ClassCastException();
         }
