@@ -10,6 +10,7 @@ public enum AtomicTypes {
     BooleanItem,
 
     HexBinaryItem,
+    Base64BinaryItem,
 
     NullItem,
 }

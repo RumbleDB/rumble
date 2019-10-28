@@ -1,4 +1,4 @@
-// Generated from ./src/main/java/sparksoniq/jsoniq/compiler/parser/Jsoniq.g4 by ANTLR 4.5.3
+// Generated from ./src/main/java/sparksoniq/jsoniq/compiler/parser/Jsoniq.g4 by ANTLR 4.7
 
 // Java header
 package sparksoniq.jsoniq.compiler.parser;
@@ -427,6 +427,12 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitKeyWordHexBinary(JsoniqParser.KeyWordHexBinaryContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#keyWordBase64Binary}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitKeyWordBase64Binary(JsoniqParser.KeyWordBase64BinaryContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#singleType}.
 	 * @param ctx the parse tree
