@@ -59,6 +59,8 @@ public class ItemFactory {
         return new HexBinaryItem(s);
     }
 
+    public Item createBase64BinaryItem(String s) {return new Base64BinaryItem(s);}
+
     public Item createObjectItem() {
         return new ObjectItem();
     }

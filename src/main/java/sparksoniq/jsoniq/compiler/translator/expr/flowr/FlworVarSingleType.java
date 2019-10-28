@@ -49,6 +49,9 @@ public class FlworVarSingleType extends Expression {
                 return AtomicTypes.DurationItem;
             case "hexbinary":
                 return AtomicTypes.HexBinaryItem;
+            case "base64binary":
+                return AtomicTypes.Base64BinaryItem;
+
             default:
                 return AtomicTypes.AtomicItem;
         }

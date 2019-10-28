@@ -83,6 +83,8 @@ public class FlworVarSequenceType extends Expression {
                 return ItemTypes.DurationItem;
             case "hexbinary":
                 return ItemTypes.HexBinaryItem;
+            case "base64binary":
+                return ItemTypes.Base64BinaryItem;
 
             default:
                 return ItemTypes.Item;

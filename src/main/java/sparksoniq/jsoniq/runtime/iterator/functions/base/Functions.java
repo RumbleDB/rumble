@@ -32,6 +32,7 @@ import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayFlattenFunctionI
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayMembersFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArraySizeFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.binaries.HexBinaryFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.binaries.Base64BinaryFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.booleans.BooleanFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.DurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.AbsFunctionIterator;
@@ -140,6 +141,7 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MIN;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DURATION;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.HEXBINARY;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.BASE64BINARY;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.NORMALIZESPACE;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.NULL;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ONEORMORE;
@@ -256,6 +258,7 @@ public class Functions {
         builtInFunctions.put(new FunctionIdentifier(DURATION, 1), DurationFunctionIterator.class);
 
         builtInFunctions.put(new FunctionIdentifier(HEXBINARY, 1), HexBinaryFunctionIterator.class);
+        builtInFunctions.put(new FunctionIdentifier(BASE64BINARY, 1), Base64BinaryFunctionIterator.class);
 
         builtInFunctions.put(new FunctionIdentifier(KEYS, 1), ObjectKeysFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(MEMBERS, 1), ArrayMembersFunctionIterator.class);
@@ -533,13 +536,20 @@ public class Functions {
          */
         public static final String MATCHES = "matches";
         /**
+<<<<<<< HEAD
          * function that returns the duration item from the supplied string
          */
         public static final String DURATION = "duration";
         /**
+=======
+>>>>>>> b239fb29feef44de1469715f9c01af1b953c9676
          * function that returns the hexBinary item from the supplied string
          */
         public static final String HEXBINARY = "hexBinary";
+        /**
+         * function that returns the base64Binary item from the supplied string
+         */
+        public static final String BASE64BINARY = "base64Binary";
         /**
          * function that normalizes spaces in a string
          */

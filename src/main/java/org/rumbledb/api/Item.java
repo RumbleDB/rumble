@@ -365,6 +365,15 @@ public abstract class Item implements SerializableItem {
         return false;
     }
 
+    /**
+     * Tests whether the item is an atomic item of type base64Binary.
+     *
+     * @return true if it is an atomic item of type base64Binary, false otherwise.
+     */
+    public boolean isBase64Binary() {
+        return false;
+    }
+
     private void readObject(ObjectInputStream aInputStream)
             throws ClassNotFoundException, IOException {
         aInputStream.defaultReadObject();

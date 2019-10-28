@@ -209,6 +209,13 @@ keyWordDuration         : 'duration';
 
 keyWordHexBinary        : 'hexBinary';
 
+keyWordBase64Binary     : 'base64Binary';
+
+typesKeywords           : keyWordBoolean
+                        | keyWordDuration
+                        | keyWordHexBinary
+                        | keyWordBase64Binary;
+
 singleType              : item=atomicType (question +='?')?;
 
 atomicType              : 'atomic'
@@ -216,15 +223,11 @@ atomicType              : 'atomic'
                         | 'integer'
                         | 'decimal'
                         | 'double'
-                        | keyWordDuration
-                        | keyWordBoolean
-                        | keyWordHexBinary
+                        | typesKeywords
                         | NullLiteral;
 
 nCNameOrKeyWord         : NCName
-                        | keyWordBoolean
-                        | keyWordDuration
-                        | keyWordHexBinary;
+                        | typesKeywords;
 
 pairConstructor         :  ( lhs=exprSingle | name=NCName ) (':' | '?') rhs=exprSingle;
 
