@@ -312,7 +312,6 @@ public class Functions {
         throw new UnknownFunctionCallException(fnName, arity, new IteratorMetadata(expression.getMetadata()));
     }
 
-
     public static class FunctionNames {
 
         /**
@@ -544,6 +543,7 @@ public class Functions {
         public static final String MATCHES = "matches";
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * function that returns the duration item from the supplied string
          */
         public static final String DURATION = "duration";
@@ -561,6 +561,8 @@ public class Functions {
 =======
 >>>>>>> b239fb29feef44de1469715f9c01af1b953c9676
 >>>>>>> be1227394b78534b425af8dfed4bc7526b7f6128
+=======
+>>>>>>> b239fb29feef44de1469715f9c01af1b953c9676
          * function that returns the hexBinary item from the supplied string
          */
         public static final String HEXBINARY = "hexBinary";
