@@ -34,6 +34,7 @@ import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArraySizeFunctionIter
 import sparksoniq.jsoniq.runtime.iterator.functions.binaries.HexBinaryFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.binaries.Base64BinaryFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.booleans.BooleanFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.io.JsonDocFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.AbsFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.CeilingFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.FloorFunctionIterator;
@@ -131,6 +132,7 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.INSERTBEFORE;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.INTERSECT;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.JSON_FILE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.JSON_DOC;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.KEYS;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.LOG;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.LOG10;
@@ -180,6 +182,7 @@ public class Functions {
 
         builtInFunctions.put(new FunctionIdentifier(JSON_FILE, 1), ParseJsonFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(JSON_FILE, 2), ParseJsonFunctionIterator.class);
+        builtInFunctions.put(new FunctionIdentifier(JSON_DOC, 1), JsonDocFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(TEXT_FILE, 1), ParseTextFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(TEXT_FILE, 2), ParseTextFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(PARALLELIZE, 1), ParallelizeFunctionIterator.class);
@@ -309,6 +312,10 @@ public class Functions {
          * function that parses a JSON lines file
          */
         public static final String JSON_FILE = "json-file";
+        /**
+         * function that parses a JSON doc file
+         */
+        public static final String JSON_DOC = "json-doc";
         /**
          * function that parses a text file
          */

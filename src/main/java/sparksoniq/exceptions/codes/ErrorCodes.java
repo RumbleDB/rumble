@@ -22,6 +22,8 @@ package sparksoniq.exceptions.codes;
 
 public class ErrorCodes {
 
+    public static final String ErrorRetrievingResourceCode = "FODC0002";
+
     public static final String CastErrorCode = "FORG0001";
     public static final String ZeroOrOneErrorCode = "FORG0003";
     public static final String OneOrMoreErrorCode = "FORG0004";
