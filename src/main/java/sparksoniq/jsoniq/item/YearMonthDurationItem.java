@@ -1,7 +1,6 @@
 package sparksoniq.jsoniq.item;
 
 
-import org.apache.commons.math3.dfp.DfpField;
 import org.joda.time.*;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.UnexpectedTypeException;

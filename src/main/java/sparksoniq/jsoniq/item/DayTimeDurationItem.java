@@ -1,6 +1,5 @@
 package sparksoniq.jsoniq.item;
 
-import org.joda.time.DurationFieldType;
 import org.joda.time.Instant;
 import org.joda.time.Period;
 import org.joda.time.PeriodType;
