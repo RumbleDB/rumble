@@ -84,7 +84,7 @@ public class DayTimeDurationItem extends DurationItem {
     @Override
     public Item add(Item other) {
         if (other.isDateTime())
-            return ItemFactory.getInstance().createDateTimeItem(other.getDateTimeValue().plus(this.getDurationValue()));
+            return ItemFactory.getInstance().createDateTimeItem(other.getDateTimeValue().plus(this.getValue()));
         return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue().plus(other.getDurationValue()));
     }
 

@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(true, true, true, true, true, true, false, true, false, true, true, true, true, false, true, true, true, true, true, true, true, true, true, false, true, false, false, true, true, true, true, false, true, true, true, false, true, true, false, true, false, false, true, true, false, false)" :)
+(:JIQS: ShouldRun; Output="(true, true, true, true, true, true, false, true, false, true, true, true, true, false, true, true, true, true, true, true, true, true, true, false, true, false, false, true, true, true, true, false, true, true, true, false, true, true, false, true, true, false, false, true, true, false, false)" :)
 1 castable as integer,
 2.14 castable as decimal,
 1 castable as decimal,
@@ -38,6 +38,7 @@ dayTimeDuration("PT0S") castable as yearMonthDuration,
 dateTime("2001-12-12T23:00:00") castable as dateTime,
 dateTime("2001-12-12T23:00:00Z") castable as string,
 dateTime("2001-12-12T23:00:00-02:00") castable as duration,
+"2004-04-13T00:00:00.000+03:00" castable as dateTime,
 "aabbCC" castable as hexBinary,
 "123" castable as hexBinary,
 "lmno" castable as hexBinary,

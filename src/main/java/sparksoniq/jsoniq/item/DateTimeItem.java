@@ -29,9 +29,9 @@ public class DateTimeItem extends AtomicItem {
     private static final String secondFrag = "(([0-5]\\d)(\\.(\\d)+)?)";
     private static final String endOfDayFrag = "(24:00:00(\\.(0)+)?)";
     private static final String timezoneFrag = "(Z|([+\\-])(((0\\d|1[0-3]):" + minuteFrag + ")|(14:00)))";
-
     private static final String dateTimeLexicalRep = yearFrag + "-" + monthFrag + "-" + dayFrag + "T" +
             "((" + hourFrag + ":" + minuteFrag + ":" + secondFrag + ")|(" + endOfDayFrag + "))(" + timezoneFrag + ")?";
+    private static final Pattern dateTimePattern = Pattern.compile(dateTimeLexicalRep);
 
     private static final long serialVersionUID = 1L;
     private DateTime _value;
@@ -124,7 +124,7 @@ public class DateTimeItem extends AtomicItem {
     }
 
     private static boolean checkInvalidDurationFormat(String dateTime) {
-        return Pattern.compile(dateTimeLexicalRep).matcher(dateTime).matches();
+        return dateTimePattern.matcher(dateTime).matches();
     }
 
     private static String fixEndOfDay(String dateTime) {
@@ -175,6 +175,7 @@ public class DateTimeItem extends AtomicItem {
 
     @Override
     public int compareTo(Item other) {
+        if (other.isNull()) return 1;
         if (other.isDateTime()) {
             return this.getValue().compareTo(other.getDateTimeValue());
         }
@@ -184,7 +185,7 @@ public class DateTimeItem extends AtomicItem {
 
     @Override
     public Item compareItem(Item other, OperationalExpressionBase.Operator operator, IteratorMetadata metadata) {
-        if (!other.isDateTime()) {
+        if (!other.isDateTime() && !other.isNull()) {
             throw new UnexpectedTypeException("\"" + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
                     + "\": invalid type: can not compare for equality to type \""
                     + ItemTypes.getItemTypeName(other.getClass().getSimpleName()) + "\"", metadata);
