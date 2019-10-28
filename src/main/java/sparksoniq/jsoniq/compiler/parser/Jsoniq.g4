@@ -40,13 +40,17 @@ moduleImport            : 'import' 'module' ('namespace' NCName '=')? uriLiteral
 
 varDecl                 : 'declare' 'variable' varRef (Kas sequenceType)? ((':=' exprSingle) | ('external' (':=' exprSingle)?));
 
-functionDecl            : 'declare' 'function' (NCName ':')? NCName '(' paramList? ')' (Kas sequenceType)? ('{' expr '}' | 'external');
+functionDecl            : 'declare' 'function' (namespace=NCName ':')? fn_name=NCName '(' paramList? ')'
+                          (Kas return_type=sequenceType)?
+                          ('{' fn_body=expr '}' | 'external');
 
-paramList               : '$' NCName (Kas sequenceType)? (',' '$' NCName (Kas sequenceType)?)*;
+paramList               : param (',' param)*;
+
+param                   : '$' NCName (Kas sequenceType)?;
 
 ///////////////////////// constructs, expression
 
-expr                    : exprSingle (',' exprSingle)*;
+expr                    : exprSingle (',' exprSingle)*;     // expr -> CommaExpression in visitor
 
 exprSingle              : flowrExpr
                         | quantifiedExpr
@@ -211,6 +215,13 @@ keyWordHexBinary        : 'hexBinary';
 
 keyWordBase64Binary     : 'base64Binary';
 
+typesKeywords           : keyWordBoolean
+                        | keyWordDuration
+                        | keyWordYearMonthDuration
+                        | keyWordDayTimeDuration
+                        | keyWordHexBinary
+                        | keyWordBase64Binary;
+
 singleType              : item=atomicType (question +='?')?;
 
 atomicType              : 'atomic'
@@ -218,22 +229,11 @@ atomicType              : 'atomic'
                         | 'integer'
                         | 'decimal'
                         | 'double'
-                        | keyWordDuration
-                        | keyWordYearMonthDuration
-                        | keyWordDayTimeDuration
-                        | keyWordBoolean
-                        | keyWordHexBinary
-                        | keyWordBase64Binary
+                        | typesKeywords
                         | NullLiteral;
 
 nCNameOrKeyWord         : NCName
-                        | keyWordBoolean
-                        | keyWordDuration
-                        | keyWordYearMonthDuration
-                        | keyWordDayTimeDuration
-                        | keyWordHexBinary
-                        | keyWordBase64Binary
-                        | keyWordHexBinary;
+                        | typesKeywords;
 
 pairConstructor         :  ( lhs=exprSingle | name=NCName ) (':' | '?') rhs=exprSingle;
 
@@ -254,7 +254,6 @@ keyWords                : Kjsoniq
                         | Kinstance
                         | Kof
                         | Ktreat
-                        |
                         | Kcast
                         | Kcastable
                         | Kdefault

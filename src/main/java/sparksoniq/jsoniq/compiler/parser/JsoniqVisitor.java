@@ -92,6 +92,12 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitParamList(JsoniqParser.ParamListContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#param}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitParam(JsoniqParser.ParamContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#expr}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -445,6 +451,12 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitKeyWordBase64Binary(JsoniqParser.KeyWordBase64BinaryContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#typesKeywords}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTypesKeywords(JsoniqParser.TypesKeywordsContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#singleType}.
 	 * @param ctx the parse tree
