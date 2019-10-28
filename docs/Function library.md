@@ -525,6 +525,16 @@ tokenize("aa;bb;cc;dd", ";")
 
 returns ("aa", "bb", "cc", "dd")
 
+## I/O functions
+
+### json-doc
+
+```
+json-doc("file.json")
+```
+
+returns the (single) JSON value read from the supplied JSON file. This will also work for structures spread over multiple lines, as the read is local and not sharded.
+
 ## Integration with HDFS and Spark
 
 We support two more functions to read a JSON file from HDFS or send a large sequence to the cluster:
