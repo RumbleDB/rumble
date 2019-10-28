@@ -91,9 +91,9 @@ public class JsoniqQueryExecutor {
         long startTime = System.currentTimeMillis();
         JsoniqExpressionTreeVisitor visitor = this.parse(new JsoniqLexer(charStream));
         // generate static context
-        generateStaticContext(visitor.getQueryExpression());
+        generateStaticContext(visitor.getMainModuleExpression());
         // generate iterators
-        RuntimeIterator result = generateRuntimeIterators(visitor.getQueryExpression());
+        RuntimeIterator result = generateRuntimeIterators(visitor.getMainModuleExpression());
         if(_configuration.isPrintIteratorTree())
         {
             StringBuffer sb = new StringBuffer();
@@ -126,9 +126,9 @@ public class JsoniqQueryExecutor {
         long startTime = System.currentTimeMillis();
         JsoniqExpressionTreeVisitor visitor = this.parse(lexer);
         // generate static context
-        generateStaticContext(visitor.getQueryExpression());
+        generateStaticContext(visitor.getMainModuleExpression());
         // generate iterators
-        RuntimeIterator result = generateRuntimeIterators(visitor.getQueryExpression());
+        RuntimeIterator result = generateRuntimeIterators(visitor.getMainModuleExpression());
         // collect output in memory and write to filesystem from java
         if (_useLocalOutputLog) {
             String output = runIterators(result);
@@ -181,9 +181,9 @@ public class JsoniqQueryExecutor {
         JsoniqLexer lexer = getInputSource(queryFile.toString());
         JsoniqExpressionTreeVisitor visitor = this.parse(lexer);
         // generate static context
-        generateStaticContext(visitor.getQueryExpression());
+        generateStaticContext(visitor.getMainModuleExpression());
         // generate iterators
-        RuntimeIterator runtimeIterator = generateRuntimeIterators(visitor.getQueryExpression());
+        RuntimeIterator runtimeIterator = generateRuntimeIterators(visitor.getMainModuleExpression());
         // execute locally for simple expressions
         if (!runtimeIterator.isRDD()) {
             String localOutput = this.runIterators(runtimeIterator);
