@@ -49,7 +49,7 @@ public class TimeItem extends AtomicItem {
     }
 
     @Override
-    public boolean hasDateOrTime() {
+    public boolean hasDateTime() {
         return true;
     }
 
@@ -95,17 +95,17 @@ public class TimeItem extends AtomicItem {
 
     @Override
     public Item add(Item other) {
-        Period period;
-        if (other.isDayTimeDuration()) period = other.getDurationValue();
-        else throw new ClassCastException();
-        return ItemFactory.getInstance().createTimeItem(this.getValue().plus(period));
+        if (other.isDayTimeDuration()) return ItemFactory.getInstance().createTimeItem(this.getValue().plus(other.getDurationValue()));
+        throw new ClassCastException();
     }
 
     @Override
     public Item subtract(Item other) {
         if (other.isTime())
             return ItemFactory.getInstance().createDayTimeDurationItem(new Period(other.getTimeValue(), this.getValue(), PeriodType.dayTime()));
-        return ItemFactory.getInstance().createTimeItem(this.getValue().minus(other.getDurationValue()));
+        if (other.isDayTimeDuration())
+            return ItemFactory.getInstance().createTimeItem(this.getValue().minus(other.getDurationValue()));
+        throw new ClassCastException();
     }
 
     @Override

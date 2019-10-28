@@ -54,7 +54,7 @@ public class DateTimeFunctionIterator extends LocalFunctionCallIterator {
             _dateTimeStringItem = this.getSingleItemOfTypeFromIterator(
                     this._children.get(0),
                     StringItem.class,
-                    new UnknownFunctionCallException("duration", this._children.size(), getMetadata()));
+                    new UnknownFunctionCallException("dateTime", this._children.size(), getMetadata()));
         } catch (UnknownFunctionCallException e) {
             throw new UnexpectedTypeException(" Sequence of more than one item can not be cast to type with quantifier '1' or '?'", getMetadata());
         }

@@ -435,7 +435,7 @@ public abstract class Item implements SerializableItem {
      *
      * @return true if it is an atomic item of type time, date or dateTime, false otherwise.
      */
-    public boolean hasDateOrTime() {
+    public boolean hasDateTime() {
         return false;
     }
 

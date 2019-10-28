@@ -76,7 +76,7 @@ public class DateTimeItem extends AtomicItem {
     }
 
     @Override
-    public boolean hasDateOrTime() {
+    public boolean hasDateTime() {
         return true;
     }
 
@@ -175,7 +175,10 @@ public class DateTimeItem extends AtomicItem {
 
     private static String fixEndOfDay(String dateTime) {
         String endOfDay = "24:00:00";
+        String startOfDay = "00:00:00";
         if (dateTime.contains(endOfDay)) {
+            if (dateTime.indexOf(endOfDay) == 0)
+                return startOfDay;
             int indexOfT = dateTime.indexOf('T');
             if (indexOfT < 1 || indexOfT != dateTime.indexOf(endOfDay)-1 || !Character.isDigit(dateTime.charAt(indexOfT-1)))
                 throw new IllegalArgumentException();
@@ -186,7 +189,7 @@ public class DateTimeItem extends AtomicItem {
                 throw new IllegalArgumentException();
             }
             return dateTime.substring(0, indexOfT-1) +
-                    (dayValue+1) + "T00:00:00" +
+                    (dayValue+1) + "T" + startOfDay +
                     dateTime.substring(indexOfT + endOfDay.length()+1);
         }
         return dateTime;

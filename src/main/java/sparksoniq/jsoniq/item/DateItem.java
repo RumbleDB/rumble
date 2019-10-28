@@ -43,7 +43,7 @@ public class DateItem extends AtomicItem {
     }
 
     @Override
-    public boolean hasDateOrTime() {
+    public boolean hasDateTime() {
         return true;
     }
 
@@ -82,8 +82,7 @@ public class DateItem extends AtomicItem {
             case DateItem:
                 return this;
             case DateTimeItem:
-                return ItemFactory.getInstance().createDateTimeItem(
-                        DateTimeItem.getDateTimeFromString(this.getValue().toString(), AtomicTypes.DateTimeItem));
+                return ItemFactory.getInstance().createDateTimeItem(this.getValue());
             case StringItem:
                 return ItemFactory.getInstance().createStringItem(this.serialize());
             default:
@@ -106,7 +105,7 @@ public class DateItem extends AtomicItem {
     @Override
     public Item subtract(Item other) {
         if (other.isYearMonthDuration() || other.isDayTimeDuration())
-            return ItemFactory.getInstance().createDateItem(this.getValue().plus(other.getDurationValue()));
+            return ItemFactory.getInstance().createDateItem(this.getValue().minus(other.getDurationValue()));
         if (other.isDate())
             return ItemFactory.getInstance().createDayTimeDurationItem(new Period(other.getDateValue(), this.getValue(), PeriodType.dayTime()));
         throw new ClassCastException();

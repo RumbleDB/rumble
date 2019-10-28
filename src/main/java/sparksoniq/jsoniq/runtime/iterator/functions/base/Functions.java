@@ -554,11 +554,6 @@ public class Functions {
          */
         public static final String MATCHES = "matches";
         /**
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-=======
->>>>>>> 1da726a... Implementation of the dateTime type
          * function that returns the duration item from the supplied string
          */
         public static final String DURATION = "duration";
@@ -571,8 +566,18 @@ public class Functions {
          */
         public static final String DAYTIMEDURATION = "dayTimeDuration";
         /**
-<<<<<<< HEAD
-<<<<<<< HEAD
+         * function that returns the dateTime item from the supplied string
+         */
+        public static final String DATETIME = "dateTime";
+        /**
+         * function that returns the date item from the supplied string
+         */
+        public static final String DATE = "date";
+        /**
+         * function that returns the time item from the supplied string
+         */
+        public static final String TIME = "time";
+        /**
          * function that returns the hexBinary item from the supplied string
          */
         public static final String HEXBINARY = "hexBinary";
@@ -581,32 +586,6 @@ public class Functions {
          */
         public static final String BASE64BINARY = "base64Binary";
         /**
-=======
-=======
->>>>>>> f5cbc28c87ae16ead4d8d1278f0174427ae83622
-         * function that returns the dateTime item from the supplied string
-         */
-        public static final String DATETIME = "dateTime";
-        /**
-<<<<<<< HEAD
-<<<<<<< HEAD
->>>>>>> 9ab0bff... DateTime type with additive and comparison operators implemented. Also casting between dateTime and string is implemented.
->>>>>>> 1da726a... Implementation of the dateTime type
-=======
-=======
->>>>>>> f5cbc28c87ae16ead4d8d1278f0174427ae83622
-         * function that returns the date item from the supplied string
-         */
-        public static final String DATE = "date";
-        /**
-<<<<<<< HEAD
->>>>>>> cc0ad76... Implementation of date type, with corresponding arithmetic and comparison operators, and casting
-=======
-         * function that returns the time item from the supplied string
-         */
-        public static final String TIME = "time";
-        /**
->>>>>>> f5cbc28c87ae16ead4d8d1278f0174427ae83622
          * function that normalizes spaces in a string
          */
         public static final String NORMALIZESPACE = "normalize-space";
