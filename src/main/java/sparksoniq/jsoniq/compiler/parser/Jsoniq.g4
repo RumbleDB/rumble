@@ -217,6 +217,14 @@ keyWordBase64Binary     : 'base64Binary';
 
 keyWordDateTime         : 'dateTime';
 
+typesKeywords           : keyWordBoolean
+                        | keyWordDuration
+                        | keyWordYearMonthDuration
+                        | keyWordDayTimeDuration
+                        | keyWordDateTime
+                        | keyWordHexBinary
+                        | keyWordBase64Binary;
+
 singleType              : item=atomicType (question +='?')?;
 
 atomicType              : 'atomic'
@@ -224,24 +232,11 @@ atomicType              : 'atomic'
                         | 'integer'
                         | 'decimal'
                         | 'double'
-                        | keyWordBoolean
-                        | keyWordDuration
-                        | keyWordYearMonthDuration
-                        | keyWordDayTimeDuration
-                        | keyWordDateTime
-                        | keyWordHexBinary
-                        | keyWordBase64Binary
+                        | typesKeywords
                         | NullLiteral;
 
 nCNameOrKeyWord         : NCName
-                        | keyWordBoolean
-                        | keyWordDuration
-                        | keyWordYearMonthDuration
-                        | keyWordDayTimeDuration
-                        | keyWordDateTime
-                        | keyWordHexBinary
-                        | keyWordBase64Binary
-                        | keyWordHexBinary;
+                        | typesKeywords;
 
 pairConstructor         :  ( lhs=exprSingle | name=NCName ) (':' | '?') rhs=exprSingle;
 

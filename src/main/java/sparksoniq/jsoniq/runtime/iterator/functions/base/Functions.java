@@ -317,7 +317,6 @@ public class Functions {
     }
 
 
-
     public static class FunctionNames {
 
         /**
@@ -549,14 +548,18 @@ public class Functions {
         public static final String MATCHES = "matches";
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 <<<<<<< HEAD
 =======
 >>>>>>> 1da726a... Implementation of the dateTime type
+=======
+>>>>>>> 2f101d6334459f30a18196670fb71effe8125909
          * function that returns the duration item from the supplied string
          */
         public static final String DURATION = "duration";
         /**
+<<<<<<< HEAD
          * function that returns the yearMonthDuration item from the supplied string
          */
         public static final String YEARMONTHDURATION = "yearMonthDuration";
@@ -566,6 +569,13 @@ public class Functions {
         public static final String DAYTIMEDURATION = "dayTimeDuration";
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+=======
+=======
+>>>>>>> b239fb29feef44de1469715f9c01af1b953c9676
+>>>>>>> be1227394b78534b425af8dfed4bc7526b7f6128
+>>>>>>> 2f101d6334459f30a18196670fb71effe8125909
          * function that returns the hexBinary item from the supplied string
          */
         public static final String HEXBINARY = "hexBinary";

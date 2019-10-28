@@ -1,6 +1,7 @@
 package sparksoniq.jsoniq.item;
 
 import org.joda.time.DurationFieldType;
+import org.joda.time.Instant;
 import org.joda.time.Period;
 import org.joda.time.PeriodType;
 import org.rumbledb.api.Item;
@@ -25,6 +26,7 @@ public class DayTimeDurationItem extends DurationItem {
     public DayTimeDurationItem(Period value) {
         super();
         this._value = value.normalizedStandard(PeriodType.dayTime());
+        isNegative = this._value.toString().charAt(1) == '-';
     }
 
     @Override
@@ -50,6 +52,7 @@ public class DayTimeDurationItem extends DurationItem {
     @Override
     public boolean isCastableAs(AtomicTypes itemType) {
         return itemType.equals(AtomicTypes.DayTimeDurationItem) ||
+                itemType.equals(AtomicTypes.YearMonthDurationItem) ||
                 itemType.equals(AtomicTypes.DurationItem) ||
                 itemType.equals(AtomicTypes.StringItem);
     }
@@ -58,9 +61,11 @@ public class DayTimeDurationItem extends DurationItem {
     public Item castAs(AtomicTypes itemType) {
         switch (itemType) {
             case DurationItem:
-                return ItemFactory.getInstance().createDurationItem(getDurationFromString(this.serialize(), AtomicTypes.DurationItem));
+                return ItemFactory.getInstance().createDurationItem(this.getValue());
             case DayTimeDurationItem:
                 return this;
+            case YearMonthDurationItem:
+                return ItemFactory.getInstance().createYearMonthDurationItem(this.getValue());
             case StringItem:
                 return ItemFactory.getInstance().createStringItem(this.serialize());
             default:
@@ -111,13 +116,12 @@ public class DayTimeDurationItem extends DurationItem {
 
     @Override
     public Item divide(Item other) {
-        BigDecimal otherBd;
         if (other.isDayTimeDuration()) {
-            otherBd = BigDecimal.valueOf(other.getDurationValue().toStandardDuration().getMillis());
-        } else {
-            otherBd = other.castToDecimalValue();
+            Instant now  = Instant.now();
+            return ItemFactory.getInstance().createDecimalItem(BigDecimal.valueOf(this.getValue().toDurationFrom(now).getMillis() /
+                            (double) other.getDurationValue().toDurationFrom(now).getMillis()));
         }
-
+        BigDecimal otherBd = other.castToDecimalValue();
         long durationInMillis = this.getValue().toStandardDuration().getMillis();
         long duration_result = (BigDecimal.valueOf(durationInMillis)).divide(otherBd, 0, BigDecimal.ROUND_HALF_UP).longValue();
         Period period_time = new Period(duration_result, PeriodType.dayTime());

@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(P2Y4M, P10Y3M, P2Y, P3M, P-2Y-3M, P0M)" :)
+(:JIQS: ShouldRun; Output="(P2Y4M, P10Y3M, P2Y, P3M, -P2Y3M, P0M)" :)
 yearMonthDuration("P2Y4M"),
 yearMonthDuration("P2Y99M"),
 yearMonthDuration("P2Y"),
