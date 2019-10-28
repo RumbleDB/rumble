@@ -38,6 +38,10 @@ public class DurationItem extends AtomicItem {
     private static final String durationLiteral = prefix + "((" + duYearMonthFrag + "(" + duDayTimeFrag + ")?)|" + duDayTimeFrag +")";
     private static final String yearMonthDurationLiteral = prefix + duYearMonthFrag;
     private static final String dayTimeDurationLiteral = prefix + duDayTimeFrag;
+    private static final Pattern durationPattern = Pattern.compile(durationLiteral);
+    private static final Pattern yearMonthDurationPattern = Pattern.compile(yearMonthDurationLiteral);
+    private static final Pattern dayTimeDurationPattern = Pattern.compile(dayTimeDurationLiteral);
+
 
     private static final long serialVersionUID = 1L;
     private Period _value;
@@ -105,18 +109,10 @@ public class DurationItem extends AtomicItem {
 
     @Override
     public boolean isCastableAs(AtomicTypes itemType) {
-        if (itemType.equals(AtomicTypes.DurationItem) ||
-                itemType.equals(AtomicTypes.StringItem)) return true;
-        try {
-            if (itemType == AtomicTypes.YearMonthDurationItem) {
-                getDurationFromString(this.getValue().toString(), AtomicTypes.YearMonthDurationItem);
-            } else if (itemType == AtomicTypes.DayTimeDurationItem) {
-                getDurationFromString(this.getValue().toString(), AtomicTypes.DayTimeDurationItem);
-            }
-        } catch (IllegalArgumentException e) {
-            return false;
-        }
-        return true;
+        return itemType.equals(AtomicTypes.DurationItem) ||
+                itemType.equals(AtomicTypes.YearMonthDurationItem) ||
+                itemType.equals(AtomicTypes.DayTimeDurationItem) ||
+                itemType.equals(AtomicTypes.StringItem);
     }
 
     @Override
@@ -125,9 +121,9 @@ public class DurationItem extends AtomicItem {
             case DurationItem:
                 return this;
             case YearMonthDurationItem:
-                return ItemFactory.getInstance().createYearMonthDurationItem(getDurationFromString(this.serialize(), AtomicTypes.YearMonthDurationItem));
+                return ItemFactory.getInstance().createYearMonthDurationItem(this.getValue());
             case DayTimeDurationItem:
-                return ItemFactory.getInstance().createDayTimeDurationItem(getDurationFromString(this.serialize(), AtomicTypes.DayTimeDurationItem));
+                return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue());
             case StringItem:
                 return ItemFactory.getInstance().createStringItem(this.serialize());
             default:
@@ -186,11 +182,11 @@ public class DurationItem extends AtomicItem {
     private static boolean checkInvalidDurationFormat(String duration, AtomicTypes durationType) {
         switch (durationType) {
             case DurationItem:
-                return Pattern.compile(durationLiteral).matcher(duration).matches();
+                return durationPattern.matcher(duration).matches();
             case YearMonthDurationItem:
-                return Pattern.compile(yearMonthDurationLiteral).matcher(duration).matches();
+                return yearMonthDurationPattern.matcher(duration).matches();
             case DayTimeDurationItem:
-                return Pattern.compile(dayTimeDurationLiteral).matcher(duration).matches();
+                return dayTimeDurationPattern.matcher(duration).matches();
         }
         throw new IllegalArgumentException();
     }
