@@ -70,7 +70,7 @@ public class DateTimeItem extends AtomicItem {
     }
 
     @Override
-    public boolean hasDateOrTime() {
+    public boolean hasDateTime() {
         return true;
     }
 

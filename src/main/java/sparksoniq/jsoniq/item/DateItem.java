@@ -43,7 +43,7 @@ public class DateItem extends AtomicItem {
     }
 
     @Override
-    public boolean hasDateOrTime() {
+    public boolean hasDateTime() {
         return true;
     }
 
@@ -82,8 +82,7 @@ public class DateItem extends AtomicItem {
             case DateItem:
                 return this;
             case DateTimeItem:
-                return ItemFactory.getInstance().createDateTimeItem(
-                        DateTimeItem.getDateTimeFromString(this.getValue().toString(), AtomicTypes.DateTimeItem));
+                return ItemFactory.getInstance().createDateTimeItem(this.getValue());
             case StringItem:
                 return ItemFactory.getInstance().createStringItem(this.serialize());
             default:
@@ -98,11 +97,9 @@ public class DateItem extends AtomicItem {
 
     @Override
     public Item add(Item other) {
-        Period period;
-        if (other.isYearMonthDuration()) period = ((YearMonthDurationItem)other).getValue();
-        else if (other.isDayTimeDuration()) period = ((DayTimeDurationItem)other).getValue();
-        else throw new ClassCastException();
-        return ItemFactory.getInstance().createDateItem(this.getValue().plus(period));
+        if (other.isYearMonthDuration() || other.isDayTimeDuration())
+            return ItemFactory.getInstance().createDateItem(this.getValue().plus(other.getDurationValue()));
+        throw new ClassCastException();
     }
 
     @Override
@@ -112,9 +109,9 @@ public class DateItem extends AtomicItem {
             period = new Period(other.getDateValue(), this.getValue(), PeriodType.dayTime());
             return ItemFactory.getInstance().createDayTimeDurationItem(period);
         }
-        if (other.isYearMonthDuration()) period = ((YearMonthDurationItem)other).getValue();
-        else period = ((DayTimeDurationItem)other).getValue();
-        return ItemFactory.getInstance().createDateItem(this.getValue().minus(period));
+        if (other.isYearMonthDuration() || other.isDayTimeDuration())
+            return ItemFactory.getInstance().createDateItem(this.getValue().minus(other.getDurationValue()));
+        throw new ClassCastException();
     }
 
     @Override

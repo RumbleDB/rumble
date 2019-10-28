@@ -1,6 +1,5 @@
 package sparksoniq.jsoniq.item;
 
-import org.joda.time.DurationFieldType;
 import org.joda.time.Period;
 import org.joda.time.PeriodType;
 import org.rumbledb.api.Item;
@@ -85,6 +84,8 @@ public class DayTimeDurationItem extends DurationItem {
     public Item add(Item other) {
         if (other.isDateTime())
             return ItemFactory.getInstance().createDateTimeItem(other.getDateTimeValue().plus(this.getDurationValue()));
+        if (other.isDate())
+            return ItemFactory.getInstance().createDateItem(other.getDateValue().plus(this.getValue()));
         return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue().plus(other.getDurationValue()));
     }
 
