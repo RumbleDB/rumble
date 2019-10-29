@@ -5,11 +5,18 @@ import com.esotericsoftware.kryo.io.ByteBufferInput;
 import com.esotericsoftware.kryo.io.ByteBufferOutput;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import com.esotericsoftware.kryo.serializers.JavaSerializer;
 import com.esotericsoftware.kryo.util.Pool;
 
 import java.util.ArrayList;
 
 import org.rumbledb.api.Item;
+import sparksoniq.jsoniq.compiler.translator.expr.Expression;
+import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
+import sparksoniq.jsoniq.compiler.translator.expr.postfix.PostFixExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.PostfixExtension;
+import sparksoniq.jsoniq.runtime.iterator.functions.FunctionItemIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 
 public class KryoManager {
 
@@ -45,6 +52,9 @@ public class KryoManager {
                     kryo.register(BooleanItem.class);
 
                     kryo.register(ArrayList.class);
+
+                    kryo.register(FunctionIdentifier.class);
+                    kryo.register(ExpressionOrClause.class);
 
                     /*kryo.register(DynamicContext.class);
                     kryo.register(FlworTuple.class);

@@ -23,6 +23,7 @@ package sparksoniq.spark;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import com.esotericsoftware.kryo.serializers.JavaSerializer;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
@@ -31,8 +32,10 @@ import org.apache.spark.sql.expressions.Window;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
-
 import scala.collection.mutable.WrappedArray;
+import sparksoniq.jsoniq.compiler.translator.expr.Expression;
+import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
+import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.PostfixExtension;
 import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.BooleanItem;
 import sparksoniq.jsoniq.item.DecimalItem;
@@ -42,6 +45,7 @@ import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.NullItem;
 import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.item.StringItem;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
@@ -49,6 +53,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.count;
 import static org.apache.spark.sql.functions.first;
@@ -86,6 +91,9 @@ public class DataFrameUtils {
         kryo.register(NullItem.class);
         kryo.register(BooleanItem.class);
         kryo.register(ArrayList.class);
+
+        kryo.register(FunctionIdentifier.class);
+        kryo.register(ExpressionOrClause.class);
     }
 
     public static byte[] serializeItem(Item toSerialize, Kryo kryo, Output output) {
@@ -139,7 +147,7 @@ public class DataFrameUtils {
             StructType inputSchema) {
         return getColumnNames(inputSchema, -1, null);
     }
-   
+
     public static void prepareDynamicContext(
             DynamicContext context,
             List<String> columnNames,
@@ -151,7 +159,7 @@ public class DataFrameUtils {
             context.addVariableValue(columnNames.get(columnIndex), deserializedParams.get(columnIndex));
         }
     }
-    
+
     private static String COMMA = ",";
 
     /**

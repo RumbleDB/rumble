@@ -23,6 +23,7 @@ package sparksoniq.jsoniq.compiler.translator.expr;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
@@ -30,7 +31,7 @@ import java.util.function.Predicate;
 /**
  * abstract class, base for all AST nodes
  */
-public abstract class ExpressionOrClause {
+public abstract class ExpressionOrClause implements Serializable {
 
     private ExpressionMetadata metadata;
 

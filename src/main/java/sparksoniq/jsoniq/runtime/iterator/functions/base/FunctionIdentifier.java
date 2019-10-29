@@ -20,7 +20,9 @@
 
 package sparksoniq.jsoniq.runtime.iterator.functions.base;
 
-public class FunctionIdentifier {
+import java.io.Serializable;
+
+public class FunctionIdentifier implements Serializable {
     private final int arity;
     private final String name;
 
