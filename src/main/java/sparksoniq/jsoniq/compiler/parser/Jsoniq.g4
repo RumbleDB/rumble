@@ -205,9 +205,16 @@ jSONItemTest            : 'object'
 
 keyWordBoolean          : 'boolean';
 
+keyWordDuration         : 'duration';
+
 keyWordHexBinary        : 'hexBinary';
 
 keyWordBase64Binary     : 'base64Binary';
+
+typesKeywords           : keyWordBoolean
+                        | keyWordDuration
+                        | keyWordHexBinary
+                        | keyWordBase64Binary;
 
 singleType              : item=atomicType (question +='?')?;
 
@@ -216,15 +223,11 @@ atomicType              : 'atomic'
                         | 'integer'
                         | 'decimal'
                         | 'double'
-                        | keyWordBoolean
-                        | keyWordHexBinary
-                        | keyWordBase64Binary
+                        | typesKeywords
                         | NullLiteral;
 
 nCNameOrKeyWord         : NCName
-                        | keyWordBoolean
-                        | keyWordHexBinary
-                        | keyWordBase64Binary;
+                        | typesKeywords;
 
 pairConstructor         :  ( lhs=exprSingle | name=NCName ) (':' | '?') rhs=exprSingle;
 

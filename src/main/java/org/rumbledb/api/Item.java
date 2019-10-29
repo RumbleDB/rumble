@@ -20,6 +20,7 @@
 
 package org.rumbledb.api;
 
+import org.joda.time.Period;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -242,6 +243,14 @@ public abstract class Item implements SerializableItem {
     }
 
     /**
+     * Returns the period value of the item, if it is a atomic item of type duration.
+     *
+     * @return the period value as a Period.
+     */
+    public Period getDurationValue() {
+        throw new RuntimeException("Item is not a duration.");
+    }
+    /**
      * Returns the byte[] value of the item, if it is a atomic item of type hexBinary.
      *
      * @return the hexBinary value as an array of bytes.
@@ -317,6 +326,15 @@ public abstract class Item implements SerializableItem {
      * @return true if it is an atomic item of type integer, false otherwise.
      */
     public boolean isInteger() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an atomic item of type duration.
+     *
+     * @return true if it is an atomic item of type duration, false otherwise.
+     */
+    public boolean isDuration() {
         return false;
     }
 

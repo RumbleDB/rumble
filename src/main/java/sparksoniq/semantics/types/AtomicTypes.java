@@ -9,6 +9,8 @@ public enum AtomicTypes {
     DoubleItem,
     BooleanItem,
 
+    DurationItem,
+
     HexBinaryItem,
     Base64BinaryItem,
 

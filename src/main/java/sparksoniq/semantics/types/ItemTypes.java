@@ -34,6 +34,8 @@ public enum ItemTypes {
     DoubleItem,
     BooleanItem,
 
+    DurationItem,
+
     HexBinaryItem,
     Base64BinaryItem,
 

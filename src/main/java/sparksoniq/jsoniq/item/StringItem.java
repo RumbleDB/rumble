@@ -92,6 +92,8 @@ public class StringItem extends AtomicItem {
                 return ItemFactory.getInstance().createIntegerItem(Integer.parseInt(this.getStringValue()));
             case NullItem:
                 return ItemFactory.getInstance().createNullItem();
+            case DurationItem:
+                return ItemFactory.getInstance().createDurationItem(DurationItem.getDurationFromString(this.getStringValue(), AtomicTypes.DurationItem));
             case HexBinaryItem:
                 return ItemFactory.getInstance().createHexBinaryItem(this.getStringValue());
             case Base64BinaryItem:
@@ -126,6 +128,8 @@ public class StringItem extends AtomicItem {
                 Double.parseDouble(this.getValue());
             } else if (itemType == AtomicTypes.NullItem) {
                 return isNullLiteral(this.getValue());
+            } else if (itemType == AtomicTypes.DurationItem) {
+                DurationItem.getDurationFromString(this._value, AtomicTypes.DurationItem);
             } else if (itemType == AtomicTypes.HexBinaryItem) {
                 HexBinaryItem.parseHexBinaryString(this.getValue());
             } else if (itemType == AtomicTypes.Base64BinaryItem) {

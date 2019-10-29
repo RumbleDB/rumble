@@ -34,6 +34,7 @@ import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArraySizeFunctionIter
 import sparksoniq.jsoniq.runtime.iterator.functions.binaries.HexBinaryFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.binaries.Base64BinaryFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.booleans.BooleanFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.durations.DurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.AbsFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.CeilingFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.FloorFunctionIterator;
@@ -138,6 +139,7 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MAX;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MEMBERS;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MIN;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DURATION;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.HEXBINARY;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.BASE64BINARY;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.NORMALIZESPACE;
@@ -253,6 +255,8 @@ public class Functions {
         builtInFunctions.put(new FunctionIdentifier(CONTAINS, 2), ContainsFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(NORMALIZESPACE, 1), NormalizeSpaceFunctionIterator.class);
 
+        builtInFunctions.put(new FunctionIdentifier(DURATION, 1), DurationFunctionIterator.class);
+
         builtInFunctions.put(new FunctionIdentifier(HEXBINARY, 1), HexBinaryFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(BASE64BINARY, 1), Base64BinaryFunctionIterator.class);
 
@@ -300,7 +304,6 @@ public class Functions {
             return userDefinedFunctions.get(identifier);
         throw new UnknownFunctionCallException(fnName, arity, new IteratorMetadata(expression.getMetadata()));
     }
-
 
 
     public static class FunctionNames {
@@ -533,6 +536,13 @@ public class Functions {
          */
         public static final String MATCHES = "matches";
         /**
+<<<<<<< HEAD
+         * function that returns the duration item from the supplied string
+         */
+        public static final String DURATION = "duration";
+        /**
+=======
+>>>>>>> b239fb29feef44de1469715f9c01af1b953c9676
          * function that returns the hexBinary item from the supplied string
          */
         public static final String HEXBINARY = "hexBinary";
@@ -544,7 +554,6 @@ public class Functions {
          * function that normalizes spaces in a string
          */
         public static final String NORMALIZESPACE = "normalize-space";
-
 
         /**
          * function that returns the keys of a Json Object
