@@ -38,8 +38,7 @@ public class FlworVarSequenceType extends Expression {
 
     public FlworVarSequenceType(ExpressionMetadata metadata) {
         super(metadata);
-        this._sequence = new SequenceType(new ItemType(ItemTypes.Item),
-                SequenceType.Arity.ZeroOrMore);
+        this._sequence = new SequenceType();
         this.isEmpty = true;
     }
 
@@ -80,6 +79,12 @@ public class FlworVarSequenceType extends Expression {
                 return ItemTypes.ArrayItem;
             case "json-item":
                 return ItemTypes.JSONItem;
+            case "duration":
+                return ItemTypes.DurationItem;
+            case "hexbinary":
+                return ItemTypes.HexBinaryItem;
+            case "base64binary":
+                return ItemTypes.Base64BinaryItem;
 
             default:
                 return ItemTypes.Item;

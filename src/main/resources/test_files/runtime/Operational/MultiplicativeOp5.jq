@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(2, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0)" :)
+(:JIQS: ShouldRun; Output="(2, 2, 2, 2, 2, 2, 2)" :)
 6 mod 4,
 6 mod 4.0,
 6 mod 4e0,

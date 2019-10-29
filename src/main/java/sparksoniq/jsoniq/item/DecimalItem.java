@@ -24,6 +24,11 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.UnexpectedTypeException;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
@@ -80,19 +85,41 @@ public class DecimalItem extends AtomicItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        if (type.getType().equals(ItemTypes.DecimalItem) || super.isTypeOf(type))
-            return true;
-        return false;
+        return type.getType().equals(ItemTypes.DecimalItem) || super.isTypeOf(type);
+    }
+
+    @Override
+    public Item castAs(AtomicTypes itemType) {
+        switch (itemType) {
+            case BooleanItem:
+                return ItemFactory.getInstance().createBooleanItem(!this.getDecimalValue().equals(BigDecimal.ZERO));
+            case DoubleItem:
+                return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue());
+            case DecimalItem:
+                return this;
+            case IntegerItem:
+                return ItemFactory.getInstance().createIntegerItem(this.castToIntegerValue());
+            case StringItem:
+                return ItemFactory.getInstance().createStringItem(String.valueOf(this.getDecimalValue()));
+            default:
+                throw new ClassCastException();
+        }
+    }
+
+    @Override
+    public boolean isCastableAs(AtomicTypes itemType) {
+        return itemType != AtomicTypes.AtomicItem &&
+                itemType != AtomicTypes.NullItem;
     }
 
     @Override
     public String serialize() {
-        return String.valueOf(_value);
+        return String.valueOf(_value.stripTrailingZeros().toPlainString());
     }
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this._value);
+        kryo.writeObject(output, this.getValue());
     }
 
     @Override
@@ -101,23 +128,11 @@ public class DecimalItem extends AtomicItem {
     }
 
     public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item)) {
+        try {
+            return (otherItem instanceof Item) && this.compareTo((Item) otherItem) == 0;
+        } catch(IteratorFlowException e) {
             return false;
         }
-        Item o = (Item) otherItem;
-        if (o.isInteger()) {
-            if (getDecimalValue().stripTrailingZeros().scale() > 0) {
-                return false;
-            }
-            return getDecimalValue().intValueExact() == o.getIntegerValue();
-        }
-        if (o.isDecimal()) {
-            return (getDecimalValue().equals(o.getDecimalValue()));
-        }
-        if (o.isDouble()) {
-            return (o.getDoubleValue() == getDecimalValue().doubleValue());
-        }
-        return false;
     }
 
     public int hashCode() {
@@ -125,5 +140,59 @@ public class DecimalItem extends AtomicItem {
             return getDecimalValue().intValue();
         }
         return getDecimalValue().hashCode();
+    }
+
+    @Override
+    public int compareTo(Item other) {
+        return other.isNull() ? 1 : this.getDecimalValue().compareTo(other.castToDecimalValue());
+    }
+
+    @Override
+    public Item compareItem(Item other, OperationalExpressionBase.Operator operator, IteratorMetadata metadata) {
+        if (!other.isNumeric() && !other.isNull()) {
+            throw new UnexpectedTypeException("Invalid args for numerics comparison " + this.serialize() +
+                    ", " + other.serialize(), metadata);
+        }
+        return operator.apply(this, other);
+    }
+
+    @Override
+    public Item add(Item other) {
+        if (other.isDouble())
+            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() + (other.getDoubleValue()));
+        return ItemFactory.getInstance().createDecimalItem(this.getDecimalValue().add(other.castToDecimalValue()));
+    }
+
+    @Override
+    public Item subtract(Item other) {
+        if (other.isDouble())
+            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() - (other.getDoubleValue()));
+        return ItemFactory.getInstance().createDecimalItem(this.getDecimalValue().subtract(other.castToDecimalValue()));
+    }
+
+    @Override
+    public Item multiply(Item other) {
+        if (other.isDouble())
+            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() * (other.getDoubleValue()));
+        return ItemFactory.getInstance().createDecimalItem(this.getDecimalValue().multiply(other.castToDecimalValue()));
+    }
+
+    @Override
+    public Item divide(Item other) {
+        if (other.isDouble())
+            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() / (other.getDoubleValue()));
+        return ItemFactory.getInstance().createDecimalItem(this.getDecimalValue().divide(other.castToDecimalValue(), 10, BigDecimal.ROUND_HALF_UP));
+    }
+
+    @Override
+    public Item modulo(Item other) {
+        if (other.isDouble())
+            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() % (other.getDoubleValue()));
+        return ItemFactory.getInstance().createDecimalItem(this.getDecimalValue().remainder(other.castToDecimalValue()));
+    }
+
+    @Override
+    public Item idivide(Item other) {
+        return ItemFactory.getInstance().createIntegerItem(this.getDecimalValue().divideToIntegralValue(other.castToDecimalValue()).intValueExact());
     }
 }

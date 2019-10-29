@@ -20,7 +20,10 @@
 
 package org.rumbledb.api;
 
+import org.joda.time.Period;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.types.ItemType;
 
 import java.io.IOException;
@@ -104,32 +107,19 @@ public abstract class Item implements SerializableItem {
      * @return -1 if this &lt; other; 0 if this == other; 1 if this &gt; other;
      */
     public int compareTo(Item other) {
-        int result;
-        if (this.isNumeric() && other.isNumeric()) {
-            BigDecimal value1 = this.castToDecimalValue();
-            BigDecimal value2 = other.castToDecimalValue();
-            result = value1.compareTo(value2);
-        } else if (this.isBoolean() && other.isBoolean()) {
-            Boolean value1 = this.getBooleanValue();
-            Boolean value2 = other.getBooleanValue();
-            result = value1.compareTo(value2);
-        } else if (this.isString() && other.isString()) {
-            String value1 = this.getStringValue();
-            String value2 = other.getStringValue();
-            result = value1.compareTo(value2);
-        } else if (this.isNull() || other.isNull()) {
-            // null equals null
-            if (this.isNull() && other.isNull()) {
-                result = 0;
-            } else if (this.isNull()) {
-                result = -1;
-            } else {
-                result = 1;
-            }
-        } else {
-            result = this.serialize().compareTo(other.serialize());
-        }
-        return result;
+        if (other.isNull()) return 1;
+        return this.serialize().compareTo(other.serialize());
+    }
+
+    /**
+     * Function that compare two items according to the operator defined for the comparison.
+     * @param other another Item
+     * @param operator the operator used for the comparison
+     * @param metadata Metadata useful for throwing exceptions
+     * @return BooleanItem result of the comparison
+     */
+    public Item compareItem(Item other, OperationalExpressionBase.Operator operator, IteratorMetadata metadata) {
+        return operator.apply(this, other);
     }
 
     /**
@@ -253,6 +243,23 @@ public abstract class Item implements SerializableItem {
     }
 
     /**
+     * Returns the period value of the item, if it is a atomic item of type duration.
+     *
+     * @return the period value as a Period.
+     */
+    public Period getDurationValue() {
+        throw new RuntimeException("Item is not a duration.");
+    }
+    /**
+     * Returns the byte[] value of the item, if it is a atomic item of type hexBinary.
+     *
+     * @return the hexBinary value as an array of bytes.
+     */
+    public byte[] getBinaryValue() {
+        throw new RuntimeException("Item is not a hexBinary.");
+    }
+
+    /**
      * Please do not use, item type API not publicly released yet.
      * @param type an ItemType.
      * @return true if it matches the item type.
@@ -269,9 +276,9 @@ public abstract class Item implements SerializableItem {
     }
 
     /**
-     * Tests whether the item is an array.
+     * Tests whether the item is an object.
      *
-     * @return true if it is an array, false otherwise.
+     * @return true if it is an object, false otherwise.
      */
     public boolean isObject() {
         return false;
@@ -323,6 +330,15 @@ public abstract class Item implements SerializableItem {
     }
 
     /**
+     * Tests whether the item is an atomic item of type duration.
+     *
+     * @return true if it is an atomic item of type duration, false otherwise.
+     */
+    public boolean isDuration() {
+        return false;
+    }
+
+    /**
      * Tests whether the item is an atomic item of type double.
      * 
      * @return true if it is an atomic item of type double, false otherwise.
@@ -337,6 +353,24 @@ public abstract class Item implements SerializableItem {
      * @return true if it is an atomic item of type decimal, false otherwise.
      */
     public boolean isDecimal() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an atomic item of type hexBinary.
+     *
+     * @return true if it is an atomic item of type hexBinary, false otherwise.
+     */
+    public boolean isHexBinary() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an atomic item of type base64Binary.
+     *
+     * @return true if it is an atomic item of type base64Binary, false otherwise.
+     */
+    public boolean isBase64Binary() {
         return false;
     }
 
@@ -366,4 +400,12 @@ public abstract class Item implements SerializableItem {
      */
     @Override
     public abstract int hashCode();
+
+
+    public Item add(Item other) { throw new UnsupportedOperationException("Operation not defined"); }
+    public Item subtract(Item other) { throw new UnsupportedOperationException("Operation not defined"); }
+    public Item multiply(Item other) { throw new UnsupportedOperationException("Operation not defined"); }
+    public Item divide(Item other) { throw new UnsupportedOperationException("Operation not defined"); }
+    public Item modulo(Item other) { throw new UnsupportedOperationException("Operation not defined"); }
+    public Item idivide(Item other) { throw new UnsupportedOperationException("Operation not defined"); }
 }

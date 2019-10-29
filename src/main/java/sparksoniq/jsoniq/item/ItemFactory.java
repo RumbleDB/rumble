@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
+import org.joda.time.Period;
 import org.rumbledb.api.Item;
 
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
@@ -49,7 +50,17 @@ public class ItemFactory {
     public Item createDoubleItem(double d) {
         return new DoubleItem(d);
     }
-    
+
+    public Item createDurationItem(Period p) {
+        return new DurationItem(p);
+    }
+
+    public Item createHexBinaryItem(String s) {
+        return new HexBinaryItem(s);
+    }
+
+    public Item createBase64BinaryItem(String s) {return new Base64BinaryItem(s);}
+
     public Item createObjectItem() {
         return new ObjectItem();
     }

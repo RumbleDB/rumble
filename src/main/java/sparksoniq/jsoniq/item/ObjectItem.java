@@ -131,9 +131,7 @@ public class ObjectItem extends JsonItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        if (type.getType().equals(ItemTypes.ObjectItem) || super.isTypeOf(type))
-            return true;
-        return false;
+        return type.getType().equals(ItemTypes.ObjectItem) || super.isTypeOf(type);
     }
 
     @Override
@@ -144,7 +142,7 @@ public class ObjectItem extends JsonItem {
             String key = _keys.get(i);
             Item value = _values.get(i);
             boolean isStringValue = value.isString();
-            sb.append("\"" + StringEscapeUtils.escapeJson(key) + "\"" + " : ");
+            sb.append("\"").append(StringEscapeUtils.escapeJson(key)).append("\"").append(" : ");
             if (isStringValue) {
                 sb.append("\"");
                 sb.append(StringEscapeUtils.escapeJson(value.serialize()));

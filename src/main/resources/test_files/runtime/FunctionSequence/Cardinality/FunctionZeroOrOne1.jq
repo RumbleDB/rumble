@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(1, a, { }, [ 20.0 ])" :)
+(:JIQS: ShouldRun; Output="(1, a, { }, [ 20 ])" :)
 zero-or-one(()),
 zero-or-one((1)),
 zero-or-one(("a")),

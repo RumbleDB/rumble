@@ -27,6 +27,10 @@ import org.rumbledb.api.Item;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import sparksoniq.exceptions.UnexpectedTypeException;
+import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
@@ -51,32 +55,24 @@ public class StringItem extends AtomicItem {
 
     @Override
     public String getStringValue() {
-        return _value;
+        return this.getValue();
     }
 
     public double castToDoubleValue() {
-    	return Double.parseDouble(_value);
+        return Double.parseDouble(this.getValue());
     }
 
     public BigDecimal castToDecimalValue() {
-        return new BigDecimal(_value);
+        return new BigDecimal(this.getValue());
     }
 
     public int castToIntegerValue() {
-        return Integer.parseInt(_value);
+        return Integer.parseInt(this.getValue());
     }
 
-    @Override
-    public boolean getEffectiveBooleanValue() {
-        return !this.getStringValue().isEmpty();
-    }
+    private boolean isBooleanLiteral(String value) { return "true".equals(value) || "false".equals(value); }
 
-    @Override
-    public boolean isTypeOf(ItemType type) {
-        if (type.getType().equals(ItemTypes.StringItem) || super.isTypeOf(type))
-            return true;
-        return false;
-    }
+    private boolean isNullLiteral(String value) { return "null".equals(value); }
 
     @Override
     public boolean isString() {
@@ -84,13 +80,75 @@ public class StringItem extends AtomicItem {
     }
 
     @Override
+    public Item castAs(AtomicTypes itemType) {
+        switch (itemType) {
+            case BooleanItem:
+                return ItemFactory.getInstance().createBooleanItem(Boolean.parseBoolean(this.getStringValue()));
+            case DoubleItem:
+                return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(this.getStringValue()));
+            case DecimalItem:
+                return ItemFactory.getInstance().createDecimalItem(new BigDecimal(this.getStringValue()));
+            case IntegerItem:
+                return ItemFactory.getInstance().createIntegerItem(Integer.parseInt(this.getStringValue()));
+            case NullItem:
+                return ItemFactory.getInstance().createNullItem();
+            case DurationItem:
+                return ItemFactory.getInstance().createDurationItem(DurationItem.getDurationFromString(this.getStringValue(), AtomicTypes.DurationItem));
+            case HexBinaryItem:
+                return ItemFactory.getInstance().createHexBinaryItem(this.getStringValue());
+            case Base64BinaryItem:
+                return ItemFactory.getInstance().createBase64BinaryItem(this.getStringValue());
+            case StringItem:
+                return this;
+            default:
+                throw new ClassCastException();
+        }
+    }
+
+    public boolean getEffectiveBooleanValue() {
+        return !this.getStringValue().isEmpty();
+    }
+
+    @Override
+    public boolean isTypeOf(ItemType type) {
+        return type.getType().equals(ItemTypes.StringItem) || super.isTypeOf(type);
+    }
+
+    @Override
+    public boolean isCastableAs(AtomicTypes itemType) {
+        if (itemType == AtomicTypes.StringItem)
+            return true;
+        try {
+            if (itemType == AtomicTypes.IntegerItem) {
+                Integer.parseInt(this.getValue());
+            } else if (itemType == AtomicTypes.DecimalItem) {
+                if (this.getValue().contains("e") || this.getValue().contains("E")) return false;
+                Float.parseFloat(this.getValue());
+            } else if (itemType == AtomicTypes.DoubleItem) {
+                Double.parseDouble(this.getValue());
+            } else if (itemType == AtomicTypes.NullItem) {
+                return isNullLiteral(this.getValue());
+            } else if (itemType == AtomicTypes.DurationItem) {
+                DurationItem.getDurationFromString(this._value, AtomicTypes.DurationItem);
+            } else if (itemType == AtomicTypes.HexBinaryItem) {
+                HexBinaryItem.parseHexBinaryString(this.getValue());
+            } else if (itemType == AtomicTypes.Base64BinaryItem) {
+                Base64BinaryItem.parseBase64BinaryString(this.getValue());
+            }
+            else return isBooleanLiteral(this.getValue());
+        } catch (UnsupportedOperationException | IllegalArgumentException e) {
+            return false;
+        }
+        return true;
+    }
+
     public String serialize() {
-        return _value;
+        return this.getValue();
     }
 
     @Override
     public void write(Kryo kryo, Output output) {
-        output.writeString(this._value);
+        output.writeString(this.getValue());
     }
 
     @Override
@@ -115,5 +173,19 @@ public class StringItem extends AtomicItem {
     public int hashCode()
     {
         return getStringValue().hashCode();
+    }
+
+    @Override
+    public int compareTo(Item other) {
+        return other.isNull() ? 1 : this.getStringValue().compareTo(other.getStringValue());
+    }
+
+    @Override
+    public Item compareItem(Item other, OperationalExpressionBase.Operator operator, IteratorMetadata metadata) {
+        if (!other.isString() && !other.isNull()) {
+            throw new UnexpectedTypeException("Invalid args for string comparison " + this.serialize() +
+                    ", " + other.serialize(), metadata);
+        }
+        return operator.apply(this, other);
     }
 }

@@ -28,12 +28,27 @@ public enum ItemTypes {
     ArrayItem,
 
     AtomicItem,
-
     StringItem,
     IntegerItem,
     DecimalItem,
     DoubleItem,
     BooleanItem,
 
-    NullItem
+    DurationItem,
+
+    HexBinaryItem,
+    Base64BinaryItem,
+
+    FunctionItem,
+
+    NullItem;
+
+    public static String getItemTypeName(String fullTypeName){
+        String itemPostfix = "Item";
+        if (!itemPostfix.equals(fullTypeName) && fullTypeName.endsWith("Item")) {
+            return Character.toLowerCase(fullTypeName.charAt(0)) +
+                    fullTypeName.substring(1, fullTypeName.length()-itemPostfix.length());
+        }
+        return fullTypeName;
+    }
 }

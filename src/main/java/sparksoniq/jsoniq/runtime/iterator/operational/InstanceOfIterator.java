@@ -24,6 +24,7 @@ import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.operational.base.UnaryOperationBaseIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.types.SequenceType;
 
@@ -32,7 +33,7 @@ import java.util.List;
 
 import org.rumbledb.api.Item;
 
-public class InstanceOfIterator extends UnaryOperationIterator {
+public class InstanceOfIterator extends UnaryOperationBaseIterator {
 
 
 	private static final long serialVersionUID = 1L;
@@ -52,12 +53,17 @@ public class InstanceOfIterator extends UnaryOperationIterator {
                 items.add(_child.next());
             _child.close();
             this._hasNext = false;
+
+            //... instance of ()
+            if (!items.isEmpty() && _sequenceType.isEmptySequence()) return ItemFactory.getInstance().createBooleanItem(false);
+
             //Empty sequence, more items
             if (items.isEmpty() && (_sequenceType.getArity() == SequenceType.Arity.One ||
                     _sequenceType.getArity() == SequenceType.Arity.OneOrMore)) {
                 return ItemFactory.getInstance().createBooleanItem(false);
             }
-            if (items.size() == 1 && _sequenceType.getArity() == SequenceType.Arity.ZeroOrMore) {
+            if (items.size() > 1 && (_sequenceType.getArity()  == SequenceType.Arity.One ||
+                    _sequenceType.getArity() == SequenceType.Arity.OneOrZero)) {
                 return ItemFactory.getInstance().createBooleanItem(false);
             }
             for (Item item : items) {
