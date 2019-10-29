@@ -20,62 +20,40 @@
 
 package sparksoniq.jsoniq.compiler.translator.expr.primary;
 
-import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
-public class FunctionCall extends PrimaryExpression {
+public class NamedFunctionRef extends PrimaryExpression {
 
-    private final String _functionName;
-    private final List<Expression> _arguments;
+    private final FunctionIdentifier identifier;
 
-
-    public FunctionCall(String functionName, List<Expression> arguments, ExpressionMetadata metadata) {
+    public NamedFunctionRef(FunctionIdentifier identifier, ExpressionMetadata metadata) {
         super(metadata);
-        this._functionName = functionName;
-        this._arguments = arguments;
+        this.identifier = identifier;
     }
 
-    public List<Expression> getArguments() {
-        return _arguments;
-    }
-
-    public String getFunctionName() {
-        return _functionName;
+    public FunctionIdentifier getIdentifier() {
+        return identifier;
     }
 
     @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
         List<ExpressionOrClause> result = new ArrayList<>();
-        result.addAll(this._arguments);
         return getDescendantsFromChildren(result, depthSearch);
     }
 
     @Override
-    public String serializationString(boolean prefix) {
-        String result = "(primaryExpr (functionCall ";
-        List<String> names = Arrays.asList(this._functionName.split(":"));
-        Collections.reverse(names);
-        for (String name : names)
-            result += name + (names.indexOf(name) < names.size() - 1 ? " : " : " ");
-        result += "(argumentList ( ";
-        for (Expression arg : this._arguments)
-            result += "(argument (exprSingle " + arg.serializationString(false) +
-                    (_arguments.indexOf(arg) < _arguments.size() - 1 ? ")) , " : ")) ");
-        result += "))";
-        result += "))";
-        return result;
-
+    public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
+        return visitor.visitNamedFunctionRef(this, argument);
     }
 
     @Override
-    public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
-        return visitor.visitFunctionCall(this, argument);
+    public String serializationString(boolean prefix) {
+        return "(namedFunctionRef(NCName " + identifier.getName() + ") (IntegerLiteral " + identifier.getArity() + "))";
     }
 }

@@ -1,4 +1,4 @@
-// Generated from ./src/main/java/sparksoniq/jsoniq/compiler/parser/Jsoniq.g4 by ANTLR 4.7
+// Generated from ./src/main/java/sparksoniq/jsoniq/compiler/parser/Jsoniq.g4 by ANTLR 4.5.3
 
 // Java header
 package sparksoniq.jsoniq.compiler.parser;
@@ -391,6 +391,24 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitArgument(JsoniqParser.ArgumentContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#functionItemExpr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFunctionItemExpr(JsoniqParser.FunctionItemExprContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#namedFunctionRef}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitNamedFunctionRef(JsoniqParser.NamedFunctionRefContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#inlineFunctionExpr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitInlineFunctionExpr(JsoniqParser.InlineFunctionExprContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#sequenceType}.
 	 * @param ctx the parse tree

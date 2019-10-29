@@ -287,24 +287,17 @@ public class Functions {
         userDefinedFunctions.put(function.getIdentifier(), function);
     }
 
-    public static Class<? extends RuntimeIterator> getBuiltInFunction(FunctionCall expression, List<RuntimeIterator> arguments) {
-        String fnName = expression.getFunctionName();
-        int arity = arguments.size();
-        FunctionIdentifier identifier = new FunctionIdentifier(fnName, arity);
+    public static Class<? extends RuntimeIterator> getBuiltInFunction(FunctionIdentifier identifier, IteratorMetadata metadata) {
         if (builtInFunctions.containsKey(identifier))
             return builtInFunctions.get(identifier);
-        throw new UnknownFunctionCallException(fnName, arity, new IteratorMetadata(expression.getMetadata()));
+        throw new UnknownFunctionCallException(identifier.getName(), identifier.getArity(), metadata);
     }
 
-    public static FunctionItem getUserDefinedFunction(FunctionCall expression, List<RuntimeIterator> arguments) {
-        String fnName = expression.getFunctionName();
-        int arity = arguments.size();
-        FunctionIdentifier identifier = new FunctionIdentifier(fnName, arity);
+    public static FunctionItem getUserDefinedFunction(FunctionIdentifier identifier, IteratorMetadata metadata) {
         if (userDefinedFunctions.containsKey(identifier))
             return userDefinedFunctions.get(identifier);
-        throw new UnknownFunctionCallException(fnName, arity, new IteratorMetadata(expression.getMetadata()));
+        throw new UnknownFunctionCallException(identifier.getName(), identifier.getArity(), metadata);
     }
-
 
     public static class FunctionNames {
 
@@ -536,13 +529,11 @@ public class Functions {
          */
         public static final String MATCHES = "matches";
         /**
-<<<<<<< HEAD
          * function that returns the duration item from the supplied string
          */
         public static final String DURATION = "duration";
         /**
-=======
->>>>>>> b239fb29feef44de1469715f9c01af1b953c9676
+
          * function that returns the hexBinary item from the supplied string
          */
         public static final String HEXBINARY = "hexBinary";

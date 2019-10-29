@@ -20,6 +20,7 @@
 
 package sparksoniq.semantics.visitor;
 
+import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnknownFunctionCallException;
 import sparksoniq.exceptions.UnsupportedFeatureException;
 import sparksoniq.jsoniq.compiler.translator.expr.CommaExpression;
@@ -42,9 +43,8 @@ import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.ReturnClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.WhereClause;
-import sparksoniq.jsoniq.compiler.translator.expr.module.FunctionDeclarationExpression;
-import sparksoniq.jsoniq.compiler.translator.expr.module.MainModuleExpression;
-import sparksoniq.jsoniq.compiler.translator.expr.module.PrologExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.module.MainModule;
+import sparksoniq.jsoniq.compiler.translator.expr.module.Prolog;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.AdditiveExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.AndExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.CastExpression;
@@ -62,6 +62,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalEx
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.PostFixExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.ArrayLookupExtension;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.ArrayUnboxingExtension;
+import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.DynamicFunctionCallExtension;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.ObjectLookupExtension;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.PostfixExtension;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.PredicateExtension;
@@ -71,7 +72,9 @@ import sparksoniq.jsoniq.compiler.translator.expr.primary.ContextExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.DecimalLiteral;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.DoubleLiteral;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionCall;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionDeclaration;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.IntegerLiteral;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.NamedFunctionRef;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.NullLiteral;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.ObjectConstructor;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.ParenthesizedExpression;
@@ -85,7 +88,10 @@ import sparksoniq.jsoniq.runtime.iterator.EmptySequenceIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.control.IfRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.control.SwitchRuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.DynamicFunctionCallIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.FunctionItemIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.UserDefinedFunctionCallIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 import sparksoniq.jsoniq.runtime.iterator.operational.AdditiveOperationIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.AndOperationIterator;
@@ -166,27 +172,13 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
 
 
     @Override
-    public RuntimeIterator visitMainModuleExpression(MainModuleExpression expression, RuntimeIterator argument) {
-        return super.visitMainModuleExpression(expression, argument);
+    public RuntimeIterator visitMainModule(MainModule expression, RuntimeIterator argument) {
+        return super.visitMainModule(expression, argument);
     }
 
     @Override
-    public RuntimeIterator visitPrologExpression(PrologExpression expression, RuntimeIterator argument) {
-        return super.visitPrologExpression(expression, argument);
-    }
-
-    @Override
-    public RuntimeIterator visitFunctionDeclarationExpression(FunctionDeclarationExpression expression, RuntimeIterator argument) {
-        Map<String, SequenceType> paramNameToSequenceTypes= new LinkedHashMap<>();
-        for (Map.Entry<String, FlworVarSequenceType> paramEntry : expression.get_params().entrySet()) {
-            paramNameToSequenceTypes.put(paramEntry.getKey(), paramEntry.getValue().getSequence());
-        }
-        SequenceType returnType = expression.get_returnType().getSequence();
-
-        FunctionItem fn = new FunctionItem(expression.get_name(),paramNameToSequenceTypes, returnType, expression.get_body());
-        Functions.addUserDefinedFunction(fn, expression.getMetadata());
-
-        return defaultAction(expression, argument);
+    public RuntimeIterator visitProlog(Prolog expression, RuntimeIterator argument) {
+        return super.visitProlog(expression, argument);
     }
     //endregion
 
@@ -272,34 +264,6 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
     }
 
     @Override
-    public RuntimeIterator visitFunctionCall(FunctionCall expression, RuntimeIterator argument) {
-        List<RuntimeIterator> arguments = new ArrayList<>();
-        IteratorMetadata iteratorMetadata = createIteratorMetadata(expression);
-        for (Expression arg : expression.getParameters()) {
-            arguments.add(this.visit(arg, argument));
-        }
-
-        try {
-            Class<? extends RuntimeIterator> functionClass = Functions.getBuiltInFunction(expression, arguments);
-            Constructor<? extends RuntimeIterator> ctor = functionClass.getConstructor(List.class, IteratorMetadata.class);
-            return ctor.newInstance(arguments, iteratorMetadata);
-        } catch (Exception ex1) {
-            if (ex1 instanceof UnknownFunctionCallException) {
-                FunctionItem fn =  Functions.getUserDefinedFunction(expression, arguments);
-                return new UserDefinedFunctionCallIterator(
-                        fn.getIdentifier().getName(),
-                        fn.getBodyExpression(),
-                        arguments,
-                        fn.getParameterNames(),
-                        iteratorMetadata
-                );
-            } else {
-                throw new RuntimeException(ex1.getMessage());
-            }
-        }
-    }
-
-    @Override
     public RuntimeIterator visitPostfixExpression(PostFixExpression expression, RuntimeIterator argument) {
         if (expression.isPrimary()) {
             return defaultAction(expression, argument);
@@ -311,19 +275,22 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                         RuntimeIterator iterator =
                                 this.visit(((ArrayLookupExtension) extension).getExpression(), argument);
                         previous = new ArrayLookupIterator(previous, iterator, createIteratorMetadata(expression));
-                    }
-                    if (extension instanceof ObjectLookupExtension) {
+                    } else if (extension instanceof ObjectLookupExtension) {
                         RuntimeIterator iterator =
                                 this.visit(((ObjectLookupExtension) extension).getExpression(), argument);
                         previous = new ObjectLookupIterator(previous, iterator, createIteratorMetadata(expression));
-                    }
-                    if (extension instanceof ArrayUnboxingExtension) {
+                    } else if (extension instanceof ArrayUnboxingExtension) {
                         previous = new ArrayUnboxingIterator(previous, createIteratorMetadata(expression));
-                    }
-                    if (extension instanceof PredicateExtension) {
+                    } else if (extension instanceof PredicateExtension) {
                         RuntimeIterator filterExpression = //pass the predicate as argument for $$ expresions
                                 this.visit(((PredicateExtension) extension).getExpression(), argument);
                         previous = new PredicateIterator(previous, filterExpression, createIteratorMetadata(expression));
+                    } else if (extension instanceof DynamicFunctionCallExtension) {
+                        List<RuntimeIterator> arguments = new ArrayList<>();
+                        for (Expression arg : ((DynamicFunctionCallExtension) extension).getArguments()) {
+                            arguments.add(this.visit(arg, argument));
+                        }
+                        previous = new DynamicFunctionCallIterator(previous, arguments, createIteratorMetadata(expression));
                     }
                 } catch (Exception ex) {
                     ex.printStackTrace();
@@ -364,6 +331,76 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
     public RuntimeIterator visitContextExpr(ContextExpression expression, RuntimeIterator argument) {
         return new ContextExpressionIterator(createIteratorMetadata(expression));
     }
+
+    @Override
+    public RuntimeIterator visitFunctionDeclaration(FunctionDeclaration expression, RuntimeIterator argument) {
+        Map<String, SequenceType> paramNameToSequenceTypes = new LinkedHashMap<>();
+        for (Map.Entry<String, FlworVarSequenceType> paramEntry : expression.get_params().entrySet()) {
+            paramNameToSequenceTypes.put(paramEntry.getKey(), paramEntry.getValue().getSequence());
+        }
+        SequenceType returnType = expression.get_returnType().getSequence();
+
+        FunctionItem function = new FunctionItem(expression.get_name(), paramNameToSequenceTypes, returnType, expression.get_body());
+        if (expression.get_name().equals("")) {
+            // unnamed (inline function declaration)
+            return new FunctionItemIterator(function, createIteratorMetadata(expression));
+        } else {
+            // named (static function declaration)
+            Functions.addUserDefinedFunction(function, expression.getMetadata());
+        }
+
+        return defaultAction(expression, argument);
+    }
+
+    @Override
+    public RuntimeIterator visitFunctionCall(FunctionCall expression, RuntimeIterator argument) {
+        List<RuntimeIterator> arguments = new ArrayList<>();
+        IteratorMetadata iteratorMetadata = createIteratorMetadata(expression);
+        for (Expression arg : expression.getArguments()) {
+            arguments.add(this.visit(arg, argument));
+        }
+        String fnName = expression.getFunctionName();
+        int arity = arguments.size();
+        FunctionIdentifier identifier = new FunctionIdentifier(fnName, arity);
+
+        try {
+            Class<? extends RuntimeIterator> functionClass = Functions.getBuiltInFunction(identifier, createIteratorMetadata(expression));
+            Constructor<? extends RuntimeIterator> ctor = functionClass.getConstructor(List.class, IteratorMetadata.class);
+            return ctor.newInstance(arguments, iteratorMetadata);
+        } catch (Exception ex1) {
+            if (ex1 instanceof UnknownFunctionCallException) {
+                FunctionItem fn = Functions.getUserDefinedFunction(identifier, createIteratorMetadata(expression));
+                return new UserDefinedFunctionCallIterator(
+                        fn.getIdentifier().getName(),
+                        fn.getBodyExpression(),
+                        arguments,
+                        fn.getParameterNames(),
+                        iteratorMetadata
+                );
+            } else {
+                throw new RuntimeException(ex1.getMessage());
+            }
+        }
+    }
+
+    @Override
+    public RuntimeIterator visitNamedFunctionRef(NamedFunctionRef expression, RuntimeIterator argument) {
+        FunctionIdentifier identifier = expression.getIdentifier();
+
+        try {
+            // as of 2019-10-25: this line should cause an unknown function call exception
+            Class<? extends RuntimeIterator> functionClass = Functions.getBuiltInFunction(identifier, createIteratorMetadata(expression));
+            throw new SparksoniqRuntimeException("Higher order functions using builtin functions are not supported.");
+        } catch (Exception ex1) {
+            if (ex1 instanceof UnknownFunctionCallException) {
+                FunctionItem function = Functions.getUserDefinedFunction(identifier, createIteratorMetadata(expression));
+                return new FunctionItemIterator(function, createIteratorMetadata(expression));
+            } else {
+                throw new SparksoniqRuntimeException(ex1.getMessage());
+            }
+        }
+    }
+
     //endregion
 
     //region literal

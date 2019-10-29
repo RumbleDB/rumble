@@ -146,7 +146,7 @@ unaryExpr               : op+=('-' | '+')* main_expr=simpleMapExpr;
 
 simpleMapExpr           : main_expr=postFixExpr ('!' postFixExpr)*;
 
-postFixExpr             : main_expr=primaryExpr (al=arrayLookup | pr=predicate | ol=objectLookup | au=arrayUnboxing)*;
+postFixExpr             : main_expr=primaryExpr (arrayLookup | predicate | objectLookup | arrayUnboxing | argumentList)*;
 
 arrayLookup             : '[' '[' expr ']' ']';
 
@@ -166,7 +166,9 @@ primaryExpr             : NullLiteral
                         | functionCall
                         | orderedExpr
                         | unorderedExpr
-                        | arrayConstructor;
+                        | arrayConstructor
+                        | functionItemExpr
+                        ;
 
 
 varRef                  : '$' (ns=NCName ':')? name=NCName;
@@ -186,6 +188,13 @@ argumentList            : '('  (args+=argument ','?)* ')';
 
 argument                : exprSingle | '?';
 
+functionItemExpr        : namedFunctionRef | inlineFunctionExpr;
+
+namedFunctionRef        : fn_name=NCName '#' arity=Literal;
+
+inlineFunctionExpr      : 'function' '(' paramList? ')'
+                           (Kas return_type=sequenceType)?
+                           ('{' fn_body=expr '}');
 
 ///////////////////////// Types
 
