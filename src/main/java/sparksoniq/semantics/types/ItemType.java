@@ -27,11 +27,13 @@ public class ItemType implements Serializable {
 
 
 	private static final long serialVersionUID = 1L;
-	private final ItemTypes _type;
+	private ItemTypes _type;
+
+    public ItemType() {
+    }
 
     public ItemType(ItemTypes type) {
         this._type = type;
-
     }
 
     public ItemTypes getType() {

@@ -17,6 +17,8 @@ import sparksoniq.jsoniq.compiler.translator.expr.postfix.PostFixExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.PostfixExtension;
 import sparksoniq.jsoniq.runtime.iterator.functions.FunctionItemIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
+import sparksoniq.semantics.types.ItemType;
+import sparksoniq.semantics.types.SequenceType;
 
 public class KryoManager {
 
@@ -50,11 +52,15 @@ public class KryoManager {
                     kryo.register(DecimalItem.class);
                     kryo.register(NullItem.class);
                     kryo.register(BooleanItem.class);
+                    kryo.register(FunctionItem.class);
 
                     kryo.register(ArrayList.class);
 
                     kryo.register(FunctionIdentifier.class);
                     kryo.register(ExpressionOrClause.class);
+                    kryo.register(SequenceType.class);
+                    kryo.register(SequenceType.Arity.class);
+                    kryo.register(ItemType.class);
 
                     /*kryo.register(DynamicContext.class);
                     kryo.register(FlworTuple.class);

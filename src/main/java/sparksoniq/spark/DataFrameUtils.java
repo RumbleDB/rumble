@@ -40,6 +40,7 @@ import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.BooleanItem;
 import sparksoniq.jsoniq.item.DecimalItem;
 import sparksoniq.jsoniq.item.DoubleItem;
+import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.NullItem;
@@ -47,6 +48,8 @@ import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.semantics.types.ItemType;
+import sparksoniq.semantics.types.SequenceType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -90,10 +93,15 @@ public class DataFrameUtils {
         kryo.register(DecimalItem.class);
         kryo.register(NullItem.class);
         kryo.register(BooleanItem.class);
+        kryo.register(FunctionItem.class);
+
         kryo.register(ArrayList.class);
 
         kryo.register(FunctionIdentifier.class);
         kryo.register(ExpressionOrClause.class);
+        kryo.register(SequenceType.class);
+        kryo.register(SequenceType.Arity.class);
+        kryo.register(ItemType.class);
     }
 
     public static byte[] serializeItem(Item toSerialize, Kryo kryo, Output output) {

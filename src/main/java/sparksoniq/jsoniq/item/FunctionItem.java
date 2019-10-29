@@ -51,7 +51,7 @@ public class FunctionItem extends Item {
     private Expression bodyExpression;
     private Map<String, List<Item>> nonLocalVariableBindings;
 
-    protected FunctionItem() {
+    public FunctionItem() {
         super();
     }
 
