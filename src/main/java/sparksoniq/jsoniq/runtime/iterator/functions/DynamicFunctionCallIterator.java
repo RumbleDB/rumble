@@ -151,7 +151,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
     }
 
     private void initializeFunctionItem() {
-        if (!(_fnItemIterator instanceof FunctionItemIterator)) {
+        if (!(_fnItemIterator instanceof FunctionRuntimeIterator)) {
             throw new UnexpectedTypeException(
                     "Dynamic function call can only be performed on functions."
                     , getMetadata()

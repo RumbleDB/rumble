@@ -89,7 +89,7 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.control.IfRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.control.SwitchRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.DynamicFunctionCallIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.FunctionItemIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.FunctionRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.UserDefinedFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
@@ -344,7 +344,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         FunctionItem function = new FunctionItem(expression.get_name(), paramNameToSequenceTypes, returnType, bodyIterator);
         if (expression.get_name().equals("")) {
             // unnamed (inline function declaration)
-            return new FunctionItemIterator(function, createIteratorMetadata(expression));
+            return new FunctionRuntimeIterator(function, createIteratorMetadata(expression));
         } else {
             // named (static function declaration)
             Functions.addUserDefinedFunction(function, expression.getMetadata());
@@ -392,7 +392,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         } catch (Exception ex1) {
             if (ex1 instanceof UnknownFunctionCallException) {
                 FunctionItem function = Functions.getUserDefinedFunction(identifier, createIteratorMetadata(expression));
-                return new FunctionItemIterator(function, createIteratorMetadata(expression));
+                return new FunctionRuntimeIterator(function, createIteratorMetadata(expression));
             } else {
                 throw new SparksoniqRuntimeException(ex1.getMessage());
             }
