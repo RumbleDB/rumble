@@ -35,12 +35,14 @@ public class DateTimeItem extends AtomicItem {
 
     private static final long serialVersionUID = 1L;
     private DateTime _value;
+    private boolean hasTimeZone;
 
     public DateTimeItem() { super(); }
 
     public DateTimeItem(DateTime _value) {
         super();
-        this._value = _value;
+        this.hasTimeZone = _value.getZone() != DateTimeZone.getDefault();
+        this._value = hasTimeZone ? _value : _value.withZoneRetainFields(DateTimeZone.UTC);
     }
 
     public DateTime getValue() {
@@ -109,8 +111,10 @@ public class DateTimeItem extends AtomicItem {
     @Override
     public String serialize() {
         String value = this.getValue().toString();
-        if (this.getValue().getZone() == DateTimeZone.UTC) return value.substring(0, value.length()-1);
-        return value;
+        String zoneString = this.getValue().getZone() == DateTimeZone.UTC ? "Z" : value.substring(value.length() - 6);
+        value = value.substring(0, value.length() - zoneString.length());
+        value = this.getValue().getMillisOfSecond() == 0 ? value.substring(0, value.length()-4) : value;
+        return value + (hasTimeZone ? zoneString : "");
     }
 
     @Override
@@ -149,11 +153,7 @@ public class DateTimeItem extends AtomicItem {
     public static DateTime getDateTimeFromString(String dateTime) throws IllegalArgumentException{
         if (!checkInvalidDurationFormat(dateTime)) throw new IllegalArgumentException();
         dateTime = fixEndOfDay(dateTime);
-        DateTime dt = DateTime.parse(dateTime);
-        if (dt.getZone() == DateTimeZone.getDefault()) {
-            return dt.withZoneRetainFields(DateTimeZone.UTC);
-        }
-        return dt;
+        return DateTime.parse(dateTime);
     }
 
     @Override
