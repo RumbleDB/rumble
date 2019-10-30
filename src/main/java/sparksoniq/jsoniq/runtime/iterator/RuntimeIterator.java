@@ -34,6 +34,7 @@ import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.semantics.types.ItemTypes;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -94,7 +95,8 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
             else if (item.isArray())
                 return true;
             else {
-                throw new SparksoniqRuntimeException("Unexpected item type found while calculating effective boolean value.");
+                throw new InvalidArgumentTypeException("Effective boolean value not defined for items of type " +
+                        ItemTypes.getItemTypeName(item.getClass().getSimpleName()), iterator.getMetadata());
             }
 
             if (iterator.hasNext()) {
