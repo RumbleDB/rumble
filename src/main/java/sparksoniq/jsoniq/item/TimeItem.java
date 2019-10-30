@@ -4,6 +4,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.joda.time.Period;
 import org.joda.time.PeriodType;
 import org.rumbledb.api.Item;
@@ -20,12 +21,14 @@ public class TimeItem extends AtomicItem {
 
     private static final long serialVersionUID = 1L;
     private DateTime _value;
+    private boolean hasTimeZone;
 
     public TimeItem() { super(); }
 
     public TimeItem(DateTime _value) {
         super();
-        this._value = _value;
+        this.hasTimeZone = _value.getZone() != DateTimeZone.getDefault();
+        this._value = hasTimeZone ? _value : _value.withZoneRetainFields(DateTimeZone.UTC);
     }
 
 
@@ -131,8 +134,11 @@ public class TimeItem extends AtomicItem {
     @Override
     public String serialize() {
         String value = this.getValue().toString();
+        String zoneString = this.getValue().getZone() == DateTimeZone.UTC ? "Z" : value.substring(value.length() - 6);
+        value = value.substring(0, value.length() - zoneString.length());
+        value = this.getValue().getMillisOfSecond() == 0 ? value.substring(0, value.length()-4) : value;
         int dateTimeSeparatorIndex = value.indexOf("T");
-        return value.substring(dateTimeSeparatorIndex+1);
+        return value.substring(dateTimeSeparatorIndex+1) + (hasTimeZone ? zoneString : "");
     }
 
     @Override

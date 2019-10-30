@@ -20,11 +20,14 @@ public class DateItem extends AtomicItem {
 
     private static final long serialVersionUID = 1L;
     private DateTime _value;
+    private boolean hasTimeZone;
 
     public DateItem() { super(); }
 
     public DateItem(DateTime _value) {
         super();
+        this.hasTimeZone = _value.getZone() != DateTimeZone.getDefault();
+        _value = hasTimeZone ? _value : _value.withZoneRetainFields(DateTimeZone.UTC);
         this._value = _value.dayOfMonth().roundFloorCopy();
     }
 
@@ -136,7 +139,7 @@ public class DateItem extends AtomicItem {
         String value = this.getValue().toString();
         String zone = this.getValue().getZone() == DateTimeZone.UTC ? "Z" : this.getValue().getZone().toString();
         int dateTimeSeparatorIndex = value.indexOf("T");
-        return value.substring(0,  dateTimeSeparatorIndex) + zone;
+        return value.substring(0,  dateTimeSeparatorIndex) + (hasTimeZone ? zone : "");
     }
 
     @Override
