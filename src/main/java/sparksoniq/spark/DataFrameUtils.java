@@ -45,6 +45,7 @@ import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.SequenceType;
 
 import javax.sound.midi.Sequence;
@@ -93,6 +94,8 @@ public class DataFrameUtils {
         kryo.register(FunctionItem.class);
         kryo.register(FunctionIdentifier.class);
         kryo.register(SequenceType.class);
+        kryo.register(SequenceType.Arity.class);
+        kryo.register(ItemType.class);
 
         kryo.register(ArrayList.class);
     }

@@ -45,11 +45,14 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
 
 	private static final long serialVersionUID = 1L;
 	protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
-    private final IteratorMetadata metadata;
+    private IteratorMetadata metadata;
     protected boolean _hasNext;
     protected boolean _isOpen;
     protected List<RuntimeIterator> _children;
     protected DynamicContext _currentDynamicContext;
+
+    public RuntimeIterator() {
+    }
 
     protected RuntimeIterator(List<RuntimeIterator> children, IteratorMetadata metadata) {
         this.metadata = metadata;
