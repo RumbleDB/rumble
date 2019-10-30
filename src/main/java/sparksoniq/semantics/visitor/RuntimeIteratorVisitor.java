@@ -340,7 +340,8 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         }
         SequenceType returnType = expression.get_returnType().getSequence();
 
-        FunctionItem function = new FunctionItem(expression.get_name(), paramNameToSequenceTypes, returnType, expression.get_body());
+        RuntimeIterator bodyIterator = this.visit(expression.get_body(), argument);
+        FunctionItem function = new FunctionItem(expression.get_name(), paramNameToSequenceTypes, returnType, bodyIterator);
         if (expression.get_name().equals("")) {
             // unnamed (inline function declaration)
             return new FunctionItemIterator(function, createIteratorMetadata(expression));
@@ -361,20 +362,17 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         }
         String fnName = expression.getFunctionName();
         int arity = arguments.size();
-        FunctionIdentifier identifier = new FunctionIdentifier(fnName, arity);
+        FunctionIdentifier fnIdentifier = new FunctionIdentifier(fnName, arity);
 
         try {
-            Class<? extends RuntimeIterator> functionClass = Functions.getBuiltInFunction(identifier, createIteratorMetadata(expression));
+            Class<? extends RuntimeIterator> functionClass = Functions.getBuiltInFunction(fnIdentifier, createIteratorMetadata(expression));
             Constructor<? extends RuntimeIterator> ctor = functionClass.getConstructor(List.class, IteratorMetadata.class);
             return ctor.newInstance(arguments, iteratorMetadata);
         } catch (Exception ex1) {
             if (ex1 instanceof UnknownFunctionCallException) {
-                FunctionItem fn = Functions.getUserDefinedFunction(identifier, createIteratorMetadata(expression));
                 return new UserDefinedFunctionCallIterator(
-                        fn.getIdentifier().getName(),
-                        fn.getBodyExpression(),
+                        fnIdentifier,
                         arguments,
-                        fn.getParameterNames(),
                         iteratorMetadata
                 );
             } else {
@@ -400,7 +398,6 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
             }
         }
     }
-
     //endregion
 
     //region literal

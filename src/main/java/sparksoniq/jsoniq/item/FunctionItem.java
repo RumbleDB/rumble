@@ -25,11 +25,8 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.FunctionsNonSerializableException;
-import sparksoniq.jsoniq.compiler.translator.expr.Expression;
-import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
@@ -48,22 +45,22 @@ public class FunctionItem extends Item {
     // signature contains type information for all parameters and the return value
     private List<SequenceType> signature;
 
-    private Expression bodyExpression;
+    private RuntimeIterator bodyIterator;
     private Map<String, Item> nonLocalVariableBindings;
 
     protected FunctionItem() {
         super();
     }
 
-    public FunctionItem(FunctionIdentifier identifier, List<String> parameterNames, List<SequenceType> signature, Expression bodyExpression, Map<String, Item> nonLocalVariableBindings) {
+    public FunctionItem(FunctionIdentifier identifier, List<String> parameterNames, List<SequenceType> signature, RuntimeIterator bodyIterator, Map<String, Item> nonLocalVariableBindings) {
         this.identifier = identifier;
         this.parameterNames = parameterNames;
         this.signature = signature;
-        this.bodyExpression = bodyExpression;
+        this.bodyIterator = bodyIterator;
         this.nonLocalVariableBindings = nonLocalVariableBindings;
     }
 
-    public FunctionItem(String name, Map<String, SequenceType> paramNameToSequenceTypes, SequenceType returnType, Expression bodyExpression) {
+    public FunctionItem(String name, Map<String, SequenceType> paramNameToSequenceTypes, SequenceType returnType, RuntimeIterator bodyIterator) {
         List<String> paramNames = new ArrayList<>();
         List<SequenceType> signature = new ArrayList<>();
         for (Map.Entry<String, SequenceType> paramEntry : paramNameToSequenceTypes.entrySet()) {
@@ -75,7 +72,7 @@ public class FunctionItem extends Item {
         this.identifier = new FunctionIdentifier(name, paramNames.size());
         this.parameterNames = paramNames;
         this.signature = signature;
-        this.bodyExpression = bodyExpression;
+        this.bodyIterator = bodyIterator;
         this.nonLocalVariableBindings = new HashMap<>();
     }
 
@@ -91,8 +88,8 @@ public class FunctionItem extends Item {
         return signature;
     }
 
-    public Expression getBodyExpression() {
-        return bodyExpression;
+    public RuntimeIterator getBodyIterator() {
+        return bodyIterator;
     }
 
     public Map<String, Item> getNonLocalVariableBindings() {
@@ -135,7 +132,7 @@ public class FunctionItem extends Item {
         kryo.writeObject(output, this.identifier);
         kryo.writeObject(output, this.parameterNames);
         kryo.writeObject(output, this.signature);
-        kryo.writeObject(output, this.bodyExpression);
+        kryo.writeObject(output, this.bodyIterator);
         kryo.writeObject(output, this.nonLocalVariableBindings);
     }
 
@@ -145,7 +142,7 @@ public class FunctionItem extends Item {
         this.identifier = kryo.readObject(input, FunctionIdentifier.class);
         this.parameterNames = kryo.readObject(input, ArrayList.class);
         this.signature = kryo.readObject(input, ArrayList.class);
-        this.bodyExpression = kryo.readObject(input, Expression.class);
+        this.bodyIterator = kryo.readObject(input, RuntimeIterator.class);
         this.nonLocalVariableBindings = kryo.readObject(input, HashMap.class);
     }
 }

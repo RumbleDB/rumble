@@ -10,6 +10,8 @@ import com.esotericsoftware.kryo.util.Pool;
 import java.util.ArrayList;
 
 import org.rumbledb.api.Item;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
+import sparksoniq.semantics.types.SequenceType;
 
 public class KryoManager {
 
@@ -43,6 +45,10 @@ public class KryoManager {
                     kryo.register(DecimalItem.class);
                     kryo.register(NullItem.class);
                     kryo.register(BooleanItem.class);
+
+                    kryo.register(FunctionItem.class);
+                    kryo.register(FunctionIdentifier.class);
+                    kryo.register(SequenceType.class);
 
                     kryo.register(ArrayList.class);
 
