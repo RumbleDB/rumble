@@ -1,6 +1,7 @@
-(:JIQS: ShouldRun; Output="(P6M, P4Y4M, 5.4074074074074074, P21DT9H42M47.407S, PT2H7M11.808S, 6.35162881737385)" :)
+(:JIQS: ShouldRun; Output="(P6M, P4Y4M, P4M, 5.4074074074074074, P21DT9H42M47.407S, PT2H7M11.808S, 6.35162881737385)" :)
 yearMonthDuration("P2Y6M") div 5.13,
 yearMonthDuration("P130Y51M") div 3.1234e1,
+yearMonthDuration("P1Y1M") div 3.12,
 yearMonthDuration("P12Y2M") div yearMonthDuration("P2Y3M"),
 dayTimeDuration("P193DT55H7M8.222S") div 9.124,
 dayTimeDuration("P16DT85H7M99.222S") div 2.213e2,

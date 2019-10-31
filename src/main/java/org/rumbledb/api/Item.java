@@ -81,7 +81,7 @@ public abstract class Item implements SerializableItem {
      * @return the BigDecimal value.
      */
     public BigDecimal castToDecimalValue() {
-        throw new IteratorFlowException("Cannot call castToDouble on non numeric");
+        throw new IteratorFlowException("Cannot call castToDecimal on non numeric");
     }
 
     /**

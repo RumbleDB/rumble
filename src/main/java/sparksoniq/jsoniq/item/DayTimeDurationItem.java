@@ -101,13 +101,29 @@ public class DayTimeDurationItem extends DurationItem {
         if (otherBd.stripTrailingZeros().scale() <= 0) {
             return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue().multipliedBy(otherBd.intValue()));
         }
+        System.out.println("OtherBD " + otherBd);
         long durationInMillis = this.getValue().toStandardDuration().getMillis();
-        long duration_result = otherBd.multiply(BigDecimal.valueOf(durationInMillis)).setScale(16, BigDecimal.ROUND_HALF_UP).longValue();
+        System.out.println("durationInMillis " + durationInMillis);
+        BigDecimal duration_result_1 = otherBd.multiply(BigDecimal.valueOf(durationInMillis));
+        System.out.println("1 duration result " + duration_result_1);
+        BigDecimal duration_result_2 = duration_result_1.setScale(16, BigDecimal.ROUND_HALF_UP);
+        System.out.println("2 duration result " + duration_result_2);
+        long duration_result = duration_result_2.longValue();
+        System.out.println("duration result " + duration_result);
         Period period_time = new Period(duration_result, PeriodType.dayTime());
+        System.out.println(period_time.toString());
         int hours = period_time.getHours();
-        BigDecimal[] quotientAndRemainder = BigDecimal.valueOf(hours).divideAndRemainder(BigDecimal.valueOf(24));
-        Period result = new Period(0L, PeriodType.dayTime()).withDays(quotientAndRemainder[0].intValue()).withHours(quotientAndRemainder[1].intValue())
+        double hoursInDay = 24.0;
+        BigDecimal[] quotientAndRemainder = BigDecimal.valueOf(hours).divideAndRemainder(BigDecimal.valueOf(hoursInDay));
+        System.out.println("DAYS " + quotientAndRemainder[0].intValue());
+        System.out.println("DAYS EXACT " + quotientAndRemainder[0].intValueExact());
+        assert quotientAndRemainder[0].intValue() != 0;
+        System.out.println("Hours " + quotientAndRemainder[1].intValue());
+        Period result_1 = new Period(0L, PeriodType.dayTime());
+        System.out.println("Period 1 " + result_1);
+        Period result = result_1.withDays(quotientAndRemainder[0].intValue()).withHours(quotientAndRemainder[1].intValue())
                 .withMinutes(period_time.getMinutes()).withSeconds(period_time.getSeconds()).withMillis(period_time.getMillis());
+        System.out.println("RESULT " + result);
         return ItemFactory.getInstance().createDayTimeDurationItem(result);
     }
 
@@ -123,8 +139,9 @@ public class DayTimeDurationItem extends DurationItem {
         long duration_result = (BigDecimal.valueOf(durationInMillis)).divide(otherBd, 16, BigDecimal.ROUND_HALF_UP).longValue();
         Period period_time = new Period(duration_result, PeriodType.dayTime());
         int hours = period_time.getHours();
-        BigDecimal[] quotientAndRemainder = BigDecimal.valueOf(hours).divideAndRemainder(BigDecimal.valueOf(24));
-        Period result = new Period(0L, PeriodType.dayTime()).withDays(quotientAndRemainder[0].intValue()).withHours(quotientAndRemainder[1].intValue())
+        double hoursInDay = 24.0;
+        BigDecimal[] quotientAndRemainder = BigDecimal.valueOf(hours).divideAndRemainder(BigDecimal.valueOf(hoursInDay));
+        Period result = new Period(0L, PeriodType.dayTime()).withDays(quotientAndRemainder[0].intValueExact()).withHours(quotientAndRemainder[1].intValue())
                 .withMinutes(period_time.getMinutes()).withSeconds(period_time.getSeconds()).withMillis(period_time.getMillis());
         return ItemFactory.getInstance().createDayTimeDurationItem(result);
     }
