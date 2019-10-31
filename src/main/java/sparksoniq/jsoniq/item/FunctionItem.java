@@ -25,12 +25,17 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.FunctionsNonSerializableException;
+import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -132,8 +137,23 @@ public class FunctionItem extends Item {
         kryo.writeObject(output, this.identifier);
         kryo.writeObject(output, this.parameterNames);
         kryo.writeObject(output, this.signature);
-        kryo.writeObject(output, this.bodyIterator);
+        // kryo.writeObject(output, this.bodyIterator);
         kryo.writeObject(output, this.nonLocalVariableBindings);
+
+        // convert RuntimeIterator to byte[] data
+        try {
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(bos);
+            oos.writeObject(this.bodyIterator);
+            oos.flush();
+            byte [] data = bos.toByteArray();
+            output.writeInt(data.length);
+            output.writeBytes(data);
+        } catch (Exception e) {
+            throw new SparksoniqRuntimeException(
+                    "Error converting functionItem-bodyRuntimeIterator to byte[]:" + e.getMessage()
+            );
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -142,7 +162,19 @@ public class FunctionItem extends Item {
         this.identifier = kryo.readObject(input, FunctionIdentifier.class);
         this.parameterNames = kryo.readObject(input, ArrayList.class);
         this.signature = kryo.readObject(input, ArrayList.class);
-        this.bodyIterator = kryo.readObject(input, RuntimeIterator.class);
+        // this.bodyIterator = kryo.readObject(input, RuntimeIterator.class);
         this.nonLocalVariableBindings = kryo.readObject(input, HashMap.class);
+
+        try {
+            int dataLength = input.readInt();
+            byte[] data = input.readBytes(dataLength);
+            ByteArrayInputStream bis = new ByteArrayInputStream(data);
+            ObjectInputStream ois = new ObjectInputStream(bis);
+            this.bodyIterator= (RuntimeIterator) ois.readObject();
+        } catch (Exception e) {
+            throw new SparksoniqRuntimeException(
+                    "Error converting functionItem-bodyRuntimeIterator to functionItem:" + e.getMessage()
+            );
+        }
     }
 }
