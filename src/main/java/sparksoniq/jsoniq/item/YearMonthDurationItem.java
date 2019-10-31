@@ -1,7 +1,6 @@
 package sparksoniq.jsoniq.item;
 
 
-import org.apache.commons.math3.dfp.DfpField;
 import org.joda.time.*;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.UnexpectedTypeException;
@@ -19,6 +18,7 @@ public class YearMonthDurationItem extends DurationItem {
 
     private static final long serialVersionUID = 1L;
     private Period _value;
+    private static final PeriodType yearMonthPeriodType = PeriodType.forFields(new DurationFieldType[]{DurationFieldType.years(), DurationFieldType.months()});
 
     public YearMonthDurationItem() {
         super();
@@ -26,7 +26,7 @@ public class YearMonthDurationItem extends DurationItem {
 
     public YearMonthDurationItem(Period value) {
         super();
-        this._value = value.normalizedStandard(PeriodType.forFields(new DurationFieldType[]{DurationFieldType.years(), DurationFieldType.months()}));
+        this._value = value.normalizedStandard(yearMonthPeriodType);
         isNegative = this._value.toString().charAt(1) == '-';
     }
 
@@ -94,16 +94,9 @@ public class YearMonthDurationItem extends DurationItem {
 
     @Override
     public Item multiply(Item other) {
-        BigDecimal otherBd = other.castToDecimalValue();
-        if (otherBd.stripTrailingZeros().scale() <= 0) {
-            return ItemFactory.getInstance().createYearMonthDurationItem(this.getValue().multipliedBy(otherBd.intValue()));
-        }
-        int years = this.getValue().getYears();
-        int months = years * 12 + this.getValue().getMonths();
-        BigDecimal[] quotientAndRemainder = (BigDecimal.valueOf(months).multiply(otherBd)
-                .setScale(0, BigDecimal.ROUND_HALF_UP)).divideAndRemainder(BigDecimal.valueOf(12));
-        Period newPeriod = new Period().withYears(quotientAndRemainder[0].intValue()).withMonths(quotientAndRemainder[1].intValue());
-        return ItemFactory.getInstance().createYearMonthDurationItem(newPeriod);
+        int months = this.getValue().getYears() * 12 + this.getValue().getMonths();
+        int totalMonths = BigDecimal.valueOf(months).multiply(other.castToDecimalValue()).setScale(0, BigDecimal.ROUND_HALF_UP).intValue();
+        return ItemFactory.getInstance().createYearMonthDurationItem(new Period().withMonths(totalMonths).withPeriodType(yearMonthPeriodType));
     }
 
     @Override
@@ -113,10 +106,7 @@ public class YearMonthDurationItem extends DurationItem {
             int otherMonths = 12 * other.getDurationValue().getYears() + other.getDurationValue().getMonths();
             return ItemFactory.getInstance().createDecimalItem(BigDecimal.valueOf(months).divide(BigDecimal.valueOf(otherMonths), 16, RoundingMode.HALF_UP));
         }
-        BigDecimal otherBd = other.castToDecimalValue();
-        BigDecimal[] quotientAndRemainder = (BigDecimal.valueOf(months).divide(otherBd, 0, BigDecimal.ROUND_HALF_UP))
-                .divideAndRemainder(BigDecimal.valueOf(12));
-        Period newPeriod = new Period(0L, PeriodType.yearMonthDay().withDaysRemoved()).withYears(quotientAndRemainder[0].intValue()).withMonths(quotientAndRemainder[1].intValue());
-        return ItemFactory.getInstance().createYearMonthDurationItem(newPeriod);
+        int totalMonths = BigDecimal.valueOf(months).divide(other.castToDecimalValue(), 0, BigDecimal.ROUND_HALF_UP).intValue();
+        return ItemFactory.getInstance().createYearMonthDurationItem(new Period().withMonths(totalMonths).withPeriodType(yearMonthPeriodType));
     }
 }
