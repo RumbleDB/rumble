@@ -151,13 +151,17 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
     }
 
     private void initializeFunctionItem() {
-        if (!(_fnItemIterator instanceof FunctionRuntimeIterator)) {
+        try {
+            _fnItem = getSingleItemOfTypeFromIterator(_fnItemIterator, FunctionItem.class, new UnexpectedTypeException(
+                    "Dynamic function call can not be performed on a sequence."
+                    , getMetadata()
+            ));
+            _fnBodyIterator = _fnItem.getBodyIterator();
+        } catch (UnexpectedTypeException e) {
             throw new UnexpectedTypeException(
                     "Dynamic function call can only be performed on functions."
                     , getMetadata()
             );
         }
-        _fnItem = getSingleItemOfTypeFromIterator(_fnItemIterator, FunctionItem.class);
-        _fnBodyIterator = _fnItem.getBodyIterator();
     }
 }
