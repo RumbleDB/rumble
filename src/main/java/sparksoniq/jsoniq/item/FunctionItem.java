@@ -25,8 +25,8 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
+import sparksoniq.exceptions.FunctionsNonSerializableException;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
@@ -119,7 +119,7 @@ public class FunctionItem extends Item {
 
     @Override
     public String serialize() {
-        throw new RuntimeException("Functions cannot be serialized into output");
+        throw new FunctionsNonSerializableException();
     }
 
     @Override

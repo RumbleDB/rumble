@@ -294,13 +294,16 @@ public class Functions {
         userDefinedFunctions.put(function.getIdentifier(), function);
     }
 
-    public static Class<? extends RuntimeIterator> getBuiltInFunction(FunctionCall expression, List<RuntimeIterator> arguments) {
-        String fnName = expression.getFunctionName();
-        int arity = arguments.size();
-        FunctionIdentifier identifier = new FunctionIdentifier(fnName, arity);
+    public static Class<? extends RuntimeIterator> getBuiltInFunction(FunctionIdentifier identifier, IteratorMetadata metadata) {
         if (builtInFunctions.containsKey(identifier))
             return builtInFunctions.get(identifier);
-        throw new UnknownFunctionCallException(fnName, arity, new IteratorMetadata(expression.getMetadata()));
+        throw new UnknownFunctionCallException(identifier.getName(), identifier.getArity(), metadata);
+    }
+
+    public static FunctionItem getUserDefinedFunction(FunctionIdentifier identifier, IteratorMetadata metadata) {
+        if (userDefinedFunctions.containsKey(identifier))
+            return userDefinedFunctions.get(identifier);
+        throw new UnknownFunctionCallException(identifier.getName(), identifier.getArity(), metadata);
     }
 
     public static FunctionItem getUserDefinedFunction(FunctionCall expression, List<RuntimeIterator> arguments) {
@@ -549,6 +552,7 @@ public class Functions {
         public static final String DURATION = "duration";
         /**
 <<<<<<< HEAD
+<<<<<<< HEAD
          * function that returns the yearMonthDuration item from the supplied string
          */
         public static final String YEARMONTHDURATION = "yearMonthDuration";
@@ -561,6 +565,9 @@ public class Functions {
 =======
 >>>>>>> b239fb29feef44de1469715f9c01af1b953c9676
 >>>>>>> be1227394b78534b425af8dfed4bc7526b7f6128
+=======
+
+>>>>>>> 40540f9e259f67aed65c05a30d8e663abb75a704
          * function that returns the hexBinary item from the supplied string
          */
         public static final String HEXBINARY = "hexBinary";

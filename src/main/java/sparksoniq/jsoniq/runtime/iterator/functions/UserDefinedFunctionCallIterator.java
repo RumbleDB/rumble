@@ -37,9 +37,10 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
 	private static final long serialVersionUID = 1L;
 	private String _fnName;
 	private Expression _fnBody;
-	private RuntimeIterator _fnBodyIterator;
 	private List<RuntimeIterator> _fnArguments;
     private List<String> _fnArgumentNames;
+
+    private RuntimeIterator _fnBodyIterator;
     private Item _nextResult;
 
     public UserDefinedFunctionCallIterator(
@@ -63,10 +64,6 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
         _currentDynamicContext = dc;
         _fnBodyIterator.open(_currentDynamicContext);
         setNextResult();
-    }
-
-    private void initializeFunctionBodyIterator() {
-        _fnBodyIterator = new RuntimeIteratorVisitor().visit(_fnBody, null);
     }
 
     private void putArgumentValuesInDynamicContext(DynamicContext context) {
@@ -140,5 +137,9 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
     public boolean initIsRDD() {
         initializeFunctionBodyIterator();
         return _fnBodyIterator.isRDD();
+    }
+
+    private void initializeFunctionBodyIterator() {
+        _fnBodyIterator = new RuntimeIteratorVisitor().visit(_fnBody, null);
     }
 }
