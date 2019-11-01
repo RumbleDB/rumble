@@ -45,10 +45,17 @@ public class FlworVarSingleType extends Expression {
                 return AtomicTypes.BooleanItem;
             case "null":
                 return AtomicTypes.NullItem;
+            case "duration":
+                return AtomicTypes.DurationItem;
+            case "yearmonthduration":
+                return AtomicTypes.YearMonthDurationItem;
+            case "daytimeduration":
+                return AtomicTypes.DayTimeDurationItem;
             case "hexbinary":
                 return AtomicTypes.HexBinaryItem;
             case "base64binary":
                 return AtomicTypes.Base64BinaryItem;
+
             default:
                 return AtomicTypes.AtomicItem;
         }
@@ -90,6 +97,8 @@ public class FlworVarSingleType extends Expression {
                 return "(atomicType boolean)";
             case NullItem:
                 return "(atomicType null)";
+            case DurationItem:
+                return "(atomicType duration)";
             default:
                 return "item";
         }

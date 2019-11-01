@@ -18,7 +18,7 @@
  *
  */
 
-package sparksoniq.jsoniq.compiler.translator.expr.module;
+package sparksoniq.jsoniq.compiler.translator.expr.primary;
 
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
@@ -31,14 +31,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class FunctionDeclarationExpression extends Expression {
+public class FunctionDeclaration extends PrimaryExpression {
 
     private final String _name;
     private final Map<String, FlworVarSequenceType> _params;
     private final FlworVarSequenceType _returnType;
     private final Expression _body;
 
-    public FunctionDeclarationExpression(
+    public FunctionDeclaration(
             String name,
             Map<String, FlworVarSequenceType> params,
             FlworVarSequenceType returnType,
@@ -75,7 +75,7 @@ public class FunctionDeclarationExpression extends Expression {
 
     @Override
     public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
-        return visitor.visitFunctionDeclarationExpression(this, argument);
+        return visitor.visitFunctionDeclaration(this, argument);
     }
 
     @Override

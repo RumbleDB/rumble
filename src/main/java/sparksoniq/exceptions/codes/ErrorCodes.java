@@ -38,6 +38,9 @@ public class ErrorCodes {
     public static final String InvalidSelectorErrorCode = "JNTY0018";
 
 
+    public static final String FunctionsNonSerializable = "SENR0001";
+
+
     public static final String CliErrorCode = "SPRKIQ0001";
     public static final String UnimplementedErrorCode = "SPRKIQ0002";
 

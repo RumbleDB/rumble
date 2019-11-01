@@ -1,0 +1,5 @@
+(:JIQS: ShouldRun; Output="":)
+let $f := function($x) { $x.guess eq "English" }
+for $o in json-file("./src/main/resources/queries/confusion_sample.json")
+where $f($o)
+return $o

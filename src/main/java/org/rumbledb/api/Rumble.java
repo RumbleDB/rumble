@@ -63,7 +63,7 @@ public class Rumble {
             e.initCause(ex);
             throw e;
         }
-        Expression expression = visitor.getMainModuleExpression();
+        Expression expression = visitor.getMainModule();
         new StaticContextVisitor().visit(expression, expression.getStaticContext());
 
         RuntimeIterator iterator = new RuntimeIteratorVisitor().visit(expression, null);

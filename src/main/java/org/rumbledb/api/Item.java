@@ -20,6 +20,7 @@
 
 package org.rumbledb.api;
 
+import org.joda.time.Period;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -242,9 +243,18 @@ public abstract class Item implements SerializableItem {
     }
 
     /**
-     * Returns the byte[] value of the item, if it is a atomic item of type hexBinary.
+     * Returns the period value of the item, if it is a atomic item of type duration.
      *
-     * @return the hexBinary value as an array of bytes.
+     * @return the period value as a Period.
+     */
+    public Period getDurationValue() {
+        throw new RuntimeException("Item is not a duration.");
+    }
+
+    /**
+     * Returns the byte[] value of the item, if it is a atomic item of type hexBinary or Base64Binary.
+     *
+     * @return the binary value as an array of bytes.
      */
     public byte[] getBinaryValue() {
         throw new RuntimeException("Item is not a hexBinary.");
@@ -335,6 +345,33 @@ public abstract class Item implements SerializableItem {
      * @return true if it is an atomic item of type decimal, false otherwise.
      */
     public boolean isDecimal() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an atomic item of type duration.
+     *
+     * @return true if it is an atomic item of type duration, false otherwise.
+     */
+    public boolean isDuration() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an atomic item of type yearMonthDuration.
+     *
+     * @return true if it is an atomic item of type yearMonthDuration, false otherwise.
+     */
+    public boolean isYearMonthDuration() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an atomic item of type dayTimeDuration.
+     *
+     * @return true if it is an atomic item of type dayTimeDuration, false otherwise.
+     */
+    public boolean isDayTimeDuration() {
         return false;
     }
 

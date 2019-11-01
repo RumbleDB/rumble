@@ -392,6 +392,24 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitArgument(JsoniqParser.ArgumentContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#functionItemExpr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFunctionItemExpr(JsoniqParser.FunctionItemExprContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#namedFunctionRef}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitNamedFunctionRef(JsoniqParser.NamedFunctionRefContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#inlineFunctionExpr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitInlineFunctionExpr(JsoniqParser.InlineFunctionExprContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#sequenceType}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -422,6 +440,24 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitKeyWordBoolean(JsoniqParser.KeyWordBooleanContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#keyWordDuration}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitKeyWordDuration(JsoniqParser.KeyWordDurationContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#keyWordYearMonthDuration}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitKeyWordYearMonthDuration(JsoniqParser.KeyWordYearMonthDurationContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#keyWordDayTimeDuration}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitKeyWordDayTimeDuration(JsoniqParser.KeyWordDayTimeDurationContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#keyWordHexBinary}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -433,6 +469,12 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitKeyWordBase64Binary(JsoniqParser.KeyWordBase64BinaryContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#typesKeywords}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTypesKeywords(JsoniqParser.TypesKeywordsContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#singleType}.
 	 * @param ctx the parse tree
