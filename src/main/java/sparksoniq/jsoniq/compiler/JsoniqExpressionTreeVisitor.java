@@ -111,6 +111,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
     }
     //endregion expr
 
+    //region module
     public MainModule getMainModule() {
         return mainModule;
     }
