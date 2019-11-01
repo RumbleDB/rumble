@@ -65,8 +65,8 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
                     default:
                         throw new IteratorFlowException("Non recognized additive operator.", getMetadata());
                 }
-            } catch (ClassCastException | UnsupportedOperationException e) {
-                throw new UnexpectedTypeException(" \"add\": operation not possible with parameters of type \""
+            } catch (RuntimeException e) {
+                throw new UnexpectedTypeException(" \"" + _operator.name().toLowerCase() + "\": operation not possible with parameters of type \""
                         + ItemTypes.getItemTypeName(_left.getClass().getSimpleName()) + "\" and \""
                         + ItemTypes.getItemTypeName(_right.getClass().getSimpleName()) + "\"", getMetadata());
             }
