@@ -29,19 +29,19 @@ import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.semantics.visitor.RuntimeIteratorVisitor;
 
 import java.util.List;
 
 public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
+    // parametrized fields
     private RuntimeIterator _fnItemIterator;
     private List<RuntimeIterator> _fnArguments;
 
+    // calculated fields
     private FunctionItem _fnItem;
     private RuntimeIterator _fnBodyIterator;
-
     private Item _nextResult;
 
     public DynamicFunctionCallIterator(
@@ -146,18 +146,22 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
 
     @Override
     public boolean initIsRDD() {
-        initializeFunctionBodyIterator();
+        initializeFunctionItem();
         return _fnBodyIterator.isRDD();
     }
 
-    private void initializeFunctionBodyIterator() {
-        if (!(_fnItemIterator instanceof FunctionItemIterator)) {
+    private void initializeFunctionItem() {
+        try {
+            _fnItem = getSingleItemOfTypeFromIterator(_fnItemIterator, FunctionItem.class, new UnexpectedTypeException(
+                    "Dynamic function call can not be performed on a sequence."
+                    , getMetadata()
+            ));
+            _fnBodyIterator = _fnItem.getBodyIterator();
+        } catch (UnexpectedTypeException e) {
             throw new UnexpectedTypeException(
                     "Dynamic function call can only be performed on functions."
                     , getMetadata()
             );
         }
-        _fnItem = getSingleItemOfTypeFromIterator(_fnItemIterator, FunctionItem.class);
-        _fnBodyIterator = new RuntimeIteratorVisitor().visit(_fnItem.getBodyExpression(), null);
     }
 }
