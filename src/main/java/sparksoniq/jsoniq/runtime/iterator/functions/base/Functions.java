@@ -34,6 +34,13 @@ import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArraySizeFunctionIter
 import sparksoniq.jsoniq.runtime.iterator.functions.binaries.Base64BinaryFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.binaries.HexBinaryFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.booleans.BooleanFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.DayFromDateTimeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.HoursFromDateTimeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.MinutesFromDateTimeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.MonthFromDateTimeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.SecondsFromDateTimeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.TimezoneFromDateTimeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.YearFromDateTimeFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.DayTimeDurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.DaysFromDurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.DurationFunctionIterator;
@@ -210,6 +217,13 @@ public class Functions {
         builtInFunctions.put(new FunctionIdentifier(SECONDSFROMDURATION, 1), SecondsFromDurationFunctionIterator.class);
 
         builtInFunctions.put(new FunctionIdentifier(DATETIME, 1), DateTimeFunctionIterator.class);
+        builtInFunctions.put(new FunctionIdentifier(YEARFROMDATETIME, 1), YearFromDateTimeFunctionIterator.class);
+        builtInFunctions.put(new FunctionIdentifier(MONTHFROMDATETIME, 1), MonthFromDateTimeFunctionIterator.class);
+        builtInFunctions.put(new FunctionIdentifier(DAYFROMDATETIME, 1), DayFromDateTimeFunctionIterator.class);
+        builtInFunctions.put(new FunctionIdentifier(HOURSFROMDATETIME, 1), HoursFromDateTimeFunctionIterator.class);
+        builtInFunctions.put(new FunctionIdentifier(MINUTESFROMDATETIME, 1), MinutesFromDateTimeFunctionIterator.class);
+        builtInFunctions.put(new FunctionIdentifier(SECONDSFROMDATETIME, 1), SecondsFromDateTimeFunctionIterator.class);
+        builtInFunctions.put(new FunctionIdentifier(TIMEZONEFROMDATETIME, 1), TimezoneFromDateTimeFunctionIterator.class);
 
         builtInFunctions.put(new FunctionIdentifier(HEXBINARY, 1), HexBinaryFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(BASE64BINARY, 1), Base64BinaryFunctionIterator.class);
@@ -513,33 +527,62 @@ public class Functions {
          */
         public static final String DAYTIMEDURATION = "dayTimeDuration";
         /**
-         * function that returns the dateTime item from the supplied string
-         */
-        public static final String DATETIME = "dateTime";
-        /**
          * function that returns the years from a duration
          */
         public static final String YEARSFROMDURATION = "years-from-duration";
         /**
-         * function that returns the years from a duration
+         * function that returns the months from a duration
          */
         public static final String MONTHSFROMDURATION = "months-from-duration";
         /**
-         * function that returns the years from a duration
+         * function that returns the days from a duration
          */
         public static final String DAYSFROMDURATION = "days-from-duration";
         /**
-         * function that returns the years from a duration
+         * function that returns the hours from a duration
          */
         public static final String HOURSFROMDURATION = "hours-from-duration";
         /**
-         * function that returns the years from a duration
+         * function that returns the minutes from a duration
          */
         public static final String MINUTESFROMDURATION = "minutes-from-duration";
         /**
-         * function that returns the years from a duration
+         * function that returns the seconds from a duration
          */
         public static final String SECONDSFROMDURATION = "seconds-from-duration";
+
+        /**
+         * function that returns the dateTime item from the supplied string
+         */
+        public static final String DATETIME = "dateTime";
+        /**
+         * function that returns the year from a dateTime
+         */
+        public static final String YEARFROMDATETIME = "year-from-dateTime";
+        /**
+         * function that returns the month from a dateTime
+         */
+        public static final String MONTHFROMDATETIME = "month-from-dateTime";
+        /**
+         * function that returns the day from a dateTime
+         */
+        public static final String DAYFROMDATETIME = "day-from-dateTime";
+        /**
+         * function that returns the hours from a dateTime
+         */
+        public static final String HOURSFROMDATETIME = "hours-from-dateTime";
+        /**
+         * function that returns the minutes from a dateTime
+         */
+        public static final String MINUTESFROMDATETIME = "minutes-from-dateTime";
+        /**
+         * function that returns the seconds from a dateTime
+         */
+        public static final String SECONDSFROMDATETIME = "seconds-from-dateTime";
+        /**
+         * function that returns the seconds from a dateTime
+         */
+        public static final String TIMEZONEFROMDATETIME = "timezone-from-dateTime";
 
         /**
          * function that returns the hexBinary item from the supplied string
