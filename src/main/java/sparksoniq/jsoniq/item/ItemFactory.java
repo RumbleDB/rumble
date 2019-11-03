@@ -64,8 +64,12 @@ public class ItemFactory {
         return new DayTimeDurationItem(p);
     }
 
-    public Item createDateTimeItem(DateTime dt) {
+    Item createDateTimeItem(DateTime dt) {
         return new DateTimeItem(dt);
+    }
+
+    public Item createDateTimeItem(String s) {
+        return new DateTimeItem(s);
     }
 
     public Item createHexBinaryItem(String s) {
