@@ -34,6 +34,7 @@ import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.semantics.types.ItemTypes;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -207,7 +208,9 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         }
         iterator.close();
         if (result != null && !(type.isInstance(result)))
-            throw new UnexpectedTypeException("Invalid item type returned by iterator", iterator.getMetadata());
+            throw new UnexpectedTypeException(
+                    ItemTypes.getItemTypeName(result.getClass().getSimpleName()) + " can not be promoted to parameter type "
+                            + ItemTypes.getItemTypeName(type.getSimpleName()), iterator.getMetadata());
         return (T) result;
     }
     
