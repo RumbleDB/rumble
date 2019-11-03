@@ -43,7 +43,7 @@ Create, in the same directory as Rumble, a file data.json and put the following 
 
 In a shell, from the directory where the rumble .jar lies, type, all on one line:
 
-    spark-submit --master local[*] --deploy-mode client spark-rumble-1.1.jar --shell yes
+    spark-submit --master local[*] --deploy-mode client spark-rumble-1.2.jar --shell yes
                  
 The Rumble shell appears:
 

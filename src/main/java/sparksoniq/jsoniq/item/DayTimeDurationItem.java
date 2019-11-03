@@ -1,6 +1,5 @@
 package sparksoniq.jsoniq.item;
 
-import org.joda.time.DurationFieldType;
 import org.joda.time.Instant;
 import org.joda.time.Period;
 import org.joda.time.PeriodType;
@@ -100,18 +99,13 @@ public class DayTimeDurationItem extends DurationItem {
 
     @Override
     public Item multiply(Item other) {
-        BigDecimal otherBd = other.castToDecimalValue();
-        if (otherBd.stripTrailingZeros().scale() <= 0) {
-            return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue().multipliedBy(otherBd.intValue()));
+        BigDecimal otherAsDecimal = other.castToDecimalValue();
+        if (otherAsDecimal.stripTrailingZeros().scale() <= 0) {
+            return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue().multipliedBy(otherAsDecimal.intValue()));
         }
         long durationInMillis = this.getValue().toStandardDuration().getMillis();
-        long duration_result = otherBd.multiply(BigDecimal.valueOf(durationInMillis)).setScale(0, BigDecimal.ROUND_HALF_UP).longValue();
-        Period period_time = new Period(duration_result, PeriodType.dayTime());
-        int hours = period_time.getHours();
-        BigDecimal[] quotientAndRemainder = BigDecimal.valueOf(hours).divideAndRemainder(BigDecimal.valueOf(24));
-        Period result = new Period().withDays(quotientAndRemainder[0].intValue()).withHours(quotientAndRemainder[1].intValue())
-                .withMinutes(period_time.getMinutes()).withSeconds(period_time.getSeconds()).withMillis(period_time.getMillis());
-        return ItemFactory.getInstance().createDayTimeDurationItem(result);
+        long durationResult = otherAsDecimal.multiply(BigDecimal.valueOf(durationInMillis)).setScale(16, BigDecimal.ROUND_HALF_UP).longValue();
+        return ItemFactory.getInstance().createDayTimeDurationItem(new Period(durationResult, PeriodType.dayTime()));
     }
 
     @Override
@@ -123,12 +117,7 @@ public class DayTimeDurationItem extends DurationItem {
         }
         BigDecimal otherBd = other.castToDecimalValue();
         long durationInMillis = this.getValue().toStandardDuration().getMillis();
-        long duration_result = (BigDecimal.valueOf(durationInMillis)).divide(otherBd, 0, BigDecimal.ROUND_HALF_UP).longValue();
-        Period period_time = new Period(duration_result, PeriodType.dayTime());
-        int hours = period_time.getHours();
-        BigDecimal[] quotientAndRemainder = BigDecimal.valueOf(hours).divideAndRemainder(BigDecimal.valueOf(24));
-        Period result = new Period(0L, PeriodType.dayTime()).withDays(quotientAndRemainder[0].intValue()).withHours(quotientAndRemainder[1].intValue())
-                .withMinutes(period_time.getMinutes()).withSeconds(period_time.getSeconds()).withMillis(period_time.getMillis());
-        return ItemFactory.getInstance().createDayTimeDurationItem(result);
+        long durationResult = (BigDecimal.valueOf(durationInMillis)).divide(otherBd, 16, BigDecimal.ROUND_HALF_UP).longValue();
+        return ItemFactory.getInstance().createDayTimeDurationItem(new Period(durationResult, PeriodType.dayTime()));
     }
 }
