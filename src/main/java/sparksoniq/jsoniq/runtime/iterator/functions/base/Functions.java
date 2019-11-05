@@ -99,6 +99,7 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.spark.iterator.function.ParallelizeFunctionIterator;
 import sparksoniq.spark.iterator.function.ParseJsonFunctionIterator;
 import sparksoniq.spark.iterator.function.ParseTextFunctionIterator;
+import sparksoniq.spark.iterator.function.ParquetFileFunctionIterator;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -152,6 +153,7 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.NULL;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ONEORMORE;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.PARALLELIZE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.PARQUET_FILE;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.PI;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.POW;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.PROJECT;
@@ -194,6 +196,8 @@ public class Functions {
         builtInFunctions.put(new FunctionIdentifier(TEXT_FILE, 2), ParseTextFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(PARALLELIZE, 1), ParallelizeFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(PARALLELIZE, 2), ParallelizeFunctionIterator.class);
+        builtInFunctions.put(new FunctionIdentifier(PARQUET_FILE, 1), ParquetFileFunctionIterator.class);
+        builtInFunctions.put(new FunctionIdentifier(PARQUET_FILE, 2), ParquetFileFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(COUNT, 1), CountFunctionIterator.class);
 
         builtInFunctions.put(new FunctionIdentifier(BOOLEAN, 1), BooleanFunctionIterator.class);
@@ -336,6 +340,10 @@ public class Functions {
          * function that parallelizes item collections into a Spark RDD
          */
         public static final String PARALLELIZE = "parallelize";
+        /**
+         * function that parses a parquet file
+         */
+        public static final String PARQUET_FILE = "parquet-file";
         /**
          * function that returns the length of a sequence
          */

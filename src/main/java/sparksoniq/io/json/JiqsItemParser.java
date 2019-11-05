@@ -24,15 +24,24 @@ import com.jsoniter.JsonIterator;
 import com.jsoniter.ValueType;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.ItemFactory;
+import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.expressions.javalang.typed;
+import org.apache.spark.sql.types.ArrayType;
+import org.apache.spark.sql.types.DataType;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 
 public class JiqsItemParser implements Serializable {
@@ -88,4 +97,137 @@ public class JiqsItemParser implements Serializable {
             throw new SparksoniqRuntimeException("IO error while parsing. JSON is not well-formed!");
         }
     }
+
+	public static Item getItemFromRow(Row row, IteratorMetadata metadata) {
+		List<String> keys = new ArrayList<String>();
+		List<Item> values = new ArrayList<Item>();
+		StructType schema = row.schema();
+		String[] fieldnames = schema.fieldNames();
+		StructField[] fields = schema.fields();
+		for(int i = 0; i < fieldnames.length; ++i)
+		{
+			StructField field = fields[i];
+			DataType fieldType = field.dataType();
+			keys.add(field.name());
+			addValue(row, i, fieldType, values, metadata);
+		}
+		return ItemFactory.getInstance().createObjectItem(keys, values, ItemMetadata.fromIteratorMetadata(metadata));
+	}
+	
+	public static void addValue(Row row, int i, DataType fieldType, List<Item> values, IteratorMetadata metadata)
+	{
+		if(row.isNullAt(i))
+		{
+			values.add(ItemFactory.getInstance().createNullItem());
+		} else if(fieldType.equals(DataTypes.StringType))
+		{
+			String s = row.getString(i);
+			values.add(ItemFactory.getInstance().createStringItem(s));
+		} else if(fieldType.equals(DataTypes.BooleanType))
+		{
+			boolean b = row.getBoolean(i);
+			values.add(ItemFactory.getInstance().createBooleanItem(b));
+		} else if(fieldType.equals(DataTypes.DoubleType))
+		{
+			double value = row.getDouble(i);
+			values.add(ItemFactory.getInstance().createDoubleItem(value));
+		} else if(fieldType.equals(DataTypes.IntegerType))
+		{
+			int value = row.getInt(i);
+			values.add(ItemFactory.getInstance().createIntegerItem(value));
+		} else if(fieldType.equals(DataTypes.FloatType))
+		{
+			float value = row.getFloat(i);
+			values.add(ItemFactory.getInstance().createDoubleItem(value));
+		} else if(fieldType.equals(DataTypes.LongType))
+		{
+			BigDecimal value = new BigDecimal(row.getLong(i));
+			values.add(ItemFactory.getInstance().createDecimalItem(value));
+		} else if(fieldType.equals(DataTypes.NullType))
+		{
+			values.add(ItemFactory.getInstance().createNullItem());
+		} else if(fieldType.equals(DataTypes.ShortType))
+		{
+			short value = row.getShort(i);
+			values.add(ItemFactory.getInstance().createIntegerItem(value));
+		} else if(fieldType.equals(DataTypes.TimestampType))
+		{
+			Timestamp value = row.getTimestamp(i);
+			values.add(ItemFactory.getInstance().createStringItem(value.toString()));
+		} else if(fieldType instanceof StructType)
+		{
+			Row value = row.getStruct(i);
+			values.add(getItemFromRow(value, metadata) );
+		} else if(fieldType instanceof ArrayType)
+		{
+			ArrayType arrayType = (ArrayType)fieldType;
+			DataType dataType = arrayType.elementType();
+			List<Item> members = new ArrayList<Item>();
+			List<Object> objects = row.getList(i);
+			for ( int j = 0; j < objects.size(); ++j)
+			{
+				addValueInArray(objects.get(j), fieldType, members, metadata);
+			}
+		} else
+		{
+			throw new RuntimeException("DataFrame type unsupported: " + fieldType.json());
+		}
+	}
+	
+	public static void addValueInArray(Object o, DataType fieldType, List<Item> values, IteratorMetadata metadata)
+	{
+		if(o == null)
+		{
+			values.add(ItemFactory.getInstance().createNullItem());
+		} else if(fieldType.equals(DataTypes.StringType))
+		{
+			String s = (String) o;
+			values.add(ItemFactory.getInstance().createStringItem(s));
+		} else if(fieldType.equals(DataTypes.BooleanType))
+		{
+			boolean b = ((Boolean)o).booleanValue();
+			values.add(ItemFactory.getInstance().createBooleanItem(b));
+		} else if(fieldType.equals(DataTypes.DoubleType))
+		{
+			double value = ((Double)o).doubleValue();
+			values.add(ItemFactory.getInstance().createDoubleItem(value));
+		} else if(fieldType.equals(DataTypes.IntegerType))
+		{
+			int value = ((Integer)o).intValue();
+			values.add(ItemFactory.getInstance().createIntegerItem(value));
+		} else if(fieldType.equals(DataTypes.FloatType))
+		{
+			float value = ((Float)o).floatValue();
+			values.add(ItemFactory.getInstance().createDoubleItem(value));
+		} else if(fieldType.equals(DataTypes.LongType))
+		{
+			BigDecimal value = new BigDecimal(((Long)o).longValue());
+			values.add(ItemFactory.getInstance().createDecimalItem(value));
+		} else if(fieldType.equals(DataTypes.NullType))
+		{
+			values.add(ItemFactory.getInstance().createNullItem());
+		} else if(fieldType.equals(DataTypes.ShortType))
+		{
+			short value = ((Short)o).shortValue();
+			values.add(ItemFactory.getInstance().createIntegerItem(value));
+		} else if(fieldType.equals(DataTypes.TimestampType))
+		{
+			Timestamp value = (Timestamp)o;
+			values.add(ItemFactory.getInstance().createStringItem(value.toString()));
+		} else if(fieldType instanceof StructType)
+		{
+			Row value = (Row)o;
+			values.add(getItemFromRow(value, metadata) );
+		} else if(fieldType instanceof ArrayType)
+		{
+			ArrayType arrayType = (ArrayType)fieldType;
+			DataType dataType = arrayType.elementType();
+			List<Item> members = new ArrayList<Item>();
+			List<Object> objects = (List<Object>)o;
+			addValueInArray(objects, fieldType, members, metadata);
+		} else
+		{
+			throw new RuntimeException("DataFrame type unsupported: " + fieldType.json());
+		}
+	}
 }
