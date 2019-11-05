@@ -216,12 +216,18 @@ keyWordBoolean          : 'boolean';
 
 keyWordDuration         : 'duration';
 
+keyWordYearMonthDuration: 'yearMonthDuration';
+
+keyWordDayTimeDuration  : 'dayTimeDuration';
+
 keyWordHexBinary        : 'hexBinary';
 
 keyWordBase64Binary     : 'base64Binary';
 
 typesKeywords           : keyWordBoolean
                         | keyWordDuration
+                        | keyWordYearMonthDuration
+                        | keyWordDayTimeDuration
                         | keyWordHexBinary
                         | keyWordBase64Binary;
 

@@ -190,8 +190,8 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
             } else {    // if child is locally evaluated
                 // _expression is definitely an RDD if execution flows here
 
-                _child.open(_currentDynamicContext);
-                _tupleContext = new DynamicContext(_currentDynamicContext);     // assign current context as parent
+                _child.open(context);
+                _tupleContext = new DynamicContext(context);     // assign current context as parent
                 while (_child.hasNext()) {
                     _inputTuple = _child.next();
                     _tupleContext.removeAllVariables();             // clear the previous variables
@@ -253,8 +253,8 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
         // if child is locally evaluated
         // _expression is definitely an RDD if execution flows here
         Dataset<Row> df = null;
-        _child.open(_currentDynamicContext);
-        _tupleContext = new DynamicContext(_currentDynamicContext);     // assign current context as parent
+        _child.open(context);
+        _tupleContext = new DynamicContext(context);     // assign current context as parent
         while (_child.hasNext()) {
             _inputTuple = _child.next();
             _tupleContext.removeAllVariables();                         // clear the previous variables

@@ -55,11 +55,21 @@ public class ItemFactory {
         return new DurationItem(p);
     }
 
+    public Item createYearMonthDurationItem(Period p) {
+        return new YearMonthDurationItem(p);
+    }
+
+    public Item createDayTimeDurationItem(Period p) {
+        return new DayTimeDurationItem(p);
+    }
+
     public Item createHexBinaryItem(String s) {
         return new HexBinaryItem(s);
     }
 
-    public Item createBase64BinaryItem(String s) {return new Base64BinaryItem(s);}
+    public Item createBase64BinaryItem(String s) {
+        return new Base64BinaryItem(s);
+    }
 
     public Item createObjectItem() {
         return new ObjectItem();

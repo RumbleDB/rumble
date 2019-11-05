@@ -65,7 +65,8 @@ public abstract class BinaryOperationBaseIterator extends LocalRuntimeIterator {
                     ItemTypes.getItemTypeName(right.getClass().getSimpleName()));
             throw new NonAtomicKeyException(message, getMetadata().getExpressionMetadata());
         }
-        if (!left.isNumeric() || !right.isNumeric()) {
+        if (!left.isNumeric() && !left.isYearMonthDuration() && !left.isDayTimeDuration() ||
+                !right.isNumeric() && !right.isYearMonthDuration() && !right.isDayTimeDuration()) {
             throw new UnexpectedTypeException(" \"" + operator.name().toLowerCase() + "\": operation not possible with parameters of type \""
                     + ItemTypes.getItemTypeName(left.getClass().getSimpleName()) + "\" and \""
                     + ItemTypes.getItemTypeName(right.getClass().getSimpleName()) + "\"", getMetadata());
