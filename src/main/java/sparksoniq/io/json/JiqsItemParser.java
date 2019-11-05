@@ -166,8 +166,9 @@ public class JiqsItemParser implements Serializable {
 			List<Object> objects = row.getList(i);
 			for ( int j = 0; j < objects.size(); ++j)
 			{
-				addValueInArray(objects.get(j), fieldType, members, metadata);
+				addValueInArray(objects.get(j), dataType, members, metadata);
 			}
+			values.add(ItemFactory.getInstance().createArrayItem(members));
 		} else
 		{
 			throw new RuntimeException("DataFrame type unsupported: " + fieldType.json());
@@ -225,6 +226,7 @@ public class JiqsItemParser implements Serializable {
 			List<Item> members = new ArrayList<Item>();
 			List<Object> objects = (List<Object>)o;
 			addValueInArray(objects, fieldType, members, metadata);
+			values.add(ItemFactory.getInstance().createArrayItem(members));
 		} else
 		{
 			throw new RuntimeException("DataFrame type unsupported: " + fieldType.json());
