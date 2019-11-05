@@ -271,6 +271,13 @@ public abstract class Item implements SerializableItem {
     }
 
     /**
+     * @return true if the Item has a timeZone, false otherwise
+     */
+    public boolean hasTimeZone() {
+        return false;
+    }
+
+    /**
      * Please do not use, item type API not publicly released yet.
      * @param type an ItemType.
      * @return true if it matches the item type.
