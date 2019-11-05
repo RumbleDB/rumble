@@ -41,50 +41,50 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     // parametrized fields
-    private FunctionIdentifier _fnIdentifier;
-    private List<RuntimeIterator> _fnArguments;
+    private FunctionIdentifier _functionIdentifier;
+    private List<RuntimeIterator> _functionArguments;
 
     // calculated fields
     private boolean _isPartialApplication;
-    private FunctionItem _fnItem;
-    private RuntimeIterator _fnCallIterator;
+    private FunctionItem _functionItem;
+    private RuntimeIterator _functionCallIterator;
     private Item _nextResult;
 
 
     public UserDefinedFunctionCallIterator(
-            FunctionIdentifier fnIdentifier,
-            List<RuntimeIterator> fnArguments,
+            FunctionIdentifier functionIdentifier,
+            List<RuntimeIterator> functionArguments,
             IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
-        for (RuntimeIterator arg: fnArguments) {
+        for (RuntimeIterator arg: functionArguments) {
             if (arg == null) {
                 _isPartialApplication = true;
             } else {
                 _children.add(arg);
             }
         }
-        _fnIdentifier = fnIdentifier;
-        _fnArguments = fnArguments;
+        _functionIdentifier = functionIdentifier;
+        _functionArguments = functionArguments;
 
     }
 
     @Override
     public void openLocal() {
         processArguments();
-        _fnCallIterator.open(_currentDynamicContext);
+        _functionCallIterator.open(_currentDynamicContext);
         setNextResult();
     }
 
     private void processArguments() {
         RuntimeIterator argIterator;
         String argName;
-        Map<String, List<Item>> argumentValues = new LinkedHashMap<>(_fnItem.getNonLocalVariableBindings());
+        Map<String, List<Item>> argumentValues = new LinkedHashMap<>(_functionItem.getNonLocalVariableBindings());
 
         if (!_isPartialApplication) {
             // calculate argument values
-            for (int i = 0; i < _fnArguments.size(); i++) {
-                argIterator = _fnArguments.get(i);
-                argName = _fnItem.getParameterNames().get(i);
+            for (int i = 0; i < _functionArguments.size(); i++) {
+                argIterator = _functionArguments.get(i);
+                argName = _functionItem.getParameterNames().get(i);
 
                 List<Item> argValue = getItemsFromIteratorWithCurrentContext(argIterator);
                 argumentValues.put(argName, argValue);
@@ -101,13 +101,13 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
             List<String> partialAppParamNames = new ArrayList<>();
             List<SequenceType> partialAppSignature = new ArrayList<>();
 
-            for (int i = 0; i < _fnArguments.size(); i++) {
-                argIterator = _fnArguments.get(i);
-                argName = _fnItem.getParameterNames().get(i);
+            for (int i = 0; i < _functionArguments.size(); i++) {
+                argIterator = _functionArguments.get(i);
+                argName = _functionItem.getParameterNames().get(i);
 
                 if (argIterator == null) {  // == ArgumentPlaceholder
                     partialAppParamNames.add(argName);
-                    partialAppSignature.add(_fnItem.getSignature().get(i));
+                    partialAppSignature.add(_functionItem.getSignature().get(i));
                 } else {
                     List<Item> argValue = getItemsFromIteratorWithCurrentContext(argIterator);
                     argumentValues.put(argName, argValue);
@@ -116,16 +116,16 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
 
             // partial application should return a new FunctionItem with given parameters set as NonLocalVariables
             // and argument placeholders as new parameters to the new FunctionItem
-            partialAppSignature.add(_fnItem.getSignature().get(_fnItem.getSignature().size() - 1));   // add return type
+            partialAppSignature.add(_functionItem.getSignature().get(_functionItem.getSignature().size() - 1));   // add return type
 
             FunctionItem partiallyAppliedFunction = new FunctionItem(
                     new FunctionIdentifier("", partialAppParamNames.size()),
                     partialAppParamNames,
                     partialAppSignature,
-                    _fnItem.getBodyIterator(),
+                    _functionItem.getBodyIterator(),
                     argumentValues
             );
-            _fnCallIterator = new FunctionRuntimeIterator(partiallyAppliedFunction, getMetadata());
+            _functionCallIterator = new FunctionRuntimeIterator(partiallyAppliedFunction, getMetadata());
         }
     }
 
@@ -137,7 +137,7 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
             return result;
         }
         throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in " + _fnIdentifier.getName() + "  function",
+                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in " + _functionIdentifier.getName() + "  function",
                 getMetadata()
         );
     }
@@ -149,7 +149,7 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
 
     @Override
     protected void resetLocal(DynamicContext context) {
-        _fnCallIterator.reset(_currentDynamicContext);
+        _functionCallIterator.reset(_currentDynamicContext);
         setNextResult();
     }
 
@@ -158,19 +158,19 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
         // ensure that recursive function calls terminate gracefully
         // the function call in the body of the deepest recursion call is never visited, never opened and never closed
         if (this.isOpen()) {
-            _fnCallIterator.close();
+            _functionCallIterator.close();
         }
     }
 
     public void setNextResult() {
         _nextResult = null;
-        if (_fnCallIterator.hasNext()) {
-            _nextResult = _fnCallIterator.next();
+        if (_functionCallIterator.hasNext()) {
+            _nextResult = _functionCallIterator.next();
         }
 
         if (_nextResult == null) {
             this._hasNext = false;
-            _fnCallIterator.close();
+            _functionCallIterator.close();
         } else {
             this._hasNext = true;
         }
@@ -180,16 +180,16 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
     public JavaRDD<Item> getRDD(DynamicContext dynamicContext) {
         // TODO: how to handle partial function appliacation for RDDs
         processArguments();
-        return _fnCallIterator.getRDD(_currentDynamicContext);
+        return _functionCallIterator.getRDD(_currentDynamicContext);
     }
 
     @Override
     public boolean initIsRDD() {
-        _fnItem = Functions.getUserDefinedFunction(_fnIdentifier, getMetadata());
+        _functionItem = Functions.getUserDefinedFunction(_functionIdentifier, getMetadata());
         if (_isPartialApplication) {
             return false;
         }
-        _fnCallIterator = _fnItem.getBodyIterator();
-        return _fnCallIterator.isRDD();
+        _functionCallIterator = _functionItem.getBodyIterator();
+        return _functionCallIterator.isRDD();
     }
 }
