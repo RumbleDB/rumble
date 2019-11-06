@@ -122,6 +122,11 @@ public class FunctionItem extends Item {
     }
 
     @Override
+    public boolean isFunction() {
+        return true;
+    }
+
+    @Override
     public String serialize() {
         throw new FunctionsNonSerializableException();
     }
