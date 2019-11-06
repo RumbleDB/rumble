@@ -197,7 +197,6 @@ public class Functions {
         builtInFunctions.put(new FunctionIdentifier(PARALLELIZE, 1), ParallelizeFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(PARALLELIZE, 2), ParallelizeFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(PARQUET_FILE, 1), ParquetFileFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(PARQUET_FILE, 2), ParquetFileFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(COUNT, 1), CountFunctionIterator.class);
 
         builtInFunctions.put(new FunctionIdentifier(BOOLEAN, 1), BooleanFunctionIterator.class);

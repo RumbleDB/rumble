@@ -582,6 +582,16 @@ count(
 
 (Also see examples for json-file for host and port, sets of files and working directory).
 
+### parquet-file (Rumble specific)
+
+Parses one or more parquet files and returns a sequence of objects.
+
+```
+for $my-object in parquet-file("file.parquet")
+where $my-object.property eq "some value"
+return $my-json
+```
+
 ### parallelize (Rumble specific)
 
 This function behaves like the Spark parallelize() you are familiar with and sends a large sequence to the cluster.

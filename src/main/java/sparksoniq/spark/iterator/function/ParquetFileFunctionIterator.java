@@ -59,18 +59,8 @@ public class ParquetFileFunctionIterator extends SparkFunctionCallIterator {
             Dataset<Row> rows;
             RuntimeIterator urlIterator = this._children.get(0);
             urlIterator.open(context);
-            if (this._children.size() == 1)
-            	rows = SparkSessionManager.getInstance().getOrCreateSession()
-            	    .read().parquet(urlIterator.next().getStringValue());
-            else {
-                RuntimeIterator partitionsIterator = this._children.get(1);
-                partitionsIterator.open(_currentDynamicContext);
-                rows = SparkSessionManager.getInstance().getOrCreateSession().read().parquet(
-                        urlIterator.next().getStringValue());
-                        // partitions not supported yet);
-                partitionsIterator.close();
-            }
-
+        	rows = SparkSessionManager.getInstance().getOrCreateSession()
+        	    .read().parquet(urlIterator.next().getStringValue());
             JavaRDD<Row> rowrdd = rows.javaRDD();
             _rdd = rowrdd.map(new RowToItemMapper(getMetadata()));
             urlIterator.close();
