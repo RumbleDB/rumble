@@ -104,8 +104,7 @@ public class JiqsItemParser implements Serializable {
 		StructType schema = row.schema();
 		String[] fieldnames = schema.fieldNames();
 		StructField[] fields = schema.fields();
-		for(int i = 0; i < fieldnames.length; ++i)
-		{
+		for(int i = 0; i < fieldnames.length; ++i) {
 			StructField field = fields[i];
 			DataType fieldType = field.dataType();
 			keys.add(field.name());
@@ -116,50 +115,38 @@ public class JiqsItemParser implements Serializable {
 	
 	public static void addValue(Row row, int i, DataType fieldType, List<Item> values, IteratorMetadata metadata)
 	{
-		if(row.isNullAt(i))
-		{
+		if(row.isNullAt(i)) {
 			values.add(ItemFactory.getInstance().createNullItem());
-		} else if(fieldType.equals(DataTypes.StringType))
-		{
+		} else if(fieldType.equals(DataTypes.StringType)) {
 			String s = row.getString(i);
 			values.add(ItemFactory.getInstance().createStringItem(s));
-		} else if(fieldType.equals(DataTypes.BooleanType))
-		{
+		} else if(fieldType.equals(DataTypes.BooleanType)) {
 			boolean b = row.getBoolean(i);
 			values.add(ItemFactory.getInstance().createBooleanItem(b));
-		} else if(fieldType.equals(DataTypes.DoubleType))
-		{
+		} else if(fieldType.equals(DataTypes.DoubleType)) {
 			double value = row.getDouble(i);
 			values.add(ItemFactory.getInstance().createDoubleItem(value));
-		} else if(fieldType.equals(DataTypes.IntegerType))
-		{
+		} else if(fieldType.equals(DataTypes.IntegerType)) {
 			int value = row.getInt(i);
 			values.add(ItemFactory.getInstance().createIntegerItem(value));
-		} else if(fieldType.equals(DataTypes.FloatType))
-		{
+		} else if(fieldType.equals(DataTypes.FloatType)) {
 			float value = row.getFloat(i);
 			values.add(ItemFactory.getInstance().createDoubleItem(value));
-		} else if(fieldType.equals(DataTypes.LongType))
-		{
+		} else if(fieldType.equals(DataTypes.LongType)) {
 			BigDecimal value = new BigDecimal(row.getLong(i));
 			values.add(ItemFactory.getInstance().createDecimalItem(value));
-		} else if(fieldType.equals(DataTypes.NullType))
-		{
+		} else if(fieldType.equals(DataTypes.NullType)) {
 			values.add(ItemFactory.getInstance().createNullItem());
-		} else if(fieldType.equals(DataTypes.ShortType))
-		{
+		} else if(fieldType.equals(DataTypes.ShortType)) {
 			short value = row.getShort(i);
 			values.add(ItemFactory.getInstance().createIntegerItem(value));
-		} else if(fieldType.equals(DataTypes.TimestampType))
-		{
+		} else if(fieldType.equals(DataTypes.TimestampType)) {
 			Timestamp value = row.getTimestamp(i);
 			values.add(ItemFactory.getInstance().createStringItem(value.toString()));
-		} else if(fieldType instanceof StructType)
-		{
+		} else if(fieldType instanceof StructType) {
 			Row value = row.getStruct(i);
 			values.add(getItemFromRow(value, metadata) );
-		} else if(fieldType instanceof ArrayType)
-		{
+		} else if(fieldType instanceof ArrayType) {
 			ArrayType arrayType = (ArrayType)fieldType;
 			DataType dataType = arrayType.elementType();
 			List<Item> members = new ArrayList<Item>();
@@ -177,58 +164,45 @@ public class JiqsItemParser implements Serializable {
 	
 	public static void addValueInArray(Object o, DataType fieldType, List<Item> values, IteratorMetadata metadata)
 	{
-		if(o == null)
-		{
+		if(o == null) {
 			values.add(ItemFactory.getInstance().createNullItem());
-		} else if(fieldType.equals(DataTypes.StringType))
-		{
+		} else if(fieldType.equals(DataTypes.StringType)) {
 			String s = (String) o;
 			values.add(ItemFactory.getInstance().createStringItem(s));
-		} else if(fieldType.equals(DataTypes.BooleanType))
-		{
+		} else if(fieldType.equals(DataTypes.BooleanType)) {
 			boolean b = ((Boolean)o).booleanValue();
 			values.add(ItemFactory.getInstance().createBooleanItem(b));
-		} else if(fieldType.equals(DataTypes.DoubleType))
-		{
+		} else if(fieldType.equals(DataTypes.DoubleType)) {
 			double value = ((Double)o).doubleValue();
 			values.add(ItemFactory.getInstance().createDoubleItem(value));
-		} else if(fieldType.equals(DataTypes.IntegerType))
-		{
+		} else if(fieldType.equals(DataTypes.IntegerType)) {
 			int value = ((Integer)o).intValue();
 			values.add(ItemFactory.getInstance().createIntegerItem(value));
-		} else if(fieldType.equals(DataTypes.FloatType))
-		{
+		} else if(fieldType.equals(DataTypes.FloatType)) {
 			float value = ((Float)o).floatValue();
 			values.add(ItemFactory.getInstance().createDoubleItem(value));
-		} else if(fieldType.equals(DataTypes.LongType))
-		{
+		} else if(fieldType.equals(DataTypes.LongType)) {
 			BigDecimal value = new BigDecimal(((Long)o).longValue());
 			values.add(ItemFactory.getInstance().createDecimalItem(value));
-		} else if(fieldType.equals(DataTypes.NullType))
-		{
+		} else if(fieldType.equals(DataTypes.NullType)) {
 			values.add(ItemFactory.getInstance().createNullItem());
-		} else if(fieldType.equals(DataTypes.ShortType))
-		{
+		} else if(fieldType.equals(DataTypes.ShortType)) {
 			short value = ((Short)o).shortValue();
 			values.add(ItemFactory.getInstance().createIntegerItem(value));
-		} else if(fieldType.equals(DataTypes.TimestampType))
-		{
+		} else if(fieldType.equals(DataTypes.TimestampType)) {
 			Timestamp value = (Timestamp)o;
 			values.add(ItemFactory.getInstance().createStringItem(value.toString()));
-		} else if(fieldType instanceof StructType)
-		{
+		} else if(fieldType instanceof StructType) {
 			Row value = (Row)o;
 			values.add(getItemFromRow(value, metadata) );
-		} else if(fieldType instanceof ArrayType)
-		{
+		} else if(fieldType instanceof ArrayType) {
 			ArrayType arrayType = (ArrayType)fieldType;
 			DataType dataType = arrayType.elementType();
 			List<Item> members = new ArrayList<Item>();
 			List<Object> objects = (List<Object>)o;
 			addValueInArray(objects, fieldType, members, metadata);
 			values.add(ItemFactory.getInstance().createArrayItem(members));
-		} else
-		{
+		} else {
 			throw new RuntimeException("DataFrame type unsupported: " + fieldType.json());
 		}
 	}
