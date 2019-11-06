@@ -1,5 +1,7 @@
 # Error codes
 
+- [FODC0002] - Error retrieving resource.
+
 - [JNDY0003] - Duplicate pair name. t is a dynamic error if two pairs in an object
  constructor or in a simple object union have the same name.
 
