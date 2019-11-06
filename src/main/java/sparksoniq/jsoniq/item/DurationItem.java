@@ -133,7 +133,7 @@ public class DurationItem extends AtomicItem {
 
     @Override
     public String serialize() {
-        if (this.hasNegativeDuration()) {
+        if (this.isNegative) {
             return '-' + this.getValue().negated().toString();
         }
         return this.getValue().toString();

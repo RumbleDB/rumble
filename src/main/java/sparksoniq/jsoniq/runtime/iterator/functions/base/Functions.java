@@ -37,6 +37,7 @@ import sparksoniq.jsoniq.runtime.iterator.functions.booleans.BooleanFunctionIter
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.DayTimeDurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.DurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.YearMonthDurationFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.DateTimeFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.AbsFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.CeilingFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.FloorFunctionIterator;
@@ -148,6 +149,7 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MAX;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MEMBERS;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MIN;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DATETIME;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.NORMALIZESPACE;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.NULL;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ONEORMORE;
@@ -266,6 +268,8 @@ public class Functions {
         builtInFunctions.put(new FunctionIdentifier(DURATION, 1), DurationFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(YEARMONTHDURATION, 1), YearMonthDurationFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(DAYTIMEDURATION, 1), DayTimeDurationFunctionIterator.class);
+
+        builtInFunctions.put(new FunctionIdentifier(DATETIME, 1), DateTimeFunctionIterator.class);
 
         builtInFunctions.put(new FunctionIdentifier(HEXBINARY, 1), HexBinaryFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(BASE64BINARY, 1), Base64BinaryFunctionIterator.class);
@@ -552,6 +556,10 @@ public class Functions {
          */
         public static final String MATCHES = "matches";
         /**
+         * function that normalizes spaces in a string
+         */
+        public static final String NORMALIZESPACE = "normalize-space";
+        /**
          * function that returns the duration item from the supplied string
          */
         public static final String DURATION = "duration";
@@ -564,6 +572,10 @@ public class Functions {
          */
         public static final String DAYTIMEDURATION = "dayTimeDuration";
         /**
+         * function that returns the dateTime item from the supplied string
+         */
+        public static final String DATETIME = "dateTime";
+        /**
          * function that returns the hexBinary item from the supplied string
          */
         public static final String HEXBINARY = "hexBinary";
@@ -571,10 +583,6 @@ public class Functions {
          * function that returns the base64Binary item from the supplied string
          */
         public static final String BASE64BINARY = "base64Binary";
-        /**
-         * function that normalizes spaces in a string
-         */
-        public static final String NORMALIZESPACE = "normalize-space";
 
 
         /**
