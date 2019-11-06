@@ -45,11 +45,14 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
 
 	private static final long serialVersionUID = 1L;
 	protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
-    private final IteratorMetadata metadata;
-    protected boolean _hasNext;
-    protected boolean _isOpen;
+    private IteratorMetadata metadata;
+    protected transient boolean _hasNext;
+    protected transient boolean _isOpen;
     protected List<RuntimeIterator> _children;
-    protected DynamicContext _currentDynamicContext;
+    protected transient DynamicContext _currentDynamicContext;
+
+    public RuntimeIterator() {
+    }
 
     protected RuntimeIterator(List<RuntimeIterator> children, IteratorMetadata metadata) {
         this.metadata = metadata;
@@ -132,18 +135,15 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
 
     @Override
     public void write(Kryo kryo, Output output) {
-        output.writeBoolean(_hasNext);
-        output.writeBoolean(_isOpen);
-        kryo.writeObject(output, this._currentDynamicContext);
         kryo.writeObject(output, this._children);
     }
 
     @SuppressWarnings("unchecked")
 	@Override
     public void read(Kryo kryo, Input input) {
-        this._hasNext = input.readBoolean();
-        this._isOpen = input.readBoolean();
-        this._currentDynamicContext = kryo.readObject(input, DynamicContext.class);
+        this._hasNext = false;
+        this._isOpen = false;
+        this._currentDynamicContext = null;
         this._children = kryo.readObject(input, ArrayList.class);
     }
 

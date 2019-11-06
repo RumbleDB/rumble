@@ -18,61 +18,45 @@
  *
  */
 
-package sparksoniq.jsoniq.compiler.translator.expr.module;
+package sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions;
 
-
-import sparksoniq.jsoniq.compiler.translator.expr.CommaExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainModuleExpression extends Expression {
+public class DynamicFunctionCallExtension extends PostfixExtension {
 
-    private final PrologExpression _prologExpression;
-    private final CommaExpression _commaExpression;
+    private List<Expression> _arguments;
 
-    public MainModuleExpression(PrologExpression _prologExpression, CommaExpression _commaExpression, ExpressionMetadata metadata) {
+    public DynamicFunctionCallExtension(List<Expression> arguments, ExpressionMetadata metadata) {
         super(metadata);
-        this._prologExpression = _prologExpression;
-        this._commaExpression = _commaExpression;
+        this._arguments= arguments;
     }
 
-    public PrologExpression get_prologExpression() {
-        return _prologExpression;
-    }
-
-    public CommaExpression get_commaExpression() {
-        return _commaExpression;
+    public List<Expression> getArguments() {
+        return _arguments;
     }
 
     @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
         List<ExpressionOrClause> result = new ArrayList<>();
-        if (_prologExpression != null) {
-            result.add(_prologExpression);
-        }
-        if (_commaExpression != null) {
-            result.add(_commaExpression);
-        }
+        if (this._arguments != null)
+            result.addAll(this._arguments);
         return getDescendantsFromChildren(result, depthSearch);
     }
 
     @Override
-    public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
-        return visitor.visitMainModuleExpression(this, argument);
-    }
-
-    @Override
     public String serializationString(boolean prefix) {
-        String result = "(mainModule ";
-        result += " (prolog " + _prologExpression.serializationString(false) + "), ";
-        result += " (expr " + _commaExpression.serializationString(false) + ") ";
-        result += ")";
-        return result;
+        StringBuilder result = new StringBuilder("(argumentList ( ");
+        for (Expression arg : this._arguments) {
+            result.append("(argument (exprSingle ");
+            result.append(arg.serializationString(false));
+            result.append((_arguments.indexOf(arg) < _arguments.size() - 1 ? ")) , " : ")) "));
+        }
+        result.append("))");
+        return result.toString();
     }
 }
-

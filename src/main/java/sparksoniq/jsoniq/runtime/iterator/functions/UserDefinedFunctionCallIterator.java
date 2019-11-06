@@ -23,37 +23,35 @@ package sparksoniq.jsoniq.runtime.iterator.functions;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.jsoniq.compiler.translator.expr.Expression;
+import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.semantics.visitor.RuntimeIteratorVisitor;
 
 import java.util.List;
 
 public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
 
-	private static final long serialVersionUID = 1L;
-	private String _fnName;
-	private Expression _fnBody;
-	private RuntimeIterator _fnBodyIterator;
-	private List<RuntimeIterator> _fnArguments;
-    private List<String> _fnArgumentNames;
+    private static final long serialVersionUID = 1L;
+    // parametrized fields
+    private FunctionIdentifier _fnIdentifier;
+    private List<RuntimeIterator> _fnArguments;
+
+    // calculated fields
+    private FunctionItem _fnItem;
+    private RuntimeIterator _fnBodyIterator;
     private Item _nextResult;
 
     public UserDefinedFunctionCallIterator(
-            String fnName,
-            Expression fnBody,
+            FunctionIdentifier fnIdentifier,
             List<RuntimeIterator> arguments,
-            List<String> argumentNames,
             IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
-        _fnName = fnName;
-        _fnBody = fnBody;
+        _fnIdentifier = fnIdentifier;
         _fnArguments = arguments;
-        _fnArgumentNames = argumentNames;
-
     }
 
     @Override
@@ -61,12 +59,8 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
         DynamicContext dc = new DynamicContext(_currentDynamicContext);
         putArgumentValuesInDynamicContext(dc);
         _currentDynamicContext = dc;
-        _fnBodyIterator.open(_currentDynamicContext);
+        _fnItem.getBodyIterator().open(_currentDynamicContext);
         setNextResult();
-    }
-
-    private void initializeFunctionBodyIterator() {
-        _fnBodyIterator = new RuntimeIteratorVisitor().visit(_fnBody, null);
     }
 
     private void putArgumentValuesInDynamicContext(DynamicContext context) {
@@ -75,13 +69,12 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
         List<Item> argValue;
         for (int i = 0; i < _fnArguments.size(); i++) {
             arg = _fnArguments.get(i);
-            argName = _fnArgumentNames.get(i);
+            argName = _fnItem.getParameterNames().get(i);
 
             argValue = getItemsFromIteratorWithCurrentContext(arg);
             context.addVariableValue("$" + argName, argValue);
         }
     }
-
 
     @Override
     public Item nextLocal() {
@@ -90,8 +83,10 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
             setNextResult();
             return result;
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in "+ _fnName + "  function",
-                getMetadata());
+        throw new IteratorFlowException(
+                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in " + _fnIdentifier.getName() + "  function",
+                getMetadata()
+        );
     }
 
     @Override
@@ -138,7 +133,12 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
 
     @Override
     public boolean initIsRDD() {
-        initializeFunctionBodyIterator();
+        initializeFunctionItem();
         return _fnBodyIterator.isRDD();
+    }
+
+    private void initializeFunctionItem() {
+        _fnItem = Functions.getUserDefinedFunction(_fnIdentifier, getMetadata());
+        _fnBodyIterator = _fnItem.getBodyIterator();
     }
 }

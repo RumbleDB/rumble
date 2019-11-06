@@ -24,7 +24,6 @@ package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
@@ -80,10 +79,17 @@ public class FlworVarSequenceType extends Expression {
                 return ItemTypes.ArrayItem;
             case "json-item":
                 return ItemTypes.JSONItem;
+            case "duration":
+                return ItemTypes.DurationItem;
+            case "yearmonthduration":
+                return ItemTypes.YearMonthDurationItem;
+            case "daytimeduration":
+                return ItemTypes.DayTimeDurationItem;
             case "hexbinary":
                 return ItemTypes.HexBinaryItem;
             case "base64binary":
                 return ItemTypes.Base64BinaryItem;
+
             default:
                 return ItemTypes.Item;
         }
