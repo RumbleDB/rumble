@@ -182,7 +182,7 @@ keys(json-file("file.json"))
 ### json-doc
 
 ```
-json-doc("Users/sheldon/object.json")
+json-doc("/Users/sheldon/object.json")
 ```
 
 returns the (unique) JSON value parsed from a local JSON (but not necessarily JSON Lines) file where this value may be spread over multiple lines.
