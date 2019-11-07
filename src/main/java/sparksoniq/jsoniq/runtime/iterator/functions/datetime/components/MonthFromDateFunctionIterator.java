@@ -1,10 +1,10 @@
-package sparksoniq.jsoniq.runtime.iterator.functions.datetime;
+package sparksoniq.jsoniq.runtime.iterator.functions.datetime.components;
 
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.exceptions.UnknownFunctionCallException;
-import sparksoniq.jsoniq.item.DateTimeItem;
+import sparksoniq.jsoniq.item.DateItem;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
@@ -13,12 +13,12 @@ import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
 
-public class HoursFromDateTimeFunctionIterator extends LocalFunctionCallIterator {
+public class MonthFromDateFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
-    private DateTimeItem _dateTimeItem = null;
+    private DateItem _dateItem = null;
 
-    public HoursFromDateTimeFunctionIterator(
+    public MonthFromDateFunctionIterator(
             List<RuntimeIterator> arguments,
             IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
@@ -28,10 +28,10 @@ public class HoursFromDateTimeFunctionIterator extends LocalFunctionCallIterator
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            return ItemFactory.getInstance().createIntegerItem(_dateTimeItem.getDateTimeValue().getHourOfDay());
+            return ItemFactory.getInstance().createIntegerItem(_dateItem.getDateValue().getMonthOfYear());
         } else
             throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " hours-from-dateTime function",
+                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " month-from-date function",
                     getMetadata());
     }
 
@@ -39,15 +39,15 @@ public class HoursFromDateTimeFunctionIterator extends LocalFunctionCallIterator
     public void open(DynamicContext context) {
         super.open(context);
         try {
-            _dateTimeItem = this.getSingleItemOfTypeFromIterator(
+            _dateItem = this.getSingleItemOfTypeFromIterator(
                     this._children.get(0),
-                    DateTimeItem.class,
-                    new UnknownFunctionCallException("hours-from-dateTime", this._children.size(), getMetadata()));
+                    DateItem.class,
+                    new UnknownFunctionCallException("month-from-date", this._children.size(), getMetadata()));
         } catch (UnexpectedTypeException e) {
-            throw new UnexpectedTypeException(e.getJSONiqErrorMessage() + "? of function hours-from-dateTime()", this._children.get(0).getMetadata());
+            throw new UnexpectedTypeException(e.getJSONiqErrorMessage() + "? of function month-from-date()", this._children.get(0).getMetadata());
         } catch (UnknownFunctionCallException e) {
-            throw new UnexpectedTypeException(" Sequence of more than one item can not be promoted to parameter type dateTime? of function hours-from-dateTime()", getMetadata());
+            throw new UnexpectedTypeException(" Sequence of more than one item can not be promoted to parameter type date? of function month-from-date()", getMetadata());
         }
-        this._hasNext = _dateTimeItem != null;
+        this._hasNext = _dateItem != null;
     }
 }

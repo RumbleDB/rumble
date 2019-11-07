@@ -1,4 +1,4 @@
-package sparksoniq.jsoniq.runtime.iterator.functions.durations;
+package sparksoniq.jsoniq.runtime.iterator.functions.durations.components;
 
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
