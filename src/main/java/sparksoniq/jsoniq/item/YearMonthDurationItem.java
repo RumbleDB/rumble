@@ -11,12 +11,14 @@ import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 
 public class YearMonthDurationItem extends DurationItem {
 
     private static final long serialVersionUID = 1L;
     private Period _value;
+    private static final PeriodType yearMonthPeriodType = PeriodType.forFields(new DurationFieldType[]{DurationFieldType.years(), DurationFieldType.months()});
 
     public YearMonthDurationItem() {
         super();
@@ -24,7 +26,8 @@ public class YearMonthDurationItem extends DurationItem {
 
     public YearMonthDurationItem(Period value) {
         super();
-        this._value = value.normalizedStandard(PeriodType.forFields(new DurationFieldType[]{DurationFieldType.years(), DurationFieldType.months()}));;
+        this._value = value.normalizedStandard(yearMonthPeriodType);
+        isNegative = this._value.toString().charAt(1) == '-';
     }
 
     @Override
@@ -45,6 +48,7 @@ public class YearMonthDurationItem extends DurationItem {
     @Override
     public boolean isCastableAs(AtomicTypes itemType) {
         return itemType.equals(AtomicTypes.YearMonthDurationItem) ||
+                itemType.equals(AtomicTypes.DayTimeDurationItem) ||
                 itemType.equals(AtomicTypes.DurationItem) ||
                 itemType.equals(AtomicTypes.StringItem);
     }
@@ -53,9 +57,11 @@ public class YearMonthDurationItem extends DurationItem {
     public Item castAs(AtomicTypes itemType) {
         switch (itemType) {
             case DurationItem:
-                return ItemFactory.getInstance().createDurationItem(getDurationFromString(this.serialize(), AtomicTypes.DurationItem));
+                return ItemFactory.getInstance().createDurationItem(this.getValue());
             case YearMonthDurationItem:
                 return this;
+            case DayTimeDurationItem:
+                return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue());
             case StringItem:
                 return ItemFactory.getInstance().createStringItem(this.serialize());
             default:
@@ -79,9 +85,9 @@ public class YearMonthDurationItem extends DurationItem {
     @Override
     public Item add(Item other) {
         if (other.isDateTime())
-            return ItemFactory.getInstance().createDateTimeItem(other.getDateTimeValue().plus(this.getDurationValue()));
+            return ItemFactory.getInstance().createDateTimeItem(other.getDateTimeValue().plus(this.getValue()), other.hasTimeZone());
         if (other.isDate())
-            return ItemFactory.getInstance().createDateItem(other.getDateValue().plus(this.getValue()));
+            return ItemFactory.getInstance().createDateItem(other.getDateValue().plus(this.getValue()), other.hasTimeZone());
         return ItemFactory.getInstance().createYearMonthDurationItem(this.getValue().plus(other.getDurationValue()));
     }
 
@@ -92,31 +98,19 @@ public class YearMonthDurationItem extends DurationItem {
 
     @Override
     public Item multiply(Item other) {
-        BigDecimal otherBd = other.castToDecimalValue();
-        if (otherBd.stripTrailingZeros().scale() <= 0) {
-            return ItemFactory.getInstance().createYearMonthDurationItem(this.getValue().multipliedBy(otherBd.intValue()));
-        }
-        int years = this.getValue().getYears();
-        int months = years * 12 + this.getValue().getMonths();
-        BigDecimal[] quotientAndRemainder = (BigDecimal.valueOf(months).multiply(otherBd)
-                .setScale(0, BigDecimal.ROUND_HALF_UP)).divideAndRemainder(BigDecimal.valueOf(12));
-        Period newPeriod = new Period().withYears(quotientAndRemainder[0].intValue()).withMonths(quotientAndRemainder[1].intValue());
-        return ItemFactory.getInstance().createYearMonthDurationItem(newPeriod);
+        int months = this.getValue().getYears() * 12 + this.getValue().getMonths();
+        int totalMonths = BigDecimal.valueOf(months).multiply(other.castToDecimalValue()).setScale(0, BigDecimal.ROUND_HALF_UP).intValue();
+        return ItemFactory.getInstance().createYearMonthDurationItem(new Period().withMonths(totalMonths).withPeriodType(yearMonthPeriodType));
     }
 
     @Override
     public Item divide(Item other) {
-        BigDecimal otherBd;
+        int months = this.getValue().getYears() * 12 + this.getValue().getMonths();
         if (other.isYearMonthDuration()) {
-            otherBd = BigDecimal.valueOf(other.getDurationValue().toStandardDuration().getMillis());
-        } else {
-            otherBd = other.castToDecimalValue();
+            int otherMonths = 12 * other.getDurationValue().getYears() + other.getDurationValue().getMonths();
+            return ItemFactory.getInstance().createDecimalItem(BigDecimal.valueOf(months).divide(BigDecimal.valueOf(otherMonths), 16, RoundingMode.HALF_UP));
         }
-        int years = this.getValue().getYears();
-        int months = years * 12 + this.getValue().getMonths();
-        BigDecimal[] quotientAndRemainder = (BigDecimal.valueOf(months).divide(otherBd, 0, BigDecimal.ROUND_HALF_UP))
-                .divideAndRemainder(BigDecimal.valueOf(12));
-        Period newPeriod = new Period(0L, PeriodType.yearMonthDay().withDaysRemoved()).withYears(quotientAndRemainder[0].intValue()).withMonths(quotientAndRemainder[1].intValue());
-        return ItemFactory.getInstance().createYearMonthDurationItem(newPeriod);
+        int totalMonths = BigDecimal.valueOf(months).divide(other.castToDecimalValue(), 0, BigDecimal.ROUND_HALF_UP).intValue();
+        return ItemFactory.getInstance().createYearMonthDurationItem(new Period().withMonths(totalMonths).withPeriodType(yearMonthPeriodType));
     }
 }

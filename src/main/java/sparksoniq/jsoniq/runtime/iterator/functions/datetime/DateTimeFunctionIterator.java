@@ -1,12 +1,10 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.datetime;
 
-import org.joda.time.DateTime;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.CastException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.exceptions.UnknownFunctionCallException;
-import sparksoniq.jsoniq.item.DateTimeItem;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -34,8 +32,7 @@ public class DateTimeFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             this._hasNext = false;
             try {
-                DateTime dateTime = DateTimeItem.getDateTimeFromString(_dateTimeStringItem.getStringValue(), AtomicTypes.DateTimeItem);
-                return ItemFactory.getInstance().createDateTimeItem(dateTime);
+                return ItemFactory.getInstance().createDateTimeItem(_dateTimeStringItem.getStringValue());
             } catch (UnsupportedOperationException | IllegalArgumentException e) {
                 String message = String.format("\"%s\": value of type %s is not castable to type %s",
                         _dateTimeStringItem.serialize(), "string", "dateTime");

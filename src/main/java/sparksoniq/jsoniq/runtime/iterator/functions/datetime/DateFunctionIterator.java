@@ -34,8 +34,7 @@ public class DateFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             this._hasNext = false;
             try {
-                DateTime dateTime = DateTimeItem.getDateTimeFromString(_dateStringItem.getStringValue(), AtomicTypes.DateItem);
-                return ItemFactory.getInstance().createDateItem(dateTime);
+                return ItemFactory.getInstance().createDateItem(_dateStringItem.getStringValue());
             } catch (UnsupportedOperationException | IllegalArgumentException e) {
                 String message = String.format("\"%s\": value of type %s is not castable to type %s",
                         _dateStringItem.serialize(), "string", "date");
