@@ -1,5 +1,8 @@
 package sparksoniq.jsoniq.item;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import org.joda.time.Instant;
 import org.joda.time.Period;
 import org.joda.time.PeriodType;
@@ -46,6 +49,16 @@ public class DayTimeDurationItem extends DurationItem {
     @Override
     public boolean isTypeOf(ItemType type) {
         return type.getType().equals(ItemTypes.DayTimeDurationItem) || super.isTypeOf(type);
+    }
+
+    @Override
+    public void write(Kryo kryo, Output output) {
+        output.writeString(this.serialize());
+    }
+
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this._value = getDurationFromString(input.readString(), AtomicTypes.DayTimeDurationItem);
     }
 
     @Override

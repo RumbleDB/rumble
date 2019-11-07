@@ -1,6 +1,9 @@
 package sparksoniq.jsoniq.item;
 
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import org.joda.time.*;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.UnexpectedTypeException;
@@ -43,6 +46,16 @@ public class YearMonthDurationItem extends DurationItem {
     @Override
     public boolean isTypeOf(ItemType type) {
         return type.getType().equals(ItemTypes.YearMonthDurationItem) || super.isTypeOf(type);
+    }
+
+    @Override
+    public void write(Kryo kryo, Output output) {
+        output.writeString(this.serialize());
+    }
+
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this._value = DurationItem.getDurationFromString(input.readString(), AtomicTypes.YearMonthDurationItem);
     }
 
     @Override
