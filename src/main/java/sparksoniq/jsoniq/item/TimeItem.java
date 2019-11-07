@@ -21,16 +21,21 @@ public class TimeItem extends AtomicItem {
 
     private static final long serialVersionUID = 1L;
     private DateTime _value;
-    private boolean hasTimeZone;
+    private boolean hasTimeZone = true;
 
-    public TimeItem() { super(); }
-
-    public TimeItem(DateTime _value) {
+    TimeItem(DateTime _value, boolean hasTimeZone) {
         super();
-        this.hasTimeZone = _value.getZone() != DateTimeZone.getDefault();
-        this._value = hasTimeZone ? _value : _value.withZoneRetainFields(DateTimeZone.UTC);
+        this._value = _value;
+        this.hasTimeZone = hasTimeZone;
     }
 
+    TimeItem(String dateTimeString) {
+        this._value = DateTimeItem.parseDateTime(dateTimeString, AtomicTypes.TimeItem);
+        if (!dateTimeString.endsWith("Z") && _value.getZone() == DateTimeZone.getDefault()) {
+            this.hasTimeZone = false;
+            this._value = _value.withZoneRetainFields(DateTimeZone.UTC);
+        }
+    }
 
     public DateTime getValue() {
         return _value;
@@ -54,6 +59,11 @@ public class TimeItem extends AtomicItem {
     @Override
     public boolean hasDateTime() {
         return true;
+    }
+
+    @Override
+    public boolean hasTimeZone() {
+        return hasTimeZone;
     }
 
     @Override
@@ -98,7 +108,7 @@ public class TimeItem extends AtomicItem {
 
     @Override
     public Item add(Item other) {
-        if (other.isDayTimeDuration()) return ItemFactory.getInstance().createTimeItem(this.getValue().plus(other.getDurationValue()));
+        if (other.isDayTimeDuration()) return ItemFactory.getInstance().createTimeItem(this.getValue().plus(other.getDurationValue()), this.hasTimeZone);
         throw new ClassCastException();
     }
 
@@ -107,7 +117,7 @@ public class TimeItem extends AtomicItem {
         if (other.isTime())
             return ItemFactory.getInstance().createDayTimeDurationItem(new Period(other.getTimeValue(), this.getValue(), PeriodType.dayTime()));
         if (other.isDayTimeDuration())
-            return ItemFactory.getInstance().createTimeItem(this.getValue().minus(other.getDurationValue()));
+            return ItemFactory.getInstance().createTimeItem(this.getValue().minus(other.getDurationValue()), this.hasTimeZone);
         throw new ClassCastException();
     }
 

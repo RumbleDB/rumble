@@ -3,6 +3,7 @@ package sparksoniq.jsoniq.item;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import org.apache.commons.codec.binary.Hex;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
@@ -30,6 +31,7 @@ public class Base64BinaryItem extends AtomicItem {
     private static final String b64final = "(" + b64finalQuad + "|" + padded16 + "|" + padded8 + ")";
     private static final String b64quad = "(" + b64 + b64 + b64 + b64 + ")";
     private static final String base64Binary = "((" + b64quad + ")*" + "(" + b64final +"))?";
+    private static final Pattern base64BinaryPattern = Pattern.compile(base64Binary);
 
     private static final long serialVersionUID = 1L;
     private byte[] _value;
@@ -57,10 +59,10 @@ public class Base64BinaryItem extends AtomicItem {
     }
 
     private static boolean checkInvalidBase64BinaryFormat(String base64BinaryString) {
-        return Pattern.compile(base64Binary).matcher(base64BinaryString).matches();
+        return base64BinaryPattern.matcher(base64BinaryString).matches();
     }
 
-    static byte[] parseBase64BinaryString(String base64BinaryString) {
+    static byte[] parseBase64BinaryString(String base64BinaryString) throws IllegalArgumentException {
         if (base64BinaryString == null || !checkInvalidBase64BinaryFormat(base64BinaryString)) throw new IllegalArgumentException();
         return DatatypeConverter.parseBase64Binary(base64BinaryString);
     }
@@ -83,16 +85,19 @@ public class Base64BinaryItem extends AtomicItem {
     @Override
     public boolean isCastableAs(AtomicTypes itemType) {
         return itemType.equals(AtomicTypes.Base64BinaryItem) ||
+                itemType.equals(AtomicTypes.HexBinaryItem) ||
                 itemType.equals(AtomicTypes.StringItem);
     }
 
     @Override
-    public AtomicItem castAs(AtomicTypes itemType) {
+    public Item castAs(AtomicTypes itemType) {
         switch (itemType) {
             case StringItem:
-                ItemFactory.getInstance().createStringItem(this.getStringValue());
+                return ItemFactory.getInstance().createStringItem(this.getStringValue());
             case Base64BinaryItem:
                 return this;
+            case HexBinaryItem:
+                return ItemFactory.getInstance().createHexBinaryItem(Hex.encodeHexString(this._value));
             default:
                 throw new ClassCastException();
         }

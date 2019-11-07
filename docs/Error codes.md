@@ -10,6 +10,8 @@ or arrays are supplied where an atomic element is expected.
 It is a type error if there is not exactly one supplied parameter
 for an object or array selector.
 
+- [SENR0001] - Serialization error. Function items can not be serialized
+
 - [SPRKIQ0001] - CLI error. Raised when invalid parameters are supplied at launch.
 
 - [SPRKIQ0002] - CLI error. Unimplemented feature error.

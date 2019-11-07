@@ -24,13 +24,18 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
-import sparksoniq.jsoniq.compiler.translator.expr.Expression;
+import sparksoniq.exceptions.FunctionsNonSerializableException;
+import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -44,23 +49,22 @@ public class FunctionItem extends Item {
 
     // signature contains type information for all parameters and the return value
     private List<SequenceType> signature;
-
-    private Expression bodyExpression;
-    private Map<String, Item> nonLocalVariableBindings;
+    private RuntimeIterator bodyIterator;
+    private Map<String, List<Item>> nonLocalVariableBindings;
 
     protected FunctionItem() {
         super();
     }
 
-    public FunctionItem(FunctionIdentifier identifier, List<String> parameterNames, List<SequenceType> signature, Expression bodyExpression, Map<String, Item> nonLocalVariableBindings) {
+    public FunctionItem(FunctionIdentifier identifier, List<String> parameterNames, List<SequenceType> signature, RuntimeIterator bodyIterator, Map<String, List<Item>> nonLocalVariableBindings) {
         this.identifier = identifier;
         this.parameterNames = parameterNames;
         this.signature = signature;
-        this.bodyExpression = bodyExpression;
+        this.bodyIterator = bodyIterator;
         this.nonLocalVariableBindings = nonLocalVariableBindings;
     }
 
-    public FunctionItem(String name, Map<String, SequenceType> paramNameToSequenceTypes, SequenceType returnType, Expression bodyExpression) {
+    public FunctionItem(String name, Map<String, SequenceType> paramNameToSequenceTypes, SequenceType returnType, RuntimeIterator bodyIterator) {
         List<String> paramNames = new ArrayList<>();
         List<SequenceType> signature = new ArrayList<>();
         for (Map.Entry<String, SequenceType> paramEntry : paramNameToSequenceTypes.entrySet()) {
@@ -72,7 +76,7 @@ public class FunctionItem extends Item {
         this.identifier = new FunctionIdentifier(name, paramNames.size());
         this.parameterNames = paramNames;
         this.signature = signature;
-        this.bodyExpression = bodyExpression;
+        this.bodyIterator = bodyIterator;
         this.nonLocalVariableBindings = new HashMap<>();
     }
 
@@ -88,11 +92,11 @@ public class FunctionItem extends Item {
         return signature;
     }
 
-    public Expression getBodyExpression() {
-        return bodyExpression;
+    public RuntimeIterator getBodyIterator() {
+        return bodyIterator;
     }
 
-    public Map<String, Item> getNonLocalVariableBindings() {
+    public Map<String, List<Item>> getNonLocalVariableBindings() {
         return nonLocalVariableBindings;
     }
 
@@ -118,8 +122,13 @@ public class FunctionItem extends Item {
     }
 
     @Override
+    public boolean isFunction() {
+        return true;
+    }
+
+    @Override
     public String serialize() {
-        throw new RuntimeException("Functions cannot be serialized into output");
+        throw new FunctionsNonSerializableException();
     }
 
     @Override
@@ -132,8 +141,23 @@ public class FunctionItem extends Item {
         kryo.writeObject(output, this.identifier);
         kryo.writeObject(output, this.parameterNames);
         kryo.writeObject(output, this.signature);
-        kryo.writeObject(output, this.bodyExpression);
+        // kryo.writeObject(output, this.bodyIterator);
         kryo.writeObject(output, this.nonLocalVariableBindings);
+
+        // convert RuntimeIterator to byte[] data
+        try {
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(bos);
+            oos.writeObject(this.bodyIterator);
+            oos.flush();
+            byte[] data = bos.toByteArray();
+            output.writeInt(data.length);
+            output.writeBytes(data);
+        } catch (Exception e) {
+            throw new SparksoniqRuntimeException(
+                    "Error converting functionItem-bodyRuntimeIterator to byte[]:" + e.getMessage()
+            );
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -142,7 +166,19 @@ public class FunctionItem extends Item {
         this.identifier = kryo.readObject(input, FunctionIdentifier.class);
         this.parameterNames = kryo.readObject(input, ArrayList.class);
         this.signature = kryo.readObject(input, ArrayList.class);
-        this.bodyExpression = kryo.readObject(input, Expression.class);
+        // this.bodyIterator = kryo.readObject(input, RuntimeIterator.class);
         this.nonLocalVariableBindings = kryo.readObject(input, HashMap.class);
+
+        try {
+            int dataLength = input.readInt();
+            byte[] data = input.readBytes(dataLength);
+            ByteArrayInputStream bis = new ByteArrayInputStream(data);
+            ObjectInputStream ois = new ObjectInputStream(bis);
+            this.bodyIterator = (RuntimeIterator) ois.readObject();
+        } catch (Exception e) {
+            throw new SparksoniqRuntimeException(
+                    "Error converting functionItem-bodyRuntimeIterator to functionItem:" + e.getMessage()
+            );
+        }
     }
 }

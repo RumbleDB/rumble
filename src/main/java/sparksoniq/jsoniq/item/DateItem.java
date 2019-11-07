@@ -20,15 +20,20 @@ public class DateItem extends AtomicItem {
 
     private static final long serialVersionUID = 1L;
     private DateTime _value;
-    private boolean hasTimeZone;
+    private boolean hasTimeZone = true;
 
-    public DateItem() { super(); }
-
-    public DateItem(DateTime _value) {
+    DateItem(DateTime _value, boolean hasTimeZone) {
         super();
-        this.hasTimeZone = _value.getZone() != DateTimeZone.getDefault();
-        _value = hasTimeZone ? _value : _value.withZoneRetainFields(DateTimeZone.UTC);
-        this._value = _value.dayOfMonth().roundFloorCopy();
+        this._value = _value;
+        this.hasTimeZone = hasTimeZone;
+    }
+
+    DateItem(String dateTimeString) {
+        this._value = DateTimeItem.parseDateTime(dateTimeString, AtomicTypes.DateItem);
+        if (!dateTimeString.endsWith("Z") && _value.getZone() == DateTimeZone.getDefault()) {
+            this.hasTimeZone = false;
+            this._value = _value.withZoneRetainFields(DateTimeZone.UTC);
+        }
     }
 
     public DateTime getValue() {
@@ -48,6 +53,11 @@ public class DateItem extends AtomicItem {
     @Override
     public boolean hasDateTime() {
         return true;
+    }
+
+    @Override
+    public boolean hasTimeZone() {
+        return hasTimeZone;
     }
 
     @Override
@@ -85,7 +95,7 @@ public class DateItem extends AtomicItem {
             case DateItem:
                 return this;
             case DateTimeItem:
-                return ItemFactory.getInstance().createDateTimeItem(this.getValue());
+                return ItemFactory.getInstance().createDateTimeItem(this.getValue(), this.hasTimeZone);
             case StringItem:
                 return ItemFactory.getInstance().createStringItem(this.serialize());
             default:
@@ -101,16 +111,17 @@ public class DateItem extends AtomicItem {
     @Override
     public Item add(Item other) {
         if (other.isYearMonthDuration() || other.isDayTimeDuration())
-            return ItemFactory.getInstance().createDateItem(this.getValue().plus(other.getDurationValue()));
+            return ItemFactory.getInstance().createDateItem(this.getValue().plus(other.getDurationValue()), this.hasTimeZone);
         throw new ClassCastException();
     }
 
     @Override
     public Item subtract(Item other) {
-        if (other.isYearMonthDuration() || other.isDayTimeDuration())
-            return ItemFactory.getInstance().createDateItem(this.getValue().minus(other.getDurationValue()));
-        if (other.isDate())
+        if (other.isDate()) {
             return ItemFactory.getInstance().createDayTimeDurationItem(new Period(other.getDateValue(), this.getValue(), PeriodType.dayTime()));
+        }
+        if (other.isYearMonthDuration() || other.isDayTimeDuration())
+            return ItemFactory.getInstance().createDateItem(this.getValue().minus(other.getDurationValue()), this.hasTimeZone);
         throw new ClassCastException();
     }
 

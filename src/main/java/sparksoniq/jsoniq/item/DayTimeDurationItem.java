@@ -1,5 +1,6 @@
 package sparksoniq.jsoniq.item;
 
+import org.joda.time.Instant;
 import org.joda.time.Period;
 import org.joda.time.PeriodType;
 import org.rumbledb.api.Item;
@@ -24,6 +25,7 @@ public class DayTimeDurationItem extends DurationItem {
     public DayTimeDurationItem(Period value) {
         super();
         this._value = value.normalizedStandard(PeriodType.dayTime());
+        isNegative = this._value.toString().contains("-");
     }
 
     @Override
@@ -54,6 +56,7 @@ public class DayTimeDurationItem extends DurationItem {
     @Override
     public boolean isCastableAs(AtomicTypes itemType) {
         return itemType.equals(AtomicTypes.DayTimeDurationItem) ||
+                itemType.equals(AtomicTypes.YearMonthDurationItem) ||
                 itemType.equals(AtomicTypes.DurationItem) ||
                 itemType.equals(AtomicTypes.StringItem);
     }
@@ -62,9 +65,11 @@ public class DayTimeDurationItem extends DurationItem {
     public Item castAs(AtomicTypes itemType) {
         switch (itemType) {
             case DurationItem:
-                return ItemFactory.getInstance().createDurationItem(DurationItem.getDurationFromString(this.serialize(), AtomicTypes.DurationItem));
+                return ItemFactory.getInstance().createDurationItem(this.getValue());
             case DayTimeDurationItem:
                 return this;
+            case YearMonthDurationItem:
+                return ItemFactory.getInstance().createYearMonthDurationItem(this.getValue());
             case StringItem:
                 return ItemFactory.getInstance().createStringItem(this.serialize());
             default:
@@ -88,11 +93,11 @@ public class DayTimeDurationItem extends DurationItem {
     @Override
     public Item add(Item other) {
         if (other.isDateTime())
-            return ItemFactory.getInstance().createDateTimeItem(other.getDateTimeValue().plus(this.getValue()));
+            return ItemFactory.getInstance().createDateTimeItem(other.getDateTimeValue().plus(this.getValue()), other.hasTimeZone());
         if (other.isDate())
-            return ItemFactory.getInstance().createDateItem(other.getDateValue().plus(this.getValue()));
+            return ItemFactory.getInstance().createDateItem(other.getDateValue().plus(this.getValue()), other.hasDateTime());
         if (other.isTime())
-            return ItemFactory.getInstance().createTimeItem(other.getTimeValue().plus(this.getValue()));
+            return ItemFactory.getInstance().createTimeItem(other.getTimeValue().plus(this.getValue()), other.hasDateTime());
         return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue().plus(other.getDurationValue()));
     }
 
@@ -103,36 +108,25 @@ public class DayTimeDurationItem extends DurationItem {
 
     @Override
     public Item multiply(Item other) {
-        BigDecimal otherBd = other.castToDecimalValue();
-        if (otherBd.stripTrailingZeros().scale() <= 0) {
-            return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue().multipliedBy(otherBd.intValue()));
+        BigDecimal otherAsDecimal = other.castToDecimalValue();
+        if (otherAsDecimal.stripTrailingZeros().scale() <= 0) {
+            return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue().multipliedBy(otherAsDecimal.intValue()));
         }
         long durationInMillis = this.getValue().toStandardDuration().getMillis();
-        long duration_result = otherBd.multiply(BigDecimal.valueOf(durationInMillis)).setScale(0, BigDecimal.ROUND_HALF_UP).longValue();
-        Period period_time = new Period(duration_result, PeriodType.dayTime());
-        int hours = period_time.getHours();
-        BigDecimal[] quotientAndRemainder = BigDecimal.valueOf(hours).divideAndRemainder(BigDecimal.valueOf(24));
-        Period result = new Period().withDays(quotientAndRemainder[0].intValue()).withHours(quotientAndRemainder[1].intValue())
-                .withMinutes(period_time.getMinutes()).withSeconds(period_time.getSeconds()).withMillis(period_time.getMillis());
-        return ItemFactory.getInstance().createDayTimeDurationItem(result);
+        long durationResult = otherAsDecimal.multiply(BigDecimal.valueOf(durationInMillis)).setScale(16, BigDecimal.ROUND_HALF_UP).longValue();
+        return ItemFactory.getInstance().createDayTimeDurationItem(new Period(durationResult, PeriodType.dayTime()));
     }
 
     @Override
     public Item divide(Item other) {
-        BigDecimal otherBd;
         if (other.isDayTimeDuration()) {
-            otherBd = BigDecimal.valueOf(other.getDurationValue().toStandardDuration().getMillis());
-        } else {
-            otherBd = other.castToDecimalValue();
+            Instant now  = Instant.now();
+            return ItemFactory.getInstance().createDecimalItem(BigDecimal.valueOf(this.getValue().toDurationFrom(now).getMillis() /
+                            (double) other.getDurationValue().toDurationFrom(now).getMillis()));
         }
-
+        BigDecimal otherBd = other.castToDecimalValue();
         long durationInMillis = this.getValue().toStandardDuration().getMillis();
-        long duration_result = (BigDecimal.valueOf(durationInMillis)).divide(otherBd, 0, BigDecimal.ROUND_HALF_UP).longValue();
-        Period period_time = new Period(duration_result, PeriodType.dayTime());
-        int hours = period_time.getHours();
-        BigDecimal[] quotientAndRemainder = BigDecimal.valueOf(hours).divideAndRemainder(BigDecimal.valueOf(24));
-        Period result = new Period(0L, PeriodType.dayTime()).withDays(quotientAndRemainder[0].intValue()).withHours(quotientAndRemainder[1].intValue())
-                .withMinutes(period_time.getMinutes()).withSeconds(period_time.getSeconds()).withMillis(period_time.getMillis());
-        return ItemFactory.getInstance().createDayTimeDurationItem(result);
+        long durationResult = (BigDecimal.valueOf(durationInMillis)).divide(otherBd, 16, BigDecimal.ROUND_HALF_UP).longValue();
+        return ItemFactory.getInstance().createDayTimeDurationItem(new Period(durationResult, PeriodType.dayTime()));
     }
 }

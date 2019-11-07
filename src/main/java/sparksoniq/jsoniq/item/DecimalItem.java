@@ -174,7 +174,8 @@ public class DecimalItem extends AtomicItem {
     public Item multiply(Item other) {
         if (other.isDouble())
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() * (other.getDoubleValue()));
-        if (other.isYearMonthDuration() || other.isDayTimeDuration()) return other.multiply(this);
+        if (other.isYearMonthDuration() || other.isDayTimeDuration())
+            return other.multiply(this);
         return ItemFactory.getInstance().createDecimalItem(this.getDecimalValue().multiply(other.castToDecimalValue()));
     }
 

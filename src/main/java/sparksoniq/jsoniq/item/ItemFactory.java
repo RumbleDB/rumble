@@ -65,16 +65,28 @@ public class ItemFactory {
         return new DayTimeDurationItem(p);
     }
 
-    public Item createDateTimeItem(DateTime dt) {
-        return new DateTimeItem(dt);
+    public Item createDateTimeItem(DateTime dt, boolean hasTimeZone) {
+        return new DateTimeItem(dt, hasTimeZone);
     }
 
-    public Item createDateItem(DateTime dt) {
-        return new DateItem(dt);
+    public Item createDateTimeItem(String s) {
+        return new DateTimeItem(s);
     }
 
-    public Item createTimeItem(DateTime dt) {
-        return new TimeItem(dt);
+    public Item createDateItem(DateTime dt, boolean hasTimeZone) {
+        return new DateItem(dt, hasTimeZone);
+    }
+
+    public Item createDateItem(String s) {
+        return new DateItem(s);
+    }
+
+    public Item createTimeItem(DateTime dt, boolean hasTimeZone) {
+        return new TimeItem(dt, hasTimeZone);
+    }
+
+    public Item createTimeItem(String s) {
+        return new TimeItem(s);
     }
 
     public Item createHexBinaryItem(String s) {

@@ -289,11 +289,27 @@ public abstract class Item implements SerializableItem {
     }
 
     /**
+     * @return true if the Item has a timeZone, false otherwise
+     */
+    public boolean hasTimeZone() {
+        return false;
+    }
+
+    /**
      * Please do not use, item type API not publicly released yet.
      * @param type an ItemType.
      * @return true if it matches the item type.
      */
     public abstract boolean isTypeOf(ItemType type);
+
+    /**
+     * Tests whether the item is a function.
+     *
+     * @return true if it is a function, false otherwise
+     */
+    public boolean isFunction() {
+        return false;
+    }
 
     /**
      * Tests whether the item is an array.
