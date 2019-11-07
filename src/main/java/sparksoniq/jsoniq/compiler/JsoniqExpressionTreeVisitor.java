@@ -72,6 +72,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.DynamicFunc
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.ObjectLookupExtension;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.PostfixExtension;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.PredicateExtension;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.ArgumentPlaceholder;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.ArrayConstructor;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.ContextExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionCall;
@@ -1034,7 +1035,11 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
 
     @Override
     public Void visitArgument(JsoniqParser.ArgumentContext ctx) {
-        this.visitExprSingle(ctx.exprSingle());
+        if (ctx.exprSingle() != null) {
+            this.visitExprSingle(ctx.exprSingle());
+        } else {
+            this.currentExpression = new ArgumentPlaceholder(createMetadataFromContext(ctx));
+        }
         return null;
     }
 

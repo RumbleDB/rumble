@@ -285,6 +285,15 @@ public abstract class Item implements SerializableItem {
     public abstract boolean isTypeOf(ItemType type);
 
     /**
+     * Tests whether the item is a function.
+     *
+     * @return true if it is a function, false otherwise
+     */
+    public boolean isFunction() {
+        return false;
+    }
+
+    /**
      * Tests whether the item is an array.
      *
      * @return true if it is an array, false otherwise.
