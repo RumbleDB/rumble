@@ -53,6 +53,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.operational.StringConcatExpres
 import sparksoniq.jsoniq.compiler.translator.expr.operational.TreatExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.UnaryExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.PostFixExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.ArgumentPlaceholder;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.ArrayConstructor;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.BooleanLiteral;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.ContextExpression;
@@ -188,6 +189,9 @@ public abstract class AbstractExpressionOrClauseVisitor<T> {
         return defaultAction(expression, argument);
     }
 
+    public T visitArgumentPlaceholder(ArgumentPlaceholder expression, T argument) {
+        return defaultAction(expression, argument);
+    }
     //endregion
 
     //region literal

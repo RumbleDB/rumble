@@ -446,6 +446,18 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitKeyWordDuration(JsoniqParser.KeyWordDurationContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#keyWordYearMonthDuration}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitKeyWordYearMonthDuration(JsoniqParser.KeyWordYearMonthDurationContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#keyWordDayTimeDuration}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitKeyWordDayTimeDuration(JsoniqParser.KeyWordDayTimeDurationContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#keyWordHexBinary}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -457,6 +469,12 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitKeyWordBase64Binary(JsoniqParser.KeyWordBase64BinaryContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#keyWordDateTime}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitKeyWordDateTime(JsoniqParser.KeyWordDateTimeContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#typesKeywords}.
 	 * @param ctx the parse tree

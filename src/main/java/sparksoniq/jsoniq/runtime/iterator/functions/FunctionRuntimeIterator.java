@@ -27,12 +27,12 @@ import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
-public class FunctionItemIterator extends LocalRuntimeIterator {
+public class FunctionRuntimeIterator extends LocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private Item _item;
 
-    public FunctionItemIterator(
+    public FunctionRuntimeIterator(
             FunctionItem function,
             IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);

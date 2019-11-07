@@ -94,6 +94,12 @@ public class StringItem extends AtomicItem {
                 return ItemFactory.getInstance().createNullItem();
             case DurationItem:
                 return ItemFactory.getInstance().createDurationItem(DurationItem.getDurationFromString(this.getStringValue(), AtomicTypes.DurationItem));
+            case YearMonthDurationItem:
+                return ItemFactory.getInstance().createYearMonthDurationItem(DurationItem.getDurationFromString(this.getStringValue(), AtomicTypes.YearMonthDurationItem));
+            case DayTimeDurationItem:
+                return ItemFactory.getInstance().createDayTimeDurationItem(DurationItem.getDurationFromString(this.getStringValue(), AtomicTypes.DayTimeDurationItem));
+            case DateTimeItem:
+                return ItemFactory.getInstance().createDateTimeItem(this.getStringValue());
             case HexBinaryItem:
                 return ItemFactory.getInstance().createHexBinaryItem(this.getStringValue());
             case Base64BinaryItem:
@@ -130,6 +136,12 @@ public class StringItem extends AtomicItem {
                 return isNullLiteral(this.getValue());
             } else if (itemType == AtomicTypes.DurationItem) {
                 DurationItem.getDurationFromString(this._value, AtomicTypes.DurationItem);
+            } else if (itemType == AtomicTypes.YearMonthDurationItem) {
+                DurationItem.getDurationFromString(this.getValue(), AtomicTypes.YearMonthDurationItem);
+            } else if (itemType == AtomicTypes.DayTimeDurationItem) {
+                DurationItem.getDurationFromString(this.getValue(), AtomicTypes.DayTimeDurationItem);
+            } else if (itemType == AtomicTypes.DateTimeItem) {
+                DateTimeItem.parseDateTime(this.getValue());
             } else if (itemType == AtomicTypes.HexBinaryItem) {
                 HexBinaryItem.parseHexBinaryString(this.getValue());
             } else if (itemType == AtomicTypes.Base64BinaryItem) {

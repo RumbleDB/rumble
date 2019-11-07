@@ -186,7 +186,7 @@ functionCall            : ((ns=NCName | kw=keyWords |  )':')?
 
 argumentList            : '('  (args+=argument ','?)* ')';
 
-argument                : exprSingle | '?';
+argument                : exprSingle | ArgumentPlaceholder;
 
 functionItemExpr        : namedFunctionRef | inlineFunctionExpr;
 
@@ -216,12 +216,21 @@ keyWordBoolean          : 'boolean';
 
 keyWordDuration         : 'duration';
 
+keyWordYearMonthDuration: 'yearMonthDuration';
+
+keyWordDayTimeDuration  : 'dayTimeDuration';
+
 keyWordHexBinary        : 'hexBinary';
 
 keyWordBase64Binary     : 'base64Binary';
 
+keyWordDateTime         : 'dateTime';
+
 typesKeywords           : keyWordBoolean
                         | keyWordDuration
+                        | keyWordYearMonthDuration
+                        | keyWordDayTimeDuration
+                        | keyWordDateTime
                         | keyWordHexBinary
                         | keyWordBase64Binary;
 
@@ -386,6 +395,8 @@ fragment ESC            : '\\' (["\\/bfnrt] | UNICODE);
 fragment UNICODE        : 'u' HEX HEX HEX HEX;
 
 fragment HEX            : [0-9a-fA-F];
+
+ArgumentPlaceholder     : '?';
 
 NullLiteral             : 'null';
 

@@ -66,6 +66,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.DynamicFunc
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.ObjectLookupExtension;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.PostfixExtension;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.PredicateExtension;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.ArgumentPlaceholder;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.ArrayConstructor;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.BooleanLiteral;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.ContextExpression;
@@ -89,7 +90,7 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.control.IfRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.control.SwitchRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.DynamicFunctionCallIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.FunctionItemIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.FunctionRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.UserDefinedFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
@@ -288,7 +289,11 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                     } else if (extension instanceof DynamicFunctionCallExtension) {
                         List<RuntimeIterator> arguments = new ArrayList<>();
                         for (Expression arg : ((DynamicFunctionCallExtension) extension).getArguments()) {
-                            arguments.add(this.visit(arg, argument));
+                            if (arg == null) {  // check ArgumentPlaceholder
+                                arguments.add(null);
+                            } else {
+                                arguments.add(this.visit(arg, argument));
+                            }
                         }
                         previous = new DynamicFunctionCallIterator(previous, arguments, createIteratorMetadata(expression));
                     }
@@ -340,10 +345,11 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         }
         SequenceType returnType = expression.get_returnType().getSequence();
 
-        FunctionItem function = new FunctionItem(expression.get_name(), paramNameToSequenceTypes, returnType, expression.get_body());
+        RuntimeIterator bodyIterator = this.visit(expression.get_body(), argument);
+        FunctionItem function = new FunctionItem(expression.get_name(), paramNameToSequenceTypes, returnType, bodyIterator);
         if (expression.get_name().equals("")) {
             // unnamed (inline function declaration)
-            return new FunctionItemIterator(function, createIteratorMetadata(expression));
+            return new FunctionRuntimeIterator(function, createIteratorMetadata(expression));
         } else {
             // named (static function declaration)
             Functions.addUserDefinedFunction(function, expression.getMetadata());
@@ -356,30 +362,39 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
     public RuntimeIterator visitFunctionCall(FunctionCall expression, RuntimeIterator argument) {
         List<RuntimeIterator> arguments = new ArrayList<>();
         IteratorMetadata iteratorMetadata = createIteratorMetadata(expression);
+        boolean isPartialApplication = false;
         for (Expression arg : expression.getArguments()) {
-            arguments.add(this.visit(arg, argument));
+            if (arg instanceof ArgumentPlaceholder) {
+                arguments.add(null);
+                isPartialApplication = true;
+            } else {
+                arguments.add(this.visit(arg, argument));
+            }
         }
         String fnName = expression.getFunctionName();
         int arity = arguments.size();
-        FunctionIdentifier identifier = new FunctionIdentifier(fnName, arity);
+        FunctionIdentifier fnIdentifier = new FunctionIdentifier(fnName, arity);
 
         try {
-            Class<? extends RuntimeIterator> functionClass = Functions.getBuiltInFunction(identifier, createIteratorMetadata(expression));
+            Class<? extends RuntimeIterator> functionClass = Functions.getBuiltInFunction(fnIdentifier, createIteratorMetadata(expression));
+            if (isPartialApplication) {
+                throw new UnsupportedFeatureException(
+                        "Partial application on built-in functions are not supported.",
+                        expression.getMetadata()
+                );
+            }
             Constructor<? extends RuntimeIterator> ctor = functionClass.getConstructor(List.class, IteratorMetadata.class);
             return ctor.newInstance(arguments, iteratorMetadata);
-        } catch (Exception ex1) {
-            if (ex1 instanceof UnknownFunctionCallException) {
-                FunctionItem fn = Functions.getUserDefinedFunction(identifier, createIteratorMetadata(expression));
-                return new UserDefinedFunctionCallIterator(
-                        fn.getIdentifier().getName(),
-                        fn.getBodyExpression(),
-                        arguments,
-                        fn.getParameterNames(),
-                        iteratorMetadata
-                );
-            } else {
-                throw new RuntimeException(ex1.getMessage());
-            }
+        } catch (UnknownFunctionCallException e) {
+            return new UserDefinedFunctionCallIterator(
+                    fnIdentifier,
+                    arguments,
+                    iteratorMetadata
+            );
+        } catch (UnsupportedFeatureException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
         }
     }
 
@@ -394,13 +409,12 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         } catch (Exception ex1) {
             if (ex1 instanceof UnknownFunctionCallException) {
                 FunctionItem function = Functions.getUserDefinedFunction(identifier, createIteratorMetadata(expression));
-                return new FunctionItemIterator(function, createIteratorMetadata(expression));
+                return new FunctionRuntimeIterator(function, createIteratorMetadata(expression));
             } else {
                 throw new SparksoniqRuntimeException(ex1.getMessage());
             }
         }
     }
-
     //endregion
 
     //region literal

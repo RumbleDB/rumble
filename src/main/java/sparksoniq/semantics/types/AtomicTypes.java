@@ -10,6 +10,10 @@ public enum AtomicTypes {
     BooleanItem,
 
     DurationItem,
+    YearMonthDurationItem,
+    DayTimeDurationItem,
+
+    DateTimeItem,
 
     HexBinaryItem,
     Base64BinaryItem,
