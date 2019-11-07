@@ -21,8 +21,9 @@
 package sparksoniq.jsoniq.runtime.iterator;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
-
 import sparksoniq.Main;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparkRuntimeException;
@@ -36,8 +37,8 @@ import java.util.List;
 public abstract class SparkRuntimeIterator extends RuntimeIterator {
 
 
-	private static final long serialVersionUID = 1L;
-	protected JiqsItemParser parser;
+    private static final long serialVersionUID = 1L;
+    protected JiqsItemParser parser;
     protected JavaRDD<Item> _rdd;
     protected List<Item> result = null;
     protected int currentResultIndex = 0;
@@ -58,12 +59,12 @@ public abstract class SparkRuntimeIterator extends RuntimeIterator {
     }
 
     @Override
-    public boolean getDataFrame() {
+    public Dataset<Row> getDataFrame(DynamicContext dynamicContext) {
         throw new SparkRuntimeException("Iterator has no DataFrames", getMetadata());
     }
 
     @Override
-    public void reset(DynamicContext context){
+    public void reset(DynamicContext context) {
         super.reset(context);
         result = null;
     }

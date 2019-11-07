@@ -25,6 +25,8 @@ import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 
 import sparksoniq.exceptions.InvalidArgumentTypeException;
@@ -167,7 +169,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
 
     public abstract boolean isDataFrame();
 
-    public abstract boolean getDataFrame();
+    public abstract Dataset<Row> getDataFrame(DynamicContext dynamicContext);
 
     public abstract Item next();
 

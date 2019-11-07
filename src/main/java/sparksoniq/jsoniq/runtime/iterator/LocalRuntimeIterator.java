@@ -21,8 +21,9 @@
 package sparksoniq.jsoniq.runtime.iterator;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
-
 import sparksoniq.exceptions.SparkRuntimeException;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
@@ -31,9 +32,9 @@ import java.util.List;
 
 public abstract class LocalRuntimeIterator extends RuntimeIterator {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	protected LocalRuntimeIterator(List<RuntimeIterator> children, IteratorMetadata iteratorMetadata) {
+    protected LocalRuntimeIterator(List<RuntimeIterator> children, IteratorMetadata iteratorMetadata) {
         super(children, iteratorMetadata);
     }
 
@@ -43,7 +44,9 @@ public abstract class LocalRuntimeIterator extends RuntimeIterator {
     }
 
     @Override
-    public boolean isRDD(){ return false; }
+    public boolean isRDD() {
+        return false;
+    }
 
     @Override
     public boolean isDataFrame() {
@@ -51,7 +54,7 @@ public abstract class LocalRuntimeIterator extends RuntimeIterator {
     }
 
     @Override
-    public boolean getDataFrame() {
+    public Dataset<Row> getDataFrame(DynamicContext dynamicContext) {
         throw new SparkRuntimeException("Iterator has no DataFrames", getMetadata());
     }
 }
