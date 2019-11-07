@@ -98,7 +98,8 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
             else if (item.isArray())
                 return true;
             else {
-                throw new SparksoniqRuntimeException("Unexpected item type found while calculating effective boolean value.");
+                throw new InvalidArgumentTypeException("Effective boolean value not defined for items of type " +
+                        ItemTypes.getItemTypeName(item.getClass().getSimpleName()), iterator.getMetadata());
             }
 
             if (iterator.hasNext()) {

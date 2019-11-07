@@ -37,8 +37,6 @@ public class DateTimeItem extends AtomicItem {
     private DateTime _value;
     private boolean hasTimeZone = true;
 
-    public DateTimeItem() { super(); }
-
     DateTimeItem(DateTime _value, boolean hasTimeZone) {
         super();
         this._value = _value;
@@ -71,7 +69,6 @@ public class DateTimeItem extends AtomicItem {
     public boolean isDateTime() {
         return true;
     }
-
 
     public boolean hasTimeZone() {
         return hasTimeZone;
