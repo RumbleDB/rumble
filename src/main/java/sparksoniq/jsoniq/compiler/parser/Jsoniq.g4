@@ -154,7 +154,7 @@ arrayUnboxing           : '[' ']';
 
 predicate               : '[' expr ']';
 
-objectLookup            : '.' ( kw=keyWords | lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | ci=contextItemExpr );
+objectLookup            : '.' ( kw=keyWords | lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | ci=contextItemExpr | tkw = typesKeywords);
 
 primaryExpr             : NullLiteral
                         | Literal
@@ -226,11 +226,17 @@ keyWordBase64Binary     : 'base64Binary';
 
 keyWordDateTime         : 'dateTime';
 
+keyWordDate             : 'date';
+
+keyWordTime             : 'time';
+
 typesKeywords           : keyWordBoolean
                         | keyWordDuration
                         | keyWordYearMonthDuration
                         | keyWordDayTimeDuration
                         | keyWordDateTime
+                        | keyWordDate
+                        | keyWordTime
                         | keyWordHexBinary
                         | keyWordBase64Binary;
 

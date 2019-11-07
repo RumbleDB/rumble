@@ -41,6 +41,9 @@ import sparksoniq.jsoniq.runtime.iterator.functions.datetime.MonthFromDateTimeFu
 import sparksoniq.jsoniq.runtime.iterator.functions.datetime.SecondsFromDateTimeFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.datetime.TimezoneFromDateTimeFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.datetime.YearFromDateTimeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.DateTimeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.DateFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.TimeFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.DayTimeDurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.DaysFromDurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.DurationFunctionIterator;
@@ -49,7 +52,6 @@ import sparksoniq.jsoniq.runtime.iterator.functions.durations.MinutesFromDuratio
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.MonthsFromDurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.SecondsFromDurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.YearMonthDurationFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.datetime.DateTimeFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.YearsFromDurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.AbsFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.CeilingFunctionIterator;
@@ -224,6 +226,9 @@ public class Functions {
         builtInFunctions.put(new FunctionIdentifier(MINUTESFROMDATETIME, 1), MinutesFromDateTimeFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(SECONDSFROMDATETIME, 1), SecondsFromDateTimeFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(TIMEZONEFROMDATETIME, 1), TimezoneFromDateTimeFunctionIterator.class);
+
+        builtInFunctions.put(new FunctionIdentifier(DATE, 1), DateFunctionIterator.class);
+        builtInFunctions.put(new FunctionIdentifier(TIME, 1), TimeFunctionIterator.class);
 
         builtInFunctions.put(new FunctionIdentifier(HEXBINARY, 1), HexBinaryFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(BASE64BINARY, 1), Base64BinaryFunctionIterator.class);
@@ -514,6 +519,7 @@ public class Functions {
          */
         public static final String NORMALIZESPACE = "normalize-space";
 
+
         /**
          * function that returns the duration item from the supplied string
          */
@@ -526,6 +532,8 @@ public class Functions {
          * function that returns the dayTimeDuration item from the supplied string
          */
         public static final String DAYTIMEDURATION = "dayTimeDuration";
+
+
         /**
          * function that returns the years from a duration
          */
@@ -583,6 +591,15 @@ public class Functions {
          * function that returns the seconds from a dateTime
          */
         public static final String TIMEZONEFROMDATETIME = "timezone-from-dateTime";
+        /**
+         * function that returns the date item from the supplied string
+         */
+        public static final String DATE = "date";
+        /**
+         * function that returns the time item from the supplied string
+         */
+        public static final String TIME = "time";
+
 
         /**
          * function that returns the hexBinary item from the supplied string
