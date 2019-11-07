@@ -187,7 +187,6 @@ public abstract class AbstractExpressionOrClauseVisitor<T> {
     public T visitNamedFunctionRef(NamedFunctionRef expression, T argument) {
         return defaultAction(expression, argument);
     }
-
     //endregion
 
     //region literal
