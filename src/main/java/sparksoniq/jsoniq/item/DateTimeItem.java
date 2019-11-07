@@ -199,14 +199,6 @@ public class DateTimeItem extends AtomicItem {
         return dateTime;
     }
 
-//    private Item getDateFromDateTime(DateTimeItem dateTimeItem) {
-//        String value = dateTimeItem.getValue().toString();
-//        int dateTimeSeparatorIndex = value.indexOf("T");
-//        String zone = dateTimeItem.getValue().getZone().toString();
-//        return ItemFactory.getInstance().createDateItem(DateTimeItem.parseDateTime(
-//                value.substring(0, dateTimeSeparatorIndex) + zone, AtomicTypes.DateItem));
-//    }
-
     static DateTime parseDateTime(String dateTime, AtomicTypes dateTimeType) throws IllegalArgumentException{
             if (!checkInvalidDateTimeFormat(dateTime, dateTimeType)) throw new IllegalArgumentException();
         dateTime = fixEndOfDay(dateTime);
