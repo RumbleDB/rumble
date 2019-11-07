@@ -64,8 +64,8 @@ public class ItemFactory {
         return new DayTimeDurationItem(p);
     }
 
-    Item createDateTimeItem(DateTime dt) {
-        return new DateTimeItem(dt);
+    Item createDateTimeItem(DateTime dt, boolean hasTimeZone) {
+        return new DateTimeItem(dt, hasTimeZone);
     }
 
     public Item createDateTimeItem(String s) {

@@ -142,6 +142,10 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
         else if (left.isObject() || right.isObject()) {
             throw new NonAtomicKeyException("Invalid args. Comparison can't be performed on object type", getMetadata().getExpressionMetadata());
         }
+        else if (left.isFunction() || right.isFunction()) {
+            throw new NonAtomicKeyException("Invalid args. Comparison can't be performed on function type", getMetadata().getExpressionMetadata());
+        }
+
         if (left.isAtomic()) {
             Item comparisonResult = left.compareItem(right, this._operator, getMetadata());
             if (comparisonResult != null) return comparisonResult;
