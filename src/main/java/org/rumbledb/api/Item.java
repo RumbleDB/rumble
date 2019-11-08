@@ -21,6 +21,7 @@
 package org.rumbledb.api;
 
 import org.joda.time.Period;
+import org.joda.time.DateTime;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -252,6 +253,15 @@ public abstract class Item implements SerializableItem {
     }
 
     /**
+     * Returns the dateTime value of the item, if it is a atomic item of type dateTimeItem.
+     *
+     * @return the dateTime value as a DateTime.
+     */
+    public DateTime getDateTimeValue() {
+        throw new RuntimeException("Item is not a DateTime.");
+    }
+
+    /**
      * Returns the byte[] value of the item, if it is a atomic item of type hexBinary or Base64Binary.
      *
      * @return the binary value as an array of bytes.
@@ -261,11 +271,27 @@ public abstract class Item implements SerializableItem {
     }
 
     /**
+     * @return true if the Item has a timeZone, false otherwise
+     */
+    public boolean hasTimeZone() {
+        return false;
+    }
+
+    /**
      * Please do not use, item type API not publicly released yet.
      * @param type an ItemType.
      * @return true if it matches the item type.
      */
     public abstract boolean isTypeOf(ItemType type);
+
+    /**
+     * Tests whether the item is a function.
+     *
+     * @return true if it is a function, false otherwise
+     */
+    public boolean isFunction() {
+        return false;
+    }
 
     /**
      * Tests whether the item is an array.
@@ -372,6 +398,15 @@ public abstract class Item implements SerializableItem {
      * @return true if it is an atomic item of type dayTimeDuration, false otherwise.
      */
     public boolean isDayTimeDuration() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an atomic item of type dateTime.
+     *
+     * @return true if it is an atomic item of type dateTime, false otherwise.
+     */
+    public boolean isDateTime() {
         return false;
     }
 

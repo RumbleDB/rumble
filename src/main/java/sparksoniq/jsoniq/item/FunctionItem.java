@@ -49,15 +49,14 @@ public class FunctionItem extends Item {
 
     // signature contains type information for all parameters and the return value
     private List<SequenceType> signature;
-
     private RuntimeIterator bodyIterator;
-    private Map<String, Item> nonLocalVariableBindings;
+    private Map<String, List<Item>> nonLocalVariableBindings;
 
     protected FunctionItem() {
         super();
     }
 
-    public FunctionItem(FunctionIdentifier identifier, List<String> parameterNames, List<SequenceType> signature, RuntimeIterator bodyIterator, Map<String, Item> nonLocalVariableBindings) {
+    public FunctionItem(FunctionIdentifier identifier, List<String> parameterNames, List<SequenceType> signature, RuntimeIterator bodyIterator, Map<String, List<Item>> nonLocalVariableBindings) {
         this.identifier = identifier;
         this.parameterNames = parameterNames;
         this.signature = signature;
@@ -97,7 +96,7 @@ public class FunctionItem extends Item {
         return bodyIterator;
     }
 
-    public Map<String, Item> getNonLocalVariableBindings() {
+    public Map<String, List<Item>> getNonLocalVariableBindings() {
         return nonLocalVariableBindings;
     }
 
@@ -120,6 +119,11 @@ public class FunctionItem extends Item {
     @Override
     public boolean isTypeOf(ItemType type) {
         return type.getType().equals(ItemTypes.FunctionItem) || type.getType().equals(ItemTypes.Item);
+    }
+
+    @Override
+    public boolean isFunction() {
+        return true;
     }
 
     @Override
@@ -146,7 +150,7 @@ public class FunctionItem extends Item {
             ObjectOutputStream oos = new ObjectOutputStream(bos);
             oos.writeObject(this.bodyIterator);
             oos.flush();
-            byte [] data = bos.toByteArray();
+            byte[] data = bos.toByteArray();
             output.writeInt(data.length);
             output.writeBytes(data);
         } catch (Exception e) {
@@ -170,7 +174,7 @@ public class FunctionItem extends Item {
             byte[] data = input.readBytes(dataLength);
             ByteArrayInputStream bis = new ByteArrayInputStream(data);
             ObjectInputStream ois = new ObjectInputStream(bis);
-            this.bodyIterator= (RuntimeIterator) ois.readObject();
+            this.bodyIterator = (RuntimeIterator) ois.readObject();
         } catch (Exception e) {
             throw new SparksoniqRuntimeException(
                     "Error converting functionItem-bodyRuntimeIterator to functionItem:" + e.getMessage()
