@@ -29,7 +29,7 @@ public class TimezoneFromTimeFunctionIterator extends LocalFunctionCallIterator 
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            return ItemFactory.getInstance().createDayTimeDurationItem(new Period(_timeItem.getTimeValue().getZone().toTimeZone().getRawOffset()));
+            return ItemFactory.getInstance().createDayTimeDurationItem(new Period(_timeItem.getDateTimeValue().getZone().toTimeZone().getRawOffset()));
         } else
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " timezone-from-time function",

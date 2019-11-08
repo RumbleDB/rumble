@@ -29,7 +29,7 @@ public class SecondsFromTimeFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            return ItemFactory.getInstance().createDecimalItem(BigDecimal.valueOf(_timeItem.getTimeValue().getSecondOfMinute() + _timeItem.getTimeValue().getMillisOfSecond()*1.0/1000));
+            return ItemFactory.getInstance().createDecimalItem(BigDecimal.valueOf(_timeItem.getDateTimeValue().getSecondOfMinute() + _timeItem.getDateTimeValue().getMillisOfSecond()*1.0/1000));
         } else
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " seconds-from-time function",
