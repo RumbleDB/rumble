@@ -14,6 +14,7 @@ public enum AtomicTypes {
     DayTimeDurationItem,
 
     DateTimeItem,
+    DateItem,
 
     HexBinaryItem,
     Base64BinaryItem,

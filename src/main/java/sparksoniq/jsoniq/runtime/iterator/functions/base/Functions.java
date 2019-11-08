@@ -34,6 +34,8 @@ import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArraySizeFunctionIter
 import sparksoniq.jsoniq.runtime.iterator.functions.binaries.Base64BinaryFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.binaries.HexBinaryFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.booleans.BooleanFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.DateTimeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.DateFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.DayTimeDurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.DaysFromDurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.DurationFunctionIterator;
@@ -42,7 +44,6 @@ import sparksoniq.jsoniq.runtime.iterator.functions.durations.MinutesFromDuratio
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.MonthsFromDurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.SecondsFromDurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.YearMonthDurationFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.datetime.DateTimeFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.YearsFromDurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.AbsFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.CeilingFunctionIterator;
@@ -159,6 +160,7 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MAX;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MEMBERS;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MIN;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DATE;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MINUTESFROMDURATION;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MONTHSFROMDURATION;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.NORMALIZESPACE;
@@ -291,6 +293,7 @@ public class Functions {
         builtInFunctions.put(new FunctionIdentifier(SECONDSFROMDURATION, 1), SecondsFromDurationFunctionIterator.class);
 
         builtInFunctions.put(new FunctionIdentifier(DATETIME, 1), DateTimeFunctionIterator.class);
+        builtInFunctions.put(new FunctionIdentifier(DATE, 1), DateFunctionIterator.class);
 
         builtInFunctions.put(new FunctionIdentifier(HEXBINARY, 1), HexBinaryFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(BASE64BINARY, 1), Base64BinaryFunctionIterator.class);
@@ -585,6 +588,7 @@ public class Functions {
          */
         public static final String NORMALIZESPACE = "normalize-space";
 
+
         /**
          * function that returns the duration item from the supplied string
          */
@@ -597,10 +601,8 @@ public class Functions {
          * function that returns the dayTimeDuration item from the supplied string
          */
         public static final String DAYTIMEDURATION = "dayTimeDuration";
-        /**
-         * function that returns the dateTime item from the supplied string
-         */
-        public static final String DATETIME = "dateTime";
+
+
         /**
          * function that returns the years from a duration
          */
@@ -625,6 +627,17 @@ public class Functions {
          * function that returns the years from a duration
          */
         public static final String SECONDSFROMDURATION = "seconds-from-duration";
+
+
+        /**
+         * function that returns the dateTime item from the supplied string
+         */
+        public static final String DATETIME = "dateTime";
+        /**
+         * function that returns the date item from the supplied string
+         */
+        public static final String DATE = "date";
+
 
         /**
          * function that returns the hexBinary item from the supplied string
