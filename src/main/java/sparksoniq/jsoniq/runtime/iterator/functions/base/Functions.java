@@ -36,6 +36,7 @@ import sparksoniq.jsoniq.runtime.iterator.functions.binaries.HexBinaryFunctionIt
 import sparksoniq.jsoniq.runtime.iterator.functions.booleans.BooleanFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.datetime.DateTimeFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.datetime.DateFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.TimeFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.DayTimeDurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.DaysFromDurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.DurationFunctionIterator;
@@ -160,6 +161,7 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MEMBERS;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MIN;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DATE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.TIME;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MINUTESFROMDURATION;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MONTHSFROMDURATION;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.NORMALIZESPACE;
@@ -291,6 +293,7 @@ public class Functions {
 
         builtInFunctions.put(new FunctionIdentifier(DATETIME, 1), DateTimeFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(DATE, 1), DateFunctionIterator.class);
+        builtInFunctions.put(new FunctionIdentifier(TIME, 1), TimeFunctionIterator.class);
 
         builtInFunctions.put(new FunctionIdentifier(HEXBINARY, 1), HexBinaryFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(BASE64BINARY, 1), Base64BinaryFunctionIterator.class);
@@ -630,6 +633,10 @@ public class Functions {
          * function that returns the date item from the supplied string
          */
         public static final String DATE = "date";
+        /**
+         * function that returns the time item from the supplied string
+         */
+        public static final String TIME = "time";
 
 
         /**
@@ -640,6 +647,7 @@ public class Functions {
          * function that returns the base64Binary item from the supplied string
          */
         public static final String BASE64BINARY = "base64Binary";
+
 
         /**
          * function that returns the keys of a Json Object

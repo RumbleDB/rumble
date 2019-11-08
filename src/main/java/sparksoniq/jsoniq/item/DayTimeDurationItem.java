@@ -25,11 +25,16 @@ public class DayTimeDurationItem extends DurationItem {
     public DayTimeDurationItem(Period value) {
         super();
         this._value = value.normalizedStandard(PeriodType.dayTime());
-        isNegative = this._value.toString().charAt(1) == '-';
+        isNegative = this._value.toString().contains("-");
     }
 
     @Override
     public Period getValue() {
+        return this._value;
+    }
+
+    @Override
+    public Period getDurationValue() {
         return this._value;
     }
 
@@ -91,6 +96,8 @@ public class DayTimeDurationItem extends DurationItem {
             return ItemFactory.getInstance().createDateTimeItem(other.getDateTimeValue().plus(this.getValue()), other.hasTimeZone());
         if (other.isDate())
             return ItemFactory.getInstance().createDateItem(other.getDateTimeValue().plus(this.getValue()), other.hasDateTime());
+        if (other.isTime())
+            return ItemFactory.getInstance().createTimeItem(other.getDateTimeValue().plus(this.getValue()), other.hasDateTime());
         return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue().plus(other.getDurationValue()));
     }
 
