@@ -648,6 +648,7 @@ public class Functions {
          */
         public static final String BASE64BINARY = "base64Binary";
 
+
         /**
          * function that returns the keys of a Json Object
          */

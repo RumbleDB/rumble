@@ -271,15 +271,6 @@ public abstract class Item implements SerializableItem {
     }
 
     /**
-     * Returns the dateTime value of the item, if it is a atomic item of type timeItem.
-     *
-     * @return the dateTime value as a DateTime.
-     */
-    public DateTime getTimeValue() {
-        throw new RuntimeException("Item is not a Time.");
-    }
-
-    /**
      * Returns the byte[] value of the item, if it is a atomic item of type hexBinary or Base64Binary.
      *
      * @return the binary value as an array of bytes.
