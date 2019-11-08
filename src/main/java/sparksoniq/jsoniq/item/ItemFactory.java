@@ -64,12 +64,20 @@ public class ItemFactory {
         return new DayTimeDurationItem(p);
     }
 
-    Item createDateTimeItem(DateTime dt, boolean hasTimeZone) {
+    public Item createDateTimeItem(DateTime dt, boolean hasTimeZone) {
         return new DateTimeItem(dt, hasTimeZone);
     }
 
     public Item createDateTimeItem(String s) {
         return new DateTimeItem(s);
+    }
+
+    public Item createDateItem(DateTime dt, boolean hasTimeZone) {
+        return new DateItem(dt, hasTimeZone);
+    }
+
+    public Item createDateItem(String s) {
+        return new DateItem(s);
     }
 
     public Item createHexBinaryItem(String s) {

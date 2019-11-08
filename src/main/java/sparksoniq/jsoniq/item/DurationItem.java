@@ -188,7 +188,7 @@ public class DurationItem extends AtomicItem {
             case DayTimeDurationItem:
                 return dayTimeDurationPattern.matcher(duration).matches();
         }
-        throw new IllegalArgumentException();
+        return false;
     }
 
     public static Period getDurationFromString(String duration, AtomicTypes durationType) throws UnsupportedOperationException, IllegalArgumentException {
