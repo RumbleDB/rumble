@@ -90,7 +90,7 @@ public class DayTimeDurationItem extends DurationItem {
         if (other.isDateTime())
             return ItemFactory.getInstance().createDateTimeItem(other.getDateTimeValue().plus(this.getValue()), other.hasTimeZone());
         if (other.isDate())
-            return ItemFactory.getInstance().createDateItem(other.getDateValue().plus(this.getValue()), other.hasDateTime());
+            return ItemFactory.getInstance().createDateItem(other.getDateTimeValue().plus(this.getValue()), other.hasDateTime());
         return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue().plus(other.getDurationValue()));
     }
 
