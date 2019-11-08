@@ -601,6 +601,8 @@ public class Functions {
          * function that returns the seconds from a dateTime
          */
         public static final String TIMEZONEFROMDATETIME = "timezone-from-dateTime";
+
+
         /**
          * function that adjusts a dateTime value to a specific timezone, or to no timezone at all.
          */
@@ -627,6 +629,8 @@ public class Functions {
          * function that returns the seconds from a date
          */
         public static final String TIMEZONEFROMDATE = "timezone-from-date";
+
+
         /**
          * function that adjusts a dateTime value to a specific timezone, or to no timezone at all.
          */
@@ -667,6 +671,7 @@ public class Functions {
          * function that returns the base64Binary item from the supplied string
          */
         public static final String BASE64BINARY = "base64Binary";
+
 
         /**
          * function that returns the keys of a Json Object

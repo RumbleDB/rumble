@@ -209,9 +209,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         }
         iterator.close();
         if (result != null && !(type.isInstance(result)))
-            throw new UnexpectedTypeException(
-                    ItemTypes.getItemTypeName(result.getClass().getSimpleName()) + " can not be promoted to parameter type "
-                            + ItemTypes.getItemTypeName(type.getSimpleName()), iterator.getMetadata());
+            throw new UnexpectedTypeException("Invalid item type returned by iterator", iterator.getMetadata());
         return (T) result;
     }
     
