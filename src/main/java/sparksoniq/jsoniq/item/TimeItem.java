@@ -42,7 +42,7 @@ public class TimeItem extends AtomicItem {
     }
 
     @Override
-    public DateTime getTimeValue() {
+    public DateTime getDateTimeValue() {
         return this._value;
     }
 
@@ -73,7 +73,7 @@ public class TimeItem extends AtomicItem {
         }
         Item otherItem = (Item) otherObject;
         if (otherItem.isTime()) {
-            return this.getValue().isEqual(otherItem.getTimeValue());
+            return this.getValue().isEqual(otherItem.getDateTimeValue());
         }
         return false;
     }
@@ -115,7 +115,7 @@ public class TimeItem extends AtomicItem {
     @Override
     public Item subtract(Item other) {
         if (other.isTime())
-            return ItemFactory.getInstance().createDayTimeDurationItem(new Period(other.getTimeValue(), this.getValue(), PeriodType.dayTime()));
+            return ItemFactory.getInstance().createDayTimeDurationItem(new Period(other.getDateTimeValue(), this.getValue(), PeriodType.dayTime()));
         if (other.isDayTimeDuration())
             return ItemFactory.getInstance().createTimeItem(this.getValue().minus(other.getDurationValue()), this.hasTimeZone);
         throw new ClassCastException();
@@ -125,7 +125,7 @@ public class TimeItem extends AtomicItem {
     public int compareTo(Item other) {
         if (other.isNull()) return 1;
         if (other.isTime()) {
-            return this.getValue().compareTo(other.getTimeValue());
+            return this.getValue().compareTo(other.getDateTimeValue());
         }
         throw new IteratorFlowException("Cannot compare item of type " + ItemTypes.getItemTypeName(this.getClass().getSimpleName()) +
                 " with item of type " + ItemTypes.getItemTypeName(other.getClass().getSimpleName()));
