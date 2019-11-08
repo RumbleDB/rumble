@@ -7,6 +7,10 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Period;
 import org.joda.time.PeriodType;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.DateTimeFormatterBuilder;
+import org.joda.time.format.DateTimeParser;
+import org.joda.time.format.ISODateTimeFormat;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
@@ -18,6 +22,7 @@ import sparksoniq.semantics.types.ItemTypes;
 
 import java.util.regex.Pattern;
 
+import static org.joda.time.format.ISODateTimeFormat.dateElementParser;
 
 public class DateTimeItem extends AtomicItem {
 
@@ -29,9 +34,14 @@ public class DateTimeItem extends AtomicItem {
     private static final String secondFrag = "(([0-5]\\d)(\\.(\\d)+)?)";
     private static final String endOfDayFrag = "(24:00:00(\\.(0)+)?)";
     private static final String timezoneFrag = "(Z|([+\\-])(((0\\d|1[0-3]):" + minuteFrag + ")|(14:00)))";
-    private static final String dateTimeLexicalRep = yearFrag + "-" + monthFrag + "-" + dayFrag + "T" +
-            "((" + hourFrag + ":" + minuteFrag + ":" + secondFrag + ")|(" + endOfDayFrag + "))(" + timezoneFrag + ")?";
+    private static final String dateFrag = "(" + yearFrag + '-' + monthFrag + '-' + dayFrag + ")";
+    private static final String timeFrag = "((" + hourFrag + ":" + minuteFrag + ":" + secondFrag + ")|(" + endOfDayFrag + "))";
+
+    private static final String dateTimeLexicalRep = dateFrag + "T" + timeFrag+ "(" + timezoneFrag + ")?";
     private static final Pattern dateTimePattern = Pattern.compile(dateTimeLexicalRep);
+
+    private static final String dateLexicalRep = "(" + dateFrag + "(" + timezoneFrag +")?)";
+    private static final Pattern datePattern = Pattern.compile(dateLexicalRep);
 
     private static final long serialVersionUID = 1L;
     private DateTime _value;
@@ -44,7 +54,7 @@ public class DateTimeItem extends AtomicItem {
     }
 
     DateTimeItem(String dateTimeString) {
-        this._value = parseDateTime(dateTimeString);
+        this._value = parseDateTime(dateTimeString, AtomicTypes.DateTimeItem);
         if (!dateTimeString.endsWith("Z") && _value.getZone() == DateTimeZone.getDefault()) {
             this.hasTimeZone = false;
             this._value = _value.withZoneRetainFields(DateTimeZone.UTC);
@@ -66,12 +76,18 @@ public class DateTimeItem extends AtomicItem {
     }
 
     @Override
+    public boolean hasTimeZone() {
+        return hasTimeZone;
+    }
+
+    @Override
     public boolean isDateTime() {
         return true;
     }
 
-    public boolean hasTimeZone() {
-        return hasTimeZone;
+    @Override
+    public boolean hasDateTime() {
+        return true;
     }
 
     @Override
@@ -81,6 +97,8 @@ public class DateTimeItem extends AtomicItem {
                 return ItemFactory.getInstance().createStringItem(this.serialize());
             case DateTimeItem:
                 return this;
+            case DateItem:
+                return ItemFactory.getInstance().createDateItem(this.getDateTimeValue(), this.hasTimeZone);
             default:
                 throw new ClassCastException();
         }
@@ -88,7 +106,9 @@ public class DateTimeItem extends AtomicItem {
 
     @Override
     public boolean isCastableAs(AtomicTypes itemType) {
-        return itemType.equals(AtomicTypes.DateTimeItem) || itemType.equals(AtomicTypes.StringItem);
+        return itemType.equals(AtomicTypes.DateTimeItem)
+                || itemType.equals(AtomicTypes.StringItem)
+                || itemType.equals(AtomicTypes.DateItem);
     }
 
     @Override
@@ -137,8 +157,27 @@ public class DateTimeItem extends AtomicItem {
         this._value = kryo.readObject(input, DateTime.class);
     }
 
-    private static boolean checkInvalidDurationFormat(String dateTime) {
-        return dateTimePattern.matcher(dateTime).matches();
+    private static DateTimeFormatter getDateTimeFormatter(AtomicTypes dateTimeType) {
+        switch (dateTimeType) {
+            case DateTimeItem:
+                return ISODateTimeFormat.dateTimeParser().withOffsetParsed();
+            case DateItem:
+                DateTimeParser dtParser = new DateTimeFormatterBuilder().appendOptional(
+                        ((new DateTimeFormatterBuilder()).appendTimeZoneOffset("Z", true, 2, 4).toFormatter()).getParser()).toParser();
+                return (new DateTimeFormatterBuilder()).append(dateElementParser()).appendOptional(dtParser).toFormatter().withOffsetParsed();
+            default:
+                throw new IllegalArgumentException();
+        }
+    }
+
+    private static boolean checkInvalidDateTimeFormat(String dateTime, AtomicTypes dateTimeType) {
+        switch (dateTimeType) {
+            case DateTimeItem:
+                return dateTimePattern.matcher(dateTime).matches();
+            case DateItem:
+                return datePattern.matcher(dateTime).matches();
+        }
+        return false;
     }
 
     private static String fixEndOfDay(String dateTime) {
@@ -160,10 +199,10 @@ public class DateTimeItem extends AtomicItem {
         return dateTime;
     }
 
-    static DateTime parseDateTime(String dateTime) throws IllegalArgumentException{
-        if (!checkInvalidDurationFormat(dateTime)) throw new IllegalArgumentException();
+    static DateTime parseDateTime(String dateTime, AtomicTypes dateTimeType) throws IllegalArgumentException{
+            if (!checkInvalidDateTimeFormat(dateTime, dateTimeType)) throw new IllegalArgumentException();
         dateTime = fixEndOfDay(dateTime);
-        return DateTime.parse(dateTime);
+        return DateTime.parse(dateTime, getDateTimeFormatter(dateTimeType));
     }
 
     @Override
