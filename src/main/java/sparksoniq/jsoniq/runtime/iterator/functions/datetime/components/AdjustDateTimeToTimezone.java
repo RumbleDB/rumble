@@ -37,7 +37,7 @@ public class AdjustDateTimeToTimezone extends LocalFunctionCallIterator {
                 return ItemFactory.getInstance().createDateTimeItem(_timeItem.getDateTimeValue().withZone(DateTimeZone.UTC), true);
             if (_timezone == null) {
                 if (_timeItem.hasTimeZone())
-                    return ItemFactory.getInstance().createDateTimeItem(_timeItem.getDateTimeValue().withZoneRetainFields(_timeItem.getTimeValue().getZone()), false);
+                    return ItemFactory.getInstance().createDateTimeItem(_timeItem.getDateTimeValue().withZoneRetainFields(_timeItem.getDateTimeValue().getZone()), false);
                 return ItemFactory.getInstance().createDateTimeItem(_timeItem.getDateTimeValue(), _timeItem.hasTimeZone());
             }
             else {

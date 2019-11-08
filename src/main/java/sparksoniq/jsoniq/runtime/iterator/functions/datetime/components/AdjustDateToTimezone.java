@@ -34,17 +34,17 @@ public class AdjustDateToTimezone extends LocalFunctionCallIterator {
         if (this._hasNext) {
             this._hasNext = false;
             if (_timezone == null && this._children.size() == 1)
-                return ItemFactory.getInstance().createDateItem(_dateItem.getDateValue().withZone(DateTimeZone.UTC), true);
+                return ItemFactory.getInstance().createDateItem(_dateItem.getDateTimeValue().withZone(DateTimeZone.UTC), true);
             if (_timezone == null) {
                 if (_dateItem.hasTimeZone())
-                    return ItemFactory.getInstance().createDateItem(_dateItem.getDateValue().withZoneRetainFields(_dateItem.getTimeValue().getZone()), false);
-                return ItemFactory.getInstance().createDateItem(_dateItem.getDateValue(), _dateItem.hasTimeZone());
+                    return ItemFactory.getInstance().createDateItem(_dateItem.getDateTimeValue().withZoneRetainFields(_dateItem.getDateTimeValue().getZone()), false);
+                return ItemFactory.getInstance().createDateItem(_dateItem.getDateTimeValue(), _dateItem.hasTimeZone());
             }
             else {
                 if (this.checkTimeZoneArgument()) throw new InvalidTimezoneException("Invalid timezone", getMetadata());
                 if (_dateItem.hasTimeZone())
-                    return ItemFactory.getInstance().createDateItem(_dateItem.getDateValue().withZone(DateTimeZone.forOffsetHoursMinutes(_timezone.getDurationValue().getHours(), _timezone.getDurationValue().getMinutes())), true);
-                return ItemFactory.getInstance().createDateItem(_dateItem.getDateValue().withZoneRetainFields(DateTimeZone.forOffsetHoursMinutes(_timezone.getDurationValue().getHours(), _timezone.getDurationValue().getMinutes())), true);
+                    return ItemFactory.getInstance().createDateItem(_dateItem.getDateTimeValue().withZone(DateTimeZone.forOffsetHoursMinutes(_timezone.getDurationValue().getHours(), _timezone.getDurationValue().getMinutes())), true);
+                return ItemFactory.getInstance().createDateItem(_dateItem.getDateTimeValue().withZoneRetainFields(DateTimeZone.forOffsetHoursMinutes(_timezone.getDurationValue().getHours(), _timezone.getDurationValue().getMinutes())), true);
             }
 
         } else
