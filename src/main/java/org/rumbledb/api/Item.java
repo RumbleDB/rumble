@@ -258,7 +258,7 @@ public abstract class Item implements SerializableItem {
      * @return the dateTime value as a DateTime.
      */
     public DateTime getDateTimeValue() {
-        throw new RuntimeException("Item is not a DateTime.");
+        throw new RuntimeException("Item does not have a DateTime.");
     }
 
     /**
