@@ -70,9 +70,8 @@ public class InstanceOfIterator extends UnaryOperationBaseIterator {
                 JavaRDD<Item> childRDD = _child.getRDD(_currentDynamicContext);
                 this._hasNext = false;
                 if (isInvalidArity(childRDD.count())) return ItemFactory.getInstance().createBooleanItem(false);
-                JavaRDD<Boolean> result = childRDD.map(new InstanceOfClosure(_sequenceType.getItemType()));
-
-                return ItemFactory.getInstance().createBooleanItem(result.distinct().count() == 1 && result.first());
+                JavaRDD<Item> result = childRDD.filter(new InstanceOfClosure(_sequenceType.getItemType()));
+                return ItemFactory.getInstance().createBooleanItem(result.isEmpty());
             }
         } else
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
