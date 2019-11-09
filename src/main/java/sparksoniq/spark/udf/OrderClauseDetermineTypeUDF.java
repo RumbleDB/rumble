@@ -110,6 +110,22 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray<byte[]>, L
                 result.add("double");
             } else if (_nextItem.isDecimal()) {
                 result.add("decimal");
+            } else if (_nextItem.isDayTimeDuration()) {
+                result.add("yearMonthDuration");
+            } else if (_nextItem.isYearMonthDuration()) {
+                result.add("dayTimeDuration");
+            } else if (_nextItem.isDuration()) {
+                result.add("duration");
+            } else if (_nextItem.isDateTime()) {
+                result.add("dateTime");
+            } else if (_nextItem.isDate()) {
+                result.add("date");
+            } else if (_nextItem.isTime()) {
+                result.add("time");
+            } else if (_nextItem.isHexBinary()) {
+                result.add("hexBinary");
+            } else if (_nextItem.isBase64Binary()) {
+                result.add("base64Binary");
             } else if (_nextItem.isArray() || _nextItem.isObject()) {
                 throw new UnexpectedTypeException("Order by variable can not contain arrays or objects.", expression.getIteratorMetadata());
             } else {

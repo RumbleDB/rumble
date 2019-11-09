@@ -311,6 +311,9 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
             columnName = columnIndex + "-doubleField";
             columnType = DataTypes.DoubleType;
             typedFields.add(DataTypes.createStructField(columnName, columnType, true));
+            columnName = columnIndex + "-durationField";
+            columnType = DataTypes.LongType;
+            typedFields.add(DataTypes.createStructField(columnName, columnType, true));
         }
 
         String serializerUDFName = "serialize";

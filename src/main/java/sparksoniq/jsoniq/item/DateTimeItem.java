@@ -50,6 +50,10 @@ public class DateTimeItem extends AtomicItem {
     private DateTime _value;
     private boolean hasTimeZone = true;
 
+    public DateTimeItem() {
+        super();
+    }
+
     DateTimeItem(DateTime _value, boolean hasTimeZone) {
         super();
         this._value = _value;
@@ -155,12 +159,12 @@ public class DateTimeItem extends AtomicItem {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.getValue());
+        output.writeString(this.serialize());
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this._value = kryo.readObject(input, DateTime.class);
+        this._value = DateTimeItem.parseDateTime(input.readString(), AtomicTypes.DateTimeItem);
     }
 
     private static DateTimeFormatter getDateTimeFormatter(AtomicTypes dateTimeType) {

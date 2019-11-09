@@ -143,7 +143,8 @@ public class DurationItem extends AtomicItem {
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this._value = getDurationFromString(input.readString(), AtomicTypes.DurationItem);
+        this._value = getDurationFromString(input.readString(), AtomicTypes.DurationItem).normalizedStandard(PeriodType.yearMonthDayTime());
+        isNegative = this._value.toString().contains("-");
     }
 
     private static PeriodFormatter getPeriodFormatter(AtomicTypes durationType) {

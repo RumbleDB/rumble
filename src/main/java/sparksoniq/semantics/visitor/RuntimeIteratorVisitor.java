@@ -203,7 +203,9 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                                                   RuntimeTupleIterator previousIterator) {
         if (clause instanceof ForClause) {
             for (ForClauseVar var : ((ForClause) clause).getForVariables()) {
-                RuntimeIterator assignmentExpression = this.visit(var.getExpression(), argument);
+                RuntimeIterator assignmentExpression = this.visit(var.getExpression(), argument);;
+                if(var.getAsSequence() != null && var.getAsSequence().getSequence() != null)
+                    assignmentExpression = new TreatIterator(assignmentExpression, var.getAsSequence().getSequence(), createIteratorMetadata(clause));
                 VariableReferenceIterator variableReferenceIterator =
                         (VariableReferenceIterator) this.visit(var.getVariableReference(), argument);
                 previousIterator = new ForClauseSparkIterator(previousIterator, variableReferenceIterator, assignmentExpression,
@@ -211,8 +213,9 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
             }
         } else if (clause instanceof LetClause) {
             for (LetClauseVar var : ((LetClause) clause).getLetVariables()) {
-                RuntimeIterator assignmentExpression = this.visit(var.getExpression(), argument);
-                VariableReferenceIterator variableReferenceIterator =
+                RuntimeIterator assignmentExpression = this.visit(var.getExpression(), argument);;
+                if(var.getAsSequence() != null && var.getAsSequence().getSequence() != null)
+                    assignmentExpression = new TreatIterator(assignmentExpression, var.getAsSequence().getSequence(), createIteratorMetadata(clause));                VariableReferenceIterator variableReferenceIterator =
                         (VariableReferenceIterator) this.visit(var.getVariableReference(), argument);
                 previousIterator = new LetClauseSparkIterator(previousIterator, variableReferenceIterator, assignmentExpression,
                         createIteratorMetadata(clause));
@@ -220,8 +223,14 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         } else if (clause instanceof GroupByClause) {
             List<GroupByClauseSparkIteratorExpression> expressions = new ArrayList<>();
             for (GroupByClauseVar groupExpr : ((GroupByClause) clause).getGroupVariables()) {
+                RuntimeIterator groupByExpression = null;
+                if (groupExpr.getExpression() != null) {
+                    groupByExpression = this.visit(groupExpr.getExpression(), argument);;
+                    if(groupExpr.getAsSequence() != null && groupExpr.getAsSequence().getSequence() != null)
+                        groupByExpression = new TreatIterator(groupByExpression, groupExpr.getAsSequence().getSequence(), createIteratorMetadata(clause));
+                }
                 expressions.add(new GroupByClauseSparkIteratorExpression(
-                        groupExpr.getExpression() != null ? this.visit(groupExpr.getExpression(), argument) : null,
+                        groupByExpression,
                         (VariableReferenceIterator) this.visit(groupExpr.getVariableReference(), argument),
                         createIteratorMetadata(groupExpr)));
             }

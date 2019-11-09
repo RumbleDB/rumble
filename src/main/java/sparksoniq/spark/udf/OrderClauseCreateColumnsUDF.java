@@ -23,6 +23,7 @@ package sparksoniq.spark.udf;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.api.java.UDF1;
+import org.joda.time.Instant;
 import org.rumbledb.api.Item;
 
 import com.esotericsoftware.kryo.Kryo;
@@ -122,7 +123,7 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, R
 
                     if (typeName.equals("bool")) {
                         _results.add(nextItem.getBooleanValue());
-                    } else if (typeName.equals("string")) {
+                    } else if (typeName.equals("string") || typeName.equals("hexBinary") || typeName.equals("base64Binary")) {
                         _results.add(nextItem.getStringValue());
                     } else if (typeName.equals("integer")) {
                         _results.add(nextItem.castToIntegerValue());
@@ -130,6 +131,10 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, R
                         _results.add(nextItem.castToDoubleValue());
                     } else if (typeName.equals("decimal")) {
                         _results.add(nextItem.castToDecimalValue());
+                    } else if (typeName.equals("duration") || typeName.equals("yearMonthDuration") || typeName.equals("dayTimeDuration")){
+                        _results.add(nextItem.getDurationValue().toDurationFrom(Instant.now()).getMillis());
+                    } else if (typeName.equals("dateTime") || typeName.equals("date") || typeName.equals("time")){
+                        _results.add(nextItem.getDateTimeValue().getMillis());
                     } else {
                         throw new SparksoniqRuntimeException("Unexpected ordering type found while creating columns.");
                     }

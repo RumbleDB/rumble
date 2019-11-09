@@ -25,6 +25,7 @@ import com.esotericsoftware.kryo.io.Input;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.api.java.UDF1;
+import org.joda.time.Instant;
 import org.rumbledb.api.Item;
 
 import scala.collection.mutable.WrappedArray;
@@ -85,6 +86,7 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, R
             int booleanFalseGroupIndex = 4;
             int stringGroupIndex = 5;
             int doubleGroupIndex = 5;
+            int durationGroupIndex = 5;
 
             // prepare dynamic context
             _context.removeAllVariables();
@@ -102,6 +104,7 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, R
                     _results.add(nullGroupIndex);
                     _results.add(null);
                     _results.add(null);
+                    _results.add(null);
                 } else if (nextItem.isBoolean() ){
                     if(nextItem.getBooleanValue())
                     {
@@ -111,22 +114,37 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, R
                     }                        
                     _results.add(null);
                     _results.add(null);
-                } else if (nextItem.isString()) {
+                    _results.add(null);
+                } else if (nextItem.isString() || nextItem.isHexBinary() || nextItem.isBase64Binary()) {
                     _results.add(stringGroupIndex);
                     _results.add(nextItem.getStringValue());
+                    _results.add(null);
                     _results.add(null);
                 } else if (nextItem.isInteger()) {
                     _results.add(doubleGroupIndex);
                     _results.add(null);
                     _results.add(new Double(nextItem.getIntegerValue()));
+                    _results.add(null);
                 } else if (nextItem.isDecimal()) {
                     _results.add(doubleGroupIndex);
                     _results.add(null);
                     _results.add(new Double(nextItem.getDecimalValue().doubleValue()));
+                    _results.add(null);
                 } else if (nextItem.isDouble()) {
                     _results.add(doubleGroupIndex);
                     _results.add(null);
-                    _results.add(new Double(nextItem.getDoubleValue()));
+                    _results.add(nextItem.castToDoubleValue());
+                    _results.add(null);
+                } else if (nextItem.isDuration()) {
+                    _results.add(durationGroupIndex);
+                    _results.add(null);
+                    _results.add(null);
+                    _results.add(nextItem.getDurationValue().toDurationFrom(Instant.now()).getMillis());
+                } else if (nextItem.hasDateTime()) {
+                    _results.add(durationGroupIndex);
+                    _results.add(null);
+                    _results.add(null);
+                    _results.add(nextItem.getDateTimeValue().getMillis());
                 } else {
                     throw new UnexpectedTypeException("Group by variable can not contain arrays or objects.", expression.getMetadata());
                 }
@@ -136,6 +154,7 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, R
             }
             if (isEmptySequence) {
                 _results.add(emptySequenceGroupIndex);
+                _results.add(null);
                 _results.add(null);
                 _results.add(null);
             }

@@ -161,12 +161,12 @@ public class Base64BinaryItem extends AtomicItem {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.getStringValue());
+        output.writeString(this.serializeValue());
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this._stringValue = kryo.readObject(input, String.class);
+        this._stringValue = input.readString();
         this._value = parseBase64BinaryString(this._stringValue);
     }
 }

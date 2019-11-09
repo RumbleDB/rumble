@@ -93,7 +93,7 @@ public class TreatIterator extends HybridRuntimeIterator {
         _currentDynamicContext = dynamicContext;
         JavaRDD<Item> childRDD = _iterator.getRDD(dynamicContext);
 
-        int count = childRDD.take(2).size();
+        long count = childRDD.count();
         checkEmptySequence(count);
         checkItemsSize(count);
         Function<Item, Boolean> transformation = new TreatAsClosure(_sequenceType, getMetadata());

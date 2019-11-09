@@ -33,22 +33,12 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 
 import scala.collection.mutable.WrappedArray;
-import sparksoniq.jsoniq.item.ArrayItem;
-import sparksoniq.jsoniq.item.BooleanItem;
-import sparksoniq.jsoniq.item.DecimalItem;
-import sparksoniq.jsoniq.item.DoubleItem;
-import sparksoniq.jsoniq.item.FunctionItem;
-import sparksoniq.jsoniq.item.IntegerItem;
-import sparksoniq.jsoniq.item.ItemFactory;
-import sparksoniq.jsoniq.item.NullItem;
-import sparksoniq.jsoniq.item.ObjectItem;
-import sparksoniq.jsoniq.item.StringItem;
+import sparksoniq.jsoniq.item.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.SequenceType;
 
-import javax.sound.midi.Sequence;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -96,6 +86,17 @@ public class DataFrameUtils {
         kryo.register(SequenceType.class);
         kryo.register(SequenceType.Arity.class);
         kryo.register(ItemType.class);
+
+        kryo.register(DurationItem.class);
+        kryo.register(YearMonthDurationItem.class);
+        kryo.register(DayTimeDurationItem.class);
+
+        kryo.register(DateTimeItem.class);
+        kryo.register(DateItem.class);
+        kryo.register(TimeItem.class);
+
+        kryo.register(Base64BinaryItem.class);
+        kryo.register(HexBinaryItem.class);
 
         kryo.register(ArrayList.class);
     }
@@ -167,8 +168,7 @@ public class DataFrameUtils {
     private static String COMMA = ",";
 
     /**
-     * @param inputSchema            schema specifies the columns to be used in the query
-     * @param duplicateVariableIndex enables skipping a variable
+     * @param columnNames names of the columns in the schema
      * @param trailingComma          boolean field to have a trailing comma
      * @return comma separated variables to be used in spark SQL
      */

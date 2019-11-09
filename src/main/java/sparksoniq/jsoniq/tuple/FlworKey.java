@@ -85,11 +85,11 @@ public class FlworKey implements KryoSerializable {
                     (comparisonItem != null && comparisonItem.isArray()) || (comparisonItem != null && comparisonItem.isObject())) {
                 throw new SparksoniqRuntimeException("Non atomic key not allowed");
             }
-            if ((currentItem != null && comparisonItem != null)
-                    && (!currentItem.getClass().getSimpleName().equals(comparisonItem.getClass().getSimpleName()))
-                    && ((!comparisonItem.isNumeric() || !currentItem.isNumeric()))) {
-                throw new SparksoniqRuntimeException("Invalid sort key: Item types can't be different.");
-            }
+//            if ((currentItem != null && comparisonItem != null)
+//                    && (!currentItem.getClass().getSimpleName().equals(comparisonItem.getClass().getSimpleName()))
+//                    && ((!comparisonItem.isNumeric() || !currentItem.isNumeric()))) {
+//                throw new SparksoniqRuntimeException("Invalid sort key: Item types can't be different.");
+//            }
 
             // handle the Java null placeholder used in orderByClauseSparkIterator
             if (currentItem == null || comparisonItem == null) {

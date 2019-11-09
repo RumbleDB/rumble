@@ -254,6 +254,22 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
                         } else {
                             // do nothing, type is already set to integer
                         }
+                    } else if (currentColumnType.equals("duration")) {
+                        typesForAllColumns.put(columnIndex, "duration");
+                    } else if (currentColumnType.equals("dayTimeDuration")) {
+                        typesForAllColumns.put(columnIndex, "dayTimeDuration");
+                    } else if (currentColumnType.equals("yearMonthDuration")) {
+                        typesForAllColumns.put(columnIndex, "dayTimeDuration");
+                    } else if (currentColumnType.equals("dateTime")) {
+                        typesForAllColumns.put(columnIndex, "dateTime");
+                    } else if (currentColumnType.equals("date")) {
+                        typesForAllColumns.put(columnIndex, "date");
+                    } else if (currentColumnType.equals("time")) {
+                        typesForAllColumns.put(columnIndex, "time");
+                    } else if (currentColumnType.equals("hexBinary")) {
+                        typesForAllColumns.put(columnIndex, "hexBinary");
+                    } else if (currentColumnType.equals("base64Binary")) {
+                        typesForAllColumns.put(columnIndex, "base64Binary");
                     } else if (!currentColumnType.equals(columnType)) {
                         throw new UnexpectedTypeException("Order by variable must contain values of a single type.", getMetadata());
                         // TODO-can add tests with different types
@@ -279,7 +295,7 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
             columnName = columnIndex + "-valueField";
             if (columnTypeString.equals("bool")) {
                 columnType = DataTypes.BooleanType;
-            } else if (columnTypeString.equals("string")) {
+            } else if (columnTypeString.equals("string") || columnTypeString.equals("hexBinary") || columnTypeString.equals("base64Binary")) {
                 columnType = DataTypes.StringType;
             } else if (columnTypeString.equals("integer")) {
                 columnType = DataTypes.IntegerType;
@@ -287,6 +303,10 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
                 columnType = DataTypes.DoubleType;
             } else if (columnTypeString.equals("decimal")) {
                 columnType = DataTypes.createDecimalType();
+            } else if (columnTypeString.equals("duration") || columnTypeString.equals("yearMonthDuration")
+                    || columnTypeString.equals("dayTimeDuration") || columnTypeString.equals("dateTime")
+                    || columnTypeString.equals("date") || columnTypeString.equals("time")) {
+                columnType = DataTypes.LongType;
             } else {
                 throw new SparksoniqRuntimeException("Unexpected ordering type found while determining UDF return type.");
             }
