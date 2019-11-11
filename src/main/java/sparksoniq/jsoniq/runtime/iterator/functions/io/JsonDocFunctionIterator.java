@@ -85,7 +85,7 @@ public class JsonDocFunctionIterator extends LocalFunctionCallIterator {
                 	throw new ErrorRetrievingResourceException("File " + path.getStringValue() + " not found.", getMetadata());
                 }
             } else {
-                throw new UnexpectedTypeException("json-doc function has non-strong arg " +
+                throw new UnexpectedTypeException("json-doc function has non-string arg " +
                 		path.serialize(), getMetadata());
             }
 
