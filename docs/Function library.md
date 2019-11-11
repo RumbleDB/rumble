@@ -565,6 +565,15 @@ where $my-json.property eq "some value"
 return $my-json
 ```
 
+Several files or whole directories can be read with the same pattern syntax as in Spark.
+
+
+```
+for $my-json in json-file("*.json")
+where $my-json.property eq "some value"
+return $my-json
+```
+
 ### text-file (Rumble specific)
 
 Exists in unary and binary. The first parameter specifies the text file (or set of text files) to read and return as a sequence of strings.
@@ -580,6 +589,8 @@ count(
 )
 ```
 
+Several files or whole directories can be read with the same pattern syntax as in Spark.
+
 (Also see examples for json-file for host and port, sets of files and working directory).
 
 ### parquet-file (Rumble specific)
@@ -588,6 +599,14 @@ Parses one or more parquet files and returns a sequence of objects.
 
 ```
 for $my-object in parquet-file("file.parquet")
+where $my-object.property eq "some value"
+return $my-json
+```
+
+Several files or whole directories can be read with the same pattern syntax as in Spark.
+
+```
+for $my-object in parquet-file("*.parquet")
 where $my-object.property eq "some value"
 return $my-json
 ```
