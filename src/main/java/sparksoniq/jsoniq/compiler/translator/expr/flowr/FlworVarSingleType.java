@@ -55,6 +55,8 @@ public class FlworVarSingleType extends Expression {
                 return AtomicTypes.DateTimeItem;
             case "date":
                 return AtomicTypes.DateItem;
+            case "time":
+                return AtomicTypes.TimeItem;
             case "hexbinary":
                 return AtomicTypes.HexBinaryItem;
             case "base64binary":

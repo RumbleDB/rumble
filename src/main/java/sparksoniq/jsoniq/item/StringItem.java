@@ -102,6 +102,8 @@ public class StringItem extends AtomicItem {
                 return ItemFactory.getInstance().createDateTimeItem(this.getStringValue());
             case DateItem:
                 return ItemFactory.getInstance().createDateItem(this.getStringValue());
+            case TimeItem:
+                return ItemFactory.getInstance().createTimeItem(this.getStringValue());
             case HexBinaryItem:
                 return ItemFactory.getInstance().createHexBinaryItem(this.getStringValue());
             case Base64BinaryItem:
@@ -146,6 +148,8 @@ public class StringItem extends AtomicItem {
                 DateTimeItem.parseDateTime(this.getValue(), AtomicTypes.DateTimeItem);
             } else if (itemType == AtomicTypes.DateItem) {
                 DateTimeItem.parseDateTime(this.getValue(), AtomicTypes.DateItem);
+            } else if (itemType == AtomicTypes.TimeItem) {
+                DateTimeItem.parseDateTime(this.getValue(), AtomicTypes.TimeItem);
             } else if (itemType == AtomicTypes.HexBinaryItem) {
                 HexBinaryItem.parseHexBinaryString(this.getValue());
             } else if (itemType == AtomicTypes.Base64BinaryItem) {

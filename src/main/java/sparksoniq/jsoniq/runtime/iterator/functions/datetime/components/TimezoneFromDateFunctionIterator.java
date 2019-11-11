@@ -1,10 +1,11 @@
-package sparksoniq.jsoniq.runtime.iterator.functions.durations;
+package sparksoniq.jsoniq.runtime.iterator.functions.datetime.components;
 
+import org.joda.time.Period;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.exceptions.UnknownFunctionCallException;
-import sparksoniq.jsoniq.item.DurationItem;
+import sparksoniq.jsoniq.item.DateItem;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
@@ -13,12 +14,12 @@ import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
 
-public class YearsFromDurationFunctionIterator extends LocalFunctionCallIterator {
+public class TimezoneFromDateFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
-    private DurationItem _durationItem = null;
+    private DateItem _dateItem = null;
 
-    public YearsFromDurationFunctionIterator(
+    public TimezoneFromDateFunctionIterator(
             List<RuntimeIterator> arguments,
             IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
@@ -28,10 +29,10 @@ public class YearsFromDurationFunctionIterator extends LocalFunctionCallIterator
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            return ItemFactory.getInstance().createIntegerItem(_durationItem.getDurationValue().getYears());
+            return ItemFactory.getInstance().createDayTimeDurationItem(new Period(_dateItem.getDateTimeValue().getZone().toTimeZone().getRawOffset()));
         } else
             throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " years-from-duration function",
+                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " timezone-from-date function",
                     getMetadata());
     }
 
@@ -39,15 +40,15 @@ public class YearsFromDurationFunctionIterator extends LocalFunctionCallIterator
     public void open(DynamicContext context) {
         super.open(context);
         try {
-            _durationItem = this.getSingleItemOfTypeFromIterator(
+            _dateItem = this.getSingleItemOfTypeFromIterator(
                     this._children.get(0),
-                    DurationItem.class,
-                    new UnknownFunctionCallException("years-from-duration", this._children.size(), getMetadata()));
+                    DateItem.class,
+                    new UnknownFunctionCallException("timezone-from-date", this._children.size(), getMetadata()));
         } catch (UnexpectedTypeException e) {
-            throw new UnexpectedTypeException(e.getJSONiqErrorMessage() + "? of function years-from-duration()", this._children.get(0).getMetadata());
+            throw new UnexpectedTypeException(e.getJSONiqErrorMessage() + "? of function timezone-from-date()", this._children.get(0).getMetadata());
         } catch (UnknownFunctionCallException e) {
-            throw new UnexpectedTypeException(" Sequence of more than one item can not be promoted to parameter type duration? of function years-from-duration()", getMetadata());
+            throw new UnexpectedTypeException(" Sequence of more than one item can not be promoted to parameter type date? of function timezone-from-date()", getMetadata());
         }
-        this._hasNext = _durationItem != null;
+        this._hasNext = _dateItem != null && _dateItem.hasTimeZone();
     }
 }
