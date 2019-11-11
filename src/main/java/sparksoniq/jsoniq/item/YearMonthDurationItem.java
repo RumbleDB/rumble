@@ -27,11 +27,16 @@ public class YearMonthDurationItem extends DurationItem {
     public YearMonthDurationItem(Period value) {
         super();
         this._value = value.normalizedStandard(yearMonthPeriodType);
-        isNegative = this._value.toString().charAt(1) == '-';
+        isNegative = this._value.toString().contains("-");
     }
 
     @Override
     public Period getValue() {
+        return this._value;
+    }
+
+    @Override
+    public Period getDurationValue() {
         return this._value;
     }
 
@@ -84,6 +89,10 @@ public class YearMonthDurationItem extends DurationItem {
 
     @Override
     public Item add(Item other) {
+        if (other.isDateTime())
+            return ItemFactory.getInstance().createDateTimeItem(other.getDateTimeValue().plus(this.getValue()), other.hasTimeZone());
+        if (other.isDate())
+            return ItemFactory.getInstance().createDateItem(other.getDateTimeValue().plus(this.getValue()), other.hasTimeZone());
         return ItemFactory.getInstance().createYearMonthDurationItem(this.getValue().plus(other.getDurationValue()));
     }
 

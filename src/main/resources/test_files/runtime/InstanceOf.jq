@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(true, true, true, false, false, true, true, true, true, false, false, true, false, false, false, true, true, false, true, true, false, true, true, false, false, true, true, true, true, false, true, true, false, true, true, true)" :)
+(:JIQS: ShouldRun; Output="(true, true, true, false, false, true, true, true, true, false, false, true, false, false, false, true, true, false, true, true, false, true, true, false, false, true, true, true, true, false, true, true, false, true, false, true, false, false, true, true, true, true)" :)
 1 instance of integer,
 2.14 instance of decimal,
 1 instance of decimal,
@@ -32,6 +32,12 @@ yearMonthDuration("P2Y99M") instance of dayTimeDuration,
 dayTimeDuration("-P4DT5M") instance of dayTimeDuration,
 dayTimeDuration("P3DT432H") instance of duration,
 dayTimeDuration("PT0S") instance of yearMonthDuration,
+dateTime("2001-12-12T23:00:00") instance of dateTime,
+dateTime("2001-12-12T23:00:00Z") instance of duration,
+date("2001-12-12-10:00") instance of date,
+date("2001-12-12-10:00") instance of dateTime,
+time("23:12:00.123") instance of dateTime,
+time("23:12:00.123") instance of time,
 hexBinary("aabbCC") instance of hexBinary,
 base64Binary("0 FB8 0F+9") instance of base64Binary,
 base64Binary("Q Q = =") instance of base64Binary

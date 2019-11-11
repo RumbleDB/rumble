@@ -14,6 +14,7 @@ import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
+import sparksoniq.jsoniq.runtime.iterator.operational.ComparisonOperationIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemType;
@@ -54,7 +55,7 @@ public class DurationItem extends AtomicItem {
     public DurationItem(Period value) {
         super();
         this._value = value.normalizedStandard(PeriodType.yearMonthDayTime());
-        isNegative = this._value.toString().charAt(1) == '-';
+        isNegative = this._value.toString().contains("-");
     }
 
     public Period getValue() {
@@ -63,10 +64,6 @@ public class DurationItem extends AtomicItem {
 
     public Period getDurationValue() {
         return this.getValue();
-    }
-
-    boolean hasNegativeDuration() {
-        return isNegative;
     }
 
     @Override
@@ -133,7 +130,7 @@ public class DurationItem extends AtomicItem {
 
     @Override
     public String serialize() {
-        if (this.hasNegativeDuration()) {
+        if (this.isNegative) {
             return '-' + this.getValue().negated().toString();
         }
         return this.getValue().toString();
@@ -188,7 +185,7 @@ public class DurationItem extends AtomicItem {
             case DayTimeDurationItem:
                 return dayTimeDurationPattern.matcher(duration).matches();
         }
-        throw new IllegalArgumentException();
+        return false;
     }
 
     public static Period getDurationFromString(String duration, AtomicTypes durationType) throws UnsupportedOperationException, IllegalArgumentException {

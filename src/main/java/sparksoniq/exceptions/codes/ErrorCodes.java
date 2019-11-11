@@ -65,4 +65,6 @@ public class ErrorCodes {
     public static final String DuplicateParamName = "XQST0039";
     public static final String UnknownCastTypeErrorCode = "XQST0052";
     public static final String InvalidGroupVariableErrorCode = "XQST0094";
+
+    public static final String InvalidTimezoneValue = "FODT0003";
 }
