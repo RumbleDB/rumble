@@ -42,6 +42,8 @@ import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+import org.joda.time.DateTime;
+import java.time.Instant;
 import org.rumbledb.api.Item;
 
 public class JiqsItemParser implements Serializable {
@@ -174,7 +176,9 @@ public class JiqsItemParser implements Serializable {
 				value = row.getTimestamp(i);
 			else
 				value = (Timestamp)o;
-			values.add(ItemFactory.getInstance().createStringItem(value.toString()));
+			Instant instant = value.toInstant();
+			DateTime dt = new DateTime(instant);
+			values.add(ItemFactory.getInstance().createDateTimeItem(dt, false));
 		} else if(fieldType instanceof StructType) {
 			Row value;
 			if(row != null)
