@@ -64,7 +64,7 @@ public class JiqsItemParser implements Serializable {
                 {
                     return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(number));
                 }
-                if(number.contains("."))
+                if(number.contains(".") || number.length() >= 12)
                 {
                     return ItemFactory.getInstance().createDecimalItem(new BigDecimal(number));
                 }
