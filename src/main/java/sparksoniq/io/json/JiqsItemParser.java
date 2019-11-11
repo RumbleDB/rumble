@@ -108,101 +108,96 @@ public class JiqsItemParser implements Serializable {
 			StructField field = fields[i];
 			DataType fieldType = field.dataType();
 			keys.add(field.name());
-			addValue(row, i, fieldType, values, metadata);
+			addValue(row, i, null, fieldType, values, metadata);
 		}
 		return ItemFactory.getInstance().createObjectItem(keys, values, ItemMetadata.fromIteratorMetadata(metadata));
 	}
 	
-	public static void addValue(Row row, int i, DataType fieldType, List<Item> values, IteratorMetadata metadata)
+	public static void addValue(Row row, int i, Object o, DataType fieldType, List<Item> values, IteratorMetadata metadata)
 	{
-		if(row.isNullAt(i)) {
+		if(row != null && row.isNullAt(i)) {
 			values.add(ItemFactory.getInstance().createNullItem());
 		} else if(fieldType.equals(DataTypes.StringType)) {
-			String s = row.getString(i);
+			String s;
+			if(row != null)
+				s = row.getString(i);
+			else
+				s = (String) o;
 			values.add(ItemFactory.getInstance().createStringItem(s));
 		} else if(fieldType.equals(DataTypes.BooleanType)) {
-			boolean b = row.getBoolean(i);
+			boolean b;
+			if(row != null)
+				b = row.getBoolean(i);
+			else
+				b = ((Boolean)o).booleanValue();
 			values.add(ItemFactory.getInstance().createBooleanItem(b));
 		} else if(fieldType.equals(DataTypes.DoubleType)) {
-			double value = row.getDouble(i);
+			double value;
+			if(row != null)
+				value = row.getDouble(i);
+			else
+				value = ((Double)o).doubleValue();
 			values.add(ItemFactory.getInstance().createDoubleItem(value));
 		} else if(fieldType.equals(DataTypes.IntegerType)) {
-			int value = row.getInt(i);
+			int value;
+			if(row != null)
+				value = row.getInt(i);
+			else
+				value = ((Integer)o).intValue();
 			values.add(ItemFactory.getInstance().createIntegerItem(value));
 		} else if(fieldType.equals(DataTypes.FloatType)) {
-			float value = row.getFloat(i);
+			float value;
+			if(row != null)
+				value = row.getFloat(i);
+			else
+				value = ((Float)o).floatValue();
 			values.add(ItemFactory.getInstance().createDoubleItem(value));
 		} else if(fieldType.equals(DataTypes.LongType)) {
-			BigDecimal value = new BigDecimal(row.getLong(i));
+			BigDecimal value;
+			if(row != null)
+				value = new BigDecimal(row.getLong(i));
+			else
+				value = new BigDecimal(((Long)o).longValue());
 			values.add(ItemFactory.getInstance().createDecimalItem(value));
 		} else if(fieldType.equals(DataTypes.NullType)) {
 			values.add(ItemFactory.getInstance().createNullItem());
 		} else if(fieldType.equals(DataTypes.ShortType)) {
-			short value = row.getShort(i);
+			short value;
+			if(row != null)
+				value = row.getShort(i);
+			else
+				value = ((Short)o).shortValue();
 			values.add(ItemFactory.getInstance().createIntegerItem(value));
 		} else if(fieldType.equals(DataTypes.TimestampType)) {
-			Timestamp value = row.getTimestamp(i);
+			Timestamp value;
+			if(row != null)
+				value = row.getTimestamp(i);
+			else
+				value = (Timestamp)o;
 			values.add(ItemFactory.getInstance().createStringItem(value.toString()));
 		} else if(fieldType instanceof StructType) {
-			Row value = row.getStruct(i);
+			Row value;
+			if(row != null)
+				value = row.getStruct(i);
+			else
+				value = (Row)o;
 			values.add(getItemFromRow(value, metadata) );
 		} else if(fieldType instanceof ArrayType) {
 			ArrayType arrayType = (ArrayType)fieldType;
 			DataType dataType = arrayType.elementType();
 			List<Item> members = new ArrayList<Item>();
-			List<Object> objects = row.getList(i);
+			List<Object> objects;
+			if(row != null)
+				objects = row.getList(i);
+			else
+				objects = (List<Object>)o;
 			for ( int j = 0; j < objects.size(); ++j)
 			{
-				addValueInArray(objects.get(j), dataType, members, metadata);
+				addValue(null, 0, objects.get(j), dataType, members, metadata);
 			}
 			values.add(ItemFactory.getInstance().createArrayItem(members));
 		} else
 		{
-			throw new RuntimeException("DataFrame type unsupported: " + fieldType.json());
-		}
-	}
-	
-	public static void addValueInArray(Object o, DataType fieldType, List<Item> values, IteratorMetadata metadata)
-	{
-		if(o == null) {
-			values.add(ItemFactory.getInstance().createNullItem());
-		} else if(fieldType.equals(DataTypes.StringType)) {
-			String s = (String) o;
-			values.add(ItemFactory.getInstance().createStringItem(s));
-		} else if(fieldType.equals(DataTypes.BooleanType)) {
-			boolean b = ((Boolean)o).booleanValue();
-			values.add(ItemFactory.getInstance().createBooleanItem(b));
-		} else if(fieldType.equals(DataTypes.DoubleType)) {
-			double value = ((Double)o).doubleValue();
-			values.add(ItemFactory.getInstance().createDoubleItem(value));
-		} else if(fieldType.equals(DataTypes.IntegerType)) {
-			int value = ((Integer)o).intValue();
-			values.add(ItemFactory.getInstance().createIntegerItem(value));
-		} else if(fieldType.equals(DataTypes.FloatType)) {
-			float value = ((Float)o).floatValue();
-			values.add(ItemFactory.getInstance().createDoubleItem(value));
-		} else if(fieldType.equals(DataTypes.LongType)) {
-			BigDecimal value = new BigDecimal(((Long)o).longValue());
-			values.add(ItemFactory.getInstance().createDecimalItem(value));
-		} else if(fieldType.equals(DataTypes.NullType)) {
-			values.add(ItemFactory.getInstance().createNullItem());
-		} else if(fieldType.equals(DataTypes.ShortType)) {
-			short value = ((Short)o).shortValue();
-			values.add(ItemFactory.getInstance().createIntegerItem(value));
-		} else if(fieldType.equals(DataTypes.TimestampType)) {
-			Timestamp value = (Timestamp)o;
-			values.add(ItemFactory.getInstance().createStringItem(value.toString()));
-		} else if(fieldType instanceof StructType) {
-			Row value = (Row)o;
-			values.add(getItemFromRow(value, metadata) );
-		} else if(fieldType instanceof ArrayType) {
-			ArrayType arrayType = (ArrayType)fieldType;
-			DataType dataType = arrayType.elementType();
-			List<Item> members = new ArrayList<Item>();
-			List<Object> objects = (List<Object>)o;
-			addValueInArray(objects, fieldType, members, metadata);
-			values.add(ItemFactory.getInstance().createArrayItem(members));
-		} else {
 			throw new RuntimeException("DataFrame type unsupported: " + fieldType.json());
 		}
 	}
