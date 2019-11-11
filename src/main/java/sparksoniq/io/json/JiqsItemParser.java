@@ -31,10 +31,12 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import java.io.IOException;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.codec.binary.Hex;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.expressions.javalang.typed;
 import org.apache.spark.sql.types.ArrayType;
@@ -179,6 +181,22 @@ public class JiqsItemParser implements Serializable {
 			Instant instant = value.toInstant();
 			DateTime dt = new DateTime(instant);
 			values.add(ItemFactory.getInstance().createDateTimeItem(dt, false));
+		} else if(fieldType.equals(DataTypes.DateType)) {
+			Date value;
+			if(row != null)
+				value = row.getDate(i);
+			else
+				value = (Date)o;
+			Instant instant = value.toInstant();
+			DateTime dt = new DateTime(instant);
+			values.add(ItemFactory.getInstance().createDateItem(dt, false));
+		} else if(fieldType.equals(DataTypes.BinaryType)) {
+			byte[] value;
+			if(row != null)
+				value = (byte[])row.get(i);
+			else
+				value = (byte[])o;
+			values.add(ItemFactory.getInstance().createHexBinaryItem(Hex.encodeHexString(value)));
 		} else if(fieldType instanceof StructType) {
 			Row value;
 			if(row != null)
