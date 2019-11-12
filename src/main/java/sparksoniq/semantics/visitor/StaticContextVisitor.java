@@ -23,6 +23,8 @@ package sparksoniq.semantics.visitor;
 import sparksoniq.exceptions.UndeclaredVariableException;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
+import sparksoniq.jsoniq.compiler.translator.expr.control.TypeSwitchCaseExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.control.TypeSwitchExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.CountClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworExpression;
@@ -181,6 +183,26 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
                 new SequenceType() : expression.getSequenceType();
         result.addVariable(expression.getVariableReference().getVariableName(), type, expression.getMetadata());
         this.visit(expression.getExpression(), argument);
+        return result;
+    }
+
+    @Override
+    public StaticContext visitTypeSwitchExpression(TypeSwitchExpression expression, StaticContext argument) {
+        StaticContext originalContext = argument == null ? new StaticContext() : argument;
+        StaticContext context = originalContext;
+        for (TypeSwitchCaseExpression typeSwitchCase : expression.getCases()) {
+            context = this.visit(typeSwitchCase, originalContext);
+        }
+        return context;
+    }
+
+    @Override
+    public StaticContext visitTypeSwitchCaseExpression(TypeSwitchCaseExpression expression, StaticContext argument) {
+        StaticContext result = new StaticContext(argument);
+        if (expression.getVariableReference() != null) {
+            result.addVariable(expression.getVariableReference().getVariableName(), null, expression.getMetadata());
+        }
+        this.visit(expression.getReturnExpression(), result);
         return result;
     }
 }

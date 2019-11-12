@@ -20,6 +20,8 @@
 
 package sparksoniq.semantics.visitor;
 
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import sparksoniq.exceptions.UnknownFunctionCallException;
 import sparksoniq.exceptions.UnsupportedFeatureException;
 import sparksoniq.jsoniq.compiler.translator.expr.CommaExpression;
@@ -28,6 +30,8 @@ import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.expr.control.IfExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.control.SwitchCaseExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.control.SwitchExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.control.TypeSwitchCaseExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.control.TypeSwitchExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.CountClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworExpression;
@@ -85,7 +89,9 @@ import sparksoniq.jsoniq.runtime.iterator.EmptySequenceIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.control.IfRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.control.SwitchRuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.control.TypeSwitchCase;
 import sparksoniq.jsoniq.runtime.iterator.functions.UserDefinedFunctionCallIterator;
+import sparksoniq.jsoniq.runtime.iterator.control.TypeSwitchRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 import sparksoniq.jsoniq.runtime.iterator.operational.AdditiveOperationIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.AndOperationIterator;
@@ -646,6 +652,28 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 createIteratorMetadata(expression));
     }
     //endregion
+
+    @Override
+    public RuntimeIterator visitTypeSwitchExpression(TypeSwitchExpression expression, RuntimeIterator argument) {
+        List<TypeSwitchCase> cases = new ArrayList<>();
+        for (TypeSwitchCaseExpression caseExpression : expression.getCases()) {
+            VariableReferenceIterator variableReferenceIterator = null;
+            if (caseExpression.getVariableReference() != null) {
+                variableReferenceIterator = (VariableReferenceIterator) this.visit(caseExpression.getVariableReference(), argument);
+            }
+            cases.add(new TypeSwitchCase(variableReferenceIterator, caseExpression.getUnion(), this.visit(caseExpression.getReturnExpression(), argument)));
+        }
+
+        TypeSwitchCase defaultCase;
+        VariableReferenceIterator varRefDefaultIterator = null;
+        if (expression.getVarRefDefault() != null) {
+            varRefDefaultIterator = (VariableReferenceIterator) this.visit(expression.getVarRefDefault(), argument);
+        }
+        defaultCase = new TypeSwitchCase(varRefDefaultIterator, this.visit(expression.getDefaultExpression(), argument));
+
+        return new TypeSwitchRuntimeIterator(this.visit(expression.getTestCondition(), argument),
+                cases, defaultCase, createIteratorMetadata(expression));
+    }
 
     private IteratorMetadata createIteratorMetadata(ExpressionOrClause expression) {
         return new IteratorMetadata(expression.getMetadata());

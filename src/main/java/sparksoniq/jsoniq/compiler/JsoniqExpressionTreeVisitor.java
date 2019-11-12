@@ -33,6 +33,8 @@ import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.control.IfExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.control.SwitchCaseExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.control.SwitchExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.control.TypeSwitchCaseExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.control.TypeSwitchExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.CountClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworExpression;
@@ -235,6 +237,8 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
             this.visitQuantifiedExpr((JsoniqParser.QuantifiedExprContext) content);
         else if (content instanceof JsoniqParser.SwitchExprContext)
             this.visitSwitchExpr((JsoniqParser.SwitchExprContext) content);
+        else if (content instanceof JsoniqParser.TypeSwitchExprContext)
+            this.visitTypeSwitchExpr((JsoniqParser.TypeSwitchExprContext) content);
         node = this.currentExpression;
         this.currentExpression = node;
         return null;
@@ -797,6 +801,8 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         } else if (ctx.ci != null) {
             this.visitContextItemExpr(ctx.ci);
             expr = this.currentPrimaryExpression;
+        } else if (ctx.tkw != null) {
+            expr = new StringLiteral(ctx.tkw.getText(), createMetadataFromContext(ctx));
         }
 
         node = new ObjectLookupExtension(expr, createMetadataFromContext(ctx));
@@ -1067,6 +1073,53 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         this.visitExprSingle(ctx.ret);
         returnExpression = this.currentExpression;
         node = new SwitchCaseExpression(condition, returnExpression, createMetadataFromContext(ctx));
+        this.currentExpression = node;
+        return null;
+    }
+
+    @Override
+    public Void visitTypeSwitchExpr(JsoniqParser.TypeSwitchExprContext ctx) {
+        TypeSwitchExpression node;
+        Expression condition, defaultCase;
+        this.visitExpr(ctx.cond);
+        condition = this.currentExpression;
+        List<TypeSwitchCaseExpression> cases = new ArrayList<>();
+        for (JsoniqParser.CaseClauseContext expr : ctx.cses) {
+            this.visitCaseClause(expr);
+            cases.add((TypeSwitchCaseExpression) this.currentExpression);
+        }
+        VariableReference varRefDefault = null;
+        if (ctx.var_ref != null) {
+            this.visitVarRef(ctx.var_ref);
+            varRefDefault = (VariableReference) this.currentPrimaryExpression;
+        }
+        this.visitExprSingle(ctx.def);
+        defaultCase = this.currentExpression;
+        node = new TypeSwitchExpression(condition, cases, defaultCase, varRefDefault, createMetadataFromContext(ctx));
+        this.currentExpression = node;
+        return null;
+    }
+
+    @Override
+    public Void visitCaseClause(JsoniqParser.CaseClauseContext ctx) {
+        TypeSwitchCaseExpression node;
+        Expression returnExpression;
+
+        VariableReference var = null;
+        List<FlworVarSequenceType> union = new ArrayList<>();
+        if (ctx.var_ref != null) {
+            this.visitVarRef(ctx.var_ref);
+            var = (VariableReference) this.currentPrimaryExpression;
+        }
+        if (ctx.union != null && !ctx.union.isEmpty()) {
+            for (JsoniqParser.SequenceTypeContext sequenceType : ctx.union) {
+                this.visitSequenceType(sequenceType);
+                union.add((FlworVarSequenceType) this.currentExpression);
+            }
+        }
+        this.visitExprSingle(ctx.ret);
+        returnExpression = this.currentExpression;
+        node = new TypeSwitchCaseExpression(var, union, returnExpression, createMetadataFromContext(ctx));
         this.currentExpression = node;
         return null;
     }

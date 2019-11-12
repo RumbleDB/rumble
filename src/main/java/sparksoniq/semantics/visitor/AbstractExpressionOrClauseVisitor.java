@@ -25,6 +25,8 @@ import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.expr.control.IfExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.control.SwitchCaseExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.control.SwitchExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.control.TypeSwitchCaseExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.control.TypeSwitchExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.CountClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.ForClause;
@@ -287,4 +289,12 @@ public abstract class AbstractExpressionOrClauseVisitor<T> {
         return defaultAction(expression, argument);
     }
     // endregion
+
+    public T visitTypeSwitchExpression(TypeSwitchExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitTypeSwitchCaseExpression(TypeSwitchCaseExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 }

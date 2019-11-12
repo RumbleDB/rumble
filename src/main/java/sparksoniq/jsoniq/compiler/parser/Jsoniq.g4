@@ -103,9 +103,9 @@ switchExpr              : Kswitch '(' cond=expr ')' cases+=switchCaseClause+ Kde
 
 switchCaseClause        : (Kcase cond+=exprSingle)+ Kreturn ret=exprSingle;
 
-typeSwitchExpr          : Ktypeswitch '(' expr ')' caseClause+ Kdefault (varRef)? Kreturn exprSingle;
+typeSwitchExpr          : Ktypeswitch '(' cond=expr ')' cses+=caseClause+ Kdefault (var_ref=varRef)? Kreturn def=exprSingle;
 
-caseClause              : Kcase (varRef Kas)? sequenceType ('|' sequenceType)* Kreturn exprSingle;
+caseClause              : Kcase (var_ref=varRef Kas)? union+=sequenceType ('|' union+=sequenceType)* Kreturn ret=exprSingle;
 
 ifExpr                  : Kif '(' test_condition=expr ')'
                           Kthen branch=exprSingle
@@ -154,7 +154,7 @@ arrayUnboxing           : '[' ']';
 
 predicate               : '[' expr ']';
 
-objectLookup            : '.' ( kw=keyWords | lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | ci=contextItemExpr );
+objectLookup            : '.' ( kw=keyWords | lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | ci=contextItemExpr | tkw=typesKeywords);
 
 primaryExpr             : NullLiteral
                         | Literal
