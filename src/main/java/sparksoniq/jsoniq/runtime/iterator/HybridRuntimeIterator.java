@@ -23,7 +23,6 @@ package sparksoniq.jsoniq.runtime.iterator;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import sparksoniq.Main;
 import sparksoniq.exceptions.IteratorFlowException;
@@ -49,8 +48,6 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     protected Dataset<Row> _dataFrame;
     protected boolean _isDataFrame = false;
 
-
-
     protected HybridRuntimeIterator(List<RuntimeIterator> children, IteratorMetadata iteratorMetadata) {
         super(children, iteratorMetadata);
         this.parser = new JiqsItemParser();
@@ -72,7 +69,11 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
     @Override
     public Dataset<Row> getDataFrame(DynamicContext dynamicContext) {
-        throw new SparkRuntimeException("Iterator has no DataFrames", getMetadata());
+        throw new SparkRuntimeException("DataFrames are not implemented for the iterator", getMetadata());
+    }
+
+    public JavaRDD<Item> getRDDAux(DynamicContext context) {
+        throw new SparkRuntimeException("DataFrames are not implemented for the iterator", getMetadata());
     }
 
     @Override
@@ -110,45 +111,22 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         }
         if (result == null) {
             currentResultIndex = 0;
-            if (_isDataFrame) {
-                this._dataFrame = this.getDataFrame(_currentDynamicContext);
-                Row[] rows;
-                if (SparkSessionManager.LIMIT_COLLECT()) {
-                    rows = (Row[]) _dataFrame.take(SparkSessionManager.COLLECT_ITEM_LIMIT);
-                    if (rows.length == SparkSessionManager.COLLECT_ITEM_LIMIT) {
-                        if (Main.terminal == null) {
-                            System.out.println("Results have been truncated to:" + SparkSessionManager.COLLECT_ITEM_LIMIT
-                                    + " items. This value can be configured with the --result-size parameter at startup.\n");
-                        } else {
-                            Main.terminal.output("\nWarning: Results have been truncated to: " + SparkSessionManager.COLLECT_ITEM_LIMIT
-                                    + " items. This value can be configured with the --result-size parameter at startup.\n");
-                        }
+            this._rdd = this.getRDD(_currentDynamicContext);
+            if (SparkSessionManager.LIMIT_COLLECT()) {
+                result = _rdd.take(SparkSessionManager.COLLECT_ITEM_LIMIT);
+                if (result.size() == SparkSessionManager.COLLECT_ITEM_LIMIT) {
+                    if (Main.terminal == null) {
+                        System.out.println("Results have been truncated to:" + SparkSessionManager.COLLECT_ITEM_LIMIT
+                                + " items. This value can be configured with the --result-size parameter at startup.\n");
+                    } else {
+                        Main.terminal.output("\nWarning: Results have been truncated to: " + SparkSessionManager.COLLECT_ITEM_LIMIT
+                                + " items. This value can be configured with the --result-size parameter at startup.\n");
                     }
-                } else {
-                    rows = (Row[]) _dataFrame.collect();
                 }
-                for (Row row: rows) {
-                    result.add(JiqsItemParser.getItemFromRow(row, getMetadata()));
-                }
-                _hasNext = !result.isEmpty();
             } else {
-                this._rdd = this.getRDD(_currentDynamicContext);
-                if (SparkSessionManager.LIMIT_COLLECT()) {
-                    result = _rdd.take(SparkSessionManager.COLLECT_ITEM_LIMIT);
-                    if (result.size() == SparkSessionManager.COLLECT_ITEM_LIMIT) {
-                        if (Main.terminal == null) {
-                            System.out.println("Results have been truncated to:" + SparkSessionManager.COLLECT_ITEM_LIMIT
-                                    + " items. This value can be configured with the --result-size parameter at startup.\n");
-                        } else {
-                            Main.terminal.output("\nWarning: Results have been truncated to: " + SparkSessionManager.COLLECT_ITEM_LIMIT
-                                    + " items. This value can be configured with the --result-size parameter at startup.\n");
-                        }
-                    }
-                } else {
-                    result = _rdd.collect();
-                }
-                _hasNext = !result.isEmpty();
+                result = _rdd.collect();
             }
+            _hasNext = !result.isEmpty();
         }
         return _hasNext;
     }
