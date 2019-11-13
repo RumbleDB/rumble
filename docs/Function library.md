@@ -179,6 +179,15 @@ Keys calls are pushed down to Spark, so this works on billions of items as well:
 keys(json-file("file.json"))
 ```
 
+### json-doc
+
+```
+json-doc("/Users/sheldon/object.json")
+```
+
+returns the (unique) JSON value parsed from a local JSON (but not necessarily JSON Lines) file where this value may be spread over multiple lines.
+
+
 ### project
 
 ```
@@ -524,6 +533,16 @@ tokenize("aa;bb;cc;dd", ";")
 ```
 
 returns ("aa", "bb", "cc", "dd")
+
+## I/O functions
+
+### json-doc
+
+```
+json-doc("file.json")
+```
+
+returns the (single) JSON value read from the supplied JSON file. This will also work for structures spread over multiple lines, as the read is local and not sharded.
 
 ## Integration with HDFS and Spark
 

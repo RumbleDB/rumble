@@ -64,11 +64,16 @@ public class JiqsItemParser implements Serializable {
                 {
                     return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(number));
                 }
-                if(number.contains("."))
+                if(number.contains(".") || number.length() >= 12)
                 {
                     return ItemFactory.getInstance().createDecimalItem(new BigDecimal(number));
                 }
-                return ItemFactory.getInstance().createIntegerItem(Integer.parseInt(number));
+                try {
+                	return ItemFactory.getInstance().createIntegerItem(Integer.parseInt(number));
+                } catch (NumberFormatException e)
+                {
+                	return ItemFactory.getInstance().createDecimalItem(new BigDecimal(number));
+                }
             }
             if (object.whatIsNext().equals(ValueType.BOOLEAN))
                 return ItemFactory.getInstance().createBooleanItem(object.readBoolean());

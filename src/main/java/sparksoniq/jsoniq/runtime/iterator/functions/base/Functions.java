@@ -34,6 +34,7 @@ import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArraySizeFunctionIter
 import sparksoniq.jsoniq.runtime.iterator.functions.binaries.Base64BinaryFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.binaries.HexBinaryFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.booleans.BooleanFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.io.JsonDocFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.datetime.DateFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.datetime.DateTimeFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.datetime.TimeFunctionIterator;
@@ -117,6 +118,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.HashMap;
 
+
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.*;
 
 public class Functions {
@@ -129,6 +131,7 @@ public class Functions {
 
         builtInFunctions.put(new FunctionIdentifier(JSON_FILE, 1), ParseJsonFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(JSON_FILE, 2), ParseJsonFunctionIterator.class);
+        builtInFunctions.put(new FunctionIdentifier(JSON_DOC, 1), JsonDocFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(TEXT_FILE, 1), ParseTextFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(TEXT_FILE, 2), ParseTextFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(PARALLELIZE, 1), ParallelizeFunctionIterator.class);
@@ -301,6 +304,10 @@ public class Functions {
          * function that parses a JSON lines file
          */
         public static final String JSON_FILE = "json-file";
+        /**
+         * function that parses a JSON doc file
+         */
+        public static final String JSON_DOC = "json-doc";
         /**
          * function that parses a text file
          */
