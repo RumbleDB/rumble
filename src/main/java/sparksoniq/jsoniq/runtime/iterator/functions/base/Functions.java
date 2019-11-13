@@ -116,7 +116,9 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.lang.reflect.Constructor;
 import java.util.HashMap;
+import java.util.List;
 
 
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.*;
@@ -261,6 +263,20 @@ public class Functions {
         builtInFunctions.put(new FunctionIdentifier(VALUES, 1), ObjectValuesFunctionIterator.class);
     }
 
+    public static boolean checkBuiltInFunctionExists(FunctionIdentifier identifier) {
+        return builtInFunctions.containsKey(identifier);
+    }
+
+    public static RuntimeIterator getBuiltInFunctionIterator(FunctionIdentifier identifier, IteratorMetadata metadata, List<RuntimeIterator> arguments) {
+        Class<? extends RuntimeIterator> functionClass = builtInFunctions.get(identifier);
+        try {
+            Constructor<? extends RuntimeIterator> ctor = functionClass.getConstructor(List.class, IteratorMetadata.class);
+            return ctor.newInstance(arguments, metadata);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
     public static void clearUserDefinedFunctions() {
         userDefinedFunctions.clear();
     }
@@ -273,29 +289,24 @@ public class Functions {
         userDefinedFunctions.put(function.getIdentifier(), function);
     }
 
-    public static Class<? extends RuntimeIterator> getBuiltInFunction(FunctionIdentifier identifier, IteratorMetadata metadata) {
-        if (builtInFunctions.containsKey(identifier))
-            return builtInFunctions.get(identifier);
-        throw new UnknownFunctionCallException(identifier.getName(), identifier.getArity(), metadata);
+    public static boolean checkUserDefinedFunctionExists(FunctionIdentifier identifier) {
+        return userDefinedFunctions.containsKey(identifier);
     }
 
     public static FunctionItem getUserDefinedFunction(FunctionIdentifier identifier, IteratorMetadata metadata) {
-        if (userDefinedFunctions.containsKey(identifier)) {
-            FunctionItem fnItem = userDefinedFunctions.get(identifier);
-            try {
-                ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                ObjectOutputStream oos = new ObjectOutputStream(bos);
-                oos.writeObject(fnItem);
-                oos.flush();
-                byte[] data = bos.toByteArray();
-                ByteArrayInputStream bis = new ByteArrayInputStream(data);
-                ObjectInputStream ois = new ObjectInputStream(bis);
-                return (FunctionItem) ois.readObject();
-            } catch (Exception e) {
-                throw new SparksoniqRuntimeException("Error while deep copying the function body runtimeIterator");
-            }
+        FunctionItem fnItem = userDefinedFunctions.get(identifier);
+        try {
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(bos);
+            oos.writeObject(fnItem);
+            oos.flush();
+            byte[] data = bos.toByteArray();
+            ByteArrayInputStream bis = new ByteArrayInputStream(data);
+            ObjectInputStream ois = new ObjectInputStream(bis);
+            return (FunctionItem) ois.readObject();
+        } catch (Exception e) {
+            throw new SparksoniqRuntimeException("Error while deep copying the function body runtimeIterator");
         }
-        throw new UnknownFunctionCallException(identifier.getName(), identifier.getArity(), metadata);
     }
 
     public static class FunctionNames {
