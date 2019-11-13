@@ -373,21 +373,22 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         }
         String fnName = expression.getFunctionName();
         int arity = arguments.size();
-        FunctionIdentifier fnIdentifier = new FunctionIdentifier(fnName, arity);
+        FunctionIdentifier identifier = new FunctionIdentifier(fnName, arity);
 
         try {
-            Class<? extends RuntimeIterator> functionClass = Functions.getBuiltInFunction(fnIdentifier, createIteratorMetadata(expression));
-            if (isPartialApplication) {
-                throw new UnsupportedFeatureException(
-                        "Partial application on built-in functions are not supported.",
-                        expression.getMetadata()
-                );
+            if (Functions.checkBuiltInFunctionExists(identifier)) {
+                Class<? extends RuntimeIterator> functionClass = Functions.getBuiltInFunction(identifier, createIteratorMetadata(expression));
+                if (isPartialApplication) {
+                    throw new UnsupportedFeatureException(
+                            "Partial application on built-in functions are not supported.",
+                            expression.getMetadata()
+                    );
+                }
+                Constructor<? extends RuntimeIterator> ctor = functionClass.getConstructor(List.class, IteratorMetadata.class);
+                return ctor.newInstance(arguments, iteratorMetadata);
             }
-            Constructor<? extends RuntimeIterator> ctor = functionClass.getConstructor(List.class, IteratorMetadata.class);
-            return ctor.newInstance(arguments, iteratorMetadata);
-        } catch (UnknownFunctionCallException e) {
             return new UserDefinedFunctionCallIterator(
-                    fnIdentifier,
+                    identifier,
                     arguments,
                     iteratorMetadata
             );
@@ -401,19 +402,14 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
     @Override
     public RuntimeIterator visitNamedFunctionRef(NamedFunctionRef expression, RuntimeIterator argument) {
         FunctionIdentifier identifier = expression.getIdentifier();
-
-        try {
-            // as of 2019-10-25: this line should cause an unknown function call exception
-            Class<? extends RuntimeIterator> functionClass = Functions.getBuiltInFunction(identifier, createIteratorMetadata(expression));
+        if (Functions.checkBuiltInFunctionExists(identifier)) {
             throw new SparksoniqRuntimeException("Higher order functions using builtin functions are not supported.");
-        } catch (Exception ex1) {
-            if (ex1 instanceof UnknownFunctionCallException) {
-                FunctionItem function = Functions.getUserDefinedFunction(identifier, createIteratorMetadata(expression));
-                return new FunctionRuntimeIterator(function, createIteratorMetadata(expression));
-            } else {
-                throw new SparksoniqRuntimeException(ex1.getMessage());
-            }
         }
+        if (Functions.checkUserDefinedFunctionExists(identifier)) {
+            FunctionItem function = Functions.getUserDefinedFunction(identifier, createIteratorMetadata(expression));
+            return new FunctionRuntimeIterator(function, createIteratorMetadata(expression));
+        }
+        throw new UnknownFunctionCallException(identifier.getName(), identifier.getArity(), createIteratorMetadata(expression));
     }
     //endregion
 
