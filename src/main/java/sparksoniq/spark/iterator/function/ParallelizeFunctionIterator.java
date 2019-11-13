@@ -22,7 +22,6 @@ package sparksoniq.spark.iterator.function;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
-
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -35,9 +34,9 @@ import java.util.List;
 
 public class ParallelizeFunctionIterator extends SparkFunctionCallIterator {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	public ParallelizeFunctionIterator(List<RuntimeIterator> parameters, IteratorMetadata iteratorMetadata) {
+    public ParallelizeFunctionIterator(List<RuntimeIterator> parameters, IteratorMetadata iteratorMetadata) {
         super(parameters, iteratorMetadata);
     }
 

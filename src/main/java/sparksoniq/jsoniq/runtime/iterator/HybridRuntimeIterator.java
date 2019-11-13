@@ -28,6 +28,7 @@ import sparksoniq.Main;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparkRuntimeException;
 import sparksoniq.io.json.JiqsItemParser;
+import sparksoniq.io.json.RowToItemMapper;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkSessionManager;
@@ -65,15 +66,6 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     @Override
     public boolean isDataFrame() {
         return _isDataFrame;
-    }
-
-    @Override
-    public Dataset<Row> getDataFrame(DynamicContext dynamicContext) {
-        throw new SparkRuntimeException("DataFrames are not implemented for the iterator", getMetadata());
-    }
-
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        throw new SparkRuntimeException("DataFrames are not implemented for the iterator", getMetadata());
     }
 
     @Override
@@ -150,7 +142,26 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         return item;
     }
 
+
+    @Override
+    public JavaRDD<Item> getRDD(DynamicContext dynamicContext) {
+        if (_isDataFrame) {
+            Dataset<Row> df = this.getDataFrame(dynamicContext);
+            JavaRDD<Row> rowRDD = df.javaRDD();
+            return rowRDD.map(new RowToItemMapper(getMetadata()));
+        } else {
+            return getRDDAux(dynamicContext);
+        }
+    }
+
+    @Override
+    public Dataset<Row> getDataFrame(DynamicContext dynamicContext) {
+        throw new SparkRuntimeException("DataFrames are not implemented for the iterator", getMetadata());
+    }
+
     protected abstract boolean initIsRDD();
+
+    protected abstract JavaRDD<Item> getRDDAux(DynamicContext context);
 
     protected abstract void openLocal();
 

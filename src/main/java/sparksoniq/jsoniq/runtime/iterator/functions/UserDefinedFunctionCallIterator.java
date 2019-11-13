@@ -56,7 +56,7 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
             List<RuntimeIterator> functionArguments,
             IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
-        for (RuntimeIterator arg: functionArguments) {
+        for (RuntimeIterator arg : functionArguments) {
             if (arg == null) {
                 _isPartialApplication = true;
             } else {
@@ -177,7 +177,7 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JavaRDD<Item> getRDD(DynamicContext dynamicContext) {
+    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         // TODO: how to handle partial function appliacation for RDDs
         processArguments();
         return _functionCallIterator.getRDD(_currentDynamicContext);
