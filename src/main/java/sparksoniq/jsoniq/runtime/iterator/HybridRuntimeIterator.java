@@ -46,9 +46,6 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     protected boolean isRDDInitialized = false;
     protected boolean _isRDD;
 
-    protected Dataset<Row> _dataFrame;
-    protected boolean _isDataFrame = false;
-
     protected HybridRuntimeIterator(List<RuntimeIterator> children, IteratorMetadata iteratorMetadata) {
         super(children, iteratorMetadata);
         this.parser = new JiqsItemParser();
@@ -65,7 +62,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
     @Override
     public boolean isDataFrame() {
-        return _isDataFrame;
+        return false;
     }
 
     @Override
@@ -144,18 +141,18 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
 
     @Override
-    public JavaRDD<Item> getRDD(DynamicContext dynamicContext) {
-        if (_isDataFrame) {
-            Dataset<Row> df = this.getDataFrame(dynamicContext);
+    public JavaRDD<Item> getRDD(DynamicContext context) {
+        if (isDataFrame()) {
+            Dataset<Row> df = this.getDataFrame(context);
             JavaRDD<Row> rowRDD = df.javaRDD();
             return rowRDD.map(new RowToItemMapper(getMetadata()));
         } else {
-            return getRDDAux(dynamicContext);
+            return getRDDAux(context);
         }
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext dynamicContext) {
+    public Dataset<Row> getDataFrame(DynamicContext context) {
         throw new SparkRuntimeException("DataFrames are not implemented for the iterator", getMetadata());
     }
 

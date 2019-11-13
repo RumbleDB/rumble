@@ -52,7 +52,7 @@ public class ParseTextFunctionIterator extends SparkFunctionCallIterator {
     }
 
     @Override
-    public JavaRDD<Item> getRDD(DynamicContext context) {
+    public JavaRDD<Item> getRDDAux(DynamicContext context) {
         if (this._rdd == null) {
             JavaRDD<String> strings;
             RuntimeIterator urlIterator = this._children.get(0);

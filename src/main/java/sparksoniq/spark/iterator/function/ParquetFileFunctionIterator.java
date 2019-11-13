@@ -54,7 +54,22 @@ public class ParquetFileFunctionIterator extends SparkFunctionCallIterator {
     }
 
     @Override
-    public JavaRDD<Item> getRDD(DynamicContext context) {
+    public boolean isDataFrame() {
+        return true;
+    }
+
+    @Override
+    public Dataset<Row> getDataFrame(DynamicContext context) {
+        RuntimeIterator urlIterator = this._children.get(0);
+        urlIterator.open(context);
+        Dataset<Row> rows = SparkSessionManager.getInstance().getOrCreateSession()
+                .read().parquet(urlIterator.next().getStringValue());
+        urlIterator.close();
+        return rows;
+    }
+
+    @Override
+    public JavaRDD<Item> getRDDAux(DynamicContext context) {
         if (this._rdd == null) {
             Dataset<Row> rows;
             RuntimeIterator urlIterator = this._children.get(0);

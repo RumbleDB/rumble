@@ -28,6 +28,7 @@ import sparksoniq.Main;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparkRuntimeException;
 import sparksoniq.io.json.JiqsItemParser;
+import sparksoniq.io.json.RowToItemMapper;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkSessionManager;
@@ -56,11 +57,6 @@ public abstract class SparkRuntimeIterator extends RuntimeIterator {
     @Override
     public boolean isDataFrame() {
         return false;
-    }
-
-    @Override
-    public Dataset<Row> getDataFrame(DynamicContext dynamicContext) {
-        throw new SparkRuntimeException("Iterator has no DataFrames", getMetadata());
     }
 
     @Override
@@ -114,4 +110,22 @@ public abstract class SparkRuntimeIterator extends RuntimeIterator {
         currentResultIndex++;
         return item;
     }
+
+    @Override
+    public JavaRDD<Item> getRDD(DynamicContext context) {
+        if (isDataFrame()) {
+            Dataset<Row> df = this.getDataFrame(context);
+            JavaRDD<Row> rowRDD = df.javaRDD();
+            return rowRDD.map(new RowToItemMapper(getMetadata()));
+        } else {
+            return getRDDAux(context);
+        }
+    }
+
+    @Override
+    public Dataset<Row> getDataFrame(DynamicContext context) {
+        throw new SparkRuntimeException("DataFrames are not implemented for the iterator", getMetadata());
+    }
+
+    protected abstract JavaRDD<Item> getRDDAux(DynamicContext context);
 }
