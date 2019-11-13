@@ -116,7 +116,9 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.lang.reflect.Constructor;
 import java.util.HashMap;
+import java.util.List;
 
 
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.*;
@@ -265,8 +267,14 @@ public class Functions {
         return builtInFunctions.containsKey(identifier);
     }
 
-    public static Class<? extends RuntimeIterator> getBuiltInFunction(FunctionIdentifier identifier, IteratorMetadata metadata) {
-        return builtInFunctions.get(identifier);
+    public static RuntimeIterator getBuiltInFunctionIterator(FunctionIdentifier identifier, IteratorMetadata metadata, List<RuntimeIterator> arguments) {
+        Class<? extends RuntimeIterator> functionClass = builtInFunctions.get(identifier);
+        try {
+            Constructor<? extends RuntimeIterator> ctor = functionClass.getConstructor(List.class, IteratorMetadata.class);
+            return ctor.newInstance(arguments, metadata);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
     }
 
     public static void clearUserDefinedFunctions() {

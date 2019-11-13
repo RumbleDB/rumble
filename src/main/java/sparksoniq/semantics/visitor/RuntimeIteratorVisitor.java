@@ -375,28 +375,20 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         int arity = arguments.size();
         FunctionIdentifier identifier = new FunctionIdentifier(fnName, arity);
 
-        try {
-            if (Functions.checkBuiltInFunctionExists(identifier)) {
-                Class<? extends RuntimeIterator> functionClass = Functions.getBuiltInFunction(identifier, createIteratorMetadata(expression));
-                if (isPartialApplication) {
-                    throw new UnsupportedFeatureException(
-                            "Partial application on built-in functions are not supported.",
-                            expression.getMetadata()
-                    );
-                }
-                Constructor<? extends RuntimeIterator> ctor = functionClass.getConstructor(List.class, IteratorMetadata.class);
-                return ctor.newInstance(arguments, iteratorMetadata);
+        if (Functions.checkBuiltInFunctionExists(identifier)) {
+            if (isPartialApplication) {
+                throw new UnsupportedFeatureException(
+                        "Partial application on built-in functions are not supported.",
+                        expression.getMetadata()
+                );
             }
-            return new UserDefinedFunctionCallIterator(
-                    identifier,
-                    arguments,
-                    iteratorMetadata
-            );
-        } catch (UnsupportedFeatureException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
+            return Functions.getBuiltInFunctionIterator(identifier, iteratorMetadata, arguments);
         }
+        return new UserDefinedFunctionCallIterator(
+                identifier,
+                arguments,
+                iteratorMetadata
+        );
     }
 
     @Override
