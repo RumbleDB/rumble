@@ -187,10 +187,10 @@ public class PredicateIterator extends HybridRuntimeIterator {
             && (
                 filter instanceof BooleanRuntimeIterator
                 || filter instanceof AndOperationIterator
-                    || filter instanceof OrOperationIterator
-                    || filter instanceof OrOperationIterator
-                    || filter instanceof ComparisonOperationIterator
-               )
+                || filter instanceof OrOperationIterator
+                || filter instanceof OrOperationIterator
+                || filter instanceof ComparisonOperationIterator
+            )
         ) {
         	Function<Item, Boolean> transformation = new PredicateClosure(filter, dynamicContext);
             JavaRDD<Item> resultRDD = childRDD.filter(transformation);
