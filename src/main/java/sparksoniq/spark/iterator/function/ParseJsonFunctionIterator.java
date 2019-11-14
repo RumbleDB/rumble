@@ -24,14 +24,14 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import sparksoniq.io.json.StringToItemMapper;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.SparkRuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.RDDRuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.List;
 
-public class ParseJsonFunctionIterator extends SparkRuntimeIterator {
+public class ParseJsonFunctionIterator extends RDDRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 

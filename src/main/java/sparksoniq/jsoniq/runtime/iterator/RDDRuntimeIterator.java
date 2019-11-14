@@ -29,11 +29,11 @@ import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
 
-public abstract class SparkRuntimeIterator extends HybridRuntimeIterator {
+public abstract class RDDRuntimeIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
-    protected SparkRuntimeIterator(List<RuntimeIterator> children, IteratorMetadata iteratorMetadata) {
+    protected RDDRuntimeIterator(List<RuntimeIterator> children, IteratorMetadata iteratorMetadata) {
         super(children, iteratorMetadata);
         this.parser = new JiqsItemParser();
     }

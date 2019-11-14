@@ -23,14 +23,14 @@ package sparksoniq.spark.iterator.function;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.SparkRuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.RDDRuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.List;
 
-public class ParquetFileFunctionIterator extends SparkRuntimeIterator {
+public class ParquetFileFunctionIterator extends RDDRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
