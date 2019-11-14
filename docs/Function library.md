@@ -534,6 +534,29 @@ tokenize("aa;bb;cc;dd", ";")
 
 returns ("aa", "bb", "cc", "dd")
 
+## Context functions
+
+### position
+
+```
+(1 to 10)[position() eq 5]
+```
+
+returns 5
+
+### last
+
+```
+(1 to 10)[position() eq last()]
+```
+returns 10
+
+
+```
+(1 to 10)[last()]
+```
+returns 10
+
 ## I/O functions
 
 ### json-doc

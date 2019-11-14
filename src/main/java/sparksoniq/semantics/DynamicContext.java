@@ -29,6 +29,8 @@ import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +50,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
 	    MIN
 	  }
 
-	  private Map<String, List<Item>> _variableValues;
+    private Map<String, List<Item>> _variableValues;
     private Map<String, Item> _variableCounts;
     private DynamicContext _parent;
 
@@ -141,6 +143,52 @@ public class DynamicContext implements Serializable, KryoSerializable {
     public void read(Kryo kryo, Input input) {
         _parent = kryo.readObjectOrNull(input, DynamicContext.class);
         _variableValues = kryo.readObject(input, HashMap.class);
+    }
+    
+    public Item getPosition() {
+    	if(_variableValues.containsKey("$position"))
+    	{
+    		return _variableValues.get("$position").get(0);
+    	}
+    	if (_parent != null)
+            return _parent.getPosition();
+    	return null;
+    }
+    
+    public void setPosition (long position) {
+    	List<Item> list = new ArrayList<Item>();
+    	Item item = null;
+    	if(position < Integer.MAX_VALUE)
+        {
+        	item = ItemFactory.getInstance().createIntegerItem((int)position);
+        } else {
+        	item = ItemFactory.getInstance().createDecimalItem(new BigDecimal(position));
+        }
+    	list.add(item);
+    	_variableValues.put("$position", list);
+    }
+    
+    public Item getLast() {
+    	if(_variableValues.containsKey("$last"))
+    	{
+    		return _variableValues.get("$last").get(0);
+    	}
+    	if (_parent != null)
+            return _parent.getLast();
+    	return null;
+    }
+    
+    public void setLast (long last) {
+    	List<Item> list = new ArrayList<Item>();
+    	Item item = null;
+    	if(last < Integer.MAX_VALUE)
+        {
+        	item = ItemFactory.getInstance().createIntegerItem((int)last);
+        } else {
+        	item = ItemFactory.getInstance().createDecimalItem(new BigDecimal(last));
+        }
+    	list.add(item);
+    	_variableValues.put("$last", list);
     }
 }
 

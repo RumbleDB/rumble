@@ -19,6 +19,8 @@ for an object or array selector.
 - [SPRKIQ0002] - CLI error. Unimplemented feature error.
 Raised when a JSONiq feature that is not yet implemented in Rumble is used.
 
+- [XPDY0002] - It is a dynamic error if evaluation of an expression relies on some part of the dynamic context that is absent.
+
 - [XPDY0050] - Dynamic type treat error. It is a dynamic error
 if the dynamic type of the operand of a treat expression does not match
 the sequence type specified by the treat expression. This error might
