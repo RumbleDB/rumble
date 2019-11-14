@@ -53,17 +53,12 @@ public class LastFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            long last = _currentDynamicContext.getLast();
-            if(last == -1)
+            Item result = _currentDynamicContext.getLast();
+            if(result == null)
             {
-	            throw new AbsentPartOfDynamicContextException("Context indefined (last) ", getMetadata());
+	            throw new AbsentPartOfDynamicContextException("Context undefined (last) ", getMetadata());
             }
-            if(last < Integer.MAX_VALUE)
-            {
-            	return ItemFactory.getInstance().createIntegerItem((int)last);
-            } else {
-            	return ItemFactory.getInstance().createDecimalItem(new BigDecimal(last));
-            }
+            return result;
         }
         return null;
     }

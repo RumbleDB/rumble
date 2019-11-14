@@ -29,6 +29,8 @@ import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,24 +52,18 @@ public class DynamicContext implements Serializable, KryoSerializable {
 
 	private Map<String, List<Item>> _variableValues;
     private Map<String, Item> _variableCounts;
-    private long _position;
-    private long _last;
     private DynamicContext _parent;
 
     public DynamicContext() {
         this._parent = null;
         this._variableValues = new HashMap<>();
         this._variableCounts = new HashMap<>();
-        this._position = -1;
-        this._last = -1;
     }
 
     public DynamicContext(DynamicContext parent) {
         this._parent = parent;
         this._variableValues = new HashMap<>();
         this._variableCounts = new HashMap<>();
-        this._position = -1;
-        this._last = -1;
     }
 
     public DynamicContext(FlworTuple tuple) {
@@ -79,8 +75,6 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this._parent = parent;
         this._variableValues = new HashMap<>();
         this._variableCounts = new HashMap<>();
-        this._position = -1;
-        this._last = -1;
         setBindingsFromTuple(tuple);
     }
 
@@ -136,8 +130,6 @@ public class DynamicContext implements Serializable, KryoSerializable {
     public void removeAllVariables() {
         this._variableValues.clear();
         this._variableCounts.clear();
-        this._position = -1;
-        this._last = -1;
     }
 
     @Override
@@ -153,32 +145,50 @@ public class DynamicContext implements Serializable, KryoSerializable {
         _variableValues = kryo.readObject(input, HashMap.class);
     }
     
-    public long getPosition() {
-    	if(_position != -1)
+    public Item getPosition() {
+    	if(_variableValues.containsKey("$position"))
     	{
-    		return _position;
+    		return _variableValues.get("$position").get(0);
     	}
     	if (_parent != null)
             return _parent.getPosition();
-    	return -1;
+    	return null;
     }
     
     public void setPosition (long position) {
-    	_position = position;
+    	List<Item> list = new ArrayList<Item>();
+    	Item item = null;
+    	if(position < Integer.MAX_VALUE)
+        {
+        	item = ItemFactory.getInstance().createIntegerItem((int)position);
+        } else {
+        	item = ItemFactory.getInstance().createDecimalItem(new BigDecimal(position));
+        }
+    	list.add(item);
+    	_variableValues.put("$position", list);
     }
     
-    public long getLast() {
-    	if(_last != -1)
+    public Item getLast() {
+    	if(_variableValues.containsKey("$last"))
     	{
-    		return _last;
+    		return _variableValues.get("$last").get(0);
     	}
     	if (_parent != null)
             return _parent.getLast();
-    	return -1;
+    	return null;
     }
     
     public void setLast (long last) {
-    	_last = last;
+    	List<Item> list = new ArrayList<Item>();
+    	Item item = null;
+    	if(last < Integer.MAX_VALUE)
+        {
+        	item = ItemFactory.getInstance().createIntegerItem((int)last);
+        } else {
+        	item = ItemFactory.getInstance().createDecimalItem(new BigDecimal(last));
+        }
+    	list.add(item);
+    	_variableValues.put("$last", list);
     }
 }
 

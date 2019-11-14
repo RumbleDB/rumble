@@ -53,17 +53,12 @@ public class PositionFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            long position = _currentDynamicContext.getPosition();
-            if(position == -1)
+            Item result = _currentDynamicContext.getPosition();
+            if(result == null)
             {
-	            throw new AbsentPartOfDynamicContextException("Context indefined (position) ", getMetadata());
+	            throw new AbsentPartOfDynamicContextException("Context undefined (last) ", getMetadata());
             }
-            if(position < Integer.MAX_VALUE)
-            {
-            	return ItemFactory.getInstance().createIntegerItem((int)position);
-            } else {
-            	return ItemFactory.getInstance().createDecimalItem(new BigDecimal(position));
-            }
+            return result;
         }
         return null;
     }
