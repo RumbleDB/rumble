@@ -163,7 +163,7 @@
                 <configuration>
                     <java>
                         <googleJavaFormat>
-                            <version>1.5</version>
+                            <version>1.7</version>
                             <style>GOOGLE</style>
                         </googleJavaFormat>
                     </java>
