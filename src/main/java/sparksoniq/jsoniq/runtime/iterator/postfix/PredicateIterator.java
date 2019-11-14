@@ -75,13 +75,13 @@ public class PredicateIterator extends HybridRuntimeIterator {
         _iterator.close();
         _filterDynamicContext = new DynamicContext(_currentDynamicContext);
         if(_filter.getVariableDependencies().containsKey("$last"))
-    	{
-    		setLast();
-    	}
-    	if(_filter.getVariableDependencies().containsKey("$position"))
-    	{
+        {
+           setLast();
+        }
+        if(_filter.getVariableDependencies().containsKey("$position"))
+        {
             _position = 0;
-    		_mustMaintainPosition = true;
+    	    _mustMaintainPosition = true;
     	}
         _iterator.open(_currentDynamicContext);
         setNextResult();
@@ -98,15 +98,15 @@ public class PredicateIterator extends HybridRuntimeIterator {
             throw new SparksoniqRuntimeException("Invalid Predicate! Must initialize filter before calling next");
         }
         _filterDynamicContext = new DynamicContext(_currentDynamicContext);
-    	if(_filter.getVariableDependencies().containsKey("$last"))
-    	{
-    		setLast();
-    	}
-    	if(_filter.getVariableDependencies().containsKey("$position"))
-    	{
+        if(_filter.getVariableDependencies().containsKey("$last"))
+        {
+            setLast();
+        }
+        if(_filter.getVariableDependencies().containsKey("$position"))
+        {
             _position = 0;
-    		_mustMaintainPosition = true;
-    	}
+            _mustMaintainPosition = true;
+        }
         _iterator.open(_currentDynamicContext);
         setNextResult();
     }

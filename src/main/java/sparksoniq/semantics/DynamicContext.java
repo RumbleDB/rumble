@@ -50,7 +50,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
 	    MIN
 	  }
 
-	private Map<String, List<Item>> _variableValues;
+    private Map<String, List<Item>> _variableValues;
     private Map<String, Item> _variableCounts;
     private DynamicContext _parent;
 
