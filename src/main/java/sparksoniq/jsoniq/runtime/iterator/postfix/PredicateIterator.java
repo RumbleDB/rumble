@@ -183,7 +183,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
         JavaRDD<Item> childRDD = iterator.getRDD(dynamicContext);
         if(
         		!filter.getVariableDependencies().containsKey("$position")
-        		&& !filter.getVariableDependencies().containsKey("last")
+                && !filter.getVariableDependencies().containsKey("$last")
         		&& (
         			filter instanceof BooleanRuntimeIterator
         			|| filter instanceof AndOperationIterator
