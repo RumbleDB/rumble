@@ -20,9 +20,12 @@
 
 package sparksoniq.jsoniq.runtime.iterator.postfix;
 
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
+
+import scala.Tuple2;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.IntegerItem;
@@ -173,10 +176,23 @@ public class PredicateIterator extends HybridRuntimeIterator {
         RuntimeIterator iterator = this._children.get(0);
         RuntimeIterator filter = this._children.get(1);
         JavaRDD<Item> childRDD = iterator.getRDD(dynamicContext);
-        Function<Item, Boolean> transformation = new PredicateClosure(filter, dynamicContext);
-
-        JavaRDD<Item> resultRDD = childRDD.filter(transformation);
-        return resultRDD;
+        if(filter.getVariableDependencies().containsKey("$position") || filter.getVariableDependencies().containsKey("last"))
+        {
+        	JavaPairRDD<Item, Long> zippedChildRDD = childRDD.zipWithIndex();
+        	long last = 0;
+        	if(filter.getVariableDependencies().containsKey("$last"))
+        	{
+        		last = childRDD.count();
+        	}
+        	Function<Tuple2<Item, Long>, Boolean> transformation = new PredicateClosureZipped(filter, dynamicContext, last);
+            JavaPairRDD<Item, Long> resultRDD = zippedChildRDD.filter(transformation);
+            return resultRDD.keys();
+        }
+        else {
+        	Function<Item, Boolean> transformation = new PredicateClosure(filter, dynamicContext);
+            JavaRDD<Item> resultRDD = childRDD.filter(transformation);
+            return resultRDD;
+        }
     }
 
     @Override
