@@ -43,6 +43,7 @@ public class ParallelizeFunctionIterator extends SparkRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
+        JavaRDD<Item> rdd = null;
         List<Item> contents = new ArrayList<>();
         RuntimeIterator sequenceIterator = this._children.get(0);
         sequenceIterator.open(context);
@@ -50,7 +51,7 @@ public class ParallelizeFunctionIterator extends SparkRuntimeIterator {
             contents.add(sequenceIterator.next());
         sequenceIterator.close();
         if (this._children.size() == 1) {
-            _rdd = SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents);
+            rdd = SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents);
         } else {
             RuntimeIterator partitionsIterator = this._children.get(1);
             partitionsIterator.open(_currentDynamicContext);
@@ -61,13 +62,13 @@ public class ParallelizeFunctionIterator extends SparkRuntimeIterator {
                 throw new UnexpectedTypeException("The second parameter of parallelize must be an integer, but a non-integer is supplied.", getMetadata());
             }
             try {
-                _rdd = SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents, partitions.getIntegerValue());
+                rdd = SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents, partitions.getIntegerValue());
             } catch (Exception e) {
                 if (!partitionsIterator.hasNext())
                     throw new SparksoniqRuntimeException("The second parameter of parallelize must be an integer.");
             }
             partitionsIterator.close();
         }
-        return _rdd;
+        return rdd;
     }
 }

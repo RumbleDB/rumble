@@ -53,25 +53,20 @@ public class ParseTextFunctionIterator extends SparkRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        if (this._rdd == null) {
-            JavaRDD<String> strings;
-            RuntimeIterator urlIterator = this._children.get(0);
-            urlIterator.open(context);
-            if (this._children.size() == 1)
-                strings = SparkSessionManager.getInstance().getJavaSparkContext().textFile(urlIterator.next().getStringValue());
-            else {
-                RuntimeIterator partitionsIterator = this._children.get(1);
-                partitionsIterator.open(_currentDynamicContext);
-                strings = SparkSessionManager.getInstance().getJavaSparkContext().textFile(
-                        urlIterator.next().getStringValue(),
-                        partitionsIterator.next().getIntegerValue());
-                partitionsIterator.close();
-            }
-
-            _rdd = strings.mapPartitions(new StringMapper());
-            urlIterator.close();
+        JavaRDD<String> strings;
+        RuntimeIterator urlIterator = this._children.get(0);
+        urlIterator.open(context);
+        if (this._children.size() == 1)
+            strings = SparkSessionManager.getInstance().getJavaSparkContext().textFile(urlIterator.next().getStringValue());
+        else {
+            RuntimeIterator partitionsIterator = this._children.get(1);
+            partitionsIterator.open(_currentDynamicContext);
+            strings = SparkSessionManager.getInstance().getJavaSparkContext().textFile(
+                    urlIterator.next().getStringValue(),
+                    partitionsIterator.next().getIntegerValue());
+            partitionsIterator.close();
         }
-        return _rdd;
+        urlIterator.close();
+        return strings.mapPartitions(new StringMapper());
     }
-
 }

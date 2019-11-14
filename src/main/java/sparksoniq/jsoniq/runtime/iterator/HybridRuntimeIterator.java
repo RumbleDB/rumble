@@ -40,7 +40,6 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     private static final long serialVersionUID = 1L;
     protected JiqsItemParser parser;
     protected List<Item> result = null;
-    protected JavaRDD<Item> _rdd;
     private int currentResultIndex = 0;
     private boolean isRDDInitialized = false;
     private boolean _isRDD;
@@ -99,9 +98,9 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         }
         if (result == null) {
             currentResultIndex = 0;
-            this._rdd = this.getRDD(_currentDynamicContext);
+            JavaRDD<Item> rdd = this.getRDD(_currentDynamicContext);
             if (SparkSessionManager.LIMIT_COLLECT()) {
-                result = _rdd.take(SparkSessionManager.COLLECT_ITEM_LIMIT);
+                result = rdd.take(SparkSessionManager.COLLECT_ITEM_LIMIT);
                 if (result.size() == SparkSessionManager.COLLECT_ITEM_LIMIT) {
                     if (Main.terminal == null) {
                         System.out.println("Results have been truncated to:" + SparkSessionManager.COLLECT_ITEM_LIMIT
@@ -112,7 +111,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
                     }
                 }
             } else {
-                result = _rdd.collect();
+                result = rdd.collect();
             }
             _hasNext = !result.isEmpty();
         }
