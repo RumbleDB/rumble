@@ -21,12 +21,14 @@
 package sparksoniq.jsoniq.runtime.iterator;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
-
 import sparksoniq.Main;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparkRuntimeException;
 import sparksoniq.io.json.JiqsItemParser;
+import sparksoniq.io.json.RowToItemMapper;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkSessionManager;
@@ -36,8 +38,8 @@ import java.util.List;
 public abstract class SparkRuntimeIterator extends RuntimeIterator {
 
 
-	private static final long serialVersionUID = 1L;
-	protected JiqsItemParser parser;
+    private static final long serialVersionUID = 1L;
+    protected JiqsItemParser parser;
     protected JavaRDD<Item> _rdd;
     protected List<Item> result = null;
     protected int currentResultIndex = 0;
@@ -58,12 +60,7 @@ public abstract class SparkRuntimeIterator extends RuntimeIterator {
     }
 
     @Override
-    public boolean getDataFrame() {
-        throw new SparkRuntimeException("Iterator has no DataFrames", getMetadata());
-    }
-
-    @Override
-    public void reset(DynamicContext context){
+    public void reset(DynamicContext context) {
         super.reset(context);
         result = null;
     }
@@ -113,4 +110,22 @@ public abstract class SparkRuntimeIterator extends RuntimeIterator {
         currentResultIndex++;
         return item;
     }
+
+    @Override
+    public JavaRDD<Item> getRDD(DynamicContext context) {
+        if (isDataFrame()) {
+            Dataset<Row> df = this.getDataFrame(context);
+            JavaRDD<Row> rowRDD = df.javaRDD();
+            return rowRDD.map(new RowToItemMapper(getMetadata()));
+        } else {
+            return getRDDAux(context);
+        }
+    }
+
+    @Override
+    public Dataset<Row> getDataFrame(DynamicContext context) {
+        throw new SparkRuntimeException("DataFrames are not implemented for the iterator", getMetadata());
+    }
+
+    protected abstract JavaRDD<Item> getRDDAux(DynamicContext context);
 }
