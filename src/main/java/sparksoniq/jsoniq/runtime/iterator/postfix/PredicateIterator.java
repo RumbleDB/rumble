@@ -188,7 +188,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
                 filter instanceof BooleanRuntimeIterator
                 || filter instanceof AndOperationIterator
                 || filter instanceof OrOperationIterator
-                || filter instanceof OrOperationIterator
+                || filter instanceof NotOperationIterator
                 || filter instanceof ComparisonOperationIterator
             )
         ) {
