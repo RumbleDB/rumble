@@ -22,20 +22,20 @@ package sparksoniq.spark.iterator.function;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
-
 import sparksoniq.io.json.StringToItemMapper;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.RDDRuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.List;
 
-public class ParseJsonFunctionIterator extends SparkFunctionCallIterator {
+public class ParseJsonFunctionIterator extends RDDRuntimeIterator {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	public ParseJsonFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
+    public ParseJsonFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
     }
 
@@ -53,25 +53,20 @@ public class ParseJsonFunctionIterator extends SparkFunctionCallIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        if (this._rdd == null) {
-            JavaRDD<String> strings;
-            RuntimeIterator urlIterator = this._children.get(0);
-            urlIterator.open(context);
-            if (this._children.size() == 1)
-                strings = SparkSessionManager.getInstance().getJavaSparkContext().textFile(urlIterator.next().getStringValue());
-            else {
-                RuntimeIterator partitionsIterator = this._children.get(1);
-                partitionsIterator.open(_currentDynamicContext);
-                strings = SparkSessionManager.getInstance().getJavaSparkContext().textFile(
-                        urlIterator.next().getStringValue(),
-                        partitionsIterator.next().getIntegerValue());
-                partitionsIterator.close();
-            }
-
-            _rdd = strings.mapPartitions(new StringToItemMapper(getMetadata()));
-            urlIterator.close();
+        JavaRDD<String> strings;
+        RuntimeIterator urlIterator = this._children.get(0);
+        urlIterator.open(context);
+        if (this._children.size() == 1)
+            strings = SparkSessionManager.getInstance().getJavaSparkContext().textFile(urlIterator.next().getStringValue());
+        else {
+            RuntimeIterator partitionsIterator = this._children.get(1);
+            partitionsIterator.open(_currentDynamicContext);
+            strings = SparkSessionManager.getInstance().getJavaSparkContext().textFile(
+                    urlIterator.next().getStringValue(),
+                    partitionsIterator.next().getIntegerValue());
+            partitionsIterator.close();
         }
-        return _rdd;
+        urlIterator.close();
+        return strings.mapPartitions(new StringToItemMapper(getMetadata()));
     }
-
 }

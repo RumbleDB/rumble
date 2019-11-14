@@ -21,40 +21,54 @@
 package sparksoniq.jsoniq.runtime.iterator;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.SparkRuntimeException;
+import sparksoniq.io.json.JiqsItemParser;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
 
-public abstract class LocalRuntimeIterator extends RuntimeIterator {
+public abstract class RDDRuntimeIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
-    protected LocalRuntimeIterator(List<RuntimeIterator> children, IteratorMetadata iteratorMetadata) {
+    protected RDDRuntimeIterator(List<RuntimeIterator> children, IteratorMetadata iteratorMetadata) {
         super(children, iteratorMetadata);
+        this.parser = new JiqsItemParser();
     }
 
     @Override
-    public boolean isRDD() {
-        return false;
+    protected boolean initIsRDD() {
+        return true;
     }
 
-    @Override
-    public boolean isDataFrame() {
-        return false;
-    }
-
-    @Override
-    public JavaRDD<Item> getRDD(DynamicContext context) {
+    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
         throw new SparkRuntimeException("RDDs are not implemented for the iterator", getMetadata());
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext context) {
-        throw new SparkRuntimeException("DataFrames are not implemented for the iterator", getMetadata());
+    protected void openLocal() {
+        throw new SparkRuntimeException("Local evaluation are not implemented for the iterator", getMetadata());
+    }
+
+    @Override
+    protected void closeLocal() {
+        throw new SparkRuntimeException("Local evaluation are not implemented for the iterator", getMetadata());
+    }
+
+    @Override
+    protected void resetLocal(DynamicContext context) {
+        throw new SparkRuntimeException("Local evaluation are not implemented for the iterator", getMetadata());
+    }
+
+    @Override
+    protected boolean hasNextLocal() {
+        throw new SparkRuntimeException("Local evaluation are not implemented for the iterator", getMetadata());
+    }
+
+    @Override
+    protected Item nextLocal() {
+        throw new SparkRuntimeException("Local evaluation are not implemented for the iterator", getMetadata());
     }
 }

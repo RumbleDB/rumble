@@ -20,24 +20,21 @@
 
 package sparksoniq.spark.iterator.function;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Row;
 import org.apache.spark.sql.Dataset;
-import org.rumbledb.api.Item;
-
-import sparksoniq.io.json.RowToItemMapper;
+import org.apache.spark.sql.Row;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.RDDRuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.List;
 
-public class ParquetFileFunctionIterator extends SparkFunctionCallIterator {
+public class ParquetFileFunctionIterator extends RDDRuntimeIterator {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	public ParquetFileFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
+    public ParquetFileFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
     }
 
@@ -67,20 +64,4 @@ public class ParquetFileFunctionIterator extends SparkFunctionCallIterator {
         urlIterator.close();
         return rows;
     }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        if (this._rdd == null) {
-            Dataset<Row> rows;
-            RuntimeIterator urlIterator = this._children.get(0);
-            urlIterator.open(context);
-        	rows = SparkSessionManager.getInstance().getOrCreateSession()
-        	    .read().parquet(urlIterator.next().getStringValue());
-            JavaRDD<Row> rowrdd = rows.javaRDD();
-            _rdd = rowrdd.map(new RowToItemMapper(getMetadata()));
-            urlIterator.close();
-        }
-        return _rdd;
-    }
-
 }
