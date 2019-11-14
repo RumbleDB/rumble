@@ -48,20 +48,26 @@ public class DynamicContext implements Serializable, KryoSerializable {
 	    MIN
 	  }
 
-	  private Map<String, List<Item>> _variableValues;
+	private Map<String, List<Item>> _variableValues;
     private Map<String, Item> _variableCounts;
+    private long _position;
+    private long _last;
     private DynamicContext _parent;
 
     public DynamicContext() {
         this._parent = null;
         this._variableValues = new HashMap<>();
         this._variableCounts = new HashMap<>();
+        this._position = -1;
+        this._last = -1;
     }
 
     public DynamicContext(DynamicContext parent) {
         this._parent = parent;
         this._variableValues = new HashMap<>();
         this._variableCounts = new HashMap<>();
+        this._position = -1;
+        this._last = -1;
     }
 
     public DynamicContext(FlworTuple tuple) {
@@ -73,6 +79,8 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this._parent = parent;
         this._variableValues = new HashMap<>();
         this._variableCounts = new HashMap<>();
+        this._position = -1;
+        this._last = -1;
         setBindingsFromTuple(tuple);
     }
 
@@ -128,6 +136,8 @@ public class DynamicContext implements Serializable, KryoSerializable {
     public void removeAllVariables() {
         this._variableValues.clear();
         this._variableCounts.clear();
+        this._position = -1;
+        this._last = -1;
     }
 
     @Override
@@ -141,6 +151,34 @@ public class DynamicContext implements Serializable, KryoSerializable {
     public void read(Kryo kryo, Input input) {
         _parent = kryo.readObjectOrNull(input, DynamicContext.class);
         _variableValues = kryo.readObject(input, HashMap.class);
+    }
+    
+    public long getPosition() {
+    	if(_position != -1)
+    	{
+    		return _position;
+    	}
+    	if (_parent != null)
+            return _parent.getPosition();
+    	return -1;
+    }
+    
+    public void setPosition (long position) {
+    	_position = position;
+    }
+    
+    public long getLast() {
+    	if(_last != -1)
+    	{
+    		return _last;
+    	}
+    	if (_parent != null)
+            return _parent.getLast();
+    	return -1;
+    }
+    
+    public void setLast (long last) {
+    	_last = last;
     }
 }
 

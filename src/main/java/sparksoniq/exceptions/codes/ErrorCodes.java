@@ -45,6 +45,7 @@ public class ErrorCodes {
     public static final String UnimplementedErrorCode = "SPRKIQ0002";
 
 
+    public static final String AbsentPartOfDynamicContextCode = "XPDY0002";
     public static final String DynamicTypeTreatErrorCode = "XPDY0050";
     public static final String RuntimeExceptionErrorCode = "XPDY0130";
 

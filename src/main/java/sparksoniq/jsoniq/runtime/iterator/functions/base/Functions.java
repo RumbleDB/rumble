@@ -35,6 +35,8 @@ import sparksoniq.jsoniq.runtime.iterator.functions.binaries.Base64BinaryFunctio
 import sparksoniq.jsoniq.runtime.iterator.functions.binaries.HexBinaryFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.booleans.BooleanFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.io.JsonDocFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.context.PositionFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.context.LastFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.datetime.DateFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.datetime.DateTimeFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.datetime.TimeFunctionIterator;
@@ -130,6 +132,9 @@ public class Functions {
     static {
         userDefinedFunctions = new HashMap<>();
         builtInFunctions = new HashMap<>();
+
+        builtInFunctions.put(new FunctionIdentifier(POSITION, 0), PositionFunctionIterator.class);
+        builtInFunctions.put(new FunctionIdentifier(LAST, 0), LastFunctionIterator.class);
 
         builtInFunctions.put(new FunctionIdentifier(JSON_FILE, 1), ParseJsonFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(JSON_FILE, 2), ParseJsonFunctionIterator.class);
@@ -310,6 +315,14 @@ public class Functions {
     }
 
     public static class FunctionNames {
+        /**
+         * function that returns the context position
+         */
+        public static final String POSITION = "position";
+        /**
+         * function that returns the context size
+         */
+        public static final String LAST  = "last";
 
         /**
          * function that parses a JSON lines file
