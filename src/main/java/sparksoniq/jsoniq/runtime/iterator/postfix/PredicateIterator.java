@@ -182,15 +182,15 @@ public class PredicateIterator extends HybridRuntimeIterator {
         RuntimeIterator filter = this._children.get(1);
         JavaRDD<Item> childRDD = iterator.getRDD(dynamicContext);
         if(
-        		!filter.getVariableDependencies().containsKey("$position")
-                && !filter.getVariableDependencies().containsKey("$last")
-        		&& (
-        			filter instanceof BooleanRuntimeIterator
-        			|| filter instanceof AndOperationIterator
-        			|| filter instanceof OrOperationIterator
-        			|| filter instanceof NotOperationIterator
-        			|| filter instanceof ComparisonOperationIterator
-        		)
+            !filter.getVariableDependencies().containsKey("$position")
+            && !filter.getVariableDependencies().containsKey("$last")
+            && (
+                filter instanceof BooleanRuntimeIterator
+                || filter instanceof AndOperationIterator
+                    || filter instanceof OrOperationIterator
+                    || filter instanceof OrOperationIterator
+                    || filter instanceof ComparisonOperationIterator
+               )
         ) {
         	Function<Item, Boolean> transformation = new PredicateClosure(filter, dynamicContext);
             JavaRDD<Item> resultRDD = childRDD.filter(transformation);
