@@ -31,6 +31,11 @@ import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.operational.AndOperationIterator;
+import sparksoniq.jsoniq.runtime.iterator.operational.ComparisonOperationIterator;
+import sparksoniq.jsoniq.runtime.iterator.operational.NotOperationIterator;
+import sparksoniq.jsoniq.runtime.iterator.operational.OrOperationIterator;
+import sparksoniq.jsoniq.runtime.iterator.primary.BooleanRuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
@@ -176,7 +181,22 @@ public class PredicateIterator extends HybridRuntimeIterator {
         RuntimeIterator iterator = this._children.get(0);
         RuntimeIterator filter = this._children.get(1);
         JavaRDD<Item> childRDD = iterator.getRDD(dynamicContext);
-        if(filter.getVariableDependencies().containsKey("$position") || filter.getVariableDependencies().containsKey("last"))
+        if(
+        		!filter.getVariableDependencies().containsKey("$position")
+        		&& !filter.getVariableDependencies().containsKey("last")
+        		&& (
+        			filter instanceof BooleanRuntimeIterator
+        			|| filter instanceof AndOperationIterator
+        			|| filter instanceof OrOperationIterator
+        			|| filter instanceof NotOperationIterator
+        			|| filter instanceof ComparisonOperationIterator
+        		)
+        ) {
+        	Function<Item, Boolean> transformation = new PredicateClosure(filter, dynamicContext);
+            JavaRDD<Item> resultRDD = childRDD.filter(transformation);
+            return resultRDD;
+        }
+        else
         {
         	JavaPairRDD<Item, Long> zippedChildRDD = childRDD.zipWithIndex();
         	long last = 0;
@@ -187,11 +207,6 @@ public class PredicateIterator extends HybridRuntimeIterator {
         	Function<Tuple2<Item, Long>, Boolean> transformation = new PredicateClosureZipped(filter, dynamicContext, last);
             JavaPairRDD<Item, Long> resultRDD = zippedChildRDD.filter(transformation);
             return resultRDD.keys();
-        }
-        else {
-        	Function<Item, Boolean> transformation = new PredicateClosure(filter, dynamicContext);
-            JavaRDD<Item> resultRDD = childRDD.filter(transformation);
-            return resultRDD;
         }
     }
 
