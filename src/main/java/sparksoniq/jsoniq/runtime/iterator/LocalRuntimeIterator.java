@@ -39,11 +39,6 @@ public abstract class LocalRuntimeIterator extends RuntimeIterator {
     }
 
     @Override
-    public JavaRDD<Item> getRDD(DynamicContext context) {
-        throw new SparkRuntimeException("Iterator has no RDDs", getMetadata());
-    }
-
-    @Override
     public boolean isRDD() {
         return false;
     }
@@ -54,7 +49,12 @@ public abstract class LocalRuntimeIterator extends RuntimeIterator {
     }
 
     @Override
+    public JavaRDD<Item> getRDD(DynamicContext context) {
+        throw new SparkRuntimeException("RDDs are not implemented for the iterator", getMetadata());
+    }
+
+    @Override
     public Dataset<Row> getDataFrame(DynamicContext context) {
-        throw new SparkRuntimeException("Iterator has no DataFrames", getMetadata());
+        throw new SparkRuntimeException("DataFrames are not implemented for the iterator", getMetadata());
     }
 }

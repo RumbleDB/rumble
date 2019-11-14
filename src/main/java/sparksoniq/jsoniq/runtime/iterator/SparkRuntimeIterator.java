@@ -21,28 +21,17 @@
 package sparksoniq.jsoniq.runtime.iterator;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
-import sparksoniq.Main;
-import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparkRuntimeException;
 import sparksoniq.io.json.JiqsItemParser;
-import sparksoniq.io.json.RowToItemMapper;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.spark.SparkSessionManager;
 
 import java.util.List;
 
-public abstract class SparkRuntimeIterator extends RuntimeIterator {
-
+public abstract class SparkRuntimeIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    protected JiqsItemParser parser;
-    protected JavaRDD<Item> _rdd;
-    protected List<Item> result = null;
-    protected int currentResultIndex = 0;
 
     protected SparkRuntimeIterator(List<RuntimeIterator> children, IteratorMetadata iteratorMetadata) {
         super(children, iteratorMetadata);
@@ -50,82 +39,36 @@ public abstract class SparkRuntimeIterator extends RuntimeIterator {
     }
 
     @Override
-    public boolean isRDD() {
+    protected boolean initIsRDD() {
         return true;
     }
 
-    @Override
-    public boolean isDataFrame() {
-        return false;
+    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
+        throw new SparkRuntimeException("RDDs are not implemented for the iterator", getMetadata());
     }
 
     @Override
-    public void reset(DynamicContext context) {
-        super.reset(context);
-        result = null;
+    protected void openLocal() {
+        throw new SparkRuntimeException("Local evaluation are not implemented for the iterator", getMetadata());
     }
 
     @Override
-    public void close() {
-        super.close();
-        result = null;
+    protected void closeLocal() {
+        throw new SparkRuntimeException("Local evaluation are not implemented for the iterator", getMetadata());
     }
 
     @Override
-    public boolean hasNext() {
-        if (result == null) {
-            currentResultIndex = 0;
-            this._rdd = this.getRDD(_currentDynamicContext);
-            if (SparkSessionManager.LIMIT_COLLECT()) {
-                result = _rdd.take(SparkSessionManager.COLLECT_ITEM_LIMIT);
-                if (result.size() == SparkSessionManager.COLLECT_ITEM_LIMIT) {
-                    if (Main.terminal == null) {
-                        System.out.println("Results have been truncated to:" + SparkSessionManager.COLLECT_ITEM_LIMIT
-                                + " items. This value can be configured with the --result-size parameter at startup.\n");
-                    } else {
-                        Main.terminal.output("\nWarning: Results have been truncated to: " + SparkSessionManager.COLLECT_ITEM_LIMIT
-                                + " items. This value can be configured with the --result-size parameter at startup.\n");
-                    }
-                }
-            } else {
-                result = _rdd.collect();
-            }
-            _hasNext = !result.isEmpty();
-        }
-        return _hasNext;
+    protected void resetLocal(DynamicContext context) {
+        throw new SparkRuntimeException("Local evaluation are not implemented for the iterator", getMetadata());
     }
 
     @Override
-    public Item next() {
-        if (!this._isOpen)
-            throw new IteratorFlowException("Runtime iterator is not open", getMetadata());
-
-        if (!(currentResultIndex <= result.size() - 1))
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.getClass().getSimpleName(),
-                    getMetadata());
-        if (currentResultIndex == result.size() - 1)
-            this._hasNext = false;
-
-        Item item = result.get(currentResultIndex);
-        currentResultIndex++;
-        return item;
+    protected boolean hasNextLocal() {
+        throw new SparkRuntimeException("Local evaluation are not implemented for the iterator", getMetadata());
     }
 
     @Override
-    public JavaRDD<Item> getRDD(DynamicContext context) {
-        if (isDataFrame()) {
-            Dataset<Row> df = this.getDataFrame(context);
-            JavaRDD<Row> rowRDD = df.javaRDD();
-            return rowRDD.map(new RowToItemMapper(getMetadata()));
-        } else {
-            return getRDDAux(context);
-        }
+    protected Item nextLocal() {
+        throw new SparkRuntimeException("Local evaluation are not implemented for the iterator", getMetadata());
     }
-
-    @Override
-    public Dataset<Row> getDataFrame(DynamicContext context) {
-        throw new SparkRuntimeException("DataFrames are not implemented for the iterator", getMetadata());
-    }
-
-    protected abstract JavaRDD<Item> getRDDAux(DynamicContext context);
 }

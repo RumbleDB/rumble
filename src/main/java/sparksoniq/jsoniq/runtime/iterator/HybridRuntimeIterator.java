@@ -40,11 +40,10 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     private static final long serialVersionUID = 1L;
     protected JiqsItemParser parser;
     protected List<Item> result = null;
-    protected int currentResultIndex = 0;
-
     protected JavaRDD<Item> _rdd;
-    protected boolean isRDDInitialized = false;
-    protected boolean _isRDD;
+    private int currentResultIndex = 0;
+    private boolean isRDDInitialized = false;
+    private boolean _isRDD;
 
     protected HybridRuntimeIterator(List<RuntimeIterator> children, IteratorMetadata iteratorMetadata) {
         super(children, iteratorMetadata);
@@ -156,9 +155,9 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         throw new SparkRuntimeException("DataFrames are not implemented for the iterator", getMetadata());
     }
 
-    protected abstract boolean initIsRDD();
-
     protected abstract JavaRDD<Item> getRDDAux(DynamicContext context);
+
+    protected abstract boolean initIsRDD();
 
     protected abstract void openLocal();
 
