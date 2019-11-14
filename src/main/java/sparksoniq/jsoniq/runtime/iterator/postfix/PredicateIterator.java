@@ -82,7 +82,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
         {
             _position = 0;
     	    _mustMaintainPosition = true;
-    	}
+        }
         _iterator.open(_currentDynamicContext);
         setNextResult();
     }
