@@ -112,7 +112,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
     }
     
     private void setLast() {
-    	long last = 0;
+        long last = 0;
         _iterator.open(_currentDynamicContext);
         while(_iterator.hasNext())
         {
