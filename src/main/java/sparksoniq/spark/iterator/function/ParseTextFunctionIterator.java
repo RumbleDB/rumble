@@ -57,13 +57,18 @@ public class ParseTextFunctionIterator extends RDDRuntimeIterator {
         RuntimeIterator urlIterator = this._children.get(0);
         urlIterator.open(context);
         if (this._children.size() == 1)
-            strings = SparkSessionManager.getInstance().getJavaSparkContext().textFile(urlIterator.next().getStringValue());
+            strings = SparkSessionManager.getInstance()
+                .getJavaSparkContext()
+                .textFile(urlIterator.next().getStringValue());
         else {
             RuntimeIterator partitionsIterator = this._children.get(1);
             partitionsIterator.open(_currentDynamicContext);
-            strings = SparkSessionManager.getInstance().getJavaSparkContext().textFile(
+            strings = SparkSessionManager.getInstance()
+                .getJavaSparkContext()
+                .textFile(
                     urlIterator.next().getStringValue(),
-                    partitionsIterator.next().getIntegerValue());
+                    partitionsIterator.next().getIntegerValue()
+                );
             partitionsIterator.close();
         }
         urlIterator.close();
