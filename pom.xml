@@ -162,10 +162,10 @@
                 </executions>
                 <configuration>
                     <java>
-                        <googleJavaFormat>
-                            <version>1.7</version>
-                            <style>GOOGLE</style>
-                        </googleJavaFormat>
+                        <eclipse>
+                            <file>${basedir}/eclipse-fmt.xml</file>
+                            <version>4.7.1</version>
+                        </eclipse>
                     </java>
                 </configuration>
             </plugin>
