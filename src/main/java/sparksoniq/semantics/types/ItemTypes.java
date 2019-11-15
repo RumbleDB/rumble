@@ -35,9 +35,15 @@ public enum ItemTypes {
     BooleanItem,
 
     DurationItem,
+    YearMonthDurationItem,
+    DayTimeDurationItem,
+
+    DateTimeItem,
+    DateItem,
 
     HexBinaryItem,
     Base64BinaryItem,
+    TimeItem,
 
     FunctionItem,
 

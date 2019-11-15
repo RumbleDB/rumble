@@ -23,12 +23,10 @@ package sparksoniq.jsoniq.runtime.iterator.operational.base;
 import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
-import sparksoniq.jsoniq.item.*;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 
 import org.rumbledb.api.Item;
@@ -65,7 +63,8 @@ public abstract class BinaryOperationBaseIterator extends LocalRuntimeIterator {
                     ItemTypes.getItemTypeName(right.getClass().getSimpleName()));
             throw new NonAtomicKeyException(message, getMetadata().getExpressionMetadata());
         }
-        if (!left.isNumeric() || !right.isNumeric()) {
+        if ((!left.isNumeric() && !left.isYearMonthDuration() && !left.isDayTimeDuration() && !left.hasDateTime()) ||
+                (!right.isNumeric() && !right.isYearMonthDuration() && !right.isDayTimeDuration() && !right.hasDateTime())) {
             throw new UnexpectedTypeException(" \"" + operator.name().toLowerCase() + "\": operation not possible with parameters of type \""
                     + ItemTypes.getItemTypeName(left.getClass().getSimpleName()) + "\" and \""
                     + ItemTypes.getItemTypeName(right.getClass().getSimpleName()) + "\"", getMetadata());

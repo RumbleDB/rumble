@@ -39,9 +39,8 @@ import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.ReturnClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.WhereClause;
-import sparksoniq.jsoniq.compiler.translator.expr.module.FunctionDeclarationExpression;
-import sparksoniq.jsoniq.compiler.translator.expr.module.MainModuleExpression;
-import sparksoniq.jsoniq.compiler.translator.expr.module.PrologExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.module.MainModule;
+import sparksoniq.jsoniq.compiler.translator.expr.module.Prolog;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.AdditiveExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.AndExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.CastExpression;
@@ -56,13 +55,16 @@ import sparksoniq.jsoniq.compiler.translator.expr.operational.StringConcatExpres
 import sparksoniq.jsoniq.compiler.translator.expr.operational.TreatExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.UnaryExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.PostFixExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.ArgumentPlaceholder;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.ArrayConstructor;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.BooleanLiteral;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.ContextExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.DecimalLiteral;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.DoubleLiteral;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionCall;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionDeclaration;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.IntegerLiteral;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.NamedFunctionRef;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.NullLiteral;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.ObjectConstructor;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.ParenthesizedExpression;
@@ -94,15 +96,11 @@ public abstract class AbstractExpressionOrClauseVisitor<T> {
     }
 
     // region module
-    public T visitMainModuleExpression(MainModuleExpression expression, T argument) {
+    public T visitMainModule(MainModule expression, T argument) {
         return defaultAction(expression, argument);
     }
 
-    public T visitPrologExpression(PrologExpression expression, T argument) {
-        return defaultAction(expression, argument);
-    }
-
-    public T visitFunctionDeclarationExpression(FunctionDeclarationExpression expression, T argument) {
+    public T visitProlog(Prolog expression, T argument) {
         return defaultAction(expression, argument);
     }
 
@@ -182,6 +180,18 @@ public abstract class AbstractExpressionOrClauseVisitor<T> {
     }
 
     public T visitParenthesizedExpression(ParenthesizedExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitFunctionDeclaration(FunctionDeclaration expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitNamedFunctionRef(NamedFunctionRef expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitArgumentPlaceholder(ArgumentPlaceholder expression, T argument) {
         return defaultAction(expression, argument);
     }
     //endregion

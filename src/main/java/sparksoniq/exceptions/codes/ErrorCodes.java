@@ -22,6 +22,8 @@ package sparksoniq.exceptions.codes;
 
 public class ErrorCodes {
 
+    public static final String ErrorRetrievingResourceCode = "FODC0002";
+
     public static final String CastErrorCode = "FORG0001";
     public static final String ZeroOrOneErrorCode = "FORG0003";
     public static final String OneOrMoreErrorCode = "FORG0004";
@@ -36,10 +38,14 @@ public class ErrorCodes {
     public static final String InvalidSelectorErrorCode = "JNTY0018";
 
 
+    public static final String FunctionsNonSerializable = "SENR0001";
+
+
     public static final String CliErrorCode = "SPRKIQ0001";
     public static final String UnimplementedErrorCode = "SPRKIQ0002";
 
 
+    public static final String AbsentPartOfDynamicContextCode = "XPDY0002";
     public static final String DynamicTypeTreatErrorCode = "XPDY0050";
     public static final String RuntimeExceptionErrorCode = "XPDY0130";
 
@@ -60,4 +66,6 @@ public class ErrorCodes {
     public static final String DuplicateParamName = "XQST0039";
     public static final String UnknownCastTypeErrorCode = "XQST0052";
     public static final String InvalidGroupVariableErrorCode = "XQST0094";
+
+    public static final String InvalidTimezoneValue = "FODT0003";
 }

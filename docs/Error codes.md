@@ -1,6 +1,8 @@
 # Error codes
 
-- [JNDY0003] - Duplicate pair name. t is a dynamic error if two pairs in an object
+- [FODC0002] - Error retrieving resource.
+
+- [JNDY0003] - Duplicate pair name. It is a dynamic error if two pairs in an object
  constructor or in a simple object union have the same name.
 
 - [JNTY0004] - Unexpected non-atomic element. Raised when objects
@@ -10,10 +12,14 @@ or arrays are supplied where an atomic element is expected.
 It is a type error if there is not exactly one supplied parameter
 for an object or array selector.
 
+- [SENR0001] - Serialization error. Function items can not be serialized
+
 - [SPRKIQ0001] - CLI error. Raised when invalid parameters are supplied at launch.
 
 - [SPRKIQ0002] - CLI error. Unimplemented feature error.
 Raised when a JSONiq feature that is not yet implemented in Rumble is used.
+
+- [XPDY0002] - It is a dynamic error if evaluation of an expression relies on some part of the dynamic context that is absent.
 
 - [XPDY0050] - Dynamic type treat error. It is a dynamic error
 if the dynamic type of the operand of a treat expression does not match

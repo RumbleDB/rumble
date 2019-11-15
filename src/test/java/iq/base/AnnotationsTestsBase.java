@@ -80,12 +80,12 @@ public class AnnotationsTestsBase {
                 JsoniqExpressionTreeVisitor completeVisitor = ((JsoniqExpressionTreeVisitor) visitor);
                 // generate static context
                 new StaticContextVisitor().visit(
-                        completeVisitor.getMainModuleExpression(),
-                        completeVisitor.getMainModuleExpression().getStaticContext()
+                        completeVisitor.getMainModule(),
+                        completeVisitor.getMainModule().getStaticContext()
                 );
                 // generate iterators
                 Functions.clearUserDefinedFunctions();
-                runtimeIterator = new RuntimeIteratorVisitor().visit(completeVisitor.getMainModuleExpression(), null);
+                runtimeIterator = new RuntimeIteratorVisitor().visit(completeVisitor.getMainModule(), null);
             }
             // PARSING
         } catch (ParsingException exception) {

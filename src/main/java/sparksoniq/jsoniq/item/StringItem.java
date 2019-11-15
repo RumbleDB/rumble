@@ -94,6 +94,16 @@ public class StringItem extends AtomicItem {
                 return ItemFactory.getInstance().createNullItem();
             case DurationItem:
                 return ItemFactory.getInstance().createDurationItem(DurationItem.getDurationFromString(this.getStringValue(), AtomicTypes.DurationItem));
+            case YearMonthDurationItem:
+                return ItemFactory.getInstance().createYearMonthDurationItem(DurationItem.getDurationFromString(this.getStringValue(), AtomicTypes.YearMonthDurationItem));
+            case DayTimeDurationItem:
+                return ItemFactory.getInstance().createDayTimeDurationItem(DurationItem.getDurationFromString(this.getStringValue(), AtomicTypes.DayTimeDurationItem));
+            case DateTimeItem:
+                return ItemFactory.getInstance().createDateTimeItem(this.getStringValue());
+            case DateItem:
+                return ItemFactory.getInstance().createDateItem(this.getStringValue());
+            case TimeItem:
+                return ItemFactory.getInstance().createTimeItem(this.getStringValue());
             case HexBinaryItem:
                 return ItemFactory.getInstance().createHexBinaryItem(this.getStringValue());
             case Base64BinaryItem:
@@ -130,12 +140,21 @@ public class StringItem extends AtomicItem {
                 return isNullLiteral(this.getValue());
             } else if (itemType == AtomicTypes.DurationItem) {
                 DurationItem.getDurationFromString(this._value, AtomicTypes.DurationItem);
+            } else if (itemType == AtomicTypes.YearMonthDurationItem) {
+                DurationItem.getDurationFromString(this.getValue(), AtomicTypes.YearMonthDurationItem);
+            } else if (itemType == AtomicTypes.DayTimeDurationItem) {
+                DurationItem.getDurationFromString(this.getValue(), AtomicTypes.DayTimeDurationItem);
+            } else if (itemType == AtomicTypes.DateTimeItem) {
+                DateTimeItem.parseDateTime(this.getValue(), AtomicTypes.DateTimeItem);
+            } else if (itemType == AtomicTypes.DateItem) {
+                DateTimeItem.parseDateTime(this.getValue(), AtomicTypes.DateItem);
+            } else if (itemType == AtomicTypes.TimeItem) {
+                DateTimeItem.parseDateTime(this.getValue(), AtomicTypes.TimeItem);
             } else if (itemType == AtomicTypes.HexBinaryItem) {
                 HexBinaryItem.parseHexBinaryString(this.getValue());
             } else if (itemType == AtomicTypes.Base64BinaryItem) {
                 Base64BinaryItem.parseBase64BinaryString(this.getValue());
-            }
-            else return isBooleanLiteral(this.getValue());
+            } else return isBooleanLiteral(this.getValue());
         } catch (UnsupportedOperationException | IllegalArgumentException e) {
             return false;
         }

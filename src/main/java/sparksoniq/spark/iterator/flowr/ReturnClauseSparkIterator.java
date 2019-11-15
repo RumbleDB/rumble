@@ -40,7 +40,6 @@ import java.util.TreeMap;
 
 public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
-
     private static final long serialVersionUID = 1L;
     private RuntimeTupleIterator _child;
     private DynamicContext _tupleContext;   // re-use same DynamicContext object for efficiency
@@ -59,7 +58,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JavaRDD<Item> getRDD(DynamicContext context) {
+    public JavaRDD<Item> getRDDAux(DynamicContext context) {
         RuntimeIterator expression = this._children.get(0);
         Dataset<Row> df = this._child.getDataFrame(context, expression.getVariableDependencies());
         StructType oldSchema = df.schema();

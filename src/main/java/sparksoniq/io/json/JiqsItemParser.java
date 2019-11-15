@@ -24,15 +24,28 @@ import com.jsoniter.JsonIterator;
 import com.jsoniter.ValueType;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.ItemFactory;
+import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.sql.Date;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.codec.binary.Hex;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.expressions.javalang.typed;
+import org.apache.spark.sql.types.ArrayType;
+import org.apache.spark.sql.types.DataType;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
+import org.joda.time.DateTime;
+import java.time.Instant;
 import org.rumbledb.api.Item;
 
 public class JiqsItemParser implements Serializable {
@@ -51,11 +64,16 @@ public class JiqsItemParser implements Serializable {
                 {
                     return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(number));
                 }
-                if(number.contains("."))
+                if(number.contains(".") || number.length() >= 12)
                 {
                     return ItemFactory.getInstance().createDecimalItem(new BigDecimal(number));
                 }
-                return ItemFactory.getInstance().createIntegerItem(Integer.parseInt(number));
+                try {
+                	return ItemFactory.getInstance().createIntegerItem(Integer.parseInt(number));
+                } catch (NumberFormatException e)
+                {
+                	return ItemFactory.getInstance().createDecimalItem(new BigDecimal(number));
+                }
             }
             if (object.whatIsNext().equals(ValueType.BOOLEAN))
                 return ItemFactory.getInstance().createBooleanItem(object.readBoolean());
@@ -88,4 +106,126 @@ public class JiqsItemParser implements Serializable {
             throw new SparksoniqRuntimeException("IO error while parsing. JSON is not well-formed!");
         }
     }
+
+	public static Item getItemFromRow(Row row, IteratorMetadata metadata) {
+		List<String> keys = new ArrayList<String>();
+		List<Item> values = new ArrayList<Item>();
+		StructType schema = row.schema();
+		String[] fieldnames = schema.fieldNames();
+		StructField[] fields = schema.fields();
+		for(int i = 0; i < fieldnames.length; ++i) {
+			StructField field = fields[i];
+			DataType fieldType = field.dataType();
+			keys.add(field.name());
+			addValue(row, i, null, fieldType, values, metadata);
+		}
+		return ItemFactory.getInstance().createObjectItem(keys, values, ItemMetadata.fromIteratorMetadata(metadata));
+	}
+	
+	public static void addValue(Row row, int i, Object o, DataType fieldType, List<Item> values, IteratorMetadata metadata)
+	{
+		if(row != null && row.isNullAt(i)) {
+			values.add(ItemFactory.getInstance().createNullItem());
+		} else if(fieldType.equals(DataTypes.StringType)) {
+			String s;
+			if(row != null)
+				s = row.getString(i);
+			else
+				s = (String) o;
+			values.add(ItemFactory.getInstance().createStringItem(s));
+		} else if(fieldType.equals(DataTypes.BooleanType)) {
+			boolean b;
+			if(row != null)
+				b = row.getBoolean(i);
+			else
+				b = ((Boolean)o).booleanValue();
+			values.add(ItemFactory.getInstance().createBooleanItem(b));
+		} else if(fieldType.equals(DataTypes.DoubleType)) {
+			double value;
+			if(row != null)
+				value = row.getDouble(i);
+			else
+				value = ((Double)o).doubleValue();
+			values.add(ItemFactory.getInstance().createDoubleItem(value));
+		} else if(fieldType.equals(DataTypes.IntegerType)) {
+			int value;
+			if(row != null)
+				value = row.getInt(i);
+			else
+				value = ((Integer)o).intValue();
+			values.add(ItemFactory.getInstance().createIntegerItem(value));
+		} else if(fieldType.equals(DataTypes.FloatType)) {
+			float value;
+			if(row != null)
+				value = row.getFloat(i);
+			else
+				value = ((Float)o).floatValue();
+			values.add(ItemFactory.getInstance().createDoubleItem(value));
+		} else if(fieldType.equals(DataTypes.LongType)) {
+			BigDecimal value;
+			if(row != null)
+				value = new BigDecimal(row.getLong(i));
+			else
+				value = new BigDecimal(((Long)o).longValue());
+			values.add(ItemFactory.getInstance().createDecimalItem(value));
+		} else if(fieldType.equals(DataTypes.NullType)) {
+			values.add(ItemFactory.getInstance().createNullItem());
+		} else if(fieldType.equals(DataTypes.ShortType)) {
+			short value;
+			if(row != null)
+				value = row.getShort(i);
+			else
+				value = ((Short)o).shortValue();
+			values.add(ItemFactory.getInstance().createIntegerItem(value));
+		} else if(fieldType.equals(DataTypes.TimestampType)) {
+			Timestamp value;
+			if(row != null)
+				value = row.getTimestamp(i);
+			else
+				value = (Timestamp)o;
+			Instant instant = value.toInstant();
+			DateTime dt = new DateTime(instant);
+			values.add(ItemFactory.getInstance().createDateTimeItem(dt, false));
+		} else if(fieldType.equals(DataTypes.DateType)) {
+			Date value;
+			if(row != null)
+				value = row.getDate(i);
+			else
+				value = (Date)o;
+			Instant instant = value.toInstant();
+			DateTime dt = new DateTime(instant);
+			values.add(ItemFactory.getInstance().createDateItem(dt, false));
+		} else if(fieldType.equals(DataTypes.BinaryType)) {
+			byte[] value;
+			if(row != null)
+				value = (byte[])row.get(i);
+			else
+				value = (byte[])o;
+			values.add(ItemFactory.getInstance().createHexBinaryItem(Hex.encodeHexString(value)));
+		} else if(fieldType instanceof StructType) {
+			Row value;
+			if(row != null)
+				value = row.getStruct(i);
+			else
+				value = (Row)o;
+			values.add(getItemFromRow(value, metadata) );
+		} else if(fieldType instanceof ArrayType) {
+			ArrayType arrayType = (ArrayType)fieldType;
+			DataType dataType = arrayType.elementType();
+			List<Item> members = new ArrayList<Item>();
+			List<Object> objects;
+			if(row != null)
+				objects = row.getList(i);
+			else
+				objects = (List<Object>)o;
+			for ( int j = 0; j < objects.size(); ++j)
+			{
+				addValue(null, 0, objects.get(j), dataType, members, metadata);
+			}
+			values.add(ItemFactory.getInstance().createArrayItem(members));
+		} else
+		{
+			throw new RuntimeException("DataFrame type unsupported: " + fieldType.json());
+		}
+	}
 }
