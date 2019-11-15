@@ -163,8 +163,7 @@
                 <configuration>
                     <java>
                         <eclipse>
-                            <file>${basedir}/eclipse-fmt.xml</file>
-                            <version>4.7.1</version>
+                            <file>${basedir}/codetemplates-eclipse.xml</file>
                         </eclipse>
                     </java>
                 </configuration>
