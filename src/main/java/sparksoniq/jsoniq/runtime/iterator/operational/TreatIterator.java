@@ -15,6 +15,7 @@ import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
 
 import java.util.Collections;
+import java.util.List;
 
 
 public class TreatIterator extends HybridRuntimeIterator {
@@ -92,7 +93,7 @@ public class TreatIterator extends HybridRuntimeIterator {
         _currentDynamicContext = dynamicContext;
         JavaRDD<Item> childRDD = _iterator.getRDD(dynamicContext);
 
-        long count = childRDD.count();
+        int count = childRDD.take(2).size();
         checkEmptySequence(count);
         checkItemsSize(count);
         Function<Item, Boolean> transformation = new TreatAsClosure(_sequenceType, getMetadata());
