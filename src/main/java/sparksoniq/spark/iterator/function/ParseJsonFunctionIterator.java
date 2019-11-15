@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -33,9 +33,9 @@ import java.util.List;
 
 public class ParseJsonFunctionIterator extends SparkFunctionCallIterator {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	public ParseJsonFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
+    public ParseJsonFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
     }
 
@@ -58,13 +58,18 @@ public class ParseJsonFunctionIterator extends SparkFunctionCallIterator {
             RuntimeIterator urlIterator = this._children.get(0);
             urlIterator.open(context);
             if (this._children.size() == 1)
-                strings = SparkSessionManager.getInstance().getJavaSparkContext().textFile(urlIterator.next().getStringValue());
+                strings = SparkSessionManager.getInstance()
+                    .getJavaSparkContext()
+                    .textFile(urlIterator.next().getStringValue());
             else {
                 RuntimeIterator partitionsIterator = this._children.get(1);
                 partitionsIterator.open(_currentDynamicContext);
-                strings = SparkSessionManager.getInstance().getJavaSparkContext().textFile(
+                strings = SparkSessionManager.getInstance()
+                    .getJavaSparkContext()
+                    .textFile(
                         urlIterator.next().getStringValue(),
-                        partitionsIterator.next().getIntegerValue());
+                        partitionsIterator.next().getIntegerValue()
+                    );
                 partitionsIterator.close();
             }
 

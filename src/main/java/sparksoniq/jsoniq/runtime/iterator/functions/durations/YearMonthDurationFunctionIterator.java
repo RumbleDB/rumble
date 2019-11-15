@@ -24,7 +24,8 @@ public class YearMonthDurationFunctionIterator extends LocalFunctionCallIterator
 
     public YearMonthDurationFunctionIterator(
             List<RuntimeIterator> parameters,
-            IteratorMetadata iteratorMetadata) {
+            IteratorMetadata iteratorMetadata
+    ) {
         super(parameters, iteratorMetadata);
     }
 
@@ -33,17 +34,25 @@ public class YearMonthDurationFunctionIterator extends LocalFunctionCallIterator
         if (this._hasNext) {
             this._hasNext = false;
             try {
-                Period period = DurationItem.getDurationFromString(_durationStringItem.getStringValue(), AtomicTypes.YearMonthDurationItem);
+                Period period = DurationItem.getDurationFromString(
+                    _durationStringItem.getStringValue(),
+                    AtomicTypes.YearMonthDurationItem
+                );
                 return ItemFactory.getInstance().createYearMonthDurationItem(period);
             } catch (UnsupportedOperationException | IllegalArgumentException e) {
-                String message = String.format("\"%s\": value of type %s is not castable to type %s",
-                        _durationStringItem.serialize(), "string", "yearMonthDuration");
+                String message = String.format(
+                    "\"%s\": value of type %s is not castable to type %s",
+                    _durationStringItem.serialize(),
+                    "string",
+                    "yearMonthDuration"
+                );
                 throw new CastException(message, getMetadata());
             }
         } else
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " yearMonthDuration function",
-                    getMetadata());
+                    getMetadata()
+            );
     }
 
     @Override
@@ -51,11 +60,15 @@ public class YearMonthDurationFunctionIterator extends LocalFunctionCallIterator
         super.open(context);
         try {
             _durationStringItem = this.getSingleItemOfTypeFromIterator(
-                    this._children.get(0),
-                    StringItem.class,
-                    new UnknownFunctionCallException("yearMonthDuration", this._children.size(), getMetadata()));
+                this._children.get(0),
+                StringItem.class,
+                new UnknownFunctionCallException("yearMonthDuration", this._children.size(), getMetadata())
+            );
         } catch (UnknownFunctionCallException e) {
-            throw new UnexpectedTypeException(" Sequence of more than one item can not be cast to type with quantifier '1' or '?'", getMetadata());
+            throw new UnexpectedTypeException(
+                    " Sequence of more than one item can not be cast to type with quantifier '1' or '?'",
+                    getMetadata()
+            );
         }
         this._hasNext = _durationStringItem != null;
     }

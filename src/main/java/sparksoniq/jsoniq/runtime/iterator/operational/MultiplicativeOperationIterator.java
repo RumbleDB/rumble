@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -41,12 +41,16 @@ import sparksoniq.semantics.types.ItemTypes;
 public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator {
 
 
-	private static final long serialVersionUID = 1L;
-	Item _left;
+    private static final long serialVersionUID = 1L;
+    Item _left;
     Item _right;
 
-    public MultiplicativeOperationIterator(RuntimeIterator left, RuntimeIterator right,
-                                           OperationalExpressionBase.Operator operator, IteratorMetadata iteratorMetadata) {
+    public MultiplicativeOperationIterator(
+            RuntimeIterator left,
+            RuntimeIterator right,
+            OperationalExpressionBase.Operator operator,
+            IteratorMetadata iteratorMetadata
+    ) {
         super(left, right, operator, iteratorMetadata);
     }
 
@@ -66,7 +70,10 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
             this.checkBinaryOperation(_left, _right, _operator);
             this._hasNext = true;
             if (_leftIterator.hasNext() || _rightIterator.hasNext())
-                throw new UnexpectedTypeException("Sequence of more than one item can not be promoted to parameter type atomic of function add()", getMetadata());
+                throw new UnexpectedTypeException(
+                        "Sequence of more than one item can not be promoted to parameter type atomic of function add()",
+                        getMetadata()
+                );
         }
         _leftIterator.close();
         _rightIterator.close();
@@ -77,7 +84,7 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
         if (this._hasNext) {
             this._hasNext = false;
             try {
-                switch(_operator) {
+                switch (_operator) {
                     case MUL:
                         return _left.multiply(_right);
                     case DIV:
@@ -90,9 +97,16 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
                         throw new IteratorFlowException("Non recognized multiplicative operator.", getMetadata());
                 }
             } catch (RuntimeException e) {
-                throw new UnexpectedTypeException(" \"" + _operator.name().toLowerCase() + "\": operation not possible with parameters of type \""
-                        + ItemTypes.getItemTypeName(_left.getClass().getSimpleName()) + "\" and \""
-                        + ItemTypes.getItemTypeName(_right.getClass().getSimpleName()) + "\"", getMetadata());
+                throw new UnexpectedTypeException(
+                        " \""
+                            + _operator.name().toLowerCase()
+                            + "\": operation not possible with parameters of type \""
+                            + ItemTypes.getItemTypeName(_left.getClass().getSimpleName())
+                            + "\" and \""
+                            + ItemTypes.getItemTypeName(_right.getClass().getSimpleName())
+                            + "\"",
+                        getMetadata()
+                );
             }
         }
         throw new IteratorFlowException("Multiplicative expression has non numeric args", getMetadata());

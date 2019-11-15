@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -54,8 +54,10 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
     @Override
     public StaticContext visitVariableReference(VariableReference expression, StaticContext argument) {
         if (argument == null || !argument.isInScope(expression.getVariableName()))
-            throw new UndeclaredVariableException("Uninitialized variable reference: " + expression.getVariableName(),
-                    expression.getMetadata());
+            throw new UndeclaredVariableException(
+                    "Uninitialized variable reference: " + expression.getVariableName(),
+                    expression.getMetadata()
+            );
         else {
             expression.setType(argument.getVariableSequenceType(expression.getVariableName()));
             return defaultAction(expression, argument);
@@ -78,7 +80,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
         return result;
     }
 
-    //region FLOWR clauses
+    // region FLOWR clauses
     @Override
     public StaticContext visitForClause(ForClause expression, StaticContext argument) {
         StaticContext result = argument;
@@ -102,16 +104,19 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
             result = this.visit(var, result);
         return result;
     }
-    //endregion
+    // endregion
 
-    //region FLOWR vars
+    // region FLOWR vars
     @Override
     public StaticContext visitForClauseVar(ForClauseVar expression, StaticContext argument) {
         StaticContext result = visitFlowrVarDeclaration(expression, argument);
         if (expression.getPositionalVariableReference() != null)
-            result.addVariable(expression.getPositionalVariableReference().getVariableName(),
-                    new SequenceType(new ItemType(ItemTypes.IntegerItem)), expression.getMetadata());
-        //TODO visit at...
+            result.addVariable(
+                expression.getPositionalVariableReference().getVariableName(),
+                new SequenceType(new ItemType(ItemTypes.IntegerItem)),
+                expression.getMetadata()
+            );
+        // TODO visit at...
         this.visit(expression.getExpression(), argument);
         return result;
     }
@@ -140,22 +145,23 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
     public StaticContext visitCountClause(CountClause expression, StaticContext argument) {
         StaticContext result = new StaticContext(argument);
         result.addVariable(
-                expression.getCountVariable().getVariableName(),
-                new SequenceType(new ItemType(ItemTypes.IntegerItem), SequenceType.Arity.One),
-                expression.getMetadata()
+            expression.getCountVariable().getVariableName(),
+            new SequenceType(new ItemType(ItemTypes.IntegerItem), SequenceType.Arity.One),
+            expression.getMetadata()
         );
         return result;
     }
 
     private StaticContext visitFlowrVarDeclaration(FlworVarDecl expression, StaticContext argument) {
         StaticContext result = new StaticContext(argument);
-        //TODO for now we only suppot as/default, no inference, flags
-        SequenceType type = expression.getAsSequence() == null ?
-                new SequenceType() : expression.getAsSequence().getSequence();
+        // TODO for now we only suppot as/default, no inference, flags
+        SequenceType type = expression.getAsSequence() == null
+            ? new SequenceType()
+            : expression.getAsSequence().getSequence();
         result.addVariable(expression.getVariableReference().getVariableName(), type, expression.getMetadata());
         return result;
     }
-    //endregion
+    // endregion
 
     @Override
     public StaticContext visitContextExpr(ContextExpression expression, StaticContext argument) {
@@ -177,8 +183,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
     @Override
     public StaticContext visitQuantifiedExpressionVar(QuantifiedExpressionVar expression, StaticContext argument) {
         StaticContext result = new StaticContext(argument);
-        SequenceType type = expression.getSequenceType() == null ?
-                new SequenceType() : expression.getSequenceType();
+        SequenceType type = expression.getSequenceType() == null ? new SequenceType() : expression.getSequenceType();
         result.addVariable(expression.getVariableReference().getVariableName(), type, expression.getMetadata());
         this.visit(expression.getExpression(), argument);
         return result;

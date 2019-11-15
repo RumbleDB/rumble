@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -37,8 +37,8 @@ import org.rumbledb.api.Item;
 public class RoundFunctionIterator extends LocalFunctionCallIterator {
 
 
-	private static final long serialVersionUID = 1L;
-	private RuntimeIterator _iterator;
+    private static final long serialVersionUID = 1L;
+    private RuntimeIterator _iterator;
 
     public RoundFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
@@ -69,7 +69,10 @@ public class RoundFunctionIterator extends LocalFunctionCallIterator {
                 if (precisionIterator.hasNext()) {
                     precision = precisionIterator.next();
                 } else {
-                    throw new UnexpectedTypeException("Type error; Precision parameter can't be empty sequence ", getMetadata());
+                    throw new UnexpectedTypeException(
+                            "Type error; Precision parameter can't be empty sequence ",
+                            getMetadata()
+                    );
                 }
             }
             // if second param is not given precision is set as 0 (rounds to a whole number)
@@ -92,8 +95,14 @@ public class RoundFunctionIterator extends LocalFunctionCallIterator {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
                 }
             } else {
-                throw new UnexpectedTypeException("Round expression has non numeric args " +
-                        value.serialize() + ", " + precision.serialize(), getMetadata());
+                throw new UnexpectedTypeException(
+                        "Round expression has non numeric args "
+                            +
+                            value.serialize()
+                            + ", "
+                            + precision.serialize(),
+                        getMetadata()
+                );
             }
 
         }

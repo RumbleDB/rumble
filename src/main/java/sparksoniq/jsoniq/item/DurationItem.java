@@ -33,10 +33,31 @@ public class DurationItem extends AtomicItem {
     private static final String duSecondFrag = "(((\\d)+)|(\\.(\\d)+)|((\\d)+\\.(\\d)+))S";
 
     private static final String duYearMonthFrag = "((" + duYearFrag + "(" + duMonthFrag + ")?)|" + duMonthFrag + ")";
-    private static final String duTimeFrag = "T((" + duHourFrag + "(" + duMinuteFrag + ")?" + "(" + duSecondFrag + ")?)|" +
-            "(" + duMinuteFrag + "(" + duSecondFrag + ")?)|" + duSecondFrag + ")";
+    private static final String duTimeFrag = "T(("
+        + duHourFrag
+        + "("
+        + duMinuteFrag
+        + ")?"
+        + "("
+        + duSecondFrag
+        + ")?)|"
+        +
+        "("
+        + duMinuteFrag
+        + "("
+        + duSecondFrag
+        + ")?)|"
+        + duSecondFrag
+        + ")";
     private static final String duDayTimeFrag = "((" + duDayFrag + "(" + duTimeFrag + ")?)|" + duTimeFrag + ")";
-    private static final String durationLiteral = prefix + "((" + duYearMonthFrag + "(" + duDayTimeFrag + ")?)|" + duDayTimeFrag +")";
+    private static final String durationLiteral = prefix
+        + "(("
+        + duYearMonthFrag
+        + "("
+        + duDayTimeFrag
+        + ")?)|"
+        + duDayTimeFrag
+        + ")";
     private static final String yearMonthDurationLiteral = prefix + duYearMonthFrag;
     private static final String dayTimeDurationLiteral = prefix + duDayTimeFrag;
     private static final Pattern durationPattern = Pattern.compile(durationLiteral);
@@ -89,7 +110,9 @@ public class DurationItem extends AtomicItem {
         Item otherItem = (Item) otherObject;
         Instant now = new Instant();
         if (otherItem.isDuration()) {
-            return this.getDurationValue().toDurationFrom(now).isEqual(otherItem.getDurationValue().toDurationFrom(now));
+            return this.getDurationValue()
+                .toDurationFrom(now)
+                .isEqual(otherItem.getDurationValue().toDurationFrom(now));
         }
         return false;
     }
@@ -106,10 +129,13 @@ public class DurationItem extends AtomicItem {
 
     @Override
     public boolean isCastableAs(AtomicTypes itemType) {
-        return itemType.equals(AtomicTypes.DurationItem) ||
-                itemType.equals(AtomicTypes.YearMonthDurationItem) ||
-                itemType.equals(AtomicTypes.DayTimeDurationItem) ||
-                itemType.equals(AtomicTypes.StringItem);
+        return itemType.equals(AtomicTypes.DurationItem)
+            ||
+            itemType.equals(AtomicTypes.YearMonthDurationItem)
+            ||
+            itemType.equals(AtomicTypes.DayTimeDurationItem)
+            ||
+            itemType.equals(AtomicTypes.StringItem);
     }
 
     @Override
@@ -143,7 +169,10 @@ public class DurationItem extends AtomicItem {
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this._value = Period.parse(kryo.readObject(input, String.class), DurationItem.getPeriodFormatter(AtomicTypes.DurationItem));
+        this._value = Period.parse(
+            kryo.readObject(input, String.class),
+            DurationItem.getPeriodFormatter(AtomicTypes.DurationItem)
+        );
     }
 
     private static PeriodFormatter getPeriodFormatter(AtomicTypes durationType) {
@@ -151,13 +180,24 @@ public class DurationItem extends AtomicItem {
             case DurationItem:
                 return ISOPeriodFormat.standard();
             case YearMonthDurationItem:
-                return new PeriodFormatterBuilder().
-                        appendLiteral("P").appendYears().appendSuffix("Y").appendMonths().appendSuffix("M").toFormatter();
+                return new PeriodFormatterBuilder().appendLiteral("P")
+                    .appendYears()
+                    .appendSuffix("Y")
+                    .appendMonths()
+                    .appendSuffix("M")
+                    .toFormatter();
             case DayTimeDurationItem:
-                return new PeriodFormatterBuilder().
-                        appendLiteral("P").appendDays().appendSuffix("D").appendSeparatorIfFieldsAfter("T").
-                        appendHours().appendSuffix("H").appendMinutes().appendSuffix("M")
-                        .appendSecondsWithOptionalMillis().appendSuffix("S").toFormatter();
+                return new PeriodFormatterBuilder().appendLiteral("P")
+                    .appendDays()
+                    .appendSuffix("D")
+                    .appendSeparatorIfFieldsAfter("T")
+                    .appendHours()
+                    .appendSuffix("H")
+                    .appendMinutes()
+                    .appendSuffix("M")
+                    .appendSecondsWithOptionalMillis()
+                    .appendSuffix("S")
+                    .toFormatter();
             default:
                 throw new IllegalArgumentException();
         }
@@ -168,7 +208,9 @@ public class DurationItem extends AtomicItem {
             case DurationItem:
                 return PeriodType.yearMonthDayTime();
             case YearMonthDurationItem:
-                return PeriodType.forFields(new DurationFieldType[]{DurationFieldType.years(), DurationFieldType.months()});
+                return PeriodType.forFields(
+                    new DurationFieldType[] { DurationFieldType.years(), DurationFieldType.months() }
+                );
             case DayTimeDurationItem:
                 return PeriodType.dayTime();
             default:
@@ -188,37 +230,52 @@ public class DurationItem extends AtomicItem {
         return false;
     }
 
-    public static Period getDurationFromString(String duration, AtomicTypes durationType) throws UnsupportedOperationException, IllegalArgumentException {
-        if (durationType == null || !checkInvalidDurationFormat(duration, durationType)) throw new IllegalArgumentException();
+    public static Period getDurationFromString(String duration, AtomicTypes durationType)
+            throws UnsupportedOperationException,
+                IllegalArgumentException {
+        if (durationType == null || !checkInvalidDurationFormat(duration, durationType))
+            throw new IllegalArgumentException();
         boolean isNegative = duration.charAt(0) == '-';
         if (isNegative)
             duration = duration.substring(1);
         PeriodFormatter pf = getPeriodFormatter(durationType);
         Period period = Period.parse(duration, pf);
-        return isNegative ?
-                period.negated().normalizedStandard(getPeriodType(durationType)) :
-                period.normalizedStandard(getPeriodType(durationType));
+        return isNegative
+            ? period.negated().normalizedStandard(getPeriodType(durationType))
+            : period.normalizedStandard(getPeriodType(durationType));
     }
 
     @Override
     public int compareTo(Item other) {
-        if (other.isNull()) return 1;
+        if (other.isNull())
+            return 1;
         Instant now = new Instant();
         if (other.isDuration()) {
             return this.getDurationValue().toDurationFrom(now).compareTo(other.getDurationValue().toDurationFrom(now));
         }
-        throw new IteratorFlowException("Cannot compare item of type " + ItemTypes.getItemTypeName(this.getClass().getSimpleName()) +
-                " with item of type " + ItemTypes.getItemTypeName(other.getClass().getSimpleName()));
+        throw new IteratorFlowException(
+                "Cannot compare item of type "
+                    + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                    +
+                    " with item of type "
+                    + ItemTypes.getItemTypeName(other.getClass().getSimpleName())
+        );
     }
 
     @Override
     public Item compareItem(Item other, OperationalExpressionBase.Operator operator, IteratorMetadata metadata) {
         if (!other.isDuration() && !other.isNull()) {
-            throw new UnexpectedTypeException("\"" + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
-                    + "\": invalid type: can not compare for equality to type \""
-                    + ItemTypes.getItemTypeName(other.getClass().getSimpleName()) + "\"", metadata);
+            throw new UnexpectedTypeException(
+                    "\""
+                        + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                        + "\": invalid type: can not compare for equality to type \""
+                        + ItemTypes.getItemTypeName(other.getClass().getSimpleName())
+                        + "\"",
+                    metadata
+            );
         }
-        if (other.isNull()) return operator.apply(this, other);
+        if (other.isNull())
+            return operator.apply(this, other);
         switch (operator) {
             case VC_EQ:
             case GC_EQ:
@@ -226,8 +283,13 @@ public class DurationItem extends AtomicItem {
             case GC_NE:
                 return operator.apply(this, other);
         }
-        throw new UnexpectedTypeException("\"" + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
-                + "\": invalid type: can not compare for equality to type \""
-                + ItemTypes.getItemTypeName(other.getClass().getSimpleName()) + "\"", metadata);
+        throw new UnexpectedTypeException(
+                "\""
+                    + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                    + "\": invalid type: can not compare for equality to type \""
+                    + ItemTypes.getItemTypeName(other.getClass().getSimpleName())
+                    + "\"",
+                metadata
+        );
     }
 }

@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -36,8 +36,8 @@ import org.rumbledb.api.Item;
 public class InstanceOfIterator extends UnaryOperationBaseIterator {
 
 
-	private static final long serialVersionUID = 1L;
-	private final SequenceType _sequenceType;
+    private static final long serialVersionUID = 1L;
+    private final SequenceType _sequenceType;
 
     public InstanceOfIterator(RuntimeIterator child, SequenceType sequenceType, IteratorMetadata iteratorMetadata) {
         super(child, OperationalExpressionBase.Operator.INSTANCE_OF, iteratorMetadata);
@@ -54,16 +54,25 @@ public class InstanceOfIterator extends UnaryOperationBaseIterator {
             _child.close();
             this._hasNext = false;
 
-            //... instance of ()
-            if (!items.isEmpty() && _sequenceType.isEmptySequence()) return ItemFactory.getInstance().createBooleanItem(false);
+            // ... instance of ()
+            if (!items.isEmpty() && _sequenceType.isEmptySequence())
+                return ItemFactory.getInstance().createBooleanItem(false);
 
-            //Empty sequence, more items
-            if (items.isEmpty() && (_sequenceType.getArity() == SequenceType.Arity.One ||
-                    _sequenceType.getArity() == SequenceType.Arity.OneOrMore)) {
+            // Empty sequence, more items
+            if (
+                items.isEmpty()
+                    && (_sequenceType.getArity() == SequenceType.Arity.One
+                        ||
+                        _sequenceType.getArity() == SequenceType.Arity.OneOrMore)
+            ) {
                 return ItemFactory.getInstance().createBooleanItem(false);
             }
-            if (items.size() > 1 && (_sequenceType.getArity()  == SequenceType.Arity.One ||
-                    _sequenceType.getArity() == SequenceType.Arity.OneOrZero)) {
+            if (
+                items.size() > 1
+                    && (_sequenceType.getArity() == SequenceType.Arity.One
+                        ||
+                        _sequenceType.getArity() == SequenceType.Arity.OneOrZero)
+            ) {
                 return ItemFactory.getInstance().createBooleanItem(false);
             }
             for (Item item : items) {

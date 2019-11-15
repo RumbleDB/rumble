@@ -43,24 +43,54 @@ public class TreatIterator extends UnaryOperationIterator {
             _nextResult = _child.next();
         } else {
             _child.close();
-            if (_childIndex == 0 && (_sequenceType.getArity() == SequenceType.Arity.One ||
-                    _sequenceType.getArity() == SequenceType.Arity.OneOrMore)) {
-                throw new TreatException(" Empty sequence cannot be treated as type " + sequenceTypeName + _sequenceType.getArity().getSymbol(), getMetadata());
+            if (
+                _childIndex == 0
+                    && (_sequenceType.getArity() == SequenceType.Arity.One
+                        ||
+                        _sequenceType.getArity() == SequenceType.Arity.OneOrMore)
+            ) {
+                throw new TreatException(
+                        " Empty sequence cannot be treated as type "
+                            + sequenceTypeName
+                            + _sequenceType.getArity().getSymbol(),
+                        getMetadata()
+                );
             }
         }
 
-        //... treat as ()
+        // ... treat as ()
         if (_nextResult != null && _sequenceType.isEmptySequence())
-            throw new TreatException(" " + ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName()) + " cannot be treated as type empty-sequence()", getMetadata());
+            throw new TreatException(
+                    " "
+                        + ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName())
+                        + " cannot be treated as type empty-sequence()",
+                    getMetadata()
+            );
 
-        //More items
-        if (_childIndex > 1 && (_sequenceType.getArity() == SequenceType.Arity.One ||
-                _sequenceType.getArity() == SequenceType.Arity.OneOrZero)) {
-            throw new TreatException(" Sequences of more than one item cannot be treated as type " + sequenceTypeName + _sequenceType.getArity().getSymbol(), getMetadata());
+        // More items
+        if (
+            _childIndex > 1
+                && (_sequenceType.getArity() == SequenceType.Arity.One
+                    ||
+                    _sequenceType.getArity() == SequenceType.Arity.OneOrZero)
+        ) {
+            throw new TreatException(
+                    " Sequences of more than one item cannot be treated as type "
+                        + sequenceTypeName
+                        + _sequenceType.getArity().getSymbol(),
+                    getMetadata()
+            );
         }
 
         if (_nextResult != null && !_nextResult.isTypeOf(itemType)) {
-            throw new TreatException(" " + ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName()) + " cannot be treated as type " + sequenceTypeName + _sequenceType.getArity().getSymbol(), getMetadata());
+            throw new TreatException(
+                    " "
+                        + ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName())
+                        + " cannot be treated as type "
+                        + sequenceTypeName
+                        + _sequenceType.getArity().getSymbol(),
+                    getMetadata()
+            );
         }
 
         this._hasNext = _nextResult != null;

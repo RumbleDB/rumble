@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -39,16 +39,22 @@ public abstract class OperationalExpressionBase extends Expression {
     protected Operator _singleOperator;
 
 
-    protected OperationalExpressionBase(Expression _mainExpression,
-                                        Operator op, ExpressionMetadata metadata) {
+    protected OperationalExpressionBase(
+            Expression _mainExpression,
+            Operator op,
+            ExpressionMetadata metadata
+    ) {
         super(metadata);
         this._mainExpression = _mainExpression;
         this._singleOperator = op;
 
     }
 
-    protected OperationalExpressionBase(Expression _mainExpression,
-                                        List<Operator> ops, ExpressionMetadata metadata) {
+    protected OperationalExpressionBase(
+            Expression _mainExpression,
+            List<Operator> ops,
+            ExpressionMetadata metadata
+    ) {
         super(metadata);
         this._mainExpression = _mainExpression;
         this._multipleOperators = ops;
@@ -171,48 +177,49 @@ public abstract class OperationalExpressionBase extends Expression {
             result.addAll(_mainExpression.getDescendants(depthSearch));
         return result;
     }
+
     public enum Operator {
         OR,
         AND,
         NOT,
 
         // Value Comparison -- 0 or 1 item with compatible types are compared
-        VC_EQ{
+        VC_EQ {
             @Override
             public Item apply(Item left, Item right) {
                 int comparison = left.compareTo(right);
                 return ItemFactory.getInstance().createBooleanItem(comparison == 0);
             }
         },
-        VC_NE{
+        VC_NE {
             @Override
             public Item apply(Item left, Item right) {
                 int comparison = left.compareTo(right);
                 return ItemFactory.getInstance().createBooleanItem(comparison != 0);
             }
         },
-        VC_LT{
+        VC_LT {
             @Override
             public Item apply(Item left, Item right) {
                 int comparison = left.compareTo(right);
                 return ItemFactory.getInstance().createBooleanItem(comparison < 0);
             }
         },
-        VC_LE{
+        VC_LE {
             @Override
             public Item apply(Item left, Item right) {
                 int comparison = left.compareTo(right);
                 return ItemFactory.getInstance().createBooleanItem(comparison < 0 || comparison == 0);
             }
         },
-        VC_GT{
+        VC_GT {
             @Override
             public Item apply(Item left, Item right) {
                 int comparison = left.compareTo(right);
                 return ItemFactory.getInstance().createBooleanItem(comparison > 0);
             }
         },
-        VC_GE{
+        VC_GE {
             @Override
             public Item apply(Item left, Item right) {
                 int comparison = left.compareTo(right);
@@ -221,42 +228,42 @@ public abstract class OperationalExpressionBase extends Expression {
         },
 
         // general Comparison -- sequences are compared
-        GC_EQ{
+        GC_EQ {
             @Override
             public Item apply(Item left, Item right) {
                 int comparison = left.compareTo(right);
                 return ItemFactory.getInstance().createBooleanItem(comparison == 0);
             }
         },
-        GC_NE{
+        GC_NE {
             @Override
             public Item apply(Item left, Item right) {
                 int comparison = left.compareTo(right);
                 return ItemFactory.getInstance().createBooleanItem(comparison != 0);
             }
         },
-        GC_LT{
+        GC_LT {
             @Override
             public Item apply(Item left, Item right) {
                 int comparison = left.compareTo(right);
                 return ItemFactory.getInstance().createBooleanItem(comparison < 0);
             }
         },
-        GC_LE{
+        GC_LE {
             @Override
             public Item apply(Item left, Item right) {
                 int comparison = left.compareTo(right);
                 return ItemFactory.getInstance().createBooleanItem(comparison < 0 || comparison == 0);
             }
         },
-        GC_GT{
+        GC_GT {
             @Override
             public Item apply(Item left, Item right) {
                 int comparison = left.compareTo(right);
                 return ItemFactory.getInstance().createBooleanItem(comparison > 0);
             }
         },
-        GC_GE{
+        GC_GE {
             @Override
             public Item apply(Item left, Item right) {
                 int comparison = left.compareTo(right);

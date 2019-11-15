@@ -12,15 +12,14 @@ import org.rumbledb.api.Item;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 
 public class ItemFactory {
-    
+
     private static ItemFactory _instance;
     private Item _nullItem;
     private Item _trueBooleanItem;
     private Item _falseBooleanItem;
 
     public static ItemFactory getInstance() {
-        if(_instance == null)
-        {
+        if (_instance == null) {
             _instance = new ItemFactory();
             _instance._nullItem = new NullItem();
             _instance._trueBooleanItem = new BooleanItem(true);
@@ -34,7 +33,7 @@ public class ItemFactory {
     }
 
     public Item createBooleanItem(boolean b) {
-        return b?_trueBooleanItem:_falseBooleanItem;
+        return b ? _trueBooleanItem : _falseBooleanItem;
     }
 
     public Item createNullItem() {
@@ -108,14 +107,12 @@ public class ItemFactory {
     public Item createArrayItem(List<Item> items) {
         return new ArrayItem(items);
     }
-    
-    public Item createObjectItem(List<String> keys, List<Item> values, ItemMetadata itemMetadata)
-    {
+
+    public Item createObjectItem(List<String> keys, List<Item> values, ItemMetadata itemMetadata) {
         return new ObjectItem(keys, values, itemMetadata);
     }
-    
-    public Item createObjectItem(Map<String, List<Item>> keyValuePairs)
-    {
+
+    public Item createObjectItem(Map<String, List<Item>> keyValuePairs) {
         return new ObjectItem(keyValuePairs);
     }
 

@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -33,9 +33,9 @@ import org.rumbledb.api.Item;
 
 public class ConcatFunctionIterator extends LocalFunctionCallIterator {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	public ConcatFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
+    public ConcatFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
     }
 
@@ -49,10 +49,15 @@ public class ConcatFunctionIterator extends LocalFunctionCallIterator {
                 if (item != null) {
                     String stringValue = "";
                     if (item.isAtomic()) {
-                        stringValue = item.serialize();       // for atomic items (not array or object) returns the equivalent string value
+                        stringValue = item.serialize(); // for atomic items (not array or object) returns the equivalent
+                                                        // string value
                     } else {
-                        throw new UnexpectedTypeException("String concat function has arguments that can't be converted to a string " +
-                                item.serialize(), getMetadata());
+                        throw new UnexpectedTypeException(
+                                "String concat function has arguments that can't be converted to a string "
+                                    +
+                                    item.serialize(),
+                                getMetadata()
+                        );
                     }
                     if (stringValue != "") {
                         builder.append(stringValue);
@@ -62,6 +67,9 @@ public class ConcatFunctionIterator extends LocalFunctionCallIterator {
             this._hasNext = false;
             return ItemFactory.getInstance().createStringItem(builder.toString());
         } else
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " substring function", getMetadata());
+            throw new IteratorFlowException(
+                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " substring function",
+                    getMetadata()
+            );
     }
 }

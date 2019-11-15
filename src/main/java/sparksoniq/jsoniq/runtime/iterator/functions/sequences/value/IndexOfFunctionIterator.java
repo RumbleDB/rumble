@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -36,8 +36,8 @@ import org.rumbledb.api.Item;
 public class IndexOfFunctionIterator extends LocalFunctionCallIterator {
 
 
-	private static final long serialVersionUID = 1L;
-	private RuntimeIterator _sequenceIterator;
+    private static final long serialVersionUID = 1L;
+    private RuntimeIterator _sequenceIterator;
     private Item _search;
     private Item _nextResult;
     private int _currentIndex;
@@ -49,8 +49,8 @@ public class IndexOfFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public Item next() {
         if (this._hasNext) {
-            Item result = _nextResult;  // save the result to be returned
-            setNextResult();            // calculate and store the next result
+            Item result = _nextResult; // save the result to be returned
+            setNextResult(); // calculate and store the next result
             return result;
         }
         throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "index-of function", getMetadata());
@@ -68,14 +68,23 @@ public class IndexOfFunctionIterator extends LocalFunctionCallIterator {
         searchIterator.open(context);
 
         if (!searchIterator.hasNext()) {
-            throw new UnexpectedTypeException("Invalid args. index-of can't be performed with empty sequences", getMetadata());
+            throw new UnexpectedTypeException(
+                    "Invalid args. index-of can't be performed with empty sequences",
+                    getMetadata()
+            );
         }
         _search = searchIterator.next();
         if (searchIterator.hasNext()) {
-            throw new UnexpectedTypeException("Invalid args. index-of can't be performed with sequences with more than one items", getMetadata());
+            throw new UnexpectedTypeException(
+                    "Invalid args. index-of can't be performed with sequences with more than one items",
+                    getMetadata()
+            );
         }
         if (!_search.isAtomic()) {
-            throw new NonAtomicKeyException("Invalid args. index-of can't be performed with a non-atomic parameter", getMetadata().getExpressionMetadata());
+            throw new NonAtomicKeyException(
+                    "Invalid args. index-of can't be performed with a non-atomic parameter",
+                    getMetadata().getExpressionMetadata()
+            );
         }
         searchIterator.close();
 
@@ -89,7 +98,10 @@ public class IndexOfFunctionIterator extends LocalFunctionCallIterator {
             _currentIndex += 1;
             Item item = _sequenceIterator.next();
             if (!item.isAtomic()) {
-                throw new NonAtomicKeyException("Invalid args. index-of can't be performed with a non-atomic in the input sequence", getMetadata().getExpressionMetadata());
+                throw new NonAtomicKeyException(
+                        "Invalid args. index-of can't be performed with a non-atomic in the input sequence",
+                        getMetadata().getExpressionMetadata()
+                );
             } else {
                 if (item.compareTo(_search) == 0) {
                     _nextResult = ItemFactory.getInstance().createIntegerItem(_currentIndex);

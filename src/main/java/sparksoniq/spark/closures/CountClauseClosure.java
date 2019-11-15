@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,8 +28,8 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 
 public class CountClauseClosure implements Function<Tuple2<FlworTuple, Long>, FlworTuple> {
 
-	private static final long serialVersionUID = 1L;
-	private String variableName;
+    private static final long serialVersionUID = 1L;
+    private String variableName;
 
     public CountClauseClosure(String variableName) {
         this.variableName = variableName;
@@ -39,9 +39,9 @@ public class CountClauseClosure implements Function<Tuple2<FlworTuple, Long>, Fl
     public FlworTuple call(Tuple2<FlworTuple, Long> inputTuple) throws Exception {
         FlworTuple result = inputTuple._1;
         result.putValue(
-                variableName,
-                ItemFactory.getInstance().createIntegerItem(inputTuple._2.intValue()),
-                true
+            variableName,
+            ItemFactory.getInstance().createIntegerItem(inputTuple._2.intValue()),
+            true
         );
         return result;
     }

@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -51,74 +51,72 @@ public class JavaAPITest {
 
     @Test(timeout = 1000000)
     public void testLocal() throws Throwable {
-        Rumble rumble = new Rumble (new RumbleConf());
+        Rumble rumble = new Rumble(new RumbleConf());
         SequenceOfItems iterator = rumble.runQuery("for $i in 1 to 5 return { \"foo\" : $i }");
         Assert.assertTrue(!iterator.isOpen());
         Assert.assertTrue(!iterator.availableAsRDD());
         iterator.open();
         Assert.assertTrue(iterator.isOpen());
         Assert.assertTrue(iterator.hasNext());
-        for (int i = 1; i <= 5; ++i)
-        {
+        for (int i = 1; i <= 5; ++i) {
             Assert.assertTrue(iterator.hasNext());
-        	Item item = iterator.next();
-        	Assert.assertTrue(item.isObject());
-        	List<String> keys = item.getKeys();
-        	Assert.assertTrue(keys.size() == 1);
-        	String key = keys.get(0);
-        	Assert.assertTrue(key.contentEquals("foo"));
-        	Item value = item.getItemByKey(key);
-        	Assert.assertTrue(value.isInteger());
-        	Assert.assertTrue(value.getIntegerValue() == i);
+            Item item = iterator.next();
+            Assert.assertTrue(item.isObject());
+            List<String> keys = item.getKeys();
+            Assert.assertTrue(keys.size() == 1);
+            String key = keys.get(0);
+            Assert.assertTrue(key.contentEquals("foo"));
+            Item value = item.getItemByKey(key);
+            Assert.assertTrue(value.isInteger());
+            Assert.assertTrue(value.getIntegerValue() == i);
         }
         iterator.close();
-    	Assert.assertTrue(!iterator.isOpen());
+        Assert.assertTrue(!iterator.isOpen());
     }
 
     @Test(timeout = 1000000)
     public void testCollect() throws Throwable {
-        Rumble rumble = new Rumble (new RumbleConf());
+        Rumble rumble = new Rumble(new RumbleConf());
         SequenceOfItems iterator = rumble.runQuery("for $i in parallelize(1 to 5) return { \"foo\" : $i }");
         Assert.assertTrue(!iterator.isOpen());
         Assert.assertTrue(iterator.availableAsRDD());
         iterator.open();
         Assert.assertTrue(iterator.isOpen());
         Assert.assertTrue(iterator.hasNext());
-        for (int i = 1; i <= 5; ++i)
-        {
+        for (int i = 1; i <= 5; ++i) {
             Assert.assertTrue(iterator.hasNext());
-        	Item item = iterator.next();
-        	Assert.assertTrue(item.isObject());
-        	List<String> keys = item.getKeys();
-        	Assert.assertTrue(keys.size() == 1);
-        	String key = keys.get(0);
-        	Assert.assertTrue(key.contentEquals("foo"));
-        	Item value = item.getItemByKey(key);
-        	Assert.assertTrue(value.isInteger());
-        	Assert.assertTrue(value.getIntegerValue() == i);
+            Item item = iterator.next();
+            Assert.assertTrue(item.isObject());
+            List<String> keys = item.getKeys();
+            Assert.assertTrue(keys.size() == 1);
+            String key = keys.get(0);
+            Assert.assertTrue(key.contentEquals("foo"));
+            Item value = item.getItemByKey(key);
+            Assert.assertTrue(value.isInteger());
+            Assert.assertTrue(value.getIntegerValue() == i);
         }
         iterator.close();
-    	Assert.assertTrue(!iterator.isOpen());
+        Assert.assertTrue(!iterator.isOpen());
     }
+
     @Test(timeout = 1000000)
     public void testRDD() throws Throwable {
-        Rumble rumble = new Rumble (new RumbleConf());
+        Rumble rumble = new Rumble(new RumbleConf());
         SequenceOfItems iterator = rumble.runQuery("for $i in parallelize(1 to 5) return { \"foo\" : $i }");
         Assert.assertTrue(!iterator.isOpen());
         Assert.assertTrue(iterator.availableAsRDD());
         JavaRDD<Item> items = iterator.getAsRDD();
         List<Item> list = items.collect();
-        for (int i = 1; i <= 5; ++i)
-        {
-        	Item item = list.get(i-1);
-        	Assert.assertTrue(item.isObject());
-        	List<String> keys = item.getKeys();
-        	Assert.assertTrue(keys.size() == 1);
-        	String key = keys.get(0);
-        	Assert.assertTrue(key.contentEquals("foo"));
-        	Item value = item.getItemByKey(key);
-        	Assert.assertTrue(value.isInteger());
-        	Assert.assertTrue(value.getIntegerValue() == i);
+        for (int i = 1; i <= 5; ++i) {
+            Item item = list.get(i - 1);
+            Assert.assertTrue(item.isObject());
+            List<String> keys = item.getKeys();
+            Assert.assertTrue(keys.size() == 1);
+            String key = keys.get(0);
+            Assert.assertTrue(key.contentEquals("foo"));
+            Item value = item.getItemByKey(key);
+            Assert.assertTrue(value.isInteger());
+            Assert.assertTrue(value.getIntegerValue() == i);
         }
     }
 }

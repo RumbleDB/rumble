@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -56,7 +56,11 @@ public class PredicateIterator extends HybridRuntimeIterator {
     private DynamicContext _filterDynamicContext;
 
 
-    public PredicateIterator(RuntimeIterator sequence, RuntimeIterator filterExpression, IteratorMetadata iteratorMetadata) {
+    public PredicateIterator(
+            RuntimeIterator sequence,
+            RuntimeIterator filterExpression,
+            IteratorMetadata iteratorMetadata
+    ) {
         super(Arrays.asList(sequence, filterExpression), iteratorMetadata);
         _iterator = sequence;
         _filter = filterExpression;
@@ -66,8 +70,8 @@ public class PredicateIterator extends HybridRuntimeIterator {
     @Override
     protected Item nextLocal() {
         if (_hasNext == true) {
-            Item result = _nextResult;  // save the result to be returned
-            setNextResult();            // calculate and store the next result
+            Item result = _nextResult; // save the result to be returned
+            setNextResult(); // calculate and store the next result
             return result;
         }
         throw new IteratorFlowException("Invalid next() call in Predicate!", getMetadata());
@@ -82,14 +86,12 @@ public class PredicateIterator extends HybridRuntimeIterator {
     protected void resetLocal(DynamicContext context) {
         _iterator.close();
         _filterDynamicContext = new DynamicContext(_currentDynamicContext);
-        if(_filter.getVariableDependencies().containsKey("$last"))
-        {
-           setLast();
+        if (_filter.getVariableDependencies().containsKey("$last")) {
+            setLast();
         }
-        if(_filter.getVariableDependencies().containsKey("$position"))
-        {
+        if (_filter.getVariableDependencies().containsKey("$position")) {
             _position = 0;
-    	    _mustMaintainPosition = true;
+            _mustMaintainPosition = true;
         }
         _iterator.open(_currentDynamicContext);
         setNextResult();
@@ -106,26 +108,23 @@ public class PredicateIterator extends HybridRuntimeIterator {
             throw new SparksoniqRuntimeException("Invalid Predicate! Must initialize filter before calling next");
         }
         _filterDynamicContext = new DynamicContext(_currentDynamicContext);
-        if(_filter.getVariableDependencies().containsKey("$last"))
-        {
+        if (_filter.getVariableDependencies().containsKey("$last")) {
             setLast();
         }
-        if(_filter.getVariableDependencies().containsKey("$position"))
-        {
+        if (_filter.getVariableDependencies().containsKey("$position")) {
             _position = 0;
             _mustMaintainPosition = true;
         }
         _iterator.open(_currentDynamicContext);
         setNextResult();
     }
-    
+
     private void setLast() {
         long last = 0;
         _iterator.open(_currentDynamicContext);
-        while(_iterator.hasNext())
-        {
-        	_iterator.next();
-        	++last;
+        while (_iterator.hasNext()) {
+            _iterator.next();
+            ++last;
         }
         _iterator.close();
         _filterDynamicContext.setLast(last);
@@ -139,8 +138,8 @@ public class PredicateIterator extends HybridRuntimeIterator {
             List<Item> currentItems = new ArrayList<>();
             currentItems.add(item);
             _filterDynamicContext.addVariableValue("$$", currentItems);
-            if(_mustMaintainPosition)
-            	_filterDynamicContext.setPosition(++_position);
+            if (_mustMaintainPosition)
+                _filterDynamicContext.setPosition(++_position);
 
             _filter.open(_filterDynamicContext);
             Item fil = null;
@@ -155,7 +154,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
                 int index = ((IntegerItem) fil).getIntegerValue();
                 // less than or equal to size -> b/c of -1
                 if (index >= 1 && index <= sequence.size()) {
-                    //-1 for Jsoniq convention, arrays start from 1
+                    // -1 for Jsoniq convention, arrays start from 1
                     _nextResult = sequence.get(index - 1);
                 }
                 break;
@@ -181,30 +180,29 @@ public class PredicateIterator extends HybridRuntimeIterator {
         RuntimeIterator iterator = this._children.get(0);
         RuntimeIterator filter = this._children.get(1);
         JavaRDD<Item> childRDD = iterator.getRDD(dynamicContext);
-        if(
+        if (
             !filter.getVariableDependencies().containsKey("$position")
-            && !filter.getVariableDependencies().containsKey("$last")
-            && (
-                filter instanceof BooleanRuntimeIterator
-                || filter instanceof AndOperationIterator
-                || filter instanceof OrOperationIterator
-                || filter instanceof NotOperationIterator
-                || filter instanceof ComparisonOperationIterator
-            )
+                && !filter.getVariableDependencies().containsKey("$last")
+                && (filter instanceof BooleanRuntimeIterator
+                    || filter instanceof AndOperationIterator
+                    || filter instanceof OrOperationIterator
+                    || filter instanceof NotOperationIterator
+                    || filter instanceof ComparisonOperationIterator)
         ) {
-        	Function<Item, Boolean> transformation = new PredicateClosure(filter, dynamicContext);
+            Function<Item, Boolean> transformation = new PredicateClosure(filter, dynamicContext);
             JavaRDD<Item> resultRDD = childRDD.filter(transformation);
             return resultRDD;
-        }
-        else
-        {
-        	JavaPairRDD<Item, Long> zippedChildRDD = childRDD.zipWithIndex();
-        	long last = 0;
-        	if(filter.getVariableDependencies().containsKey("$last"))
-        	{
-        		last = childRDD.count();
-        	}
-        	Function<Tuple2<Item, Long>, Boolean> transformation = new PredicateClosureZipped(filter, dynamicContext, last);
+        } else {
+            JavaPairRDD<Item, Long> zippedChildRDD = childRDD.zipWithIndex();
+            long last = 0;
+            if (filter.getVariableDependencies().containsKey("$last")) {
+                last = childRDD.count();
+            }
+            Function<Tuple2<Item, Long>, Boolean> transformation = new PredicateClosureZipped(
+                    filter,
+                    dynamicContext,
+                    last
+            );
             JavaPairRDD<Item, Long> resultRDD = zippedChildRDD.filter(transformation);
             return resultRDD.keys();
         }
@@ -216,7 +214,8 @@ public class PredicateIterator extends HybridRuntimeIterator {
     }
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
+        Map<String, DynamicContext.VariableDependency> result =
+            new TreeMap<String, DynamicContext.VariableDependency>();
         result.putAll(_filter.getVariableDependencies());
         result.remove("$");
         result.putAll(_iterator.getVariableDependencies());

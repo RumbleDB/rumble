@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -34,8 +34,8 @@ import java.util.List;
 
 public class GroupByLinearizeTupleClosure implements Function<Tuple2<FlworKey, Iterable<FlworTuple>>, FlworTuple> {
 
-	private static final long serialVersionUID = 1L;
-	private final List<GroupByClauseSparkIteratorExpression> _groupVariables;
+    private static final long serialVersionUID = 1L;
+    private final List<GroupByClauseSparkIteratorExpression> _groupVariables;
 
     public GroupByLinearizeTupleClosure(List<GroupByClauseSparkIteratorExpression> groupVariable) {
         this._groupVariables = groupVariable;
@@ -48,7 +48,9 @@ public class GroupByLinearizeTupleClosure implements Function<Tuple2<FlworKey, I
         FlworTuple newTuple = new FlworTuple(oldFirstTuple.getKeys().size());
         for (String tupleVariable : oldFirstTuple.getKeys()) {
             iterator = v1._2().iterator();
-            if (_groupVariables.stream().anyMatch(v -> v.getVariableReference().getVariableName().equals(tupleVariable)))
+            if (
+                _groupVariables.stream().anyMatch(v -> v.getVariableReference().getVariableName().equals(tupleVariable))
+            )
                 newTuple.putValue(tupleVariable, oldFirstTuple.getValue(tupleVariable), false);
             else {
                 List<Item> allValues = new ArrayList<>();

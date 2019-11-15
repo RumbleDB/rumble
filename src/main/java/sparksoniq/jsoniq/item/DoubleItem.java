@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -39,8 +39,8 @@ import org.rumbledb.api.Item;
 
 public class DoubleItem extends AtomicItem {
 
-	private static final long serialVersionUID = 1L;
-	private double _value;
+    private static final long serialVersionUID = 1L;
+    private double _value;
 
     public DoubleItem() {
         super();
@@ -66,16 +66,17 @@ public class DoubleItem extends AtomicItem {
     }
 
     public double castToDoubleValue() {
-    	return getDoubleValue();
+        return getDoubleValue();
     }
 
     public BigDecimal castToDecimalValue() {
-        if (Double.isNaN(this.getDoubleValue()) || Double.isInfinite(this.getDoubleValue())) return super.castToDecimalValue();
+        if (Double.isNaN(this.getDoubleValue()) || Double.isInfinite(this.getDoubleValue()))
+            return super.castToDecimalValue();
         return BigDecimal.valueOf(getDoubleValue());
     }
 
     public int castToIntegerValue() {
-    	return new Double(getDoubleValue()).intValue();
+        return new Double(getDoubleValue()).intValue();
     }
 
     @Override
@@ -108,11 +109,11 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public boolean isCastableAs(AtomicTypes itemType) {
-        if (itemType == AtomicTypes.AtomicItem || itemType == AtomicTypes.NullItem) return false;
+        if (itemType == AtomicTypes.AtomicItem || itemType == AtomicTypes.NullItem)
+            return false;
         else if (itemType == AtomicTypes.DecimalItem) {
             return !Double.isInfinite(this.getValue());
-        }
-        else if (itemType == AtomicTypes.IntegerItem) {
+        } else if (itemType == AtomicTypes.IntegerItem) {
             return !(Integer.MAX_VALUE < this.getValue()) && !(Integer.MIN_VALUE > this.getValue());
         }
         return true;
@@ -124,7 +125,7 @@ public class DoubleItem extends AtomicItem {
             return String.valueOf(this.getDoubleValue());
         boolean negativeZero = this.getDoubleValue() == 0 && String.valueOf(this.getDoubleValue()).charAt(0) == ('-');
         String doubleString = String.valueOf(this.castToDecimalValue().stripTrailingZeros().toPlainString());
-        return negativeZero ? '-'+doubleString : doubleString;
+        return negativeZero ? '-' + doubleString : doubleString;
     }
 
     @Override
@@ -136,19 +137,17 @@ public class DoubleItem extends AtomicItem {
     public void read(Kryo kryo, Input input) {
         this._value = input.readDouble();
     }
-    
-    public boolean equals(Object otherItem)
-    {
+
+    public boolean equals(Object otherItem) {
         try {
             return (otherItem instanceof Item) && this.compareTo((Item) otherItem) == 0;
-        } catch(IteratorFlowException e) {
+        } catch (IteratorFlowException e) {
             return false;
         }
     }
-    
-    public int hashCode()
-    {
-        return (int)Math.round(getDoubleValue());
+
+    public int hashCode() {
+        return (int) Math.round(getDoubleValue());
     }
 
     @Override
@@ -159,8 +158,14 @@ public class DoubleItem extends AtomicItem {
     @Override
     public Item compareItem(Item other, OperationalExpressionBase.Operator operator, IteratorMetadata metadata) {
         if (!other.isNumeric() && !other.isNull()) {
-            throw new UnexpectedTypeException("Invalid args for numerics comparison " + this.serialize() +
-                    ", " + other.serialize(), metadata);
+            throw new UnexpectedTypeException(
+                    "Invalid args for numerics comparison "
+                        + this.serialize()
+                        +
+                        ", "
+                        + other.serialize(),
+                    metadata
+            );
         }
         return operator.apply(this, other);
     }

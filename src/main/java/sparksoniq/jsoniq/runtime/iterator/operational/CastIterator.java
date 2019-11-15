@@ -37,8 +37,11 @@ public class CastIterator extends UnaryOperationIterator {
                 if (items.size() > 1) {
                     _child.close();
                     this._hasNext = false;
-                    throw new UnexpectedTypeException(" Sequence of more than one item can not be treated as type "
-                            + targetType, getMetadata());
+                    throw new UnexpectedTypeException(
+                            " Sequence of more than one item can not be treated as type "
+                                + targetType,
+                            getMetadata()
+                    );
                 }
             }
             _child.close();
@@ -47,10 +50,15 @@ public class CastIterator extends UnaryOperationIterator {
             Item item = items.get(0);
             String itemType = ItemTypes.getItemTypeName(item.getClass().getSimpleName());
 
-            if (itemType.equals(targetType)) return item;
+            if (itemType.equals(targetType))
+                return item;
 
-            String message = String.format("\"%s\": value of type %s is not castable to type %s",
-                    item.serialize(), itemType, targetType);
+            String message = String.format(
+                "\"%s\": value of type %s is not castable to type %s",
+                item.serialize(),
+                itemType,
+                targetType
+            );
 
             AtomicItem atomicItem = CastableIterator.checkInvalidCastable(item, getMetadata(), _singleType);
 
@@ -71,6 +79,9 @@ public class CastIterator extends UnaryOperationIterator {
     public void open(DynamicContext context) {
         super.open(context);
         if (!_child.hasNext() && !_singleType.getZeroOrOne())
-            throw new UnexpectedTypeException(" Empty sequence can not be cast to type with quantifier '1'", getMetadata());
+            throw new UnexpectedTypeException(
+                    " Empty sequence can not be cast to type with quantifier '1'",
+                    getMetadata()
+            );
     }
 }

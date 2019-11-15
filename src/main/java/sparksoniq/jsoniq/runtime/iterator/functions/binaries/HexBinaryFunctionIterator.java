@@ -21,7 +21,8 @@ public class HexBinaryFunctionIterator extends LocalFunctionCallIterator {
 
     public HexBinaryFunctionIterator(
             List<RuntimeIterator> arguments,
-            IteratorMetadata iteratorMetadata) {
+            IteratorMetadata iteratorMetadata
+    ) {
         super(arguments, iteratorMetadata);
     }
 
@@ -32,14 +33,19 @@ public class HexBinaryFunctionIterator extends LocalFunctionCallIterator {
             try {
                 return ItemFactory.getInstance().createHexBinaryItem(_hexBinaryStringItem.getStringValue());
             } catch (IllegalArgumentException e) {
-                String message = String.format("\"%s\": value of type %s is not castable to type %s",
-                        _hexBinaryStringItem.serialize(), "string", "hexBinary");
+                String message = String.format(
+                    "\"%s\": value of type %s is not castable to type %s",
+                    _hexBinaryStringItem.serialize(),
+                    "string",
+                    "hexBinary"
+                );
                 throw new CastException(message, getMetadata());
             }
         } else
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " hexBinary function",
-                    getMetadata());
+                    getMetadata()
+            );
     }
 
 
@@ -48,11 +54,15 @@ public class HexBinaryFunctionIterator extends LocalFunctionCallIterator {
         super.open(context);
         try {
             _hexBinaryStringItem = this.getSingleItemOfTypeFromIterator(
-                    this._children.get(0),
-                    StringItem.class,
-                    new UnknownFunctionCallException("hexBinary", this._children.size(), getMetadata()));
+                this._children.get(0),
+                StringItem.class,
+                new UnknownFunctionCallException("hexBinary", this._children.size(), getMetadata())
+            );
         } catch (UnknownFunctionCallException e) {
-            throw new UnexpectedTypeException(" Sequence of more than one item can not be cast to type with quantifier '1' or '?'", getMetadata());
+            throw new UnexpectedTypeException(
+                    " Sequence of more than one item can not be cast to type with quantifier '1' or '?'",
+                    getMetadata()
+            );
         }
         this._hasNext = _hexBinaryStringItem != null;
     }

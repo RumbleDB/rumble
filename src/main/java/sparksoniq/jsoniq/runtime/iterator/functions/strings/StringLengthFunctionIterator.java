@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,11 +32,12 @@ import java.util.List;
 
 public class StringLengthFunctionIterator extends LocalFunctionCallIterator {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	public StringLengthFunctionIterator(
+    public StringLengthFunctionIterator(
             List<RuntimeIterator> arguments,
-            IteratorMetadata iteratorMetadata) {
+            IteratorMetadata iteratorMetadata
+    ) {
         super(arguments, iteratorMetadata);
     }
 
@@ -46,8 +47,9 @@ public class StringLengthFunctionIterator extends LocalFunctionCallIterator {
             this._hasNext = false;
 
             StringItem stringItem = this.getSingleItemOfTypeFromIterator(
-                    this._children.get(0),
-                    StringItem.class);
+                this._children.get(0),
+                StringItem.class
+            );
 
             if (stringItem == null) {
                 return ItemFactory.getInstance().createIntegerItem(0);
@@ -56,7 +58,8 @@ public class StringLengthFunctionIterator extends LocalFunctionCallIterator {
             return ItemFactory.getInstance().createIntegerItem(stringItem.getStringValue().length());
         } else
             throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " string-length function",
-                getMetadata());
+                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " string-length function",
+                    getMetadata()
+            );
     }
 }

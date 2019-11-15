@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -39,8 +39,8 @@ import org.rumbledb.api.Item;
 public class AvgFunctionIterator extends LocalFunctionCallIterator {
 
 
-	private static final long serialVersionUID = 1L;
-	private RuntimeIterator _iterator;
+    private static final long serialVersionUID = 1L;
+    private RuntimeIterator _iterator;
 
     public AvgFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
@@ -67,11 +67,15 @@ public class AvgFunctionIterator extends LocalFunctionCallIterator {
             this._hasNext = false;
             results.forEach(r -> {
                 if (!r.isNumeric())
-                    throw new InvalidArgumentTypeException("Average expression has non numeric args " +
-                            r.serialize(), getMetadata());
+                    throw new InvalidArgumentTypeException(
+                            "Average expression has non numeric args "
+                                +
+                                r.serialize(),
+                            getMetadata()
+                    );
             });
             try {
-                //TODO check numeric types conversions
+                // TODO check numeric types conversions
                 BigDecimal sum = new BigDecimal(0);
                 for (Item r : results)
                     sum = sum.add(r.castToDecimalValue());
@@ -82,16 +86,17 @@ public class AvgFunctionIterator extends LocalFunctionCallIterator {
                 throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
             }
         }
-        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "AVG function",
-                getMetadata());
+        throw new IteratorFlowException(
+                FLOW_EXCEPTION_MESSAGE + "AVG function",
+                getMetadata()
+        );
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies()
-    {
-        if(_children.get(0) instanceof VariableReferenceIterator)
-        {
+    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
+        if (_children.get(0) instanceof VariableReferenceIterator) {
             VariableReferenceIterator expr = (VariableReferenceIterator) _children.get(0);
-            Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
+            Map<String, DynamicContext.VariableDependency> result =
+                new TreeMap<String, DynamicContext.VariableDependency>();
             result.put(expr.getVariableName(), DynamicContext.VariableDependency.AVG);
             return result;
         } else {

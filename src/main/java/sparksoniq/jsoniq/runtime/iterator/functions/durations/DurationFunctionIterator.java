@@ -26,7 +26,8 @@ public class DurationFunctionIterator extends LocalFunctionCallIterator {
 
     public DurationFunctionIterator(
             List<RuntimeIterator> arguments,
-            IteratorMetadata iteratorMetadata) {
+            IteratorMetadata iteratorMetadata
+    ) {
         super(arguments, iteratorMetadata);
     }
 
@@ -35,17 +36,25 @@ public class DurationFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             this._hasNext = false;
             try {
-                Period period = DurationItem.getDurationFromString(_durationStringItem.getStringValue(), AtomicTypes.DurationItem);
+                Period period = DurationItem.getDurationFromString(
+                    _durationStringItem.getStringValue(),
+                    AtomicTypes.DurationItem
+                );
                 return ItemFactory.getInstance().createDurationItem(period);
             } catch (UnsupportedOperationException | IllegalArgumentException e) {
-                String message = String.format("\"%s\": value of type %s is not castable to type %s",
-                        _durationStringItem.serialize(), "string", "duration");
+                String message = String.format(
+                    "\"%s\": value of type %s is not castable to type %s",
+                    _durationStringItem.serialize(),
+                    "string",
+                    "duration"
+                );
                 throw new CastException(message, getMetadata());
             }
         } else
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " duration function",
-                    getMetadata());
+                    getMetadata()
+            );
     }
 
     @Override
@@ -53,12 +62,16 @@ public class DurationFunctionIterator extends LocalFunctionCallIterator {
         super.open(context);
         try {
             _durationStringItem = this.getSingleItemOfTypeFromIterator(
-                    this._children.get(0),
-                    StringItem.class,
-                    new UnknownFunctionCallException("duration", this._children.size(), getMetadata()));
+                this._children.get(0),
+                StringItem.class,
+                new UnknownFunctionCallException("duration", this._children.size(), getMetadata())
+            );
         } catch (UnknownFunctionCallException e) {
-            throw new UnexpectedTypeException(" Sequence of more than one item can not be cast to type with quantifier '1' or '?'", getMetadata());
+            throw new UnexpectedTypeException(
+                    " Sequence of more than one item can not be cast to type with quantifier '1' or '?'",
+                    getMetadata()
+            );
         }
-       this._hasNext = _durationStringItem != null;
+        this._hasNext = _durationStringItem != null;
     }
 }
