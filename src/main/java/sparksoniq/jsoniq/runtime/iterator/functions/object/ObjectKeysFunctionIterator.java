@@ -116,7 +116,7 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JavaRDD<Item> getRDD(DynamicContext dynamicContext) {
+    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         _currentDynamicContext = dynamicContext;
         JavaRDD<Item> childRDD = _iterator.getRDD(dynamicContext);
         FlatMapFunction<Item, Item> transformation = new ObjectKeysClosure();

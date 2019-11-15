@@ -1,4 +1,4 @@
-// Generated from ./src/main/java/sparksoniq/jsoniq/compiler/parser/Jsoniq.g4 by ANTLR 4.5.3
+// Generated from ./src/main/java/sparksoniq/jsoniq/compiler/parser/Jsoniq.g4 by ANTLR 4.7
 
 // Java header
 package sparksoniq.jsoniq.compiler.parser;
@@ -475,6 +475,18 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitKeyWordDateTime(JsoniqParser.KeyWordDateTimeContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#keyWordDate}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitKeyWordDate(JsoniqParser.KeyWordDateContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#keyWordTime}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitKeyWordTime(JsoniqParser.KeyWordTimeContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#typesKeywords}.
 	 * @param ctx the parse tree

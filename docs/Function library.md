@@ -179,6 +179,15 @@ Keys calls are pushed down to Spark, so this works on billions of items as well:
 keys(json-file("file.json"))
 ```
 
+### json-doc
+
+```
+json-doc("/Users/sheldon/object.json")
+```
+
+returns the (unique) JSON value parsed from a local JSON (but not necessarily JSON Lines) file where this value may be spread over multiple lines.
+
+
 ### project
 
 ```
@@ -525,6 +534,39 @@ tokenize("aa;bb;cc;dd", ";")
 
 returns ("aa", "bb", "cc", "dd")
 
+## Context functions
+
+### position
+
+```
+(1 to 10)[position() eq 5]
+```
+
+returns 5
+
+### last
+
+```
+(1 to 10)[position() eq last()]
+```
+returns 10
+
+
+```
+(1 to 10)[last()]
+```
+returns 10
+
+## I/O functions
+
+### json-doc
+
+```
+json-doc("file.json")
+```
+
+returns the (single) JSON value read from the supplied JSON file. This will also work for structures spread over multiple lines, as the read is local and not sharded.
+
 ## Integration with HDFS and Spark
 
 We support two more functions to read a JSON file from HDFS or send a large sequence to the cluster:
@@ -565,6 +607,15 @@ where $my-json.property eq "some value"
 return $my-json
 ```
 
+Several files or whole directories can be read with the same pattern syntax as in Spark.
+
+
+```
+for $my-json in json-file("*.json")
+where $my-json.property eq "some value"
+return $my-json
+```
+
 ### text-file (Rumble specific)
 
 Exists in unary and binary. The first parameter specifies the text file (or set of text files) to read and return as a sequence of strings.
@@ -580,7 +631,27 @@ count(
 )
 ```
 
+Several files or whole directories can be read with the same pattern syntax as in Spark.
+
 (Also see examples for json-file for host and port, sets of files and working directory).
+
+### parquet-file (Rumble specific)
+
+Parses one or more parquet files and returns a sequence of objects.
+
+```
+for $my-object in parquet-file("file.parquet")
+where $my-object.property eq "some value"
+return $my-json
+```
+
+Several files or whole directories can be read with the same pattern syntax as in Spark.
+
+```
+for $my-object in parquet-file("*.parquet")
+where $my-object.property eq "some value"
+return $my-json
+```
 
 ### parallelize (Rumble specific)
 
