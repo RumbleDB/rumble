@@ -85,7 +85,6 @@ import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpressi
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpressionVar;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.types.AtomicTypes;
-import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
 

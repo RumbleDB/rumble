@@ -278,7 +278,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
     }
 
     @Override
-    public RuntimeIterator visitFunctionCall(FunctionCall expression, RuntimeIterator argument) {
+    public RuntimeIterator  visitFunctionCall(FunctionCall expression, RuntimeIterator argument) {
         List<RuntimeIterator> arguments = new ArrayList<>();
         IteratorMetadata iteratorMetadata = createIteratorMetadata(expression);
         for (Expression arg : expression.getParameters()) {
