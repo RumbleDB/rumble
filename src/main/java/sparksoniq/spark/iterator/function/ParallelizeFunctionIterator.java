@@ -68,13 +68,7 @@ public class ParallelizeFunctionIterator extends RDDRuntimeIterator {
                 );
             }
             try {
-<<<<<<< HEAD
-                _rdd = SparkSessionManager.getInstance()
-                    .getJavaSparkContext()
-                    .parallelize(contents, partitions.getIntegerValue());
-=======
                 rdd = SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents, partitions.getIntegerValue());
->>>>>>> master
             } catch (Exception e) {
                 if (!partitionsIterator.hasNext())
                     throw new SparksoniqRuntimeException("The second parameter of parallelize must be an integer.");
