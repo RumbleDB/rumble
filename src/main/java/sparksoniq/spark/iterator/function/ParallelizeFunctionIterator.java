@@ -25,6 +25,7 @@ import org.rumbledb.api.Item;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.RDDRuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkSessionManager;
@@ -32,7 +33,7 @@ import sparksoniq.spark.SparkSessionManager;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ParallelizeFunctionIterator extends SparkFunctionCallIterator {
+public class ParallelizeFunctionIterator extends RDDRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
@@ -42,6 +43,7 @@ public class ParallelizeFunctionIterator extends SparkFunctionCallIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
+        JavaRDD<Item> rdd = null;
         List<Item> contents = new ArrayList<>();
         RuntimeIterator sequenceIterator = this._children.get(0);
         sequenceIterator.open(context);
@@ -49,7 +51,7 @@ public class ParallelizeFunctionIterator extends SparkFunctionCallIterator {
             contents.add(sequenceIterator.next());
         sequenceIterator.close();
         if (this._children.size() == 1) {
-            _rdd = SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents);
+            rdd = SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents);
         } else {
             RuntimeIterator partitionsIterator = this._children.get(1);
             partitionsIterator.open(_currentDynamicContext);
@@ -66,15 +68,19 @@ public class ParallelizeFunctionIterator extends SparkFunctionCallIterator {
                 );
             }
             try {
+<<<<<<< HEAD
                 _rdd = SparkSessionManager.getInstance()
                     .getJavaSparkContext()
                     .parallelize(contents, partitions.getIntegerValue());
+=======
+                rdd = SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents, partitions.getIntegerValue());
+>>>>>>> master
             } catch (Exception e) {
                 if (!partitionsIterator.hasNext())
                     throw new SparksoniqRuntimeException("The second parameter of parallelize must be an integer.");
             }
             partitionsIterator.close();
         }
-        return _rdd;
+        return rdd;
     }
 }
