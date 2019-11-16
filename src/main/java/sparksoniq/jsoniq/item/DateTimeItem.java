@@ -151,7 +151,8 @@ public class DateTimeItem extends AtomicItem {
     @Override
     public String serialize() {
         String value = this.getValue().toString();
-        String zoneString = this.getValue().getZone() == DateTimeZone.UTC ? "Z" : value.substring(value.length() - 6);
+        String zoneString = this.getValue().getZone() == DateTimeZone.UTC ? "Z"  :
+                this.getValue().getZone().toString().equals(DateTimeZone.getDefault().toString()) ? "" : value.substring(value.length() - 6);
         value = value.substring(0, value.length() - zoneString.length());
         value = this.getValue().getMillisOfSecond() == 0 ? value.substring(0, value.length()-4) : value;
         return value + (hasTimeZone ? zoneString : "");

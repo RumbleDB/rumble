@@ -28,12 +28,14 @@ import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+import org.joda.time.Instant;
 import org.rumbledb.api.Item;
 
 import sparksoniq.exceptions.InvalidGroupVariableException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -176,6 +178,9 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
                         if (!resultItem.isAtomic()) {
                             throw new NonAtomicKeyException("Group by keys must be atomics", expression.getIteratorMetadata().getExpressionMetadata());
                         }
+                        if (resultItem.isDuration()) resultItem = ItemFactory.getInstance().createStringItem(String.valueOf(resultItem.getDurationValue().toDurationFrom(Instant.now()).getMillis()));
+                        else if (resultItem.hasDateTime()) resultItem = ItemFactory.getInstance().createStringItem(String.valueOf(resultItem.getDateTimeValue().getMillis()));
+                        else if (resultItem.isBase64Binary() || resultItem.isHexBinary()) resultItem = ItemFactory.getInstance().createStringItem(Arrays.toString(resultItem.getBinaryValue()));
                         newVariableResults.add(resultItem);
                     }
                     groupVariableExpression.close();
@@ -192,7 +197,11 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
 
                     groupVariableReference.open(tupleContext);
                     while (groupVariableReference.hasNext()) {
-                        results.add(groupVariableReference.next());
+                        Item next = groupVariableReference.next();
+                        if (next.isDuration()) next = ItemFactory.getInstance().createStringItem(String.valueOf(next.getDurationValue().toDurationFrom(Instant.now()).getMillis()));
+                        else if (next.hasDateTime()) next = ItemFactory.getInstance().createStringItem(String.valueOf(next.getDateTimeValue().getMillis()));
+                        else if (next.isBase64Binary() || next.isHexBinary()) next = ItemFactory.getInstance().createStringItem(Arrays.toString(next.getBinaryValue()));
+                        results.add(next);
                     }
                     groupVariableReference.close();
                 }

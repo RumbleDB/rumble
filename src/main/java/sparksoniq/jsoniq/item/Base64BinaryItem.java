@@ -161,7 +161,7 @@ public class Base64BinaryItem extends AtomicItem {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        output.writeString(this.serializeValue());
+        output.writeString(this.serialize());
     }
 
     @Override

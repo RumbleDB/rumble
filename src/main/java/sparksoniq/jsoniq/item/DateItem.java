@@ -160,8 +160,7 @@ public class DateItem extends AtomicItem {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        if (this.hasTimeZone)
-            output.writeString(this.serialize());
+        output.writeString(this.serialize());
     }
 
     @Override

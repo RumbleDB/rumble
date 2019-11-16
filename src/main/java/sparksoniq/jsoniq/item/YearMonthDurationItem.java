@@ -20,7 +20,6 @@ import java.math.RoundingMode;
 public class YearMonthDurationItem extends DurationItem {
 
     private static final long serialVersionUID = 1L;
-    private Period _value;
     private static final PeriodType yearMonthPeriodType = PeriodType.forFields(new DurationFieldType[]{DurationFieldType.years(), DurationFieldType.months()});
 
     public YearMonthDurationItem() {
@@ -57,6 +56,8 @@ public class YearMonthDurationItem extends DurationItem {
     public void read(Kryo kryo, Input input) {
         this._value = getDurationFromString(input.readString(), AtomicTypes.YearMonthDurationItem).normalizedStandard(yearMonthPeriodType);
         isNegative = this._value.toString().contains("-");
+//        this._value = new Period(input.readLong()).normalizedStandard(yearMonthPeriodType);
+//        this.isNegative = this._value.toString().contains("-");
     }
 
     @Override

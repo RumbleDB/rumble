@@ -40,7 +40,7 @@ public class ForClauseVar extends FlworVarDecl {
         super(FLWOR_CLAUSES.FOR_VAR, varRef, seq, expression, metadataFromContext);
         this.allowEmpty = emptyFlag;
         this.positionalVariableReference = atVarRef;
-        this.asSequence = new FlworVarSequenceType(seq.getSequence().getItemType().getType(), SequenceType.Arity.ZeroOrMore, metadataFromContext);
+        if (seq != null) this.asSequence = new FlworVarSequenceType(seq.getSequence().getItemType().getType(), SequenceType.Arity.ZeroOrMore, metadataFromContext);
     }
 
     public boolean allowsEmpty() {

@@ -19,7 +19,6 @@ import java.math.BigDecimal;
 public class DayTimeDurationItem extends DurationItem {
 
     private static final long serialVersionUID = 1L;
-    private Period _value;
 
     public DayTimeDurationItem() {
         super();
@@ -60,6 +59,8 @@ public class DayTimeDurationItem extends DurationItem {
     public void read(Kryo kryo, Input input) {
         this._value = getDurationFromString(input.readString(), AtomicTypes.DayTimeDurationItem).normalizedStandard(PeriodType.dayTime());
         isNegative = this._value.toString().contains("-");
+//        this._value = new Period(input.readLong()).normalizedStandard(PeriodType.dayTime());
+//        this.isNegative = this._value.toString().contains("-");
     }
 
     @Override
