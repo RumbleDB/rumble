@@ -138,7 +138,7 @@ public class DurationItem extends AtomicItem {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        output.writeString(this.getValue().toString());
+        output.writeString(this.serialize());
 //        Long l = this.getValue().toDurationFrom(Instant.now()).getMillis();
 //        output.writeLong(l);
     }
