@@ -27,22 +27,17 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
-
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
-import sparksoniq.jsoniq.runtime.tupleiterator.SparkRuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.SparkSessionManager;
-import sparksoniq.spark.closures.ForClauseClosure;
 import sparksoniq.spark.closures.ForClauseLocalToRowClosure;
 import sparksoniq.spark.closures.ForClauseSerializeClosure;
-import sparksoniq.spark.closures.InitialForClauseClosure;
-import sparksoniq.spark.closures.OLD_ForClauseLocalToRDDClosure;
 import sparksoniq.spark.udf.ForClauseUDF;
 
 import java.util.ArrayList;
@@ -53,7 +48,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
+public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
 
     private static final long serialVersionUID = 1L;
@@ -77,11 +72,6 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
     }
 
     @Override
-    public boolean isRDD() {
-        return (_expression.isRDD() || (_child != null && _child.isRDD()));
-    }
-
-    @Override
     public boolean isDataFrame() {
         return (_expression.isRDD() || (_child != null && _child.isDataFrame()));
     }
@@ -90,10 +80,7 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-
-        // isRDD checks omitted, as open is used for non-RDD(local) operations
-
-        if (this._child != null) { // if it's not a start clause
+        if (this._child != null) { //if it's not a start clause
             _child.open(_currentDynamicContext);
             _tupleContext = new DynamicContext(_currentDynamicContext); // assign current context as parent
 
@@ -170,46 +157,9 @@ public class ForClauseSparkIterator extends SparkRuntimeTupleIterator {
     @Override
     public void close() {
         this._isOpen = false;
-        result = null;
         if (_child != null) {
             this._child.close();
         }
-    }
-
-
-    @Override
-    public JavaRDD<FlworTuple> getRDD(DynamicContext context) {
-        JavaRDD<Item> initialRdd = null;
-        this._rdd = SparkSessionManager.getInstance().getJavaSparkContext().emptyRDD();
-
-        if (this._child == null) {
-            initialRdd = _expression.getRDD(context);
-            this._rdd = initialRdd.map(new InitialForClauseClosure(_variableName));
-        } else { // if it's not a start clause
-
-            if (_child.isRDD()) {
-                this._rdd = this._child.getRDD(context);
-                this._rdd = this._rdd.flatMap(new ForClauseClosure(_expression, _variableName));
-
-            } else { // if child is locally evaluated
-                // _expression is definitely an RDD if execution flows here
-
-                _child.open(context);
-                _tupleContext = new DynamicContext(context); // assign current context as parent
-                while (_child.hasNext()) {
-                    _inputTuple = _child.next();
-                    _tupleContext.removeAllVariables(); // clear the previous variables
-                    _tupleContext.setBindingsFromTuple(_inputTuple); // assign new variables from new tuple
-
-                    JavaRDD<Item> expressionRDD = _expression.getRDD(_tupleContext);
-                    this._rdd = this._rdd.union(
-                        expressionRDD.map(new OLD_ForClauseLocalToRDDClosure(_variableName, _inputTuple))
-                    );
-                }
-                _child.close();
-            }
-        }
-        return _rdd;
     }
 
     @Override

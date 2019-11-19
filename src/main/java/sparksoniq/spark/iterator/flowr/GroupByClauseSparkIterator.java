@@ -20,8 +20,6 @@
 
 package sparksoniq.spark.iterator.flowr;
 
-import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataType;
@@ -29,7 +27,6 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
-
 import sparksoniq.exceptions.InvalidGroupVariableException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
@@ -38,13 +35,10 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
-import sparksoniq.jsoniq.runtime.tupleiterator.SparkRuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
-import sparksoniq.spark.closures.GroupByLinearizeTupleClosure;
-import sparksoniq.spark.closures.GroupByToPairMapClosure;
 import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
 import sparksoniq.spark.udf.GroupClauseCreateColumnsUDF;
 import sparksoniq.spark.udf.GroupClauseSerializeAggregateResultsUDF;
@@ -60,7 +54,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
+public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
 
     private static final long serialVersionUID = 1L;
     private final List<GroupByClauseSparkIteratorExpression> _expressions;
@@ -86,11 +80,6 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
     }
 
     @Override
-    public boolean isRDD() {
-        return _child.isRDD();
-    }
-
-    @Override
     public boolean isDataFrame() {
         return _child.isDataFrame();
     }
@@ -98,9 +87,6 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-
-        // isRDD checks omitted, as open is used for non-RDD(local) operations
-
         if (this._child != null) {
             _child.open(_currentDynamicContext);
 
@@ -236,21 +222,6 @@ public class GroupByClauseSparkIterator extends SparkRuntimeTupleIterator {
             }
         }
         _localTupleResults.add(newTuple);
-    }
-
-
-    @Override
-    public JavaRDD<FlworTuple> getRDD(DynamicContext context) {
-        _rdd = this._child.getRDD(context);
-        // map to pairs - ArrayItem [sort keys] , tuples
-        JavaPairRDD<FlworKey, FlworTuple> keyTuplePair = this._rdd
-            .mapToPair(new GroupByToPairMapClosure(_expressions));
-        // group by key
-        JavaPairRDD<FlworKey, Iterable<FlworTuple>> groupedPair =
-            keyTuplePair.groupByKey();
-        // linearize iterable tuples into arrays
-        this._rdd = groupedPair.map(new GroupByLinearizeTupleClosure(_expressions));
-        return _rdd;
     }
 
     @Override

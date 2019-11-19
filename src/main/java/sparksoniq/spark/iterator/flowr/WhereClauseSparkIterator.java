@@ -20,13 +20,6 @@
 
 package sparksoniq.spark.iterator.flowr;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
@@ -36,14 +29,18 @@ import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
-import sparksoniq.jsoniq.runtime.tupleiterator.SparkRuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
-import sparksoniq.spark.closures.OLD_WhereClauseClosure;
 import sparksoniq.spark.udf.WhereClauseUDF;
 
-public class WhereClauseSparkIterator extends SparkRuntimeTupleIterator {
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+
+public class WhereClauseSparkIterator extends RuntimeTupleIterator {
 
 
     private static final long serialVersionUID = 1L;
@@ -64,11 +61,6 @@ public class WhereClauseSparkIterator extends SparkRuntimeTupleIterator {
     }
 
     @Override
-    public boolean isRDD() {
-        return _child.isRDD();
-    }
-
-    @Override
     public boolean isDataFrame() {
         return _child.isDataFrame();
     }
@@ -76,9 +68,6 @@ public class WhereClauseSparkIterator extends SparkRuntimeTupleIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-
-        // isRDD checks omitted, as open is used for non-RDD(local) operations
-
         if (this._child != null) {
             _child.open(_currentDynamicContext);
             _tupleContext = new DynamicContext(_currentDynamicContext); // assign current context as parent
@@ -125,21 +114,8 @@ public class WhereClauseSparkIterator extends SparkRuntimeTupleIterator {
     }
 
     @Override
-    public JavaRDD<FlworTuple> getRDD(DynamicContext context) {
-        if (this._child == null) {
-            throw new SparksoniqRuntimeException("Invalid where clause.");
-        }
-        this._rdd = _child.getRDD(context);
-        this._rdd = this._rdd.filter(new OLD_WhereClauseClosure(_expression));
-        return _rdd;
-
-    }
-
-    @Override
-    public Dataset<Row> getDataFrame(
-            DynamicContext context,
-            Map<String, DynamicContext.VariableDependency> parentProjection
-    ) {
+    public Dataset<Row> getDataFrame(DynamicContext context, Map<String, DynamicContext.VariableDependency> parentProjection)
+    {
         if (this._child == null) {
             throw new SparksoniqRuntimeException("Invalid where clause.");
         }

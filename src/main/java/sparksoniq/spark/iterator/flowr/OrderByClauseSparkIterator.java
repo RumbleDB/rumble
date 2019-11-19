@@ -20,8 +20,6 @@
 
 package sparksoniq.spark.iterator.flowr;
 
-import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataType;
@@ -29,7 +27,6 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
-
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
@@ -37,26 +34,24 @@ import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
-import sparksoniq.jsoniq.runtime.tupleiterator.SparkRuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.closures.OrderByClauseSortClosure;
-import sparksoniq.spark.closures.OrderByMapToPairClosure;
 import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 import sparksoniq.spark.udf.OrderClauseCreateColumnsUDF;
 import sparksoniq.spark.udf.OrderClauseDetermineTypeUDF;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeMap;
 
-public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
+public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
     private static final long serialVersionUID = 1L;
     private final boolean _isStable;
@@ -82,11 +77,6 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
     }
 
     @Override
-    public boolean isRDD() {
-        return _child.isRDD();
-    }
-
-    @Override
     public boolean isDataFrame() {
         return _child.isDataFrame();
     }
@@ -94,9 +84,6 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-
-        // isRDD checks omitted, as open is used for non-RDD(local) operations
-
         if (this._child != null) {
             _child.open(_currentDynamicContext);
 
@@ -199,25 +186,8 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
     }
 
     @Override
-    public JavaRDD<FlworTuple> getRDD(DynamicContext context) {
-        if (this._child == null) {
-            throw new SparksoniqRuntimeException("Invalid orderby clause.");
-        }
-
-        // map to pairs - ArrayItem [sort keys] , tuples
-        JavaPairRDD<FlworKey, FlworTuple> keyTuplePair = this._child.getRDD(context)
-            .mapToPair(new OrderByMapToPairClosure(this._expressions, _isStable));
-        // sort by key
-        keyTuplePair = keyTuplePair.sortByKey(new OrderByClauseSortClosure(this._expressions, _isStable));
-        // map back to tuple RDD
-        return keyTuplePair.map(tuple2 -> tuple2._2());
-    }
-
-    @Override
-    public Dataset<Row> getDataFrame(
-            DynamicContext context,
-            Map<String, DynamicContext.VariableDependency> parentProjection
-    ) {
+    public Dataset<Row> getDataFrame(DynamicContext context, Map<String, DynamicContext.VariableDependency> parentProjection)
+    {
         if (this._child == null) {
             throw new SparksoniqRuntimeException("Invalid orderby clause.");
         }

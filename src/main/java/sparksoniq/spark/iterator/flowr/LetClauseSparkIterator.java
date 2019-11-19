@@ -20,24 +20,20 @@
 
 package sparksoniq.spark.iterator.flowr;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
-
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
-import sparksoniq.jsoniq.runtime.tupleiterator.SparkRuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
-import sparksoniq.spark.closures.OLD_LetClauseMapClosure;
 import sparksoniq.spark.udf.LetClauseUDF;
 
 import java.util.ArrayList;
@@ -48,7 +44,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
+public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
 
     private static final long serialVersionUID = 1L;
@@ -68,15 +64,6 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
         _variableName = variableReference.getVariableName();
         _expression = expression;
         _dependencies = _expression.getVariableDependencies();
-    }
-
-    @Override
-    public boolean isRDD() {
-        if (this._child == null) {
-            return false;
-        } else {
-            return _child.isRDD();
-        }
     }
 
     @Override
@@ -128,10 +115,7 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-
-        // isRDD checks omitted, as open is used for non-RDD(local) operations
-
-        if (this._child != null) { // if it's not a start clause
+        if (this._child != null) { //if it's not a start clause
             _child.open(_currentDynamicContext);
             _tupleContext = new DynamicContext(_currentDynamicContext); // assign current context as parent
 
@@ -152,28 +136,15 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
     @Override
     public void close() {
         this._isOpen = false;
-        result = null;
         if (_child != null) {
             _child.close();
         }
     }
 
     @Override
-    public JavaRDD<FlworTuple> getRDD(DynamicContext context) {
-        if (this._child != null) {
-            this._rdd = _child.getRDD(context);
-            this._rdd = this._rdd.map(new OLD_LetClauseMapClosure(_variableName, _expression));
-            return _rdd;
-        }
-        throw new SparksoniqRuntimeException("Initial letClauses don't support RDDs");
-    }
-
-    @Override
-    public Dataset<Row> getDataFrame(
-            DynamicContext context,
-            Map<String, DynamicContext.VariableDependency> parentProjection
-    ) {
-        // if it's not a start clause
+    public Dataset<Row> getDataFrame(DynamicContext context, Map<String, DynamicContext.VariableDependency> parentProjection)
+    {
+        //if it's not a start clause
         if (this._child != null) {
             Dataset<Row> df = _child.getDataFrame(context, getProjection(parentProjection));
 
