@@ -72,7 +72,15 @@ public class TreatIterator extends HybridRuntimeIterator {
     private void setNextResult() {
         _nextResult = null;
         if (_iterator.hasNext()) {
-            _nextResult = _iterator.next();
+            if (_iterator.isRDD()) {
+                JavaRDD<Item> childRDD = _iterator.getRDD(_currentDynamicContext);
+                List<Item> items = childRDD.take(2);
+                checkMoreThanOneItemSequence(items.size());
+                _nextResult = childRDD.first();
+            }
+            else {
+                _nextResult = _iterator.next();
+            }
             if (_nextResult != null) _childIndex++;
         } else {
             _iterator.close();
@@ -82,9 +90,10 @@ public class TreatIterator extends HybridRuntimeIterator {
         this._hasNext = _nextResult != null;
         if (!hasNext()) return;
 
-        checkItemsSize(_childIndex);
+        checkTreatAsEmptySequence(_childIndex);
+        checkMoreThanOneItemSequence(_childIndex);
         if (!_nextResult.isTypeOf(itemType)) {
-            throw new TreatException(" " + ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName()) + " cannot be treated as type " + sequenceTypeName + _sequenceType.getArity().getSymbol(), getMetadata());
+            throw new TreatException(ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName()) + " cannot be treated as type " + sequenceTypeName + _sequenceType.getArity().getSymbol(), getMetadata());
         }
     }
 
@@ -93,34 +102,37 @@ public class TreatIterator extends HybridRuntimeIterator {
         _currentDynamicContext = dynamicContext;
         JavaRDD<Item> childRDD = _iterator.getRDD(dynamicContext);
 
-        int count = childRDD.take(2).size();
-        checkEmptySequence(count);
-        checkItemsSize(count);
+        if (_sequenceType.getArity() != SequenceType.Arity.ZeroOrMore)
+            checkEmptySequence(childRDD.take(2).size());
+
         Function<Item, Boolean> transformation = new TreatAsClosure(_sequenceType, getMetadata());
         return childRDD.filter(transformation);
     }
 
-    private void checkEmptySequence(long size) {
+    private void checkEmptySequence(int size) {
         if (size == 0 && (_sequenceType.getArity() == SequenceType.Arity.One ||
                 _sequenceType.getArity() == SequenceType.Arity.OneOrMore)) {
-            throw new TreatException(" Empty sequence cannot be treated as type " + sequenceTypeName + _sequenceType.getArity().getSymbol(), getMetadata());
+            throw new TreatException("Empty sequence cannot be treated as type " + sequenceTypeName + _sequenceType.getArity().getSymbol(), getMetadata());
         }
     }
 
-    private void checkItemsSize(long size) {
+    private void checkTreatAsEmptySequence(int size) {
         if (size > 0 && _sequenceType.isEmptySequence())
-            throw new TreatException(" " + ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName()) + " cannot be treated as type empty-sequence()", getMetadata());
+            throw new TreatException(ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName()) + " cannot be treated as type empty-sequence()", getMetadata());
+    }
 
-
+    private void checkMoreThanOneItemSequence(int size) {
         if (size > 1 && (_sequenceType.getArity() == SequenceType.Arity.One ||
                 _sequenceType.getArity() == SequenceType.Arity.OneOrZero)) {
-            throw new TreatException(" Sequences of more than one item cannot be treated as type " + sequenceTypeName + _sequenceType.getArity().getSymbol(), getMetadata());
+            throw new TreatException("Sequences of more than one item cannot be treated as type " + sequenceTypeName + _sequenceType.getArity().getSymbol(), getMetadata());
         }
     }
 
     @Override
     public boolean initIsRDD() {
-        return _iterator.isRDD();
+        return _sequenceType.getArity() != SequenceType.Arity.One
+                && _sequenceType.getArity() != SequenceType.Arity.OneOrZero
+                && _iterator.isRDD();
     }
 }
 
