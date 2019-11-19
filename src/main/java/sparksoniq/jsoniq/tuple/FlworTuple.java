@@ -24,6 +24,8 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import org.apache.spark.api.java.JavaRDD;
+import org.rumbledb.api.Item;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 
 import java.io.Serializable;
@@ -32,35 +34,48 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
-import org.rumbledb.api.Item;
-
 public class FlworTuple implements Serializable, KryoSerializable {
 
-
     private static final long serialVersionUID = 1L;
-    private LinkedHashMap<String, List<Item>> variables;
+    private LinkedHashMap<String, List<Item>> localVariables;
+    private LinkedHashMap<String, JavaRDD<Item>> rddVariables;
 
     public FlworTuple() {
-        variables = new LinkedHashMap<>(1, 1);
+        localVariables = new LinkedHashMap<>(1, 1);
+        rddVariables = new LinkedHashMap<>(1, 1);
     }
 
     public FlworTuple(int nb) {
-        variables = new LinkedHashMap<>(nb, 1);
+        localVariables = new LinkedHashMap<>(nb, 1);
+        rddVariables = new LinkedHashMap<>(nb, 1);
     }
 
     /**
-     * Create a deep copy
+     * Deep copy constructor
      */
     public FlworTuple(FlworTuple toCopy) {
-        variables = new LinkedHashMap<>(toCopy.getKeys().size(), 1);
-        for (String key : toCopy.getKeys())
-            this.putValue(key, toCopy.getValue(key));
+        localVariables = new LinkedHashMap<>(toCopy.localVariables.size(), 1);
+        for (String key : toCopy.localVariables.keySet()) {
+            this.putValue(key, toCopy.localVariables.get(key));
+        }
+        rddVariables = new LinkedHashMap<>(toCopy.rddVariables.size(), 1);
+        for (String key : toCopy.rddVariables.keySet()) {
+            this.putValue(key, toCopy.rddVariables.get(key));
+        }
     }
 
     /**
      * Create a tuple containing only the given key-value pair
      */
     public FlworTuple(String newKey, List<Item> value) {
+        this(1);
+        this.putValue(newKey, value);
+    }
+
+    /**
+     * Create a tuple containing only the given key-value pair
+     */
+    public FlworTuple(String newKey, JavaRDD<Item> value) {
         this(1);
         this.putValue(newKey, value);
     }
@@ -73,12 +88,38 @@ public class FlworTuple implements Serializable, KryoSerializable {
         this.putValue(newKey, value);
     }
 
-    public boolean contains(String key) {
-        return variables.containsKey(key);
+    /**
+     * Create a deep copy containing new key-value pair
+     */
+    public FlworTuple(FlworTuple toCopy, String newKey, JavaRDD<Item> value) {
+        this(toCopy);
+        this.putValue(newKey, value);
     }
 
-    public void putValue(String key, List<Item> value) {
-        variables.put(key, value);
+    public boolean contains(String key) {
+        return localVariables.containsKey(key) || rddVariables.containsKey(key);
+    }
+
+    public List<Item> getLocalValue(String key) {
+        if (localVariables.containsKey(key)) {
+            return localVariables.get(key);
+        }
+        throw new SparksoniqRuntimeException("Undeclared FLOWR variable");
+    }
+
+    public JavaRDD<Item> getRDDValue(String key) {
+        if (rddVariables.containsKey(key)) {
+            return rddVariables.get(key);
+        }
+        throw new SparksoniqRuntimeException("Undeclared FLOWR variable");
+    }
+
+    public Set<String> getLocalKeys() {
+        return localVariables.keySet();
+    }
+
+    public Set<String> getRDDKeys() {
+        return rddVariables.keySet();
     }
 
     public void putValue(String key, Item value) {
@@ -87,25 +128,24 @@ public class FlworTuple implements Serializable, KryoSerializable {
         this.putValue(key, itemList);
     }
 
-    public List<Item> getValue(String key) {
-        if (contains(key))
-            return variables.get(key);
-
-        throw new SparksoniqRuntimeException("Undeclared FLOWR variable");
+    public void putValue(String key, List<Item> value) {
+        localVariables.put(key, value);
     }
 
-    public Set<String> getKeys() {
-        return this.variables.keySet();
+    public void putValue(String key, JavaRDD<Item> value) {
+        rddVariables.put(key, value);
     }
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, variables);
+        kryo.writeObject(output, localVariables);
+        kryo.writeObject(output, rddVariables);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public void read(Kryo kryo, Input input) {
-        variables = kryo.readObject(input, LinkedHashMap.class);
+        localVariables = kryo.readObject(input, LinkedHashMap.class);
+        rddVariables = kryo.readObject(input, LinkedHashMap.class);
     }
 }

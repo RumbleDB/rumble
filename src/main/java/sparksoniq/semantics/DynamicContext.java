@@ -79,9 +79,9 @@ public class DynamicContext implements Serializable, KryoSerializable {
     }
 
     public void setBindingsFromTuple(FlworTuple tuple) {
-        for (String key : tuple.getKeys())
+        for (String key : tuple.getLocalKeys())
             if (!key.startsWith("."))
-                this.addVariableValue(key, tuple.getValue(key));
+                this.addVariableValue(key, tuple.getLocalValue(key));
     }
 
     public void addVariableValue(String varName, List<Item> value) {
@@ -158,6 +158,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         Item item = null;
         if (position < Integer.MAX_VALUE) {
             item = ItemFactory.getInstance().createIntegerItem((int) position);
+
         } else {
             item = ItemFactory.getInstance().createDecimalItem(new BigDecimal(position));
         }

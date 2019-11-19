@@ -200,15 +200,15 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
     private void linearizeTuples(List<FlworTuple> keyTuplePairs) {
         Iterator<FlworTuple> iterator = keyTuplePairs.iterator();
         FlworTuple oldFirstTuple = iterator.next();
-        FlworTuple newTuple = new FlworTuple(oldFirstTuple.getKeys().size());
-        for (String tupleVariable : oldFirstTuple.getKeys()) {
+        FlworTuple newTuple = new FlworTuple(oldFirstTuple.getLocalKeys().size());
+        for (String tupleVariable : oldFirstTuple.getLocalKeys()) {
             iterator = keyTuplePairs.iterator();
             if (_expressions.stream().anyMatch(v -> v.getVariableReference().getVariableName().equals(tupleVariable))) {
-                newTuple.putValue(tupleVariable, oldFirstTuple.getValue(tupleVariable));
+                newTuple.putValue(tupleVariable, oldFirstTuple.getLocalValue(tupleVariable));
             } else {
                 List<Item> allValues = new ArrayList<>();
                 while (iterator.hasNext()) {
-                    allValues.addAll(iterator.next().getValue(tupleVariable));
+                    allValues.addAll(iterator.next().getLocalValue(tupleVariable));
                 }
                 newTuple.putValue(tupleVariable, allValues);
             }

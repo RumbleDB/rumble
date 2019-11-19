@@ -231,8 +231,9 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             JavaRDD<Item> expressionRDD = _expression.getRDD(_tupleContext);
 
             // TODO - Optimization: Iterate schema creation only once
-            Set<String> oldColumnNames = _inputTuple.getKeys();
+            Set<String> oldColumnNames = _inputTuple.getLocalKeys();
             List<String> newColumnNames = new ArrayList<>(oldColumnNames);
+
             newColumnNames.add(_variableName);
             List<StructField> fields = new ArrayList<>();
             for (String columnName : newColumnNames) {
