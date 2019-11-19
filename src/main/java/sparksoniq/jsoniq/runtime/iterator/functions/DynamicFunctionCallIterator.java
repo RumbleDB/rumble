@@ -28,6 +28,7 @@ import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionSignature;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.SequenceType;
@@ -78,13 +79,13 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
     }
 
     private void processArguments() {
-        if (_functionItem.getParameterNames().size() != _functionArguments.size()) {
-            String formattedName = (!_functionItem.getIdentifier().getName().equals(""))
-                    ? _functionItem.getIdentifier().getName() + " "
+        if (_functionItem.getSignature().getParameterNames().size() != _functionArguments.size()) {
+            String formattedName = (!_functionItem.getSignature().getIdentifier().getName().equals(""))
+                    ? _functionItem.getSignature().getIdentifier().getName() + " "
                     : "";
             throw new UnexpectedTypeException(
                     "Dynamic function " + formattedName
-                            + "invoked with incorrect number of arguments. Expected: " + _functionItem.getParameterNames().size()
+                            + "invoked with incorrect number of arguments. Expected: " + _functionItem.getSignature().getParameterNames().size()
                             + ", Found: " + _functionArguments.size()
                     , getMetadata()
             );
@@ -98,7 +99,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
             // calculate argument values
             for (int i = 0; i < _functionArguments.size(); i++) {
                 argIterator = _functionArguments.get(i);
-                argName = _functionItem.getParameterNames().get(i);
+                argName = _functionItem.getSignature().getParameterNames().get(i);
 
                 List<Item> argValue = getItemsFromIteratorWithCurrentContext(argIterator);
                 argumentValues.put(argName, argValue);
@@ -112,16 +113,16 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
                 );
             }
         } else {
-            List<String> partialAppParamNames = new ArrayList<>();
-            List<SequenceType> partialAppSignature = new ArrayList<>();
+            List<String> partialAppParametersNames = new ArrayList<>();
+            List<SequenceType> partialAppParameters = new ArrayList<>();
 
             for (int i = 0; i < _functionArguments.size(); i++) {
                 argIterator = _functionArguments.get(i);
-                argName = _functionItem.getParameterNames().get(i);
+                argName = _functionItem.getSignature().getParameterNames().get(i);
 
                 if (argIterator == null) {  // == ArgumentPlaceholder
-                    partialAppParamNames.add(argName);
-                    partialAppSignature.add(_functionItem.getSignature().get(i));
+                    partialAppParametersNames.add(argName);
+                    partialAppParameters.add(_functionItem.getSignature().getParameters().get(i));
                 } else {
                     List<Item> argValue = getItemsFromIteratorWithCurrentContext(argIterator);
                     argumentValues.put(argName, argValue);
@@ -130,15 +131,15 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
 
             // partial application should return a new FunctionItem with given parameters set as NonLocalVariables
             // and argument placeholders as new parameters to the new FunctionItem
-            partialAppSignature.add(_functionItem.getSignature().get(_functionItem.getSignature().size() - 1));   // add return type
-
-            FunctionItem partiallyAppliedFunction = new FunctionItem(
-                    new FunctionIdentifier("", partialAppParamNames.size()),
-                    partialAppParamNames,
-                    partialAppSignature,
+            FunctionItem partiallyAppliedFunction =
+                    new FunctionItem(
+                            new FunctionSignature(
+                                    new FunctionIdentifier("", partialAppParametersNames.size()),
+                                    partialAppParameters,
+                                    partialAppParametersNames,
+                                    _functionItem.getSignature().getReturnType()),
                     _functionItem.getBodyIterator(),
-                    argumentValues
-            );
+                    argumentValues);
             _functionCallIterator = new FunctionRuntimeIterator(partiallyAppliedFunction, getMetadata());
         }
     }
@@ -151,7 +152,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
             return result;
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in "
-                + _functionItem.getIdentifier().getName() + "  function",
+                + _functionItem.getSignature().getIdentifier().getName() + "  function",
                 getMetadata());
     }
 

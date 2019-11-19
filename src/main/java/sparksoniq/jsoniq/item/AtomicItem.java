@@ -44,6 +44,11 @@ public abstract class AtomicItem extends Item {
         return type.getType().equals(ItemTypes.AtomicItem) || type.getType().equals(ItemTypes.Item);
     }
 
+    @Override
+    public Item promoteTo(ItemType type) {
+        return this.castAs(AtomicTypes.valueOf(type.getType().toString()));
+    }
+
     public abstract Item castAs(AtomicTypes itemType);
 
     public abstract boolean isCastableAs(AtomicTypes itemType);

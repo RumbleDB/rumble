@@ -66,7 +66,7 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
             this.checkBinaryOperation(_left, _right, _operator);
             this._hasNext = true;
             if (_leftIterator.hasNext() || _rightIterator.hasNext())
-                throw new UnexpectedTypeException("Sequence of more than one item can not be promoted to parameter type atomic of function add()", getMetadata());
+                throw new UnexpectedTypeException("Sequence of more than one item cannot be promoted to parameter type atomic of function add()", getMetadata());
         }
         _leftIterator.close();
         _rightIterator.close();

@@ -15,18 +15,19 @@ import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
 
 import java.util.Collections;
-import java.util.List;
 
 
 public class TreatIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator _iterator;
-    private Item _nextResult;
-    private final SequenceType _sequenceType;
+    public Item _nextResult;
+    Item _currentResult;
+    private SequenceType _sequenceType;
     private int _childIndex;
-    private final ItemType itemType;
-    private final String sequenceTypeName;
+    private ItemType itemType;
+    private String sequenceTypeName;
+    boolean _shouldCheckForTypePromotion = true;
 
     public TreatIterator(RuntimeIterator iterator, SequenceType sequenceType, IteratorMetadata iteratorMetadata) {
         super(Collections.singletonList(iterator), iteratorMetadata);
@@ -37,18 +38,18 @@ public class TreatIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected boolean hasNextLocal() {
+    public boolean hasNextLocal() {
         return _hasNext;
     }
 
     @Override
-    protected void resetLocal(DynamicContext context) {
+    public void resetLocal(DynamicContext context) {
         _iterator.reset(_currentDynamicContext);
         setNextResult();
     }
 
     @Override
-    protected void closeLocal() {
+    public void closeLocal() {
         _iterator.close();
     }
 
@@ -62,9 +63,9 @@ public class TreatIterator extends HybridRuntimeIterator {
     @Override
     public Item nextLocal() {
         if (this._hasNext) {
-            Item result = _nextResult;
+            _currentResult = _nextResult;
             setNextResult();
-            return result;
+            return _currentResult;
         } else
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
     }
@@ -84,7 +85,7 @@ public class TreatIterator extends HybridRuntimeIterator {
 
         checkItemsSize(_childIndex);
         if (!_nextResult.isTypeOf(itemType)) {
-            throw new TreatException(" " + ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName()) + " cannot be treated as type " + sequenceTypeName + _sequenceType.getArity().getSymbol(), getMetadata());
+            throw new TreatException(ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName()) + " cannot be treated as type " + sequenceTypeName + _sequenceType.getArity().getSymbol(), getMetadata());
         }
     }
 
@@ -100,21 +101,23 @@ public class TreatIterator extends HybridRuntimeIterator {
         return childRDD.filter(transformation);
     }
 
-    private void checkEmptySequence(long size) {
-        if (size == 0 && (_sequenceType.getArity() == SequenceType.Arity.One ||
-                _sequenceType.getArity() == SequenceType.Arity.OneOrMore)) {
-            throw new TreatException(" Empty sequence cannot be treated as type " + sequenceTypeName + _sequenceType.getArity().getSymbol(), getMetadata());
+    void checkEmptySequence(int size) {
+        if (size == 0 && (_sequenceType.getArity() == SequenceType.Arity.One || _sequenceType.getArity() == SequenceType.Arity.OneOrMore)) {
+            _shouldCheckForTypePromotion = false;
+            throw new TreatException("Empty sequence cannot be treated as type " + sequenceTypeName + _sequenceType.getArity().getSymbol(), getMetadata());
         }
     }
 
-    private void checkItemsSize(long size) {
-        if (size > 0 && _sequenceType.isEmptySequence())
-            throw new TreatException(" " + ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName()) + " cannot be treated as type empty-sequence()", getMetadata());
+    void checkItemsSize(int size) {
+        if (size > 0 && _sequenceType.isEmptySequence()) {
+            _shouldCheckForTypePromotion = false;
+            throw new TreatException(ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName()) + " cannot be treated as type empty-sequence()", getMetadata());
+        }
 
 
-        if (size > 1 && (_sequenceType.getArity() == SequenceType.Arity.One ||
-                _sequenceType.getArity() == SequenceType.Arity.OneOrZero)) {
-            throw new TreatException(" Sequences of more than one item cannot be treated as type " + sequenceTypeName + _sequenceType.getArity().getSymbol(), getMetadata());
+        if (size > 1 && (_sequenceType.getArity() == SequenceType.Arity.One || _sequenceType.getArity() == SequenceType.Arity.OneOrZero)) {
+            _shouldCheckForTypePromotion = false;
+            throw new TreatException("Sequences of more than one item cannot be treated as type " + sequenceTypeName + _sequenceType.getArity().getSymbol(), getMetadata());
         }
     }
 

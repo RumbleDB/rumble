@@ -22,264 +22,179 @@ package sparksoniq.jsoniq.runtime.iterator.functions.base;
 
 import sparksoniq.exceptions.DuplicateFunctionIdentifierException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
-import sparksoniq.exceptions.UnknownFunctionCallException;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.NullFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayDescendantFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayFlattenFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayMembersFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArraySizeFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.binaries.Base64BinaryFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.BuiltinFunctionCallIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.CheckReturnTypeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.binaries.HexBinaryFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.booleans.BooleanFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.io.JsonDocFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.context.PositionFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.context.LastFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.datetime.DateFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.datetime.DateTimeFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.datetime.TimeFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.*;
-import sparksoniq.jsoniq.runtime.iterator.functions.durations.DayTimeDurationFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.durations.DurationFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.durations.YearMonthDurationFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.durations.components.DaysFromDurationFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.durations.components.HoursFromDurationFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.durations.components.MinutesFromDurationFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.durations.components.MonthsFromDurationFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.durations.components.SecondsFromDurationFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.durations.components.YearsFromDurationFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.numerics.AbsFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.numerics.CeilingFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.numerics.FloorFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.numerics.PiFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.numerics.RoundFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.numerics.RoundHalfToEvenFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential.Exp10FunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential.ExpFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential.Log10FunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential.LogFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential.PowFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential.SqrtFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.numerics.trigonometric.ACosFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.numerics.trigonometric.ASinFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.numerics.trigonometric.ATan2FunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.numerics.trigonometric.ATanFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.numerics.trigonometric.CosFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.numerics.trigonometric.SinFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.numerics.trigonometric.TanFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectAccumulateFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectDescendantFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectDescendantPairsFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectIntersectFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectKeysFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectProjectFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectRemoveKeysFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectValuesFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate.AvgFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate.CountFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate.MaxFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate.MinFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate.SumFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.sequences.cardinality.ExactlyOneIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.sequences.cardinality.OneOrMoreIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.sequences.cardinality.ZeroOrOneIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.EmptyFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.ExistsFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.HeadFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.InsertBeforeFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.RemoveFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.ReverseFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.SubsequenceFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.TailFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.sequences.value.DeepEqualFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.sequences.value.DistinctValuesFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.sequences.value.IndexOfFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.strings.ConcatFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.strings.ContainsFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.EndsWithFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.strings.MatchesFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.strings.NormalizeSpaceFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.strings.StartsWithFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.strings.StringJoinFunction;
-import sparksoniq.jsoniq.runtime.iterator.functions.strings.StringLengthFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.strings.SubstringAfterFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.strings.SubstringBeforeFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.strings.SubstringFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.strings.TokenizeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.operational.TypePromotionIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.types.ItemType;
+import sparksoniq.semantics.types.ItemTypes;
+import sparksoniq.semantics.types.SequenceType;
 import sparksoniq.spark.iterator.function.ParallelizeFunctionIterator;
-import sparksoniq.spark.iterator.function.ParseJsonFunctionIterator;
-import sparksoniq.spark.iterator.function.ParseTextFunctionIterator;
-import sparksoniq.spark.iterator.function.ParquetFileFunctionIterator;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.lang.reflect.Constructor;
-import java.util.HashMap;
-import java.util.List;
 
-
-import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.*;
 
 public class Functions {
-    private static HashMap<FunctionIdentifier, Class<? extends RuntimeIterator>> builtInFunctions;
+    private static final HashMap<FunctionIdentifier, SparksoniqFunction> builtInFunctions;
     private static HashMap<FunctionIdentifier, FunctionItem> userDefinedFunctions;
+
+    private static final Map<String, ItemType> itemTypes;
+
+    static {
+        itemTypes = new HashMap<>();
+        itemTypes.put("String", new ItemType(ItemTypes.StringItem));
+        itemTypes.put("HexBinary", new ItemType(ItemTypes.HexBinaryItem));
+        itemTypes.put("Boolean", new ItemType(ItemTypes.BooleanItem));
+        itemTypes.put("Item", new ItemType(ItemTypes.Item));
+        itemTypes.put("Integer", new ItemType(ItemTypes.IntegerItem));
+    }
+
+    private static final Map<String, SequenceType> sequenceTypes;
+    static {
+        sequenceTypes = new HashMap<>();
+        sequenceTypes.put("String", new SequenceType(itemTypes.get("String"), SequenceType.Arity.One));
+        sequenceTypes.put("String?", new SequenceType(itemTypes.get("String"), SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("Boolean", new SequenceType(itemTypes.get("Boolean"), SequenceType.Arity.One));
+        sequenceTypes.put("Boolean?", new SequenceType(itemTypes.get("Boolean"), SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("HexBinary", new SequenceType(itemTypes.get("HexBinary"), SequenceType.Arity.One));
+        sequenceTypes.put("HexBinary?", new SequenceType(itemTypes.get("HexBinary"), SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("Item*", new SequenceType(itemTypes.get("Item"), SequenceType.Arity.ZeroOrMore));
+        sequenceTypes.put("Integer", new SequenceType(itemTypes.get("Integer"), SequenceType.Arity.One));
+    }
+
 
     static {
         userDefinedFunctions = new HashMap<>();
         builtInFunctions = new HashMap<>();
 
-        builtInFunctions.put(new FunctionIdentifier(POSITION, 0), PositionFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(LAST, 0), LastFunctionIterator.class);
+        builtInFunctions.put(hexBinaryFunction.getSignature().getIdentifier(), hexBinaryFunction);
+        builtInFunctions.put(endsWithFunction.getSignature().getIdentifier(), endsWithFunction);
 
-        builtInFunctions.put(new FunctionIdentifier(JSON_FILE, 1), ParseJsonFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(JSON_FILE, 2), ParseJsonFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(JSON_DOC, 1), JsonDocFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(TEXT_FILE, 1), ParseTextFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(TEXT_FILE, 2), ParseTextFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(PARALLELIZE, 1), ParallelizeFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(PARALLELIZE, 2), ParallelizeFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(PARQUET_FILE, 1), ParquetFileFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(COUNT, 1), CountFunctionIterator.class);
-
-        builtInFunctions.put(new FunctionIdentifier(BOOLEAN, 1), BooleanFunctionIterator.class);
-
-        builtInFunctions.put(new FunctionIdentifier(MIN, 1), MinFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(MAX, 1), MaxFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(SUM, 1), SumFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(SUM, 2), SumFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(AVG, 1), AvgFunctionIterator.class);
-
-        builtInFunctions.put(new FunctionIdentifier(EMPTY, 1), EmptyFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(EXISTS, 1), ExistsFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(HEAD, 1), HeadFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(TAIL, 1), TailFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(INSERTBEFORE, 3), InsertBeforeFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(REMOVE, 2), RemoveFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(REVERSE, 1), ReverseFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(SUBSEQUENCE, 2), SubsequenceFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(SUBSEQUENCE, 3), SubsequenceFunctionIterator.class);
-
-        builtInFunctions.put(new FunctionIdentifier(ZEROORONE, 1), ZeroOrOneIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(ONEORMORE, 1), OneOrMoreIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(EXACTLYONE, 1), ExactlyOneIterator.class);
-
-        builtInFunctions.put(new FunctionIdentifier(DISTINCTVALUES, 1), DistinctValuesFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(INDEXOF, 2), IndexOfFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(DEEPEQUAL, 2), DeepEqualFunctionIterator.class);
-
-        builtInFunctions.put(new FunctionIdentifier(ABS, 1), AbsFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(CEILING, 1), CeilingFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(FLOOR, 1), FloorFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(ROUND, 1), RoundFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(ROUND, 2), RoundFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(ROUNDHALFTOEVEN, 1), RoundHalfToEvenFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(ROUNDHALFTOEVEN, 2), RoundHalfToEvenFunctionIterator.class);
-
-        builtInFunctions.put(new FunctionIdentifier(PI, 0), PiFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(EXP, 1), ExpFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(EXP10, 1), Exp10FunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(LOG, 1), LogFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(LOG10, 1), Log10FunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(POW, 2), PowFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(SQRT, 1), SqrtFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(SIN, 1), SinFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(COS, 1), CosFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(TAN, 1), TanFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(ASIN, 1), ASinFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(ACOS, 1), ACosFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(ATAN, 1), ATanFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(ATAN2, 2), ATan2FunctionIterator.class);
-
-        builtInFunctions.put(new FunctionIdentifier(SUBSTRING, 2), SubstringFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(SUBSTRING, 3), SubstringFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(SUBSTRING_BEFORE, 2), SubstringBeforeFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(SUBSTRING_AFTER, 2), SubstringAfterFunctionIterator.class);
-        for (int i = 0; i <= 100; i++)
-            builtInFunctions.put(new FunctionIdentifier(CONCAT, i), ConcatFunctionIterator.class);
-
-        builtInFunctions.put(new FunctionIdentifier(ENDSWITH, 2), EndsWithFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(STRINGJOIN, 1), StringJoinFunction.class);
-        builtInFunctions.put(new FunctionIdentifier(STRINGJOIN, 2), StringJoinFunction.class);
-        builtInFunctions.put(new FunctionIdentifier(STRINGLENGTH, 1), StringLengthFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(TOKENIZE, 1), TokenizeFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(TOKENIZE, 2), TokenizeFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(STARTSWITH, 2), StartsWithFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(MATCHES, 2), MatchesFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(CONTAINS, 2), ContainsFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(NORMALIZESPACE, 1), NormalizeSpaceFunctionIterator.class);
-
-        builtInFunctions.put(new FunctionIdentifier(DURATION, 1), DurationFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(YEARMONTHDURATION, 1), YearMonthDurationFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(DAYTIMEDURATION, 1), DayTimeDurationFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(YEARSFROMDURATION, 1), YearsFromDurationFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(MONTHSFROMDURATION, 1), MonthsFromDurationFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(DAYSFROMDURATION, 1), DaysFromDurationFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(HOURSFROMDURATION, 1), HoursFromDurationFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(MINUTESFROMDURATION, 1), MinutesFromDurationFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(SECONDSFROMDURATION, 1), SecondsFromDurationFunctionIterator.class);
-
-        builtInFunctions.put(new FunctionIdentifier(DATETIME, 1), DateTimeFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(YEARFROMDATETIME, 1), YearFromDateTimeFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(MONTHFROMDATETIME, 1), MonthFromDateTimeFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(DAYFROMDATETIME, 1), DayFromDateTimeFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(HOURSFROMDATETIME, 1), HoursFromDateTimeFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(MINUTESFROMDATETIME, 1), MinutesFromDateTimeFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(SECONDSFROMDATETIME, 1), SecondsFromDateTimeFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(TIMEZONEFROMDATETIME, 1), TimezoneFromDateTimeFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(ADJUSTDATETIMETOTIMEZONE, 1), AdjustDateTimeToTimezone.class);
-        builtInFunctions.put(new FunctionIdentifier(ADJUSTDATETIMETOTIMEZONE, 2), AdjustDateTimeToTimezone.class);
-
-        builtInFunctions.put(new FunctionIdentifier(DATE, 1), DateFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(YEARFROMDATE, 1), YearFromDateFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(MONTHFROMDATE, 1), MonthFromDateFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(DAYFROMDATE, 1), DayFromDateFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(TIMEZONEFROMDATE, 1), TimezoneFromDateFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(ADJUSTDATETOTIMEZONE, 1), AdjustDateToTimezone.class);
-        builtInFunctions.put(new FunctionIdentifier(ADJUSTDATETOTIMEZONE, 2), AdjustDateToTimezone.class);
-
-        builtInFunctions.put(new FunctionIdentifier(TIME, 1), TimeFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(HOURSFROMTIME, 1), HoursFromTimeFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(MINUTESFROMTIME, 1), MinutesFromTimeFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(SECONDSFROMTIME, 1), SecondsFromTimeFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(TIMEZONEFROMTIME, 1), TimezoneFromTimeFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(ADJUSTTIMETOTIMEZONE, 1), AdjustTimeToTimezone.class);
-        builtInFunctions.put(new FunctionIdentifier(ADJUSTTIMETOTIMEZONE, 2), AdjustTimeToTimezone.class);
-
-        builtInFunctions.put(new FunctionIdentifier(HEXBINARY, 1), HexBinaryFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(BASE64BINARY, 1), Base64BinaryFunctionIterator.class);
-
-        builtInFunctions.put(new FunctionIdentifier(KEYS, 1), ObjectKeysFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(MEMBERS, 1), ArrayMembersFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(NULL, 0), NullFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(SIZE, 1), ArraySizeFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(ACCUMULATE, 1), ObjectAccumulateFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(DESCENDANTARRAYS, 1), ArrayDescendantFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(DESCENDANTOBJECTS, 1), ObjectDescendantFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(DESCENDANTPAIRS, 1), ObjectDescendantPairsFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(FLATTEN, 1), ArrayFlattenFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(INTERSECT, 1), ObjectIntersectFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(PROJECT, 2), ObjectProjectFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(REMOVEKEYS, 2), ObjectRemoveKeysFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(VALUES, 1), ObjectValuesFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(JSON_FILE, 1), ParseJsonFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(JSON_FILE, 2), ParseJsonFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(TEXT_FILE, 1), ParseTextFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(TEXT_FILE, 2), ParseTextFunctionIterator.class);
+        builtInFunctions.put(parallelizeFunction1.getSignature().getIdentifier(), parallelizeFunction1);
+        builtInFunctions.put(parallelizeFunction2.getSignature().getIdentifier(), parallelizeFunction2);
+//        builtInFunctions.put(new FunctionIdentifier(COUNT, 1), CountFunctionIterator.class);
+//
+//        builtInFunctions.put(new FunctionIdentifier(BOOLEAN, 1), BooleanFunctionIterator.class);
+//
+//        builtInFunctions.put(new FunctionIdentifier(MIN, 1), MinFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(MAX, 1), MaxFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(SUM, 1), SumFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(SUM, 2), SumFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(AVG, 1), AvgFunctionIterator.class);
+//
+//        builtInFunctions.put(new FunctionIdentifier(EMPTY, 1), EmptyFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(EXISTS, 1), ExistsFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(HEAD, 1), HeadFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(TAIL, 1), TailFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(INSERTBEFORE, 3), InsertBeforeFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(REMOVE, 2), RemoveFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(REVERSE, 1), ReverseFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(SUBSEQUENCE, 2), SubsequenceFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(SUBSEQUENCE, 3), SubsequenceFunctionIterator.class);
+//
+//        builtInFunctions.put(new FunctionIdentifier(ZEROORONE, 1), ZeroOrOneIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(ONEORMORE, 1), OneOrMoreIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(EXACTLYONE, 1), ExactlyOneIterator.class);
+//
+//        builtInFunctions.put(new FunctionIdentifier(DISTINCTVALUES, 1), DistinctValuesFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(INDEXOF, 2), IndexOfFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(DEEPEQUAL, 2), DeepEqualFunctionIterator.class);
+//
+//        builtInFunctions.put(new FunctionIdentifier(ABS, 1), AbsFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(CEILING, 1), CeilingFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(FLOOR, 1), FloorFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(ROUND, 1), RoundFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(ROUND, 2), RoundFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(ROUNDHALFTOEVEN, 1), RoundHalfToEvenFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(ROUNDHALFTOEVEN, 2), RoundHalfToEvenFunctionIterator.class);
+//
+//        builtInFunctions.put(new FunctionIdentifier(PI, 0), PiFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(EXP, 1), ExpFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(EXP10, 1), Exp10FunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(LOG, 1), LogFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(LOG10, 1), Log10FunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(POW, 2), PowFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(SQRT, 1), SqrtFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(SIN, 1), SinFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(COS, 1), CosFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(TAN, 1), TanFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(ASIN, 1), ASinFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(ACOS, 1), ACosFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(ATAN, 1), ATanFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(ATAN2, 2), ATan2FunctionIterator.class);
+//
+//        builtInFunctions.put(new FunctionIdentifier(SUBSTRING, 2), SubstringFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(SUBSTRING, 3), SubstringFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(SUBSTRING_BEFORE, 2), SubstringBeforeFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(SUBSTRING_AFTER, 2), SubstringAfterFunctionIterator.class);
+//        for (int i = 0; i <= 100; i++)
+//            builtInFunctions.put(new FunctionIdentifier(CONCAT, i), ConcatFunctionIterator.class);
+//
+//        builtInFunctions.put(new FunctionIdentifier(ENDSWITH, 2), EndsWithFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(STRINGJOIN, 1), StringJoinFunction.class);
+//        builtInFunctions.put(new FunctionIdentifier(STRINGJOIN, 2), StringJoinFunction.class);
+//        builtInFunctions.put(new FunctionIdentifier(STRINGLENGTH, 1), StringLengthFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(TOKENIZE, 1), TokenizeFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(TOKENIZE, 2), TokenizeFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(STARTSWITH, 2), StartsWithFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(MATCHES, 2), MatchesFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(CONTAINS, 2), ContainsFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(HEXBINARY, 1), HexBinaryFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(NORMALIZESPACE, 1), NormalizeSpaceFunctionIterator.class);
+//
+//        builtInFunctions.put(new FunctionIdentifier(KEYS, 1), ObjectKeysFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(MEMBERS, 1), ArrayMembersFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(NULL, 0), NullFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(SIZE, 1), ArraySizeFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(ACCUMULATE, 1), ObjectAccumulateFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(DESCENDANTARRAYS, 1), ArrayDescendantFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(DESCENDANTOBJECTS, 1), ObjectDescendantFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(DESCENDANTPAIRS, 1), ObjectDescendantPairsFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(FLATTEN, 1), ArrayFlattenFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(INTERSECT, 1), ObjectIntersectFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(PROJECT, 2), ObjectProjectFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(REMOVEKEYS, 2), ObjectRemoveKeysFunctionIterator.class);
+//        builtInFunctions.put(new FunctionIdentifier(VALUES, 1), ObjectValuesFunctionIterator.class);
     }
 
     public static boolean checkBuiltInFunctionExists(FunctionIdentifier identifier) {
         return builtInFunctions.containsKey(identifier);
     }
 
-    public static RuntimeIterator getBuiltInFunctionIterator(FunctionIdentifier identifier, IteratorMetadata metadata, List<RuntimeIterator> arguments) {
-        Class<? extends RuntimeIterator> functionClass = builtInFunctions.get(identifier);
-        try {
-            Constructor<? extends RuntimeIterator> ctor = functionClass.getConstructor(List.class, IteratorMetadata.class);
-            return ctor.newInstance(arguments, metadata);
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
+    public static RuntimeIterator getBuiltInFunctionIterator(FunctionIdentifier identifier, List<RuntimeIterator> arguments, IteratorMetadata metadata) {
+        SparksoniqFunction sparksoniqFunction = builtInFunctions.get(identifier);
+        for (int i = 0; i < arguments.size(); i++) {
+            arguments.set(i, new TypePromotionIterator(arguments.get(i), sparksoniqFunction.getSignature().getParameters().get(i), metadata));
         }
+        return new CheckReturnTypeIterator(
+            new TypePromotionIterator(
+                    new BuiltinFunctionCallIterator(identifier, arguments, sparksoniqFunction, metadata),
+                    sparksoniqFunction.getSignature().getReturnType(),
+                    metadata),
+                identifier.getName(),
+                metadata);
     }
 
     public static void clearUserDefinedFunctions() {
@@ -287,11 +202,10 @@ public class Functions {
     }
 
     public static void addUserDefinedFunction(FunctionItem function, ExpressionMetadata meta) {
-        if (builtInFunctions.containsKey(function.getIdentifier())
-                || userDefinedFunctions.containsKey(function.getIdentifier())) {
-            throw new DuplicateFunctionIdentifierException(function.getIdentifier(), meta);
-        }
-        userDefinedFunctions.put(function.getIdentifier(), function);
+        FunctionIdentifier functionIdentifier = function.getSignature().getIdentifier();
+        if (builtInFunctions.containsKey(functionIdentifier) || userDefinedFunctions.containsKey(functionIdentifier))
+            throw new DuplicateFunctionIdentifierException(functionIdentifier, meta);
+        userDefinedFunctions.put(functionIdentifier, function);
     }
 
     public static boolean checkUserDefinedFunctionExists(FunctionIdentifier identifier) {
@@ -309,7 +223,7 @@ public class Functions {
             ByteArrayInputStream bis = new ByteArrayInputStream(data);
             ObjectInputStream ois = new ObjectInputStream(bis);
             return (FunctionItem) ois.readObject();
-        } catch (Exception e) {
+        } catch (IOException | ClassNotFoundException e) {
             throw new SparksoniqRuntimeException("Error while deep copying the function body runtimeIterator");
         }
     }
@@ -340,6 +254,8 @@ public class Functions {
          * function that parallelizes item collections into a Spark RDD
          */
         public static final String PARALLELIZE = "parallelize";
+        public static final SparksoniqFunction parallelizeFunction1 = new SparksoniqFunction(new FunctionSignature(new FunctionIdentifier(PARALLELIZE, 1), Collections.singletonList(sequenceTypes.get("Item*")), sequenceTypes.get("Item*")), ParallelizeFunctionIterator.class);
+        public static final SparksoniqFunction parallelizeFunction2 = new SparksoniqFunction(new FunctionSignature(new FunctionIdentifier(PARALLELIZE, 2), Collections.unmodifiableList(Arrays.asList(sequenceTypes.get("Item*"), sequenceTypes.get("Integer"))), sequenceTypes.get("Item*")), ParallelizeFunctionIterator.class);
         /**
          * function that parses a parquet file
          */
@@ -547,6 +463,7 @@ public class Functions {
          * function that checks whether a string ends with a substring
          */
         public static final String ENDSWITH = "ends-with";
+        public static final SparksoniqFunction endsWithFunction = new SparksoniqFunction(new FunctionSignature(new FunctionIdentifier(ENDSWITH, 2), Collections.unmodifiableList(Arrays.asList(sequenceTypes.get("String?"), sequenceTypes.get("String?"))), sequenceTypes.get("Boolean")), EndsWithFunctionIterator.class);
         /**
          * function that checks whether a string starts with a substring
          */
@@ -703,6 +620,7 @@ public class Functions {
          * function that returns the hexBinary item from the supplied string
          */
         public static final String HEXBINARY = "hexBinary";
+        public static final SparksoniqFunction hexBinaryFunction = new SparksoniqFunction(new FunctionSignature(new FunctionIdentifier(HEXBINARY,  1), Collections.singletonList(sequenceTypes.get("String?")), sequenceTypes.get("HexBinary?")), HexBinaryFunctionIterator.class);
         /**
          * function that returns the base64Binary item from the supplied string
          */

@@ -93,6 +93,7 @@ import sparksoniq.jsoniq.runtime.iterator.functions.DynamicFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.FunctionRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.UserDefinedFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionSignature;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 import sparksoniq.jsoniq.runtime.iterator.operational.AdditiveOperationIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.AndOperationIterator;
@@ -136,8 +137,8 @@ import sparksoniq.spark.iterator.flowr.WhereClauseSparkIterator;
 import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
 import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 
-import java.lang.reflect.Constructor;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -194,7 +195,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         }
         return new ReturnClauseSparkIterator(
                 previous,
-                this.visit(((ReturnClause) expression.get_returnClause()).getReturnExpr(),
+                this.visit((expression.get_returnClause()).getReturnExpr(),
                         argument), createIteratorMetadata(expression.get_returnClause()));
     }
 
@@ -346,7 +347,21 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         SequenceType returnType = expression.get_returnType().getSequence();
 
         RuntimeIterator bodyIterator = this.visit(expression.get_body(), argument);
-        FunctionItem function = new FunctionItem(expression.get_name(), paramNameToSequenceTypes, returnType, bodyIterator);
+        List<String> parametersNames = new ArrayList<>();
+        List<SequenceType> parameters = new ArrayList<>();
+        for (Map.Entry<String, SequenceType> paramEntry : paramNameToSequenceTypes.entrySet()) {
+            parametersNames.add(paramEntry.getKey());
+            parameters.add(paramEntry.getValue());
+        }
+        FunctionItem function =
+                new FunctionItem(
+                        new FunctionSignature(
+                                new FunctionIdentifier(expression.get_name(), parameters.size()),
+                                parameters,
+                                parametersNames,
+                                returnType),
+                        bodyIterator,
+                        new HashMap<>());
         if (expression.get_name().equals("")) {
             // unnamed (inline function declaration)
             return new FunctionRuntimeIterator(function, createIteratorMetadata(expression));
@@ -382,13 +397,12 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                         expression.getMetadata()
                 );
             }
-            return Functions.getBuiltInFunctionIterator(identifier, iteratorMetadata, arguments);
+            return Functions.getBuiltInFunctionIterator(identifier, arguments, iteratorMetadata);
         }
-        return new UserDefinedFunctionCallIterator(
-                identifier,
-                arguments,
-                iteratorMetadata
-        );
+        if (Functions.checkUserDefinedFunctionExists(identifier)) {
+            return new UserDefinedFunctionCallIterator(identifier, arguments, iteratorMetadata);
+        }
+        throw new UnknownFunctionCallException(identifier.getName(), identifier.getArity(), createIteratorMetadata(expression));
     }
 
     @Override
