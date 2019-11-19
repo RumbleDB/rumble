@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
+import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.joda.time.DateTime;
 import org.rumbledb.api.Item;
@@ -16,7 +17,7 @@ public class ItemFactory {
     private Item _nullItem;
     private Item _trueBooleanItem;
     private Item _falseBooleanItem;
-    
+
     public static ItemFactory getInstance() {
         if(_instance == null)
         {
@@ -27,7 +28,7 @@ public class ItemFactory {
         }
         return _instance;
     }
-    
+
     public Item createStringItem(String s) {
         return new StringItem(s);
     }
@@ -78,6 +79,14 @@ public class ItemFactory {
 
     public Item createDateItem(String s) {
         return new DateItem(s);
+    }
+
+    public Item createTimeItem(DateTime dt, boolean hasTimeZone) {
+        return new TimeItem(dt, hasTimeZone);
+    }
+
+    public Item createTimeItem(String s) {
+        return new TimeItem(s);
     }
 
     public Item createHexBinaryItem(String s) {

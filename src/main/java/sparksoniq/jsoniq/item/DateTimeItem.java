@@ -38,10 +38,13 @@ public class DateTimeItem extends AtomicItem {
     private static final String timeFrag = "((" + hourFrag + ":" + minuteFrag + ":" + secondFrag + ")|(" + endOfDayFrag + "))";
 
     private static final String dateTimeLexicalRep = dateFrag + "T" + timeFrag+ "(" + timezoneFrag + ")?";
-    private static final Pattern dateTimePattern = Pattern.compile(dateTimeLexicalRep);
-
     private static final String dateLexicalRep = "(" + dateFrag + "(" + timezoneFrag +")?)";
+    private static final String timeLexicalRep = "(" + timeFrag + "(" + timezoneFrag + ")?)";
+
+    private static final Pattern dateTimePattern = Pattern.compile(dateTimeLexicalRep);
     private static final Pattern datePattern = Pattern.compile(dateLexicalRep);
+    private static final Pattern timePattern = Pattern.compile(timeLexicalRep);
+
 
     private static final long serialVersionUID = 1L;
     private DateTime _value;
@@ -99,6 +102,8 @@ public class DateTimeItem extends AtomicItem {
                 return this;
             case DateItem:
                 return ItemFactory.getInstance().createDateItem(this.getDateTimeValue(), this.hasTimeZone);
+            case TimeItem:
+                return ItemFactory.getInstance().createTimeItem(this.getDateTimeValue(), this.hasTimeZone);
             default:
                 throw new ClassCastException();
         }
@@ -107,8 +112,9 @@ public class DateTimeItem extends AtomicItem {
     @Override
     public boolean isCastableAs(AtomicTypes itemType) {
         return itemType.equals(AtomicTypes.DateTimeItem)
-                || itemType.equals(AtomicTypes.StringItem)
-                || itemType.equals(AtomicTypes.DateItem);
+                || itemType.equals(AtomicTypes.DateItem)
+                || itemType.equals(AtomicTypes.TimeItem)
+                || itemType.equals(AtomicTypes.StringItem);
     }
 
     @Override
@@ -165,6 +171,8 @@ public class DateTimeItem extends AtomicItem {
                 DateTimeParser dtParser = new DateTimeFormatterBuilder().appendOptional(
                         ((new DateTimeFormatterBuilder()).appendTimeZoneOffset("Z", true, 2, 4).toFormatter()).getParser()).toParser();
                 return (new DateTimeFormatterBuilder()).append(dateElementParser()).appendOptional(dtParser).toFormatter().withOffsetParsed();
+            case TimeItem:
+                return ISODateTimeFormat.timeParser().withOffsetParsed();
             default:
                 throw new IllegalArgumentException();
         }
@@ -176,13 +184,18 @@ public class DateTimeItem extends AtomicItem {
                 return dateTimePattern.matcher(dateTime).matches();
             case DateItem:
                 return datePattern.matcher(dateTime).matches();
+            case TimeItem:
+                return timePattern.matcher(dateTime).matches();
         }
         return false;
     }
 
     private static String fixEndOfDay(String dateTime) {
         String endOfDay = "24:00:00";
+        String startOfDay = "00:00:00";
         if (dateTime.contains(endOfDay)) {
+            if (dateTime.indexOf(endOfDay) == 0)
+                return startOfDay;
             int indexOfT = dateTime.indexOf('T');
             if (indexOfT < 1 || indexOfT != dateTime.indexOf(endOfDay)-1 || !Character.isDigit(dateTime.charAt(indexOfT-1)))
                 throw new IllegalArgumentException();
@@ -193,7 +206,7 @@ public class DateTimeItem extends AtomicItem {
                 throw new IllegalArgumentException();
             }
             return dateTime.substring(0, indexOfT-1) +
-                    (dayValue+1) + "T00:00:00" +
+                    (dayValue+1) + "T" + startOfDay +
                     dateTime.substring(indexOfT + endOfDay.length()+1);
         }
         return dateTime;

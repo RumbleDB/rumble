@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(true, true, false, true, true, true, false, true, true, false, false)" :)
+(:JIQS: ShouldRun; Output="(true, true, false, true, true, true, false, true, true, false, false, true, true, true, false, false)" :)
 dateTime("2001-12-12T23:00:00") castable as dateTime,
 dateTime("2001-12-12T23:00:00Z") castable as string,
 dateTime("2001-12-12T23:00:00-02:00") castable as duration,
@@ -9,4 +9,9 @@ date("2001-12-12-10:00") castable as duration,
 dateTime("2001-12-12T23:00:00-02:00") castable as date,
 "3011-02-11-02:00" castable as date,
 "2001-12-12T23:00:00" castable as date,
-"2001-12-32" castable as date
+"2001-12-32" castable as date,
+time("13:20:20+09:00") castable as time,
+time("23:12:00.123") castable as string,
+dateTime("2001-12-12T12:34:56.789Z") castable as time,
+"13:20:88+09:00" castable as time,
+time("23:12:00.123") castable as dateTime

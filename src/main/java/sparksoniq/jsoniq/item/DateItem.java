@@ -117,10 +117,8 @@ public class DateItem extends AtomicItem {
 
     @Override
     public Item subtract(Item other) {
-        Period period;
         if (other.isDate()) {
-            period = new Period(other.getDateTimeValue(), this.getValue(), PeriodType.dayTime());
-            return ItemFactory.getInstance().createDayTimeDurationItem(period);
+            return ItemFactory.getInstance().createDayTimeDurationItem(new Period(other.getDateTimeValue(), this.getValue(), PeriodType.dayTime()));
         }
         if (other.isYearMonthDuration() || other.isDayTimeDuration())
             return ItemFactory.getInstance().createDateItem(this.getValue().minus(other.getDurationValue()), this.hasTimeZone);

@@ -1,0 +1,5 @@
+{
+  "foo" :  1,
+  "bar" :  null,
+  "foobar" :  ["test1", "test2"]
+}

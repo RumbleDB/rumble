@@ -18,19 +18,29 @@
  *
  */
 
-package sparksoniq.spark.iterator.function;
+package sparksoniq.io.json;
 
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.SparkRuntimeIterator;
+import org.apache.spark.api.java.function.Function;
+import org.apache.spark.sql.Row;
+import org.rumbledb.api.Item;
+
+import com.jsoniter.JsonIterator;
+
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
-import java.util.List;
+import java.util.Iterator;
 
-public abstract class SparkFunctionCallIterator extends SparkRuntimeIterator {
+public class RowToItemMapper implements Function<Row, Item> {
 
 	private static final long serialVersionUID = 1L;
+	private final IteratorMetadata metadata;
 
-	protected SparkFunctionCallIterator(List<RuntimeIterator> parameters, IteratorMetadata iteratorMetadata) {
-        super(parameters, iteratorMetadata);
+    public RowToItemMapper(IteratorMetadata metadata) {
+        this.metadata = metadata;
+    }
+
+    @Override
+    public Item call(Row row) throws Exception {
+        return JiqsItemParser.getItemFromRow(row, metadata);
     }
 }

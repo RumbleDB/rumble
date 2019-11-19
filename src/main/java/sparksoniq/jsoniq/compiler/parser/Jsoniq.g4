@@ -228,12 +228,15 @@ keyWordDateTime         : 'dateTime';
 
 keyWordDate             : 'date';
 
+keyWordTime             : 'time';
+
 typesKeywords           : keyWordBoolean
                         | keyWordDuration
                         | keyWordYearMonthDuration
                         | keyWordDayTimeDuration
                         | keyWordDateTime
                         | keyWordDate
+                        | keyWordTime
                         | keyWordHexBinary
                         | keyWordBase64Binary;
 

@@ -30,11 +30,16 @@ public class YearMonthDurationItem extends DurationItem {
     public YearMonthDurationItem(Period value) {
         super();
         this._value = value.normalizedStandard(yearMonthPeriodType);
-        isNegative = this._value.toString().charAt(1) == '-';
+        isNegative = this._value.toString().contains("-");
     }
 
     @Override
     public Period getValue() {
+        return this._value;
+    }
+
+    @Override
+    public Period getDurationValue() {
         return this._value;
     }
 
