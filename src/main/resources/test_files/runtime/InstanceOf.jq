@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(true, true, true, false, false, true, true, true, true, false, false, true, false, false, false, true, true, false, true, true, false, true, true, false, false, true, true, true, true, false, true, true, false, true, false, true, false, false, true, true, true, true)" :)
+(:JIQS: ShouldRun; Output="(true, true, true, false, false, true, true, true, true, false, false, true, false, false, true, true)" :)
 1 instance of integer,
 2.14 instance of decimal,
 1 instance of decimal,
@@ -12,35 +12,9 @@
 (4 + 2.3e5) instance of decimal,
 false instance of boolean,
 2 instance of boolean,
-null instance of string?,
-null instance of string,
-null instance of null,
-null instance of null?,
 [1,23,3] instance of integer+,
 [1,23,3] instance of array,
-({"aa": "bb"}, {"cc": "dd"}) instance of json-item+,
-3 instance of (),
-() instance of string?,
-() instance of string*,
-() instance of string+,
-() instance of string,
-() instance of (),
-duration("P3Y5M") instance of duration,
-yearMonthDuration("P2Y4M") instance of yearMonthDuration,
-yearMonthDuration("P2Y99M") instance of duration,
-yearMonthDuration("P2Y99M") instance of dayTimeDuration,
-dayTimeDuration("-P4DT5M") instance of dayTimeDuration,
-dayTimeDuration("P3DT432H") instance of duration,
-dayTimeDuration("PT0S") instance of yearMonthDuration,
-dateTime("2001-12-12T23:00:00") instance of dateTime,
-dateTime("2001-12-12T23:00:00Z") instance of duration,
-date("2001-12-12-10:00") instance of date,
-date("2001-12-12-10:00") instance of dateTime,
-time("23:12:00.123") instance of dateTime,
-time("23:12:00.123") instance of time,
-hexBinary("aabbCC") instance of hexBinary,
-base64Binary("0 FB8 0F+9") instance of base64Binary,
-base64Binary("Q Q = =") instance of base64Binary
+({"aa": "bb"}, {"cc": "dd"}) instance of json-item+
 
 (: general tests :)
 

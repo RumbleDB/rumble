@@ -138,12 +138,12 @@ public class DurationItem extends AtomicItem {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.serialize());
+        output.writeString(this.serialize());
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this._value = Period.parse(kryo.readObject(input, String.class), DurationItem.getPeriodFormatter(AtomicTypes.DurationItem));
+        this._value = getDurationFromString(input.readString(), AtomicTypes.DurationItem);
     }
 
     private static PeriodFormatter getPeriodFormatter(AtomicTypes durationType) {
