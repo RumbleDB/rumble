@@ -40,8 +40,6 @@ import java.util.Map;
 public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    // parametrized fields
-    private List<RuntimeIterator> _functionArguments;
 
     // calculated fields
     private boolean _isPartialApplication;
@@ -55,7 +53,7 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
             List<RuntimeIterator> functionArguments,
             IteratorMetadata iteratorMetadata
     ) {
-        super(null, iteratorMetadata);
+        super(functionArguments, iteratorMetadata);
         for (RuntimeIterator arg : functionArguments) {
             if (arg == null) {
                 _isPartialApplication = true;
@@ -64,7 +62,6 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
             }
         }
         _functionItem = functionItem;
-        _functionArguments = functionArguments;
 
     }
 
@@ -82,8 +79,8 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
 
         if (!_isPartialApplication) {
             // calculate argument values
-            for (int i = 0; i < _functionArguments.size(); i++) {
-                argIterator = _functionArguments.get(i);
+            for (int i = 0; i < _children.size(); i++) {
+                argIterator = _children.get(i);
                 argName = _functionItem.getParameterNames().get(i);
 
                 List<Item> argValue = getItemsFromIteratorWithCurrentContext(argIterator);
@@ -101,10 +98,10 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
             List<String> partialAppParamNames = new ArrayList<>();
             List<SequenceType> partialAppSignature = new ArrayList<>();
 
-            for (int i = 0; i < _functionArguments.size(); i++) {
-                argIterator = _functionArguments.get(i);
+            for (int i = 0; i < _children.size(); i++) {
+                argIterator = _children.get(i);
                 argName = _functionItem.getParameterNames().get(i);
-
+                
                 if (argIterator == null) { // == ArgumentPlaceholder
                     partialAppParamNames.add(argName);
                     partialAppSignature.add(_functionItem.getSignature().get(i));

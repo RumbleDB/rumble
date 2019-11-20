@@ -80,7 +80,7 @@ public class WhereClauseUDF implements UDF1<WrappedArray<byte[]>, Boolean> {
         DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
 
         DataFrameUtils.prepareDynamicContext(_context, _columnNames, _deserializedParams);
-
+        
         // apply expression in the dynamic context
         _expression.open(_context);
         Item nextItem = _expression.next();

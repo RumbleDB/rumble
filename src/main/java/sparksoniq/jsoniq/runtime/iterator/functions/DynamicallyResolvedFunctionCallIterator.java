@@ -38,10 +38,8 @@ public class DynamicallyResolvedFunctionCallIterator extends HybridRuntimeIterat
     private static final long serialVersionUID = 1L;
     // parametrized fields
     private FunctionIdentifier _functionIdentifier;
-    private List<RuntimeIterator> _functionArguments;
 
     // calculated fields
-    private FunctionItem _functionItem;
     private RuntimeIterator _functionCallIterator;
     private Item _nextResult;
 
@@ -51,15 +49,13 @@ public class DynamicallyResolvedFunctionCallIterator extends HybridRuntimeIterat
             List<RuntimeIterator> functionArguments,
             IteratorMetadata iteratorMetadata
     ) {
-        super(null, iteratorMetadata);
+        super(functionArguments, iteratorMetadata);
         _functionIdentifier = functionIdentifier;
-        _functionArguments = functionArguments;
-
     }
 
     @Override
     public void openLocal() {
-        _functionCallIterator = Functions.getUserDefinedFunctionIterator(_functionIdentifier, getMetadata(), _functionArguments);
+        _functionCallIterator = Functions.getUserDefinedFunctionIterator(_functionIdentifier, getMetadata(), _children);
         _functionCallIterator.open(_currentDynamicContext);
         setNextResult();
     }
@@ -118,7 +114,7 @@ public class DynamicallyResolvedFunctionCallIterator extends HybridRuntimeIterat
 
     @Override
     public boolean initIsRDD() {
-        _functionCallIterator = Functions.getUserDefinedFunctionIterator(_functionIdentifier, getMetadata(), _functionArguments);
+        _functionCallIterator = Functions.getUserDefinedFunctionIterator(_functionIdentifier, getMetadata(), _children);
         return _functionCallIterator.isRDD();
     }
 }
