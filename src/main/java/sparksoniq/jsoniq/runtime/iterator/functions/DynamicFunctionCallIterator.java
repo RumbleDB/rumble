@@ -28,6 +28,7 @@ import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.SequenceType;
@@ -73,80 +74,8 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
     @Override
     public void openLocal() {
         setFunctionItemAndIteratorWithCurrentContext();
-        processArguments();
         _functionCallIterator.open(_currentDynamicContext);
         setNextResult();
-    }
-
-    private void processArguments() {
-        if (_functionItem.getParameterNames().size() != _functionArguments.size()) {
-            String formattedName = (!_functionItem.getIdentifier().getName().equals(""))
-                ? _functionItem.getIdentifier().getName() + " "
-                : "";
-            throw new UnexpectedTypeException(
-                    "Dynamic function "
-                        + formattedName
-                        + "invoked with incorrect number of arguments. Expected: "
-                        + _functionItem.getParameterNames().size()
-                        + ", Found: "
-                        + _functionArguments.size(),
-                    getMetadata()
-            );
-        }
-
-        RuntimeIterator argIterator;
-        String argName;
-        Map<String, List<Item>> argumentValues = new LinkedHashMap<>(_functionItem.getNonLocalVariableBindings());
-
-        if (!_isPartialApplication) {
-            // calculate argument values
-            for (int i = 0; i < _functionArguments.size(); i++) {
-                argIterator = _functionArguments.get(i);
-                argName = _functionItem.getParameterNames().get(i);
-
-                List<Item> argValue = getItemsFromIteratorWithCurrentContext(argIterator);
-                argumentValues.put(argName, argValue);
-            }
-            // place argument values into dynamic context
-            _currentDynamicContext = new DynamicContext(_currentDynamicContext);
-            for (Map.Entry<String, List<Item>> argumentEntry : argumentValues.entrySet()) {
-                _currentDynamicContext.addVariableValue(
-                    "$" + argumentEntry.getKey(),
-                    argumentEntry.getValue()
-                );
-            }
-        } else {
-            List<String> partialAppParamNames = new ArrayList<>();
-            List<SequenceType> partialAppSignature = new ArrayList<>();
-
-            for (int i = 0; i < _functionArguments.size(); i++) {
-                argIterator = _functionArguments.get(i);
-                argName = _functionItem.getParameterNames().get(i);
-
-                if (argIterator == null) { // == ArgumentPlaceholder
-                    partialAppParamNames.add(argName);
-                    partialAppSignature.add(_functionItem.getSignature().get(i));
-                } else {
-                    List<Item> argValue = getItemsFromIteratorWithCurrentContext(argIterator);
-                    argumentValues.put(argName, argValue);
-                }
-            }
-
-            // partial application should return a new FunctionItem with given parameters set as NonLocalVariables
-            // and argument placeholders as new parameters to the new FunctionItem
-            partialAppSignature.add(_functionItem.getSignature().get(_functionItem.getSignature().size() - 1)); // add
-                                                                                                                // return
-                                                                                                                // type
-
-            FunctionItem partiallyAppliedFunction = new FunctionItem(
-                    new FunctionIdentifier("", partialAppParamNames.size()),
-                    partialAppParamNames,
-                    partialAppSignature,
-                    _functionItem.getBodyIterator(),
-                    argumentValues
-            );
-            _functionCallIterator = new FunctionRuntimeIterator(partiallyAppliedFunction, getMetadata());
-        }
     }
 
     @Override
@@ -201,7 +130,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        processArguments();
+    	setFunctionItemAndIteratorWithCurrentContext();
         return _functionCallIterator.getRDD(_currentDynamicContext);
     }
 
@@ -231,6 +160,6 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
                     getMetadata()
             );
         }
-        _functionCallIterator = _functionItem.getBodyIterator();
+        _functionCallIterator = Functions.buildUserDefinedFunctionIterator(_functionItem, getMetadata(), _functionArguments);
     }
 }

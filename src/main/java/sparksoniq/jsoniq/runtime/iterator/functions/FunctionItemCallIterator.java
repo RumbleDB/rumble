@@ -23,11 +23,11 @@ package sparksoniq.jsoniq.runtime.iterator.functions;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
-import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.SequenceType;
@@ -37,7 +37,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
+public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     // parametrized fields
@@ -50,7 +50,7 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
     private Item _nextResult;
 
 
-    public UserDefinedFunctionCallIterator(
+    public FunctionItemCallIterator(
             FunctionItem functionItem,
             List<RuntimeIterator> functionArguments,
             IteratorMetadata iteratorMetadata
@@ -76,6 +76,21 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
     }
 
     private void processArguments() {
+        if (_functionItem.getParameterNames().size() != _functionArguments.size()) {
+            String formattedName = (!_functionItem.getIdentifier().getName().equals(""))
+                ? _functionItem.getIdentifier().getName() + " "
+                : "";
+            throw new UnexpectedTypeException(
+                    "Dynamic function "
+                        + formattedName
+                        + "invoked with incorrect number of arguments. Expected: "
+                        + _functionItem.getParameterNames().size()
+                        + ", Found: "
+                        + _functionArguments.size(),
+                    getMetadata()
+            );
+        }
+
         RuntimeIterator argIterator;
         String argName;
         Map<String, List<Item>> argumentValues = new LinkedHashMap<>(_functionItem.getNonLocalVariableBindings());

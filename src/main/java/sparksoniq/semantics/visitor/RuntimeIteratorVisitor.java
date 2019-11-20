@@ -92,7 +92,7 @@ import sparksoniq.jsoniq.runtime.iterator.control.SwitchRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.DynamicFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.DynamicallyResolvedFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.FunctionRuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.UserDefinedFunctionCallIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.FunctionItemCallIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 import sparksoniq.jsoniq.runtime.iterator.operational.AdditiveOperationIterator;

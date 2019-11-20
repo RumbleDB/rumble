@@ -27,7 +27,7 @@ import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.NullFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.UserDefinedFunctionCallIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.FunctionItemCallIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayDescendantFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayFlattenFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayMembersFunctionIterator;
@@ -298,7 +298,15 @@ public class Functions {
             IteratorMetadata metadata,
             List<RuntimeIterator> arguments
     ) {
-        return new UserDefinedFunctionCallIterator(getUserDefinedFunction(identifier, metadata), arguments, metadata);
+        return buildUserDefinedFunctionIterator(getUserDefinedFunction(identifier, metadata), metadata, arguments);
+    }
+
+    public static RuntimeIterator buildUserDefinedFunctionIterator(
+            FunctionItem functionItem,
+            IteratorMetadata metadata,
+            List<RuntimeIterator> arguments
+    ) {
+        return new FunctionItemCallIterator(functionItem, arguments, metadata);
     }
 
     public static void clearUserDefinedFunctions() {
