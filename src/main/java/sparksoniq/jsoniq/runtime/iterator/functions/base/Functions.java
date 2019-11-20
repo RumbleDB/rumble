@@ -298,7 +298,7 @@ public class Functions {
             IteratorMetadata metadata,
             List<RuntimeIterator> arguments
     ) {
-        return buildUserDefinedFunctionIterator(getUserDefinedFunction(identifier, metadata), metadata, arguments);
+        return buildUserDefinedFunctionIterator(getUserDefinedFunction(identifier), metadata, arguments);
     }
 
     public static RuntimeIterator buildUserDefinedFunctionIterator(
@@ -327,7 +327,7 @@ public class Functions {
         return userDefinedFunctions.containsKey(identifier);
     }
 
-    public static FunctionItem getUserDefinedFunction(FunctionIdentifier identifier, IteratorMetadata metadata) {
+    public static FunctionItem getUserDefinedFunction(FunctionIdentifier identifier) {
         FunctionItem fnItem = userDefinedFunctions.get(identifier);
         try {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
