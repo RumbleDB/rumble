@@ -56,10 +56,11 @@ public class HexBinaryItem extends AtomicItem {
         return hexBinaryPattern.matcher(hexBinaryString).matches();
     }
 
-    static byte[] parseHexBinaryString(String hexBinaryString) throws IllegalArgumentException{
-        if (hexBinaryString == null || !checkInvalidHexBinaryFormat(hexBinaryString)) throw new IllegalArgumentException();
+    static byte[] parseHexBinaryString(String hexBinaryString) throws IllegalArgumentException {
+        if (hexBinaryString == null || !checkInvalidHexBinaryFormat(hexBinaryString))
+            throw new IllegalArgumentException();
         try {
-            return (byte[])new Hex().decode(hexBinaryString);
+            return (byte[]) new Hex().decode(hexBinaryString);
         } catch (DecoderException e) {
             throw new IllegalArgumentException();
         }
@@ -82,9 +83,11 @@ public class HexBinaryItem extends AtomicItem {
 
     @Override
     public boolean isCastableAs(AtomicTypes itemType) {
-        return itemType.equals(AtomicTypes.HexBinaryItem) ||
-                itemType.equals(AtomicTypes.Base64BinaryItem) ||
-                itemType.equals(AtomicTypes.StringItem);
+        return itemType.equals(AtomicTypes.HexBinaryItem)
+            ||
+            itemType.equals(AtomicTypes.Base64BinaryItem)
+            ||
+            itemType.equals(AtomicTypes.StringItem);
     }
 
     @Override
@@ -115,22 +118,34 @@ public class HexBinaryItem extends AtomicItem {
 
     @Override
     public int compareTo(Item other) {
-        if (other.isNull()) return 1;
+        if (other.isNull())
+            return 1;
         if (other.isHexBinary()) {
             return this.serializeValue().compareTo(Arrays.toString(other.getBinaryValue()));
         }
-        throw new IteratorFlowException("Cannot compare item of type " + ItemTypes.getItemTypeName(this.getClass().getSimpleName()) +
-                " with item of type " + ItemTypes.getItemTypeName(other.getClass().getSimpleName()));
+        throw new IteratorFlowException(
+                "Cannot compare item of type "
+                    + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                    +
+                    " with item of type "
+                    + ItemTypes.getItemTypeName(other.getClass().getSimpleName())
+        );
     }
 
     @Override
     public Item compareItem(Item other, OperationalExpressionBase.Operator operator, IteratorMetadata metadata) {
         if (!other.isHexBinary() && !other.isNull()) {
-            throw new UnexpectedTypeException("\"" + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
-                    + "\": invalid type: can not compare for equality to type \""
-                    + ItemTypes.getItemTypeName(other.getClass().getSimpleName()) + "\"", metadata);
+            throw new UnexpectedTypeException(
+                    "\""
+                        + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                        + "\": invalid type: can not compare for equality to type \""
+                        + ItemTypes.getItemTypeName(other.getClass().getSimpleName())
+                        + "\"",
+                    metadata
+            );
         }
-        if (other.isNull()) return operator.apply(this, other);
+        if (other.isNull())
+            return operator.apply(this, other);
         switch (operator) {
             case VC_EQ:
             case GC_EQ:
@@ -138,9 +153,14 @@ public class HexBinaryItem extends AtomicItem {
             case GC_NE:
                 return operator.apply(this, other);
         }
-        throw new UnexpectedTypeException("\"" + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
-                + "\": invalid type: can not compare for equality to type \""
-                + ItemTypes.getItemTypeName(other.getClass().getSimpleName()) + "\"", metadata);
+        throw new UnexpectedTypeException(
+                "\""
+                    + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                    + "\": invalid type: can not compare for equality to type \""
+                    + ItemTypes.getItemTypeName(other.getClass().getSimpleName())
+                    + "\"",
+                metadata
+        );
     }
 
     @Override

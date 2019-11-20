@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -34,7 +34,7 @@ public abstract class ExpressionOrClause {
 
     private ExpressionMetadata metadata;
 
-    //Visitor pattern implementation
+    // Visitor pattern implementation
 
     protected ExpressionOrClause() {
     }
@@ -50,7 +50,7 @@ public abstract class ExpressionOrClause {
      */
     public abstract <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument);
 
-    //serialization
+    // serialization
     public abstract String serializationString(boolean prefix);
 
     public List<ExpressionOrClause> getDescendants() {
@@ -68,7 +68,10 @@ public abstract class ExpressionOrClause {
         return metadata;
     }
 
-    protected List<ExpressionOrClause> getDescendantsFromChildren(List<ExpressionOrClause> result, boolean depthSearch) {
+    protected List<ExpressionOrClause> getDescendantsFromChildren(
+            List<ExpressionOrClause> result,
+            boolean depthSearch
+    ) {
         if (depthSearch) {
             List<ExpressionOrClause> childrenResults = new ArrayList<>();
             result.forEach(r -> childrenResults.addAll(r.getDescendants(depthSearch)));

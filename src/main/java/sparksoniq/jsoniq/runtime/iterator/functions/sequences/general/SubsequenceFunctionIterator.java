@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -37,8 +37,8 @@ import org.rumbledb.api.Item;
 public class SubsequenceFunctionIterator extends LocalFunctionCallIterator {
 
 
-	private static final long serialVersionUID = 1L;
-	private RuntimeIterator _sequenceIterator;
+    private static final long serialVersionUID = 1L;
+    private RuntimeIterator _sequenceIterator;
     private Item _nextResult;
     private int _currentPosition;
     private int _startPosition;
@@ -52,9 +52,9 @@ public class SubsequenceFunctionIterator extends LocalFunctionCallIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        _currentPosition = 1;   // JSONiq indices start from 1
+        _currentPosition = 1; // JSONiq indices start from 1
 
-        _length = -1;   // unassigned
+        _length = -1; // unassigned
         // if length param is given, process it
         RuntimeIterator lengthIterator;
         Item lengthItem = null;
@@ -65,21 +65,25 @@ public class SubsequenceFunctionIterator extends LocalFunctionCallIterator {
             if (!lengthIterator.hasNext()) {
                 throw new UnexpectedTypeException(
                         "Invalid args. subsequence can't be performed with empty sequence as the length",
-                        getMetadata());
+                        getMetadata()
+                );
             }
             lengthItem = lengthIterator.next();
             if (lengthItem.isArray()) {
                 throw new NonAtomicKeyException(
                         "Invalid args. subsequence can't be performed with an array parameter as the length",
-                        getMetadata().getExpressionMetadata());
+                        getMetadata().getExpressionMetadata()
+                );
             } else if (lengthItem.isObject()) {
                 throw new NonAtomicKeyException(
                         "Invalid args. subsequence can't be performed with an object parameter as the length",
-                        getMetadata().getExpressionMetadata());
+                        getMetadata().getExpressionMetadata()
+                );
             } else if (!(lengthItem.isNumeric())) {
                 throw new UnexpectedTypeException(
                         "Invalid args. Length parameter should be an numeric(Integer/Decimal/Double)",
-                        getMetadata());
+                        getMetadata()
+                );
             }
             lengthIterator.close();
             // round double to nearest int
@@ -97,21 +101,25 @@ public class SubsequenceFunctionIterator extends LocalFunctionCallIterator {
         if (!positionIterator.hasNext()) {
             throw new UnexpectedTypeException(
                     "Invalid args. subsequence can't be performed with empty sequence as the position",
-                    getMetadata());
+                    getMetadata()
+            );
         }
         Item positionItem = positionIterator.next();
         if (positionItem.isArray()) {
             throw new NonAtomicKeyException(
                     "Invalid args. subsequence can't be performed with an array parameter as the position",
-                    getMetadata().getExpressionMetadata());
+                    getMetadata().getExpressionMetadata()
+            );
         } else if (positionItem instanceof ObjectItem) {
             throw new NonAtomicKeyException(
                     "Invalid args. subsequence can't be performed with an object parameter as the position",
-                    getMetadata().getExpressionMetadata());
+                    getMetadata().getExpressionMetadata()
+            );
         } else if (!(positionItem.isNumeric())) {
             throw new UnexpectedTypeException(
                     "Invalid args. Position parameter should be a numeric(Integer/Decimal/Double)",
-                    getMetadata());
+                    getMetadata()
+            );
         }
         positionIterator.close();
         // round double to nearest int
@@ -129,7 +137,7 @@ public class SubsequenceFunctionIterator extends LocalFunctionCallIterator {
             // find the start of the subsequence
             while (_sequenceIterator.hasNext()) {
                 if (_currentPosition < _startPosition) {
-                    _sequenceIterator.next();   // skip item
+                    _sequenceIterator.next(); // skip item
                 } else {
                     _nextResult = _sequenceIterator.next();
                     // if length is specified, decrement it
@@ -154,8 +162,8 @@ public class SubsequenceFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public Item next() {
         if (this.hasNext()) {
-            Item result = _nextResult;  // save the result to be returned
-            setNextResult();            // calculate and store the next result
+            Item result = _nextResult; // save the result to be returned
+            setNextResult(); // calculate and store the next result
             return result;
         }
         throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "subsequence function", getMetadata());
@@ -166,13 +174,15 @@ public class SubsequenceFunctionIterator extends LocalFunctionCallIterator {
 
         if (_length != 0) {
             if (_sequenceIterator.hasNext()) {
-                if (_length > 0) {      // take _length many items -> decrement the value for each item until 0
+                if (_length > 0) { // take _length many items -> decrement the value for each item until 0
                     _nextResult = _sequenceIterator.next();
                     _length--;
-                } else if (_length == -1) {     // _length not specified -> take all items until the end
+                } else if (_length == -1) { // _length not specified -> take all items until the end
                     _nextResult = _sequenceIterator.next();
                 } else {
-                    throw new SparksoniqRuntimeException("Unexpected length value found. Please report the bug with subsequence function iterator.");
+                    throw new SparksoniqRuntimeException(
+                            "Unexpected length value found. Please report the bug with subsequence function iterator."
+                    );
                 }
             }
         }

@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -41,7 +41,7 @@ import java.util.TreeMap;
 
 public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray<byte[]>, List<String>> {
     private static final long serialVersionUID = 1L;
-	  private List<OrderByClauseSparkIteratorExpression> _expressions;
+    private List<OrderByClauseSparkIteratorExpression> _expressions;
     Map<String, DynamicContext.VariableDependency> _dependencies;
 
     List<String> _columnNames;
@@ -50,25 +50,26 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray<byte[]>, L
     private DynamicContext _context;
     private Item _nextItem;
     private List<String> result;
-    
+
     private transient Kryo _kryo;
     private transient Input _input;
 
     public OrderClauseDetermineTypeUDF(
             List<OrderByClauseSparkIteratorExpression> expressions,
-            List<String> columnNames) {
+            List<String> columnNames
+    ) {
         _expressions = expressions;
 
         _deserializedParams = new ArrayList<>();
         _context = new DynamicContext();
         result = new ArrayList<>();
-        
+
         _dependencies = new TreeMap<String, DynamicContext.VariableDependency>();
         for (OrderByClauseSparkIteratorExpression expression : _expressions) {
             _dependencies.putAll(expression.getExpression().getVariableDependencies());
         }
         _columnNames = columnNames;
-        
+
         _kryo = new Kryo();
         _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
@@ -91,7 +92,10 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray<byte[]>, L
             if (expression.getExpression().hasNext()) {
                 _nextItem = expression.getExpression().next();
                 if (expression.getExpression().hasNext()) {
-                    throw new UnexpectedTypeException("Can not order by variables with sequences of multiple items.", expression.getIteratorMetadata());
+                    throw new UnexpectedTypeException(
+                            "Can not order by variables with sequences of multiple items.",
+                            expression.getIteratorMetadata()
+                    );
                 }
             }
             expression.getExpression().close();
@@ -111,18 +115,22 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray<byte[]>, L
             } else if (_nextItem.isDecimal()) {
                 result.add("decimal");
             } else if (_nextItem.isArray() || _nextItem.isObject()) {
-                throw new UnexpectedTypeException("Order by variable can not contain arrays or objects.", expression.getIteratorMetadata());
+                throw new UnexpectedTypeException(
+                        "Order by variable can not contain arrays or objects.",
+                        expression.getIteratorMetadata()
+                );
             } else {
                 throw new SparksoniqRuntimeException("Unexpected type found.");
             }
         }
         return result;
     }
-    
+
     private void readObject(java.io.ObjectInputStream in)
-            throws IOException, ClassNotFoundException {
+            throws IOException,
+                ClassNotFoundException {
         in.defaultReadObject();
-        
+
         _kryo = new Kryo();
         _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);

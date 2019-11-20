@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,13 +27,13 @@ import java.util.List;
 
 public class BashCommandExecutor {
     public static void executeCommand(List<String> commands) throws IOException, InterruptedException {
-        //Run macro on target
+        // Run macro on target
         ProcessBuilder pb = new ProcessBuilder(commands);
         pb.inheritIO();
         pb.redirectErrorStream(true);
         Process process = pb.start();
 
-        //Read output
+        // Read output
         StringBuilder out = new StringBuilder();
         BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()));
         String line = null, previous = null;
@@ -43,13 +43,13 @@ public class BashCommandExecutor {
                 out.append(line).append('\n');
             }
 
-        //Check result
+        // Check result
         if (process.waitFor() == 0) {
             System.out.println("Success!");
-//            System.exit(0);
+            // System.exit(0);
         }
 
         System.err.println(out.toString());
-//        System.exit(1);
+        // System.exit(1);
     }
 }

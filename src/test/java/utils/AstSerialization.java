@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -27,37 +27,159 @@ import java.util.Arrays;
 
 public class AstSerialization {
 
-    //all serialization strings
-    public static final String[] SERIALIZATION_RULES_FULL = new String[]{"module", "mainModule", "libraryModule", "prolog",
-            "defaultCollationDecl", "orderingModeDecl", "emptyOrderDecl", "decimalFormatDecl",
-            "dfPropertyName", "moduleImport", "varDecl", "functionDecl", "paramList", "expr", "exprSingle",
-            "flowrExpr", "forClause", "forVar", "letClause", "letVar", "whereClause", "groupByClause",
-            "groupByVar", "orderByClause", "countClause", "quantifiedExpr", "quantifiedExprVar", "switchExpr", "switchCaseClause",
-            "typeSwitchExpr", "caseClause", "ifExpr", "tryCatchExpr", "orExpr", "andExpr", "notExpr",
+    // all serialization strings
+    public static final String[] SERIALIZATION_RULES_FULL = new String[] {
+        "module",
+        "mainModule",
+        "libraryModule",
+        "prolog",
+        "defaultCollationDecl",
+        "orderingModeDecl",
+        "emptyOrderDecl",
+        "decimalFormatDecl",
+        "dfPropertyName",
+        "moduleImport",
+        "varDecl",
+        "functionDecl",
+        "paramList",
+        "expr",
+        "exprSingle",
+        "flowrExpr",
+        "forClause",
+        "forVar",
+        "letClause",
+        "letVar",
+        "whereClause",
+        "groupByClause",
+        "groupByVar",
+        "orderByClause",
+        "countClause",
+        "quantifiedExpr",
+        "quantifiedExprVar",
+        "switchExpr",
+        "switchCaseClause",
+        "typeSwitchExpr",
+        "caseClause",
+        "ifExpr",
+        "tryCatchExpr",
+        "orExpr",
+        "andExpr",
+        "notExpr",
 
-            "comparisonExpr", "stringConcatExpr", "rangeExpr", "additiveExpr", "multiplicativeExpr",
-            "instanceOfExpr", "treatExpr", "castableExpr", "castExpr", "unaryExpr", "simpleMapExpr",
-            "postFixExpr", "predicate", "objectLookup", "arrayLookup", "arrayUnboxing", "primaryExpr",
-            "varRef", "parenthesizedExpr", "contextItemExpr", "orderedExpr", "unorderedExpr",
-            "functionCall", "argumentList", "argument", "sequenceType", "objectConstructor", "itemType",
-            "jSONItemTest", "atomicType", "pairConstructor", "arrayConstructor", "uriLiteral", "stringLiteral"};
+        "comparisonExpr",
+        "stringConcatExpr",
+        "rangeExpr",
+        "additiveExpr",
+        "multiplicativeExpr",
+        "instanceOfExpr",
+        "treatExpr",
+        "castableExpr",
+        "castExpr",
+        "unaryExpr",
+        "simpleMapExpr",
+        "postFixExpr",
+        "predicate",
+        "objectLookup",
+        "arrayLookup",
+        "arrayUnboxing",
+        "primaryExpr",
+        "varRef",
+        "parenthesizedExpr",
+        "contextItemExpr",
+        "orderedExpr",
+        "unorderedExpr",
+        "functionCall",
+        "argumentList",
+        "argument",
+        "sequenceType",
+        "objectConstructor",
+        "itemType",
+        "jSONItemTest",
+        "atomicType",
+        "pairConstructor",
+        "arrayConstructor",
+        "uriLiteral",
+        "stringLiteral" };
 
-    //contains serialization strings only for supported features
-    public static final String[] SERIALIZATION_RULES_PARTIAL = new String[]{"module", "mainModule", "#", "#",
-            "#", "#", "#", "#",
-            "#", "#", "varDecl", "functionDecl", "paramList", "expr", "exprSingle",
-            "flowrExpr", "forClause", "forVar", "letClause", "letVar", "whereClause", "groupByClause",
-            "groupByVar", "orderByClause", "orderByExpr", "countClause", "quantifiedExpr", "quantifiedExprVar", "#", "#",
-            "#", "#", "ifExpr", "#", "orExpr", "andExpr", "notExpr",
+    // contains serialization strings only for supported features
+    public static final String[] SERIALIZATION_RULES_PARTIAL = new String[] {
+        "module",
+        "mainModule",
+        "#",
+        "#",
+        "#",
+        "#",
+        "#",
+        "#",
+        "#",
+        "#",
+        "varDecl",
+        "functionDecl",
+        "paramList",
+        "expr",
+        "exprSingle",
+        "flowrExpr",
+        "forClause",
+        "forVar",
+        "letClause",
+        "letVar",
+        "whereClause",
+        "groupByClause",
+        "groupByVar",
+        "orderByClause",
+        "orderByExpr",
+        "countClause",
+        "quantifiedExpr",
+        "quantifiedExprVar",
+        "#",
+        "#",
+        "#",
+        "#",
+        "ifExpr",
+        "#",
+        "orExpr",
+        "andExpr",
+        "notExpr",
 
-            "comparisonExpr", "stringConcatExpr", "rangeExpr", "additiveExpr", "multiplicativeExpr",
-            "instanceOfExpr", "#", "#", "#", "unaryExpr", "#",
-            "postFixExpr", "predicate", "objectLookup", "arrayLookup", "arrayUnboxing", "primaryExpr",
-            "varRef", "parenthesizedExpr", "#", "#", "#",
-            "functionCall", "argumentList", "argument", "sequenceType", "objectConstructor", "itemType",
-            "jSONItemTest", "atomicType", "pairConstructor", "arrayConstructor", "uriLiteral", "stringLiteral"};
+        "comparisonExpr",
+        "stringConcatExpr",
+        "rangeExpr",
+        "additiveExpr",
+        "multiplicativeExpr",
+        "instanceOfExpr",
+        "#",
+        "#",
+        "#",
+        "unaryExpr",
+        "#",
+        "postFixExpr",
+        "predicate",
+        "objectLookup",
+        "arrayLookup",
+        "arrayUnboxing",
+        "primaryExpr",
+        "varRef",
+        "parenthesizedExpr",
+        "#",
+        "#",
+        "#",
+        "functionCall",
+        "argumentList",
+        "argument",
+        "sequenceType",
+        "objectConstructor",
+        "itemType",
+        "jSONItemTest",
+        "atomicType",
+        "pairConstructor",
+        "arrayConstructor",
+        "uriLiteral",
+        "stringLiteral" };
 
-    public static boolean checkSerialization(JsoniqExpressionTreeVisitor visitor, JsoniqParser.MainModuleContext context) {
+    public static boolean checkSerialization(
+            JsoniqExpressionTreeVisitor visitor,
+            JsoniqParser.MainModuleContext context
+    ) {
 
         String antlrSerializedTree = context.expr().toStringTree(Arrays.asList(SERIALIZATION_RULES_PARTIAL));
         antlrSerializedTree = filterNotSupportedFeatures(antlrSerializedTree);
@@ -68,7 +190,7 @@ public class AstSerialization {
         return isEqual;
     }
 
-    //filter unsupported clauses
+    // filter unsupported clauses
     private static String filterNotSupportedFeatures(String antlrSerializedTree) {
         while (true) {
             int startIndex = antlrSerializedTree.indexOf("(#");
@@ -76,7 +198,7 @@ public class AstSerialization {
                 break;
             int stopIndex = findClosingBrace(antlrSerializedTree.toCharArray(), startIndex);
             antlrSerializedTree = antlrSerializedTree.substring(0, stopIndex)
-                    + antlrSerializedTree.substring(stopIndex + 1, antlrSerializedTree.length());
+                + antlrSerializedTree.substring(stopIndex + 1, antlrSerializedTree.length());
             antlrSerializedTree = antlrSerializedTree.replaceFirst(" \\(#", "");
         }
         return antlrSerializedTree;

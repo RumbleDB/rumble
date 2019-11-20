@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -70,16 +70,15 @@ public class JsoniqQueryExecutor {
 
     public void runLocal(String queryFile, String outputPath) throws IOException {
         File outputFile = null;
-        if(outputPath != null)
-        {
+        if (outputPath != null) {
             outputFile = new File(outputPath);
-            if(outputFile.exists())
-            {
-                if(!_configuration.getOverwrite())
-                {
-                    System.err.println("Output path " + outputPath + " already exists. Please use --overwrite yes to overwrite.");
+            if (outputFile.exists()) {
+                if (!_configuration.getOverwrite()) {
+                    System.err.println(
+                        "Output path " + outputPath + " already exists. Please use --overwrite yes to overwrite."
+                    );
                     System.exit(1);
-                } else if(outputFile.isDirectory()) {
+                } else if (outputFile.isDirectory()) {
                     org.apache.commons.io.FileUtils.deleteDirectory(outputFile);
                 } else {
                     outputFile.delete();
@@ -94,8 +93,7 @@ public class JsoniqQueryExecutor {
         generateStaticContext(visitor.getMainModule());
         // generate iterators
         RuntimeIterator result = generateRuntimeIterators(visitor.getMainModule());
-        if(_configuration.isPrintIteratorTree())
-        {
+        if (_configuration.isPrintIteratorTree()) {
             StringBuffer sb = new StringBuffer();
             result.print(sb, 0);
             System.out.println(sb);
@@ -133,7 +131,7 @@ public class JsoniqQueryExecutor {
         if (_useLocalOutputLog) {
             String output = runIterators(result);
             org.apache.hadoop.fs.FileSystem fileSystem = org.apache.hadoop.fs.FileSystem
-                    .get(SparkSessionManager.getInstance().getJavaSparkContext().hadoopConfiguration());
+                .get(SparkSessionManager.getInstance().getJavaSparkContext().hadoopConfiguration());
             FSDataOutputStream fsDataOutputStream = fileSystem.create(new Path(outputPath));
             BufferedOutputStream stream = new BufferedOutputStream(fsDataOutputStream);
             stream.write(output.getBytes());
@@ -163,7 +161,7 @@ public class JsoniqQueryExecutor {
         }
         if (_configuration.getLogPath().startsWith("hdfs://")) {
             org.apache.hadoop.fs.FileSystem fileSystem = org.apache.hadoop.fs.FileSystem
-                    .get(SparkSessionManager.getInstance().getJavaSparkContext().hadoopConfiguration());
+                .get(SparkSessionManager.getInstance().getJavaSparkContext().hadoopConfiguration());
             FSDataOutputStream fsDataOutputStream = fileSystem.create(new Path(_configuration.getLogPath()));
             BufferedOutputStream stream = new BufferedOutputStream(fsDataOutputStream);
             stream.write(result.getBytes());
@@ -195,7 +193,7 @@ public class JsoniqQueryExecutor {
 
     private JsoniqLexer getInputSource(String arg) throws IOException {
         arg = arg.trim();
-        //return embedded file
+        // return embedded file
         if (arg.isEmpty())
             new JsoniqLexer(CharStreams.fromStream(Main.class.getResourceAsStream("/queries/runQuery.iq")));
         if (arg.startsWith("file://") || arg.startsWith("/")) {
@@ -203,7 +201,7 @@ public class JsoniqQueryExecutor {
         }
         if (arg.startsWith("hdfs://")) {
             org.apache.hadoop.fs.FileSystem fileSystem = org.apache.hadoop.fs.FileSystem
-                    .get(URI.create(arg), SparkSessionManager.getInstance().getJavaSparkContext().hadoopConfiguration());
+                .get(URI.create(arg), SparkSessionManager.getInstance().getJavaSparkContext().hadoopConfiguration());
             FSDataInputStream in;
             try {
                 in = fileSystem.open(new Path(arg));
@@ -226,8 +224,13 @@ public class JsoniqQueryExecutor {
             JsoniqParser.MainModuleContext main = module.main;
             visitor.visit(main);
         } catch (ParseCancellationException ex) {
-            ParsingException e = new ParsingException(lexer.getText(), new ExpressionMetadata(lexer.getLine(),
-                    lexer.getCharPositionInLine()));
+            ParsingException e = new ParsingException(
+                    lexer.getText(),
+                    new ExpressionMetadata(
+                            lexer.getLine(),
+                            lexer.getCharPositionInLine()
+                    )
+            );
             e.initCause(ex);
             throw e;
         }
@@ -265,9 +268,13 @@ public class JsoniqQueryExecutor {
             StringBuilder sb = new StringBuilder();
             sb.append(result.serialize());
             sb.append("\n");
-            while (iterator.hasNext() &&
-                    ((itemCount < _configuration.getResultSizeCap() && _configuration.getResultSizeCap() > 0) ||
-                            _configuration.getResultSizeCap() == 0)) {
+            while (
+                iterator.hasNext()
+                    &&
+                    ((itemCount < _configuration.getResultSizeCap() && _configuration.getResultSizeCap() > 0)
+                        ||
+                        _configuration.getResultSizeCap() == 0)
+            ) {
                 sb.append(iterator.next().serialize());
                 sb.append("\n");
                 itemCount++;
@@ -293,11 +300,17 @@ public class JsoniqQueryExecutor {
                 collectedOutput = output.take(SparkSessionManager.COLLECT_ITEM_LIMIT);
                 if (collectedOutput.size() == SparkSessionManager.COLLECT_ITEM_LIMIT) {
                     if (Main.terminal == null) {
-                        System.out.println("Results have been truncated to:" + SparkSessionManager.COLLECT_ITEM_LIMIT
-                                + " items. This value can be configured with the --result-size parameter at startup.\n");
+                        System.out.println(
+                            "Results have been truncated to:"
+                                + SparkSessionManager.COLLECT_ITEM_LIMIT
+                                + " items. This value can be configured with the --result-size parameter at startup.\n"
+                        );
                     } else {
-                        Main.terminal.output("\nWarning: Results have been truncated to: " + SparkSessionManager.COLLECT_ITEM_LIMIT
-                                + " items. This value can be configured with the --result-size parameter at startup.\n");
+                        Main.terminal.output(
+                            "\nWarning: Results have been truncated to: "
+                                + SparkSessionManager.COLLECT_ITEM_LIMIT
+                                + " items. This value can be configured with the --result-size parameter at startup.\n"
+                        );
                     }
                 }
             } else {

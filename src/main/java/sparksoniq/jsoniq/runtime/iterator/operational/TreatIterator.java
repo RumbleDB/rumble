@@ -1,31 +1,66 @@
 package sparksoniq.jsoniq.runtime.iterator.operational;
 
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.TreatException;
-import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
+import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.TreatAsClosure;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
 
+import java.util.Collections;
+import java.util.List;
 
-public class TreatIterator extends UnaryOperationIterator {
+
+public class TreatIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private final SequenceType _sequenceType;
+    private RuntimeIterator _iterator;
     private Item _nextResult;
+    private final SequenceType _sequenceType;
     private int _childIndex;
+    private final ItemType itemType;
+    private final String sequenceTypeName;
 
-    public TreatIterator(RuntimeIterator child, SequenceType sequenceType, IteratorMetadata iteratorMetadata) {
-        super(child, OperationalExpressionBase.Operator.TREAT, iteratorMetadata);
+    public TreatIterator(RuntimeIterator iterator, SequenceType sequenceType, IteratorMetadata iteratorMetadata) {
+        super(Collections.singletonList(iterator), iteratorMetadata);
+        _iterator = iterator;
         this._sequenceType = sequenceType;
+        itemType = _sequenceType.getItemType();
+        sequenceTypeName = ItemTypes.getItemTypeName(itemType.getType().toString());
     }
 
     @Override
-    public Item next() {
+    protected boolean hasNextLocal() {
+        return _hasNext;
+    }
+
+    @Override
+    protected void resetLocal(DynamicContext context) {
+        _iterator.reset(_currentDynamicContext);
+        setNextResult();
+    }
+
+    @Override
+    protected void closeLocal() {
+        _iterator.close();
+    }
+
+    @Override
+    public void openLocal() {
+        this._childIndex = 0;
+        _iterator.open(_currentDynamicContext);
+        this.setNextResult();
+    }
+
+    @Override
+    public Item nextLocal() {
         if (this._hasNext) {
             Item result = _nextResult;
             setNextResult();
@@ -35,43 +70,90 @@ public class TreatIterator extends UnaryOperationIterator {
     }
 
     private void setNextResult() {
-        ItemType itemType = _sequenceType.getItemType();
-        String sequenceTypeName = ItemTypes.getItemTypeName(itemType.getType().toString());
-
         _nextResult = null;
-        if (_child.hasNext()) {
-            _nextResult = _child.next();
+        if (_iterator.hasNext()) {
+            _nextResult = _iterator.next();
+            if (_nextResult != null)
+                _childIndex++;
         } else {
-            _child.close();
-            if (_childIndex == 0 && (_sequenceType.getArity() == SequenceType.Arity.One ||
-                    _sequenceType.getArity() == SequenceType.Arity.OneOrMore)) {
-                throw new TreatException(" Empty sequence cannot be treated as type " + sequenceTypeName + _sequenceType.getArity().getSymbol(), getMetadata());
-            }
-        }
-
-        //... treat as ()
-        if (_nextResult != null && _sequenceType.isEmptySequence())
-            throw new TreatException(" " + ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName()) + " cannot be treated as type empty-sequence()", getMetadata());
-
-        //More items
-        if (_childIndex > 1 && (_sequenceType.getArity() == SequenceType.Arity.One ||
-                _sequenceType.getArity() == SequenceType.Arity.OneOrZero)) {
-            throw new TreatException(" Sequences of more than one item cannot be treated as type " + sequenceTypeName + _sequenceType.getArity().getSymbol(), getMetadata());
-        }
-
-        if (_nextResult != null && !_nextResult.isTypeOf(itemType)) {
-            throw new TreatException(" " + ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName()) + " cannot be treated as type " + sequenceTypeName + _sequenceType.getArity().getSymbol(), getMetadata());
+            _iterator.close();
+            checkEmptySequence(_childIndex);
         }
 
         this._hasNext = _nextResult != null;
-        _childIndex++;
+        if (!hasNext())
+            return;
+
+        checkItemsSize(_childIndex);
+        if (!_nextResult.isTypeOf(itemType)) {
+            throw new TreatException(
+                    " "
+                        + ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName())
+                        + " cannot be treated as type "
+                        + sequenceTypeName
+                        + _sequenceType.getArity().getSymbol(),
+                    getMetadata()
+            );
+
+        }
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this._childIndex = 0;
-        _child.open(_currentDynamicContext);
-        this.setNextResult();
+    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+        _currentDynamicContext = dynamicContext;
+        JavaRDD<Item> childRDD = _iterator.getRDD(dynamicContext);
+
+        int count = childRDD.take(2).size();
+        checkEmptySequence(count);
+        checkItemsSize(count);
+        Function<Item, Boolean> transformation = new TreatAsClosure(_sequenceType, getMetadata());
+        return childRDD.filter(transformation);
+    }
+
+    private void checkEmptySequence(long size) {
+        if (
+            size == 0
+                && (_sequenceType.getArity() == SequenceType.Arity.One
+                    ||
+                    _sequenceType.getArity() == SequenceType.Arity.OneOrMore)
+        ) {
+            throw new TreatException(
+                    " Empty sequence cannot be treated as type "
+                        + sequenceTypeName
+                        + _sequenceType.getArity().getSymbol(),
+                    getMetadata()
+            );
+        }
+    }
+
+    private void checkItemsSize(long size) {
+        if (size > 0 && _sequenceType.isEmptySequence())
+            throw new TreatException(
+                    " "
+                        + ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName())
+                        + " cannot be treated as type empty-sequence()",
+                    getMetadata()
+            );
+
+
+        if (
+            size > 1
+                && (_sequenceType.getArity() == SequenceType.Arity.One
+                    ||
+                    _sequenceType.getArity() == SequenceType.Arity.OneOrZero)
+        ) {
+            throw new TreatException(
+                    " Sequences of more than one item cannot be treated as type "
+                        + sequenceTypeName
+                        + _sequenceType.getArity().getSymbol(),
+                    getMetadata()
+            );
+        }
+    }
+
+    @Override
+    public boolean initIsRDD() {
+        return _iterator.isRDD();
     }
 }
+

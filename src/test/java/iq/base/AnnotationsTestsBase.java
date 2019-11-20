@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -62,7 +62,8 @@ public class AnnotationsTestsBase {
     /**
      * Tests annotations
      */
-    protected JsoniqParser.MainModuleContext testAnnotations(String path, JsoniqBaseVisitor<Void> visitor) throws IOException {
+    protected JsoniqParser.MainModuleContext testAnnotations(String path, JsoniqBaseVisitor<Void> visitor)
+            throws IOException {
         JsoniqParser.MainModuleContext context = null;
         RuntimeIterator runtimeIterator = null;
         try {
@@ -80,8 +81,8 @@ public class AnnotationsTestsBase {
                 JsoniqExpressionTreeVisitor completeVisitor = ((JsoniqExpressionTreeVisitor) visitor);
                 // generate static context
                 new StaticContextVisitor().visit(
-                        completeVisitor.getMainModule(),
-                        completeVisitor.getMainModule().getStaticContext()
+                    completeVisitor.getMainModule(),
+                    completeVisitor.getMainModule().getStaticContext()
                 );
                 // generate iterators
                 Functions.clearUserDefinedFunctions();
@@ -147,8 +148,11 @@ public class AnnotationsTestsBase {
         }
 
         // PROGRAM SHOULD RUN
-        if (currentAnnotation instanceof AnnotationProcessor.RunnableTestAnnotation &&
-                currentAnnotation.shouldRun()) {
+        if (
+            currentAnnotation instanceof AnnotationProcessor.RunnableTestAnnotation
+                &&
+                currentAnnotation.shouldRun()
+        ) {
             try {
                 checkExpectedOutput(currentAnnotation.getOutput(), runtimeIterator);
             } catch (SparksoniqRuntimeException exception) {
@@ -156,9 +160,12 @@ public class AnnotationsTestsBase {
                 Assert.fail("Program did not run when expected to.\nError output: " + errorOutput + "\n");
             }
         } else {
-            //PROGRAM SHOULD CRASH
-            if (currentAnnotation instanceof AnnotationProcessor.UnrunnableTestAnnotation &&
-                    !currentAnnotation.shouldRun()) {
+            // PROGRAM SHOULD CRASH
+            if (
+                currentAnnotation instanceof AnnotationProcessor.UnrunnableTestAnnotation
+                    &&
+                    !currentAnnotation.shouldRun()
+            ) {
                 try {
                     checkExpectedOutput(currentAnnotation.getOutput(), runtimeIterator);
                 } catch (Exception exception) {
@@ -180,9 +187,11 @@ public class AnnotationsTestsBase {
 
         try {
             // the original
-            /*JsoniqParser.ModuleContext unit = parser.module();
-            JsoniqParser.MainModuleContext main = unit.main;
-            visitor.visit(unit);*/
+            /*
+             * JsoniqParser.ModuleContext unit = parser.module();
+             * JsoniqParser.MainModuleContext main = unit.main;
+             * visitor.visit(unit);
+             */
 
             JsoniqParser.ModuleContext module = parser.module();
             JsoniqParser.MainModuleContext main = module.main;
@@ -191,8 +200,13 @@ public class AnnotationsTestsBase {
             return main;
 
         } catch (ParseCancellationException ex) {
-            ParsingException e = new ParsingException(lexer.getText(), new ExpressionMetadata(lexer.getLine(),
-                    lexer.getCharPositionInLine()));
+            ParsingException e = new ParsingException(
+                    lexer.getText(),
+                    new ExpressionMetadata(
+                            lexer.getLine(),
+                            lexer.getCharPositionInLine()
+                    )
+            );
             e.initCause(ex);
             throw e;
         }
@@ -204,10 +218,22 @@ public class AnnotationsTestsBase {
 
     protected void checkErrorCode(String errorOutput, String expectedErrorCode, String errorMetadata) {
         if (errorOutput != null && expectedErrorCode != null)
-            Assert.assertTrue("Unexpected error code returned; Expected: " + expectedErrorCode +
-                    "; Error: " + errorOutput, errorOutput.contains(expectedErrorCode));
+            Assert.assertTrue(
+                "Unexpected error code returned; Expected: "
+                    + expectedErrorCode
+                    +
+                    "; Error: "
+                    + errorOutput,
+                errorOutput.contains(expectedErrorCode)
+            );
         if (errorOutput != null && errorMetadata != null)
-            Assert.assertTrue("Unexpected metadata returned; Expected: " + errorMetadata +
-                    "; Error: " + errorOutput, errorOutput.contains(errorMetadata));
+            Assert.assertTrue(
+                "Unexpected metadata returned; Expected: "
+                    + errorMetadata
+                    +
+                    "; Error: "
+                    + errorOutput,
+                errorOutput.contains(errorMetadata)
+            );
     }
 }

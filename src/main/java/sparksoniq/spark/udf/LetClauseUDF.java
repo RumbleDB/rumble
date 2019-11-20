@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -38,34 +38,35 @@ import java.util.List;
 
 public class LetClauseUDF implements UDF1<WrappedArray<byte[]>, byte[]> {
 
-	private static final long serialVersionUID = 1L;
-	private RuntimeIterator _expression;
+    private static final long serialVersionUID = 1L;
+    private RuntimeIterator _expression;
 
     List<String> _columnNames;
 
     private List<List<Item>> _deserializedParams;
     private DynamicContext _context;
     private List<Item> _nextResult;
-    
+
     private transient Kryo _kryo;
     private transient Output _output;
     private transient Input _input;
-    
+
     public LetClauseUDF(
             RuntimeIterator expression,
-            List<String> columnNames) {
+            List<String> columnNames
+    ) {
         _expression = expression;
 
         _deserializedParams = new ArrayList<>();
         _context = new DynamicContext();
         _nextResult = new ArrayList<>();
-        
+
         _kryo = new Kryo();
         _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _output = new Output(128, -1);
         _input = new Input();
-        
+
         _columnNames = columnNames;
     }
 
@@ -90,16 +91,17 @@ public class LetClauseUDF implements UDF1<WrappedArray<byte[]>, byte[]> {
 
         return DataFrameUtils.serializeItemList(_nextResult, _kryo, _output);
     }
-    
+
     private void readObject(java.io.ObjectInputStream in)
-            throws IOException, ClassNotFoundException {
+            throws IOException,
+                ClassNotFoundException {
         in.defaultReadObject();
-        
+
         _kryo = new Kryo();
         _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _output = new Output(128, -1);
         _input = new Input();
     }
-    
+
 }

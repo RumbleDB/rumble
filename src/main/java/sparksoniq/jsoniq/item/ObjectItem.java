@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -39,8 +39,8 @@ import java.util.Map;
 public class ObjectItem extends JsonItem {
 
 
-	private static final long serialVersionUID = 1L;
-	private List<Item> _values;
+    private static final long serialVersionUID = 1L;
+    private List<Item> _values;
     private List<String> _keys;
 
     public ObjectItem() {
@@ -56,9 +56,11 @@ public class ObjectItem extends JsonItem {
 
     /**
      * ObjectItem constructor from the given map data structure.
-     * For each key, the corresponding values list is turned into an ArrayItem if it contains more than a single element.
+     * For each key, the corresponding values list is turned into an ArrayItem if it contains more than a single
+     * element.
      *
-     * @param keyValuePairs LinkedHashMap -- this map implementation preserves order of the keys -- essential for functionality
+     * @param keyValuePairs LinkedHashMap -- this map implementation preserves order of the keys -- essential for
+     *        functionality
      */
     public ObjectItem(Map<String, List<Item>> keyValuePairs) {
         super();
@@ -167,56 +169,45 @@ public class ObjectItem extends JsonItem {
     }
 
     @SuppressWarnings("unchecked")
-	@Override
+    @Override
     public void read(Kryo kryo, Input input) {
         this._keys = kryo.readObject(input, ArrayList.class);
         this._values = kryo.readObject(input, ArrayList.class);
     }
-    
-    public boolean equals(Object otherItem)
-    {
-        if(!(otherItem instanceof Item))
-        {
+
+    public boolean equals(Object otherItem) {
+        if (!(otherItem instanceof Item)) {
             return false;
         }
-        Item o = (Item)otherItem;
-        if(!o.isObject())
-        {
+        Item o = (Item) otherItem;
+        if (!o.isObject()) {
             return false;
         }
-        for(String s : getKeys())
-        {
+        for (String s : getKeys()) {
             Item v = o.getItemByKey(s);
-            if(v == null)
-            {
+            if (v == null) {
                 return false;
             }
-            if(!getItemByKey(s).equals(v))
-            {
+            if (!getItemByKey(s).equals(v)) {
                 return false;
             }
         }
-        for(String s : o.getKeys())
-        {
+        for (String s : o.getKeys()) {
             Item v = getItemByKey(s);
-            if(v == null)
-            {
+            if (v == null) {
                 return false;
             }
-            if(!o.getItemByKey(s).equals(v))
-            {
+            if (!o.getItemByKey(s).equals(v)) {
                 return false;
             }
         }
         return true;
     }
-    
-    public int hashCode()
-    {
+
+    public int hashCode() {
         int result = 0;
         result += getSize();
-        for(String s : getKeys())
-        {
+        for (String s : getKeys()) {
             result += getItemByKey(s).hashCode();
         }
         return result;

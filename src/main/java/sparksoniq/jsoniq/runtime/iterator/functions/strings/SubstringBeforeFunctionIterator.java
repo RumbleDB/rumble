@@ -23,23 +23,38 @@ public class SubstringBeforeFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             this._hasNext = false;
             StringItem stringItem = this.getSingleItemOfTypeFromIterator(
-                    this._children.get(0),
-                    StringItem.class);
+                this._children.get(0),
+                StringItem.class
+            );
             StringItem substringItem = this.getSingleItemOfTypeFromIterator(
-                    this._children.get(1),
-                    StringItem.class);
-            if (substringItem == null || substringItem.getStringValue().isEmpty() ||
-                    stringItem == null || stringItem.getStringValue().isEmpty()) {
+                this._children.get(1),
+                StringItem.class
+            );
+            if (
+                substringItem == null
+                    || substringItem.getStringValue().isEmpty()
+                    ||
+                    stringItem == null
+                    || stringItem.getStringValue().isEmpty()
+            ) {
                 return ItemFactory.getInstance().createStringItem("");
             }
             int indexOfOccurrence = stringItem.getStringValue().indexOf(substringItem.getStringValue());
-            return indexOfOccurrence == -1 ? ItemFactory.getInstance().createStringItem("") :
-                    ItemFactory.getInstance().createStringItem(stringItem.getStringValue().substring(
-                    0, indexOfOccurrence));
+            return indexOfOccurrence == -1
+                ? ItemFactory.getInstance().createStringItem("")
+                : ItemFactory.getInstance()
+                    .createStringItem(
+                        stringItem.getStringValue()
+                            .substring(
+                                0,
+                                indexOfOccurrence
+                            )
+                    );
         } else
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " substring-before function",
-                    getMetadata());
+                    getMetadata()
+            );
 
     }
 }

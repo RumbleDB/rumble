@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -41,18 +41,32 @@ import org.rumbledb.api.Item;
 public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
 
 
-	private static final long serialVersionUID = 1L;
-	private static final Operator[] valueComparisonOperators = new Operator[]{
-            Operator.VC_GE, Operator.VC_GT, Operator.VC_EQ, Operator.VC_NE, Operator.VC_LE, Operator.VC_LT};
-    private static final Operator[] generalComparisonOperators = new Operator[]{
-            Operator.GC_GE, Operator.GC_GT, Operator.GC_EQ, Operator.GC_NE, Operator.GC_LE, Operator.GC_LT};
+    private static final long serialVersionUID = 1L;
+    private static final Operator[] valueComparisonOperators = new Operator[] {
+        Operator.VC_GE,
+        Operator.VC_GT,
+        Operator.VC_EQ,
+        Operator.VC_NE,
+        Operator.VC_LE,
+        Operator.VC_LT };
+    private static final Operator[] generalComparisonOperators = new Operator[] {
+        Operator.GC_GE,
+        Operator.GC_GT,
+        Operator.GC_EQ,
+        Operator.GC_NE,
+        Operator.GC_LE,
+        Operator.GC_LT };
     private boolean _isValueComparison;
     private Item _left;
     private Item _right;
 
 
-    public ComparisonOperationIterator(RuntimeIterator left, RuntimeIterator right,
-                                       OperationalExpressionBase.Operator operator, IteratorMetadata iteratorMetadata) {
+    public ComparisonOperationIterator(
+            RuntimeIterator left,
+            RuntimeIterator right,
+            OperationalExpressionBase.Operator operator,
+            IteratorMetadata iteratorMetadata
+    ) {
         super(left, right, operator, iteratorMetadata);
     }
 
@@ -101,7 +115,10 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
 
                 // value comparison doesn't support more than 1 items
                 if (_leftIterator.hasNext() || _rightIterator.hasNext()) {
-                    throw new UnexpectedTypeException("Invalid args. Value comparison can't be performed on sequences with more than 1 items", getMetadata());
+                    throw new UnexpectedTypeException(
+                            "Invalid args. Value comparison can't be performed on sequences with more than 1 items",
+                            getMetadata()
+                    );
                 }
 
                 _isValueComparison = true;
@@ -119,7 +136,7 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
     /**
      * Function to compare two lists of items one by one with each other.
      *
-     * @param left  item list of left iterator
+     * @param left item list of left iterator
      * @param right item list of right iterator
      * @return true if a single match is found, false if no matches. Given an empty sequence, false is returned.
      */
@@ -137,21 +154,28 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
     private Item comparePair(Item left, Item right) {
 
         if (left.isArray() || right.isArray()) {
-            throw new NonAtomicKeyException("Invalid args. Comparison can't be performed on array type", getMetadata().getExpressionMetadata());
-        }
-        else if (left.isObject() || right.isObject()) {
-            throw new NonAtomicKeyException("Invalid args. Comparison can't be performed on object type", getMetadata().getExpressionMetadata());
-        }
-        else if (left.isFunction() || right.isFunction()) {
-            throw new NonAtomicKeyException("Invalid args. Comparison can't be performed on function type", getMetadata().getExpressionMetadata());
+            throw new NonAtomicKeyException(
+                    "Invalid args. Comparison can't be performed on array type",
+                    getMetadata().getExpressionMetadata()
+            );
+        } else if (left.isObject() || right.isObject()) {
+            throw new NonAtomicKeyException(
+                    "Invalid args. Comparison can't be performed on object type",
+                    getMetadata().getExpressionMetadata()
+            );
+        } else if (left.isFunction() || right.isFunction()) {
+            throw new NonAtomicKeyException(
+                    "Invalid args. Comparison can't be performed on function type",
+                    getMetadata().getExpressionMetadata()
+            );
         }
 
         if (left.isAtomic()) {
             Item comparisonResult = left.compareItem(right, this._operator, getMetadata());
-            if (comparisonResult != null) return comparisonResult;
+            if (comparisonResult != null)
+                return comparisonResult;
             throw new IteratorFlowException("Unrecognized operator found", getMetadata());
-        }
-        else {
+        } else {
             throw new IteratorFlowException("Invalid comparison expression", getMetadata());
         }
     }

@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -36,12 +36,12 @@ import java.util.TreeMap;
 import org.rumbledb.api.Item;
 
 public class CountFunctionIterator extends LocalFunctionCallIterator {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
 
-	public CountFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
+    public CountFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
     }
 
@@ -50,8 +50,7 @@ public class CountFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             RuntimeIterator iterator = this._children.get(0);
             if (!iterator.isRDD()) {
-                if(_children.get(0) instanceof VariableReferenceIterator)
-                {
+                if (_children.get(0) instanceof VariableReferenceIterator) {
                     VariableReferenceIterator expr = (VariableReferenceIterator) _children.get(0);
                     this._hasNext = false;
                     return _currentDynamicContext.getVariableCount(expr.getVariableName());
@@ -70,16 +69,17 @@ public class CountFunctionIterator extends LocalFunctionCallIterator {
                 }
             }
         } else
-            throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + " count function",
-                    getMetadata());
+            throw new IteratorFlowException(
+                    FLOW_EXCEPTION_MESSAGE + " count function",
+                    getMetadata()
+            );
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies()
-    {
-        if(_children.get(0) instanceof VariableReferenceIterator)
-        {
+    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
+        if (_children.get(0) instanceof VariableReferenceIterator) {
             VariableReferenceIterator expr = (VariableReferenceIterator) _children.get(0);
-            Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
+            Map<String, DynamicContext.VariableDependency> result =
+                new TreeMap<String, DynamicContext.VariableDependency>();
             result.put(expr.getVariableName(), DynamicContext.VariableDependency.COUNT);
             return result;
         } else {

@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -33,9 +33,9 @@ import org.rumbledb.api.Item;
 
 public class ATan2FunctionIterator extends LocalFunctionCallIterator {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	public ATan2FunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
+    public ATan2FunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
     }
 
@@ -62,8 +62,7 @@ public class ATan2FunctionIterator extends LocalFunctionCallIterator {
 
             if (y.isNumeric() && x.isNumeric()) {
                 try {
-                    Double result = Math.atan2(y.castToDoubleValue()
-                            , x.castToDoubleValue());
+                    Double result = Math.atan2(y.castToDoubleValue(), x.castToDoubleValue());
                     this._hasNext = false;
                     return ItemFactory.getInstance().createDoubleItem(result);
 
@@ -71,8 +70,14 @@ public class ATan2FunctionIterator extends LocalFunctionCallIterator {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
                 }
             } else {
-                throw new UnexpectedTypeException("ATan2 expression has non numeric args " +
-                        y.serialize() + ", " + x.serialize(), getMetadata());
+                throw new UnexpectedTypeException(
+                        "ATan2 expression has non numeric args "
+                            +
+                            y.serialize()
+                            + ", "
+                            + x.serialize(),
+                        getMetadata()
+                );
             }
         } else
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " atan2 function", getMetadata());
