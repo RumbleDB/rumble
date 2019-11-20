@@ -32,14 +32,18 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class DynamicallyResolvedFunctionCallIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     // parametrized fields
     private FunctionIdentifier _functionIdentifier;
+    private List<RuntimeIterator> _functionArguments;
 
     // calculated fields
+    private FunctionItem _functionItem;
     private RuntimeIterator _functionCallIterator;
     private Item _nextResult;
 
@@ -49,13 +53,15 @@ public class DynamicallyResolvedFunctionCallIterator extends HybridRuntimeIterat
             List<RuntimeIterator> functionArguments,
             IteratorMetadata iteratorMetadata
     ) {
-        super(functionArguments, iteratorMetadata);
+        super(null, iteratorMetadata);
         _functionIdentifier = functionIdentifier;
+        _functionArguments = functionArguments;
+
     }
 
     @Override
     public void openLocal() {
-        _functionCallIterator = Functions.getUserDefinedFunctionIterator(_functionIdentifier, getMetadata(), _children);
+        _functionCallIterator = Functions.getUserDefinedFunctionIterator(_functionIdentifier, getMetadata(), _functionArguments);
         _functionCallIterator.open(_currentDynamicContext);
         setNextResult();
     }
@@ -114,7 +120,20 @@ public class DynamicallyResolvedFunctionCallIterator extends HybridRuntimeIterat
 
     @Override
     public boolean initIsRDD() {
-        _functionCallIterator = Functions.getUserDefinedFunctionIterator(_functionIdentifier, getMetadata(), _children);
+        _functionCallIterator = Functions.getUserDefinedFunctionIterator(_functionIdentifier, getMetadata(), _functionArguments);
         return _functionCallIterator.isRDD();
     }
+
+    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
+        Map<String, DynamicContext.VariableDependency> result =
+            new TreeMap<String, DynamicContext.VariableDependency>();
+        result.putAll(super.getVariableDependencies());
+        for (RuntimeIterator iterator : _functionArguments) {
+        	if(iterator == null)
+        		continue;
+            result.putAll(iterator.getVariableDependencies());
+        }
+        return result;
+    }
+
 }
