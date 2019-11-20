@@ -61,11 +61,6 @@ public class DynamicallyResolvedFunctionCallIterator extends HybridRuntimeIterat
 
     @Override
     public void openLocal() {
-        _functionCallIterator = Functions.getUserDefinedFunctionIterator(
-            _functionIdentifier,
-            getMetadata(),
-            _functionArguments
-        );
         _functionCallIterator.open(_currentDynamicContext);
         setNextResult();
     }
