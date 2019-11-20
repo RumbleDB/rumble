@@ -25,7 +25,8 @@ public class TypeSwitchRuntimeIterator extends LocalRuntimeIterator {
             RuntimeIterator test,
             List<TypeSwitchCase> cases,
             TypeSwitchCase defaultCase,
-            IteratorMetadata iteratorMetadata) {
+            IteratorMetadata iteratorMetadata
+    ) {
 
         super(null, iteratorMetadata);
         this._children.add(test);
@@ -57,8 +58,10 @@ public class TypeSwitchRuntimeIterator extends LocalRuntimeIterator {
             this._hasNext = false;
             return nextItem;
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in typeSwitch statement",
-                getMetadata());
+        throw new IteratorFlowException(
+                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in typeSwitch statement",
+                getMetadata()
+        );
     }
 
     @Override
@@ -73,12 +76,16 @@ public class TypeSwitchRuntimeIterator extends LocalRuntimeIterator {
         testValue = getSingleItemOfTypeFromIterator(test, Item.class);
 
         for (TypeSwitchCase typeSwitchCase : cases) {
-            if (testTypeMatch(typeSwitchCase)) break;
+            if (testTypeMatch(typeSwitchCase))
+                break;
         }
 
         if (matchingIterator == null) {
             if (defaultCase.getVariable() != null) {
-                _currentDynamicContext.addVariableValue(defaultCase.getVariable().getVariableName(), Collections.singletonList(testValue));
+                _currentDynamicContext.addVariableValue(
+                    defaultCase.getVariable().getVariableName(),
+                    Collections.singletonList(testValue)
+                );
             }
             matchingIterator = defaultCase.getReturnIterator();
         }
@@ -92,7 +99,10 @@ public class TypeSwitchRuntimeIterator extends LocalRuntimeIterator {
         for (FlworVarSequenceType sequenceType : typeSwitchCase.getSequenceTypeUnion()) {
             if (testValue != null && testValue.isTypeOf(sequenceType.getSequence().getItemType())) {
                 if (typeSwitchCase.getVariable() != null) {
-                    _currentDynamicContext.addVariableValue(typeSwitchCase.getVariable().getVariableName(), Collections.singletonList(testValue));
+                    _currentDynamicContext.addVariableValue(
+                        typeSwitchCase.getVariable().getVariableName(),
+                        Collections.singletonList(testValue)
+                    );
                 }
                 matchingIterator = typeSwitchCase.getReturnIterator();
                 return true;

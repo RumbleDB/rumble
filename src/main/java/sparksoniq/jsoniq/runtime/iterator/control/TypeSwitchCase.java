@@ -11,7 +11,11 @@ public class TypeSwitchCase {
     private final List<FlworVarSequenceType> sequenceTypeUnion;
     private final RuntimeIterator returnIterator;
 
-    public TypeSwitchCase(VariableReferenceIterator variable, List<FlworVarSequenceType> sequenceTypeUnion, RuntimeIterator returnIterator) {
+    public TypeSwitchCase(
+            VariableReferenceIterator variable,
+            List<FlworVarSequenceType> sequenceTypeUnion,
+            RuntimeIterator returnIterator
+    ) {
         this.variable = variable;
         this.sequenceTypeUnion = sequenceTypeUnion;
         this.returnIterator = returnIterator;

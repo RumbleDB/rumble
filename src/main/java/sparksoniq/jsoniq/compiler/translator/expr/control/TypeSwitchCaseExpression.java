@@ -16,7 +16,12 @@ public class TypeSwitchCaseExpression extends Expression {
     private List<FlworVarSequenceType> union = new ArrayList<>();
     private final Expression returnExpression;
 
-    public TypeSwitchCaseExpression(VariableReference var, List<FlworVarSequenceType> union, Expression returnExpression, ExpressionMetadata metadataFromContext) {
+    public TypeSwitchCaseExpression(
+            VariableReference var,
+            List<FlworVarSequenceType> union,
+            Expression returnExpression,
+            ExpressionMetadata metadataFromContext
+    ) {
         super(metadataFromContext);
         this.variableReferenceNode = var;
         this.union.addAll(union);
@@ -53,7 +58,7 @@ public class TypeSwitchCaseExpression extends Expression {
     }
 
     @Override
-    //TODO implement serialization for switch expr
+    // TODO implement serialization for switch expr
     public String serializationString(boolean prefix) {
         return "";
     }

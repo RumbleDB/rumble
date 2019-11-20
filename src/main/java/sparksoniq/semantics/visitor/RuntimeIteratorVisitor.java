@@ -828,9 +828,18 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         for (TypeSwitchCaseExpression caseExpression : expression.getCases()) {
             VariableReferenceIterator variableReferenceIterator = null;
             if (caseExpression.getVariableReference() != null) {
-                variableReferenceIterator = (VariableReferenceIterator) this.visit(caseExpression.getVariableReference(), argument);
+                variableReferenceIterator = (VariableReferenceIterator) this.visit(
+                    caseExpression.getVariableReference(),
+                    argument
+                );
             }
-            cases.add(new TypeSwitchCase(variableReferenceIterator, caseExpression.getUnion(), this.visit(caseExpression.getReturnExpression(), argument)));
+            cases.add(
+                new TypeSwitchCase(
+                        variableReferenceIterator,
+                        caseExpression.getUnion(),
+                        this.visit(caseExpression.getReturnExpression(), argument)
+                )
+            );
         }
 
         TypeSwitchCase defaultCase;
@@ -838,10 +847,17 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         if (expression.getVarRefDefault() != null) {
             varRefDefaultIterator = (VariableReferenceIterator) this.visit(expression.getVarRefDefault(), argument);
         }
-        defaultCase = new TypeSwitchCase(varRefDefaultIterator, this.visit(expression.getDefaultExpression(), argument));
+        defaultCase = new TypeSwitchCase(
+                varRefDefaultIterator,
+                this.visit(expression.getDefaultExpression(), argument)
+        );
 
-        return new TypeSwitchRuntimeIterator(this.visit(expression.getTestCondition(), argument),
-                cases, defaultCase, createIteratorMetadata(expression));
+        return new TypeSwitchRuntimeIterator(
+                this.visit(expression.getTestCondition(), argument),
+                cases,
+                defaultCase,
+                createIteratorMetadata(expression)
+        );
     }
 
     private IteratorMetadata createIteratorMetadata(ExpressionOrClause expression) {

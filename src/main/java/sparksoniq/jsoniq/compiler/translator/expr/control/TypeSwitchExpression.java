@@ -21,7 +21,8 @@ public class TypeSwitchExpression extends Expression {
             List<TypeSwitchCaseExpression> cases,
             Expression defaultExpression,
             VariableReference varRefDefault,
-            ExpressionMetadata metadataFromContext) {
+            ExpressionMetadata metadataFromContext
+    ) {
 
         super(metadataFromContext);
         this.testCondition = testCondition;
@@ -63,7 +64,7 @@ public class TypeSwitchExpression extends Expression {
     }
 
     @Override
-    //TODO implement serialization for switch expr
+    // TODO implement serialization for switch expr
     public String serializationString(boolean prefix) {
         return "";
     }
