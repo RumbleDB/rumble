@@ -50,8 +50,6 @@ public class FlworTuple implements Serializable, KryoSerializable {
 
     /**
      * Create a deep copy
-     *
-     * @param toCopy original tuple
      */
     public FlworTuple(FlworTuple toCopy) {
         variables = new LinkedHashMap<>(toCopy.getKeys().size(), 1);
@@ -61,9 +59,6 @@ public class FlworTuple implements Serializable, KryoSerializable {
 
     /**
      * Create a tuple containing only the given key-value pair
-     *
-     * @param newKey
-     * @param value
      */
     public FlworTuple(String newKey, List<Item> value) {
         this(1);
@@ -72,10 +67,6 @@ public class FlworTuple implements Serializable, KryoSerializable {
 
     /**
      * Create a deep copy containing new key-value pair
-     *
-     * @param toCopy original tuple
-     * @param newKey
-     * @param value
      */
     public FlworTuple(FlworTuple toCopy, String newKey, List<Item> value) {
         this(toCopy);
