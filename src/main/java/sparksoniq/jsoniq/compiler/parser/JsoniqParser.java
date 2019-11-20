@@ -3327,12 +3327,14 @@ public class JsoniqParser extends Parser {
     }
 
     public static class TypeSwitchExprContext extends ParserRuleContext {
+        public ExprContext cond;
+        public CaseClauseContext caseClause;
+        public List<CaseClauseContext> cses = new ArrayList<CaseClauseContext>();
+        public VarRefContext var_ref;
+        public ExprSingleContext def;
+
         public TerminalNode Ktypeswitch() {
             return getToken(JsoniqParser.Ktypeswitch, 0);
-        }
-
-        public ExprContext expr() {
-            return getRuleContext(ExprContext.class, 0);
         }
 
         public TerminalNode Kdefault() {
@@ -3341,6 +3343,10 @@ public class JsoniqParser extends Parser {
 
         public TerminalNode Kreturn() {
             return getToken(JsoniqParser.Kreturn, 0);
+        }
+
+        public ExprContext expr() {
+            return getRuleContext(ExprContext.class, 0);
         }
 
         public ExprSingleContext exprSingle() {
@@ -3389,7 +3395,7 @@ public class JsoniqParser extends Parser {
                 setState(515);
                 match(T__26);
                 setState(516);
-                expr();
+                ((TypeSwitchExprContext) _localctx).cond = expr();
                 setState(517);
                 match(T__27);
                 setState(519);
@@ -3399,7 +3405,10 @@ public class JsoniqParser extends Parser {
                     {
                         {
                             setState(518);
-                            caseClause();
+                            ((TypeSwitchExprContext) _localctx).caseClause = caseClause();
+                            ((TypeSwitchExprContext) _localctx).cses.add(
+                                ((TypeSwitchExprContext) _localctx).caseClause
+                            );
                         }
                     }
                     setState(521);
@@ -3414,14 +3423,14 @@ public class JsoniqParser extends Parser {
                 if (_la == T__30) {
                     {
                         setState(524);
-                        varRef();
+                        ((TypeSwitchExprContext) _localctx).var_ref = varRef();
                     }
                 }
 
                 setState(527);
                 match(Kreturn);
                 setState(528);
-                exprSingle();
+                ((TypeSwitchExprContext) _localctx).def = exprSingle();
             }
         } catch (RecognitionException re) {
             _localctx.exception = re;
@@ -3434,8 +3443,17 @@ public class JsoniqParser extends Parser {
     }
 
     public static class CaseClauseContext extends ParserRuleContext {
+        public VarRefContext var_ref;
+        public SequenceTypeContext sequenceType;
+        public List<SequenceTypeContext> union = new ArrayList<SequenceTypeContext>();
+        public ExprSingleContext ret;
+
         public TerminalNode Kcase() {
             return getToken(JsoniqParser.Kcase, 0);
+        }
+
+        public TerminalNode Kreturn() {
+            return getToken(JsoniqParser.Kreturn, 0);
         }
 
         public List<SequenceTypeContext> sequenceType() {
@@ -3446,20 +3464,16 @@ public class JsoniqParser extends Parser {
             return getRuleContext(SequenceTypeContext.class, i);
         }
 
-        public TerminalNode Kreturn() {
-            return getToken(JsoniqParser.Kreturn, 0);
-        }
-
         public ExprSingleContext exprSingle() {
             return getRuleContext(ExprSingleContext.class, 0);
         }
 
-        public VarRefContext varRef() {
-            return getRuleContext(VarRefContext.class, 0);
-        }
-
         public TerminalNode Kas() {
             return getToken(JsoniqParser.Kas, 0);
+        }
+
+        public VarRefContext varRef() {
+            return getRuleContext(VarRefContext.class, 0);
         }
 
         public CaseClauseContext(ParserRuleContext parent, int invokingState) {
@@ -3495,14 +3509,15 @@ public class JsoniqParser extends Parser {
                 if (_la == T__30) {
                     {
                         setState(531);
-                        varRef();
+                        ((CaseClauseContext) _localctx).var_ref = varRef();
                         setState(532);
                         match(Kas);
                     }
                 }
 
                 setState(536);
-                sequenceType();
+                ((CaseClauseContext) _localctx).sequenceType = sequenceType();
+                ((CaseClauseContext) _localctx).union.add(((CaseClauseContext) _localctx).sequenceType);
                 setState(541);
                 _errHandler.sync(this);
                 _la = _input.LA(1);
@@ -3512,7 +3527,8 @@ public class JsoniqParser extends Parser {
                             setState(537);
                             match(T__31);
                             setState(538);
-                            sequenceType();
+                            ((CaseClauseContext) _localctx).sequenceType = sequenceType();
+                            ((CaseClauseContext) _localctx).union.add(((CaseClauseContext) _localctx).sequenceType);
                         }
                     }
                     setState(543);
@@ -3522,7 +3538,7 @@ public class JsoniqParser extends Parser {
                 setState(544);
                 match(Kreturn);
                 setState(545);
-                exprSingle();
+                ((CaseClauseContext) _localctx).ret = exprSingle();
             }
         } catch (RecognitionException re) {
             _localctx.exception = re;
@@ -3915,7 +3931,7 @@ public class JsoniqParser extends Parser {
         public Token s42;
         public Token s43;
         public Token s44;
-        public Token _tset1033;
+        public Token _tset1049;
         public StringConcatExprContext stringConcatExpr;
         public List<StringConcatExprContext> rhs = new ArrayList<StringConcatExprContext>();
 
@@ -3975,7 +3991,7 @@ public class JsoniqParser extends Parser {
                 ) {
                     {
                         setState(588);
-                        ((ComparisonExprContext) _localctx)._tset1033 = _input.LT(1);
+                        ((ComparisonExprContext) _localctx)._tset1049 = _input.LT(1);
                         _la = _input.LA(1);
                         if (
                             !((((_la) & ~0x3f) == 0
@@ -3993,14 +4009,14 @@ public class JsoniqParser extends Parser {
                                         | (1L << T__42)
                                         | (1L << T__43))) != 0))
                         ) {
-                            ((ComparisonExprContext) _localctx)._tset1033 = (Token) _errHandler.recoverInline(this);
+                            ((ComparisonExprContext) _localctx)._tset1049 = (Token) _errHandler.recoverInline(this);
                         } else {
                             if (_input.LA(1) == Token.EOF)
                                 matchedEOF = true;
                             _errHandler.reportMatch(this);
                             consume();
                         }
-                        ((ComparisonExprContext) _localctx).op.add(((ComparisonExprContext) _localctx)._tset1033);
+                        ((ComparisonExprContext) _localctx).op.add(((ComparisonExprContext) _localctx)._tset1049);
                         setState(589);
                         ((ComparisonExprContext) _localctx).stringConcatExpr = stringConcatExpr();
                         ((ComparisonExprContext) _localctx).rhs.add(
@@ -4161,7 +4177,7 @@ public class JsoniqParser extends Parser {
         public Token s46;
         public List<Token> op = new ArrayList<Token>();
         public Token s47;
-        public Token _tset1142;
+        public Token _tset1158;
         public MultiplicativeExprContext multiplicativeExpr;
         public List<MultiplicativeExprContext> rhs = new ArrayList<MultiplicativeExprContext>();
 
@@ -4209,10 +4225,10 @@ public class JsoniqParser extends Parser {
                         {
                             {
                                 setState(606);
-                                ((AdditiveExprContext) _localctx)._tset1142 = _input.LT(1);
+                                ((AdditiveExprContext) _localctx)._tset1158 = _input.LT(1);
                                 _la = _input.LA(1);
                                 if (!(_la == T__45 || _la == T__46)) {
-                                    ((AdditiveExprContext) _localctx)._tset1142 = (Token) _errHandler.recoverInline(
+                                    ((AdditiveExprContext) _localctx)._tset1158 = (Token) _errHandler.recoverInline(
                                         this
                                     );
                                 } else {
@@ -4221,7 +4237,7 @@ public class JsoniqParser extends Parser {
                                     _errHandler.reportMatch(this);
                                     consume();
                                 }
-                                ((AdditiveExprContext) _localctx).op.add(((AdditiveExprContext) _localctx)._tset1142);
+                                ((AdditiveExprContext) _localctx).op.add(((AdditiveExprContext) _localctx)._tset1158);
                                 setState(607);
                                 ((AdditiveExprContext) _localctx).multiplicativeExpr = multiplicativeExpr();
                                 ((AdditiveExprContext) _localctx).rhs.add(
@@ -4252,7 +4268,7 @@ public class JsoniqParser extends Parser {
         public Token s48;
         public Token s49;
         public Token s50;
-        public Token _tset1170;
+        public Token _tset1186;
         public InstanceOfExprContext instanceOfExpr;
         public List<InstanceOfExprContext> rhs = new ArrayList<InstanceOfExprContext>();
 
@@ -4301,14 +4317,14 @@ public class JsoniqParser extends Parser {
                     {
                         {
                             setState(614);
-                            ((MultiplicativeExprContext) _localctx)._tset1170 = _input.LT(1);
+                            ((MultiplicativeExprContext) _localctx)._tset1186 = _input.LT(1);
                             _la = _input.LA(1);
                             if (
                                 !((((_la) & ~0x3f) == 0
                                     && ((1L << _la)
                                         & ((1L << T__32) | (1L << T__47) | (1L << T__48) | (1L << T__49))) != 0))
                             ) {
-                                ((MultiplicativeExprContext) _localctx)._tset1170 = (Token) _errHandler.recoverInline(
+                                ((MultiplicativeExprContext) _localctx)._tset1186 = (Token) _errHandler.recoverInline(
                                     this
                                 );
                             } else {
@@ -4318,7 +4334,7 @@ public class JsoniqParser extends Parser {
                                 consume();
                             }
                             ((MultiplicativeExprContext) _localctx).op.add(
-                                ((MultiplicativeExprContext) _localctx)._tset1170
+                                ((MultiplicativeExprContext) _localctx)._tset1186
                             );
                             setState(615);
                             ((MultiplicativeExprContext) _localctx).instanceOfExpr = instanceOfExpr();
@@ -4626,7 +4642,7 @@ public class JsoniqParser extends Parser {
         public Token s47;
         public List<Token> op = new ArrayList<Token>();
         public Token s46;
-        public Token _tset1287;
+        public Token _tset1303;
         public SimpleMapExprContext main_expr;
 
         public SimpleMapExprContext simpleMapExpr() {
@@ -4665,17 +4681,17 @@ public class JsoniqParser extends Parser {
                     {
                         {
                             setState(645);
-                            ((UnaryExprContext) _localctx)._tset1287 = _input.LT(1);
+                            ((UnaryExprContext) _localctx)._tset1303 = _input.LT(1);
                             _la = _input.LA(1);
                             if (!(_la == T__45 || _la == T__46)) {
-                                ((UnaryExprContext) _localctx)._tset1287 = (Token) _errHandler.recoverInline(this);
+                                ((UnaryExprContext) _localctx)._tset1303 = (Token) _errHandler.recoverInline(this);
                             } else {
                                 if (_input.LA(1) == Token.EOF)
                                     matchedEOF = true;
                                 _errHandler.reportMatch(this);
                                 consume();
                             }
-                            ((UnaryExprContext) _localctx).op.add(((UnaryExprContext) _localctx)._tset1287);
+                            ((UnaryExprContext) _localctx).op.add(((UnaryExprContext) _localctx)._tset1303);
                         }
                     }
                     setState(650);
