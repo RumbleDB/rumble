@@ -165,7 +165,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                     groupVariableExpression.close();
 
                     // if a new variable is declared inside the group by clause, insert value in tuple
-                    inputTuple.putValue(expression.getVariableReference().getVariableName(), newVariableResults, false);
+                    inputTuple.putValue(expression.getVariableReference().getVariableName(), newVariableResults);
                     results.addAll(newVariableResults);
 
                 } else { // if grouping on a variable reference
@@ -204,13 +204,13 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         for (String tupleVariable : oldFirstTuple.getKeys()) {
             iterator = keyTuplePairs.iterator();
             if (_expressions.stream().anyMatch(v -> v.getVariableReference().getVariableName().equals(tupleVariable))) {
-                newTuple.putValue(tupleVariable, oldFirstTuple.getValue(tupleVariable), false);
+                newTuple.putValue(tupleVariable, oldFirstTuple.getValue(tupleVariable));
             } else {
                 List<Item> allValues = new ArrayList<>();
                 while (iterator.hasNext()) {
                     allValues.addAll(iterator.next().getValue(tupleVariable));
                 }
-                newTuple.putValue(tupleVariable, allValues, false);
+                newTuple.putValue(tupleVariable, allValues);
             }
         }
         _localTupleResults.add(newTuple);
