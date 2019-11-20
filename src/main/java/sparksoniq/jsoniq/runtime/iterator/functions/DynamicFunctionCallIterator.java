@@ -46,7 +46,6 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
     private List<RuntimeIterator> _functionArguments;
 
     // calculated fields
-    private boolean _isPartialApplication;
     private FunctionItem _functionItem;
     private RuntimeIterator _functionCallIterator;
     private Item _nextResult;
@@ -58,9 +57,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
     ) {
         super(null, iteratorMetadata);
         for (RuntimeIterator arg : functionArguments) {
-            if (arg == null) {
-                _isPartialApplication = true;
-            } else {
+            if (arg != null) {
                 _children.add(arg);
             }
         }
@@ -73,7 +70,6 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
 
     @Override
     public void openLocal() {
-        setFunctionItemAndIteratorWithCurrentContext();
         _functionCallIterator.open(_currentDynamicContext);
         setNextResult();
     }
@@ -135,10 +131,6 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
 
     @Override
     public boolean initIsRDD() {
-        if (_isPartialApplication) {
-            return false;
-        }
-
         setFunctionItemAndIteratorWithCurrentContext();
         return _functionCallIterator.isRDD();
     }
