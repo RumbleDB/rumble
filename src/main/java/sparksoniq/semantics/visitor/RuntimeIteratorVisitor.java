@@ -90,6 +90,7 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.control.IfRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.control.SwitchRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.DynamicFunctionCallIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.DynamicallyResolvedFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.FunctionRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.UserDefinedFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
@@ -438,7 +439,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
             }
             return Functions.getBuiltInFunctionIterator(identifier, iteratorMetadata, arguments);
         }
-        return new UserDefinedFunctionCallIterator(
+        return new DynamicallyResolvedFunctionCallIterator(
                 identifier,
                 arguments,
                 iteratorMetadata
