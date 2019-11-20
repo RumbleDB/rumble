@@ -61,7 +61,11 @@ public class DynamicallyResolvedFunctionCallIterator extends HybridRuntimeIterat
 
     @Override
     public void openLocal() {
-        _functionCallIterator = Functions.getUserDefinedFunctionIterator(_functionIdentifier, getMetadata(), _functionArguments);
+        _functionCallIterator = Functions.getUserDefinedFunctionIterator(
+            _functionIdentifier,
+            getMetadata(),
+            _functionArguments
+        );
         _functionCallIterator.open(_currentDynamicContext);
         setNextResult();
     }
@@ -120,7 +124,11 @@ public class DynamicallyResolvedFunctionCallIterator extends HybridRuntimeIterat
 
     @Override
     public boolean initIsRDD() {
-        _functionCallIterator = Functions.getUserDefinedFunctionIterator(_functionIdentifier, getMetadata(), _functionArguments);
+        _functionCallIterator = Functions.getUserDefinedFunctionIterator(
+            _functionIdentifier,
+            getMetadata(),
+            _functionArguments
+        );
         return _functionCallIterator.isRDD();
     }
 
@@ -129,8 +137,8 @@ public class DynamicallyResolvedFunctionCallIterator extends HybridRuntimeIterat
             new TreeMap<String, DynamicContext.VariableDependency>();
         result.putAll(super.getVariableDependencies());
         for (RuntimeIterator iterator : _functionArguments) {
-        	if(iterator == null)
-        		continue;
+            if (iterator == null)
+                continue;
             result.putAll(iterator.getVariableDependencies());
         }
         return result;

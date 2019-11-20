@@ -104,7 +104,7 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
             for (int i = 0; i < _functionArguments.size(); i++) {
                 argIterator = _functionArguments.get(i);
                 argName = _functionItem.getParameterNames().get(i);
-                
+
                 if (argIterator == null) { // == ArgumentPlaceholder
                     partialAppParamNames.add(argName);
                     partialAppSignature.add(_functionItem.getSignature().get(i));
@@ -139,7 +139,10 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
             return result;
         }
         throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in " + _functionItem.getIdentifier().getName() + "  function",
+                RuntimeIterator.FLOW_EXCEPTION_MESSAGE
+                    + " in "
+                    + _functionItem.getIdentifier().getName()
+                    + "  function",
                 getMetadata()
         );
     }
