@@ -152,19 +152,19 @@ public class DateItem extends AtomicItem {
     @Override
     public String serialize() {
         String value = this.getValue().toString();
-        String zone = this.getValue().getZone() == DateTimeZone.UTC ? "Z" :
-                this.getValue().getZone().toString().equals(DateTimeZone.getDefault().toString()) ? "" : this.getValue().getZone().toString();
+        String zone = this.getValue().getZone() == DateTimeZone.UTC ? "Z" : this.getValue().getZone().toString();
         int dateTimeSeparatorIndex = value.indexOf("T");
         return value.substring(0,  dateTimeSeparatorIndex) + (hasTimeZone ? zone : "");
     }
 
     @Override
     public void write(Kryo kryo, Output output) {
-        output.writeString(this.serialize());
+        output.writeLong(this.getDateTimeValue().getMillis(), true);
+        output.writeString(this.getDateTimeValue().getZone().getID());
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this._value = DateTimeItem.parseDateTime(input.readString(), AtomicTypes.DateItem);
+        this._value = new DateTime(input.readLong(true), DateTimeZone.forID(input.readString()));
     }
 }

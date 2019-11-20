@@ -123,7 +123,7 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, R
 
                     if (typeName.equals("bool")) {
                         _results.add(nextItem.getBooleanValue());
-                    } else if (typeName.equals("string") || typeName.equals("hexBinary") || typeName.equals("base64Binary")) {
+                    } else if (typeName.equals("string")) {
                         _results.add(nextItem.getStringValue());
                     } else if (typeName.equals("integer")) {
                         _results.add(nextItem.castToIntegerValue());

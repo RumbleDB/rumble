@@ -41,6 +41,7 @@ import sparksoniq.jsoniq.runtime.tupleiterator.SparkRuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.closures.OrderByClauseSortClosure;
 import sparksoniq.spark.closures.OrderByMapToPairClosure;
@@ -167,9 +168,17 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
                 expression.open(tupleContext);
                 while (expression.hasNext()) {
                     Item resultItem = expression.next();
-                    if (resultItem != null && !resultItem.isAtomic())
-                        throw new NonAtomicKeyException("Order by keys must be atomics",
-                                orderByExpression.getIteratorMetadata().getExpressionMetadata());
+                    if (resultItem != null) {
+                        if (!resultItem.isAtomic())
+                            throw new NonAtomicKeyException("Order by keys must be atomics",
+                                    orderByExpression.getIteratorMetadata().getExpressionMetadata());
+                        if (resultItem.isBinary()) {
+                            String itemType = ItemTypes.getItemTypeName(resultItem.getClass().getSimpleName());
+                            throw new UnexpectedTypeException("\"" + itemType
+                                    + "\": invalid type: can not compare for equality to type \""
+                                    + itemType + "\"", getMetadata());
+                        }
+                    }
                     isFieldEmpty = false;
                     results.add(resultItem);
                 }
@@ -266,10 +275,6 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
                         typesForAllColumns.put(columnIndex, "date");
                     } else if (currentColumnType.equals("time")) {
                         typesForAllColumns.put(columnIndex, "time");
-                    } else if (currentColumnType.equals("hexBinary")) {
-                        typesForAllColumns.put(columnIndex, "hexBinary");
-                    } else if (currentColumnType.equals("base64Binary")) {
-                        typesForAllColumns.put(columnIndex, "base64Binary");
                     } else if (!currentColumnType.equals(columnType)) {
                         throw new UnexpectedTypeException("Order by variable must contain values of a single type.", getMetadata());
                         // TODO-can add tests with different types
@@ -295,7 +300,7 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
             columnName = columnIndex + "-valueField";
             if (columnTypeString.equals("bool")) {
                 columnType = DataTypes.BooleanType;
-            } else if (columnTypeString.equals("string") || columnTypeString.equals("hexBinary") || columnTypeString.equals("base64Binary")) {
+            } else if (columnTypeString.equals("string")) {
                 columnType = DataTypes.StringType;
             } else if (columnTypeString.equals("integer")) {
                 columnType = DataTypes.IntegerType;

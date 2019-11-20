@@ -54,10 +54,8 @@ public class YearMonthDurationItem extends DurationItem {
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this._value = getDurationFromString(input.readString(), AtomicTypes.YearMonthDurationItem).normalizedStandard(yearMonthPeriodType);
-        isNegative = this._value.toString().contains("-");
-//        this._value = new Period(input.readLong()).normalizedStandard(yearMonthPeriodType);
-//        this.isNegative = this._value.toString().contains("-");
+        this._value = new Period(input.readLong()).normalizedStandard(yearMonthPeriodType);
+        this.isNegative = this._value.toString().contains("-");
     }
 
     @Override

@@ -160,12 +160,13 @@ public class DateTimeItem extends AtomicItem {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        output.writeString(this.serialize());
+        output.writeLong(this.getDateTimeValue().getMillis(), true);
+        output.writeString(this.getDateTimeValue().getZone().getID());
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this._value = DateTimeItem.parseDateTime(input.readString(), AtomicTypes.DateTimeItem);
+        this._value = new DateTime(input.readLong(true), DateTimeZone.forID(input.readString()));
     }
 
     private static DateTimeFormatter getDateTimeFormatter(AtomicTypes dateTimeType) {

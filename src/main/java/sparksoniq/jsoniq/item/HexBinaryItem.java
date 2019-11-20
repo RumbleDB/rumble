@@ -6,6 +6,7 @@ import com.esotericsoftware.kryo.io.Output;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang.StringUtils;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
@@ -15,6 +16,7 @@ import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
+import javax.xml.bind.DatatypeConverter;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
@@ -159,12 +161,14 @@ public class HexBinaryItem extends AtomicItem {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        output.writeString(this.serialize());
+        output.writeInt(this.getValue().length);
+        output.writeBytes(this.getValue());
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this._stringValue = input.readString();
-        this._value = parseHexBinaryString(this._stringValue);
+        int bytesLength = input.readInt();
+        this._value = input.readBytes(bytesLength);
+        this._stringValue = Hex.encodeHexString(this._value);
     }
 }
