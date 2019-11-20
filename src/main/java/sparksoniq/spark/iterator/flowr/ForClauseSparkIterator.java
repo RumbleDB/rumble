@@ -80,7 +80,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        if (this._child != null) { //if it's not a start clause
+        if (this._child != null) { // if it's not a start clause
             _child.open(_currentDynamicContext);
             _tupleContext = new DynamicContext(_currentDynamicContext); // assign current context as parent
 

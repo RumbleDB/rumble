@@ -111,8 +111,10 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext context, Map<String, DynamicContext.VariableDependency> parentProjection)
-    {
+    public Dataset<Row> getDataFrame(
+            DynamicContext context,
+            Map<String, DynamicContext.VariableDependency> parentProjection
+    ) {
         if (this._child == null) {
             throw new SparksoniqRuntimeException("Invalid count clause.");
         }
@@ -161,8 +163,7 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
         return result;
     }
 
-    public void print(StringBuffer buffer, int indent)
-    {
+    public void print(StringBuffer buffer, int indent) {
         super.print(buffer, indent);
         for (int i = 0; i < indent + 1; ++i) {
             buffer.append("  ");

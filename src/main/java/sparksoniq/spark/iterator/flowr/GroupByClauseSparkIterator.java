@@ -254,33 +254,33 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, _dependencies);
 
                 df.sparkSession()
-                        .udf()
-                        .register(
-                                "letClauseUDF",
-                                new LetClauseUDF(newVariableExpression, UDFcolumns),
-                                DataTypes.BinaryType
-                        );
+                    .udf()
+                    .register(
+                        "letClauseUDF",
+                        new LetClauseUDF(newVariableExpression, UDFcolumns),
+                        DataTypes.BinaryType
+                    );
 
                 String selectSQL = DataFrameUtils.getSQL(allColumns, true);
                 String udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
 
                 df.createOrReplaceTempView("input");
                 df = df.sparkSession()
-                        .sql(
-                                String.format(
-                                        "select %s letClauseUDF(array(%s)) as `%s` from input",
-                                        selectSQL,
-                                        udfSQL,
-                                        newVariableName
-                                )
-                        );
+                    .sql(
+                        String.format(
+                            "select %s letClauseUDF(array(%s)) as `%s` from input",
+                            selectSQL,
+                            udfSQL,
+                            newVariableName
+                        )
+                    );
 
             } else {
                 if (!columnNames.contains(expression.getVariableReference().getVariableName())) {
                     throw new InvalidGroupVariableException(
                             "Variable "
-                                    + expression.getVariableReference().getVariableName()
-                                    + " cannot be used in group clause",
+                                + expression.getVariableReference().getVariableName()
+                                + " cannot be used in group clause",
                             expression.getIteratorMetadata()
                     );
                 }

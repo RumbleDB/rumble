@@ -114,7 +114,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        if (this._child != null) { //if it's not a start clause
+        if (this._child != null) { // if it's not a start clause
             _child.open(_currentDynamicContext);
             _tupleContext = new DynamicContext(_currentDynamicContext); // assign current context as parent
 
@@ -140,9 +140,11 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext context, Map<String, DynamicContext.VariableDependency> parentProjection)
-    {
-        //if it's not a start clause
+    public Dataset<Row> getDataFrame(
+            DynamicContext context,
+            Map<String, DynamicContext.VariableDependency> parentProjection
+    ) {
+        // if it's not a start clause
         if (this._child != null) {
             Dataset<Row> df = _child.getDataFrame(context, getProjection(parentProjection));
 
