@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -53,7 +53,8 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
     public DynamicFunctionCallIterator(
             RuntimeIterator functionItemIterator,
             List<RuntimeIterator> functionArguments,
-            IteratorMetadata iteratorMetadata) {
+            IteratorMetadata iteratorMetadata
+    ) {
         super(null, iteratorMetadata);
         for (RuntimeIterator arg : functionArguments) {
             if (arg == null) {
@@ -80,13 +81,16 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
     private void processArguments() {
         if (_functionItem.getParameterNames().size() != _functionArguments.size()) {
             String formattedName = (!_functionItem.getIdentifier().getName().equals(""))
-                    ? _functionItem.getIdentifier().getName() + " "
-                    : "";
+                ? _functionItem.getIdentifier().getName() + " "
+                : "";
             throw new UnexpectedTypeException(
-                    "Dynamic function " + formattedName
-                            + "invoked with incorrect number of arguments. Expected: " + _functionItem.getParameterNames().size()
-                            + ", Found: " + _functionArguments.size()
-                    , getMetadata()
+                    "Dynamic function "
+                        + formattedName
+                        + "invoked with incorrect number of arguments. Expected: "
+                        + _functionItem.getParameterNames().size()
+                        + ", Found: "
+                        + _functionArguments.size(),
+                    getMetadata()
             );
         }
 
@@ -107,8 +111,8 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
             _currentDynamicContext = new DynamicContext(_currentDynamicContext);
             for (Map.Entry<String, List<Item>> argumentEntry : argumentValues.entrySet()) {
                 _currentDynamicContext.addVariableValue(
-                        "$" + argumentEntry.getKey(),
-                        argumentEntry.getValue()
+                    "$" + argumentEntry.getKey(),
+                    argumentEntry.getValue()
                 );
             }
         } else {
@@ -119,7 +123,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
                 argIterator = _functionArguments.get(i);
                 argName = _functionItem.getParameterNames().get(i);
 
-                if (argIterator == null) {  // == ArgumentPlaceholder
+                if (argIterator == null) { // == ArgumentPlaceholder
                     partialAppParamNames.add(argName);
                     partialAppSignature.add(_functionItem.getSignature().get(i));
                 } else {
@@ -130,7 +134,9 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
 
             // partial application should return a new FunctionItem with given parameters set as NonLocalVariables
             // and argument placeholders as new parameters to the new FunctionItem
-            partialAppSignature.add(_functionItem.getSignature().get(_functionItem.getSignature().size() - 1));   // add return type
+            partialAppSignature.add(_functionItem.getSignature().get(_functionItem.getSignature().size() - 1)); // add
+                                                                                                                // return
+                                                                                                                // type
 
             FunctionItem partiallyAppliedFunction = new FunctionItem(
                     new FunctionIdentifier("", partialAppParamNames.size()),
@@ -150,9 +156,13 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
             setNextResult();
             return result;
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in "
-                + _functionItem.getIdentifier().getName() + "  function",
-                getMetadata());
+        throw new IteratorFlowException(
+                RuntimeIterator.FLOW_EXCEPTION_MESSAGE
+                    + " in "
+                    + _functionItem.getIdentifier().getName()
+                    + "  function",
+                getMetadata()
+        );
     }
 
     @Override
@@ -207,14 +217,18 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
 
     private void setFunctionItemAndIteratorWithCurrentContext() {
         try {
-            _functionItem = getSingleItemOfTypeFromIterator(_functionItemIterator, FunctionItem.class, new UnexpectedTypeException(
-                    "Dynamic function call can not be performed on a sequence."
-                    , getMetadata()
-            ));
+            _functionItem = getSingleItemOfTypeFromIterator(
+                _functionItemIterator,
+                FunctionItem.class,
+                new UnexpectedTypeException(
+                        "Dynamic function call can not be performed on a sequence.",
+                        getMetadata()
+                )
+            );
         } catch (UnexpectedTypeException e) {
             throw new UnexpectedTypeException(
-                    "Dynamic function call can only be performed on functions."
-                    , getMetadata()
+                    "Dynamic function call can only be performed on functions.",
+                    getMetadata()
             );
         }
         _functionCallIterator = _functionItem.getBodyIterator();

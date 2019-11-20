@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -40,8 +40,8 @@ import java.util.List;
 
 public class LetClauseMapClosure implements MapFunction<Row, Row> {
 
-	private static final long serialVersionUID = 1L;
-	private final RuntimeIterator _expression;
+    private static final long serialVersionUID = 1L;
+    private final RuntimeIterator _expression;
     StructType _inputSchema;
     private int _duplicateColumnIndex;
 
@@ -56,7 +56,8 @@ public class LetClauseMapClosure implements MapFunction<Row, Row> {
     public LetClauseMapClosure(
             RuntimeIterator expression,
             StructType oldSchema,
-            int duplicateColumnIndex) {
+            int duplicateColumnIndex
+    ) {
         this._expression = expression;
         this._inputSchema = oldSchema;
         this._duplicateColumnIndex = duplicateColumnIndex;
@@ -84,7 +85,7 @@ public class LetClauseMapClosure implements MapFunction<Row, Row> {
         List<Object> deserializedRow = DataFrameUtils.deserializeEntireRow(row, _kryo, _input);
         for (Object columnObject : deserializedRow) {
             @SuppressWarnings("unchecked")
-			List<Item> column = (List<Item>) columnObject;
+            List<Item> column = (List<Item>) columnObject;
             _rowColumns.add(column);
         }
 
@@ -103,11 +104,12 @@ public class LetClauseMapClosure implements MapFunction<Row, Row> {
 
         return DataFrameUtils.reserializeRowWithNewData(row, _newColumn, _duplicateColumnIndex, _kryo, _output);
     }
-    
+
     private void readObject(java.io.ObjectInputStream in)
-            throws IOException, ClassNotFoundException {
+            throws IOException,
+                ClassNotFoundException {
         in.defaultReadObject();
-        
+
         _kryo = new Kryo();
         _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);

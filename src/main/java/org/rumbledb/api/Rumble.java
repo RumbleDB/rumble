@@ -21,7 +21,8 @@ import sparksoniq.spark.SparkSessionManager;
  * 
  * The query must be provided as a string and a sequence of items is returned.
  * 
- * It is possible for the queries to use the text-file() and json-file() functions if Spark and either the local file system or HDFS are properly configured.
+ * It is possible for the queries to use the text-file() and json-file() functions if Spark and either the local file
+ * system or HDFS are properly configured.
  * 
  * @author Ghislain Fourny, Stefan Irimescu, Can Berker Cikis
  */
@@ -34,19 +35,18 @@ public class Rumble {
      *
      * @param conf a RumbleConf object containing the configuration.
      */
-    public Rumble(RumbleConf conf)
-    {
+    public Rumble(RumbleConf conf) {
         _conf = conf;
         SparkSessionManager.COLLECT_ITEM_LIMIT = conf.getResultsSizeCap();
     }
 
     /**
      * Runs a query and returns an iterator over the resulting sequence of Items.
+     * 
      * @param query the JSONiq query.
      * @return the resulting sequence as an ItemIterator.
      */
-    public SequenceOfItems runQuery(String query)
-    {
+    public SequenceOfItems runQuery(String query) {
         CharStream charStream = CharStreams.fromString(query);
         JsoniqLexer lexer = new JsoniqLexer(charStream);
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
@@ -58,8 +58,13 @@ public class Rumble {
             JsoniqParser.MainModuleContext main = module.main;
             visitor.visit(main);
         } catch (ParseCancellationException ex) {
-            ParsingException e = new ParsingException(lexer.getText(), new ExpressionMetadata(lexer.getLine(),
-                    lexer.getCharPositionInLine()));
+            ParsingException e = new ParsingException(
+                    lexer.getText(),
+                    new ExpressionMetadata(
+                            lexer.getLine(),
+                            lexer.getCharPositionInLine()
+                    )
+            );
             e.initCause(ex);
             throw e;
         }

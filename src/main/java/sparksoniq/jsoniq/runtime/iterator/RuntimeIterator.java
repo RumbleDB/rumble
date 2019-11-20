@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -87,7 +87,9 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 else if (item.isDecimal())
                     result = !item.getDecimalValue().equals(BigDecimal.ZERO);
                 else {
-                    throw new SparksoniqRuntimeException("Unexpected numeric type found while calculating effective boolean value.");
+                    throw new SparksoniqRuntimeException(
+                            "Unexpected numeric type found while calculating effective boolean value."
+                    );
                 }
             } else if (item.isNull())
                 result = false;
@@ -98,15 +100,22 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
             else if (item.isArray())
                 return true;
             else {
-                throw new InvalidArgumentTypeException("Effective boolean value not defined for items of type " +
-                        ItemTypes.getItemTypeName(item.getClass().getSimpleName()), iterator.getMetadata());
+                throw new InvalidArgumentTypeException(
+                        "Effective boolean value not defined for items of type "
+                            +
+                            ItemTypes.getItemTypeName(item.getClass().getSimpleName()),
+                        iterator.getMetadata()
+                );
             }
 
             if (iterator.hasNext()) {
                 throw new InvalidArgumentTypeException(
                         "Effective boolean value not defined for sequences of more than one atomic item. "
-                                + "Sequence containing: " + item.serialize() + " must be a singleton."
-                        , iterator.getMetadata());
+                            + "Sequence containing: "
+                            + item.serialize()
+                            + " must be a singleton.",
+                        iterator.getMetadata()
+                );
             }
 
             return result;
@@ -192,13 +201,21 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     }
 
     protected <T extends Item> T getSingleItemOfTypeFromIterator(RuntimeIterator iterator, Class<T> type) {
-        return getSingleItemOfTypeFromIterator(iterator, type,
-                new SparksoniqRuntimeException("Iterator was expected to return a single item but returned a sequence",
-                        iterator.getMetadata().getExpressionMetadata()));
+        return getSingleItemOfTypeFromIterator(
+            iterator,
+            type,
+            new SparksoniqRuntimeException(
+                    "Iterator was expected to return a single item but returned a sequence",
+                    iterator.getMetadata().getExpressionMetadata()
+            )
+        );
     }
 
-    protected <T extends Item, E extends SparksoniqRuntimeException> T getSingleItemOfTypeFromIterator(RuntimeIterator iterator,
-                                                                                                       Class<T> type, E nonAtomicException) {
+    protected <T extends Item, E extends SparksoniqRuntimeException> T getSingleItemOfTypeFromIterator(
+            RuntimeIterator iterator,
+            Class<T> type,
+            E nonAtomicException
+    ) {
         iterator.open(_currentDynamicContext);
         Item result = null;
         if (iterator.hasNext()) {
@@ -214,7 +231,8 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     }
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
+        Map<String, DynamicContext.VariableDependency> result =
+            new TreeMap<String, DynamicContext.VariableDependency>();
         for (RuntimeIterator iterator : _children) {
             result.putAll(iterator.getVariableDependencies());
         }

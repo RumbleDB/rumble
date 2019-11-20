@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,15 +31,19 @@ import java.util.List;
 
 public class AdditiveExpression extends NaryExpressionBase {
 
-    public static final Operator[] operators = new Operator[]{Operator.PLUS, Operator.MINUS};
+    public static final Operator[] operators = new Operator[] { Operator.PLUS, Operator.MINUS };
 
     public AdditiveExpression(Expression _mainExpression, ExpressionMetadata metadata) {
         super(_mainExpression, metadata);
 
     }
 
-    public AdditiveExpression(Expression _mainExpression, List<Expression> rhs,
-                              List<Operator> ops, ExpressionMetadata metadata) {
+    public AdditiveExpression(
+            Expression _mainExpression,
+            List<Expression> rhs,
+            List<Operator> ops,
+            ExpressionMetadata metadata
+    ) {
         super(_mainExpression, rhs, ops, metadata);
         validateOperators(Arrays.asList(operators), ops);
     }
@@ -55,9 +59,11 @@ public class AdditiveExpression extends NaryExpressionBase {
         result += _mainExpression.serializationString(true);
         if (this.getRightExpressions() != null && this.getRightExpressions().size() > 0)
             for (Expression expr : this.getRightExpressions())
-                result += " " +
-                        getStringFromOperator(this._multipleOperators.get(this.getRightExpressions().indexOf(expr)))
-                        + " " + expr.serializationString(true);
+                result += " "
+                    +
+                    getStringFromOperator(this._multipleOperators.get(this.getRightExpressions().indexOf(expr)))
+                    + " "
+                    + expr.serializationString(true);
         result += ")";
         return result;
     }

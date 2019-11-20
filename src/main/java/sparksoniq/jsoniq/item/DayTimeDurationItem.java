@@ -57,16 +57,19 @@ public class DayTimeDurationItem extends DurationItem {
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this._value = new Period(input.readLong()).normalizedStandard(PeriodType.dayTime());
+        this._value = getDurationFromString(input.readString(), AtomicTypes.DayTimeDurationItem);
         this.isNegative = this._value.toString().contains("-");
     }
 
     @Override
     public boolean isCastableAs(AtomicTypes itemType) {
-        return itemType.equals(AtomicTypes.DayTimeDurationItem) ||
-                itemType.equals(AtomicTypes.YearMonthDurationItem) ||
-                itemType.equals(AtomicTypes.DurationItem) ||
-                itemType.equals(AtomicTypes.StringItem);
+        return itemType.equals(AtomicTypes.DayTimeDurationItem)
+            ||
+            itemType.equals(AtomicTypes.YearMonthDurationItem)
+            ||
+            itemType.equals(AtomicTypes.DurationItem)
+            ||
+            itemType.equals(AtomicTypes.StringItem);
     }
 
     @Override
@@ -89,11 +92,15 @@ public class DayTimeDurationItem extends DurationItem {
     public Item compareItem(Item other, OperationalExpressionBase.Operator operator, IteratorMetadata metadata) {
         if (other.isDuration() && !other.isDayTimeDuration() && !other.isYearMonthDuration()) {
             return other.compareItem(this, operator, metadata);
-        }
-        else if (!other.isDayTimeDuration() && !other.isNull()) {
-            throw new UnexpectedTypeException("\"" + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
-                    + "\": invalid type: can not compare for equality to type \""
-                    + ItemTypes.getItemTypeName(other.getClass().getSimpleName()) + "\"", metadata);
+        } else if (!other.isDayTimeDuration() && !other.isNull()) {
+            throw new UnexpectedTypeException(
+                    "\""
+                        + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                        + "\": invalid type: can not compare for equality to type \""
+                        + ItemTypes.getItemTypeName(other.getClass().getSimpleName())
+                        + "\"",
+                    metadata
+            );
         }
         return operator.apply(this, other);
     }
@@ -101,11 +108,14 @@ public class DayTimeDurationItem extends DurationItem {
     @Override
     public Item add(Item other) {
         if (other.isDateTime())
-            return ItemFactory.getInstance().createDateTimeItem(other.getDateTimeValue().plus(this.getValue()), other.hasTimeZone());
+            return ItemFactory.getInstance()
+                .createDateTimeItem(other.getDateTimeValue().plus(this.getValue()), other.hasTimeZone());
         if (other.isDate())
-            return ItemFactory.getInstance().createDateItem(other.getDateTimeValue().plus(this.getValue()), other.hasDateTime());
+            return ItemFactory.getInstance()
+                .createDateItem(other.getDateTimeValue().plus(this.getValue()), other.hasDateTime());
         if (other.isTime())
-            return ItemFactory.getInstance().createTimeItem(other.getDateTimeValue().plus(this.getValue()), other.hasDateTime());
+            return ItemFactory.getInstance()
+                .createTimeItem(other.getDateTimeValue().plus(this.getValue()), other.hasDateTime());
         return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue().plus(other.getDurationValue()));
     }
 
@@ -118,23 +128,33 @@ public class DayTimeDurationItem extends DurationItem {
     public Item multiply(Item other) {
         BigDecimal otherAsDecimal = other.castToDecimalValue();
         if (otherAsDecimal.stripTrailingZeros().scale() <= 0) {
-            return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue().multipliedBy(otherAsDecimal.intValue()));
+            return ItemFactory.getInstance()
+                .createDayTimeDurationItem(this.getValue().multipliedBy(otherAsDecimal.intValue()));
         }
         long durationInMillis = this.getValue().toStandardDuration().getMillis();
-        long durationResult = otherAsDecimal.multiply(BigDecimal.valueOf(durationInMillis)).setScale(16, BigDecimal.ROUND_HALF_UP).longValue();
+        long durationResult = otherAsDecimal.multiply(BigDecimal.valueOf(durationInMillis))
+            .setScale(16, BigDecimal.ROUND_HALF_UP)
+            .longValue();
         return ItemFactory.getInstance().createDayTimeDurationItem(new Period(durationResult, PeriodType.dayTime()));
     }
 
     @Override
     public Item divide(Item other) {
         if (other.isDayTimeDuration()) {
-            Instant now  = Instant.now();
-            return ItemFactory.getInstance().createDecimalItem(BigDecimal.valueOf(this.getValue().toDurationFrom(now).getMillis() /
-                            (double) other.getDurationValue().toDurationFrom(now).getMillis()));
+            Instant now = Instant.now();
+            return ItemFactory.getInstance()
+                .createDecimalItem(
+                    BigDecimal.valueOf(
+                        this.getValue().toDurationFrom(now).getMillis()
+                            /
+                            (double) other.getDurationValue().toDurationFrom(now).getMillis()
+                    )
+                );
         }
         BigDecimal otherBd = other.castToDecimalValue();
         long durationInMillis = this.getValue().toStandardDuration().getMillis();
-        long durationResult = (BigDecimal.valueOf(durationInMillis)).divide(otherBd, 16, BigDecimal.ROUND_HALF_UP).longValue();
+        long durationResult = (BigDecimal.valueOf(durationInMillis)).divide(otherBd, 16, BigDecimal.ROUND_HALF_UP)
+            .longValue();
         return ItemFactory.getInstance().createDayTimeDurationItem(new Period(durationResult, PeriodType.dayTime()));
     }
 }

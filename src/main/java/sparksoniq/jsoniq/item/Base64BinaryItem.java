@@ -32,14 +32,16 @@ public class Base64BinaryItem extends AtomicItem {
     private static final String b64finalQuad = "(" + b64 + b64 + b64 + b64char + ")";
     private static final String b64final = "(" + b64finalQuad + "|" + padded16 + "|" + padded8 + ")";
     private static final String b64quad = "(" + b64 + b64 + b64 + b64 + ")";
-    private static final String base64Binary = "((" + b64quad + ")*" + "(" + b64final +"))?";
+    private static final String base64Binary = "((" + b64quad + ")*" + "(" + b64final + "))?";
     private static final Pattern base64BinaryPattern = Pattern.compile(base64Binary);
 
     private static final long serialVersionUID = 1L;
     private byte[] _value;
     private String _stringValue;
 
-    public Base64BinaryItem() { super(); }
+    public Base64BinaryItem() {
+        super();
+    }
 
     public Base64BinaryItem(String stringValue) {
         this._stringValue = stringValue;
@@ -65,7 +67,8 @@ public class Base64BinaryItem extends AtomicItem {
     }
 
     static byte[] parseBase64BinaryString(String base64BinaryString) throws IllegalArgumentException {
-        if (base64BinaryString == null || !checkInvalidBase64BinaryFormat(base64BinaryString)) throw new IllegalArgumentException();
+        if (base64BinaryString == null || !checkInvalidBase64BinaryFormat(base64BinaryString))
+            throw new IllegalArgumentException();
         return DatatypeConverter.parseBase64Binary(base64BinaryString);
     }
 
@@ -86,9 +89,11 @@ public class Base64BinaryItem extends AtomicItem {
 
     @Override
     public boolean isCastableAs(AtomicTypes itemType) {
-        return itemType.equals(AtomicTypes.Base64BinaryItem) ||
-                itemType.equals(AtomicTypes.HexBinaryItem) ||
-                itemType.equals(AtomicTypes.StringItem);
+        return itemType.equals(AtomicTypes.Base64BinaryItem)
+            ||
+            itemType.equals(AtomicTypes.HexBinaryItem)
+            ||
+            itemType.equals(AtomicTypes.StringItem);
     }
 
     @Override
@@ -119,22 +124,34 @@ public class Base64BinaryItem extends AtomicItem {
 
     @Override
     public int compareTo(Item other) {
-        if (other.isNull()) return 1;
+        if (other.isNull())
+            return 1;
         if (other.isBase64Binary()) {
             return this.serializeValue().compareTo(Arrays.toString(other.getBinaryValue()));
         }
-        throw new IteratorFlowException("Cannot compare item of type " + ItemTypes.getItemTypeName(this.getClass().getSimpleName()) +
-                " with item of type " + ItemTypes.getItemTypeName(other.getClass().getSimpleName()));
+        throw new IteratorFlowException(
+                "Cannot compare item of type "
+                    + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                    +
+                    " with item of type "
+                    + ItemTypes.getItemTypeName(other.getClass().getSimpleName())
+        );
     }
 
     @Override
     public Item compareItem(Item other, OperationalExpressionBase.Operator operator, IteratorMetadata metadata) {
         if (!other.isBase64Binary() && !other.isNull()) {
-            throw new UnexpectedTypeException("\"" + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
-                    + "\": invalid type: can not compare for equality to type \""
-                    + ItemTypes.getItemTypeName(other.getClass().getSimpleName()) + "\"", metadata);
+            throw new UnexpectedTypeException(
+                    "\""
+                        + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                        + "\": invalid type: can not compare for equality to type \""
+                        + ItemTypes.getItemTypeName(other.getClass().getSimpleName())
+                        + "\"",
+                    metadata
+            );
         }
-        if (other.isNull()) return operator.apply(this, other);
+        if (other.isNull())
+            return operator.apply(this, other);
         switch (operator) {
             case VC_EQ:
             case GC_EQ:
@@ -142,9 +159,14 @@ public class Base64BinaryItem extends AtomicItem {
             case GC_NE:
                 return operator.apply(this, other);
         }
-        throw new UnexpectedTypeException("\"" + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
-                + "\": invalid type: can not compare for equality to type \""
-                + ItemTypes.getItemTypeName(other.getClass().getSimpleName()) + "\"", metadata);
+        throw new UnexpectedTypeException(
+                "\""
+                    + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                    + "\": invalid type: can not compare for equality to type \""
+                    + ItemTypes.getItemTypeName(other.getClass().getSimpleName())
+                    + "\"",
+                metadata
+        );
     }
 
     @Override

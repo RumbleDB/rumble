@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -40,27 +40,28 @@ import java.util.List;
 
 public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, Row> {
 
-	private static final long serialVersionUID = 1L;
-	private List<VariableReferenceIterator> _expressions;
+    private static final long serialVersionUID = 1L;
+    private List<VariableReferenceIterator> _expressions;
     private List<String> _inputColumnNames;
 
     private List<List<Item>> _deserializedParams;
     private DynamicContext _context;
     private List<Object> _results;
-    
+
     private transient Kryo _kryo;
     private transient Input _input;
 
     public GroupClauseCreateColumnsUDF(
             List<VariableReferenceIterator> expressions,
-            List<String> inputColumnNames) {
+            List<String> inputColumnNames
+    ) {
         _expressions = expressions;
         _inputColumnNames = inputColumnNames;
 
         _deserializedParams = new ArrayList<>();
         _context = new DynamicContext();
         _results = new ArrayList<>();
-        
+
         _kryo = new Kryo();
         _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
@@ -74,9 +75,7 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, R
 
         DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
 
-        for (int expressionIndex = 0; expressionIndex < _expressions.size(); expressionIndex++) {
-            VariableReferenceIterator expression = _expressions.get(expressionIndex);
-
+        for (VariableReferenceIterator expression : _expressions) {
             // nulls, true, false and empty sequences have special grouping captured in the first grouping column.
             // The second column is used for strings, with a special value in the first column.
             // The third column is used for numbers (as a double), with a special value in the first column.
@@ -87,6 +86,7 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, R
             int stringGroupIndex = 5;
             int doubleGroupIndex = 5;
             int durationGroupIndex = 5;
+            int dateTimeGroupIndex = 5;
 
             // prepare dynamic context
             _context.removeAllVariables();
@@ -105,13 +105,12 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, R
                     _results.add(null);
                     _results.add(null);
                     _results.add(null);
-                } else if (nextItem.isBoolean() ){
-                    if(nextItem.getBooleanValue())
-                    {
+                } else if (nextItem.isBoolean()) {
+                    if (nextItem.getBooleanValue()) {
                         _results.add(booleanTrueGroupIndex);
                     } else {
                         _results.add(booleanFalseGroupIndex);
-                    }                        
+                    }
                     _results.add(null);
                     _results.add(null);
                     _results.add(null);
@@ -123,17 +122,17 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, R
                 } else if (nextItem.isInteger()) {
                     _results.add(doubleGroupIndex);
                     _results.add(null);
-                    _results.add(new Double(nextItem.getIntegerValue()));
+                    _results.add(nextItem.castToDoubleValue());
                     _results.add(null);
                 } else if (nextItem.isDecimal()) {
                     _results.add(doubleGroupIndex);
                     _results.add(null);
-                    _results.add(new Double(nextItem.getDecimalValue().doubleValue()));
+                    _results.add(nextItem.castToDoubleValue());
                     _results.add(null);
                 } else if (nextItem.isDouble()) {
                     _results.add(doubleGroupIndex);
                     _results.add(null);
-                    _results.add(nextItem.castToDoubleValue());
+                    _results.add(nextItem.getDoubleValue());
                     _results.add(null);
                 } else if (nextItem.isDuration()) {
                     _results.add(durationGroupIndex);
@@ -141,16 +140,22 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, R
                     _results.add(null);
                     _results.add(nextItem.getDurationValue().toDurationFrom(Instant.now()).getMillis());
                 } else if (nextItem.hasDateTime()) {
-                    _results.add(durationGroupIndex);
+                    _results.add(dateTimeGroupIndex);
                     _results.add(null);
                     _results.add(null);
                     _results.add(nextItem.getDateTimeValue().getMillis());
                 } else {
-                    throw new UnexpectedTypeException("Group by variable can not contain arrays or objects.", expression.getMetadata());
+                    throw new UnexpectedTypeException(
+                            "Group by variable can not contain arrays or objects.",
+                            expression.getMetadata()
+                    );
                 }
             }
             if (expression.hasNext()) {
-                throw new UnexpectedTypeException("Can not group on variables with sequences of multiple items.", expression.getMetadata());
+                throw new UnexpectedTypeException(
+                        "Can not group on variables with sequences of multiple items.",
+                        expression.getMetadata()
+                );
             }
             if (isEmptySequence) {
                 _results.add(emptySequenceGroupIndex);
@@ -163,10 +168,12 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, R
         }
         return RowFactory.create(_results.toArray());
     }
-    
-    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
+
+    private void readObject(java.io.ObjectInputStream in)
+            throws IOException,
+                ClassNotFoundException {
         in.defaultReadObject();
-        
+
         _kryo = new Kryo();
         _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);

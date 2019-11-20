@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,6 +25,8 @@ import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.expr.control.IfExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.control.SwitchCaseExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.control.SwitchExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.control.TypeSwitchCaseExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.control.TypeSwitchExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.CountClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.ForClause;
@@ -158,7 +160,7 @@ public abstract class AbstractExpressionOrClauseVisitor<T> {
     }
     // endregion
 
-    //region primary
+    // region primary
     public T visitPostfixExpression(PostFixExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
@@ -192,9 +194,9 @@ public abstract class AbstractExpressionOrClauseVisitor<T> {
     public T visitArgumentPlaceholder(ArgumentPlaceholder expression, T argument) {
         return defaultAction(expression, argument);
     }
-    //endregion
+    // endregion
 
-    //region literal
+    // region literal
     public T visitInteger(IntegerLiteral expression, T argument) {
         return defaultAction(expression, argument);
     }
@@ -218,9 +220,9 @@ public abstract class AbstractExpressionOrClauseVisitor<T> {
     public T visitBoolean(BooleanLiteral expression, T argument) {
         return defaultAction(expression, argument);
     }
-    //endregion
+    // endregion
 
-    //region operational
+    // region operational
     public T visitAdditiveExpr(AdditiveExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
@@ -272,7 +274,7 @@ public abstract class AbstractExpressionOrClauseVisitor<T> {
     public T visitCastExpression(CastExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
-    //endregion
+    // endregion
 
     // region quantifiers
     public T visitQuantifiedExpression(QuantifiedExpression expression, T argument) {
@@ -297,4 +299,12 @@ public abstract class AbstractExpressionOrClauseVisitor<T> {
         return defaultAction(expression, argument);
     }
     // endregion
+
+    public T visitTypeSwitchExpression(TypeSwitchExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitTypeSwitchCaseExpression(TypeSwitchCaseExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 }

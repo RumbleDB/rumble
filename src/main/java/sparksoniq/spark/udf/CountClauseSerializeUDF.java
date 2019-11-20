@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -36,16 +36,16 @@ import java.util.List;
 public class CountClauseSerializeUDF implements UDF1<Long, byte[]> {
 
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	private List<Item> _nextResult;
-    
+    private List<Item> _nextResult;
+
     private transient Kryo _kryo;
     private transient Output _output;
 
     public CountClauseSerializeUDF() {
         _nextResult = new ArrayList<>();
-        
+
         _kryo = new Kryo();
         _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
@@ -59,11 +59,12 @@ public class CountClauseSerializeUDF implements UDF1<Long, byte[]> {
 
         return DataFrameUtils.serializeItemList(_nextResult, _kryo, _output);
     }
-    
+
     private void readObject(java.io.ObjectInputStream in)
-            throws IOException, ClassNotFoundException {
+            throws IOException,
+                ClassNotFoundException {
         in.defaultReadObject();
-        
+
         _kryo = new Kryo();
         _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);

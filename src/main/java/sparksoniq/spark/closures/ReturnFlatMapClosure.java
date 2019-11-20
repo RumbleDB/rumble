@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -41,10 +41,10 @@ import java.util.Map;
 
 public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
 
-	private static final long serialVersionUID = 1L;
-	RuntimeIterator _expression;
+    private static final long serialVersionUID = 1L;
+    RuntimeIterator _expression;
     StructType _oldSchema;
-    
+
     private transient Kryo _kryo;
     private transient Input _input;
 
@@ -67,14 +67,12 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
         DynamicContext context = new DynamicContext();
         for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
             String field = columnNames[columnIndex];
-            if(dependencies.containsKey(field))
-            {
-                List<Item> i = DataFrameUtils.deserializeRowField(row, columnIndex, _kryo, _input); //rowColumns.get(columnIndex);
-                if(dependencies.get(field).equals(DynamicContext.VariableDependency.COUNT))
-                {
-                	context.addVariableCount(field, i.get(0));
+            if (dependencies.containsKey(field)) {
+                List<Item> i = DataFrameUtils.deserializeRowField(row, columnIndex, _kryo, _input); // rowColumns.get(columnIndex);
+                if (dependencies.get(field).equals(DynamicContext.VariableDependency.COUNT)) {
+                    context.addVariableCount(field, i.get(0));
                 } else {
-                	context.addVariableValue(field, i);
+                    context.addVariableValue(field, i);
                 }
             }
         }
@@ -89,11 +87,12 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
 
         return results.iterator();
     }
-    
+
     private void readObject(java.io.ObjectInputStream in)
-            throws IOException, ClassNotFoundException {
+            throws IOException,
+                ClassNotFoundException {
         in.defaultReadObject();
-        
+
         _kryo = new Kryo();
         _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);

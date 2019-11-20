@@ -23,11 +23,13 @@ public class SubstringAfterFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             this._hasNext = false;
             StringItem stringItem = this.getSingleItemOfTypeFromIterator(
-                    this._children.get(0),
-                    StringItem.class);
+                this._children.get(0),
+                StringItem.class
+            );
             StringItem substringItem = this.getSingleItemOfTypeFromIterator(
-                    this._children.get(1),
-                    StringItem.class);
+                this._children.get(1),
+                StringItem.class
+            );
 
             if (stringItem == null || stringItem.getStringValue().isEmpty())
                 return ItemFactory.getInstance().createStringItem("");
@@ -35,13 +37,20 @@ public class SubstringAfterFunctionIterator extends LocalFunctionCallIterator {
                 return ItemFactory.getInstance().createStringItem(stringItem.getStringValue());
 
             int indexOfOccurrence = stringItem.getStringValue().indexOf(substringItem.getStringValue());
-            return indexOfOccurrence == -1 ? ItemFactory.getInstance().createStringItem("") :
-                    ItemFactory.getInstance().createStringItem(stringItem.getStringValue().substring(
-                            indexOfOccurrence + substringItem.getStringValue().length()));
+            return indexOfOccurrence == -1
+                ? ItemFactory.getInstance().createStringItem("")
+                : ItemFactory.getInstance()
+                    .createStringItem(
+                        stringItem.getStringValue()
+                            .substring(
+                                indexOfOccurrence + substringItem.getStringValue().length()
+                            )
+                    );
         } else
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " substring-after function",
-                    getMetadata());
+                    getMetadata()
+            );
 
     }
 }

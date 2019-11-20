@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -230,7 +230,10 @@ public class Functions {
         builtInFunctions.put(new FunctionIdentifier(HOURSFROMDATETIME, 1), HoursFromDateTimeFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(MINUTESFROMDATETIME, 1), MinutesFromDateTimeFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(SECONDSFROMDATETIME, 1), SecondsFromDateTimeFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(TIMEZONEFROMDATETIME, 1), TimezoneFromDateTimeFunctionIterator.class);
+        builtInFunctions.put(
+            new FunctionIdentifier(TIMEZONEFROMDATETIME, 1),
+            TimezoneFromDateTimeFunctionIterator.class
+        );
         builtInFunctions.put(new FunctionIdentifier(ADJUSTDATETIMETOTIMEZONE, 1), AdjustDateTimeToTimezone.class);
         builtInFunctions.put(new FunctionIdentifier(ADJUSTDATETIMETOTIMEZONE, 2), AdjustDateTimeToTimezone.class);
 
@@ -272,10 +275,17 @@ public class Functions {
         return builtInFunctions.containsKey(identifier);
     }
 
-    public static RuntimeIterator getBuiltInFunctionIterator(FunctionIdentifier identifier, IteratorMetadata metadata, List<RuntimeIterator> arguments) {
+    public static RuntimeIterator getBuiltInFunctionIterator(
+            FunctionIdentifier identifier,
+            IteratorMetadata metadata,
+            List<RuntimeIterator> arguments
+    ) {
         Class<? extends RuntimeIterator> functionClass = builtInFunctions.get(identifier);
         try {
-            Constructor<? extends RuntimeIterator> ctor = functionClass.getConstructor(List.class, IteratorMetadata.class);
+            Constructor<? extends RuntimeIterator> ctor = functionClass.getConstructor(
+                List.class,
+                IteratorMetadata.class
+            );
             return ctor.newInstance(arguments, metadata);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
@@ -287,8 +297,10 @@ public class Functions {
     }
 
     public static void addUserDefinedFunction(FunctionItem function, ExpressionMetadata meta) {
-        if (builtInFunctions.containsKey(function.getIdentifier())
-                || userDefinedFunctions.containsKey(function.getIdentifier())) {
+        if (
+            builtInFunctions.containsKey(function.getIdentifier())
+                || userDefinedFunctions.containsKey(function.getIdentifier())
+        ) {
             throw new DuplicateFunctionIdentifierException(function.getIdentifier(), meta);
         }
         userDefinedFunctions.put(function.getIdentifier(), function);
@@ -322,7 +334,7 @@ public class Functions {
         /**
          * function that returns the context size
          */
-        public static final String LAST  = "last";
+        public static final String LAST = "last";
 
         /**
          * function that parses a JSON lines file
@@ -391,11 +403,13 @@ public class Functions {
          */
         public static final String TAIL = "tail";
         /**
-         * function that returns a sequence constructed by inserting an item or a sequence of items at a given position within an existing sequence
+         * function that returns a sequence constructed by inserting an item or a sequence of items at a given position
+         * within an existing sequence
          */
         public static final String INSERTBEFORE = "insert-before";
         /**
-         * function that returns a new sequence containing all the items of $target except the item at position $position.
+         * function that returns a new sequence containing all the items of $target except the item at position
+         * $position.
          */
         public static final String REMOVE = "remove";
         /**
@@ -403,7 +417,8 @@ public class Functions {
          */
         public static final String REVERSE = "reverse";
         /**
-         * function that applies a subsequence operation to the given sequence with the given start index and length parameters
+         * function that applies a subsequence operation to the given sequence with the given start index and length
+         * parameters
          */
         public static final String SUBSEQUENCE = "subsequence";
 
@@ -448,11 +463,13 @@ public class Functions {
          */
         public static final String FLOOR = "floor";
         /**
-         * function that rounds a value to a specified number of decimal places, rounding upwards if two such values are equally near
+         * function that rounds a value to a specified number of decimal places, rounding upwards if two such values are
+         * equally near
          */
         public static final String ROUND = "round";
         /**
-         * function that rounds a value to a specified number of decimal places, rounding to make the last digit even if two such values are equally near
+         * function that rounds a value to a specified number of decimal places, rounding to make the last digit even if
+         * two such values are equally near
          */
         public static final String ROUNDHALFTOEVEN = "round-half-to-even";
 
@@ -474,7 +491,7 @@ public class Functions {
          */
         public static final String LOG = "log";
         /**
-         * function that returns the  base-ten logarithm of the argument
+         * function that returns the base-ten logarithm of the argument
          */
         public static final String LOG10 = "log10";
         /**
@@ -510,7 +527,8 @@ public class Functions {
          */
         public static final String ATAN = "atan";
         /**
-         * function that returns the the angle in radians subtended at the origin by the point on a plane with coordinates (x, y) and the positive x-axis.
+         * function that returns the the angle in radians subtended at the origin by the point on a plane with
+         * coordinates (x, y) and the positive x-axis.
          */
         public static final String ATAN2 = "atan2";
 
@@ -520,11 +538,13 @@ public class Functions {
          */
         public static final String SUBSTRING = "substring";
         /**
-         * function that returns the part of the first variable that precedes the first occurrence of the second vairable.
+         * function that returns the part of the first variable that precedes the first occurrence of the second
+         * vairable.
          */
         public static final String SUBSTRING_BEFORE = "substring-before";
         /**
-         * function that returns the part of the first variable that follows the first occurrence of the second vairable.
+         * function that returns the part of the first variable that follows the first occurrence of the second
+         * vairable.
          */
         public static final String SUBSTRING_AFTER = "substring-after";
         /**
@@ -746,7 +766,8 @@ public class Functions {
          */
         public static final String FLATTEN = "flatten";
         /**
-         * function that returns the intersection of the supplied objects, and aggregates values corresponding to the same name into an array
+         * function that returns the intersection of the supplied objects, and aggregates values corresponding to the
+         * same name into an array
          */
         public static final String INTERSECT = "intersect";
         /**

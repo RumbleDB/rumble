@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
  * Author: Stefan Irimescu
  *
  */
- package sparksoniq.spark.closures;
+package sparksoniq.spark.closures;
 
 import org.apache.spark.api.java.function.FilterFunction;
 import org.apache.spark.sql.Row;
@@ -37,13 +37,13 @@ import java.util.List;
 
 public class WhereClauseMapClosure implements FilterFunction<Row> {
 
-	private static final long serialVersionUID = 1L;
-	private final RuntimeIterator _expression;
+    private static final long serialVersionUID = 1L;
+    private final RuntimeIterator _expression;
     StructType _inputSchema;
 
     private List<List<Item>> _rowColumns;
     private DynamicContext _context;
-    
+
     private transient Kryo _kryo;
     private transient Input _input;
 
@@ -53,7 +53,7 @@ public class WhereClauseMapClosure implements FilterFunction<Row> {
 
         _rowColumns = new ArrayList<>();
         _context = new DynamicContext();
-        
+
         _kryo = new Kryo();
         _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
@@ -71,7 +71,7 @@ public class WhereClauseMapClosure implements FilterFunction<Row> {
         List<Object> deserializedRow = DataFrameUtils.deserializeEntireRow(row, _kryo, _input);
         for (Object columnObject : deserializedRow) {
             @SuppressWarnings("unchecked")
-			List<Item> column = (List<Item>) columnObject;
+            List<Item> column = (List<Item>) columnObject;
             _rowColumns.add(column);
         }
 
@@ -85,11 +85,12 @@ public class WhereClauseMapClosure implements FilterFunction<Row> {
         _expression.close();
         return result.getBooleanValue();
     }
-    
+
     private void readObject(java.io.ObjectInputStream in)
-            throws IOException, ClassNotFoundException {
+            throws IOException,
+                ClassNotFoundException {
         in.defaultReadObject();
-        
+
         _kryo = new Kryo();
         _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);

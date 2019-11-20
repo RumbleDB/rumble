@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,6 +29,8 @@ import org.rumbledb.api.Item;
 
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
+import sparksoniq.exceptions.TreatException;
+import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -51,14 +53,19 @@ import java.util.TreeMap;
 public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
 
 
-	private static final long serialVersionUID = 1L;
-	private String _variableName;           // for efficient use in local iteration
+    private static final long serialVersionUID = 1L;
+    private String _variableName; // for efficient use in local iteration
     private RuntimeIterator _expression;
-    private DynamicContext _tupleContext;   // re-use same DynamicContext object for efficiency
+    private DynamicContext _tupleContext; // re-use same DynamicContext object for efficiency
     private FlworTuple _nextLocalTupleResult;
-    Map<String, DynamicContext.VariableDependency> _dependencies;
+    private Map<String, DynamicContext.VariableDependency> _dependencies;
 
-    public LetClauseSparkIterator(RuntimeTupleIterator child, VariableReferenceIterator variableReference, RuntimeIterator expression, IteratorMetadata iteratorMetadata) {
+    public LetClauseSparkIterator(
+            RuntimeTupleIterator child,
+            VariableReferenceIterator variableReference,
+            RuntimeIterator expression,
+            IteratorMetadata iteratorMetadata
+    ) {
         super(child, iteratorMetadata);
         _variableName = variableReference.getVariableName();
         _expression = expression;
@@ -85,9 +92,9 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
 
     @Override
     public FlworTuple next() {
-        if (_hasNext == true) {
-            FlworTuple result = _nextLocalTupleResult;      // save the result to be returned
-            setNextLocalTupleResult();              // calculate and store the next result
+        if (_hasNext) {
+            FlworTuple result = _nextLocalTupleResult; // save the result to be returned
+            setNextLocalTupleResult(); // calculate and store the next result
             return result;
         }
         throw new IteratorFlowException("Invalid next() call in let flwor clause", getMetadata());
@@ -102,8 +109,8 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
 
         if (_child.hasNext()) {
             FlworTuple inputTuple = _child.next();
-            _tupleContext.removeAllVariables();             // clear the previous variables
-            _tupleContext.setBindingsFromTuple(inputTuple);      // assign new variables from new tuple
+            _tupleContext.removeAllVariables(); // clear the previous variables
+            _tupleContext.setBindingsFromTuple(inputTuple); // assign new variables from new tuple
 
             List<Item> results = new ArrayList<>();
             _expression.open(_tupleContext);
@@ -111,8 +118,7 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
                 results.add(_expression.next());
             _expression.close();
 
-            FlworTuple newTuple = new FlworTuple(inputTuple, _variableName, results);
-            _nextLocalTupleResult = newTuple;
+            _nextLocalTupleResult = new FlworTuple(inputTuple, _variableName, results);
             this._hasNext = true;
         } else {
             _child.close();
@@ -131,7 +137,7 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
             _tupleContext = new DynamicContext(_currentDynamicContext);     // assign current context as parent
 
             setNextLocalTupleResult();
-        } else {    //if it's a start clause, it returns only one tuple
+        } else { // if it's a start clause, it returns only one tuple
             // expression is materialized
             List<Item> results = new ArrayList<>();
             _expression.open(this._currentDynamicContext);
@@ -139,8 +145,7 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
                 results.add(_expression.next());
             _expression.close();
 
-            FlworTuple newTuple = new FlworTuple(_variableName, results);
-            _nextLocalTupleResult = newTuple;
+            _nextLocalTupleResult = new FlworTuple(_variableName, results);
         }
     }
 
@@ -164,43 +169,52 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext context, Map<String, DynamicContext.VariableDependency> parentProjection)
-    {
-        //if it's not a start clause
+    public Dataset<Row> getDataFrame(
+            DynamicContext context,
+            Map<String, DynamicContext.VariableDependency> parentProjection
+    ) {
+        // if it's not a start clause
         if (this._child != null) {
             Dataset<Row> df = _child.getDataFrame(context, getProjection(parentProjection));
 
             StructType inputSchema = df.schema();
-            
+
             int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(_variableName);
 
             List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
             List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, _dependencies);
 
-            df.sparkSession().udf().register("letClauseUDF",
-                    new LetClauseUDF(_expression, UDFcolumns), DataTypes.BinaryType);
+            df.sparkSession()
+                .udf()
+                .register(
+                    "letClauseUDF",
+                    new LetClauseUDF(_expression, UDFcolumns),
+                    DataTypes.BinaryType
+                );
 
             String selectSQL = DataFrameUtils.getSQL(allColumns, true);
             String udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
 
             df.createOrReplaceTempView("input");
-            df = df.sparkSession().sql(
-                    String.format("select %s letClauseUDF(array(%s)) as `%s` from input",
-                            selectSQL, udfSQL, _variableName)
-            );
+            df = df.sparkSession()
+                .sql(
+                    String.format(
+                        "select %s letClauseUDF(array(%s)) as `%s` from input",
+                        selectSQL,
+                        udfSQL,
+                        _variableName
+                    )
+                );
             return df;
         }
         throw new SparksoniqRuntimeException("Initial letClauses don't support DataFrames");
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies()
-    {
-        Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
-        result.putAll(_expression.getVariableDependencies());
-        if(_child != null)
-        {
-            for (String var : _child.getVariablesBoundInCurrentFLWORExpression())
-            {
+    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
+        Map<String, DynamicContext.VariableDependency> result =
+            new TreeMap<>(_expression.getVariableDependencies());
+        if (_child != null) {
+            for (String var : _child.getVariablesBoundInCurrentFLWORExpression()) {
                 result.remove(var);
             }
             result.putAll(_child.getVariableDependencies());
@@ -208,58 +222,51 @@ public class LetClauseSparkIterator extends SparkRuntimeTupleIterator {
         return result;
     }
 
-    public Set<String> getVariablesBoundInCurrentFLWORExpression()
-    {
-        Set<String> result = new HashSet<String>();
-        if(_child != null)
-        {
+    public Set<String> getVariablesBoundInCurrentFLWORExpression() {
+        Set<String> result = new HashSet<>();
+        if (_child != null) {
             result.addAll(_child.getVariablesBoundInCurrentFLWORExpression());
         }
         result.add(_variableName);
         return result;
     }
-    
-    public void print(StringBuffer buffer, int indent)
-    {
+
+    public void print(StringBuffer buffer, int indent) {
         super.print(buffer, indent);
-        for (int i = 0; i < indent + 1; ++i)
-        {
+        for (int i = 0; i < indent + 1; ++i) {
             buffer.append("  ");
         }
-        buffer.append("Variable " + _variableName);
-        buffer.append("\n");
-        _expression.print(buffer, indent+1);
+        buffer.append("Variable ").append(_variableName).append("\n");
+        _expression.print(buffer, indent + 1);
     }
-    
-    public Map<String, DynamicContext.VariableDependency> getProjection(Map<String, DynamicContext.VariableDependency> parentProjection)
-    {
-        if(_child == null)
-        {
+
+    public Map<String, DynamicContext.VariableDependency> getProjection(
+            Map<String, DynamicContext.VariableDependency> parentProjection
+    ) {
+        if (_child == null) {
             return null;
         }
 
         // start with an empty projection.
-    	Map<String, DynamicContext.VariableDependency> projection = new TreeMap<String, DynamicContext.VariableDependency>();
 
         // copy over the projection needed by the parent clause.
-        projection.putAll(parentProjection);
+        Map<String, DynamicContext.VariableDependency> projection =
+                new TreeMap<>(parentProjection);
 
         // remove the variable that this clause binds.
         projection.remove(_variableName);
 
         // add the variable dependencies needed by this for clause's expression.
         Map<String, DynamicContext.VariableDependency> exprDependency = _expression.getVariableDependencies();
-        for(String variable : exprDependency.keySet())
-        {
-            if(projection.containsKey(variable)) {
-                if(projection.get(variable) != exprDependency.get(variable))
-                {
+        for (String variable : exprDependency.keySet()) {
+            if (projection.containsKey(variable)) {
+                if (projection.get(variable) != exprDependency.get(variable)) {
                     projection.put(variable, DynamicContext.VariableDependency.FULL);
                 }
             } else {
                 projection.put(variable, exprDependency.get(variable));
             }
         }
-       return projection;
+        return projection;
     }
 }

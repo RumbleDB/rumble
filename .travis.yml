@@ -10,6 +10,7 @@ script:
   - mvn -Dtest=RuntimeTests test
   - mvn -Dtest=SparkRuntimeTests test
   - mvn -Dtest=JavaAPITest test
+  - mvn spotless:check
 cache:
   directories:
     - $HOME/.m2

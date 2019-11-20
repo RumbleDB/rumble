@@ -19,8 +19,14 @@ public class TreatAsClosure implements Function<Item, Boolean> {
     @Override
     public Boolean call(Item input) throws Exception {
         if (input != null && !input.isTypeOf(sequenceType.getItemType()))
-            throw new TreatException(" " + ItemTypes.getItemTypeName(input.getClass().getSimpleName()) + " cannot be treated as type "
-                    + ItemTypes.getItemTypeName(sequenceType.getItemType().getType().toString()) + sequenceType.getArity().getSymbol(), metadata);
+            throw new TreatException(
+                    " "
+                        + ItemTypes.getItemTypeName(input.getClass().getSimpleName())
+                        + " cannot be treated as type "
+                        + ItemTypes.getItemTypeName(sequenceType.getItemType().getType().toString())
+                        + sequenceType.getArity().getSymbol(),
+                    metadata
+            );
         return true;
     }
 }

@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -81,15 +81,15 @@ public class FlworKey implements KryoSerializable {
             Item comparisonItem = flworKey.keyItems.get(index);
 
             // check for incorrect ordering inputs
-            if ((currentItem != null && currentItem.isArray()) || (currentItem != null && currentItem.isObject()) ||
-                    (comparisonItem != null && comparisonItem.isArray()) || (comparisonItem != null && comparisonItem.isObject())) {
+            if (
+                (currentItem != null && currentItem.isArray())
+                    || (currentItem != null && currentItem.isObject())
+                    ||
+                    (comparisonItem != null && comparisonItem.isArray())
+                    || (comparisonItem != null && comparisonItem.isObject())
+            ) {
                 throw new SparksoniqRuntimeException("Non atomic key not allowed");
             }
-//            if ((currentItem != null && comparisonItem != null)
-//                    && (!currentItem.getClass().getSimpleName().equals(comparisonItem.getClass().getSimpleName()))
-//                    && ((!comparisonItem.isNumeric() || !currentItem.isNumeric()))) {
-//                throw new SparksoniqRuntimeException("Invalid sort key: Item types can't be different.");
-//            }
 
             // handle the Java null placeholder used in orderByClauseSparkIterator
             if (currentItem == null || comparisonItem == null) {
@@ -124,7 +124,7 @@ public class FlworKey implements KryoSerializable {
     }
 
     @SuppressWarnings("unchecked")
-	@Override
+    @Override
     public void read(Kryo kryo, Input input) {
         keyItems = kryo.readObject(input, ArrayList.class);
     }

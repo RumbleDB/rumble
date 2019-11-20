@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -35,6 +35,7 @@ import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.closures.ReturnFlatMapClosure;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -42,12 +43,16 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private RuntimeTupleIterator _child;
-    private DynamicContext _tupleContext;   // re-use same DynamicContext object for efficiency
+    private DynamicContext _tupleContext; // re-use same DynamicContext object for efficiency
     private RuntimeIterator _expression;
     private Item _nextResult;
 
-    public ReturnClauseSparkIterator(RuntimeTupleIterator child, RuntimeIterator expression, IteratorMetadata iteratorMetadata) {
-        super(Arrays.asList(expression), iteratorMetadata);
+    public ReturnClauseSparkIterator(
+            RuntimeTupleIterator child,
+            RuntimeIterator expression,
+            IteratorMetadata iteratorMetadata
+    ) {
+        super(Collections.singletonList(expression), iteratorMetadata);
         _child = child;
         _expression = expression;
     }
@@ -72,9 +77,9 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
     @Override
     protected Item nextLocal() {
-        if (_hasNext == true) {
-            Item result = _nextResult;  // save the result to be returned
-            setNextResult();            // calculate and store the next result
+        if (_hasNext) {
+            Item result = _nextResult; // save the result to be returned
+            setNextResult(); // calculate and store the next result
             return result;
         }
         throw new IteratorFlowException("Invalid next() call in Object Lookup", getMetadata());
@@ -83,7 +88,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     @Override
     protected void openLocal() {
         _child.open(_currentDynamicContext);
-        _tupleContext = new DynamicContext(_currentDynamicContext);     // assign current context as parent
+        _tupleContext = new DynamicContext(_currentDynamicContext); // assign current context as parent
         setNextResult();
     }
 
@@ -97,8 +102,8 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
         while (_child.hasNext()) {
             FlworTuple tuple = _child.next();
-            _tupleContext.removeAllVariables();             // clear the previous variables
-            _tupleContext.setBindingsFromTuple(tuple);      // assign new variables from new tuple
+            _tupleContext.removeAllVariables(); // clear the previous variables
+            _tupleContext.setBindingsFromTuple(tuple); // assign new variables from new tuple
 
             _expression.open(_tupleContext);
             boolean isResultSet = setResultFromExpression();
@@ -118,11 +123,11 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
      * @return true if _nextResult is set and _hasNext is true, false otherwise
      */
     private boolean setResultFromExpression() {
-        if (_expression.hasNext()) {        // if expression returns a value, set it as next
+        if (_expression.hasNext()) { // if expression returns a value, set it as next
             _nextResult = _expression.next();
             this._hasNext = true;
             return true;
-        } else {    // if not, keep iterating
+        } else { // if not, keep iterating
             _expression.close();
             return false;
         }
@@ -142,8 +147,8 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     }
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
-        result.putAll(_expression.getVariableDependencies());
+        Map<String, DynamicContext.VariableDependency> result =
+            new TreeMap<>(_expression.getVariableDependencies());
         for (String variable : _child.getVariablesBoundInCurrentFLWORExpression()) {
             result.remove(variable);
         }

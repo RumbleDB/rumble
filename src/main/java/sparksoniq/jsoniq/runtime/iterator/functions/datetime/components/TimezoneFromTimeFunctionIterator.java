@@ -21,7 +21,8 @@ public class TimezoneFromTimeFunctionIterator extends LocalFunctionCallIterator 
 
     public TimezoneFromTimeFunctionIterator(
             List<RuntimeIterator> arguments,
-            IteratorMetadata iteratorMetadata) {
+            IteratorMetadata iteratorMetadata
+    ) {
         super(arguments, iteratorMetadata);
     }
 
@@ -29,11 +30,15 @@ public class TimezoneFromTimeFunctionIterator extends LocalFunctionCallIterator 
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            return ItemFactory.getInstance().createDayTimeDurationItem(new Period(_timeItem.getDateTimeValue().getZone().toTimeZone().getRawOffset()));
+            return ItemFactory.getInstance()
+                .createDayTimeDurationItem(
+                    new Period(_timeItem.getDateTimeValue().getZone().toTimeZone().getRawOffset())
+                );
         } else
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " timezone-from-time function",
-                    getMetadata());
+                    getMetadata()
+            );
     }
 
     @Override
@@ -41,13 +46,20 @@ public class TimezoneFromTimeFunctionIterator extends LocalFunctionCallIterator 
         super.open(context);
         try {
             _timeItem = this.getSingleItemOfTypeFromIterator(
-                    this._children.get(0),
-                    TimeItem.class,
-                    new UnknownFunctionCallException("timezone-from-dateTime", this._children.size(), getMetadata()));
+                this._children.get(0),
+                TimeItem.class,
+                new UnknownFunctionCallException("timezone-from-dateTime", this._children.size(), getMetadata())
+            );
         } catch (UnexpectedTypeException e) {
-            throw new UnexpectedTypeException(e.getJSONiqErrorMessage() + "? of function timezone-from-time()", this._children.get(0).getMetadata());
+            throw new UnexpectedTypeException(
+                    e.getJSONiqErrorMessage() + "? of function timezone-from-time()",
+                    this._children.get(0).getMetadata()
+            );
         } catch (UnknownFunctionCallException e) {
-            throw new UnexpectedTypeException(" Sequence of more than one item can not be promoted to parameter type time? of function timezone-from-time()", getMetadata());
+            throw new UnexpectedTypeException(
+                    " Sequence of more than one item can not be promoted to parameter type time? of function timezone-from-time()",
+                    getMetadata()
+            );
         }
         this._hasNext = _timeItem != null && _timeItem.hasTimeZone();
     }

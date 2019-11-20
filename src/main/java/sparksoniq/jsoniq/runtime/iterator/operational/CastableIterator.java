@@ -46,7 +46,8 @@ public class CastableIterator extends UnaryOperationBaseIterator {
             if (items.isEmpty())
                 return ItemFactory.getInstance().createBooleanItem(_singleType.getZeroOrOne());
 
-            if (items.size() != 1 || items.get(0) == null) return ItemFactory.getInstance().createBooleanItem(false);
+            if (items.size() != 1 || items.get(0) == null)
+                return ItemFactory.getInstance().createBooleanItem(false);
 
             AtomicItem atomicItem = checkInvalidCastable(items.get(0), getMetadata(), _singleType);
 
@@ -63,11 +64,13 @@ public class CastableIterator extends UnaryOperationBaseIterator {
 
         if (item.isAtomic()) {
             atomicItem = (AtomicItem) item;
-        }
-        else {
-            String message = String.format("Can not atomize an %1$s item: an %1$s has probably been passed where " +
-                            "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
-                    ItemTypes.getItemTypeName(item.getClass().getSimpleName()));
+        } else {
+            String message = String.format(
+                "Can not atomize an %1$s item: an %1$s has probably been passed where "
+                    +
+                    "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
+                ItemTypes.getItemTypeName(item.getClass().getSimpleName())
+            );
             throw new NonAtomicKeyException(message, metadata.getExpressionMetadata());
         }
         return atomicItem;

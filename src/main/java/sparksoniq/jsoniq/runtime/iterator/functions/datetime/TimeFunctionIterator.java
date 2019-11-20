@@ -24,7 +24,8 @@ public class TimeFunctionIterator extends LocalFunctionCallIterator {
 
     public TimeFunctionIterator(
             List<RuntimeIterator> arguments,
-            IteratorMetadata iteratorMetadata) {
+            IteratorMetadata iteratorMetadata
+    ) {
         super(arguments, iteratorMetadata);
     }
 
@@ -35,14 +36,19 @@ public class TimeFunctionIterator extends LocalFunctionCallIterator {
             try {
                 return ItemFactory.getInstance().createTimeItem(_timeStringItem.getStringValue());
             } catch (UnsupportedOperationException | IllegalArgumentException e) {
-                String message = String.format("\"%s\": value of type %s is not castable to type %s",
-                        _timeStringItem.serialize(), "string", "time");
+                String message = String.format(
+                    "\"%s\": value of type %s is not castable to type %s",
+                    _timeStringItem.serialize(),
+                    "string",
+                    "time"
+                );
                 throw new CastException(message, getMetadata());
             }
         } else
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " time function",
-                    getMetadata());
+                    getMetadata()
+            );
     }
 
     @Override
@@ -50,11 +56,15 @@ public class TimeFunctionIterator extends LocalFunctionCallIterator {
         super.open(context);
         try {
             _timeStringItem = this.getSingleItemOfTypeFromIterator(
-                    this._children.get(0),
-                    StringItem.class,
-                    new UnknownFunctionCallException("time", this._children.size(), getMetadata()));
+                this._children.get(0),
+                StringItem.class,
+                new UnknownFunctionCallException("time", this._children.size(), getMetadata())
+            );
         } catch (UnknownFunctionCallException e) {
-            throw new UnexpectedTypeException(" Sequence of more than one item can not be cast to type with quantifier '1' or '?'", getMetadata());
+            throw new UnexpectedTypeException(
+                    " Sequence of more than one item can not be cast to type with quantifier '1' or '?'",
+                    getMetadata()
+            );
         }
         this._hasNext = _timeStringItem != null;
     }

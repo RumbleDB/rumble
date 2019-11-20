@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -35,9 +35,9 @@ import java.util.List;
 public class ArrayItem extends JsonItem {
 
 
-	private static final long serialVersionUID = 1L;
-	private List<Item> _arrayItems;
-    
+    private static final long serialVersionUID = 1L;
+    private List<Item> _arrayItems;
+
     public ArrayItem() {
         super();
     }
@@ -80,7 +80,7 @@ public class ArrayItem extends JsonItem {
     public String serialize() {
         StringBuilder sb = new StringBuilder();
         sb.append("[");
-        
+
         String separator = " ";
         for (Item item : this._arrayItems) {
             sb.append(separator);
@@ -105,42 +105,34 @@ public class ArrayItem extends JsonItem {
     }
 
     @SuppressWarnings("unchecked")
-	@Override
+    @Override
     public void read(Kryo kryo, Input input) {
         this._arrayItems = kryo.readObject(input, ArrayList.class);
     }
-    
-    public boolean equals(Object otherItem)
-    {
-        if(!(otherItem instanceof Item))
-        {
+
+    public boolean equals(Object otherItem) {
+        if (!(otherItem instanceof Item)) {
             return false;
         }
-        Item o = (Item)otherItem;
-        if(!o.isArray())
-        {
+        Item o = (Item) otherItem;
+        if (!o.isArray()) {
             return false;
         }
-        if(getSize() != o.getSize())
-        {
+        if (getSize() != o.getSize()) {
             return false;
         }
-        for(int i= 0; i< getSize(); ++i)
-        {
-            if(!getItemAt(i).equals(o.getItemAt(i)))
-            {
+        for (int i = 0; i < getSize(); ++i) {
+            if (!getItemAt(i).equals(o.getItemAt(i))) {
                 return false;
             }
         }
         return true;
     }
-    
-    public int hashCode()
-    {
+
+    public int hashCode() {
         int result = 0;
         result += getSize();
-        for(int i= 0; i< getSize(); ++i)
-        {
+        for (int i = 0; i < getSize(); ++i) {
             result += getItemAt(i).hashCode();
         }
         return result;

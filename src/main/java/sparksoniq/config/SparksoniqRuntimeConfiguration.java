@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,7 +28,8 @@ import java.util.HashMap;
 public class SparksoniqRuntimeConfiguration {
 
     public static final String ARGUMENT_PREFIX = "--";
-    private static final String ARGUMENT_FORMAT_ERROR_MESSAGE = "Invalid argument format. Required format: --property value";
+    private static final String ARGUMENT_FORMAT_ERROR_MESSAGE =
+        "Invalid argument format. Required format: --property value";
     private HashMap<String, String> _arguments;
 
     public SparksoniqRuntimeConfiguration(String[] args) {
@@ -95,7 +96,7 @@ public class SparksoniqRuntimeConfiguration {
         else
             return false;
     }
-    
+
     public boolean isLocal() {
         String masterConfig = SparkSessionManager.getInstance().getJavaSparkContext().getConf().get("spark.master");
         return masterConfig.contains("local");
@@ -104,11 +105,25 @@ public class SparksoniqRuntimeConfiguration {
     @Override
     public String toString() {
         String result = "";
-        result += "Master: " + SparkSessionManager.getInstance().getJavaSparkContext().getConf().get("spark.master") + "\n" +
-                "Item Display Limit: " + (_arguments.getOrDefault("result-size", "-")) + "\n" +
-                "Output Path: " + (_arguments.getOrDefault("output-path", "-")) + "\n" +
-                "Log Path: " + (_arguments.getOrDefault("log-path", "-")) + "\n" +
-                "Query Path : " + (_arguments.getOrDefault("query-path", "-")) + "\n";
+        result += "Master: "
+            + SparkSessionManager.getInstance().getJavaSparkContext().getConf().get("spark.master")
+            + "\n"
+            +
+            "Item Display Limit: "
+            + (_arguments.getOrDefault("result-size", "-"))
+            + "\n"
+            +
+            "Output Path: "
+            + (_arguments.getOrDefault("output-path", "-"))
+            + "\n"
+            +
+            "Log Path: "
+            + (_arguments.getOrDefault("log-path", "-"))
+            + "\n"
+            +
+            "Query Path : "
+            + (_arguments.getOrDefault("query-path", "-"))
+            + "\n";
         return result;
     }
 }
