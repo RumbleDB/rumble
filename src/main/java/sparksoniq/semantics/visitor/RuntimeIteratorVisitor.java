@@ -457,7 +457,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
             throw new SparksoniqRuntimeException("Higher order functions using builtin functions are not supported.");
         }
         if (Functions.checkUserDefinedFunctionExists(identifier)) {
-            FunctionItem function = Functions.getUserDefinedFunction(identifier, createIteratorMetadata(expression));
+            FunctionItem function = Functions.getUserDefinedFunction(identifier);
             return new FunctionRuntimeIterator(function, createIteratorMetadata(expression));
         }
         throw new UnknownFunctionCallException(
