@@ -38,7 +38,6 @@ import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
-import sparksoniq.jsoniq.runtime.tupleiterator.SparkRuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
@@ -108,9 +107,9 @@ public class SparkSessionManager {
             DynamicContext.class,
             FlworTuple.class,
             FlworKey.class,
-            SparkRuntimeTupleIterator.class,
             RuntimeIterator.class,
             RuntimeTupleIterator.class };
+
         configuration.registerKryoClasses(serializedClasses);
     }
 

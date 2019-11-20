@@ -20,13 +20,11 @@
 
 package sparksoniq.spark.iterator.flowr;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
-
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.ItemFactory;
@@ -34,11 +32,9 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
-import sparksoniq.jsoniq.runtime.tupleiterator.SparkRuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
-import sparksoniq.spark.closures.CountClauseClosure;
 import sparksoniq.spark.udf.CountClauseSerializeUDF;
 
 import java.util.ArrayList;
@@ -49,7 +45,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
+public class CountClauseSparkIterator extends RuntimeTupleIterator {
 
     private static final long serialVersionUID = 1L;
     private String _variableName;
@@ -67,11 +63,6 @@ public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
     }
 
     @Override
-    public boolean isRDD() {
-        return _child.isRDD();
-    }
-
-    @Override
     public boolean isDataFrame() {
         return _child.isDataFrame();
     }
@@ -79,9 +70,6 @@ public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-
-        // isRDD checks omitted, as open is used for non-RDD(local) operations
-
         if (this._child != null) {
             _child.open(_currentDynamicContext);
 
@@ -99,7 +87,7 @@ public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
 
     @Override
     public FlworTuple next() {
-        if (_hasNext == true) {
+        if (_hasNext) {
             FlworTuple result = _nextLocalTupleResult; // save the result to be returned
             setNextLocalTupleResult(); // calculate and store the next result
             return result;
@@ -114,23 +102,12 @@ public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
             List<Item> results = new ArrayList<>();
             results.add(ItemFactory.getInstance().createIntegerItem(_currentCountIndex++));
 
-            FlworTuple newTuple = new FlworTuple(inputTuple, _variableName, results);
-            _nextLocalTupleResult = newTuple;
+            _nextLocalTupleResult = new FlworTuple(inputTuple, _variableName, results);
             this._hasNext = true;
         } else {
             _child.close();
             this._hasNext = false;
         }
-    }
-
-    @Override
-    public JavaRDD<FlworTuple> getRDD(DynamicContext context) {
-        String variableName = _variableName;
-        // zipWithIndex starts from 0, increment indices by 1 for jsoniq convention
-        return _child.getRDD(context)
-            .zipWithIndex()
-            .mapValues(index -> index + 1)
-            .map(new CountClauseClosure(variableName));
     }
 
     @Override
@@ -149,7 +126,7 @@ public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
 
         String selectSQL = DataFrameUtils.getSQL(allColumns, true);
 
-        Dataset<Row> dfWithIndex = DataFrameUtils.zipWithIndex(df, new Long(1), _variableName);
+        Dataset<Row> dfWithIndex = DataFrameUtils.zipWithIndex(df, 1L, _variableName);
 
         df.sparkSession()
             .udf()
@@ -191,7 +168,7 @@ public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
         for (int i = 0; i < indent + 1; ++i) {
             buffer.append("  ");
         }
-        buffer.append("Variable " + _variableName);
+        buffer.append("Variable ").append(_variableName);
         buffer.append("\n");
     }
 
