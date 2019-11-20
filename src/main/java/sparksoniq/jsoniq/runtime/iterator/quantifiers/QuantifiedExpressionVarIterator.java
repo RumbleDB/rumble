@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,21 +32,27 @@ import sparksoniq.semantics.types.SequenceType;
 public class QuantifiedExpressionVarIterator extends LocalRuntimeIterator {
 
 
-	private static final long serialVersionUID = 1L;
-	private final String _variableReference;
-    //private final SequenceType _sequenceType;
+    private static final long serialVersionUID = 1L;
+    private final String _variableReference;
+    // private final SequenceType _sequenceType;
     private RuntimeIterator _iterator;
     private Item _nextResult;
 
-    /*private List<Item> result = null;
-    private int currentResultIndex;*/
+    /*
+     * private List<Item> result = null;
+     * private int currentResultIndex;
+     */
 
-    public QuantifiedExpressionVarIterator(String variableReference, SequenceType sequenceType,
-                                           RuntimeIterator expression, IteratorMetadata iteratorMetadata) {
+    public QuantifiedExpressionVarIterator(
+            String variableReference,
+            SequenceType sequenceType,
+            RuntimeIterator expression,
+            IteratorMetadata iteratorMetadata
+    ) {
         super(null, iteratorMetadata);
         this._children.add(expression);
         this._variableReference = variableReference;
-        //this._sequenceType = sequenceType;
+        // this._sequenceType = sequenceType;
     }
 
     public String getVariableReference() {
@@ -66,8 +72,8 @@ public class QuantifiedExpressionVarIterator extends LocalRuntimeIterator {
     @Override
     public Item next() {
         if (_hasNext == true) {
-            Item result = _nextResult;  // save the result to be returned
-            setNextResult();            // calculate and store the next result
+            Item result = _nextResult; // save the result to be returned
+            setNextResult(); // calculate and store the next result
             return result;
         }
         throw new IteratorFlowException("Invalid next() call in QuantifiedExpressionVar", getMetadata());

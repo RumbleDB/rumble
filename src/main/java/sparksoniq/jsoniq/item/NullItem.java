@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -34,9 +34,9 @@ import sparksoniq.semantics.types.ItemTypes;
 public class NullItem extends AtomicItem {
 
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	public NullItem() {
+    public NullItem() {
         super();
     }
 
@@ -57,8 +57,9 @@ public class NullItem extends AtomicItem {
 
     @Override
     public boolean isCastableAs(AtomicTypes itemType) {
-        return itemType == AtomicTypes.NullItem ||
-                itemType == AtomicTypes.StringItem;
+        return itemType == AtomicTypes.NullItem
+            ||
+            itemType == AtomicTypes.StringItem;
     }
 
     @Override
@@ -88,30 +89,28 @@ public class NullItem extends AtomicItem {
         kryo.readObjectOrNull(input, Item.class);
 
     }
-    
-    public boolean equals(Object otherItem)
-    {
-        if(!(otherItem instanceof Item))
-        {
+
+    public boolean equals(Object otherItem) {
+        if (!(otherItem instanceof Item)) {
             return false;
         }
-        Item o = (Item)otherItem;
+        Item o = (Item) otherItem;
         return o.isNull();
     }
-    
-    public int hashCode()
-    {
+
+    public int hashCode() {
         return 0;
     }
 
     @Override
     public int compareTo(Item other) {
-        if (other.isNull()) return 0;
+        if (other.isNull())
+            return 0;
         return -1;
     }
 
     @Override
     public Item compareItem(Item other, OperationalExpressionBase.Operator operator, IteratorMetadata metadata) {
         return operator.apply(this, other);
-	}
+    }
 }

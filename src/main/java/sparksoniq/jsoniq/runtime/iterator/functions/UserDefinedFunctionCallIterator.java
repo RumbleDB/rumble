@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -54,7 +54,8 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
     public UserDefinedFunctionCallIterator(
             FunctionIdentifier functionIdentifier,
             List<RuntimeIterator> functionArguments,
-            IteratorMetadata iteratorMetadata) {
+            IteratorMetadata iteratorMetadata
+    ) {
         super(null, iteratorMetadata);
         for (RuntimeIterator arg : functionArguments) {
             if (arg == null) {
@@ -93,8 +94,8 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
             _currentDynamicContext = new DynamicContext(_currentDynamicContext);
             for (Map.Entry<String, List<Item>> argumentEntry : argumentValues.entrySet()) {
                 _currentDynamicContext.addVariableValue(
-                        "$" + argumentEntry.getKey(),
-                        argumentEntry.getValue()
+                    "$" + argumentEntry.getKey(),
+                    argumentEntry.getValue()
                 );
             }
         } else {
@@ -105,7 +106,7 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
                 argIterator = _functionArguments.get(i);
                 argName = _functionItem.getParameterNames().get(i);
 
-                if (argIterator == null) {  // == ArgumentPlaceholder
+                if (argIterator == null) { // == ArgumentPlaceholder
                     partialAppParamNames.add(argName);
                     partialAppSignature.add(_functionItem.getSignature().get(i));
                 } else {
@@ -116,7 +117,9 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
 
             // partial application should return a new FunctionItem with given parameters set as NonLocalVariables
             // and argument placeholders as new parameters to the new FunctionItem
-            partialAppSignature.add(_functionItem.getSignature().get(_functionItem.getSignature().size() - 1));   // add return type
+            partialAppSignature.add(_functionItem.getSignature().get(_functionItem.getSignature().size() - 1)); // add
+                                                                                                                // return
+                                                                                                                // type
 
             FunctionItem partiallyAppliedFunction = new FunctionItem(
                     new FunctionIdentifier("", partialAppParamNames.size()),

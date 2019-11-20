@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -46,14 +46,18 @@ import sparksoniq.spark.udf.WhereClauseUDF;
 public class WhereClauseSparkIterator extends SparkRuntimeTupleIterator {
 
 
-	private static final long serialVersionUID = 1L;
-	private RuntimeIterator _expression;
-    private DynamicContext _tupleContext;   // re-use same DynamicContext object for efficiency
+    private static final long serialVersionUID = 1L;
+    private RuntimeIterator _expression;
+    private DynamicContext _tupleContext; // re-use same DynamicContext object for efficiency
     private FlworTuple _nextLocalTupleResult;
-    private FlworTuple _inputTuple;     // tuple received from child, used for tuple creation
+    private FlworTuple _inputTuple; // tuple received from child, used for tuple creation
     Map<String, DynamicContext.VariableDependency> _dependencies;
 
-    public WhereClauseSparkIterator(RuntimeTupleIterator child, RuntimeIterator whereExpression, IteratorMetadata iteratorMetadata) {
+    public WhereClauseSparkIterator(
+            RuntimeTupleIterator child,
+            RuntimeIterator whereExpression,
+            IteratorMetadata iteratorMetadata
+    ) {
         super(child, iteratorMetadata);
         _expression = whereExpression;
         _dependencies = _expression.getVariableDependencies();
@@ -77,7 +81,7 @@ public class WhereClauseSparkIterator extends SparkRuntimeTupleIterator {
 
         if (this._child != null) {
             _child.open(_currentDynamicContext);
-            _tupleContext = new DynamicContext(_currentDynamicContext);     // assign current context as parent
+            _tupleContext = new DynamicContext(_currentDynamicContext); // assign current context as parent
 
             setNextLocalTupleResult();
 
@@ -89,8 +93,8 @@ public class WhereClauseSparkIterator extends SparkRuntimeTupleIterator {
     @Override
     public FlworTuple next() {
         if (_hasNext == true) {
-            FlworTuple result = _nextLocalTupleResult;      // save the result to be returned
-            setNextLocalTupleResult();              // calculate and store the next result
+            FlworTuple result = _nextLocalTupleResult; // save the result to be returned
+            setNextLocalTupleResult(); // calculate and store the next result
             return result;
         }
         throw new IteratorFlowException("Invalid next() call in let flwor clause", getMetadata());
@@ -102,8 +106,8 @@ public class WhereClauseSparkIterator extends SparkRuntimeTupleIterator {
 
         while (_child.hasNext()) {
             _inputTuple = _child.next();
-            _tupleContext.removeAllVariables();             // clear the previous variables
-            _tupleContext.setBindingsFromTuple(_inputTuple);      // assign new variables from new tuple
+            _tupleContext.removeAllVariables(); // clear the previous variables
+            _tupleContext.setBindingsFromTuple(_inputTuple); // assign new variables from new tuple
 
             _expression.open(_tupleContext);
             boolean effectiveBooleanValue = RuntimeIterator.getEffectiveBooleanValue(_expression);
@@ -132,8 +136,10 @@ public class WhereClauseSparkIterator extends SparkRuntimeTupleIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext context, Map<String, DynamicContext.VariableDependency> parentProjection)
-    {
+    public Dataset<Row> getDataFrame(
+            DynamicContext context,
+            Map<String, DynamicContext.VariableDependency> parentProjection
+    ) {
         if (this._child == null) {
             throw new SparksoniqRuntimeException("Invalid where clause.");
         }
@@ -143,58 +149,61 @@ public class WhereClauseSparkIterator extends SparkRuntimeTupleIterator {
         List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, _dependencies);
 
 
-        df.sparkSession().udf().register("whereClauseUDF",
-                new WhereClauseUDF(_expression, inputSchema, UDFcolumns), DataTypes.BooleanType);
+        df.sparkSession()
+            .udf()
+            .register(
+                "whereClauseUDF",
+                new WhereClauseUDF(_expression, inputSchema, UDFcolumns),
+                DataTypes.BooleanType
+            );
 
         String udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
 
         df.createOrReplaceTempView("input");
-        df = df.sparkSession().sql(
+        df = df.sparkSession()
+            .sql(
                 String.format("select * from input where whereClauseUDF(array(%s)) = 'true'", udfSQL)
-        );
+            );
         return df;
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies()
-    {
-        Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
+    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
+        Map<String, DynamicContext.VariableDependency> result =
+            new TreeMap<String, DynamicContext.VariableDependency>();
         result.putAll(_expression.getVariableDependencies());
-        for (String var : _child.getVariablesBoundInCurrentFLWORExpression())
-        {
+        for (String var : _child.getVariablesBoundInCurrentFLWORExpression()) {
             result.remove(var);
         }
         result.putAll(_child.getVariableDependencies());
         return result;
     }
 
-    public Set<String> getVariablesBoundInCurrentFLWORExpression()
-    {
+    public Set<String> getVariablesBoundInCurrentFLWORExpression() {
         Set<String> result = new HashSet<String>();
         result.addAll(_child.getVariablesBoundInCurrentFLWORExpression());
         return result;
     }
-    
-    public void print(StringBuffer buffer, int indent)
-    {
-        super.print(buffer,  indent);
+
+    public void print(StringBuffer buffer, int indent) {
+        super.print(buffer, indent);
         _expression.print(buffer, indent + 1);
     }
-    
-    public Map<String, DynamicContext.VariableDependency> getProjection(Map<String, DynamicContext.VariableDependency> parentProjection)
-    {
+
+    public Map<String, DynamicContext.VariableDependency> getProjection(
+            Map<String, DynamicContext.VariableDependency> parentProjection
+    ) {
         // start with an empty projection.
-    	Map<String, DynamicContext.VariableDependency> projection = new TreeMap<String, DynamicContext.VariableDependency>();
+        Map<String, DynamicContext.VariableDependency> projection =
+            new TreeMap<String, DynamicContext.VariableDependency>();
 
         // copy over the projection needed by the parent clause.
         projection.putAll(parentProjection);
 
         // add the variable dependencies needed by this for clause's expression.
         Map<String, DynamicContext.VariableDependency> exprDependency = _expression.getVariableDependencies();
-        for(String variable : exprDependency.keySet())
-        {
-            if(projection.containsKey(variable)) {
-                if(projection.get(variable) != exprDependency.get(variable))
-                {
+        for (String variable : exprDependency.keySet()) {
+            if (projection.containsKey(variable)) {
+                if (projection.get(variable) != exprDependency.get(variable)) {
                     projection.put(variable, DynamicContext.VariableDependency.FULL);
                 }
             } else {

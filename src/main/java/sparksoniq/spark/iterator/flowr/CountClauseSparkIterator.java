@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -51,15 +51,19 @@ import java.util.TreeMap;
 
 public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
 
-	private static final long serialVersionUID = 1L;
-	private String _variableName;
+    private static final long serialVersionUID = 1L;
+    private String _variableName;
     private FlworTuple _nextLocalTupleResult;
     private int _currentCountIndex;
 
-    public CountClauseSparkIterator(RuntimeTupleIterator child, RuntimeIterator variableReference, IteratorMetadata iteratorMetadata) {
+    public CountClauseSparkIterator(
+            RuntimeTupleIterator child,
+            RuntimeIterator variableReference,
+            IteratorMetadata iteratorMetadata
+    ) {
         super(child, iteratorMetadata);
         _variableName = ((VariableReferenceIterator) variableReference).getVariableName();
-        _currentCountIndex = 1;    // indices start at 1 in JSONiq
+        _currentCountIndex = 1; // indices start at 1 in JSONiq
     }
 
     @Override
@@ -96,8 +100,8 @@ public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
     @Override
     public FlworTuple next() {
         if (_hasNext == true) {
-            FlworTuple result = _nextLocalTupleResult;      // save the result to be returned
-            setNextLocalTupleResult();              // calculate and store the next result
+            FlworTuple result = _nextLocalTupleResult; // save the result to be returned
+            setNextLocalTupleResult(); // calculate and store the next result
             return result;
         }
         throw new IteratorFlowException("Invalid next() call in count flwor clause", getMetadata());
@@ -123,68 +127,80 @@ public class CountClauseSparkIterator extends SparkRuntimeTupleIterator {
     public JavaRDD<FlworTuple> getRDD(DynamicContext context) {
         String variableName = _variableName;
         // zipWithIndex starts from 0, increment indices by 1 for jsoniq convention
-        return _child.getRDD(context).zipWithIndex()
-                .mapValues(index -> index + 1)
-                .map(new CountClauseClosure(variableName));
+        return _child.getRDD(context)
+            .zipWithIndex()
+            .mapValues(index -> index + 1)
+            .map(new CountClauseClosure(variableName));
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext context, Map<String, DynamicContext.VariableDependency> parentProjection)
-    {
+    public Dataset<Row> getDataFrame(
+            DynamicContext context,
+            Map<String, DynamicContext.VariableDependency> parentProjection
+    ) {
         if (this._child == null) {
             throw new SparksoniqRuntimeException("Invalid count clause.");
         }
         Dataset<Row> df = _child.getDataFrame(context, getProjection(parentProjection));
         StructType inputSchema = df.schema();
         int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(_variableName);
-        
+
         List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
 
         String selectSQL = DataFrameUtils.getSQL(allColumns, true);
 
         Dataset<Row> dfWithIndex = DataFrameUtils.zipWithIndex(df, new Long(1), _variableName);
 
-        df.sparkSession().udf().register("serializeCountIndex",
-                new CountClauseSerializeUDF(), DataTypes.BinaryType);
+        df.sparkSession()
+            .udf()
+            .register(
+                "serializeCountIndex",
+                new CountClauseSerializeUDF(),
+                DataTypes.BinaryType
+            );
 
         dfWithIndex.createOrReplaceTempView("input");
-        dfWithIndex = dfWithIndex.sparkSession().sql(
-                String.format("select %s serializeCountIndex(`%s`) as `%s` from input",
-                        selectSQL, _variableName, _variableName)
-        );
+        dfWithIndex = dfWithIndex.sparkSession()
+            .sql(
+                String.format(
+                    "select %s serializeCountIndex(`%s`) as `%s` from input",
+                    selectSQL,
+                    _variableName,
+                    _variableName
+                )
+            );
         return dfWithIndex;
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies()
-    {
-        Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
+    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
+        Map<String, DynamicContext.VariableDependency> result =
+            new TreeMap<String, DynamicContext.VariableDependency>();
         result.putAll(_child.getVariableDependencies());
         return result;
     }
 
-    public Set<String> getVariablesBoundInCurrentFLWORExpression()
-    {
+    public Set<String> getVariablesBoundInCurrentFLWORExpression() {
         Set<String> result = new HashSet<String>();
         result.addAll(_child.getVariablesBoundInCurrentFLWORExpression());
         result.add(_variableName);
         return result;
     }
-    
-    public void print(StringBuffer buffer, int indent)
-    {
+
+    public void print(StringBuffer buffer, int indent) {
         super.print(buffer, indent);
-        for (int i = 0; i < indent + 1; ++i)
-        {
+        for (int i = 0; i < indent + 1; ++i) {
             buffer.append("  ");
         }
         buffer.append("Variable " + _variableName);
         buffer.append("\n");
     }
-    
-    public Map<String, DynamicContext.VariableDependency> getProjection(Map<String, DynamicContext.VariableDependency> parentProjection)
-    {
+
+    public Map<String, DynamicContext.VariableDependency> getProjection(
+            Map<String, DynamicContext.VariableDependency> parentProjection
+    ) {
         // start with an empty projection.
-        Map<String, DynamicContext.VariableDependency> projection = new TreeMap<String, DynamicContext.VariableDependency>();
+        Map<String, DynamicContext.VariableDependency> projection =
+            new TreeMap<String, DynamicContext.VariableDependency>();
 
         // copy over the projection needed by the parent clause.
         projection.putAll(parentProjection);

@@ -21,7 +21,8 @@ public class Base64BinaryFunctionIterator extends LocalFunctionCallIterator {
 
     public Base64BinaryFunctionIterator(
             List<RuntimeIterator> parameters,
-            IteratorMetadata iteratorMetadata) {
+            IteratorMetadata iteratorMetadata
+    ) {
         super(parameters, iteratorMetadata);
     }
 
@@ -32,14 +33,19 @@ public class Base64BinaryFunctionIterator extends LocalFunctionCallIterator {
             try {
                 return ItemFactory.getInstance().createBase64BinaryItem(_base64BinaryStringItem.getStringValue());
             } catch (IllegalArgumentException e) {
-                String message = String.format("\"%s\": value of type %s is not castable to type %s",
-                        _base64BinaryStringItem.serialize(), "string", "base64Binary");
+                String message = String.format(
+                    "\"%s\": value of type %s is not castable to type %s",
+                    _base64BinaryStringItem.serialize(),
+                    "string",
+                    "base64Binary"
+                );
                 throw new CastException(message, getMetadata());
             }
         } else
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " base64Binary function",
-                    getMetadata());
+                    getMetadata()
+            );
     }
 
 
@@ -48,11 +54,15 @@ public class Base64BinaryFunctionIterator extends LocalFunctionCallIterator {
         super.open(context);
         try {
             _base64BinaryStringItem = this.getSingleItemOfTypeFromIterator(
-                    this._children.get(0),
-                    StringItem.class,
-                    new UnknownFunctionCallException("base64Binary", this._children.size(), getMetadata()));
+                this._children.get(0),
+                StringItem.class,
+                new UnknownFunctionCallException("base64Binary", this._children.size(), getMetadata())
+            );
         } catch (UnknownFunctionCallException e) {
-            throw new UnexpectedTypeException(" Sequence of more than one item can not be cast to type with quantifier '1' or '?'", getMetadata());
+            throw new UnexpectedTypeException(
+                    " Sequence of more than one item can not be cast to type with quantifier '1' or '?'",
+                    getMetadata()
+            );
         }
         this._hasNext = _base64BinaryStringItem != null;
     }

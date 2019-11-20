@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -33,8 +33,8 @@ import org.rumbledb.api.Item;
 public class OneOrMoreIterator extends CardinalityFunctionIterator {
 
 
-	private static final long serialVersionUID = 1L;
-	private RuntimeIterator _iterator;
+    private static final long serialVersionUID = 1L;
+    private RuntimeIterator _iterator;
     private Item _nextResult;
 
     public OneOrMoreIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
@@ -48,7 +48,10 @@ public class OneOrMoreIterator extends CardinalityFunctionIterator {
         _iterator = this._children.get(0);
         _iterator.open(context);
         if (!_iterator.hasNext()) {
-            throw new SequenceExceptionOneOrMore("fn:one-or-more() called with a sequence containing less than 1 item", getMetadata());
+            throw new SequenceExceptionOneOrMore(
+                    "fn:one-or-more() called with a sequence containing less than 1 item",
+                    getMetadata()
+            );
         }
         setNextResult();
     }
@@ -56,12 +59,14 @@ public class OneOrMoreIterator extends CardinalityFunctionIterator {
     @Override
     public Item next() {
         if (this._hasNext) {
-            Item result = _nextResult;  // save the result to be returned
-            setNextResult();            // calculate and store the next result
+            Item result = _nextResult; // save the result to be returned
+            setNextResult(); // calculate and store the next result
             return result;
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " ONE-OR-MORE function",
-                getMetadata());
+        throw new IteratorFlowException(
+                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " ONE-OR-MORE function",
+                getMetadata()
+        );
     }
 
     public void setNextResult() {

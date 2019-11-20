@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -37,8 +37,8 @@ import org.rumbledb.api.Item;
 public class ObjectProjectFunctionIterator extends LocalFunctionCallIterator {
 
 
-	private static final long serialVersionUID = 1L;
-	private RuntimeIterator _iterator;
+    private static final long serialVersionUID = 1L;
+    private RuntimeIterator _iterator;
     private Item _nextResult;
     private List<Item> _projKeys;
 
@@ -55,8 +55,10 @@ public class ObjectProjectFunctionIterator extends LocalFunctionCallIterator {
 
         _projKeys = getItemsFromIteratorWithCurrentContext(this._children.get(1));
         if (_projKeys.isEmpty()) {
-            throw new InvalidSelectorException("Invalid Projection Key; Object projection can't be performed with zero keys: "
-                    , getMetadata());
+            throw new InvalidSelectorException(
+                    "Invalid Projection Key; Object projection can't be performed with zero keys: ",
+                    getMetadata()
+            );
         }
 
         setNextResult();
@@ -65,12 +67,14 @@ public class ObjectProjectFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public Item next() {
         if (this._hasNext) {
-            Item result = _nextResult;  // save the result to be returned
-            setNextResult();            // calculate and store the next result
+            Item result = _nextResult; // save the result to be returned
+            setNextResult(); // calculate and store the next result
             return result;
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " PROJECT function",
-                getMetadata());
+        throw new IteratorFlowException(
+                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " PROJECT function",
+                getMetadata()
+        );
     }
 
     public void setNextResult() {
@@ -104,7 +108,8 @@ public class ObjectProjectFunctionIterator extends LocalFunctionCallIterator {
                 finalValueList.add(value);
             }
         }
-        return ItemFactory.getInstance().createObjectItem(finalKeylist, finalValueList, ItemMetadata.fromIteratorMetadata(getMetadata()));
+        return ItemFactory.getInstance()
+            .createObjectItem(finalKeylist, finalValueList, ItemMetadata.fromIteratorMetadata(getMetadata()));
 
     }
 }

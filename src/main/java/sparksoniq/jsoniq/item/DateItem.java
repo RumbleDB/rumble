@@ -84,9 +84,11 @@ public class DateItem extends AtomicItem {
 
     @Override
     public boolean isCastableAs(AtomicTypes itemType) {
-        return itemType.equals(AtomicTypes.DateItem) ||
-                itemType.equals(AtomicTypes.DateTimeItem) ||
-                itemType.equals(AtomicTypes.StringItem);
+        return itemType.equals(AtomicTypes.DateItem)
+            ||
+            itemType.equals(AtomicTypes.DateTimeItem)
+            ||
+            itemType.equals(AtomicTypes.StringItem);
     }
 
     @Override
@@ -111,36 +113,50 @@ public class DateItem extends AtomicItem {
     @Override
     public Item add(Item other) {
         if (other.isYearMonthDuration() || other.isDayTimeDuration())
-            return ItemFactory.getInstance().createDateItem(this.getValue().plus(other.getDurationValue()), this.hasTimeZone);
+            return ItemFactory.getInstance()
+                .createDateItem(this.getValue().plus(other.getDurationValue()), this.hasTimeZone);
         throw new ClassCastException();
     }
 
     @Override
     public Item subtract(Item other) {
         if (other.isDate()) {
-            return ItemFactory.getInstance().createDayTimeDurationItem(new Period(other.getDateTimeValue(), this.getValue(), PeriodType.dayTime()));
+            return ItemFactory.getInstance()
+                .createDayTimeDurationItem(new Period(other.getDateTimeValue(), this.getValue(), PeriodType.dayTime()));
         }
         if (other.isYearMonthDuration() || other.isDayTimeDuration())
-            return ItemFactory.getInstance().createDateItem(this.getValue().minus(other.getDurationValue()), this.hasTimeZone);
+            return ItemFactory.getInstance()
+                .createDateItem(this.getValue().minus(other.getDurationValue()), this.hasTimeZone);
         throw new ClassCastException();
     }
 
     @Override
     public int compareTo(Item other) {
-        if (other.isNull()) return 1;
+        if (other.isNull())
+            return 1;
         if (other.isDate()) {
             return this.getValue().compareTo(other.getDateTimeValue());
         }
-        throw new IteratorFlowException("Cannot compare item of type " + ItemTypes.getItemTypeName(this.getClass().getSimpleName()) +
-                " with item of type " + ItemTypes.getItemTypeName(other.getClass().getSimpleName()));
+        throw new IteratorFlowException(
+                "Cannot compare item of type "
+                    + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                    +
+                    " with item of type "
+                    + ItemTypes.getItemTypeName(other.getClass().getSimpleName())
+        );
     }
 
     @Override
     public Item compareItem(Item other, OperationalExpressionBase.Operator operator, IteratorMetadata metadata) {
         if (!other.isDate() && !other.isNull()) {
-            throw new UnexpectedTypeException("\"" + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
-                    + "\": invalid type: can not compare for equality to type \""
-                    + ItemTypes.getItemTypeName(other.getClass().getSimpleName()) + "\"", metadata);
+            throw new UnexpectedTypeException(
+                    "\""
+                        + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                        + "\": invalid type: can not compare for equality to type \""
+                        + ItemTypes.getItemTypeName(other.getClass().getSimpleName())
+                        + "\"",
+                    metadata
+            );
         }
         return operator.apply(this, other);
     }
@@ -150,7 +166,7 @@ public class DateItem extends AtomicItem {
         String value = this.getValue().toString();
         String zone = this.getValue().getZone() == DateTimeZone.UTC ? "Z" : this.getValue().getZone().toString();
         int dateTimeSeparatorIndex = value.indexOf("T");
-        return value.substring(0,  dateTimeSeparatorIndex) + (hasTimeZone ? zone : "");
+        return value.substring(0, dateTimeSeparatorIndex) + (hasTimeZone ? zone : "");
     }
 
     @Override

@@ -18,6 +18,7 @@ public class FlworVarSingleType extends Expression {
         this._singleType = new SingleType(AtomicTypes.AtomicItem);
         this.isEmpty = true;
     }
+
     public FlworVarSingleType(AtomicTypes atomicType, ExpressionMetadata metadata) {
         super(metadata);
         this._singleType = new SingleType(atomicType);

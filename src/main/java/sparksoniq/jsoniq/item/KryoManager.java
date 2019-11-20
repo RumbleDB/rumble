@@ -55,12 +55,14 @@ public class KryoManager {
 
                     kryo.register(ArrayList.class);
 
-                    /*kryo.register(DynamicContext.class);
-                    kryo.register(FlworTuple.class);
-                    kryo.register(FlworKey.class);
-                    kryo.register(SparkRuntimeTupleIterator.class);
-                    kryo.register(RuntimeIterator.class);
-                    kryo.register(RuntimeTupleIterator.class);*/
+                    /*
+                     * kryo.register(DynamicContext.class);
+                     * kryo.register(FlworTuple.class);
+                     * kryo.register(FlworKey.class);
+                     * kryo.register(SparkRuntimeTupleIterator.class);
+                     * kryo.register(RuntimeIterator.class);
+                     * kryo.register(RuntimeTupleIterator.class);
+                     */
 
                     return kryo;
                 }

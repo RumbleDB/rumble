@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -35,9 +35,9 @@ import org.rumbledb.api.Item;
 
 public class SubstringFunctionIterator extends LocalFunctionCallIterator {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	public SubstringFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
+    public SubstringFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
     }
 
@@ -52,13 +52,22 @@ public class SubstringFunctionIterator extends LocalFunctionCallIterator {
             }
             IntegerItem indexItem = this.getSingleItemOfTypeFromIterator(this._children.get(1), IntegerItem.class);
             if (indexItem == null) {
-                throw new UnexpectedTypeException("Type error; Start index parameter can't be empty sequence ", getMetadata());
+                throw new UnexpectedTypeException(
+                        "Type error; Start index parameter can't be empty sequence ",
+                        getMetadata()
+                );
             }
             int index = sanitizeIndexItem(indexItem);
             if (this._children.size() > 2) {
-                IntegerItem endIndexItem = this.getSingleItemOfTypeFromIterator(this._children.get(2), IntegerItem.class);
+                IntegerItem endIndexItem = this.getSingleItemOfTypeFromIterator(
+                    this._children.get(2),
+                    IntegerItem.class
+                );
                 if (endIndexItem == null) {
-                    throw new UnexpectedTypeException("Type error; End index parameter can't be empty sequence ", getMetadata());
+                    throw new UnexpectedTypeException(
+                            "Type error; End index parameter can't be empty sequence ",
+                            getMetadata()
+                    );
                 }
                 int endIndex = sanitizeEndIndex(stringItem, endIndexItem, index);
                 result = stringItem.getStringValue().substring(index, endIndex);
@@ -68,16 +77,19 @@ public class SubstringFunctionIterator extends LocalFunctionCallIterator {
 
             return ItemFactory.getInstance().createStringItem(result);
         } else
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " substring function", getMetadata());
+            throw new IteratorFlowException(
+                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " substring function",
+                    getMetadata()
+            );
     }
 
     private int sanitizeEndIndex(StringItem stringItem, IntegerItem endIndexItem, int startIndex) {
-        //char indexing starts from 1 in JSONiq
+        // char indexing starts from 1 in JSONiq
         return Math.min(stringItem.getStringValue().length(), startIndex + endIndexItem.getIntegerValue());
     }
 
     private int sanitizeIndexItem(IntegerItem indexItem) {
-        //char indexing starts from 1 in JSONiq
+        // char indexing starts from 1 in JSONiq
         return indexItem.getIntegerValue() - 1 > 0 ? indexItem.getIntegerValue() - 1 : 0;
     }
 }

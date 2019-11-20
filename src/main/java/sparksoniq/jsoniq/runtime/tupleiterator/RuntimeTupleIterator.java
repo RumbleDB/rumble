@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -40,8 +40,8 @@ import sparksoniq.semantics.DynamicContext;
 
 public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterface, KryoSerializable {
 
-	private static final long serialVersionUID = 1L;
-	protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
+    private static final long serialVersionUID = 1L;
+    protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
     private final IteratorMetadata metadata;
     protected boolean _hasNext;
     protected boolean _isOpen;
@@ -56,7 +56,10 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
 
     public void open(DynamicContext context) {
         if (this._isOpen)
-            throw new IteratorFlowException("Runtime tuple iterator cannot be opened twice" + ", this: " + this.toString(), getMetadata());
+            throw new IteratorFlowException(
+                    "Runtime tuple iterator cannot be opened twice" + ", this: " + this.toString(),
+                    getMetadata()
+            );
         this._isOpen = true;
         this._hasNext = true;
         this._currentDynamicContext = context;
@@ -108,7 +111,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     public abstract JavaRDD<FlworTuple> getRDD(DynamicContext context);
 
     public abstract boolean isDataFrame();
-    
+
     /**
      * Obtains the dataframe from the child clause.
      * It is possible, with the second parameter, to specify the variables it needs to project the others away,
@@ -118,31 +121,41 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
      * @param parentProjection information on the projection needed by the caller.
      * @return the DataFrame with the tuples returned by the child clause.
      */
-    public abstract Dataset<Row> getDataFrame(DynamicContext context, Map<String, DynamicContext.VariableDependency> parentProjection);
+    public abstract Dataset<Row> getDataFrame(
+            DynamicContext context,
+            Map<String, DynamicContext.VariableDependency> parentProjection
+    );
 
     /**
      * Builds the DataFrame projection that this clause needs to receive from its child clause.
-     * The intent is that the result of this method is forwarded to the child clause in getDataFrame() so it can optimize some values away.
+     * The intent is that the result of this method is forwarded to the child clause in getDataFrame() so it can
+     * optimize some values away.
      * 
      * @parentProjection the projection needed by the parent clause.
      * @return the projection needed by this clause.
      */
-    public abstract Map<String, DynamicContext.VariableDependency> getProjection(Map<String, DynamicContext.VariableDependency> parentProjection);
+    public abstract Map<String, DynamicContext.VariableDependency> getProjection(
+            Map<String, DynamicContext.VariableDependency> parentProjection
+    );
 
     /**
      * Variable dependencies are variables that MUST be provided by the parent clause in the dynamic context
      * for successful execution of this clause.
      * 
      * These variables are:
-     * 1. All variables that the expression of the clause depends on (recursive call of getVariableDependencies on the expression)
-     * 2. Except those variables bound in the current FLWOR (obtained from the auxiliary method getVariablesBoundInCurrentFLWORExpression), because those are provided in the Tuples
-     * 3. Plus (recursively calling getVariableDependencies) all the Variable Dependencies of the child clause if it exists.
+     * 1. All variables that the expression of the clause depends on (recursive call of getVariableDependencies on the
+     * expression)
+     * 2. Except those variables bound in the current FLWOR (obtained from the auxiliary method
+     * getVariablesBoundInCurrentFLWORExpression), because those are provided in the Tuples
+     * 3. Plus (recursively calling getVariableDependencies) all the Variable Dependencies of the child clause if it
+     * exists.
      * 
-     * @return a map of variable names to dependencies (FULL, COUNT, ...) that this clause needs to obtain from the dynamic context.
+     * @return a map of variable names to dependencies (FULL, COUNT, ...) that this clause needs to obtain from the
+     *         dynamic context.
      */
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies()
-    {
-        Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
+    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
+        Map<String, DynamicContext.VariableDependency> result =
+            new TreeMap<String, DynamicContext.VariableDependency>();
         result.putAll(_child.getVariableDependencies());
         return result;
     }
@@ -154,15 +167,12 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
      * 
      * @return the set of variable names that are bound by descendant clauses.
      */
-    public Set<String> getVariablesBoundInCurrentFLWORExpression()
-    {
+    public Set<String> getVariablesBoundInCurrentFLWORExpression() {
         return new HashSet<String>();
     }
-    
-    public void print(StringBuffer buffer, int indent)
-    {
-        for (int i = 0; i < indent; ++i)
-        {
+
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
         buffer.append(getClass().getName());
@@ -170,22 +180,19 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
 
         buffer.append("Variable dependencies: ");
         Map<String, DynamicContext.VariableDependency> dependencies = getVariableDependencies();
-        for(String v : dependencies.keySet())
-        {
-          buffer.append(v + "(" + dependencies.get(v) + ")"  + " ");
+        for (String v : dependencies.keySet()) {
+            buffer.append(v + "(" + dependencies.get(v) + ")" + " ");
         }
         buffer.append(" | ");
 
         buffer.append("Variables bound in current FLWOR: ");
-        for(String v : getVariablesBoundInCurrentFLWORExpression())
-        {
-          buffer.append(v + " ");
+        for (String v : getVariablesBoundInCurrentFLWORExpression()) {
+            buffer.append(v + " ");
         }
         buffer.append("\n");
 
-        if(_child != null)
-        {
-          _child.print(buffer, indent + 1);
+        if (_child != null) {
+            _child.print(buffer, indent + 1);
         }
     }
 }

@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -46,11 +46,15 @@ public class AnnotationProcessor {
     public static String readAnnotationText(Reader reader) throws IOException {
         BufferedReader bread = new BufferedReader(reader);
         return String
-                .join(" ",
-                        (Iterable<String>) bread.lines().map(String::trim)
-                                .filter((line) -> line.startsWith(MAGIC_COOKIE))
-                                .map((line) -> line.substring(MAGIC_COOKIE.length()).trim())::iterator)
-                .replace(":)", "").trim();
+            .join(
+                " ",
+                (Iterable<String>) bread.lines()
+                    .map(String::trim)
+                    .filter((line) -> line.startsWith(MAGIC_COOKIE))
+                    .map((line) -> line.substring(MAGIC_COOKIE.length()).trim())::iterator
+            )
+            .replace(":)", "")
+            .trim();
     }
 
     public static TestAnnotation readAnnotation(Reader reader) throws IOException, AnnotationParseException {
@@ -95,31 +99,39 @@ public class AnnotationProcessor {
         }
 
         if (!shouldParse.isPresent() && !shouldCompile.isPresent() && !shouldRun.isPresent()) {
-            throw new AnnotationParseException(annotationText,
-                    String.format("Missing compilability indicator (e.g. [%s]).", SHOULD_PARSE));
+            throw new AnnotationParseException(
+                    annotationText,
+                    String.format("Missing compilability indicator (e.g. [%s]).", SHOULD_PARSE)
+            );
         }
 
         if (shouldRun.isPresent()) {
             if (shouldRun.get())
                 return new RunnableTestAnnotation(parameters.get(OUTPUT_KEY));
             else
-                return new UnrunnableTestAnnotation(parameters.get(ERROR_MESSAGE),
-                        parameters.get(ERROR_METADATA));
+                return new UnrunnableTestAnnotation(
+                        parameters.get(ERROR_MESSAGE),
+                        parameters.get(ERROR_METADATA)
+                );
         }
 
         if (shouldCompile.isPresent()) {
             if (shouldCompile.get())
                 return new CompilableTestAnnotation();
             else
-                return new UncompilableTestAnnotation(parameters.get(ERROR_MESSAGE),
-                        parameters.get(ERROR_METADATA));
+                return new UncompilableTestAnnotation(
+                        parameters.get(ERROR_MESSAGE),
+                        parameters.get(ERROR_METADATA)
+                );
         }
 
         if (shouldParse.get())
             return new ParsableTestAnnotation();
         else
-            return new UnparsableTestAnnotation(parameters.get(ERROR_MESSAGE),
-                    parameters.get(ERROR_METADATA));
+            return new UnparsableTestAnnotation(
+                    parameters.get(ERROR_MESSAGE),
+                    parameters.get(ERROR_METADATA)
+            );
     }
 
     public static abstract class TestAnnotation {

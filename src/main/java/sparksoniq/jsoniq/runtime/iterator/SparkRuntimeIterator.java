@@ -35,27 +35,23 @@ import sparksoniq.spark.SparkSessionManager;
 
 import java.util.List;
 
-public abstract class HybridRuntimeIterator extends RuntimeIterator {
+public abstract class SparkRuntimeIterator extends RuntimeIterator {
+
 
     private static final long serialVersionUID = 1L;
     protected JiqsItemParser parser;
+    protected JavaRDD<Item> _rdd;
     protected List<Item> result = null;
-    private int currentResultIndex = 0;
-    private boolean isRDDInitialized = false;
-    private boolean _isRDD;
+    protected int currentResultIndex = 0;
 
-    protected HybridRuntimeIterator(List<RuntimeIterator> children, IteratorMetadata iteratorMetadata) {
+    protected SparkRuntimeIterator(List<RuntimeIterator> children, IteratorMetadata iteratorMetadata) {
         super(children, iteratorMetadata);
         this.parser = new JiqsItemParser();
     }
 
     @Override
     public boolean isRDD() {
-        if (!isRDDInitialized) {
-            _isRDD = initIsRDD();
-            isRDDInitialized = true;
-        }
-        return _isRDD;
+        return true;
     }
 
     @Override
@@ -64,43 +60,24 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        if (!isRDD()) {
-            openLocal();
-        }
-    }
-
-    @Override
     public void reset(DynamicContext context) {
         super.reset(context);
-        if (!_isRDD) {
-            resetLocal(context);
-            return;
-        }
         result = null;
     }
 
     @Override
     public void close() {
         super.close();
-        if (!_isRDD) {
-            closeLocal();
-            return;
-        }
         result = null;
     }
 
     @Override
     public boolean hasNext() {
-        if (!_isRDD) {
-            return hasNextLocal();
-        }
         if (result == null) {
             currentResultIndex = 0;
-            JavaRDD<Item> rdd = this.getRDD(_currentDynamicContext);
+            this._rdd = this.getRDD(_currentDynamicContext);
             if (SparkSessionManager.LIMIT_COLLECT()) {
-                result = rdd.take(SparkSessionManager.COLLECT_ITEM_LIMIT);
+                result = _rdd.take(SparkSessionManager.COLLECT_ITEM_LIMIT);
                 if (result.size() == SparkSessionManager.COLLECT_ITEM_LIMIT) {
                     if (Main.terminal == null) {
                         System.out.println(
@@ -117,7 +94,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
                     }
                 }
             } else {
-                result = rdd.collect();
+                result = _rdd.collect();
             }
             _hasNext = !result.isEmpty();
         }
@@ -126,9 +103,6 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
     @Override
     public Item next() {
-        if (!_isRDD) {
-            return nextLocal();
-        }
         if (!this._isOpen)
             throw new IteratorFlowException("Runtime iterator is not open", getMetadata());
 
@@ -144,7 +118,6 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         currentResultIndex++;
         return item;
     }
-
 
     @Override
     public JavaRDD<Item> getRDD(DynamicContext context) {
@@ -163,16 +136,4 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     }
 
     protected abstract JavaRDD<Item> getRDDAux(DynamicContext context);
-
-    protected abstract boolean initIsRDD();
-
-    protected abstract void openLocal();
-
-    protected abstract void closeLocal();
-
-    protected abstract void resetLocal(DynamicContext context);
-
-    protected abstract boolean hasNextLocal();
-
-    protected abstract Item nextLocal();
 }

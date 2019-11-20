@@ -25,7 +25,8 @@ public class DateFunctionIterator extends LocalFunctionCallIterator {
 
     public DateFunctionIterator(
             List<RuntimeIterator> arguments,
-            IteratorMetadata iteratorMetadata) {
+            IteratorMetadata iteratorMetadata
+    ) {
         super(arguments, iteratorMetadata);
     }
 
@@ -36,14 +37,19 @@ public class DateFunctionIterator extends LocalFunctionCallIterator {
             try {
                 return ItemFactory.getInstance().createDateItem(_dateStringItem.getStringValue());
             } catch (UnsupportedOperationException | IllegalArgumentException e) {
-                String message = String.format("\"%s\": value of type %s is not castable to type %s",
-                        _dateStringItem.serialize(), "string", "date");
+                String message = String.format(
+                    "\"%s\": value of type %s is not castable to type %s",
+                    _dateStringItem.serialize(),
+                    "string",
+                    "date"
+                );
                 throw new CastException(message, getMetadata());
             }
         } else
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " date function",
-                    getMetadata());
+                    getMetadata()
+            );
     }
 
     @Override
@@ -51,11 +57,15 @@ public class DateFunctionIterator extends LocalFunctionCallIterator {
         super.open(context);
         try {
             _dateStringItem = this.getSingleItemOfTypeFromIterator(
-                    this._children.get(0),
-                    StringItem.class,
-                    new UnknownFunctionCallException("date", this._children.size(), getMetadata()));
+                this._children.get(0),
+                StringItem.class,
+                new UnknownFunctionCallException("date", this._children.size(), getMetadata())
+            );
         } catch (UnknownFunctionCallException e) {
-            throw new UnexpectedTypeException(" Sequence of more than one item can not be cast to type with quantifier '1' or '?'", getMetadata());
+            throw new UnexpectedTypeException(
+                    " Sequence of more than one item can not be cast to type with quantifier '1' or '?'",
+                    getMetadata()
+            );
         }
         this._hasNext = _dateStringItem != null;
     }

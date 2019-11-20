@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -36,8 +36,8 @@ import org.rumbledb.api.Item;
 public class VariableReferenceIterator extends LocalRuntimeIterator {
 
 
-	private static final long serialVersionUID = 1L;
-	private SequenceType sequence;
+    private static final long serialVersionUID = 1L;
+    private SequenceType sequence;
     private String _variableName;
     private List<Item> items = null;
     private int currentIndex = 0;
@@ -51,7 +51,10 @@ public class VariableReferenceIterator extends LocalRuntimeIterator {
     @Override
     public Item next() {
         if (!this.hasNext())
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "$" + _variableName, getMetadata());
+            throw new IteratorFlowException(
+                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "$" + _variableName,
+                    getMetadata()
+            );
         Item item = items.get(currentIndex);
         currentIndex++;
         if (currentIndex == items.size())
@@ -87,9 +90,9 @@ public class VariableReferenceIterator extends LocalRuntimeIterator {
         return _variableName;
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies()
-    {
-        Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
+    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
+        Map<String, DynamicContext.VariableDependency> result =
+            new TreeMap<String, DynamicContext.VariableDependency>();
         result.put(_variableName, DynamicContext.VariableDependency.FULL);
         return result;
     }
