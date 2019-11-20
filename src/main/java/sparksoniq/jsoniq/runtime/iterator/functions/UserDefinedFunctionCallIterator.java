@@ -41,7 +41,6 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     // parametrized fields
-    private FunctionIdentifier _functionIdentifier;
     private List<RuntimeIterator> _functionArguments;
 
     // calculated fields
@@ -52,7 +51,7 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
 
 
     public UserDefinedFunctionCallIterator(
-            FunctionIdentifier functionIdentifier,
+            FunctionItem functionItem,
             List<RuntimeIterator> functionArguments,
             IteratorMetadata iteratorMetadata
     ) {
@@ -64,7 +63,7 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
                 _children.add(arg);
             }
         }
-        _functionIdentifier = functionIdentifier;
+        _functionItem = functionItem;
         _functionArguments = functionArguments;
 
     }
@@ -140,7 +139,7 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
             return result;
         }
         throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in " + _functionIdentifier.getName() + "  function",
+                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in " + _functionItem.getIdentifier().getName() + "  function",
                 getMetadata()
         );
     }
@@ -188,7 +187,6 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
 
     @Override
     public boolean initIsRDD() {
-        _functionItem = Functions.getUserDefinedFunction(_functionIdentifier, getMetadata());
         if (_isPartialApplication) {
             return false;
         }
