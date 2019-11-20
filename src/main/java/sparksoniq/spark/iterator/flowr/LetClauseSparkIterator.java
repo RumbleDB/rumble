@@ -52,7 +52,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
     private RuntimeIterator _expression;
     private DynamicContext _tupleContext; // re-use same DynamicContext object for efficiency
     private FlworTuple _nextLocalTupleResult;
-    Map<String, DynamicContext.VariableDependency> _dependencies;
+    private Map<String, DynamicContext.VariableDependency> _dependencies;
 
     public LetClauseSparkIterator(
             RuntimeTupleIterator child,
@@ -77,7 +77,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
     @Override
     public FlworTuple next() {
-        if (_hasNext == true) {
+        if (_hasNext) {
             FlworTuple result = _nextLocalTupleResult; // save the result to be returned
             setNextLocalTupleResult(); // calculate and store the next result
             return result;
@@ -103,8 +103,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 results.add(_expression.next());
             _expression.close();
 
-            FlworTuple newTuple = new FlworTuple(inputTuple, _variableName, results);
-            _nextLocalTupleResult = newTuple;
+            _nextLocalTupleResult = new FlworTuple(inputTuple, _variableName, results);
             this._hasNext = true;
         } else {
             _child.close();
@@ -128,8 +127,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 results.add(_expression.next());
             _expression.close();
 
-            FlworTuple newTuple = new FlworTuple(_variableName, results);
-            _nextLocalTupleResult = newTuple;
+            _nextLocalTupleResult = new FlworTuple(_variableName, results);
         }
     }
 
@@ -208,7 +206,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         for (int i = 0; i < indent + 1; ++i) {
             buffer.append("  ");
         }
-        buffer.append("Variable " + _variableName);
+        buffer.append("Variable ").append(_variableName);
         buffer.append("\n");
         _expression.print(buffer, indent + 1);
     }

@@ -47,7 +47,6 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
     private RuntimeIterator _expression;
     private DynamicContext _tupleContext; // re-use same DynamicContext object for efficiency
     private FlworTuple _nextLocalTupleResult;
-    private FlworTuple _inputTuple; // tuple received from child, used for tuple creation
     Map<String, DynamicContext.VariableDependency> _dependencies;
 
     public WhereClauseSparkIterator(
@@ -81,7 +80,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
 
     @Override
     public FlworTuple next() {
-        if (_hasNext == true) {
+        if (_hasNext) {
             FlworTuple result = _nextLocalTupleResult; // save the result to be returned
             setNextLocalTupleResult(); // calculate and store the next result
             return result;
@@ -93,16 +92,18 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         // for each incoming tuple, evaluate the expression to a boolean.
         // forward if true, drop if false
 
+        FlworTuple inputTuple;
         while (_child.hasNext()) {
-            _inputTuple = _child.next();
+            // tuple received from child, used for tuple creation
+            inputTuple = _child.next();
             _tupleContext.removeAllVariables(); // clear the previous variables
-            _tupleContext.setBindingsFromTuple(_inputTuple); // assign new variables from new tuple
+            _tupleContext.setBindingsFromTuple(inputTuple); // assign new variables from new tuple
 
             _expression.open(_tupleContext);
             boolean effectiveBooleanValue = RuntimeIterator.getEffectiveBooleanValue(_expression);
             _expression.close();
             if (effectiveBooleanValue) {
-                _nextLocalTupleResult = _inputTuple;
+                _nextLocalTupleResult = inputTuple;
                 this._hasNext = true;
                 return;
             }
@@ -123,8 +124,6 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         StructType inputSchema = df.schema();
 
         List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, _dependencies);
-
-
         df.sparkSession()
             .udf()
             .register(

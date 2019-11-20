@@ -87,7 +87,7 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
 
     @Override
     public FlworTuple next() {
-        if (_hasNext == true) {
+        if (_hasNext) {
             FlworTuple result = _nextLocalTupleResult; // save the result to be returned
             setNextLocalTupleResult(); // calculate and store the next result
             return result;
@@ -102,8 +102,7 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
             List<Item> results = new ArrayList<>();
             results.add(ItemFactory.getInstance().createIntegerItem(_currentCountIndex++));
 
-            FlworTuple newTuple = new FlworTuple(inputTuple, _variableName, results);
-            _nextLocalTupleResult = newTuple;
+            _nextLocalTupleResult = new FlworTuple(inputTuple, _variableName, results);
             this._hasNext = true;
         } else {
             _child.close();
@@ -125,7 +124,7 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
 
         String selectSQL = DataFrameUtils.getSQL(allColumns, true);
 
-        Dataset<Row> dfWithIndex = DataFrameUtils.zipWithIndex(df, new Long(1), _variableName);
+        Dataset<Row> dfWithIndex = DataFrameUtils.zipWithIndex(df, 1L, _variableName);
 
         df.sparkSession()
             .udf()
@@ -168,7 +167,7 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
         for (int i = 0; i < indent + 1; ++i) {
             buffer.append("  ");
         }
-        buffer.append("Variable " + _variableName);
+        buffer.append("Variable ").append(_variableName);
         buffer.append("\n");
     }
 

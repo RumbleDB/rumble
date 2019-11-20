@@ -54,7 +54,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     private static final long serialVersionUID = 1L;
     private String _variableName; // for efficient use in local iteration
     private RuntimeIterator _expression;
-    Map<String, DynamicContext.VariableDependency> _dependencies;
+    private Map<String, DynamicContext.VariableDependency> _dependencies;
     private DynamicContext _tupleContext; // re-use same DynamicContext object for efficiency
     private FlworTuple _nextLocalTupleResult;
     private FlworTuple _inputTuple; // tuple received from child, used for tuple creation
@@ -94,7 +94,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
     @Override
     public FlworTuple next() {
-        if (_hasNext == true) {
+        if (_hasNext) {
             FlworTuple result = _nextLocalTupleResult; // save the result to be returned
             // calculate and store the next result
             if (_child == null) { // if it's the initial for clause, call the correct function
@@ -232,8 +232,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
             // TODO - Optimization: Iterate schema creation only once
             Set<String> oldColumnNames = _inputTuple.getKeys();
-            List<String> newColumnNames = new ArrayList<>();
-            oldColumnNames.forEach(fieldName -> newColumnNames.add(fieldName));
+            List<String> newColumnNames = new ArrayList<>(oldColumnNames);
             newColumnNames.add(_variableName);
             List<StructField> fields = new ArrayList<>();
             for (String columnName : newColumnNames) {
@@ -281,7 +280,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         for (int i = 0; i < indent + 1; ++i) {
             buffer.append("  ");
         }
-        buffer.append("Variable " + _variableName);
+        buffer.append("Variable ").append(_variableName);
         buffer.append("\n");
         _expression.print(buffer, indent + 1);
     }
