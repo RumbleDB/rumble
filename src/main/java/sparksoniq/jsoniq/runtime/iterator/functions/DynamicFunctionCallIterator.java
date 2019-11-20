@@ -73,7 +73,6 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
 
     @Override
     public void openLocal() {
-        setFunctionItemAndIteratorWithCurrentContext();
         _functionCallIterator.open(_currentDynamicContext);
         setNextResult();
     }
