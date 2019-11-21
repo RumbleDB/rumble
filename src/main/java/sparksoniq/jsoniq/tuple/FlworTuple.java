@@ -26,7 +26,9 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
+import sparksoniq.Main;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
+import sparksoniq.spark.SparkSessionManager;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -100,10 +102,22 @@ public class FlworTuple implements Serializable, KryoSerializable {
         return localVariables.containsKey(key) || rddVariables.containsKey(key);
     }
 
+    public boolean isRDD(String key) {
+        if (!contains(key)) {
+            throw new SparksoniqRuntimeException("Undeclared FLWOR variable");
+        }
+        return rddVariables.containsKey(key);
+    }
+
     public List<Item> getLocalValue(String key) {
         if (localVariables.containsKey(key)) {
             return localVariables.get(key);
         }
+        if (rddVariables.containsKey(key)) {
+            JavaRDD<Item> rdd = rddVariables.get(key);
+            return SparkSessionManager.collectRDDwithLimit(rdd);
+        }
+
         throw new SparksoniqRuntimeException("Undeclared FLOWR variable");
     }
 
