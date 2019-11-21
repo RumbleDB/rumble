@@ -129,10 +129,12 @@ public class FlworTuple implements Serializable, KryoSerializable {
     }
 
     public void putValue(String key, List<Item> value) {
+        rddVariables.remove(key);
         localVariables.put(key, value);
     }
 
     public void putValue(String key, JavaRDD<Item> value) {
+        localVariables.remove(key);
         rddVariables.put(key, value);
     }
 
