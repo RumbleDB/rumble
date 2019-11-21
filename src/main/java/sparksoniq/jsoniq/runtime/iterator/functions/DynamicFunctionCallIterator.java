@@ -126,6 +126,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+        setFunctionItemAndIteratorWithCurrentContext();
         return _functionCallIterator.getRDD(_currentDynamicContext);
     }
 

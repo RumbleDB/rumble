@@ -112,6 +112,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                     argumentEntry.getValue()
                 );
             }
+            _functionCallIterator = _functionItem.getBodyIterator();
         } else {
             List<String> partialAppParamNames = new ArrayList<>();
             List<SequenceType> partialAppSignature = new ArrayList<>();
