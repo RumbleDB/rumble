@@ -296,6 +296,7 @@ public class JsoniqQueryExecutor {
         }
         if (resultCount > 1) {
             List<String> collectedOutput;
+
             if (SparkSessionManager.LIMIT_COLLECT()) {
                 collectedOutput = output.take(SparkSessionManager.COLLECT_ITEM_LIMIT);
                 if (collectedOutput.size() == SparkSessionManager.COLLECT_ITEM_LIMIT) {

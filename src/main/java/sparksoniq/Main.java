@@ -119,4 +119,12 @@ public class Main {
         terminal.launch();
     }
 
+    public static void printMessageToLog(String message) {
+        if (Main.terminal == null) {
+            System.out.println(message);
+        } else {
+            Main.terminal.output(message);
+        }
+    }
+
 }
