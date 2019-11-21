@@ -747,6 +747,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
             return new TreatIterator(
                     childExpression,
                     expression.getsequenceType().getSequence(),
+                    true,
                     createIteratorMetadata(expression)
             );
         } else

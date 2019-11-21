@@ -126,7 +126,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
 
                 if (argIterator == null) { // == ArgumentPlaceholder
                     partialAppParametersNames.add(argName);
-                    partialAppParameters.add(_functionItem.getSignature().getParameters().get(i));
+                    partialAppParameters.add(_functionItem.getSignature().getParameterTypes().get(i));
                 } else {
                     List<Item> argValue = getItemsFromIteratorWithCurrentContext(argIterator);
                     argumentValues.put(argName, argValue);

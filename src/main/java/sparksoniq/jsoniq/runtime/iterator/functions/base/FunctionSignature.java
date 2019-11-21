@@ -38,7 +38,7 @@ public class FunctionSignature implements Serializable {
     }
 
 
-    public List<SequenceType> getParameters() {
+    public List<SequenceType> getParameterTypes() {
         return parameters;
     }
 
@@ -49,12 +49,12 @@ public class FunctionSignature implements Serializable {
     @Override
     public boolean equals(Object instance) {
         return instance instanceof FunctionSignature
-            && this.getParameters() == ((FunctionSignature) instance).getParameters()
+            && this.getParameterTypes() == ((FunctionSignature) instance).getParameterTypes()
             && this.getReturnType() == ((FunctionSignature) instance).getReturnType();
     }
 
     @Override
     public int hashCode() {
-        return this.getParameters().hashCode() + this.getReturnType().hashCode();
+        return this.getParameterTypes().hashCode() + this.getReturnType().hashCode();
     }
 }

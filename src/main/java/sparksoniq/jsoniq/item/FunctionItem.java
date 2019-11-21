@@ -151,7 +151,7 @@ public class FunctionItem extends Item {
     public void write(Kryo kryo, Output output) {
         kryo.writeObject(output, this.identifier);
         kryo.writeObject(output, this.parameterNames);
-        kryo.writeObject(output, this.signature.getParameters());
+        kryo.writeObject(output, this.signature.getParameterTypes());
         kryo.writeObject(output, this.signature.getReturnType());
         // kryo.writeObject(output, this.bodyIterator);
         kryo.writeObject(output, this.nonLocalVariableBindings);
