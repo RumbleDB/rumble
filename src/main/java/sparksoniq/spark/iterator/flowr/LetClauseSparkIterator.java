@@ -95,7 +95,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         if (_child.hasNext()) {
             FlworTuple inputTuple = _child.next();
             _tupleContext.removeAllVariables(); // clear the previous variables
-            _tupleContext.setBindingsFromTuple(inputTuple); // assign new variables from new tuple
+            _tupleContext.setBindingsFromTuple(inputTuple, getMetadata()); // assign new variables from new tuple
 
             List<Item> results = new ArrayList<>();
             _expression.open(_tupleContext);

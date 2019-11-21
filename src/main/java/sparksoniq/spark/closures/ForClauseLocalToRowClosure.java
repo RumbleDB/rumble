@@ -28,6 +28,7 @@ import org.rumbledb.api.Item;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Output;
 
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.DataFrameUtils;
 
@@ -40,12 +41,14 @@ public class ForClauseLocalToRowClosure implements Function<Item, Row> {
     private static final long serialVersionUID = 1L;
 
     private final FlworTuple _inputTuple;
+    private final IteratorMetadata _metadata;
 
     private transient Kryo _kryo;
     private transient Output _output;
 
-    public ForClauseLocalToRowClosure(FlworTuple inputTuple) {
+    public ForClauseLocalToRowClosure(FlworTuple inputTuple, IteratorMetadata metadata) {
         this._inputTuple = inputTuple;
+        this._metadata = metadata;
         _kryo = new Kryo();
         _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
@@ -55,7 +58,7 @@ public class ForClauseLocalToRowClosure implements Function<Item, Row> {
     @Override
     public Row call(Item item) throws Exception {
         List<List<Item>> rowColumns = new ArrayList<>();
-        _inputTuple.getLocalKeys().forEach(key -> rowColumns.add(_inputTuple.getLocalValue(key)));
+        _inputTuple.getLocalKeys().forEach(key -> rowColumns.add(_inputTuple.getLocalValue(key, _metadata)));
 
         List<Item> itemList = new ArrayList<>();
         itemList.add(item);

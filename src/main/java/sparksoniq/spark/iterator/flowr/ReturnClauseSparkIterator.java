@@ -102,7 +102,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         while (_child.hasNext()) {
             FlworTuple tuple = _child.next();
             _tupleContext.removeAllVariables(); // clear the previous variables
-            _tupleContext.setBindingsFromTuple(tuple); // assign new variables from new tuple
+            _tupleContext.setBindingsFromTuple(tuple, getMetadata()); // assign new variables from new tuple
 
             _expression.open(_tupleContext);
             boolean isResultSet = setResultFromExpression();

@@ -26,6 +26,7 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.ItemFactory;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.io.Serializable;
@@ -66,22 +67,10 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this._variableCounts = new HashMap<>();
     }
 
-    public DynamicContext(FlworTuple tuple) {
-        this();
-        setBindingsFromTuple(tuple);
-    }
-
-    public DynamicContext(DynamicContext parent, FlworTuple tuple) {
-        this._parent = parent;
-        this._variableValues = new HashMap<>();
-        this._variableCounts = new HashMap<>();
-        setBindingsFromTuple(tuple);
-    }
-
-    public void setBindingsFromTuple(FlworTuple tuple) {
+    public void setBindingsFromTuple(FlworTuple tuple, IteratorMetadata metadata) {
         for (String key : tuple.getLocalKeys())
             if (!key.startsWith("."))
-                this.addVariableValue(key, tuple.getLocalValue(key));
+                this.addVariableValue(key, tuple.getLocalValue(key, metadata));
     }
 
     public void addVariableValue(String varName, List<Item> value) {

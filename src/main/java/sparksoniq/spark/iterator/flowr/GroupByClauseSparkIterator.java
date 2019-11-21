@@ -138,7 +138,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             List<Item> results = new ArrayList<>();
             for (GroupByClauseSparkIteratorExpression expression : _expressions) {
                 tupleContext.removeAllVariables(); // clear the previous variables
-                tupleContext.setBindingsFromTuple(inputTuple); // assign new variables from new tuple
+                tupleContext.setBindingsFromTuple(inputTuple, getMetadata()); // assign new variables from new tuple
 
                 // if grouping on an expression
                 RuntimeIterator groupVariableExpression = expression.getExpression();
@@ -204,11 +204,11 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         for (String tupleVariable : oldFirstTuple.getLocalKeys()) {
             iterator = keyTuplePairs.iterator();
             if (_expressions.stream().anyMatch(v -> v.getVariableReference().getVariableName().equals(tupleVariable))) {
-                newTuple.putValue(tupleVariable, oldFirstTuple.getLocalValue(tupleVariable));
+                newTuple.putValue(tupleVariable, oldFirstTuple.getLocalValue(tupleVariable, getMetadata()));
             } else {
                 List<Item> allValues = new ArrayList<>();
                 while (iterator.hasNext()) {
-                    allValues.addAll(iterator.next().getLocalValue(tupleVariable));
+                    allValues.addAll(iterator.next().getLocalValue(tupleVariable, getMetadata()));
                 }
                 newTuple.putValue(tupleVariable, allValues);
             }

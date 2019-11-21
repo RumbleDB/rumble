@@ -97,7 +97,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             // tuple received from child, used for tuple creation
             inputTuple = _child.next();
             _tupleContext.removeAllVariables(); // clear the previous variables
-            _tupleContext.setBindingsFromTuple(inputTuple); // assign new variables from new tuple
+            _tupleContext.setBindingsFromTuple(inputTuple, getMetadata()); // assign new variables from new tuple
 
             _expression.open(_tupleContext);
             boolean effectiveBooleanValue = RuntimeIterator.getEffectiveBooleanValue(_expression);
