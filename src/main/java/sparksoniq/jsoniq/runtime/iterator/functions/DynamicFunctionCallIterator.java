@@ -23,12 +23,15 @@ package sparksoniq.jsoniq.runtime.iterator.functions;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.SequenceExceptionExactlyOne;
+import sparksoniq.exceptions.TreatException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionSignature;
+import sparksoniq.jsoniq.runtime.iterator.operational.TypePromotionIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.SequenceType;
@@ -50,6 +53,8 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
     private FunctionItem _functionItem;
     private RuntimeIterator _functionCallIterator;
     private Item _nextResult;
+    private FunctionIdentifier _functionIdentifier;
+    private CheckReturnTypeIterator _checkReturnTypeIterator;
 
     public DynamicFunctionCallIterator(
             RuntimeIterator functionItemIterator,
@@ -73,9 +78,16 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
 
     @Override
     public void openLocal() {
-        setFunctionItemAndIteratorWithCurrentContext();
-        processArguments();
-        _functionCallIterator.open(_currentDynamicContext);
+        try {
+            setFunctionItemAndIteratorWithCurrentContext();
+            processArguments();
+            _functionCallIterator.open(_currentDynamicContext);
+        } catch(TreatException e) {
+            String exceptionMessage = e.getJSONiqErrorMessage();
+            throw new UnexpectedTypeException("Invalid argument for "
+                    + (_functionIdentifier.getName().equals("") ? "inline" :
+                    _functionIdentifier.getName()) + " function. " + exceptionMessage, getMetadata());
+        }
         setNextResult();
     }
 
@@ -188,7 +200,14 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
     public void setNextResult() {
         _nextResult = null;
         if (_functionCallIterator.hasNext()) {
-            _nextResult = _functionCallIterator.next();
+            try {
+                _nextResult = _functionCallIterator.next();
+            } catch(TreatException e) {
+                String exceptionMessage = e.getJSONiqErrorMessage();
+                throw new UnexpectedTypeException("Invalid argument for "
+                        + (_functionIdentifier.getName().equals("") ? "inline" :
+                        _functionIdentifier.getName()) + " function. " + exceptionMessage, getMetadata());
+            }
         }
 
         if (_nextResult == null) {
@@ -201,8 +220,17 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        processArguments();
-        return _functionCallIterator.getRDD(_currentDynamicContext);
+        JavaRDD<Item> result;
+        try {
+            processArguments();
+            result = _functionCallIterator.getRDD(_currentDynamicContext);
+        } catch(TreatException e) {
+            String exceptionMessage = e.getJSONiqErrorMessage();
+            throw new UnexpectedTypeException("Invalid argument for "
+                    + (_functionIdentifier.getName().equals("") ? "inline" :
+                    _functionIdentifier.getName()) + " function. " + exceptionMessage, getMetadata());
+        }
+        return result;
     }
 
     @Override
@@ -210,7 +238,6 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
         if (_isPartialApplication) {
             return false;
         }
-
         setFunctionItemAndIteratorWithCurrentContext();
         return _functionCallIterator.isRDD();
     }
@@ -232,5 +259,21 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
             );
         }
         _functionCallIterator = _functionItem.getBodyIterator();
+        _functionIdentifier = _functionItem.getIdentifier();
+
+        if (_functionItem.getSignature().getParameters() != null) {
+            for (int i = 0; i < _functionArguments.size(); i++) {
+                if (_functionArguments.get(i) != null) {
+                    _functionArguments.set(i, new TypePromotionIterator(
+                            _functionArguments.get(i), _functionItem.getSignature().getParameters().get(i), getMetadata()));
+                }
+            }
+        }
+        this._checkReturnTypeIterator.setFunctionName(_functionIdentifier.getName());
+        this._checkReturnTypeIterator.getTypePromotionIterator().setSequenceType(_functionItem.getSignature().getReturnType());
+    }
+
+    public void setCheckReturnTypeIterator(CheckReturnTypeIterator checkReturnTypeIterator) {
+        this._checkReturnTypeIterator = checkReturnTypeIterator;
     }
 }

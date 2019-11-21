@@ -29,9 +29,13 @@ public class TreatIterator extends HybridRuntimeIterator {
     private String sequenceTypeName;
     boolean _shouldCheckForTypePromotion = true;
 
-    public TreatIterator(RuntimeIterator iterator, SequenceType sequenceType, IteratorMetadata iteratorMetadata) {
+    TreatIterator(RuntimeIterator iterator, IteratorMetadata iteratorMetadata) {
         super(Collections.singletonList(iterator), iteratorMetadata);
         _iterator = iterator;
+    }
+
+    public TreatIterator(RuntimeIterator iterator, SequenceType sequenceType, IteratorMetadata iteratorMetadata) {
+        this(iterator, iteratorMetadata);
         this._sequenceType = sequenceType;
         itemType = _sequenceType.getItemType();
         sequenceTypeName = ItemTypes.getItemTypeName(itemType.getType().toString());
@@ -156,6 +160,12 @@ public class TreatIterator extends HybridRuntimeIterator {
     @Override
     public boolean initIsRDD() {
         return _iterator.isRDD();
+    }
+
+    public void setSequenceType(SequenceType _sequenceType) {
+        this._sequenceType = _sequenceType;
+        this.itemType = _sequenceType.getItemType();
+        this.sequenceTypeName = ItemTypes.getItemTypeName(itemType.getType().toString());
     }
 }
 

@@ -93,6 +93,7 @@ import sparksoniq.jsoniq.runtime.iterator.control.IfRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.control.SwitchRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.control.TypeSwitchCase;
 import sparksoniq.jsoniq.runtime.iterator.control.TypeSwitchRuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.CheckReturnTypeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.DynamicFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.FunctionRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.UserDefinedFunctionCallIterator;
@@ -111,6 +112,7 @@ import sparksoniq.jsoniq.runtime.iterator.operational.OrOperationIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.RangeOperationIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.StringConcatIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.TreatIterator;
+import sparksoniq.jsoniq.runtime.iterator.operational.TypePromotionIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.UnaryOperationIterator;
 import sparksoniq.jsoniq.runtime.iterator.postfix.ArrayLookupIterator;
 import sparksoniq.jsoniq.runtime.iterator.postfix.ArrayUnboxingIterator;
@@ -345,11 +347,15 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                                 arguments.add(this.visit(arg, argument));
                             }
                         }
-                        previous = new DynamicFunctionCallIterator(
-                                previous,
-                                arguments,
-                                createIteratorMetadata(expression)
-                        );
+                        IteratorMetadata metadata = createIteratorMetadata(expression);
+                        DynamicFunctionCallIterator iterator = new DynamicFunctionCallIterator(previous, arguments, metadata);
+                        CheckReturnTypeIterator checkReturnTypeIterator = new CheckReturnTypeIterator(
+                                        new TypePromotionIterator(
+                                            iterator,
+                                            metadata),
+                                        metadata);
+                        iterator.setCheckReturnTypeIterator(checkReturnTypeIterator);
+                        previous = checkReturnTypeIterator;
                     }
                 } catch (Exception ex) {
                     ex.printStackTrace();
@@ -454,7 +460,25 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
             return Functions.getBuiltInFunctionIterator(identifier, arguments, iteratorMetadata);
         }
         if (Functions.checkUserDefinedFunctionExists(identifier)) {
-            return new UserDefinedFunctionCallIterator(identifier, arguments, iteratorMetadata);
+            FunctionItem functionItem = Functions.getUserDefinedFunction(identifier, iteratorMetadata);
+            if (functionItem.getSignature().getParameters() != null) {
+                for (int i = 0; i < arguments.size(); i++) {
+                    if (arguments.get(i) != null)
+                        arguments.set(i, new TypePromotionIterator(
+                            arguments.get(i), functionItem.getSignature().getParameters().get(i), iteratorMetadata));
+                }
+            }
+            if (functionItem.getSignature().getReturnType() != null) {
+
+                return new CheckReturnTypeIterator(
+                            new TypePromotionIterator(
+                                new UserDefinedFunctionCallIterator(functionItem, arguments, iteratorMetadata),
+                                functionItem.getSignature().getReturnType(),
+                                iteratorMetadata),
+                            identifier.getName(),
+                            iteratorMetadata);
+            }
+            return new UserDefinedFunctionCallIterator(functionItem, arguments, iteratorMetadata);
         }
         throw new UnknownFunctionCallException(
                 identifier.getName(),

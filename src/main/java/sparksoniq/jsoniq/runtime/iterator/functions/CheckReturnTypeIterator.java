@@ -23,7 +23,6 @@ public class CheckReturnTypeIterator extends HybridRuntimeIterator {
         this._typePromotionIterator = typePromotionIterator;
     }
 
-
     public CheckReturnTypeIterator(
             TypePromotionIterator typePromotionIterator,
             String functionName,
@@ -103,5 +102,13 @@ public class CheckReturnTypeIterator extends HybridRuntimeIterator {
             );
         }
         return result;
+    }
+
+    void setFunctionName(String _functionName) {
+        this._functionName = _functionName;
+    }
+
+    TypePromotionIterator getTypePromotionIterator() {
+        return _typePromotionIterator;
     }
 }

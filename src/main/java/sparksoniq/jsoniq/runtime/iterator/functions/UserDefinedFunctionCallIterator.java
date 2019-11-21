@@ -23,12 +23,13 @@ package sparksoniq.jsoniq.runtime.iterator.functions;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.TreatException;
+import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionSignature;
-import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.SequenceType;
@@ -42,18 +43,17 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     // parametrized fields
-    private FunctionIdentifier _functionIdentifier;
+    private FunctionItem _functionItem;
     private List<RuntimeIterator> _functionArguments;
 
     // calculated fields
     private boolean _isPartialApplication;
-    private FunctionItem _functionItem;
+    private FunctionIdentifier _functionIdentifier;
     private RuntimeIterator _functionCallIterator;
     private Item _nextResult;
 
-
     public UserDefinedFunctionCallIterator(
-            FunctionIdentifier functionIdentifier,
+            FunctionItem functionItem,
             List<RuntimeIterator> functionArguments,
             IteratorMetadata iteratorMetadata
     ) {
@@ -65,15 +65,22 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
                 _children.add(arg);
             }
         }
-        _functionIdentifier = functionIdentifier;
+        _functionIdentifier = functionItem.getIdentifier();
         _functionArguments = functionArguments;
-
+        _functionItem = functionItem;
     }
 
     @Override
     public void openLocal() {
-        processArguments();
-        _functionCallIterator.open(_currentDynamicContext);
+        try {
+            processArguments();
+            _functionCallIterator.open(_currentDynamicContext);
+        } catch(TreatException e) {
+            String exceptionMessage = e.getJSONiqErrorMessage();
+            throw new UnexpectedTypeException("Invalid argument for "
+                    + (_functionIdentifier.getName().equals("") ? "inline" :
+                    _functionIdentifier.getName()) + " function. " + exceptionMessage, getMetadata());
+        }
         setNextResult();
     }
 
@@ -168,7 +175,14 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
     public void setNextResult() {
         _nextResult = null;
         if (_functionCallIterator.hasNext()) {
-            _nextResult = _functionCallIterator.next();
+            try {
+                _nextResult = _functionCallIterator.next();
+            } catch(TreatException e) {
+                String exceptionMessage = e.getJSONiqErrorMessage();
+                throw new UnexpectedTypeException("Invalid argument for "
+                        + (_functionIdentifier.getName().equals("") ? "inline" :
+                        _functionIdentifier.getName()) + " function. " + exceptionMessage, getMetadata());
+            }
         }
 
         if (_nextResult == null) {
@@ -182,13 +196,21 @@ public class UserDefinedFunctionCallIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         // TODO: how to handle partial function appliacation for RDDs
-        processArguments();
-        return _functionCallIterator.getRDD(_currentDynamicContext);
+        JavaRDD<Item> result;
+        try {
+            processArguments();
+            result = _functionCallIterator.getRDD(_currentDynamicContext);
+        } catch(TreatException e) {
+            String exceptionMessage = e.getJSONiqErrorMessage();
+            throw new UnexpectedTypeException("Invalid argument for "
+                    + (_functionIdentifier.getName().equals("") ? "inline" :
+                    _functionIdentifier.getName()) + " function. " + exceptionMessage, getMetadata());
+        }
+        return result;
     }
 
     @Override
     public boolean initIsRDD() {
-        _functionItem = Functions.getUserDefinedFunction(_functionIdentifier, getMetadata());
         if (_isPartialApplication) {
             return false;
         }

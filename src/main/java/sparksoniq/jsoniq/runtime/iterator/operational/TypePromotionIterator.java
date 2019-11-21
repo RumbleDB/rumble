@@ -21,15 +21,15 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     private TreatIterator _treatIterator;
     private RuntimeIterator _child;
 
-    public TypePromotionIterator(
-            RuntimeIterator iterator,
-            SequenceType sequenceType,
-            IteratorMetadata iteratorMetadata
-    ) {
+    public TypePromotionIterator(RuntimeIterator iterator, IteratorMetadata iteratorMetadata) {
         super(Collections.singletonList(iterator), iteratorMetadata);
         this._child = iterator;
-        this._sequenceType = sequenceType;
-        this._treatIterator = new TreatIterator(_child, sequenceType, iteratorMetadata);
+        this._treatIterator = new TreatIterator(_child, iteratorMetadata);
+    }
+
+    public TypePromotionIterator(RuntimeIterator iterator, SequenceType sequenceType, IteratorMetadata iteratorMetadata) {
+        this(iterator, iteratorMetadata);
+        this.setSequenceType(sequenceType);
     }
 
     @Override
@@ -70,7 +70,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
 
     @Override
     public boolean initIsRDD() {
-        return _treatIterator.initIsRDD();
+        return _treatIterator.isRDD();
     }
 
     @Override
@@ -92,8 +92,14 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     }
 
     private void checkTypePromotion(String treatExceptionMessage) {
+        if (_treatIterator._nextResult != null && _treatIterator._nextResult.isFunction()) return;
         if (!this.resultCanBePromoted())
             throw new TreatException(treatExceptionMessage.replaceFirst("treated as", "promoted to"), getMetadata());
         _treatIterator._nextResult = _treatIterator._nextResult.promoteTo(_sequenceType.getItemType());
+    }
+
+    public void setSequenceType(SequenceType _sequenceType) {
+        this._sequenceType = _sequenceType;
+        this._treatIterator.setSequenceType(_sequenceType);
     }
 }
