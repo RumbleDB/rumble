@@ -208,12 +208,12 @@ public class DataFrameUtils {
         for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
             String columnName = columnNames[columnIndex];
 
-            boolean applyDistinct = false;
+            boolean groupingKey = false;
             if (columnIndex == duplicateVariableIndex) {
                 continue;
             }
             if (groupbyVariableNames.contains(columnName)) {
-                applyDistinct = true;
+                groupingKey = true;
             }
 
             boolean applyCount = false;
@@ -228,7 +228,7 @@ public class DataFrameUtils {
             } else {
                 queryColumnString.append(serializerUdfName);
                 queryColumnString.append("(");
-                if (applyDistinct) {
+                if (groupingKey) {
                     queryColumnString.append("array(");
                     queryColumnString.append("first(`");
                 } else {
@@ -242,7 +242,7 @@ public class DataFrameUtils {
                 queryColumnString.append("`)");
             } else {
                 queryColumnString.append("`)");
-                if (applyDistinct) {
+                if (groupingKey) {
                     queryColumnString.append(")");
                 }
                 queryColumnString.append(")");
