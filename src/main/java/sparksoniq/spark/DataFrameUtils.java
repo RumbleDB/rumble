@@ -225,27 +225,26 @@ public class DataFrameUtils {
             }
             if (applyCount) {
                 queryColumnString.append("count(`");
-            } else if (applyDistinct) {
-                queryColumnString.append(serializerUdfName);
-                queryColumnString.append("(");
-                queryColumnString.append("array(");
-                queryColumnString.append("first(`");
             } else {
                 queryColumnString.append(serializerUdfName);
                 queryColumnString.append("(");
-                queryColumnString.append("collect_list(`");
+                if (applyDistinct) {
+                    queryColumnString.append("array(");
+                    queryColumnString.append("first(`");
+                } else {
+                    queryColumnString.append("collect_list(`");
+                }
             }
 
             queryColumnString.append(columnName);
 
             if (applyCount) {
                 queryColumnString.append("`)");
-            } else if (applyDistinct) {
-                queryColumnString.append("`)");
-                queryColumnString.append(")");
-                queryColumnString.append(")");
             } else {
                 queryColumnString.append("`)");
+                if (applyDistinct) {
+                    queryColumnString.append(")");
+                }
                 queryColumnString.append(")");
             }
             queryColumnString.append(" as `");
