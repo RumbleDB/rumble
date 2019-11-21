@@ -138,16 +138,16 @@ public class SparkSessionManager {
         return javaSparkContext;
     }
 
-    public static List<Item> collectRDDwithLimit (JavaRDD<Item> rdd) {
+    public static <T> List<T> collectRDDwithLimit (JavaRDD<T> rdd) {
         String truncationMessage = "Results have been truncated to:"
                 + SparkSessionManager.COLLECT_ITEM_LIMIT
                 + " items. This value can be configured with the --result-size parameter at startup.\n";
         return collectRDDwithLimit(rdd, truncationMessage);
     }
 
-    public static List<Item> collectRDDwithLimit (JavaRDD<Item> rdd, String customTruncationMessage) {
+    public static <T> List<T> collectRDDwithLimit (JavaRDD<T> rdd, String customTruncationMessage) {
         if (SparkSessionManager.LIMIT_COLLECT()) {
-            List<Item> result = rdd.take(SparkSessionManager.COLLECT_ITEM_LIMIT);
+            List<T> result = rdd.take(SparkSessionManager.COLLECT_ITEM_LIMIT);
             if (result.size() == SparkSessionManager.COLLECT_ITEM_LIMIT) {
                 Main.printMessageToLog(customTruncationMessage);
             }
