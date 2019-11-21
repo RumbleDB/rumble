@@ -24,19 +24,17 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
+
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterface, KryoSerializable {
 
@@ -105,10 +103,6 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     public IteratorMetadata getMetadata() {
         return metadata;
     }
-
-    public abstract boolean isRDD();
-
-    public abstract JavaRDD<FlworTuple> getRDD(DynamicContext context);
 
     public abstract boolean isDataFrame();
 

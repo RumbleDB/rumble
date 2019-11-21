@@ -57,7 +57,9 @@ public class DayTimeDurationItem extends DurationItem {
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this._value = getDurationFromString(input.readString(), AtomicTypes.DayTimeDurationItem);
+        this._value = getDurationFromString(input.readString(), AtomicTypes.DayTimeDurationItem).normalizedStandard(
+            PeriodType.dayTime()
+        );
         this.isNegative = this._value.toString().contains("-");
     }
 

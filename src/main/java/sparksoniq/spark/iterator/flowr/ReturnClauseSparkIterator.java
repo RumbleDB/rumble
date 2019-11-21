@@ -59,7 +59,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
     @Override
     protected boolean initIsRDD() {
-        return _child.isRDD();
+        return _child.isDataFrame();
     }
 
     @Override

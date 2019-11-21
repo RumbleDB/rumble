@@ -165,16 +165,14 @@ public class DurationItem extends AtomicItem {
     @Override
     public void write(Kryo kryo, Output output) {
         output.writeString(this.serialize());
-//        Long l = this.getValue().toDurationFrom(Instant.now()).getMillis();
-//        output.writeLong(l);
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this._value = getDurationFromString(input.readString(), AtomicTypes.DurationItem).normalizedStandard(PeriodType.yearMonthDayTime());
+        this._value = getDurationFromString(input.readString(), AtomicTypes.DurationItem).normalizedStandard(
+            PeriodType.yearMonthDayTime()
+        );
         isNegative = this._value.toString().contains("-");
-//        this._value = new Period(input.readLong());
-//        this.isNegative = this._value.toString().contains("-");
     }
 
     private static PeriodFormatter getPeriodFormatter(AtomicTypes durationType) {

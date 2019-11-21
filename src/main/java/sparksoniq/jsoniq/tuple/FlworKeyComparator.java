@@ -18,23 +18,22 @@
  *
  */
 
-package sparksoniq.spark.closures;
+package sparksoniq.jsoniq.tuple;
 
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
-import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 
 import java.io.Serializable;
 import java.util.Comparator;
 import java.util.List;
 
-public class OrderByClauseSortClosure implements Comparator<FlworKey>, Serializable {
+public class FlworKeyComparator implements Comparator<FlworKey>, Serializable {
 
     private static final long serialVersionUID = 1L;
     // private final boolean _isStable;
     private final List<OrderByClauseSparkIteratorExpression> _expressions;
 
-    public OrderByClauseSortClosure(List<OrderByClauseSparkIteratorExpression> expressions, boolean isStable) {
+    public FlworKeyComparator(List<OrderByClauseSparkIteratorExpression> expressions, boolean isStable) {
         // this._isStable = isStable;
         this._expressions = expressions;
     }

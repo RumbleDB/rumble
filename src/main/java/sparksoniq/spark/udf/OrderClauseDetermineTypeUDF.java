@@ -136,10 +136,10 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray<byte[]>, L
                 String itemType = ItemTypes.getItemTypeName(_nextItem.getClass().getSimpleName());
                 throw new UnexpectedTypeException(
                         "\""
-                        + itemType
-                        + "\": invalid type: can not compare for equality to type \""
-                        + itemType
-                        + "\"",
+                            + itemType
+                            + "\": invalid type: can not compare for equality to type \""
+                            + itemType
+                            + "\"",
                         expression.getIteratorMetadata()
                 );
             } else {
