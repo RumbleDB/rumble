@@ -95,8 +95,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
             return _variableCounts.get(varName);
         }
         if (_variableValues.containsKey(varName)) {
-            Item count = ItemFactory.getInstance().createIntegerItem(_variableValues.get(varName).size());
-            return count;
+            return ItemFactory.getInstance().createIntegerItem(_variableValues.get(varName).size());
         }
         if (_parent != null) {
             return _parent.getVariableCount(varName);
@@ -138,8 +137,8 @@ public class DynamicContext implements Serializable, KryoSerializable {
     }
 
     public void setPosition(long position) {
-        List<Item> list = new ArrayList<Item>();
-        Item item = null;
+        List<Item> list = new ArrayList<>();
+        Item item;
         if (position < Integer.MAX_VALUE) {
             item = ItemFactory.getInstance().createIntegerItem((int) position);
 
@@ -161,8 +160,8 @@ public class DynamicContext implements Serializable, KryoSerializable {
     }
 
     public void setLast(long last) {
-        List<Item> list = new ArrayList<Item>();
-        Item item = null;
+        List<Item> list = new ArrayList<>();
+        Item item;
         if (last < Integer.MAX_VALUE) {
             item = ItemFactory.getInstance().createIntegerItem((int) last);
         } else {

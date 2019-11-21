@@ -54,7 +54,7 @@ public class ForClauseLocalToRowClosure implements Function<Item, Row> {
     }
 
     @Override
-    public Row call(Item item) throws Exception {
+    public Row call(Item item) {
         List<List<Item>> rowColumns = new ArrayList<>();
         _inputTuple.getLocalKeys().forEach(key -> rowColumns.add(_inputTuple.getLocalValue(key, _metadata)));
 

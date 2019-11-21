@@ -76,7 +76,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
     @Override
     protected Item nextLocal() {
-        if (_hasNext == true) {
+        if (_hasNext) {
             Item result = _nextResult; // save the result to be returned
             setNextResult(); // calculate and store the next result
             return result;
