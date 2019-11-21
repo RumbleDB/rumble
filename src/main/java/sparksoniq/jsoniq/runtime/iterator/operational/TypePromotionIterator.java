@@ -94,6 +94,6 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     private void checkTypePromotion(String treatExceptionMessage) {
         if (!this.resultCanBePromoted())
             throw new TreatException(treatExceptionMessage.replaceFirst("treated as", "promoted to"), getMetadata());
-        _treatIterator._nextResult = ((AtomicItem) _treatIterator._nextResult).promoteTo(_sequenceType.getItemType());
+        _treatIterator._nextResult = _treatIterator._nextResult.promoteTo(_sequenceType.getItemType());
     }
 }

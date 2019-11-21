@@ -21,7 +21,7 @@ public class TreatIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator _iterator;
-    public Item _nextResult;
+    Item _nextResult;
     Item _currentResult;
     private SequenceType _sequenceType;
     private int _childIndex;
@@ -116,6 +116,7 @@ public class TreatIterator extends HybridRuntimeIterator {
                     ||
                     _sequenceType.getArity() == SequenceType.Arity.OneOrMore)
         ) {
+            _shouldCheckForTypePromotion = false;
             throw new TreatException(
                     "Empty sequence cannot be treated as type "
                         + sequenceTypeName
@@ -126,12 +127,14 @@ public class TreatIterator extends HybridRuntimeIterator {
     }
 
     void checkItemsSize(long size) {
-        if (size > 0 && _sequenceType.isEmptySequence())
+        if (size > 0 && _sequenceType.isEmptySequence()) {
+            _shouldCheckForTypePromotion = false;
             throw new TreatException(
                     ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName())
                         + " cannot be treated as type empty-sequence()",
                     getMetadata()
             );
+        }
 
 
         if (
@@ -140,6 +143,7 @@ public class TreatIterator extends HybridRuntimeIterator {
                     ||
                     _sequenceType.getArity() == SequenceType.Arity.OneOrZero)
         ) {
+            _shouldCheckForTypePromotion = false;
             throw new TreatException(
                     "Sequences of more than one item cannot be treated as type "
                         + sequenceTypeName
