@@ -165,8 +165,7 @@ public class DataFrameUtils {
     private static String COMMA = ",";
 
     /**
-     * @param inputSchema schema specifies the columns to be used in the query
-     * @param duplicateVariableIndex enables skipping a variable
+     * @param columnNames schema specifies the columns to be used in the query
      * @param trailingComma boolean field to have a trailing comma
      * @return comma separated variables to be used in spark SQL
      */
