@@ -27,18 +27,15 @@ import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.semantics.types.SequenceType;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
+    // dynamic: functionIdentifier is not known at compile time
+    // it is known only after evaluating postfix expression at runtime
 
     private static final long serialVersionUID = 1L;
     // parametrized fields
@@ -153,7 +150,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
                     getMetadata()
             );
         }
-        _functionCallIterator = Functions.buildUserDefinedFunctionIterator(
+        _functionCallIterator = Functions.buildUserDefinedFunctionCallIterator(
             _functionItem,
             getMetadata(),
             _functionArguments
