@@ -228,6 +228,7 @@ public class DataFrameUtils {
             } else if (applyDistinct) {
                 queryColumnString.append(serializerUdfName);
                 queryColumnString.append("(");
+                queryColumnString.append("array(");
                 queryColumnString.append("first(");
             } else {
                 queryColumnString.append(serializerUdfName);
@@ -240,6 +241,7 @@ public class DataFrameUtils {
             if (applyCount) {
                 queryColumnString.append("`)");
             } else if (applyDistinct) {
+                queryColumnString.append(")");
                 queryColumnString.append(")");
                 queryColumnString.append(")");
             } else {
