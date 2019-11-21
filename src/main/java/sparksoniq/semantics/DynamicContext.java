@@ -24,6 +24,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import org.rumbledb.api.Item;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -36,21 +37,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.rumbledb.api.Item;
-
 public class DynamicContext implements Serializable, KryoSerializable {
 
     private static final long serialVersionUID = 1L;
-
-    public enum VariableDependency {
-        FULL,
-        COUNT,
-        SUM,
-        AVG,
-        MAX,
-        MIN
-    }
-
     private Map<String, List<Item>> _variableValues;
     private Map<String, Item> _variableCounts;
     private DynamicContext _parent;
@@ -68,9 +57,11 @@ public class DynamicContext implements Serializable, KryoSerializable {
     }
 
     public void setBindingsFromTuple(FlworTuple tuple, IteratorMetadata metadata) {
-        for (String key : tuple.getLocalKeys())
-            if (!key.startsWith("."))
+        for (String key : tuple.getLocalKeys()) {
+            if (!key.startsWith(".")) {
                 this.addVariableValue(key, tuple.getLocalValue(key, metadata));
+            }
+        }
     }
 
     public void addVariableValue(String varName, List<Item> value) {
@@ -82,16 +73,19 @@ public class DynamicContext implements Serializable, KryoSerializable {
     }
 
     public List<Item> getVariableValue(String varName) {
-        if (_variableValues.containsKey(varName))
+        if (_variableValues.containsKey(varName)) {
             return _variableValues.get(varName);
+        }
 
-        if (_parent != null)
+        if (_parent != null) {
             return _parent.getVariableValue(varName);
+        }
 
-        if (_variableCounts.containsKey(varName))
+        if (_variableCounts.containsKey(varName)) {
             throw new SparksoniqRuntimeException(
                     "Runtime error retrieving variable " + varName + " value: only count available."
             );
+        }
 
         throw new SparksoniqRuntimeException("Runtime error retrieving variable " + varName + " value");
     }
@@ -137,8 +131,9 @@ public class DynamicContext implements Serializable, KryoSerializable {
         if (_variableValues.containsKey("$position")) {
             return _variableValues.get("$position").get(0);
         }
-        if (_parent != null)
+        if (_parent != null) {
             return _parent.getPosition();
+        }
         return null;
     }
 
@@ -159,8 +154,9 @@ public class DynamicContext implements Serializable, KryoSerializable {
         if (_variableValues.containsKey("$last")) {
             return _variableValues.get("$last").get(0);
         }
-        if (_parent != null)
+        if (_parent != null) {
             return _parent.getLast();
+        }
         return null;
     }
 
@@ -174,6 +170,15 @@ public class DynamicContext implements Serializable, KryoSerializable {
         }
         list.add(item);
         _variableValues.put("$last", list);
+    }
+
+    public enum VariableDependency {
+        FULL,
+        COUNT,
+        SUM,
+        AVG,
+        MAX,
+        MIN
     }
 }
 

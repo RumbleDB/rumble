@@ -99,8 +99,9 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
             List<Item> results = new ArrayList<>();
             _expression.open(_tupleContext);
-            while (_expression.hasNext())
+            while (_expression.hasNext()) {
                 results.add(_expression.next());
+            }
             _expression.close();
 
             _nextLocalTupleResult = new FlworTuple(inputTuple, _variableName, results);
@@ -123,8 +124,9 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             // expression is materialized
             List<Item> results = new ArrayList<>();
             _expression.open(this._currentDynamicContext);
-            while (_expression.hasNext())
+            while (_expression.hasNext()) {
                 results.add(_expression.next());
+            }
             _expression.close();
 
             _nextLocalTupleResult = new FlworTuple(_variableName, results);

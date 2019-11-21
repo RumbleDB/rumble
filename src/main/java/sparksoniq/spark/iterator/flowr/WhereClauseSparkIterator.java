@@ -44,10 +44,10 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
 
 
     private static final long serialVersionUID = 1L;
+    Map<String, DynamicContext.VariableDependency> _dependencies;
     private RuntimeIterator _expression;
     private DynamicContext _tupleContext; // re-use same DynamicContext object for efficiency
     private FlworTuple _nextLocalTupleResult;
-    Map<String, DynamicContext.VariableDependency> _dependencies;
 
     public WhereClauseSparkIterator(
             RuntimeTupleIterator child,

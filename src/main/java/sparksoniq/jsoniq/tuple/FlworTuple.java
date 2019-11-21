@@ -138,8 +138,8 @@ public class FlworTuple implements Serializable, KryoSerializable {
 
     public boolean contains(String key) {
         return localVariables.containsKey(key)
-                || rddVariables.containsKey(key)
-                || dfVariables.containsKey(key);
+            || rddVariables.containsKey(key)
+            || dfVariables.containsKey(key);
     }
 
     public boolean isRDD(String key, IteratorMetadata metadata) {
@@ -147,7 +147,7 @@ public class FlworTuple implements Serializable, KryoSerializable {
             throw new SparksoniqRuntimeException("Undeclared FLWOR variable", metadata.getExpressionMetadata());
         }
         return rddVariables.containsKey(key)
-                || dfVariables.containsKey(key);
+            || dfVariables.containsKey(key);
     }
 
     public boolean isDF(String key, IteratorMetadata metadata) {
