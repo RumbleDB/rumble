@@ -24,7 +24,11 @@ public class CheckReturnTypeIterator extends HybridRuntimeIterator {
     }
 
 
-    public CheckReturnTypeIterator(TypePromotionIterator typePromotionIterator, String functionName, IteratorMetadata metadata) {
+    public CheckReturnTypeIterator(
+            TypePromotionIterator typePromotionIterator,
+            String functionName,
+            IteratorMetadata metadata
+    ) {
         this(typePromotionIterator, metadata);
         this._functionName = functionName;
     }
@@ -34,10 +38,15 @@ public class CheckReturnTypeIterator extends HybridRuntimeIterator {
         JavaRDD<Item> result;
         try {
             result = _typePromotionIterator.getRDDAux(context);
-        } catch(TreatException e) {
+        } catch (TreatException e) {
             String exceptionMessage = e.getJSONiqErrorMessage();
-            throw new UnexpectedTypeException("Invalid return type for "
-                    + (_functionName.equals("") ? "inline" : _functionName) + " function. " + exceptionMessage, getMetadata());
+            throw new UnexpectedTypeException(
+                    "Invalid return type for "
+                        + (_functionName.equals("") ? "inline" : _functionName)
+                        + " function. "
+                        + exceptionMessage,
+                    getMetadata()
+            );
         }
         return result;
     }
@@ -53,8 +62,13 @@ public class CheckReturnTypeIterator extends HybridRuntimeIterator {
             _typePromotionIterator.open(_currentDynamicContext);
         } catch (TreatException e) {
             String exceptionMessage = e.getJSONiqErrorMessage();
-            throw new UnexpectedTypeException("Invalid return type for "
-                    + (_functionName.equals("") ? "inline" : _functionName) + " function. " + exceptionMessage, getMetadata());
+            throw new UnexpectedTypeException(
+                    "Invalid return type for "
+                        + (_functionName.equals("") ? "inline" : _functionName)
+                        + " function. "
+                        + exceptionMessage,
+                    getMetadata()
+            );
         }
     }
 
@@ -80,8 +94,13 @@ public class CheckReturnTypeIterator extends HybridRuntimeIterator {
             result = _typePromotionIterator.next();
         } catch (TreatException e) {
             String exceptionMessage = e.getJSONiqErrorMessage();
-            throw new UnexpectedTypeException("Invalid return type for "
-                    + (_functionName.equals("") ? "inline" : _functionName) + " function. " + exceptionMessage, getMetadata());
+            throw new UnexpectedTypeException(
+                    "Invalid return type for "
+                        + (_functionName.equals("") ? "inline" : _functionName)
+                        + " function. "
+                        + exceptionMessage,
+                    getMetadata()
+            );
         }
         return result;
     }

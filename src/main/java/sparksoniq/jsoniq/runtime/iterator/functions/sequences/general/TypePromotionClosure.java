@@ -23,8 +23,13 @@ public class TypePromotionClosure implements Function<Item, Item> {
             if (input.canBePromotedTo(sequenceType.getItemType())) {
                 return input.promoteTo(sequenceType.getItemType());
             }
-            throw new TreatException(ItemTypes.getItemTypeName(input.getClass().getSimpleName()) + " cannot be treated as type "
-                    + ItemTypes.getItemTypeName(sequenceType.getItemType().getType().toString()) + sequenceType.getArity().getSymbol(), metadata);
+            throw new TreatException(
+                    ItemTypes.getItemTypeName(input.getClass().getSimpleName())
+                        + " cannot be treated as type "
+                        + ItemTypes.getItemTypeName(sequenceType.getItemType().getType().toString())
+                        + sequenceType.getArity().getSymbol(),
+                    metadata
+            );
         }
         return input;
     }

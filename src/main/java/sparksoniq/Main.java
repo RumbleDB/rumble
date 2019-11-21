@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -38,11 +38,10 @@ public class Main {
         try {
             sparksoniqConf = new SparksoniqRuntimeConfiguration(args);
 
-            if(sparksoniqConf.isShell())
-            {
+            if (sparksoniqConf.isShell()) {
                 initializeApplication();
                 launchShell(sparksoniqConf);
-            } else if(sparksoniqConf.getQueryPath() != null) {
+            } else if (sparksoniqConf.getQueryPath() != null) {
                 initializeApplication();
                 runQueryExecutor(sparksoniqConf);
             } else {
@@ -58,14 +57,22 @@ public class Main {
                 System.out.println("spark-submit spark-rumble-1.0.jar --shell yes");
                 System.out.println("spark-submit --master local[*] spark-rumble-1.0.jar --shell yes");
                 System.out.println("spark-submit --master local[2] spark-rumble-1.0.jar --shell yes");
-                System.out.println("spark-submit --master local[*] --driver-memory 10G spark-rumble-1.0.jar --shell yes");
+                System.out.println(
+                    "spark-submit --master local[*] --driver-memory 10G spark-rumble-1.0.jar --shell yes"
+                );
                 System.out.println("");
                 System.out.println("spark-submit --master yarn sparksoniq-0.9.7.jar --shell yes");
-                System.out.println("spark-submit --master yarn --executor-cores 3 --executor-memory 5G spark-rumble-1.0.jar --shell yes");
+                System.out.println(
+                    "spark-submit --master yarn --executor-cores 3 --executor-memory 5G spark-rumble-1.0.jar --shell yes"
+                );
                 System.out.println("spark-submit --master local[*] spark-rumble-1.0.jar --query-path my-query.jq");
                 System.out.println("spark-submit --master local[*] spark-rumble-1.0.jar --query-path my-query.jq");
-                System.out.println("spark-submit --master yarn --executor-cores 3 --executor-memory 5G spark-rumble-1.0.jar --query-path hdfs:///my-query.jq --output-path hdfs:///my-output.json");
-                System.out.println("spark-submit --master local[*] spark-rumble-1.0.jar --query-path my-query.jq --output-path my-output.json --log-path my-log.txt");
+                System.out.println(
+                    "spark-submit --master yarn --executor-cores 3 --executor-memory 5G spark-rumble-1.0.jar --query-path hdfs:///my-query.jq --output-path hdfs:///my-output.json"
+                );
+                System.out.println(
+                    "spark-submit --master local[*] spark-rumble-1.0.jar --query-path my-query.jq --output-path my-output.json --log-path my-log.txt"
+                );
             }
         } catch (Exception ex) {
             handleException(ex);
@@ -80,15 +87,18 @@ public class Main {
             } else if (ex instanceof SparksoniqRuntimeException) {
                 System.err.println("⚠️  ️" + ex.getMessage());
             } else {
-            	System.out.println("An error has occured: " + ex.getMessage());
-                System.out.println("We should investigate this 🙈. Please contact us or file an issue on GitHub with your query.");
+                System.out.println("An error has occured: " + ex.getMessage());
+                System.out.println(
+                    "We should investigate this 🙈. Please contact us or file an issue on GitHub with your query."
+                );
                 System.out.println("Link: https://github.com/RumbleDB/rumble/issues");
                 ex.printStackTrace();
             }
         }
     }
+
     private static void runQueryExecutor(SparksoniqRuntimeConfiguration sparksoniqConf) throws IOException {
-        
+
         JsoniqQueryExecutor translator;
         translator = new JsoniqQueryExecutor(sparksoniqConf.isLocal(), sparksoniqConf);
         if (sparksoniqConf.isLocal()) {
@@ -103,7 +113,7 @@ public class Main {
     private static void initializeApplication() {
         SparkSessionManager.getInstance().initializeConfigurationAndSession();
     }
-    
+
     private static void launchShell(SparksoniqRuntimeConfiguration sparksoniqConf) throws IOException {
         terminal = new JiqsJLineShell(sparksoniqConf);
         terminal.launch();

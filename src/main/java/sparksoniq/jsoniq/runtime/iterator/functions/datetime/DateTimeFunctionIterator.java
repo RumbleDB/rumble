@@ -23,7 +23,8 @@ public class DateTimeFunctionIterator extends LocalFunctionCallIterator {
 
     public DateTimeFunctionIterator(
             List<RuntimeIterator> arguments,
-            IteratorMetadata iteratorMetadata) {
+            IteratorMetadata iteratorMetadata
+    ) {
         super(arguments, iteratorMetadata);
     }
 
@@ -34,14 +35,19 @@ public class DateTimeFunctionIterator extends LocalFunctionCallIterator {
             try {
                 return ItemFactory.getInstance().createDateTimeItem(_dateTimeStringItem.getStringValue());
             } catch (UnsupportedOperationException | IllegalArgumentException e) {
-                String message = String.format("\"%s\": value of type %s is not castable to type %s",
-                        _dateTimeStringItem.serialize(), "string", "dateTime");
+                String message = String.format(
+                    "\"%s\": value of type %s is not castable to type %s",
+                    _dateTimeStringItem.serialize(),
+                    "string",
+                    "dateTime"
+                );
                 throw new CastException(message, getMetadata());
             }
         } else
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " dateTime function",
-                    getMetadata());
+                    getMetadata()
+            );
     }
 
     @Override
@@ -49,11 +55,15 @@ public class DateTimeFunctionIterator extends LocalFunctionCallIterator {
         super.open(context);
         try {
             _dateTimeStringItem = this.getSingleItemOfTypeFromIterator(
-                    this._children.get(0),
-                    StringItem.class,
-                    new UnknownFunctionCallException("dateTime", this._children.size(), getMetadata()));
+                this._children.get(0),
+                StringItem.class,
+                new UnknownFunctionCallException("dateTime", this._children.size(), getMetadata())
+            );
         } catch (UnknownFunctionCallException e) {
-            throw new UnexpectedTypeException(" Sequence of more than one item can not be cast to type with quantifier '1' or '?'", getMetadata());
+            throw new UnexpectedTypeException(
+                    " Sequence of more than one item can not be cast to type with quantifier '1' or '?'",
+                    getMetadata()
+            );
         }
         this._hasNext = _dateTimeStringItem != null;
     }

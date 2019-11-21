@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -37,23 +37,25 @@ import sparksoniq.semantics.types.SequenceType;
 import sparksoniq.spark.iterator.function.ParallelizeFunctionIterator;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.*;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.endsWithFunction;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.hexBinaryFunction;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.parallelizeFunction1;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.parallelizeFunction2;
+
 
 public class Functions {
-    private static final HashMap<FunctionIdentifier, SparksoniqFunction> builtInFunctions;
+    private static final HashMap<FunctionIdentifier, BuiltinFunction> builtInFunctions;
     private static HashMap<FunctionIdentifier, FunctionItem> userDefinedFunctions;
 
     private static final Map<String, ItemType> itemTypes;
@@ -85,116 +87,130 @@ public class Functions {
         userDefinedFunctions = new HashMap<>();
         builtInFunctions = new HashMap<>();
 
-        builtInFunctions.put(hexBinaryFunction.getSignature().getIdentifier(), hexBinaryFunction);
-        builtInFunctions.put(endsWithFunction.getSignature().getIdentifier(), endsWithFunction);
+        builtInFunctions.put(hexBinaryFunction.getIdentifier(), hexBinaryFunction);
+        builtInFunctions.put(endsWithFunction.getIdentifier(), endsWithFunction);
 
-//        builtInFunctions.put(new FunctionIdentifier(JSON_FILE, 1), ParseJsonFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(JSON_FILE, 2), ParseJsonFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(TEXT_FILE, 1), ParseTextFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(TEXT_FILE, 2), ParseTextFunctionIterator.class);
-        builtInFunctions.put(parallelizeFunction1.getSignature().getIdentifier(), parallelizeFunction1);
-        builtInFunctions.put(parallelizeFunction2.getSignature().getIdentifier(), parallelizeFunction2);
-//        builtInFunctions.put(new FunctionIdentifier(COUNT, 1), CountFunctionIterator.class);
-//
-//        builtInFunctions.put(new FunctionIdentifier(BOOLEAN, 1), BooleanFunctionIterator.class);
-//
-//        builtInFunctions.put(new FunctionIdentifier(MIN, 1), MinFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(MAX, 1), MaxFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(SUM, 1), SumFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(SUM, 2), SumFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(AVG, 1), AvgFunctionIterator.class);
-//
-//        builtInFunctions.put(new FunctionIdentifier(EMPTY, 1), EmptyFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(EXISTS, 1), ExistsFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(HEAD, 1), HeadFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(TAIL, 1), TailFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(INSERTBEFORE, 3), InsertBeforeFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(REMOVE, 2), RemoveFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(REVERSE, 1), ReverseFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(SUBSEQUENCE, 2), SubsequenceFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(SUBSEQUENCE, 3), SubsequenceFunctionIterator.class);
-//
-//        builtInFunctions.put(new FunctionIdentifier(ZEROORONE, 1), ZeroOrOneIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(ONEORMORE, 1), OneOrMoreIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(EXACTLYONE, 1), ExactlyOneIterator.class);
-//
-//        builtInFunctions.put(new FunctionIdentifier(DISTINCTVALUES, 1), DistinctValuesFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(INDEXOF, 2), IndexOfFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(DEEPEQUAL, 2), DeepEqualFunctionIterator.class);
-//
-//        builtInFunctions.put(new FunctionIdentifier(ABS, 1), AbsFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(CEILING, 1), CeilingFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(FLOOR, 1), FloorFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(ROUND, 1), RoundFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(ROUND, 2), RoundFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(ROUNDHALFTOEVEN, 1), RoundHalfToEvenFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(ROUNDHALFTOEVEN, 2), RoundHalfToEvenFunctionIterator.class);
-//
-//        builtInFunctions.put(new FunctionIdentifier(PI, 0), PiFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(EXP, 1), ExpFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(EXP10, 1), Exp10FunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(LOG, 1), LogFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(LOG10, 1), Log10FunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(POW, 2), PowFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(SQRT, 1), SqrtFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(SIN, 1), SinFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(COS, 1), CosFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(TAN, 1), TanFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(ASIN, 1), ASinFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(ACOS, 1), ACosFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(ATAN, 1), ATanFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(ATAN2, 2), ATan2FunctionIterator.class);
-//
-//        builtInFunctions.put(new FunctionIdentifier(SUBSTRING, 2), SubstringFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(SUBSTRING, 3), SubstringFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(SUBSTRING_BEFORE, 2), SubstringBeforeFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(SUBSTRING_AFTER, 2), SubstringAfterFunctionIterator.class);
-//        for (int i = 0; i <= 100; i++)
-//            builtInFunctions.put(new FunctionIdentifier(CONCAT, i), ConcatFunctionIterator.class);
-//
-//        builtInFunctions.put(new FunctionIdentifier(ENDSWITH, 2), EndsWithFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(STRINGJOIN, 1), StringJoinFunction.class);
-//        builtInFunctions.put(new FunctionIdentifier(STRINGJOIN, 2), StringJoinFunction.class);
-//        builtInFunctions.put(new FunctionIdentifier(STRINGLENGTH, 1), StringLengthFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(TOKENIZE, 1), TokenizeFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(TOKENIZE, 2), TokenizeFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(STARTSWITH, 2), StartsWithFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(MATCHES, 2), MatchesFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(CONTAINS, 2), ContainsFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(HEXBINARY, 1), HexBinaryFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(NORMALIZESPACE, 1), NormalizeSpaceFunctionIterator.class);
-//
-//        builtInFunctions.put(new FunctionIdentifier(KEYS, 1), ObjectKeysFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(MEMBERS, 1), ArrayMembersFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(NULL, 0), NullFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(SIZE, 1), ArraySizeFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(ACCUMULATE, 1), ObjectAccumulateFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(DESCENDANTARRAYS, 1), ArrayDescendantFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(DESCENDANTOBJECTS, 1), ObjectDescendantFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(DESCENDANTPAIRS, 1), ObjectDescendantPairsFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(FLATTEN, 1), ArrayFlattenFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(INTERSECT, 1), ObjectIntersectFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(PROJECT, 2), ObjectProjectFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(REMOVEKEYS, 2), ObjectRemoveKeysFunctionIterator.class);
-//        builtInFunctions.put(new FunctionIdentifier(VALUES, 1), ObjectValuesFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(JSON_FILE, 1), ParseJsonFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(JSON_FILE, 2), ParseJsonFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(TEXT_FILE, 1), ParseTextFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(TEXT_FILE, 2), ParseTextFunctionIterator.class);
+        builtInFunctions.put(parallelizeFunction1.getIdentifier(), parallelizeFunction1);
+        builtInFunctions.put(parallelizeFunction2.getIdentifier(), parallelizeFunction2);
+        // builtInFunctions.put(new FunctionIdentifier(COUNT, 1), CountFunctionIterator.class);
+        //
+        // builtInFunctions.put(new FunctionIdentifier(BOOLEAN, 1), BooleanFunctionIterator.class);
+        //
+        // builtInFunctions.put(new FunctionIdentifier(MIN, 1), MinFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(MAX, 1), MaxFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(SUM, 1), SumFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(SUM, 2), SumFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(AVG, 1), AvgFunctionIterator.class);
+        //
+        // builtInFunctions.put(new FunctionIdentifier(EMPTY, 1), EmptyFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(EXISTS, 1), ExistsFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(HEAD, 1), HeadFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(TAIL, 1), TailFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(INSERTBEFORE, 3), InsertBeforeFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(REMOVE, 2), RemoveFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(REVERSE, 1), ReverseFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(SUBSEQUENCE, 2), SubsequenceFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(SUBSEQUENCE, 3), SubsequenceFunctionIterator.class);
+        //
+        // builtInFunctions.put(new FunctionIdentifier(ZEROORONE, 1), ZeroOrOneIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(ONEORMORE, 1), OneOrMoreIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(EXACTLYONE, 1), ExactlyOneIterator.class);
+        //
+        // builtInFunctions.put(new FunctionIdentifier(DISTINCTVALUES, 1), DistinctValuesFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(INDEXOF, 2), IndexOfFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(DEEPEQUAL, 2), DeepEqualFunctionIterator.class);
+        //
+        // builtInFunctions.put(new FunctionIdentifier(ABS, 1), AbsFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(CEILING, 1), CeilingFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(FLOOR, 1), FloorFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(ROUND, 1), RoundFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(ROUND, 2), RoundFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(ROUNDHALFTOEVEN, 1), RoundHalfToEvenFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(ROUNDHALFTOEVEN, 2), RoundHalfToEvenFunctionIterator.class);
+        //
+        // builtInFunctions.put(new FunctionIdentifier(PI, 0), PiFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(EXP, 1), ExpFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(EXP10, 1), Exp10FunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(LOG, 1), LogFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(LOG10, 1), Log10FunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(POW, 2), PowFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(SQRT, 1), SqrtFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(SIN, 1), SinFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(COS, 1), CosFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(TAN, 1), TanFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(ASIN, 1), ASinFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(ACOS, 1), ACosFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(ATAN, 1), ATanFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(ATAN2, 2), ATan2FunctionIterator.class);
+        //
+        // builtInFunctions.put(new FunctionIdentifier(SUBSTRING, 2), SubstringFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(SUBSTRING, 3), SubstringFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(SUBSTRING_BEFORE, 2), SubstringBeforeFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(SUBSTRING_AFTER, 2), SubstringAfterFunctionIterator.class);
+        // for (int i = 0; i <= 100; i++)
+        // builtInFunctions.put(new FunctionIdentifier(CONCAT, i), ConcatFunctionIterator.class);
+        //
+        // builtInFunctions.put(new FunctionIdentifier(ENDSWITH, 2), EndsWithFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(STRINGJOIN, 1), StringJoinFunction.class);
+        // builtInFunctions.put(new FunctionIdentifier(STRINGJOIN, 2), StringJoinFunction.class);
+        // builtInFunctions.put(new FunctionIdentifier(STRINGLENGTH, 1), StringLengthFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(TOKENIZE, 1), TokenizeFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(TOKENIZE, 2), TokenizeFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(STARTSWITH, 2), StartsWithFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(MATCHES, 2), MatchesFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(CONTAINS, 2), ContainsFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(HEXBINARY, 1), HexBinaryFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(NORMALIZESPACE, 1), NormalizeSpaceFunctionIterator.class);
+        //
+        // builtInFunctions.put(new FunctionIdentifier(KEYS, 1), ObjectKeysFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(MEMBERS, 1), ArrayMembersFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(NULL, 0), NullFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(SIZE, 1), ArraySizeFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(ACCUMULATE, 1), ObjectAccumulateFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(DESCENDANTARRAYS, 1), ArrayDescendantFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(DESCENDANTOBJECTS, 1), ObjectDescendantFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(DESCENDANTPAIRS, 1),
+        // ObjectDescendantPairsFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(FLATTEN, 1), ArrayFlattenFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(INTERSECT, 1), ObjectIntersectFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(PROJECT, 2), ObjectProjectFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(REMOVEKEYS, 2), ObjectRemoveKeysFunctionIterator.class);
+        // builtInFunctions.put(new FunctionIdentifier(VALUES, 1), ObjectValuesFunctionIterator.class);
     }
 
     public static boolean checkBuiltInFunctionExists(FunctionIdentifier identifier) {
         return builtInFunctions.containsKey(identifier);
     }
 
-    public static RuntimeIterator getBuiltInFunctionIterator(FunctionIdentifier identifier, List<RuntimeIterator> arguments, IteratorMetadata metadata) {
-        SparksoniqFunction sparksoniqFunction = builtInFunctions.get(identifier);
+    public static RuntimeIterator getBuiltInFunctionIterator(
+            FunctionIdentifier identifier,
+            List<RuntimeIterator> arguments,
+            IteratorMetadata metadata
+    ) {
+        BuiltinFunction builtinFunction = builtInFunctions.get(identifier);
         for (int i = 0; i < arguments.size(); i++) {
-            arguments.set(i, new TypePromotionIterator(arguments.get(i), sparksoniqFunction.getSignature().getParameters().get(i), metadata));
+            arguments.set(
+                i,
+                new TypePromotionIterator(
+                        arguments.get(i),
+                        builtinFunction.getSignature().getParameters().get(i),
+                        metadata
+                )
+            );
         }
         return new CheckReturnTypeIterator(
-            new TypePromotionIterator(
-                    new BuiltinFunctionCallIterator(identifier, arguments, sparksoniqFunction, metadata),
-                    sparksoniqFunction.getSignature().getReturnType(),
-                    metadata),
+                new TypePromotionIterator(
+                        new BuiltinFunctionCallIterator(builtinFunction, arguments, metadata),
+                        builtinFunction.getSignature().getReturnType(),
+                        metadata
+                ),
                 identifier.getName(),
-                metadata);
+                metadata
+        );
     }
 
     public static void clearUserDefinedFunctions() {
@@ -202,9 +218,13 @@ public class Functions {
     }
 
     public static void addUserDefinedFunction(FunctionItem function, ExpressionMetadata meta) {
-        FunctionIdentifier functionIdentifier = function.getSignature().getIdentifier();
-        if (builtInFunctions.containsKey(functionIdentifier) || userDefinedFunctions.containsKey(functionIdentifier))
+        FunctionIdentifier functionIdentifier = function.getIdentifier();
+        if (
+            builtInFunctions.containsKey(functionIdentifier)
+                || userDefinedFunctions.containsKey(functionIdentifier)
+        ) {
             throw new DuplicateFunctionIdentifierException(functionIdentifier, meta);
+        }
         userDefinedFunctions.put(functionIdentifier, function);
     }
 
@@ -236,7 +256,7 @@ public class Functions {
         /**
          * function that returns the context size
          */
-        public static final String LAST  = "last";
+        public static final String LAST = "last";
 
         /**
          * function that parses a JSON lines file
@@ -254,8 +274,24 @@ public class Functions {
          * function that parallelizes item collections into a Spark RDD
          */
         public static final String PARALLELIZE = "parallelize";
-        public static final SparksoniqFunction parallelizeFunction1 = new SparksoniqFunction(new FunctionSignature(new FunctionIdentifier(PARALLELIZE, 1), Collections.singletonList(sequenceTypes.get("Item*")), sequenceTypes.get("Item*")), ParallelizeFunctionIterator.class);
-        public static final SparksoniqFunction parallelizeFunction2 = new SparksoniqFunction(new FunctionSignature(new FunctionIdentifier(PARALLELIZE, 2), Collections.unmodifiableList(Arrays.asList(sequenceTypes.get("Item*"), sequenceTypes.get("Integer"))), sequenceTypes.get("Item*")), ParallelizeFunctionIterator.class);
+        public static final BuiltinFunction parallelizeFunction1 = new BuiltinFunction(
+                new FunctionIdentifier(PARALLELIZE, 1),
+                new FunctionSignature(
+                        Collections.singletonList(sequenceTypes.get("Item*")),
+                        sequenceTypes.get("Item*")
+                ),
+                ParallelizeFunctionIterator.class
+        );
+        public static final BuiltinFunction parallelizeFunction2 = new BuiltinFunction(
+                new FunctionIdentifier(PARALLELIZE, 2),
+                new FunctionSignature(
+                        Collections.unmodifiableList(
+                            Arrays.asList(sequenceTypes.get("Item*"), sequenceTypes.get("Integer"))
+                        ),
+                        sequenceTypes.get("Item*")
+                ),
+                ParallelizeFunctionIterator.class
+        );
         /**
          * function that parses a parquet file
          */
@@ -307,11 +343,13 @@ public class Functions {
          */
         public static final String TAIL = "tail";
         /**
-         * function that returns a sequence constructed by inserting an item or a sequence of items at a given position within an existing sequence
+         * function that returns a sequence constructed by inserting an item or a sequence of items at a given position
+         * within an existing sequence
          */
         public static final String INSERTBEFORE = "insert-before";
         /**
-         * function that returns a new sequence containing all the items of $target except the item at position $position.
+         * function that returns a new sequence containing all the items of $target except the item at position
+         * $position.
          */
         public static final String REMOVE = "remove";
         /**
@@ -319,7 +357,8 @@ public class Functions {
          */
         public static final String REVERSE = "reverse";
         /**
-         * function that applies a subsequence operation to the given sequence with the given start index and length parameters
+         * function that applies a subsequence operation to the given sequence with the given start index and length
+         * parameters
          */
         public static final String SUBSEQUENCE = "subsequence";
 
@@ -364,11 +403,13 @@ public class Functions {
          */
         public static final String FLOOR = "floor";
         /**
-         * function that rounds a value to a specified number of decimal places, rounding upwards if two such values are equally near
+         * function that rounds a value to a specified number of decimal places, rounding upwards if two such values are
+         * equally near
          */
         public static final String ROUND = "round";
         /**
-         * function that rounds a value to a specified number of decimal places, rounding to make the last digit even if two such values are equally near
+         * function that rounds a value to a specified number of decimal places, rounding to make the last digit even if
+         * two such values are equally near
          */
         public static final String ROUNDHALFTOEVEN = "round-half-to-even";
 
@@ -390,7 +431,7 @@ public class Functions {
          */
         public static final String LOG = "log";
         /**
-         * function that returns the  base-ten logarithm of the argument
+         * function that returns the base-ten logarithm of the argument
          */
         public static final String LOG10 = "log10";
         /**
@@ -426,7 +467,8 @@ public class Functions {
          */
         public static final String ATAN = "atan";
         /**
-         * function that returns the the angle in radians subtended at the origin by the point on a plane with coordinates (x, y) and the positive x-axis.
+         * function that returns the the angle in radians subtended at the origin by the point on a plane with
+         * coordinates (x, y) and the positive x-axis.
          */
         public static final String ATAN2 = "atan2";
 
@@ -436,11 +478,13 @@ public class Functions {
          */
         public static final String SUBSTRING = "substring";
         /**
-         * function that returns the part of the first variable that precedes the first occurrence of the second vairable.
+         * function that returns the part of the first variable that precedes the first occurrence of the second
+         * vairable.
          */
         public static final String SUBSTRING_BEFORE = "substring-before";
         /**
-         * function that returns the part of the first variable that follows the first occurrence of the second vairable.
+         * function that returns the part of the first variable that follows the first occurrence of the second
+         * vairable.
          */
         public static final String SUBSTRING_AFTER = "substring-after";
         /**
@@ -463,7 +507,16 @@ public class Functions {
          * function that checks whether a string ends with a substring
          */
         public static final String ENDSWITH = "ends-with";
-        public static final SparksoniqFunction endsWithFunction = new SparksoniqFunction(new FunctionSignature(new FunctionIdentifier(ENDSWITH, 2), Collections.unmodifiableList(Arrays.asList(sequenceTypes.get("String?"), sequenceTypes.get("String?"))), sequenceTypes.get("Boolean")), EndsWithFunctionIterator.class);
+        public static final BuiltinFunction endsWithFunction = new BuiltinFunction(
+                new FunctionIdentifier(ENDSWITH, 2),
+                new FunctionSignature(
+                        Collections.unmodifiableList(
+                            Arrays.asList(sequenceTypes.get("String?"), sequenceTypes.get("String?"))
+                        ),
+                        sequenceTypes.get("Boolean")
+                ),
+                EndsWithFunctionIterator.class
+        );
         /**
          * function that checks whether a string starts with a substring
          */
@@ -620,7 +673,14 @@ public class Functions {
          * function that returns the hexBinary item from the supplied string
          */
         public static final String HEXBINARY = "hexBinary";
-        public static final SparksoniqFunction hexBinaryFunction = new SparksoniqFunction(new FunctionSignature(new FunctionIdentifier(HEXBINARY,  1), Collections.singletonList(sequenceTypes.get("String?")), sequenceTypes.get("HexBinary?")), HexBinaryFunctionIterator.class);
+        public static final BuiltinFunction hexBinaryFunction = new BuiltinFunction(
+                new FunctionIdentifier(HEXBINARY, 1),
+                new FunctionSignature(
+                        Collections.singletonList(sequenceTypes.get("String?")),
+                        sequenceTypes.get("HexBinary?")
+                ),
+                HexBinaryFunctionIterator.class
+        );
         /**
          * function that returns the base64Binary item from the supplied string
          */
@@ -664,7 +724,8 @@ public class Functions {
          */
         public static final String FLATTEN = "flatten";
         /**
-         * function that returns the intersection of the supplied objects, and aggregates values corresponding to the same name into an array
+         * function that returns the intersection of the supplied objects, and aggregates values corresponding to the
+         * same name into an array
          */
         public static final String INTERSECT = "intersect";
         /**

@@ -21,7 +21,11 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     private TreatIterator _treatIterator;
     private RuntimeIterator _child;
 
-    public TypePromotionIterator(RuntimeIterator iterator, SequenceType sequenceType, IteratorMetadata iteratorMetadata) {
+    public TypePromotionIterator(
+            RuntimeIterator iterator,
+            SequenceType sequenceType,
+            IteratorMetadata iteratorMetadata
+    ) {
         super(Collections.singletonList(iterator), iteratorMetadata);
         this._child = iterator;
         this._sequenceType = sequenceType;
@@ -82,7 +86,8 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     }
 
     private boolean resultCanBePromoted() {
-        return _treatIterator._shouldCheckForTypePromotion && _treatIterator._nextResult != null
+        return _treatIterator._shouldCheckForTypePromotion
+            && _treatIterator._nextResult != null
             && _treatIterator._nextResult.canBePromotedTo(_sequenceType.getItemType());
     }
 

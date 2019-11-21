@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -54,27 +54,28 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, R
     private List<List<Item>> _deserializedParams;
     private DynamicContext _context;
     private List<Object> _results;
-    
+
     private transient Kryo _kryo;
     private transient Input _input;
 
     public OrderClauseCreateColumnsUDF(
             List<OrderByClauseSparkIteratorExpression> expressions,
             Map<Integer, String> allColumnTypes,
-            List<String> columnNames) {
+            List<String> columnNames
+    ) {
         _expressions = expressions;
         _allColumnTypes = allColumnTypes;
 
         _deserializedParams = new ArrayList<>();
         _context = new DynamicContext();
         _results = new ArrayList<>();
-        
+
         _dependencies = new TreeMap<String, DynamicContext.VariableDependency>();
         for (OrderByClauseSparkIteratorExpression expression : _expressions) {
             _dependencies.putAll(expression.getExpression().getVariableDependencies());
         }
         _columnNames = columnNames;
-        
+
         _kryo = new Kryo();
         _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
@@ -97,9 +98,9 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, R
             // nulls and empty sequences have special ordering captured in the first sorting column
             // if non-null, non-empty-sequence value is given, the second column is used to sort the input
             // indices are assigned to each value type for the first column
-            int emptySequenceOrderIndex = 1;         // by default, empty sequence is taken as first(=least)
-            int nullOrderIndex = 2;                  // null is the smallest value except empty sequence(default)
-            int valueOrderIndex = 3;                 // values are larger than null and empty sequence(default)
+            int emptySequenceOrderIndex = 1; // by default, empty sequence is taken as first(=least)
+            int nullOrderIndex = 2; // null is the smallest value except empty sequence(default)
+            int valueOrderIndex = 3; // values are larger than null and empty sequence(default)
             if (expression.getEmptyOrder() == OrderByClauseExpr.EMPTY_ORDER.LAST) {
                 emptySequenceOrderIndex = 4;
             }
@@ -112,7 +113,7 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, R
                 Item nextItem = expression.getExpression().next();
                 if (nextItem instanceof NullItem) {
                     _results.add(nullOrderIndex);
-                    _results.add(null);     // placeholder for valueColumn(2nd column)
+                    _results.add(null); // placeholder for valueColumn(2nd column)
                 } else {
                     // any other atomic type
                     _results.add(valueOrderIndex);
@@ -137,18 +138,19 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, R
             }
             if (isEmptySequence) {
                 _results.add(emptySequenceOrderIndex);
-                _results.add(null);     // placeholder for valueColumn(2nd column)
+                _results.add(null); // placeholder for valueColumn(2nd column)
             }
             expression.getExpression().close();
 
         }
         return RowFactory.create(_results.toArray());
     }
-    
+
     private void readObject(java.io.ObjectInputStream in)
-            throws IOException, ClassNotFoundException {
+            throws IOException,
+                ClassNotFoundException {
         in.defaultReadObject();
-        
+
         _kryo = new Kryo();
         _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);

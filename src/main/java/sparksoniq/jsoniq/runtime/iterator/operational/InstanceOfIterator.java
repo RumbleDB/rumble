@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -58,7 +58,8 @@ public class InstanceOfIterator extends UnaryOperationBaseIterator {
                     items.add(_child.next());
                 _child.close();
                 this._hasNext = false;
-                if (isInvalidArity(items.size())) return ItemFactory.getInstance().createBooleanItem(false);
+                if (isInvalidArity(items.size()))
+                    return ItemFactory.getInstance().createBooleanItem(false);
                 ItemType itemType = _sequenceType.getItemType();
                 for (Item item : items) {
                     if (!item.isTypeOf(itemType)) {
@@ -69,7 +70,8 @@ public class InstanceOfIterator extends UnaryOperationBaseIterator {
             } else {
                 JavaRDD<Item> childRDD = _child.getRDD(_currentDynamicContext);
                 this._hasNext = false;
-                if (isInvalidArity(childRDD.count())) return ItemFactory.getInstance().createBooleanItem(false);
+                if (isInvalidArity(childRDD.count()))
+                    return ItemFactory.getInstance().createBooleanItem(false);
                 JavaRDD<Item> result = childRDD.filter(new InstanceOfClosure(_sequenceType.getItemType()));
                 return ItemFactory.getInstance().createBooleanItem(result.isEmpty());
             }
@@ -78,10 +80,16 @@ public class InstanceOfIterator extends UnaryOperationBaseIterator {
     }
 
     private boolean isInvalidArity(long numOfItems) {
-        return (numOfItems != 0 && _sequenceType.isEmptySequence()) ||
-                (numOfItems == 0 && (_sequenceType.getArity() == SequenceType.Arity.One ||
-                        _sequenceType.getArity() == SequenceType.Arity.OneOrMore)) ||
-                (numOfItems > 1 && (_sequenceType.getArity() == SequenceType.Arity.One ||
-                        _sequenceType.getArity() == SequenceType.Arity.OneOrZero));
+        return (numOfItems != 0 && _sequenceType.isEmptySequence())
+            ||
+            (numOfItems == 0
+                && (_sequenceType.getArity() == SequenceType.Arity.One
+                    ||
+                    _sequenceType.getArity() == SequenceType.Arity.OneOrMore))
+            ||
+            (numOfItems > 1
+                && (_sequenceType.getArity() == SequenceType.Arity.One
+                    ||
+                    _sequenceType.getArity() == SequenceType.Arity.OneOrZero));
     }
 }

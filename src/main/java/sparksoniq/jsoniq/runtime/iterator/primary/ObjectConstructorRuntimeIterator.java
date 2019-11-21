@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -37,21 +37,26 @@ import org.rumbledb.api.Item;
 public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
 
 
-	private static final long serialVersionUID = 1L;
-	private List<RuntimeIterator> _keys;
+    private static final long serialVersionUID = 1L;
+    private List<RuntimeIterator> _keys;
     private List<RuntimeIterator> _values;
     private boolean _isMergedObject = false;
 
-    public ObjectConstructorRuntimeIterator(List<RuntimeIterator> keys, List<RuntimeIterator> values,
-                                            IteratorMetadata iteratorMetadata) {
+    public ObjectConstructorRuntimeIterator(
+            List<RuntimeIterator> keys,
+            List<RuntimeIterator> values,
+            IteratorMetadata iteratorMetadata
+    ) {
         super(keys, iteratorMetadata);
         this._children.addAll(values);
         this._keys = keys;
         this._values = values;
     }
 
-    public ObjectConstructorRuntimeIterator(List<RuntimeIterator> childExpressions,
-                                            IteratorMetadata iteratorMetadata) {
+    public ObjectConstructorRuntimeIterator(
+            List<RuntimeIterator> childExpressions,
+            IteratorMetadata iteratorMetadata
+    ) {
         super(null, iteratorMetadata);
         childExpressions.forEach(c -> this._children.add(c));
         this._isMergedObject = true;
@@ -73,7 +78,8 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
                     iterator.close();
                 }
                 this._hasNext = false;
-                return ItemFactory.getInstance().createObjectItem(keys, values, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                return ItemFactory.getInstance()
+                    .createObjectItem(keys, values, ItemMetadata.fromIteratorMetadata(getMetadata()));
 
             } else {
 
@@ -84,7 +90,7 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
                         currentResults.add(valueIterator.next());
                     }
                     valueIterator.close();
-                    //SIMILAR TO ZORBA, if value is more than one item, wrap it in an array
+                    // SIMILAR TO ZORBA, if value is more than one item, wrap it in an array
                     if (currentResults.size() > 1) {
                         values.add(ItemFactory.getInstance().createArrayItem(currentResults));
                     } else if (currentResults.size() == 1) {
@@ -101,15 +107,22 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
                     }
                     Item key = keyIterator.next();
                     if (!key.isString()) {
-                        throw new UnexpectedTypeException("Key provided for object creation must be of type String", getMetadata());
+                        throw new UnexpectedTypeException(
+                                "Key provided for object creation must be of type String",
+                                getMetadata()
+                        );
                     }
                     keys.add(key.getStringValue());
                     if (keyIterator.hasNext())
-                        throw new IteratorFlowException("A key cannot be a sequence of more than one item", getMetadata());
+                        throw new IteratorFlowException(
+                                "A key cannot be a sequence of more than one item",
+                                getMetadata()
+                        );
                     keyIterator.close();
                 }
                 this._hasNext = false;
-                return ItemFactory.getInstance().createObjectItem(keys, values, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                return ItemFactory.getInstance()
+                    .createObjectItem(keys, values, ItemMetadata.fromIteratorMetadata(getMetadata()));
             }
         }
         throw new IteratorFlowException("Invalid next() call on object!", getMetadata());

@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -45,6 +45,10 @@ import java.util.Map;
 public class FunctionItem extends Item {
 
     private static final long serialVersionUID = 1L;
+    private FunctionIdentifier identifier;
+    private List<String> parameterNames;
+
+    // signature contains type information for all parameters and the return value
     private FunctionSignature signature;
     private RuntimeIterator bodyIterator;
     private Map<String, List<Item>> nonLocalVariableBindings;
@@ -53,10 +57,46 @@ public class FunctionItem extends Item {
         super();
     }
 
-    public FunctionItem(FunctionSignature functionSignature, RuntimeIterator bodyIterator, Map<String, List<Item>> nonLocalVariableBindings) {
-        this.signature = functionSignature;
+    public FunctionItem(
+            FunctionIdentifier identifier,
+            List<String> parameterNames,
+            FunctionSignature signature,
+            RuntimeIterator bodyIterator,
+            Map<String, List<Item>> nonLocalVariableBindings
+    ) {
+        this.identifier = identifier;
+        this.parameterNames = parameterNames;
+        this.signature = signature;
         this.bodyIterator = bodyIterator;
         this.nonLocalVariableBindings = nonLocalVariableBindings;
+    }
+
+    public FunctionItem(
+            String name,
+            Map<String, SequenceType> paramNameToSequenceTypes,
+            SequenceType returnType,
+            RuntimeIterator bodyIterator
+    ) {
+        List<String> paramNames = new ArrayList<>();
+        List<SequenceType> parameters = new ArrayList<>();
+        for (Map.Entry<String, SequenceType> paramEntry : paramNameToSequenceTypes.entrySet()) {
+            paramNames.add(paramEntry.getKey());
+            parameters.add(paramEntry.getValue());
+        }
+
+        this.identifier = new FunctionIdentifier(name, paramNames.size());
+        this.parameterNames = paramNames;
+        this.signature = new FunctionSignature(parameters, returnType);
+        this.bodyIterator = bodyIterator;
+        this.nonLocalVariableBindings = new HashMap<>();
+    }
+
+    public FunctionIdentifier getIdentifier() {
+        return identifier;
+    }
+
+    public List<String> getParameterNames() {
+        return parameterNames;
     }
 
     public FunctionSignature getSignature() {
@@ -104,13 +144,13 @@ public class FunctionItem extends Item {
 
     @Override
     public int hashCode() {
-        return this.signature.hashCode();
+        return this.identifier.hashCode() + String.join("", this.parameterNames).hashCode() + this.signature.hashCode();
     }
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.signature.getIdentifier());
-        kryo.writeObject(output, this.signature.getParameterNames());
+        kryo.writeObject(output, this.identifier);
+        kryo.writeObject(output, this.parameterNames);
         kryo.writeObject(output, this.signature.getParameters());
         kryo.writeObject(output, this.signature.getReturnType());
         // kryo.writeObject(output, this.bodyIterator);
@@ -135,11 +175,11 @@ public class FunctionItem extends Item {
     @SuppressWarnings("unchecked")
     @Override
     public void read(Kryo kryo, Input input) {
-        FunctionIdentifier functionIdentifier = kryo.readObject(input, FunctionIdentifier.class);
-        List<String> parametersNames = kryo.readObject(input, ArrayList.class);
+        this.identifier = kryo.readObject(input, FunctionIdentifier.class);
+        this.parameterNames = kryo.readObject(input, ArrayList.class);
         List<SequenceType> parameters = kryo.readObject(input, ArrayList.class);
         SequenceType returnType = kryo.readObject(input, SequenceType.class);
-        this.signature = new FunctionSignature(functionIdentifier, parameters, parametersNames, returnType);
+        this.signature = new FunctionSignature(parameters, returnType);
         // this.bodyIterator = kryo.readObject(input, RuntimeIterator.class);
         this.nonLocalVariableBindings = kryo.readObject(input, HashMap.class);
 

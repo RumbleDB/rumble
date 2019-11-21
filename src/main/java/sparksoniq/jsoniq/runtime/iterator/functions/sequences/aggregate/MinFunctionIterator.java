@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -40,8 +40,8 @@ import org.rumbledb.api.Item;
 public class MinFunctionIterator extends LocalFunctionCallIterator {
 
 
-	private static final long serialVersionUID = 1L;
-	private RuntimeIterator _iterator;
+    private static final long serialVersionUID = 1L;
+    private RuntimeIterator _iterator;
 
     public MinFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
@@ -72,26 +72,35 @@ public class MinFunctionIterator extends LocalFunctionCallIterator {
                 try {
                     return Collections.min(results, comparator);
                 } catch (SparksoniqRuntimeException e) {
-                    throw new InvalidArgumentTypeException("Min expression input error. Input has to be non-null atomics of matching types: " + e.getMessage(), getMetadata());
+                    throw new InvalidArgumentTypeException(
+                            "Min expression input error. Input has to be non-null atomics of matching types: "
+                                + e.getMessage(),
+                            getMetadata()
+                    );
                 }
             } else {
                 try {
                     return _iterator.getRDD(_currentDynamicContext).min(comparator);
                 } catch (SparksoniqRuntimeException e) {
-                    throw new InvalidArgumentTypeException("Min expression input error. Input has to be non-null atomics of matching types: " + e.getMessage(), getMetadata());
+                    throw new InvalidArgumentTypeException(
+                            "Min expression input error. Input has to be non-null atomics of matching types: "
+                                + e.getMessage(),
+                            getMetadata()
+                    );
                 }
             }
         } else
-            throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "MIN function",
-                    getMetadata());
+            throw new IteratorFlowException(
+                    FLOW_EXCEPTION_MESSAGE + "MIN function",
+                    getMetadata()
+            );
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies()
-    {
-        if(_children.get(0) instanceof VariableReferenceIterator)
-        {
+    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
+        if (_children.get(0) instanceof VariableReferenceIterator) {
             VariableReferenceIterator expr = (VariableReferenceIterator) _children.get(0);
-            Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
+            Map<String, DynamicContext.VariableDependency> result =
+                new TreeMap<String, DynamicContext.VariableDependency>();
             result.put(expr.getVariableName(), DynamicContext.VariableDependency.MIN);
             return result;
         } else {

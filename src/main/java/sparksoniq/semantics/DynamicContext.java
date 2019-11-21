@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -39,16 +39,16 @@ import org.rumbledb.api.Item;
 
 public class DynamicContext implements Serializable, KryoSerializable {
 
-  	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	  public enum VariableDependency {
-	    FULL,
-	    COUNT,
-	    SUM,
-	    AVG,
-	    MAX,
-	    MIN
-	  }
+    public enum VariableDependency {
+        FULL,
+        COUNT,
+        SUM,
+        AVG,
+        MAX,
+        MIN
+    }
 
     private Map<String, List<Item>> _variableValues;
     private Map<String, Item> _variableCounts;
@@ -99,24 +99,23 @@ public class DynamicContext implements Serializable, KryoSerializable {
         if (_parent != null)
             return _parent.getVariableValue(varName);
 
-        if(_variableCounts.containsKey(varName))
-            throw new SparksoniqRuntimeException("Runtime error retrieving variable " + varName + " value: only count available.");
+        if (_variableCounts.containsKey(varName))
+            throw new SparksoniqRuntimeException(
+                    "Runtime error retrieving variable " + varName + " value: only count available."
+            );
 
         throw new SparksoniqRuntimeException("Runtime error retrieving variable " + varName + " value");
     }
 
     public Item getVariableCount(String varName) {
-        if(_variableCounts.containsKey(varName))
-        {
+        if (_variableCounts.containsKey(varName)) {
             return _variableCounts.get(varName);
         }
-        if (_variableValues.containsKey(varName))
-        {
+        if (_variableValues.containsKey(varName)) {
             Item count = ItemFactory.getInstance().createIntegerItem(_variableValues.get(varName).size());
             return count;
         }
-        if (_parent != null)
-        {
+        if (_parent != null) {
             return _parent.getVariableCount(varName);
         }
         throw new SparksoniqRuntimeException("Runtime error retrieving variable " + varName + " value");
@@ -139,56 +138,52 @@ public class DynamicContext implements Serializable, KryoSerializable {
     }
 
     @SuppressWarnings("unchecked")
-	@Override
+    @Override
     public void read(Kryo kryo, Input input) {
         _parent = kryo.readObjectOrNull(input, DynamicContext.class);
         _variableValues = kryo.readObject(input, HashMap.class);
     }
-    
+
     public Item getPosition() {
-    	if(_variableValues.containsKey("$position"))
-    	{
-    		return _variableValues.get("$position").get(0);
-    	}
-    	if (_parent != null)
+        if (_variableValues.containsKey("$position")) {
+            return _variableValues.get("$position").get(0);
+        }
+        if (_parent != null)
             return _parent.getPosition();
-    	return null;
+        return null;
     }
-    
-    public void setPosition (long position) {
-    	List<Item> list = new ArrayList<Item>();
-    	Item item = null;
-    	if(position < Integer.MAX_VALUE)
-        {
-        	item = ItemFactory.getInstance().createIntegerItem((int)position);
+
+    public void setPosition(long position) {
+        List<Item> list = new ArrayList<Item>();
+        Item item = null;
+        if (position < Integer.MAX_VALUE) {
+            item = ItemFactory.getInstance().createIntegerItem((int) position);
         } else {
-        	item = ItemFactory.getInstance().createDecimalItem(new BigDecimal(position));
+            item = ItemFactory.getInstance().createDecimalItem(new BigDecimal(position));
         }
-    	list.add(item);
-    	_variableValues.put("$position", list);
+        list.add(item);
+        _variableValues.put("$position", list);
     }
-    
+
     public Item getLast() {
-    	if(_variableValues.containsKey("$last"))
-    	{
-    		return _variableValues.get("$last").get(0);
-    	}
-    	if (_parent != null)
-            return _parent.getLast();
-    	return null;
-    }
-    
-    public void setLast (long last) {
-    	List<Item> list = new ArrayList<Item>();
-    	Item item = null;
-    	if(last < Integer.MAX_VALUE)
-        {
-        	item = ItemFactory.getInstance().createIntegerItem((int)last);
-        } else {
-        	item = ItemFactory.getInstance().createDecimalItem(new BigDecimal(last));
+        if (_variableValues.containsKey("$last")) {
+            return _variableValues.get("$last").get(0);
         }
-    	list.add(item);
-    	_variableValues.put("$last", list);
+        if (_parent != null)
+            return _parent.getLast();
+        return null;
+    }
+
+    public void setLast(long last) {
+        List<Item> list = new ArrayList<Item>();
+        Item item = null;
+        if (last < Integer.MAX_VALUE) {
+            item = ItemFactory.getInstance().createIntegerItem((int) last);
+        } else {
+            item = ItemFactory.getInstance().createDecimalItem(new BigDecimal(last));
+        }
+        list.add(item);
+        _variableValues.put("$last", list);
     }
 }
 

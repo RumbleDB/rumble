@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -38,8 +38,8 @@ import org.rumbledb.api.Item;
 public class IntegerItem extends AtomicItem {
 
 
-	private static final long serialVersionUID = 1L;
-	private int _value;
+    private static final long serialVersionUID = 1L;
+    private int _value;
 
     public IntegerItem() {
         super();
@@ -65,7 +65,7 @@ public class IntegerItem extends AtomicItem {
     }
 
     public double castToDoubleValue() {
-    	return new Integer(getIntegerValue()).doubleValue();
+        return new Integer(getIntegerValue()).doubleValue();
     }
 
     public BigDecimal castToDecimalValue() {
@@ -73,7 +73,7 @@ public class IntegerItem extends AtomicItem {
     }
 
     public int castToIntegerValue() {
-    	return getIntegerValue();
+        return getIntegerValue();
     }
 
     @Override
@@ -83,8 +83,9 @@ public class IntegerItem extends AtomicItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.getType().equals(ItemTypes.IntegerItem) || type.getType().equals(ItemTypes.DecimalItem)
-                || super.isTypeOf(type);
+        return type.getType().equals(ItemTypes.IntegerItem)
+            || type.getType().equals(ItemTypes.DecimalItem)
+            || super.isTypeOf(type);
     }
 
     @Override
@@ -112,8 +113,9 @@ public class IntegerItem extends AtomicItem {
 
     @Override
     public boolean isCastableAs(AtomicTypes itemType) {
-        return itemType != AtomicTypes.AtomicItem &&
-                itemType != AtomicTypes.NullItem;
+        return itemType != AtomicTypes.AtomicItem
+            &&
+            itemType != AtomicTypes.NullItem;
     }
 
     @Override
@@ -134,7 +136,7 @@ public class IntegerItem extends AtomicItem {
     public boolean equals(Object otherItem) {
         try {
             return (otherItem instanceof Item) && this.compareTo((Item) otherItem) == 0;
-        } catch(IteratorFlowException e) {
+        } catch (IteratorFlowException e) {
             return false;
         }
     }
@@ -151,8 +153,14 @@ public class IntegerItem extends AtomicItem {
     @Override
     public Item compareItem(Item other, OperationalExpressionBase.Operator operator, IteratorMetadata metadata) {
         if (!other.isNumeric() && !other.isNull()) {
-            throw new UnexpectedTypeException("Invalid args for numerics comparison " + this.serialize() +
-                    ", " + other.serialize(), metadata);
+            throw new UnexpectedTypeException(
+                    "Invalid args for numerics comparison "
+                        + this.serialize()
+                        +
+                        ", "
+                        + other.serialize(),
+                    metadata
+            );
         }
         return operator.apply(this, other);
     }
@@ -172,7 +180,8 @@ public class IntegerItem extends AtomicItem {
         if (other.isDouble())
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() - other.getDoubleValue());
         if (other.isDecimal())
-            return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue().subtract(other.getDecimalValue()));
+            return ItemFactory.getInstance()
+                .createDecimalItem(this.castToDecimalValue().subtract(other.getDecimalValue()));
         return ItemFactory.getInstance().createIntegerItem(this.getIntegerValue() - other.castToIntegerValue());
     }
 
@@ -181,11 +190,14 @@ public class IntegerItem extends AtomicItem {
         if (other.isDouble())
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() * other.getDoubleValue());
         if (other.isDecimal())
-            return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue().multiply(other.getDecimalValue()));
+            return ItemFactory.getInstance()
+                .createDecimalItem(this.castToDecimalValue().multiply(other.getDecimalValue()));
         if (other.isYearMonthDuration())
-            return ItemFactory.getInstance().createYearMonthDurationItem(other.getDurationValue().multipliedBy(this.getIntegerValue()));
+            return ItemFactory.getInstance()
+                .createYearMonthDurationItem(other.getDurationValue().multipliedBy(this.getIntegerValue()));
         if (other.isDayTimeDuration())
-            return ItemFactory.getInstance().createDayTimeDurationItem(other.getDurationValue().multipliedBy(this.getIntegerValue()));
+            return ItemFactory.getInstance()
+                .createDayTimeDurationItem(other.getDurationValue().multipliedBy(this.getIntegerValue()));
         return ItemFactory.getInstance().createIntegerItem(this.getIntegerValue() * other.castToIntegerValue());
     }
 
@@ -193,7 +205,8 @@ public class IntegerItem extends AtomicItem {
     public Item divide(Item other) {
         if (other.isDouble())
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() / other.getDoubleValue());
-        BigDecimal bdResult = this.castToDecimalValue().divide(other.castToDecimalValue(), 10, BigDecimal.ROUND_HALF_UP);
+        BigDecimal bdResult = this.castToDecimalValue()
+            .divide(other.castToDecimalValue(), 10, BigDecimal.ROUND_HALF_UP);
         if (bdResult.stripTrailingZeros().scale() <= 0) {
             return ItemFactory.getInstance().createIntegerItem(bdResult.intValueExact());
         } else {
@@ -206,7 +219,8 @@ public class IntegerItem extends AtomicItem {
         if (other.isDouble())
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() % other.getDoubleValue());
         if (other.isDecimal())
-            return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue().remainder(other.getDecimalValue()));
+            return ItemFactory.getInstance()
+                .createDecimalItem(this.castToDecimalValue().remainder(other.getDecimalValue()));
         return ItemFactory.getInstance().createIntegerItem(this.getIntegerValue() % other.castToIntegerValue());
     }
 

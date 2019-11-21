@@ -148,6 +148,26 @@
                     </dependency>
                 </dependencies>
             </plugin>
+            <plugin>
+                <groupId>com.diffplug.spotless</groupId>
+                <artifactId>spotless-maven-plugin</artifactId>
+                <version>1.26.0</version>
+                <executions>
+                    <execution>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <java>
+                        <eclipse>
+                            <file>${basedir}/codetemplates-eclipse.xml</file>
+                        </eclipse>
+                    </java>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 

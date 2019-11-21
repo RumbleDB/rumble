@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -49,7 +49,11 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     private boolean _contextLookup;
     private Item _nextResult;
 
-    public ObjectLookupIterator(RuntimeIterator object, RuntimeIterator lookupIterator, IteratorMetadata iteratorMetadata) {
+    public ObjectLookupIterator(
+            RuntimeIterator object,
+            RuntimeIterator lookupIterator,
+            IteratorMetadata iteratorMetadata
+    ) {
         super(Arrays.asList(object, lookupIterator), iteratorMetadata);
         _iterator = object;
     }
@@ -69,15 +73,23 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             if (lookupIterator.hasNext()) {
                 this._lookupKey = lookupIterator.next();
             } else {
-                throw new InvalidSelectorException("Invalid Lookup Key; Object lookup can't be performed with zero keys: "
-                        , getMetadata());
+                throw new InvalidSelectorException(
+                        "Invalid Lookup Key; Object lookup can't be performed with zero keys: ",
+                        getMetadata()
+                );
             }
             if (lookupIterator.hasNext())
-                throw new InvalidSelectorException("\"Invalid Lookup Key; Object lookup can't be performed with multiple keys: "
-                        + _lookupKey.serialize(), getMetadata());
+                throw new InvalidSelectorException(
+                        "\"Invalid Lookup Key; Object lookup can't be performed with multiple keys: "
+                            + _lookupKey.serialize(),
+                        getMetadata()
+                );
             if (_lookupKey.isNull() || _lookupKey.isObject() || _lookupKey.isArray()) {
-                throw new UnexpectedTypeException("Type error; Object selector can't be converted to a string: "
-                        + _lookupKey.serialize(), getMetadata());
+                throw new UnexpectedTypeException(
+                        "Type error; Object selector can't be converted to a string: "
+                            + _lookupKey.serialize(),
+                        getMetadata()
+                );
             } else {
                 // convert to string
                 if (_lookupKey.isBoolean()) {
@@ -97,7 +109,10 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                 }
             }
             if (!_lookupKey.isString())
-                throw new UnexpectedTypeException("Non string object lookup for " + _lookupKey.serialize(), getMetadata());
+                throw new UnexpectedTypeException(
+                        "Non string object lookup for " + _lookupKey.serialize(),
+                        getMetadata()
+                );
             lookupIterator.close();
         }
     }
@@ -128,8 +143,8 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     @Override
     public Item nextLocal() {
         if (_hasNext == true) {
-            Item result = _nextResult;  // save the result to be returned
-            setNextResult();            // calculate and store the next result
+            Item result = _nextResult; // save the result to be returned
+            setNextResult(); // calculate and store the next result
             return result;
         }
         throw new IteratorFlowException("Invalid next() call in Object Lookup", getMetadata());

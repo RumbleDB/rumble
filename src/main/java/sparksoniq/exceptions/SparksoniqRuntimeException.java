@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,8 +28,8 @@ import java.util.Arrays;
 public class SparksoniqRuntimeException extends RuntimeException {
 
 
-	private static final long serialVersionUID = 1L;
-	private final String errorCode;
+    private static final long serialVersionUID = 1L;
+    private final String errorCode;
     private final String errorMessage;
     private ExpressionMetadata metadata;
 
@@ -56,10 +56,20 @@ public class SparksoniqRuntimeException extends RuntimeException {
 
 
     public SparksoniqRuntimeException(String message, String errorCode, ExpressionMetadata metadata) {
-        super("Error [err: " + errorCode + "]" + (metadata != null ?
-                "LINE:" + metadata.getTokenLineNumber() +
-                        ":COLUMN:" + metadata.getTokenColumnNumber() + ":" : "")
-                + message);
+        super(
+            "Error [err: "
+                + errorCode
+                + "]"
+                + (metadata != null
+                    ? "LINE:"
+                        + metadata.getTokenLineNumber()
+                        +
+                        ":COLUMN:"
+                        + metadata.getTokenColumnNumber()
+                        + ":"
+                    : "")
+                + message
+        );
         if (!Arrays.asList(ErrorCodes.class.getFields()).stream().anyMatch(f -> {
             try {
                 return f.get(null).equals(errorCode);
@@ -75,12 +85,21 @@ public class SparksoniqRuntimeException extends RuntimeException {
     }
 
     public SparksoniqRuntimeException(String message, ExpressionMetadata metadata) {
-        super("Error [err: " + ErrorCodes.RuntimeExceptionErrorCode + "]" + (metadata != null ?
-                "LINE:" + metadata.getTokenLineNumber() +
-                        ";COLUMN:" + metadata.getTokenColumnNumber() + ";" : "")
-                + message);
-        this.errorCode = ErrorCodes.RuntimeExceptionErrorCode;
-        ;
+        super(
+            "Error [err: "
+                + ErrorCodes.RuntimeExceptionErrorCode
+                + "]"
+                + (metadata != null
+                    ? "LINE:"
+                        + metadata.getTokenLineNumber()
+                        +
+                        ";COLUMN:"
+                        + metadata.getTokenColumnNumber()
+                        + ";"
+                    : "")
+                + message
+        );
+        this.errorCode = ErrorCodes.RuntimeExceptionErrorCode;;
         this.metadata = metadata;
         this.errorMessage = message;
     }

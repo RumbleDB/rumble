@@ -20,7 +20,8 @@ public class MinutesFromTimeFunctionIterator extends LocalFunctionCallIterator {
 
     public MinutesFromTimeFunctionIterator(
             List<RuntimeIterator> arguments,
-            IteratorMetadata iteratorMetadata) {
+            IteratorMetadata iteratorMetadata
+    ) {
         super(arguments, iteratorMetadata);
     }
 
@@ -32,7 +33,8 @@ public class MinutesFromTimeFunctionIterator extends LocalFunctionCallIterator {
         } else
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " minutes-from-time function",
-                    getMetadata());
+                    getMetadata()
+            );
     }
 
     @Override
@@ -40,13 +42,20 @@ public class MinutesFromTimeFunctionIterator extends LocalFunctionCallIterator {
         super.open(context);
         try {
             _dateTimeItem = this.getSingleItemOfTypeFromIterator(
-                    this._children.get(0),
-                    TimeItem.class,
-                    new UnknownFunctionCallException("minutes-from-time", this._children.size(), getMetadata()));
+                this._children.get(0),
+                TimeItem.class,
+                new UnknownFunctionCallException("minutes-from-time", this._children.size(), getMetadata())
+            );
         } catch (UnexpectedTypeException e) {
-            throw new UnexpectedTypeException(e.getJSONiqErrorMessage() + "? of function minutes-from-time()", this._children.get(0).getMetadata());
+            throw new UnexpectedTypeException(
+                    e.getJSONiqErrorMessage() + "? of function minutes-from-time()",
+                    this._children.get(0).getMetadata()
+            );
         } catch (UnknownFunctionCallException e) {
-            throw new UnexpectedTypeException(" Sequence of more than one item can not be promoted to parameter type time? of function minutes-from-time()", getMetadata());
+            throw new UnexpectedTypeException(
+                    " Sequence of more than one item can not be promoted to parameter type time? of function minutes-from-time()",
+                    getMetadata()
+            );
         }
         this._hasNext = _dateTimeItem != null;
     }

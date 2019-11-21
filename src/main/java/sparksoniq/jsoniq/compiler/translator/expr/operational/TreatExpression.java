@@ -16,8 +16,11 @@ public class TreatExpression extends UnaryExpressionBase {
         this._isActive = false;
     }
 
-    public TreatExpression(Expression _mainExpression, FlworVarSequenceType sequenceType,
-                           ExpressionMetadata metadata) {
+    public TreatExpression(
+            Expression _mainExpression,
+            FlworVarSequenceType sequenceType,
+            ExpressionMetadata metadata
+    ) {
         super(_mainExpression, Operator.TREAT, true, metadata);
         this._sequenceType = sequenceType;
     }

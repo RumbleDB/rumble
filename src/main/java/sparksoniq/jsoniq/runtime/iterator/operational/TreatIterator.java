@@ -74,18 +74,26 @@ public class TreatIterator extends HybridRuntimeIterator {
         _nextResult = null;
         if (_iterator.hasNext()) {
             _nextResult = _iterator.next();
-            if (_nextResult != null) _childIndex++;
+            if (_nextResult != null)
+                _childIndex++;
         } else {
             _iterator.close();
             checkEmptySequence(_childIndex);
         }
 
         this._hasNext = _nextResult != null;
-        if (!hasNext()) return;
+        if (!hasNext())
+            return;
 
         checkItemsSize(_childIndex);
         if (!_nextResult.isTypeOf(itemType)) {
-            throw new TreatException(ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName()) + " cannot be treated as type " + sequenceTypeName + _sequenceType.getArity().getSymbol(), getMetadata());
+            throw new TreatException(
+                    ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName())
+                        + " cannot be treated as type "
+                        + sequenceTypeName
+                        + _sequenceType.getArity().getSymbol(),
+                    getMetadata()
+            );
         }
     }
 
@@ -101,23 +109,43 @@ public class TreatIterator extends HybridRuntimeIterator {
         return childRDD.filter(transformation);
     }
 
-    void checkEmptySequence(int size) {
-        if (size == 0 && (_sequenceType.getArity() == SequenceType.Arity.One || _sequenceType.getArity() == SequenceType.Arity.OneOrMore)) {
-            _shouldCheckForTypePromotion = false;
-            throw new TreatException("Empty sequence cannot be treated as type " + sequenceTypeName + _sequenceType.getArity().getSymbol(), getMetadata());
+    void checkEmptySequence(long size) {
+        if (
+            size == 0
+                && (_sequenceType.getArity() == SequenceType.Arity.One
+                    ||
+                    _sequenceType.getArity() == SequenceType.Arity.OneOrMore)
+        ) {
+            throw new TreatException(
+                    "Empty sequence cannot be treated as type "
+                        + sequenceTypeName
+                        + _sequenceType.getArity().getSymbol(),
+                    getMetadata()
+            );
         }
     }
 
-    void checkItemsSize(int size) {
-        if (size > 0 && _sequenceType.isEmptySequence()) {
-            _shouldCheckForTypePromotion = false;
-            throw new TreatException(ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName()) + " cannot be treated as type empty-sequence()", getMetadata());
-        }
+    void checkItemsSize(long size) {
+        if (size > 0 && _sequenceType.isEmptySequence())
+            throw new TreatException(
+                    ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName())
+                        + " cannot be treated as type empty-sequence()",
+                    getMetadata()
+            );
 
 
-        if (size > 1 && (_sequenceType.getArity() == SequenceType.Arity.One || _sequenceType.getArity() == SequenceType.Arity.OneOrZero)) {
-            _shouldCheckForTypePromotion = false;
-            throw new TreatException("Sequences of more than one item cannot be treated as type " + sequenceTypeName + _sequenceType.getArity().getSymbol(), getMetadata());
+        if (
+            size > 1
+                && (_sequenceType.getArity() == SequenceType.Arity.One
+                    ||
+                    _sequenceType.getArity() == SequenceType.Arity.OneOrZero)
+        ) {
+            throw new TreatException(
+                    "Sequences of more than one item cannot be treated as type "
+                        + sequenceTypeName
+                        + _sequenceType.getArity().getSymbol(),
+                    getMetadata()
+            );
         }
     }
 

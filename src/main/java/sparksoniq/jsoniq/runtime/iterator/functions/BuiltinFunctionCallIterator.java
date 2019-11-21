@@ -10,7 +10,7 @@ import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionSignature;
-import sparksoniq.jsoniq.runtime.iterator.functions.base.SparksoniqFunction;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.BuiltinFunction;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
@@ -24,22 +24,20 @@ public class BuiltinFunctionCallIterator extends HybridRuntimeIterator {
     // parametrized fields
     private FunctionIdentifier _functionIdentifier;
     private List<RuntimeIterator> _functionArguments;
-    private FunctionSignature _functionSignature;
 
     // calculated fields
     private RuntimeIterator _functionCallIterator;
     private Item _nextResult;
 
     public BuiltinFunctionCallIterator(
-            FunctionIdentifier fnIdentifier,
+            BuiltinFunction builtinFunction,
             List<RuntimeIterator> arguments,
-            SparksoniqFunction sparksoniqFunction,
-            IteratorMetadata iteratorMetadata) {
+            IteratorMetadata iteratorMetadata
+    ) {
         super(arguments, iteratorMetadata);
-        _functionIdentifier = fnIdentifier;
+        _functionIdentifier = builtinFunction.getIdentifier();
         _functionArguments = arguments;
-        _functionSignature = sparksoniqFunction.getSignature();
-        _functionCallIterator = initializeFnBodyIterator(sparksoniqFunction.getFunctionIterator(), iteratorMetadata);
+        _functionCallIterator = initializeFnBodyIterator(builtinFunction.getFunctionIterator(), iteratorMetadata);
     }
 
     @Override
@@ -47,11 +45,15 @@ public class BuiltinFunctionCallIterator extends HybridRuntimeIterator {
         _currentDynamicContext = new DynamicContext(_currentDynamicContext);
         try {
             _functionCallIterator.open(_currentDynamicContext);
-        } catch(TreatException e) {
+        } catch (TreatException e) {
             String exceptionMessage = e.getJSONiqErrorMessage();
-            throw new UnexpectedTypeException("Invalid argument for "
-                    + (_functionSignature.getIdentifier().getName().equals("") ? "inline" :
-                    _functionSignature.getIdentifier().getName()) + " function. " + exceptionMessage, getMetadata());
+            throw new UnexpectedTypeException(
+                    "Invalid argument for "
+                        + (_functionIdentifier.getName().equals("") ? "inline" : _functionIdentifier.getName())
+                        + " function. "
+                        + exceptionMessage,
+                    getMetadata()
+            );
         }
         setNextResult();
     }
@@ -94,11 +96,15 @@ public class BuiltinFunctionCallIterator extends HybridRuntimeIterator {
         if (_functionCallIterator.hasNext()) {
             try {
                 _nextResult = _functionCallIterator.next();
-            } catch(TreatException e) {
+            } catch (TreatException e) {
                 String exceptionMessage = e.getJSONiqErrorMessage();
-                throw new UnexpectedTypeException("Invalid argument for "
-                        + (_functionSignature.getIdentifier().getName().equals("") ? "inline" :
-                        _functionSignature.getIdentifier().getName()) + " function. " + exceptionMessage, getMetadata());
+                throw new UnexpectedTypeException(
+                        "Invalid argument for "
+                            + (_functionIdentifier.getName().equals("") ? "inline" : _functionIdentifier.getName())
+                            + " function. "
+                            + exceptionMessage,
+                        getMetadata()
+                );
             }
         }
 
@@ -116,11 +122,15 @@ public class BuiltinFunctionCallIterator extends HybridRuntimeIterator {
         JavaRDD<Item> result;
         try {
             result = _functionCallIterator.getRDD(_currentDynamicContext);
-        } catch(TreatException e) {
+        } catch (TreatException e) {
             String exceptionMessage = e.getJSONiqErrorMessage();
-            throw new UnexpectedTypeException("Invalid argument for "
-                    + (_functionSignature.getIdentifier().getName().equals("") ? "inline" :
-                    _functionSignature.getIdentifier().getName()) + " function. " + exceptionMessage, getMetadata());
+            throw new UnexpectedTypeException(
+                    "Invalid argument for "
+                        + (_functionIdentifier.getName().equals("") ? "inline" : _functionIdentifier.getName())
+                        + " function. "
+                        + exceptionMessage,
+                    getMetadata()
+            );
         }
         return result;
     }
@@ -130,9 +140,15 @@ public class BuiltinFunctionCallIterator extends HybridRuntimeIterator {
         return _functionCallIterator.isRDD();
     }
 
-    private RuntimeIterator initializeFnBodyIterator(Class<? extends RuntimeIterator> fnBodyIteratorClass, IteratorMetadata metadata) {
+    private RuntimeIterator initializeFnBodyIterator(
+            Class<? extends RuntimeIterator> fnBodyIteratorClass,
+            IteratorMetadata metadata
+    ) {
         try {
-            Constructor<? extends RuntimeIterator> ctor = fnBodyIteratorClass.getConstructor(List.class, IteratorMetadata.class);
+            Constructor<? extends RuntimeIterator> ctor = fnBodyIteratorClass.getConstructor(
+                List.class,
+                IteratorMetadata.class
+            );
             return ctor.newInstance(_functionArguments, metadata);
         } catch (ReflectiveOperationException e) {
             throw new UnknownFunctionCallException(_functionIdentifier.getName(), _functionArguments.size(), metadata);

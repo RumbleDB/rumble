@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -35,13 +35,17 @@ import sparksoniq.semantics.types.ItemTypes;
 public abstract class BinaryOperationBaseIterator extends LocalRuntimeIterator {
 
 
-	private static final long serialVersionUID = 1L;
-	protected final RuntimeIterator _leftIterator;
+    private static final long serialVersionUID = 1L;
+    protected final RuntimeIterator _leftIterator;
     protected final RuntimeIterator _rightIterator;
     protected final OperationalExpressionBase.Operator _operator;
 
-    protected BinaryOperationBaseIterator(RuntimeIterator left, RuntimeIterator right,
-                                          OperationalExpressionBase.Operator operator, IteratorMetadata iteratorMetadata) {
+    protected BinaryOperationBaseIterator(
+            RuntimeIterator left,
+            RuntimeIterator right,
+            OperationalExpressionBase.Operator operator,
+            IteratorMetadata iteratorMetadata
+    ) {
         super(new ArrayList<>(), iteratorMetadata);
         this._children.add(left);
         this._children.add(right);
@@ -52,22 +56,41 @@ public abstract class BinaryOperationBaseIterator extends LocalRuntimeIterator {
 
     protected void checkBinaryOperation(Item left, Item right, OperationalExpressionBase.Operator operator) {
         if (!left.isAtomic()) {
-            String message = String.format("Can not atomize an %1$s item: an %1$s has probably been passed where " +
-                            "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
-                    ItemTypes.getItemTypeName(left.getClass().getSimpleName()));
+            String message = String.format(
+                "Can not atomize an %1$s item: an %1$s has probably been passed where "
+                    +
+                    "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
+                ItemTypes.getItemTypeName(left.getClass().getSimpleName())
+            );
             throw new NonAtomicKeyException(message, getMetadata().getExpressionMetadata());
         }
         if (!right.isAtomic()) {
-            String message = String.format("Can not atomize an %1$s item: an %1$s has probably been passed where " +
-                            "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
-                    ItemTypes.getItemTypeName(right.getClass().getSimpleName()));
+            String message = String.format(
+                "Can not atomize an %1$s item: an %1$s has probably been passed where "
+                    +
+                    "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
+                ItemTypes.getItemTypeName(right.getClass().getSimpleName())
+            );
             throw new NonAtomicKeyException(message, getMetadata().getExpressionMetadata());
         }
-        if ((!left.isNumeric() && !left.isYearMonthDuration() && !left.isDayTimeDuration() && !left.hasDateTime()) ||
-                (!right.isNumeric() && !right.isYearMonthDuration() && !right.isDayTimeDuration() && !right.hasDateTime())) {
-            throw new UnexpectedTypeException(" \"" + operator.name().toLowerCase() + "\": operation not possible with parameters of type \""
-                    + ItemTypes.getItemTypeName(left.getClass().getSimpleName()) + "\" and \""
-                    + ItemTypes.getItemTypeName(right.getClass().getSimpleName()) + "\"", getMetadata());
+        if (
+            (!left.isNumeric() && !left.isYearMonthDuration() && !left.isDayTimeDuration() && !left.hasDateTime())
+                ||
+                (!right.isNumeric()
+                    && !right.isYearMonthDuration()
+                    && !right.isDayTimeDuration()
+                    && !right.hasDateTime())
+        ) {
+            throw new UnexpectedTypeException(
+                    " \""
+                        + operator.name().toLowerCase()
+                        + "\": operation not possible with parameters of type \""
+                        + ItemTypes.getItemTypeName(left.getClass().getSimpleName())
+                        + "\" and \""
+                        + ItemTypes.getItemTypeName(right.getClass().getSimpleName())
+                        + "\"",
+                    getMetadata()
+            );
         }
     }
 }
