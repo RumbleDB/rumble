@@ -56,7 +56,7 @@ public class DateTimeItem extends AtomicItem {
 
     private static final long serialVersionUID = 1L;
     private DateTime _value;
-    private boolean hasTimeZone = true;
+    private boolean _hasTimeZone = true;
 
     public DateTimeItem() {
         super();
@@ -65,13 +65,13 @@ public class DateTimeItem extends AtomicItem {
     DateTimeItem(DateTime _value, boolean hasTimeZone) {
         super();
         this._value = _value;
-        this.hasTimeZone = hasTimeZone;
+        this._hasTimeZone = hasTimeZone;
     }
 
     DateTimeItem(String dateTimeString) {
         this._value = parseDateTime(dateTimeString, AtomicTypes.DateTimeItem);
         if (!dateTimeString.endsWith("Z") && _value.getZone() == DateTimeZone.getDefault()) {
-            this.hasTimeZone = false;
+            this._hasTimeZone = false;
             this._value = _value.withZoneRetainFields(DateTimeZone.UTC);
         }
     }
@@ -92,7 +92,7 @@ public class DateTimeItem extends AtomicItem {
 
     @Override
     public boolean hasTimeZone() {
-        return hasTimeZone;
+        return _hasTimeZone;
     }
 
     @Override
@@ -113,9 +113,9 @@ public class DateTimeItem extends AtomicItem {
             case DateTimeItem:
                 return this;
             case DateItem:
-                return ItemFactory.getInstance().createDateItem(this.getDateTimeValue(), this.hasTimeZone);
+                return ItemFactory.getInstance().createDateItem(this.getDateTimeValue(), this._hasTimeZone);
             case TimeItem:
-                return ItemFactory.getInstance().createTimeItem(this.getDateTimeValue(), this.hasTimeZone);
+                return ItemFactory.getInstance().createTimeItem(this.getDateTimeValue(), this._hasTimeZone);
             default:
                 throw new ClassCastException();
         }
@@ -166,18 +166,22 @@ public class DateTimeItem extends AtomicItem {
                 : value.substring(value.length() - 6);
         value = value.substring(0, value.length() - zoneString.length());
         value = this.getValue().getMillisOfSecond() == 0 ? value.substring(0, value.length() - 4) : value;
-        return value + (hasTimeZone ? zoneString : "");
+        return value + (_hasTimeZone ? zoneString : "");
     }
 
     @Override
     public void write(Kryo kryo, Output output) {
         output.writeLong(this.getDateTimeValue().getMillis(), true);
+        output.writeBoolean(this._hasTimeZone);
         output.writeString(this.getDateTimeValue().getZone().getID());
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this._value = new DateTime(input.readLong(true), DateTimeZone.forID(input.readString()));
+        Long millis = input.readLong(true);
+        this._hasTimeZone = input.readBoolean();
+        DateTimeZone zone = DateTimeZone.forID(input.readString());
+        this._value = new DateTime(millis, zone);
     }
 
     private static DateTimeFormatter getDateTimeFormatter(AtomicTypes dateTimeType) {
@@ -252,7 +256,7 @@ public class DateTimeItem extends AtomicItem {
     public Item add(Item other) {
         if (other.isYearMonthDuration() || other.isDayTimeDuration())
             return ItemFactory.getInstance()
-                .createDateTimeItem(this.getValue().plus(other.getDurationValue()), this.hasTimeZone);
+                .createDateTimeItem(this.getValue().plus(other.getDurationValue()), this._hasTimeZone);
         else
             throw new ClassCastException();
     }
@@ -265,7 +269,7 @@ public class DateTimeItem extends AtomicItem {
         }
         if (other.isYearMonthDuration() || other.isDayTimeDuration())
             return ItemFactory.getInstance()
-                .createDateTimeItem(this.getValue().minus(other.getDurationValue()), this.hasTimeZone);
+                .createDateTimeItem(this.getValue().minus(other.getDurationValue()), this._hasTimeZone);
         else
             throw new ClassCastException();
     }

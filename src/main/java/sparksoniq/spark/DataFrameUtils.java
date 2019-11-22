@@ -166,7 +166,7 @@ public class DataFrameUtils {
     private static String COMMA = ",";
 
     /**
-     * @param columnNames names of the columns in the schema
+     * @param columnNames schema specifies the columns to be used in the query
      * @param trailingComma boolean field to have a trailing comma
      * @return comma separated variables to be used in spark SQL
      */
@@ -208,12 +208,12 @@ public class DataFrameUtils {
         for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
             String columnName = columnNames[columnIndex];
 
-            boolean applyDistinct = false;
+            boolean groupingKey = false;
             if (columnIndex == duplicateVariableIndex) {
                 continue;
             }
             if (groupbyVariableNames.contains(columnName)) {
-                applyDistinct = true;
+                groupingKey = true;
             }
 
             boolean applyCount = false;
@@ -228,10 +228,12 @@ public class DataFrameUtils {
             } else {
                 queryColumnString.append(serializerUdfName);
                 queryColumnString.append("(");
-                if (applyDistinct) {
-                    queryColumnString.append("array_distinct(");
+                if (groupingKey) {
+                    queryColumnString.append("array(");
+                    queryColumnString.append("first(`");
+                } else {
+                    queryColumnString.append("collect_list(`");
                 }
-                queryColumnString.append("collect_list(`");
             }
 
             queryColumnString.append(columnName);
@@ -240,7 +242,7 @@ public class DataFrameUtils {
                 queryColumnString.append("`)");
             } else {
                 queryColumnString.append("`)");
-                if (applyDistinct) {
+                if (groupingKey) {
                     queryColumnString.append(")");
                 }
                 queryColumnString.append(")");
