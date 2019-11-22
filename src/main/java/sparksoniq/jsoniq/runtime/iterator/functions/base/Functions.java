@@ -22,11 +22,10 @@ package sparksoniq.jsoniq.runtime.iterator.functions.base;
 
 import sparksoniq.exceptions.DuplicateFunctionIdentifierException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
+import sparksoniq.exceptions.UnknownFunctionCallException;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.BuiltinFunctionCallIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.CheckReturnTypeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.binaries.HexBinaryFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.EndsWithFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.TypePromotionIterator;
@@ -37,6 +36,7 @@ import sparksoniq.semantics.types.SequenceType;
 import sparksoniq.spark.iterator.function.ParallelizeFunctionIterator;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -62,24 +62,24 @@ public class Functions {
 
     static {
         itemTypes = new HashMap<>();
-        itemTypes.put("String", new ItemType(ItemTypes.StringItem));
-        itemTypes.put("HexBinary", new ItemType(ItemTypes.HexBinaryItem));
-        itemTypes.put("Boolean", new ItemType(ItemTypes.BooleanItem));
-        itemTypes.put("Item", new ItemType(ItemTypes.Item));
-        itemTypes.put("Integer", new ItemType(ItemTypes.IntegerItem));
+        itemTypes.put("string", new ItemType(ItemTypes.StringItem));
+        itemTypes.put("hexBinary", new ItemType(ItemTypes.HexBinaryItem));
+        itemTypes.put("boolean", new ItemType(ItemTypes.BooleanItem));
+        itemTypes.put("item", new ItemType(ItemTypes.Item));
+        itemTypes.put("integer", new ItemType(ItemTypes.IntegerItem));
     }
 
     private static final Map<String, SequenceType> sequenceTypes;
     static {
         sequenceTypes = new HashMap<>();
-        sequenceTypes.put("String", new SequenceType(itemTypes.get("String"), SequenceType.Arity.One));
-        sequenceTypes.put("String?", new SequenceType(itemTypes.get("String"), SequenceType.Arity.OneOrZero));
-        sequenceTypes.put("Boolean", new SequenceType(itemTypes.get("Boolean"), SequenceType.Arity.One));
-        sequenceTypes.put("Boolean?", new SequenceType(itemTypes.get("Boolean"), SequenceType.Arity.OneOrZero));
-        sequenceTypes.put("HexBinary", new SequenceType(itemTypes.get("HexBinary"), SequenceType.Arity.One));
-        sequenceTypes.put("HexBinary?", new SequenceType(itemTypes.get("HexBinary"), SequenceType.Arity.OneOrZero));
-        sequenceTypes.put("Item*", new SequenceType(itemTypes.get("Item"), SequenceType.Arity.ZeroOrMore));
-        sequenceTypes.put("Integer", new SequenceType(itemTypes.get("Integer"), SequenceType.Arity.One));
+        sequenceTypes.put("string", new SequenceType(itemTypes.get("string"), SequenceType.Arity.One));
+        sequenceTypes.put("string?", new SequenceType(itemTypes.get("string"), SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("boolean", new SequenceType(itemTypes.get("boolean"), SequenceType.Arity.One));
+        sequenceTypes.put("boolean?", new SequenceType(itemTypes.get("boolean"), SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("hexBinary", new SequenceType(itemTypes.get("hexBinary"), SequenceType.Arity.One));
+        sequenceTypes.put("hexBinary?", new SequenceType(itemTypes.get("hexBinary"), SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("item*", new SequenceType(itemTypes.get("item"), SequenceType.Arity.ZeroOrMore));
+        sequenceTypes.put("integer", new SequenceType(itemTypes.get("integer"), SequenceType.Arity.One));
     }
 
 
@@ -192,23 +192,35 @@ public class Functions {
             IteratorMetadata metadata
     ) {
         BuiltinFunction builtinFunction = builtInFunctions.get(identifier);
+
         for (int i = 0; i < arguments.size(); i++) {
             arguments.set(
                 i,
                 new TypePromotionIterator(
                         arguments.get(i),
-                        builtinFunction.getSignature().getParameters().get(i),
+                        builtinFunction.getSignature().getParameterTypes().get(i),
+                        "Invalid argument for function " + identifier.getName() + ". ",
                         metadata
                 )
             );
         }
-        return new CheckReturnTypeIterator(
-                new TypePromotionIterator(
-                        new BuiltinFunctionCallIterator(builtinFunction, arguments, metadata),
-                        builtinFunction.getSignature().getReturnType(),
-                        metadata
-                ),
-                identifier.getName(),
+
+        RuntimeIterator functionCallIterator;
+        try {
+            Constructor<? extends RuntimeIterator> constructor = builtinFunction.getFunctionIterator()
+                .getConstructor(
+                    List.class,
+                    IteratorMetadata.class
+                );
+            functionCallIterator = constructor.newInstance(arguments, metadata);
+        } catch (ReflectiveOperationException e) {
+            throw new UnknownFunctionCallException(identifier.getName(), arguments.size(), metadata);
+        }
+
+        return new TypePromotionIterator(
+                functionCallIterator,
+                builtinFunction.getSignature().getReturnType(),
+                "Invalid return type for function " + identifier.getName() + ". ",
                 metadata
         );
     }
@@ -277,8 +289,8 @@ public class Functions {
         public static final BuiltinFunction parallelizeFunction1 = new BuiltinFunction(
                 new FunctionIdentifier(PARALLELIZE, 1),
                 new FunctionSignature(
-                        Collections.singletonList(sequenceTypes.get("Item*")),
-                        sequenceTypes.get("Item*")
+                        Collections.singletonList(sequenceTypes.get("item*")),
+                        sequenceTypes.get("item*")
                 ),
                 ParallelizeFunctionIterator.class
         );
@@ -286,9 +298,9 @@ public class Functions {
                 new FunctionIdentifier(PARALLELIZE, 2),
                 new FunctionSignature(
                         Collections.unmodifiableList(
-                            Arrays.asList(sequenceTypes.get("Item*"), sequenceTypes.get("Integer"))
+                            Arrays.asList(sequenceTypes.get("item*"), sequenceTypes.get("integer"))
                         ),
-                        sequenceTypes.get("Item*")
+                        sequenceTypes.get("item*")
                 ),
                 ParallelizeFunctionIterator.class
         );
@@ -511,9 +523,9 @@ public class Functions {
                 new FunctionIdentifier(ENDSWITH, 2),
                 new FunctionSignature(
                         Collections.unmodifiableList(
-                            Arrays.asList(sequenceTypes.get("String?"), sequenceTypes.get("String?"))
+                            Arrays.asList(sequenceTypes.get("string?"), sequenceTypes.get("string?"))
                         ),
-                        sequenceTypes.get("Boolean")
+                        sequenceTypes.get("boolean")
                 ),
                 EndsWithFunctionIterator.class
         );
@@ -676,8 +688,8 @@ public class Functions {
         public static final BuiltinFunction hexBinaryFunction = new BuiltinFunction(
                 new FunctionIdentifier(HEXBINARY, 1),
                 new FunctionSignature(
-                        Collections.singletonList(sequenceTypes.get("String?")),
-                        sequenceTypes.get("HexBinary?")
+                        Collections.singletonList(sequenceTypes.get("string?")),
+                        sequenceTypes.get("hexBinary?")
                 ),
                 HexBinaryFunctionIterator.class
         );

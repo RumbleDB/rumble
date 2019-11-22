@@ -43,7 +43,6 @@ import sparksoniq.jsoniq.compiler.translator.expr.flowr.LetClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.LetClauseVar;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
-import sparksoniq.jsoniq.compiler.translator.expr.flowr.ReturnClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.WhereClause;
 import sparksoniq.jsoniq.compiler.translator.expr.module.MainModule;
 import sparksoniq.jsoniq.compiler.translator.expr.module.Prolog;
@@ -93,7 +92,6 @@ import sparksoniq.jsoniq.runtime.iterator.control.IfRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.control.SwitchRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.control.TypeSwitchCase;
 import sparksoniq.jsoniq.runtime.iterator.control.TypeSwitchRuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.CheckReturnTypeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.DynamicFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.FunctionRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.UserDefinedFunctionCallIterator;
@@ -349,13 +347,10 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                         }
                         IteratorMetadata metadata = createIteratorMetadata(expression);
                         DynamicFunctionCallIterator iterator = new DynamicFunctionCallIterator(previous, arguments, metadata);
-                        CheckReturnTypeIterator checkReturnTypeIterator = new CheckReturnTypeIterator(
-                                        new TypePromotionIterator(
-                                            iterator,
-                                            metadata),
-                                        metadata);
-                        iterator.setCheckReturnTypeIterator(checkReturnTypeIterator);
-                        previous = checkReturnTypeIterator;
+                        TypePromotionIterator typePromotionIterator =
+                                new TypePromotionIterator(iterator, metadata);
+                        iterator.setTypePromotionIterator(typePromotionIterator);
+                        previous = typePromotionIterator;
                     }
                 } catch (Exception ex) {
                     ex.printStackTrace();
@@ -461,22 +456,29 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         }
         if (Functions.checkUserDefinedFunctionExists(identifier)) {
             FunctionItem functionItem = Functions.getUserDefinedFunction(identifier, iteratorMetadata);
-            if (functionItem.getSignature().getParameters() != null) {
+            if (functionItem.getSignature().getParameterTypes() != null) {
                 for (int i = 0; i < arguments.size(); i++) {
                     if (arguments.get(i) != null)
-                        arguments.set(i, new TypePromotionIterator(
-                            arguments.get(i), functionItem.getSignature().getParameters().get(i), iteratorMetadata));
+                        arguments.set(i,
+                            new TypePromotionIterator(
+                                arguments.get(i),
+                                functionItem.getSignature().getParameterTypes().get(i),
+                                    "Invalid argument for "
+                                            + (identifier.getName().equals("") ? "inline" :
+                                            identifier.getName()) + " function. ",
+                                iteratorMetadata
+                            ));
                 }
             }
             if (functionItem.getSignature().getReturnType() != null) {
 
-                return new CheckReturnTypeIterator(
-                            new TypePromotionIterator(
-                                new UserDefinedFunctionCallIterator(functionItem, arguments, iteratorMetadata),
-                                functionItem.getSignature().getReturnType(),
-                                iteratorMetadata),
-                            identifier.getName(),
-                            iteratorMetadata);
+                return new TypePromotionIterator(
+                        new UserDefinedFunctionCallIterator(functionItem, arguments, iteratorMetadata),
+                        functionItem.getSignature().getReturnType(),
+                        "Invalid return type for "
+                                + (identifier.getName().equals("") ? "inline" :
+                                identifier.getName()) + " function. ",
+                        iteratorMetadata);
             }
             return new UserDefinedFunctionCallIterator(functionItem, arguments, iteratorMetadata);
         }
@@ -771,6 +773,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
             return new TreatIterator(
                     childExpression,
                     expression.getsequenceType().getSequence(),
+                    true,
                     createIteratorMetadata(expression)
             );
         } else

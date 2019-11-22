@@ -54,7 +54,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
     private RuntimeIterator _functionCallIterator;
     private Item _nextResult;
     private FunctionIdentifier _functionIdentifier;
-    private CheckReturnTypeIterator _checkReturnTypeIterator;
+    private TypePromotionIterator _typePromotionIterator;
 
     public DynamicFunctionCallIterator(
             RuntimeIterator functionItemIterator,
@@ -138,7 +138,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
 
                 if (argIterator == null) { // == ArgumentPlaceholder
                     partialAppParametersNames.add(argName);
-                    partialAppParameters.add(_functionItem.getSignature().getParameters().get(i));
+                    partialAppParameters.add(_functionItem.getSignature().getParameterTypes().get(i));
                 } else {
                     List<Item> argValue = getItemsFromIteratorWithCurrentContext(argIterator);
                     argumentValues.put(argName, argValue);
@@ -247,12 +247,12 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
             _functionItem = getSingleItemOfTypeFromIterator(
                 _functionItemIterator,
                 FunctionItem.class,
-                new UnexpectedTypeException(
+                new SequenceExceptionExactlyOne(
                         "Dynamic function call can not be performed on a sequence.",
                         getMetadata()
                 )
             );
-        } catch (UnexpectedTypeException e) {
+        } catch (SequenceExceptionExactlyOne e) {
             throw new UnexpectedTypeException(
                     "Dynamic function call can only be performed on functions.",
                     getMetadata()
@@ -261,19 +261,28 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
         _functionCallIterator = _functionItem.getBodyIterator();
         _functionIdentifier = _functionItem.getIdentifier();
 
-        if (_functionItem.getSignature().getParameters() != null) {
+        if (_functionItem.getSignature().getParameterTypes() != null) {
             for (int i = 0; i < _functionArguments.size(); i++) {
                 if (_functionArguments.get(i) != null) {
-                    _functionArguments.set(i, new TypePromotionIterator(
-                            _functionArguments.get(i), _functionItem.getSignature().getParameters().get(i), getMetadata()));
+                    _functionArguments.set(i,
+                            new TypePromotionIterator(
+                                    _functionArguments.get(i),
+                                    _functionItem.getSignature().getParameterTypes().get(i),
+                                    "Invalid argument for "
+                                            + (_functionIdentifier.getName().equals("") ? "inline" :
+                                            _functionIdentifier.getName()) + " function. ",
+                                    getMetadata()
+                            ));
                 }
             }
         }
-        this._checkReturnTypeIterator.setFunctionName(_functionIdentifier.getName());
-        this._checkReturnTypeIterator.getTypePromotionIterator().setSequenceType(_functionItem.getSignature().getReturnType());
+        this._typePromotionIterator.setExceptionMessage("Invalid return type for "
+                + (_functionIdentifier.getName().equals("") ? "inline" :
+                _functionIdentifier.getName()) + " function. ");
+        this._typePromotionIterator.setSequenceType(_functionItem.getSignature().getReturnType());
     }
 
-    public void setCheckReturnTypeIterator(CheckReturnTypeIterator checkReturnTypeIterator) {
-        this._checkReturnTypeIterator = checkReturnTypeIterator;
+    public void setTypePromotionIterator(TypePromotionIterator typePromotionIterator) {
+        this._typePromotionIterator = typePromotionIterator;
     }
 }

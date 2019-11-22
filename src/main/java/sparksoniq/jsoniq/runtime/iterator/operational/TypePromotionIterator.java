@@ -4,6 +4,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.TreatException;
+import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -17,18 +18,26 @@ import java.util.Collections;
 public class TypePromotionIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
+    private String _exceptionMessage;
     private SequenceType _sequenceType;
     private TreatIterator _treatIterator;
-    private RuntimeIterator _child;
 
-    public TypePromotionIterator(RuntimeIterator iterator, IteratorMetadata iteratorMetadata) {
+    public TypePromotionIterator(
+            RuntimeIterator iterator,
+            IteratorMetadata iteratorMetadata
+    ) {
         super(Collections.singletonList(iterator), iteratorMetadata);
-        this._child = iterator;
-        this._treatIterator = new TreatIterator(_child, iteratorMetadata);
+        this._treatIterator = new TreatIterator(iterator, true, iteratorMetadata);
     }
 
-    public TypePromotionIterator(RuntimeIterator iterator, SequenceType sequenceType, IteratorMetadata iteratorMetadata) {
+    public TypePromotionIterator(
+            RuntimeIterator iterator,
+            SequenceType sequenceType,
+            String exceptionMessage,
+            IteratorMetadata iteratorMetadata
+    ) {
         this(iterator, iteratorMetadata);
+        this._exceptionMessage = exceptionMessage;
         this.setSequenceType(sequenceType);
     }
 
@@ -76,12 +85,12 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         _currentDynamicContext = context;
-        JavaRDD<Item> childRDD = _child.getRDD(context);
+        JavaRDD<Item> childRDD = _treatIterator.getRDD(context);
 
         int count = childRDD.take(2).size();
         _treatIterator.checkEmptySequence(count);
         _treatIterator.checkItemsSize(count);
-        Function<Item, Item> transformation = new TypePromotionClosure(_sequenceType, getMetadata());
+        Function<Item, Item> transformation = new TypePromotionClosure(_exceptionMessage, _sequenceType, getMetadata());
         return childRDD.map(transformation);
     }
 
@@ -94,12 +103,19 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     private void checkTypePromotion(String treatExceptionMessage) {
         if (_treatIterator._nextResult != null && _treatIterator._nextResult.isFunction()) return;
         if (!this.resultCanBePromoted())
-            throw new TreatException(treatExceptionMessage.replaceFirst("treated as", "promoted to"), getMetadata());
+            throw new UnexpectedTypeException(
+                    _exceptionMessage + treatExceptionMessage.replaceFirst("treated as", "promoted to"),
+                    getMetadata()
+            );
         _treatIterator._nextResult = _treatIterator._nextResult.promoteTo(_sequenceType.getItemType());
     }
 
     public void setSequenceType(SequenceType _sequenceType) {
         this._sequenceType = _sequenceType;
         this._treatIterator.setSequenceType(_sequenceType);
+    }
+
+    public void setExceptionMessage(String exceptionMessage) {
+        this._exceptionMessage = exceptionMessage;
     }
 }
