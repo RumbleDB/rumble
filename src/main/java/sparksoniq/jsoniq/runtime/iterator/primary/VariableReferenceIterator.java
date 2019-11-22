@@ -20,6 +20,7 @@
 
 package sparksoniq.jsoniq.runtime.iterator.primary;
 
+import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -30,8 +31,6 @@ import sparksoniq.semantics.types.SequenceType;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-
-import org.rumbledb.api.Item;
 
 public class VariableReferenceIterator extends LocalRuntimeIterator {
 
@@ -50,15 +49,17 @@ public class VariableReferenceIterator extends LocalRuntimeIterator {
 
     @Override
     public Item next() {
-        if (!this.hasNext())
+        if (!this.hasNext()) {
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "$" + _variableName,
                     getMetadata()
             );
+        }
         Item item = items.get(currentIndex);
         currentIndex++;
-        if (currentIndex == items.size())
+        if (currentIndex == items.size()) {
             this._hasNext = false;
+        }
         return item;
     }
 
@@ -75,11 +76,7 @@ public class VariableReferenceIterator extends LocalRuntimeIterator {
 
         this.currentIndex = 0;
         this.items = this._currentDynamicContext.getVariableValue(this._variableName);
-        if (items.size() == 0) {
-            this._hasNext = false;
-        } else {
-            this._hasNext = true;
-        }
+        this._hasNext = items.size() != 0;
     }
 
     public SequenceType getSequence() {
@@ -91,8 +88,7 @@ public class VariableReferenceIterator extends LocalRuntimeIterator {
     }
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<String, DynamicContext.VariableDependency> result =
-            new TreeMap<String, DynamicContext.VariableDependency>();
+        Map<String, DynamicContext.VariableDependency> result = new TreeMap<>();
         result.put(_variableName, DynamicContext.VariableDependency.FULL);
         return result;
     }
