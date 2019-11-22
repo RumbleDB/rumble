@@ -75,7 +75,7 @@ public class VariableReferenceIterator extends LocalRuntimeIterator {
         super.open(context);
 
         this.currentIndex = 0;
-        this.items = this._currentDynamicContext.getVariableValue(this._variableName);
+        this.items = this._currentDynamicContext.getLocalVariableValue(this._variableName, getMetadata());
         this._hasNext = items.size() != 0;
     }
 

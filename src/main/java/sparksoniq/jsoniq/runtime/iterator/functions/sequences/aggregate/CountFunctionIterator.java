@@ -52,7 +52,7 @@ public class CountFunctionIterator extends LocalFunctionCallIterator {
                 if (iterator instanceof VariableReferenceIterator) {
                     VariableReferenceIterator expr = (VariableReferenceIterator) iterator;
                     this._hasNext = false;
-                    return _currentDynamicContext.getVariableCount(expr.getVariableName());
+                    return _currentDynamicContext.getLocalVariableCount(expr.getVariableName());
                 }
                 List<Item> results = getItemsFromIteratorWithCurrentContext(iterator);
                 this._hasNext = false;
