@@ -76,54 +76,6 @@ public class FlworTuple implements Serializable, KryoSerializable {
         }
     }
 
-    /**
-     * Create a tuple containing only the given key-value pair
-     */
-    public FlworTuple(String newKey, List<Item> value) {
-        this(1);
-        this.putValue(newKey, value);
-    }
-
-    /**
-     * Create a tuple containing only the given key-value pair
-     */
-    public FlworTuple(String newKey, JavaRDD<Item> value) {
-        this(1);
-        this.putValue(newKey, value);
-    }
-
-    /**
-     * Create a tuple containing only the given key-value pair
-     */
-    public FlworTuple(String newKey, Dataset<Row> value) {
-        this(1);
-        this.putValue(newKey, value);
-    }
-
-    /**
-     * Create a deep copy containing new key-value pair
-     */
-    public FlworTuple(FlworTuple toCopy, String newKey, List<Item> value) {
-        this(toCopy);
-        this.putValue(newKey, value);
-    }
-
-    /**
-     * Create a deep copy containing new key-value pair
-     */
-    public FlworTuple(FlworTuple toCopy, String newKey, JavaRDD<Item> value) {
-        this(toCopy);
-        this.putValue(newKey, value);
-    }
-
-    /**
-     * Create a deep copy containing new key-value pair
-     */
-    public FlworTuple(FlworTuple toCopy, String newKey, Dataset<Row> value) {
-        this(toCopy);
-        this.putValue(newKey, value);
-    }
-
     public Set<String> getLocalKeys() {
         return localVariables.keySet();
     }
@@ -194,22 +146,25 @@ public class FlworTuple implements Serializable, KryoSerializable {
         this.putValue(key, itemList);
     }
 
-    public void putValue(String key, List<Item> value) {
+    public FlworTuple putValue(String key, List<Item> value) {
         rddVariables.remove(key);
         dfVariables.remove(key);
         localVariables.put(key, value);
+        return this;
     }
 
-    public void putValue(String key, JavaRDD<Item> value) {
+    public FlworTuple putValue(String key, JavaRDD<Item> value) {
         localVariables.remove(key);
         dfVariables.remove(key);
         rddVariables.put(key, value);
+        return this;
     }
 
-    public void putValue(String key, Dataset<Row> value) {
+    public FlworTuple putValue(String key, Dataset<Row> value) {
         localVariables.remove(key);
         rddVariables.remove(key);
         dfVariables.put(key, value);
+        return this;
     }
 
     @Override
