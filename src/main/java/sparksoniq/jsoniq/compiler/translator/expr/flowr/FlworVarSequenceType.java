@@ -45,15 +45,16 @@ public class FlworVarSequenceType extends Expression {
     public FlworVarSequenceType(ItemTypes item, SequenceType.Arity arity, ExpressionMetadata metadata) {
         super(metadata);
         this._sequence = new SequenceType(new ItemType(item), arity);
-        this.isEmpty = false;
+    }
 
+    public FlworVarSequenceType(SequenceType sequenceType, ExpressionMetadata metadata) {
+        super(metadata);
+        this._sequence = sequenceType;
     }
 
     public FlworVarSequenceType(ItemTypes item, ExpressionMetadata metadata) {
         super(metadata);
         this._sequence = new SequenceType(new ItemType(item), SequenceType.Arity.One);
-        this.isEmpty = false;
-
     }
 
     public static ItemTypes getItemType(String text) {

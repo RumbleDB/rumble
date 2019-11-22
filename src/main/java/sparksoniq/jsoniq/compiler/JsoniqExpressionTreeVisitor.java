@@ -167,8 +167,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         String fnName = ctx.fn_name.getText();
         Map<String, FlworVarSequenceType> fnParams = new LinkedHashMap<>();
         FlworVarSequenceType fnReturnType = new FlworVarSequenceType(
-                ItemTypes.Item,
-                SequenceType.Arity.ZeroOrMore,
+                SequenceType.mostGeneralSequenceType,
                 createMetadataFromContext(ctx)
         );
         CommaExpression fnBody;
@@ -179,8 +178,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
                 paramName = param.NCName().getText();
                 paramType = new FlworVarSequenceType(
-                        ItemTypes.Item,
-                        SequenceType.Arity.ZeroOrMore,
+                        SequenceType.mostGeneralSequenceType,
                         createMetadataFromContext(ctx)
                 );
                 if (fnParams.containsKey(paramName)) {
@@ -1128,8 +1126,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
     public Void visitInlineFunctionExpr(JsoniqParser.InlineFunctionExprContext ctx) {
         Map<String, FlworVarSequenceType> fnParams = new LinkedHashMap<>();
         FlworVarSequenceType fnReturnType = new FlworVarSequenceType(
-                ItemTypes.Item,
-                SequenceType.Arity.ZeroOrMore,
+                SequenceType.mostGeneralSequenceType,
                 createMetadataFromContext(ctx)
         );
         CommaExpression fnBody;
@@ -1140,8 +1137,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
                 paramName = param.NCName().getText();
                 paramType = new FlworVarSequenceType(
-                        ItemTypes.Item,
-                        SequenceType.Arity.ZeroOrMore,
+                        SequenceType.mostGeneralSequenceType,
                         createMetadataFromContext(ctx)
                 );
                 if (fnParams.containsKey(paramName)) {

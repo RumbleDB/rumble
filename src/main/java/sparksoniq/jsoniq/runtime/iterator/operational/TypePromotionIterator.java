@@ -18,17 +18,10 @@ import java.util.Collections;
 public class TypePromotionIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
+    private RuntimeIterator _child;
     private String _exceptionMessage;
     private SequenceType _sequenceType;
     private TreatIterator _treatIterator;
-
-    public TypePromotionIterator(
-            RuntimeIterator iterator,
-            IteratorMetadata iteratorMetadata
-    ) {
-        super(Collections.singletonList(iterator), iteratorMetadata);
-        this._treatIterator = new TreatIterator(iterator, true, iteratorMetadata);
-    }
 
     public TypePromotionIterator(
             RuntimeIterator iterator,
@@ -36,9 +29,11 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
             String exceptionMessage,
             IteratorMetadata iteratorMetadata
     ) {
-        this(iterator, iteratorMetadata);
+        super(Collections.singletonList(iterator), iteratorMetadata);
+        this._child = iterator;
         this._exceptionMessage = exceptionMessage;
-        this.setSequenceType(sequenceType);
+        this._sequenceType = sequenceType;
+        this._treatIterator = new TreatIterator(iterator, _sequenceType, true, iteratorMetadata);
     }
 
     @Override
@@ -85,7 +80,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         _currentDynamicContext = context;
-        JavaRDD<Item> childRDD = _treatIterator.getRDD(context);
+        JavaRDD<Item> childRDD = _child.getRDD(context);
 
         int count = childRDD.take(2).size();
         _treatIterator.checkEmptySequence(count);
@@ -101,7 +96,8 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     }
 
     private void checkTypePromotion(String treatExceptionMessage) {
-        if (_treatIterator._nextResult != null && _treatIterator._nextResult.isFunction()) return;
+        if (_treatIterator._nextResult != null && _treatIterator._nextResult.isFunction())
+            return;
         if (!this.resultCanBePromoted())
             throw new UnexpectedTypeException(
                     _exceptionMessage + treatExceptionMessage.replaceFirst("treated as", "promoted to"),
@@ -111,11 +107,6 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     }
 
     public void setSequenceType(SequenceType _sequenceType) {
-        this._sequenceType = _sequenceType;
-        this._treatIterator.setSequenceType(_sequenceType);
-    }
 
-    public void setExceptionMessage(String exceptionMessage) {
-        this._exceptionMessage = exceptionMessage;
     }
 }

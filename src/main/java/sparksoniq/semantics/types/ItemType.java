@@ -71,4 +71,11 @@ public class ItemType implements Serializable {
     }
 
 
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof ItemType))
+            return false;
+        ItemType otherItemType = (ItemType) o;
+        return this.getType().equals(otherItemType.getType());
+    }
 }

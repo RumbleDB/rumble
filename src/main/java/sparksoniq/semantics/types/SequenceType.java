@@ -24,11 +24,14 @@ import java.io.Serializable;
 
 public class SequenceType implements Serializable {
 
-
     private static final long serialVersionUID = 1L;
     private Arity _arity;
     private ItemType _itemType;
     private boolean _isEmptySequence = false;
+    public static final SequenceType mostGeneralSequenceType = new SequenceType(
+            new ItemType(ItemTypes.Item),
+            Arity.ZeroOrMore
+    );
 
 
     public SequenceType(ItemType itemType, Arity arity) {
@@ -94,5 +97,15 @@ public class SequenceType implements Serializable {
         };
 
         public abstract String getSymbol();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof SequenceType))
+            return false;
+        SequenceType otherSequenceType = (SequenceType) o;
+        return this.getItemType().equals(otherSequenceType.getItemType())
+            &&
+            this.getArity().equals(otherSequenceType.getArity());
     }
 }

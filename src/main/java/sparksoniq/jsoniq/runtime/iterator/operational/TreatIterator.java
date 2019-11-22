@@ -33,26 +33,18 @@ public class TreatIterator extends HybridRuntimeIterator {
     private int _childIndex;
     boolean _shouldCheckForTypePromotion = true;
 
-    TreatIterator(
-            RuntimeIterator iterator,
-            boolean shouldThrowTreatException,
-            IteratorMetadata iteratorMetadata
-    ) {
-        super(Collections.singletonList(iterator), iteratorMetadata);
-        _iterator = iterator;
-        this._shouldThrowTreatException = shouldThrowTreatException;
-    }
-
     public TreatIterator(
             RuntimeIterator iterator,
             SequenceType sequenceType,
             boolean shouldThrowTreatException,
             IteratorMetadata iteratorMetadata
-        ) {
-        this(iterator, shouldThrowTreatException, iteratorMetadata);
+    ) {
+        super(Collections.singletonList(iterator), iteratorMetadata);
+        this._iterator = iterator;
         this._sequenceType = sequenceType;
-        itemType = _sequenceType.getItemType();
-        sequenceTypeName = ItemTypes.getItemTypeName(itemType.getType().toString());
+        this._shouldThrowTreatException = shouldThrowTreatException;
+        this.itemType = _sequenceType.getItemType();
+        this.sequenceTypeName = ItemTypes.getItemTypeName(itemType.getType().toString());
     }
 
     @Override

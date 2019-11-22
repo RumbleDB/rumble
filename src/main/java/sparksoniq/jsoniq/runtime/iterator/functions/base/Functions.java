@@ -27,6 +27,7 @@ import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.binaries.HexBinaryFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.FunctionItemCallIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.EndsWithFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.TypePromotionIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -199,7 +200,7 @@ public class Functions {
                 new TypePromotionIterator(
                         arguments.get(i),
                         builtinFunction.getSignature().getParameterTypes().get(i),
-                        "Invalid argument for function " + identifier.getName() + ". ",
+                        "Invalid argument for " + identifier.getName() + " function. ",
                         metadata
                 )
             );
@@ -217,12 +218,44 @@ public class Functions {
             throw new UnknownFunctionCallException(identifier.getName(), arguments.size(), metadata);
         }
 
-        return new TypePromotionIterator(
-                functionCallIterator,
-                builtinFunction.getSignature().getReturnType(),
-                "Invalid return type for function " + identifier.getName() + ". ",
-                metadata
-        );
+        if (!builtinFunction.getSignature().getReturnType().equals(SequenceType.mostGeneralSequenceType)) {
+            return new TypePromotionIterator(
+                    functionCallIterator,
+                    builtinFunction.getSignature().getReturnType(),
+                    "Invalid return type for " + identifier.getName() + " function. ",
+                    metadata
+            );
+        }
+        return functionCallIterator;
+    }
+
+    public static RuntimeIterator getUserDefinedFunctionCallIterator(
+            FunctionIdentifier identifier,
+            IteratorMetadata metadata,
+            List<RuntimeIterator> arguments
+    ) {
+        return buildUserDefinedFunctionCallIterator(getUserDefinedFunction(identifier), metadata, arguments);
+    }
+
+    public static RuntimeIterator buildUserDefinedFunctionCallIterator(
+            FunctionItem functionItem,
+            IteratorMetadata metadata,
+            List<RuntimeIterator> arguments
+    ) {
+        FunctionItemCallIterator functionCallIterator = new FunctionItemCallIterator(functionItem, arguments, metadata);
+        if (!functionItem.getSignature().getReturnType().equals(SequenceType.mostGeneralSequenceType)) {
+            return new TypePromotionIterator(
+                    functionCallIterator,
+                    functionItem.getSignature().getReturnType(),
+                    "Invalid return type for "
+                        + (functionItem.getIdentifier().getName().equals("")
+                            ? ""
+                            : functionItem.getIdentifier().getName())
+                        + " function. ",
+                    metadata
+            );
+        }
+        return functionCallIterator;
     }
 
     public static void clearUserDefinedFunctions() {
@@ -244,7 +277,7 @@ public class Functions {
         return userDefinedFunctions.containsKey(identifier);
     }
 
-    public static FunctionItem getUserDefinedFunction(FunctionIdentifier identifier, IteratorMetadata metadata) {
+    public static FunctionItem getUserDefinedFunction(FunctionIdentifier identifier) {
         FunctionItem fnItem = userDefinedFunctions.get(identifier);
         try {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
