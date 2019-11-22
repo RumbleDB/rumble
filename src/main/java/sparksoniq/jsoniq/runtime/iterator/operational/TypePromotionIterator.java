@@ -80,7 +80,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         _currentDynamicContext = context;
-        JavaRDD<Item> childRDD = _treatIterator.getRDD(context);
+        JavaRDD<Item> childRDD = _child.getRDD(context);
 
         int count = childRDD.take(2).size();
         _treatIterator.checkEmptySequence(count);
