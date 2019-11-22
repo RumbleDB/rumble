@@ -202,6 +202,9 @@ public class DynamicContext implements Serializable, KryoSerializable {
         if (_localVariableCounts.containsKey(varName)) {
             return _localVariableCounts.get(varName);
         }
+        if (_dfVariableValues.containsKey(varName)) {
+            return ItemFactory.getInstance().createIntegerItem((int) _dfVariableValues.get(varName).count());
+        }
         if (_rddVariableValues.containsKey(varName)) {
             return ItemFactory.getInstance().createIntegerItem((int) _rddVariableValues.get(varName).count());
         }
