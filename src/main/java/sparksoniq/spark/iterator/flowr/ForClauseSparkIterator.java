@@ -117,7 +117,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         while (_child.hasNext()) {
             _inputTuple = _child.next();
             _tupleContext.removeAllVariables(); // clear the previous variables
-            _tupleContext.setBindingsFromTuple(_inputTuple); // assign new variables from new tuple
+            _tupleContext.setBindingsFromTuple(_inputTuple, getMetadata()); // assign new variables from new tuple
 
             _expression.open(_tupleContext);
             if (setResultFromExpression()) {
@@ -226,13 +226,14 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         while (_child.hasNext()) {
             _inputTuple = _child.next();
             _tupleContext.removeAllVariables(); // clear the previous variables
-            _tupleContext.setBindingsFromTuple(_inputTuple); // assign new variables from new tuple
+            _tupleContext.setBindingsFromTuple(_inputTuple, getMetadata()); // assign new variables from new tuple
 
             JavaRDD<Item> expressionRDD = _expression.getRDD(_tupleContext);
 
             // TODO - Optimization: Iterate schema creation only once
-            Set<String> oldColumnNames = _inputTuple.getKeys();
+            Set<String> oldColumnNames = _inputTuple.getLocalKeys();
             List<String> newColumnNames = new ArrayList<>(oldColumnNames);
+
             newColumnNames.add(_variableName);
             List<StructField> fields = new ArrayList<>();
             for (String columnName : newColumnNames) {
@@ -241,7 +242,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             }
             StructType schema = DataTypes.createStructType(fields);
 
-            JavaRDD<Row> rowRDD = expressionRDD.map(new ForClauseLocalToRowClosure(_inputTuple));
+            JavaRDD<Row> rowRDD = expressionRDD.map(new ForClauseLocalToRowClosure(_inputTuple, getMetadata()));
 
             if (df == null) {
                 df = SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
