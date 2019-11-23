@@ -25,8 +25,8 @@ import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.NullFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.FunctionItemCallIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.NullFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayDescendantFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayFlattenFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayMembersFunctionIterator;
@@ -126,10 +126,10 @@ import sparksoniq.jsoniq.runtime.iterator.functions.strings.SubstringBeforeFunct
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.SubstringFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.TokenizeFunctionIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.spark.iterator.function.JsonFileFunctionIterator;
 import sparksoniq.spark.iterator.function.ParallelizeFunctionIterator;
 import sparksoniq.spark.iterator.function.ParquetFileFunctionIterator;
-import sparksoniq.spark.iterator.function.ParseJsonFunctionIterator;
-import sparksoniq.spark.iterator.function.ParseTextFunctionIterator;
+import sparksoniq.spark.iterator.function.TextFileFunctionIterator;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -254,11 +254,11 @@ public class Functions {
         builtInFunctions.put(new FunctionIdentifier(POSITION, 0), PositionFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(LAST, 0), LastFunctionIterator.class);
 
-        builtInFunctions.put(new FunctionIdentifier(JSON_FILE, 1), ParseJsonFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(JSON_FILE, 2), ParseJsonFunctionIterator.class);
+        builtInFunctions.put(new FunctionIdentifier(JSON_FILE, 1), JsonFileFunctionIterator.class);
+        builtInFunctions.put(new FunctionIdentifier(JSON_FILE, 2), JsonFileFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(JSON_DOC, 1), JsonDocFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(TEXT_FILE, 1), ParseTextFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(TEXT_FILE, 2), ParseTextFunctionIterator.class);
+        builtInFunctions.put(new FunctionIdentifier(TEXT_FILE, 1), TextFileFunctionIterator.class);
+        builtInFunctions.put(new FunctionIdentifier(TEXT_FILE, 2), TextFileFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(PARALLELIZE, 1), ParallelizeFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(PARALLELIZE, 2), ParallelizeFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(PARQUET_FILE, 1), ParquetFileFunctionIterator.class);

@@ -22,8 +22,8 @@ package sparksoniq.spark.iterator.function;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RDDRuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkSessionManager;
@@ -43,11 +43,7 @@ public class ParquetFileFunctionIterator extends RDDRuntimeIterator {
         super.open(context);
 
         long resultSize = this.getRDD(_currentDynamicContext).count();
-        if (resultSize == 0) {
-            this._hasNext = false;
-        } else {
-            this._hasNext = true;
-        }
+        this._hasNext = resultSize != 0;
     }
 
     @Override

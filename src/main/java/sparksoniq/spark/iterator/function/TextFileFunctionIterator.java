@@ -22,7 +22,7 @@ package sparksoniq.spark.iterator.function;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
-import sparksoniq.io.json.StringToItemMapper;
+import sparksoniq.io.json.StringMapper;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RDDRuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -31,11 +31,11 @@ import sparksoniq.spark.SparkSessionManager;
 
 import java.util.List;
 
-public class ParseJsonFunctionIterator extends RDDRuntimeIterator {
+public class TextFileFunctionIterator extends RDDRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
-    public ParseJsonFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
+    public TextFileFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
     }
 
@@ -44,11 +44,7 @@ public class ParseJsonFunctionIterator extends RDDRuntimeIterator {
         super.open(context);
 
         long resultSize = this.getRDD(_currentDynamicContext).count();
-        if (resultSize == 0) {
-            this._hasNext = false;
-        } else {
-            this._hasNext = true;
-        }
+        this._hasNext = resultSize != 0;
     }
 
     @Override
@@ -72,6 +68,6 @@ public class ParseJsonFunctionIterator extends RDDRuntimeIterator {
             partitionsIterator.close();
         }
         urlIterator.close();
-        return strings.mapPartitions(new StringToItemMapper(getMetadata()));
+        return strings.mapPartitions(new StringMapper());
     }
 }
