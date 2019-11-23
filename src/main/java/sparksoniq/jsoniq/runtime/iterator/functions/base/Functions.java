@@ -129,6 +129,7 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.spark.iterator.function.JsonFileFunctionIterator;
 import sparksoniq.spark.iterator.function.ParallelizeFunctionIterator;
 import sparksoniq.spark.iterator.function.ParquetFileFunctionIterator;
+import sparksoniq.spark.iterator.function.StructuredJsonFileFunctionIterator;
 import sparksoniq.spark.iterator.function.TextFileFunctionIterator;
 
 import java.io.ByteArrayInputStream;
@@ -223,6 +224,7 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.STARTSWITH;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.STRINGJOIN;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.STRINGLENGTH;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.STRUCTURED_JSON_FILE;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SUBSEQUENCE;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SUBSTRING;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SUBSTRING_AFTER;
@@ -256,6 +258,7 @@ public class Functions {
 
         builtInFunctions.put(new FunctionIdentifier(JSON_FILE, 1), JsonFileFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(JSON_FILE, 2), JsonFileFunctionIterator.class);
+        builtInFunctions.put(new FunctionIdentifier(STRUCTURED_JSON_FILE, 1), StructuredJsonFileFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(JSON_DOC, 1), JsonDocFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(TEXT_FILE, 1), TextFileFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(TEXT_FILE, 2), TextFileFunctionIterator.class);
@@ -475,6 +478,10 @@ public class Functions {
          * function that parses a JSON lines file
          */
         public static final String JSON_FILE = "json-file";
+        /**
+         * function that parses a structured JSON lines file into a DataFrame
+         */
+        public static final String STRUCTURED_JSON_FILE = "structured-json-file";
         /**
          * function that parses a JSON doc file
          */
