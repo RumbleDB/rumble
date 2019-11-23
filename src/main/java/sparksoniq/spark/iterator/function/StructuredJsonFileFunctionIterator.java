@@ -20,8 +20,10 @@
 
 package sparksoniq.spark.iterator.function;
 
+import org.apache.spark.SparkException;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.runtime.iterator.RDDRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -55,11 +57,21 @@ public class StructuredJsonFileFunctionIterator extends RDDRuntimeIterator {
     public Dataset<Row> getDataFrame(DynamicContext context) {
         RuntimeIterator urlIterator = this._children.get(0);
         urlIterator.open(context);
-        Dataset<Row> rows = SparkSessionManager.getInstance()
-            .getOrCreateSession()
-            .read()
-            .json(urlIterator.next().getStringValue());
+        String fileName = urlIterator.next().getStringValue();
         urlIterator.close();
-        return rows;
+        try {
+            return SparkSessionManager.getInstance()
+                .getOrCreateSession()
+                .read()
+                .option("mode", "FAILFAST")
+                .json(fileName);
+        } catch (Exception e) {
+            throw new SparksoniqRuntimeException(
+                    "File "
+                        + fileName
+                        + " contains a malformed JSON document that does not fit into the JSON lines format.",
+                    getMetadata().getExpressionMetadata()
+            );
+        }
     }
 }
