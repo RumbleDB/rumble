@@ -20,8 +20,12 @@
 
 package sparksoniq.jsoniq.runtime.iterator.primary;
 
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
@@ -31,59 +35,79 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.rumbledb.api.Item;
-
-public class VariableReferenceIterator extends LocalRuntimeIterator {
+public class VariableReferenceIterator extends HybridRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private SequenceType sequence;
+    private SequenceType _sequence;
     private String _variableName;
-    private List<Item> items = null;
-    private int currentIndex = 0;
+    private List<Item> _items = null;
+    private int _currentIndex = 0;
 
     public VariableReferenceIterator(String variableName, SequenceType seq, IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
-        this._variableName = "$" + variableName;
-        this.sequence = seq;
+        _variableName = "$" + variableName;
+        _sequence = seq;
     }
 
     @Override
-    public Item next() {
-        if (!this.hasNext())
+    protected boolean initIsRDD() {
+        // TODO: figure out how to set isRDD for varRefIter.
+        // return _currentDynamicContext.isRDD(_variableName, getMetadata());
+        return false;
+    }
+
+    @Override
+    public JavaRDD<Item> getRDDAux(DynamicContext context) {
+        return _currentDynamicContext.getRDDVariableValue(_variableName, getMetadata());
+    }
+
+    @Override
+    public Dataset<Row> getDataFrame(DynamicContext context) {
+        return _currentDynamicContext.getDFVariableValue(_variableName, getMetadata());
+    }
+
+    @Override
+    protected boolean hasNextLocal() {
+        return _hasNext;
+    }
+
+    @Override
+    public Item nextLocal() {
+        if (!_hasNext) {
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "$" + _variableName,
                     getMetadata()
             );
-        Item item = items.get(currentIndex);
-        currentIndex++;
-        if (currentIndex == items.size())
-            this._hasNext = false;
+        }
+        Item item = _items.get(_currentIndex);
+        _currentIndex++;
+        if (_currentIndex == _items.size()) {
+            _hasNext = false;
+        }
         return item;
     }
 
     @Override
-    public void reset(DynamicContext context) {
-        super.reset(context);
-        this.currentIndex = 0;
-        this.items = null;
+    public void openLocal() {
+        _currentIndex = 0;
+        _items = _currentDynamicContext.getLocalVariableValue(_variableName, getMetadata());
+        _hasNext = _items.size() != 0;
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
+    protected void closeLocal() {
+        // do nothing
+    }
 
-        this.currentIndex = 0;
-        this.items = this._currentDynamicContext.getVariableValue(this._variableName);
-        if (items.size() == 0) {
-            this._hasNext = false;
-        } else {
-            this._hasNext = true;
-        }
+    @Override
+    public void resetLocal(DynamicContext context) {
+        _currentIndex = 0;
+        _items = null;
     }
 
     public SequenceType getSequence() {
-        return sequence;
+        return _sequence;
     }
 
     public String getVariableName() {
@@ -91,8 +115,7 @@ public class VariableReferenceIterator extends LocalRuntimeIterator {
     }
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<String, DynamicContext.VariableDependency> result =
-            new TreeMap<String, DynamicContext.VariableDependency>();
+        Map<String, DynamicContext.VariableDependency> result = new TreeMap<>();
         result.put(_variableName, DynamicContext.VariableDependency.FULL);
         return result;
     }

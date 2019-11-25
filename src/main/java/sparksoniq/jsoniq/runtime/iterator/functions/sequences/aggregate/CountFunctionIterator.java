@@ -20,12 +20,13 @@
 
 package sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate;
 
+import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
+import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
@@ -33,11 +34,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.rumbledb.api.Item;
-
 public class CountFunctionIterator extends LocalFunctionCallIterator {
     /**
-     * 
+     *
      */
     private static final long serialVersionUID = 1L;
 
@@ -49,37 +48,43 @@ public class CountFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this._hasNext) {
             RuntimeIterator iterator = this._children.get(0);
+
+            // the count($x) case is treated separately because we can short-circuit the
+            // count, e.g., if it comes from the group-by aggregation of a non-grouping
+            // key.
+            if (iterator instanceof VariableReferenceIterator) {
+                VariableReferenceIterator expr = (VariableReferenceIterator) iterator;
+                this._hasNext = false;
+                return _currentDynamicContext.getVariableCount(expr.getVariableName());
+            }
+
             if (!iterator.isRDD()) {
-                if (_children.get(0) instanceof VariableReferenceIterator) {
-                    VariableReferenceIterator expr = (VariableReferenceIterator) _children.get(0);
-                    this._hasNext = false;
-                    return _currentDynamicContext.getVariableCount(expr.getVariableName());
-                }
                 List<Item> results = getItemsFromIteratorWithCurrentContext(iterator);
                 this._hasNext = false;
                 return ItemFactory.getInstance().createIntegerItem(results.size());
-            } else {
-                Long count = iterator.getRDD(_currentDynamicContext).count();
-                this._hasNext = false;
-                if (count > (long) Integer.MAX_VALUE) {
-                    // TODO: handle too big x values
-                    throw new SparksoniqRuntimeException("The count value is too big to convert to integer type.");
-                } else {
-                    return ItemFactory.getInstance().createIntegerItem(count.intValue());
-                }
             }
-        } else
+
+            // it is an RDD
+            long count = iterator.getRDD(_currentDynamicContext).count();
+            this._hasNext = false;
+            if (count > (long) Integer.MAX_VALUE) {
+                // TODO: handle too big x values
+                throw new SparksoniqRuntimeException("The count value is too big to convert to integer type.");
+            } else {
+                return ItemFactory.getInstance().createIntegerItem((int) count);
+            }
+        } else {
             throw new IteratorFlowException(
                     FLOW_EXCEPTION_MESSAGE + " count function",
                     getMetadata()
             );
+        }
     }
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
         if (_children.get(0) instanceof VariableReferenceIterator) {
             VariableReferenceIterator expr = (VariableReferenceIterator) _children.get(0);
-            Map<String, DynamicContext.VariableDependency> result =
-                new TreeMap<String, DynamicContext.VariableDependency>();
+            Map<String, DynamicContext.VariableDependency> result = new TreeMap<>();
             result.put(expr.getVariableName(), DynamicContext.VariableDependency.COUNT);
             return result;
         } else {

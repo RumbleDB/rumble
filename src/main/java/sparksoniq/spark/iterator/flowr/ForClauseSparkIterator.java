@@ -140,9 +140,9 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             results.add(_expression.next());
             FlworTuple newTuple;
             if (_child == null) { // if initial for clause
-                newTuple = new FlworTuple(_variableName, results);
+                newTuple = new FlworTuple().putValue(_variableName, results);
             } else {
-                newTuple = new FlworTuple(_inputTuple, _variableName, results);
+                newTuple = new FlworTuple(_inputTuple).putValue(_variableName, results);
             }
             _nextLocalTupleResult = newTuple;
             this._hasNext = true;

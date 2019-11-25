@@ -131,6 +131,7 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
+import sparksoniq.spark.iterator.function.JsonFileFunctionIterator;
 import sparksoniq.spark.iterator.function.ParallelizeFunctionIterator;
 
 import java.io.IOException;
@@ -141,8 +142,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import sparksoniq.spark.iterator.function.ParquetFileFunctionIterator;
-import sparksoniq.spark.iterator.function.ParseJsonFunctionIterator;
-import sparksoniq.spark.iterator.function.ParseTextFunctionIterator;
+import sparksoniq.spark.iterator.function.StructuredJsonFileFunctionIterator;
+import sparksoniq.spark.iterator.function.TextFileFunctionIterator;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -241,6 +242,7 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.string_join1;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.string_join2;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.string_length;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.structured_json_file;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.subsequence2;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.subsequence3;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.substring2;
@@ -373,6 +375,7 @@ public class Functions {
 
         builtInFunctions.put(json_file1.getIdentifier(), json_file1);
         builtInFunctions.put(json_file2.getIdentifier(), json_file2);
+        builtInFunctions.put(structured_json_file.getIdentifier(), structured_json_file);
         builtInFunctions.put(json_doc.getIdentifier(), json_doc);
         builtInFunctions.put(text_file1.getIdentifier(), text_file1);
         builtInFunctions.put(text_file2.getIdentifier(), text_file2);
@@ -700,14 +703,23 @@ public class Functions {
             "json-file",
             "string?",
             "item*",
-            ParseJsonFunctionIterator.class
+            JsonFileFunctionIterator.class
         );
         static final BuiltinFunction json_file2 = createBuiltinFunction(
             "json-file",
             "string?",
             "integer?",
             "item*",
-            ParseJsonFunctionIterator.class
+            JsonFileFunctionIterator.class
+        );
+        /**
+         * function that parses a structured JSON lines file into a DataFrame
+         */
+        static final BuiltinFunction structured_json_file = createBuiltinFunction(
+                "structured-json-file",
+                "string?",
+                "item*",
+                StructuredJsonFileFunctionIterator.class
         );
         /**
          * function that parses a JSON doc file
@@ -725,14 +737,14 @@ public class Functions {
             "text-file",
             "string?",
             "item*",
-            ParseTextFunctionIterator.class
+            TextFileFunctionIterator.class
         );
         static final BuiltinFunction text_file2 = createBuiltinFunction(
             "text-file",
             "string?",
             "integer?",
             "item*",
-            ParseTextFunctionIterator.class
+            TextFileFunctionIterator.class
         );
         /**
          * function that parallelizes item collections into a Spark RDD
