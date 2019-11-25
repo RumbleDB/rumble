@@ -265,6 +265,7 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.year_from_dateTime;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.years_from_duration;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.zero_or_one;
+import static sparksoniq.semantics.types.SequenceType.mostGeneralSequenceType;
 
 public class Functions {
     private static final HashMap<FunctionIdentifier, BuiltinFunction> builtInFunctions;
@@ -514,15 +515,17 @@ public class Functions {
         BuiltinFunction builtinFunction = builtInFunctions.get(identifier);
 
         for (int i = 0; i < arguments.size(); i++) {
-            arguments.set(
-                i,
-                new TypePromotionIterator(
-                        "Invalid argument for function " + identifier.getName() + ". ",
-                        arguments.get(i),
-                        builtinFunction.getSignature().getParameterTypes().get(i),
-                        metadata
-                )
-            );
+            if (builtinFunction.getSignature().getParameterTypes().get(i) != mostGeneralSequenceType) {
+                arguments.set(
+                    i,
+                    new TypePromotionIterator(
+                            "Invalid argument for function " + identifier.getName() + ". ",
+                            arguments.get(i),
+                            builtinFunction.getSignature().getParameterTypes().get(i),
+                            metadata
+                    )
+                );
+            }
         }
 
         RuntimeIterator functionCallIterator;
@@ -537,12 +540,15 @@ public class Functions {
             throw new UnknownFunctionCallException(identifier.getName(), arguments.size(), metadata);
         }
 
-        return new TypePromotionIterator(
-                "Invalid return type for function " + identifier.getName() + ". ",
-                functionCallIterator,
-                builtinFunction.getSignature().getReturnType(),
-                metadata
-        );
+        if (builtinFunction.getSignature().getReturnType() != mostGeneralSequenceType) {
+            return new TypePromotionIterator(
+                    "Invalid return type for function " + identifier.getName() + ". ",
+                    functionCallIterator,
+                    builtinFunction.getSignature().getReturnType(),
+                    metadata
+            );
+        }
+        return functionCallIterator;
     }
 
     public static RuntimeIterator getUserDefinedFunctionCallIterator(

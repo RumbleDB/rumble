@@ -159,7 +159,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     }
 
     private void checkTypePromotion() {
-        if (_nextResult == null || !_nextResult.canBePromotedTo(_sequenceType.getItemType()))
+        if (!_nextResult.canBePromotedTo(_sequenceType.getItemType()))
             throw new UnexpectedTypeException(
                     _exceptionMessage
                         + ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName())

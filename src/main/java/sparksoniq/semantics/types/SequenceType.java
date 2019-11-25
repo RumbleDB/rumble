@@ -30,17 +30,20 @@ public class SequenceType implements Serializable {
     private ItemType _itemType;
     private boolean _isEmptySequence = false;
 
+    public final static SequenceType mostGeneralSequenceType = new SequenceType(
+            new ItemType(ItemTypes.Item),
+            SequenceType.Arity.ZeroOrMore
+    );
+
 
     public SequenceType(ItemType itemType, Arity arity) {
         this._itemType = itemType;
         this._arity = arity;
-
     }
 
     public SequenceType(ItemType itemType) {
         this._itemType = itemType;
         this._arity = Arity.One;
-
     }
 
     public SequenceType() {
