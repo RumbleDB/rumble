@@ -97,7 +97,7 @@ public class ObjectProjectFunctionIterator extends LocalFunctionCallIterator {
         }
     }
 
-    public Item getProjection(Item objItem, List<Item> keys) {
+    private Item getProjection(Item objItem, List<Item> keys) {
         ArrayList<String> finalKeylist = new ArrayList<>();
         ArrayList<Item> finalValueList = new ArrayList<>();
         for (Item keyItem : keys) {

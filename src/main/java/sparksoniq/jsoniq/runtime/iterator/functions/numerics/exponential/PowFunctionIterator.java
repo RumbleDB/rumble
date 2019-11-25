@@ -47,11 +47,7 @@ public class PowFunctionIterator extends LocalFunctionCallIterator {
         super.open(context);
         _iterator = this._children.get(0);
         _iterator.open(_currentDynamicContext);
-        if (_iterator.hasNext()) {
-            this._hasNext = true;
-        } else {
-            this._hasNext = false;
-        }
+        this._hasNext = _iterator.hasNext();
         _iterator.close();
     }
 
@@ -72,9 +68,8 @@ public class PowFunctionIterator extends LocalFunctionCallIterator {
             }
             if (base.isNumeric() && exponent.isNumeric()) {
                 try {
-                    Double result = Math.pow(base.castToDoubleValue(), exponent.castToDoubleValue());
                     this._hasNext = false;
-                    return ItemFactory.getInstance().createDoubleItem(result);
+                    return ItemFactory.getInstance().createDoubleItem(Math.pow(base.castToDoubleValue(), exponent.castToDoubleValue()));
                 } catch (IteratorFlowException e) {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
                 }

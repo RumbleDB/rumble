@@ -93,13 +93,13 @@ public class ArrayDescendantFunctionIterator extends LocalFunctionCallIterator {
         }
     }
 
-    public void getDescendantArrays(List<Item> items) {
+    private void getDescendantArrays(List<Item> items) {
         for (Item item : items) {
             if (item.isArray()) {
                 _nextResults.add(item);
                 getDescendantArrays(item.getItems());
             } else if (item.isObject()) {
-                getDescendantArrays((List<Item>) item.getValues());
+                getDescendantArrays(item.getValues());
             } else {
                 // for atomic types: do nothing
             }

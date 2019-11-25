@@ -43,11 +43,7 @@ public class ParquetFileFunctionIterator extends RDDRuntimeIterator {
         super.open(context);
 
         long resultSize = this.getRDD(_currentDynamicContext).count();
-        if (resultSize == 0) {
-            this._hasNext = false;
-        } else {
-            this._hasNext = true;
-        }
+        this._hasNext = resultSize != 0;
     }
 
     @Override

@@ -56,7 +56,7 @@ public class ArrayMembersFunctionIterator extends LocalFunctionCallIterator {
 
     @Override
     public Item next() {
-        if (_hasNext == true) {
+        if (_hasNext) {
             Item result = _nextResults.remove(); // save the result to be returned
             if (_nextResults.isEmpty()) {
                 // if there are no more results left in the queue, trigger calculation for the next result

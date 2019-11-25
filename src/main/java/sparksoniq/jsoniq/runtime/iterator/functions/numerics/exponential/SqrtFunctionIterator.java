@@ -47,11 +47,7 @@ public class SqrtFunctionIterator extends LocalFunctionCallIterator {
         super.open(context);
         _iterator = this._children.get(0);
         _iterator.open(_currentDynamicContext);
-        if (_iterator.hasNext()) {
-            this._hasNext = true;
-        } else {
-            this._hasNext = false;
-        }
+        this._hasNext = _iterator.hasNext();
         _iterator.close();
     }
 
@@ -61,9 +57,8 @@ public class SqrtFunctionIterator extends LocalFunctionCallIterator {
             Item value = this.getSingleItemOfTypeFromIterator(_iterator, Item.class);
             if (value.isNumeric()) {
                 try {
-                    Double result = Math.sqrt(value.castToDoubleValue());
                     this._hasNext = false;
-                    return ItemFactory.getInstance().createDoubleItem(result);
+                    return ItemFactory.getInstance().createDoubleItem(Math.sqrt(value.castToDoubleValue()));
 
                 } catch (IteratorFlowException e) {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());

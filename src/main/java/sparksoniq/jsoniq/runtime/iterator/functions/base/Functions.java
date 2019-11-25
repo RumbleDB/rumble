@@ -27,7 +27,105 @@ import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.binaries.HexBinaryFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.NullFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.FunctionItemCallIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayDescendantFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayFlattenFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayMembersFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArraySizeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.binaries.Base64BinaryFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.booleans.BooleanFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.context.LastFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.context.PositionFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.DateFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.DateTimeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.TimeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.AdjustDateTimeToTimezone;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.AdjustDateToTimezone;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.AdjustTimeToTimezone;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.DayFromDateFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.DayFromDateTimeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.HoursFromDateTimeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.HoursFromTimeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.MinutesFromDateTimeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.MinutesFromTimeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.MonthFromDateFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.MonthFromDateTimeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.SecondsFromDateTimeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.SecondsFromTimeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.TimezoneFromDateFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.TimezoneFromDateTimeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.TimezoneFromTimeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.YearFromDateFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.YearFromDateTimeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.durations.DayTimeDurationFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.durations.DurationFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.durations.YearMonthDurationFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.durations.components.DaysFromDurationFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.durations.components.HoursFromDurationFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.durations.components.MinutesFromDurationFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.durations.components.MonthsFromDurationFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.durations.components.SecondsFromDurationFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.durations.components.YearsFromDurationFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.io.JsonDocFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.AbsFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.CeilingFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.FloorFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.PiFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.RoundFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.RoundHalfToEvenFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential.Exp10FunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential.ExpFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential.Log10FunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential.LogFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential.PowFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential.SqrtFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.trigonometric.ACosFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.trigonometric.ASinFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.trigonometric.ATan2FunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.trigonometric.ATanFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.trigonometric.CosFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.trigonometric.SinFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.trigonometric.TanFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectAccumulateFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectDescendantFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectDescendantPairsFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectIntersectFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectKeysFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectProjectFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectRemoveKeysFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectValuesFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate.AvgFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate.CountFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate.MaxFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate.MinFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate.SumFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.cardinality.ExactlyOneIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.cardinality.OneOrMoreIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.cardinality.ZeroOrOneIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.EmptyFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.ExistsFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.HeadFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.InsertBeforeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.RemoveFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.ReverseFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.SubsequenceFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.TailFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.value.DeepEqualFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.value.DistinctValuesFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.value.IndexOfFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.strings.ConcatFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.strings.ContainsFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.EndsWithFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.strings.MatchesFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.strings.NormalizeSpaceFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.strings.StartsWithFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.strings.StringJoinFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.strings.StringLengthFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.strings.SubstringAfterFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.strings.SubstringBeforeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.strings.SubstringFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.strings.TokenizeFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.TypePromotionIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.types.ItemType;
@@ -42,17 +140,131 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import sparksoniq.spark.iterator.function.ParquetFileFunctionIterator;
+import sparksoniq.spark.iterator.function.ParseJsonFunctionIterator;
+import sparksoniq.spark.iterator.function.ParseTextFunctionIterator;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.endsWithFunction;
-import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.hexBinaryFunction;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.abs;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.accumulate;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.acos;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.adjust_dateTime_to_timezone1;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.adjust_dateTime_to_timezone2;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.adjust_date_to_timezone1;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.adjust_date_to_timezone2;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.adjust_time_to_timezone1;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.adjust_time_to_timezone2;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.asin;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.atan;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.atan2;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.avg;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.base64Binary;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.boolean_function;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ceiling;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.concat;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.contains;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.cos;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.count;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.date;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.dateTime;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.dayTimeDuration;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.day_from_date;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.day_from_dateTime;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.days_from_duration;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.deep_equal;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.descendant_arrays;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.descendant_objects;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.descendant_pairs;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.distinct_values;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.duration;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.empty;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ends_with;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.exactly_one;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.exists;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.exp;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.exp10;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.flatten;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.floor;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.head;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.hexBinary;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.hours_from_dateTime;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.hours_from_duration;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.hours_from_time;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.index_of;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.insert_before;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.intersect;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.json_doc;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.json_file1;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.json_file2;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.keys;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.last;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.log;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.log10;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.matches;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.max;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.members;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.min;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.minutes_from_dateTime;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.minutes_from_duration;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.minutes_from_time;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.month_from_date;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.month_from_dateTime;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.months_from_duration;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.normalize_space;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.null_function;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.one_or_more;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.parallelizeFunction1;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.parallelizeFunction2;
-
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.parquet_file;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.pi;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.position;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.pow;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.project;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.remove;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.remove_keys;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.reverse;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.round1;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.round2;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.round_half_to_even1;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.round_half_to_even2;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.seconds_from_dateTime;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.seconds_from_duration;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.seconds_from_time;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.sin;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.size;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.sqrt;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.starts_with;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.string_join1;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.string_join2;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.string_length;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.subsequence2;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.subsequence3;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.substring2;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.substring3;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.substring_after;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.substring_before;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.sum1;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.sum2;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.tail;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.tan;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.text_file1;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.text_file2;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.time;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.timezone_from_date;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.timezone_from_dateTime;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.timezone_from_time;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.tokenize1;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.tokenize2;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.values;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.yearMonthDuration;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.year_from_date;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.year_from_dateTime;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.years_from_duration;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.zero_or_one;
 
 public class Functions {
     private static final HashMap<FunctionIdentifier, BuiltinFunction> builtInFunctions;
@@ -62,24 +274,83 @@ public class Functions {
 
     static {
         itemTypes = new HashMap<>();
-        itemTypes.put("string", new ItemType(ItemTypes.StringItem));
-        itemTypes.put("hexBinary", new ItemType(ItemTypes.HexBinaryItem));
-        itemTypes.put("boolean", new ItemType(ItemTypes.BooleanItem));
         itemTypes.put("item", new ItemType(ItemTypes.Item));
+
+        itemTypes.put("object", new ItemType(ItemTypes.ObjectItem));
+        itemTypes.put("array", new ItemType(ItemTypes.ArrayItem));
+
+        itemTypes.put("atomic", new ItemType(ItemTypes.AtomicItem));
+        itemTypes.put("string", new ItemType(ItemTypes.StringItem));
         itemTypes.put("integer", new ItemType(ItemTypes.IntegerItem));
+        itemTypes.put("decimal", new ItemType(ItemTypes.DecimalItem));
+        itemTypes.put("double", new ItemType(ItemTypes.DoubleItem));
+        itemTypes.put("boolean", new ItemType(ItemTypes.BooleanItem));
+
+        itemTypes.put("duration", new ItemType(ItemTypes.DurationItem));
+        itemTypes.put("yearMonthDuration", new ItemType(ItemTypes.YearMonthDurationItem));
+        itemTypes.put("dayTimeDuration", new ItemType(ItemTypes.DayTimeDurationItem));
+
+        itemTypes.put("dateTime", new ItemType(ItemTypes.DateTimeItem));
+        itemTypes.put("date", new ItemType(ItemTypes.DateItem));
+        itemTypes.put("time", new ItemType(ItemTypes.TimeItem));
+
+        itemTypes.put("hexBinary", new ItemType(ItemTypes.HexBinaryItem));
+        itemTypes.put("base64Binary", new ItemType(ItemTypes.Base64BinaryItem));
+
+        itemTypes.put("null", new ItemType(ItemTypes.NullItem));
+
     }
 
     private static final Map<String, SequenceType> sequenceTypes;
     static {
         sequenceTypes = new HashMap<>();
+        sequenceTypes.put("item", new SequenceType(itemTypes.get("item"), SequenceType.Arity.One));
+        sequenceTypes.put("item?", new SequenceType(itemTypes.get("item"), SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("item*", new SequenceType(itemTypes.get("item"), SequenceType.Arity.ZeroOrMore));
+        sequenceTypes.put("item+", new SequenceType(itemTypes.get("item"), SequenceType.Arity.OneOrMore));
+
+        sequenceTypes.put("object", new SequenceType(itemTypes.get("object"), SequenceType.Arity.One));
+        sequenceTypes.put("object+", new SequenceType(itemTypes.get("object"), SequenceType.Arity.OneOrMore));
+
+        sequenceTypes.put("array?", new SequenceType(itemTypes.get("array"), SequenceType.Arity.OneOrZero));
+
+        sequenceTypes.put("atomic", new SequenceType(itemTypes.get("atomic"), SequenceType.Arity.One));
+        sequenceTypes.put("atomic?", new SequenceType(itemTypes.get("atomic"), SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("atomic*", new SequenceType(itemTypes.get("atomic"), SequenceType.Arity.ZeroOrMore));
+
         sequenceTypes.put("string", new SequenceType(itemTypes.get("string"), SequenceType.Arity.One));
         sequenceTypes.put("string?", new SequenceType(itemTypes.get("string"), SequenceType.Arity.OneOrZero));
-        sequenceTypes.put("boolean", new SequenceType(itemTypes.get("boolean"), SequenceType.Arity.One));
-        sequenceTypes.put("boolean?", new SequenceType(itemTypes.get("boolean"), SequenceType.Arity.OneOrZero));
-        sequenceTypes.put("hexBinary", new SequenceType(itemTypes.get("hexBinary"), SequenceType.Arity.One));
-        sequenceTypes.put("hexBinary?", new SequenceType(itemTypes.get("hexBinary"), SequenceType.Arity.OneOrZero));
-        sequenceTypes.put("item*", new SequenceType(itemTypes.get("item"), SequenceType.Arity.ZeroOrMore));
+        sequenceTypes.put("string*", new SequenceType(itemTypes.get("string"), SequenceType.Arity.ZeroOrMore));
+
         sequenceTypes.put("integer", new SequenceType(itemTypes.get("integer"), SequenceType.Arity.One));
+        sequenceTypes.put("integer?", new SequenceType(itemTypes.get("integer"), SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("integer*", new SequenceType(itemTypes.get("integer"), SequenceType.Arity.ZeroOrMore));
+
+        sequenceTypes.put("decimal?", new SequenceType(itemTypes.get("decimal"), SequenceType.Arity.OneOrZero));
+
+        sequenceTypes.put("double", new SequenceType(itemTypes.get("double"), SequenceType.Arity.One));
+        sequenceTypes.put("double?", new SequenceType(itemTypes.get("double"), SequenceType.Arity.OneOrZero));
+
+        sequenceTypes.put("boolean", new SequenceType(itemTypes.get("boolean"), SequenceType.Arity.One));
+
+        sequenceTypes.put("duration?", new SequenceType(itemTypes.get("duration"), SequenceType.Arity.OneOrZero));
+
+        sequenceTypes.put("yearMonthDuration?", new SequenceType(itemTypes.get("yearMonthDuration"), SequenceType.Arity.OneOrZero));
+
+        sequenceTypes.put("dayTimeDuration?", new SequenceType(itemTypes.get("dayTimeDuration"), SequenceType.Arity.OneOrZero));
+
+        sequenceTypes.put("dateTime?", new SequenceType(itemTypes.get("dateTime"), SequenceType.Arity.OneOrZero));
+
+        sequenceTypes.put("date?", new SequenceType(itemTypes.get("date"), SequenceType.Arity.OneOrZero));
+
+        sequenceTypes.put("time?", new SequenceType(itemTypes.get("time"), SequenceType.Arity.OneOrZero));
+
+        sequenceTypes.put("hexBinary?", new SequenceType(itemTypes.get("hexBinary"), SequenceType.Arity.OneOrZero));
+
+        sequenceTypes.put("base64Binary?", new SequenceType(itemTypes.get("base64Binary"), SequenceType.Arity.OneOrZero));
+
+        sequenceTypes.put("null?", new SequenceType(itemTypes.get("null"), SequenceType.Arity.OneOrZero));
+
     }
 
 
@@ -87,99 +358,139 @@ public class Functions {
         userDefinedFunctions = new HashMap<>();
         builtInFunctions = new HashMap<>();
 
-        builtInFunctions.put(hexBinaryFunction.getIdentifier(), hexBinaryFunction);
-        builtInFunctions.put(endsWithFunction.getIdentifier(), endsWithFunction);
+        builtInFunctions.put(position.getIdentifier(), position);
+        builtInFunctions.put(last.getIdentifier(), last);
 
-        // builtInFunctions.put(new FunctionIdentifier(JSON_FILE, 1), ParseJsonFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(JSON_FILE, 2), ParseJsonFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(TEXT_FILE, 1), ParseTextFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(TEXT_FILE, 2), ParseTextFunctionIterator.class);
+        builtInFunctions.put(json_file1.getIdentifier(), json_file1);
+        builtInFunctions.put(json_file2.getIdentifier(), json_file2);
+        builtInFunctions.put(json_doc.getIdentifier(), json_doc);
+        builtInFunctions.put(text_file1.getIdentifier(), text_file1);
+        builtInFunctions.put(text_file2.getIdentifier(), text_file2);
         builtInFunctions.put(parallelizeFunction1.getIdentifier(), parallelizeFunction1);
         builtInFunctions.put(parallelizeFunction2.getIdentifier(), parallelizeFunction2);
-        // builtInFunctions.put(new FunctionIdentifier(COUNT, 1), CountFunctionIterator.class);
-        //
-        // builtInFunctions.put(new FunctionIdentifier(BOOLEAN, 1), BooleanFunctionIterator.class);
-        //
-        // builtInFunctions.put(new FunctionIdentifier(MIN, 1), MinFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(MAX, 1), MaxFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(SUM, 1), SumFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(SUM, 2), SumFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(AVG, 1), AvgFunctionIterator.class);
-        //
-        // builtInFunctions.put(new FunctionIdentifier(EMPTY, 1), EmptyFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(EXISTS, 1), ExistsFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(HEAD, 1), HeadFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(TAIL, 1), TailFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(INSERTBEFORE, 3), InsertBeforeFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(REMOVE, 2), RemoveFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(REVERSE, 1), ReverseFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(SUBSEQUENCE, 2), SubsequenceFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(SUBSEQUENCE, 3), SubsequenceFunctionIterator.class);
-        //
-        // builtInFunctions.put(new FunctionIdentifier(ZEROORONE, 1), ZeroOrOneIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(ONEORMORE, 1), OneOrMoreIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(EXACTLYONE, 1), ExactlyOneIterator.class);
-        //
-        // builtInFunctions.put(new FunctionIdentifier(DISTINCTVALUES, 1), DistinctValuesFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(INDEXOF, 2), IndexOfFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(DEEPEQUAL, 2), DeepEqualFunctionIterator.class);
-        //
-        // builtInFunctions.put(new FunctionIdentifier(ABS, 1), AbsFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(CEILING, 1), CeilingFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(FLOOR, 1), FloorFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(ROUND, 1), RoundFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(ROUND, 2), RoundFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(ROUNDHALFTOEVEN, 1), RoundHalfToEvenFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(ROUNDHALFTOEVEN, 2), RoundHalfToEvenFunctionIterator.class);
-        //
-        // builtInFunctions.put(new FunctionIdentifier(PI, 0), PiFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(EXP, 1), ExpFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(EXP10, 1), Exp10FunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(LOG, 1), LogFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(LOG10, 1), Log10FunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(POW, 2), PowFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(SQRT, 1), SqrtFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(SIN, 1), SinFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(COS, 1), CosFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(TAN, 1), TanFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(ASIN, 1), ASinFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(ACOS, 1), ACosFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(ATAN, 1), ATanFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(ATAN2, 2), ATan2FunctionIterator.class);
-        //
-        // builtInFunctions.put(new FunctionIdentifier(SUBSTRING, 2), SubstringFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(SUBSTRING, 3), SubstringFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(SUBSTRING_BEFORE, 2), SubstringBeforeFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(SUBSTRING_AFTER, 2), SubstringAfterFunctionIterator.class);
-        // for (int i = 0; i <= 100; i++)
-        // builtInFunctions.put(new FunctionIdentifier(CONCAT, i), ConcatFunctionIterator.class);
-        //
-        // builtInFunctions.put(new FunctionIdentifier(ENDSWITH, 2), EndsWithFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(STRINGJOIN, 1), StringJoinFunction.class);
-        // builtInFunctions.put(new FunctionIdentifier(STRINGJOIN, 2), StringJoinFunction.class);
-        // builtInFunctions.put(new FunctionIdentifier(STRINGLENGTH, 1), StringLengthFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(TOKENIZE, 1), TokenizeFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(TOKENIZE, 2), TokenizeFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(STARTSWITH, 2), StartsWithFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(MATCHES, 2), MatchesFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(CONTAINS, 2), ContainsFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(HEXBINARY, 1), HexBinaryFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(NORMALIZESPACE, 1), NormalizeSpaceFunctionIterator.class);
-        //
-        // builtInFunctions.put(new FunctionIdentifier(KEYS, 1), ObjectKeysFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(MEMBERS, 1), ArrayMembersFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(NULL, 0), NullFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(SIZE, 1), ArraySizeFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(ACCUMULATE, 1), ObjectAccumulateFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(DESCENDANTARRAYS, 1), ArrayDescendantFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(DESCENDANTOBJECTS, 1), ObjectDescendantFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(DESCENDANTPAIRS, 1),
-        // ObjectDescendantPairsFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(FLATTEN, 1), ArrayFlattenFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(INTERSECT, 1), ObjectIntersectFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(PROJECT, 2), ObjectProjectFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(REMOVEKEYS, 2), ObjectRemoveKeysFunctionIterator.class);
-        // builtInFunctions.put(new FunctionIdentifier(VALUES, 1), ObjectValuesFunctionIterator.class);
+        builtInFunctions.put(parquet_file.getIdentifier(), parquet_file);
+
+        builtInFunctions.put(count.getIdentifier(), count);
+        builtInFunctions.put(boolean_function.getIdentifier(), boolean_function);
+
+        builtInFunctions.put(min.getIdentifier(), min);
+        builtInFunctions.put(max.getIdentifier(), max);
+        builtInFunctions.put(sum1.getIdentifier(), sum1);
+        builtInFunctions.put(sum2.getIdentifier(), sum2);
+        builtInFunctions.put(avg.getIdentifier(), avg);
+
+        builtInFunctions.put(empty.getIdentifier(), empty);
+        builtInFunctions.put(exists.getIdentifier(), exists);
+        builtInFunctions.put(head.getIdentifier(), head);
+        builtInFunctions.put(tail.getIdentifier(), tail);
+        builtInFunctions.put(insert_before.getIdentifier(), insert_before);
+        builtInFunctions.put(remove.getIdentifier(), remove);
+        builtInFunctions.put(reverse.getIdentifier(), reverse);
+        builtInFunctions.put(subsequence2.getIdentifier(), subsequence2);
+        builtInFunctions.put(subsequence3.getIdentifier(), subsequence3);
+
+        builtInFunctions.put(zero_or_one.getIdentifier(), zero_or_one);
+        builtInFunctions.put(one_or_more.getIdentifier(), one_or_more);
+        builtInFunctions.put(exactly_one.getIdentifier(), exactly_one);
+
+        builtInFunctions.put(distinct_values.getIdentifier(), distinct_values);
+        builtInFunctions.put(index_of.getIdentifier(), index_of);
+        builtInFunctions.put(deep_equal.getIdentifier(), deep_equal);
+
+        builtInFunctions.put(abs.getIdentifier(), abs);
+        builtInFunctions.put(ceiling.getIdentifier(), ceiling);
+        builtInFunctions.put(floor.getIdentifier(), floor);
+        builtInFunctions.put(round1.getIdentifier(), round1);
+        builtInFunctions.put(round2.getIdentifier(), round2);
+        builtInFunctions.put(round_half_to_even1.getIdentifier(), round_half_to_even1);
+        builtInFunctions.put(round_half_to_even2.getIdentifier(), round_half_to_even2);
+
+        builtInFunctions.put(pi.getIdentifier(), pi);
+        builtInFunctions.put(exp.getIdentifier(), exp);
+        builtInFunctions.put(exp10.getIdentifier(), exp10);
+        builtInFunctions.put(log.getIdentifier(), log);
+        builtInFunctions.put(log10.getIdentifier(), log10);
+        builtInFunctions.put(pow.getIdentifier(), pow);
+        builtInFunctions.put(sqrt.getIdentifier(), sqrt);
+        builtInFunctions.put(sin.getIdentifier(), sin);
+        builtInFunctions.put(cos.getIdentifier(), cos);
+        builtInFunctions.put(tan.getIdentifier(), tan);
+        builtInFunctions.put(asin.getIdentifier(), asin);
+        builtInFunctions.put(acos.getIdentifier(), acos);
+        builtInFunctions.put(atan.getIdentifier(), atan);
+        builtInFunctions.put(atan2.getIdentifier(), atan2);
+
+        builtInFunctions.put(substring2.getIdentifier(), substring2);
+        builtInFunctions.put(substring3.getIdentifier(), substring3);
+        builtInFunctions.put(substring_before.getIdentifier(), substring_before);
+        builtInFunctions.put(substring_after.getIdentifier(), substring_after);
+        for (int i=0; i < 100; i++) {
+            builtInFunctions.put(new FunctionIdentifier("concat", i), concat);
+        }
+        builtInFunctions.put(ends_with.getIdentifier(), ends_with);
+        builtInFunctions.put(string_join1.getIdentifier(), string_join1);
+        builtInFunctions.put(string_join2.getIdentifier(), string_join2);
+        builtInFunctions.put(string_length.getIdentifier(), string_length);
+        builtInFunctions.put(tokenize1.getIdentifier(), tokenize1);
+        builtInFunctions.put(tokenize2.getIdentifier(), tokenize2);
+        builtInFunctions.put(starts_with.getIdentifier(), starts_with);
+        builtInFunctions.put(matches.getIdentifier(), matches);
+        builtInFunctions.put(contains.getIdentifier(), contains);
+        builtInFunctions.put(normalize_space.getIdentifier(), normalize_space);
+
+        builtInFunctions.put(duration.getIdentifier(), duration);
+        builtInFunctions.put(dayTimeDuration.getIdentifier(), dayTimeDuration);
+        builtInFunctions.put(yearMonthDuration.getIdentifier(), yearMonthDuration);
+        builtInFunctions.put(years_from_duration.getIdentifier(), years_from_duration);
+        builtInFunctions.put(months_from_duration.getIdentifier(), months_from_duration);
+        builtInFunctions.put(days_from_duration.getIdentifier(), days_from_duration);
+        builtInFunctions.put(hours_from_duration.getIdentifier(), hours_from_duration);
+        builtInFunctions.put(minutes_from_duration.getIdentifier(), minutes_from_duration);
+        builtInFunctions.put(seconds_from_duration.getIdentifier(), seconds_from_duration);
+
+        builtInFunctions.put(dateTime.getIdentifier(), dateTime);
+        builtInFunctions.put(year_from_dateTime.getIdentifier(), year_from_dateTime);
+        builtInFunctions.put(month_from_dateTime.getIdentifier(), month_from_dateTime);
+        builtInFunctions.put(day_from_dateTime.getIdentifier(), day_from_dateTime);
+        builtInFunctions.put(hours_from_dateTime.getIdentifier(), hours_from_dateTime);
+        builtInFunctions.put(minutes_from_dateTime.getIdentifier(), minutes_from_dateTime);
+        builtInFunctions.put(seconds_from_dateTime.getIdentifier(), seconds_from_dateTime);
+        builtInFunctions.put(timezone_from_dateTime.getIdentifier(), timezone_from_dateTime);
+        builtInFunctions.put(adjust_dateTime_to_timezone1.getIdentifier(), adjust_dateTime_to_timezone1);
+        builtInFunctions.put(adjust_dateTime_to_timezone2.getIdentifier(), adjust_dateTime_to_timezone2);
+
+        builtInFunctions.put(date.getIdentifier(), date);
+        builtInFunctions.put(year_from_date.getIdentifier(), year_from_date);
+        builtInFunctions.put(month_from_date.getIdentifier(), month_from_date);
+        builtInFunctions.put(day_from_date.getIdentifier(), day_from_date);
+        builtInFunctions.put(timezone_from_date.getIdentifier(), timezone_from_date);
+        builtInFunctions.put(adjust_date_to_timezone1.getIdentifier(), adjust_date_to_timezone1);
+        builtInFunctions.put(adjust_date_to_timezone2.getIdentifier(), adjust_date_to_timezone2);
+
+        builtInFunctions.put(time.getIdentifier(), time);
+        builtInFunctions.put(hours_from_time.getIdentifier(), hours_from_time);
+        builtInFunctions.put(minutes_from_time.getIdentifier(), minutes_from_time);
+        builtInFunctions.put(seconds_from_time.getIdentifier(), seconds_from_time);
+        builtInFunctions.put(timezone_from_time.getIdentifier(), timezone_from_time);
+        builtInFunctions.put(adjust_time_to_timezone1.getIdentifier(), adjust_time_to_timezone1);
+        builtInFunctions.put(adjust_time_to_timezone2.getIdentifier(), adjust_time_to_timezone2);
+
+        builtInFunctions.put(hexBinary.getIdentifier(), hexBinary);
+        builtInFunctions.put(base64Binary.getIdentifier(), base64Binary);
+
+        builtInFunctions.put(keys.getIdentifier(), keys);
+        builtInFunctions.put(members.getIdentifier(), members);
+        builtInFunctions.put(null_function.getIdentifier(), null_function);
+        builtInFunctions.put(size.getIdentifier(), size);
+        builtInFunctions.put(accumulate.getIdentifier(), accumulate);
+        builtInFunctions.put(descendant_arrays.getIdentifier(), descendant_arrays);
+        builtInFunctions.put(descendant_objects.getIdentifier(), descendant_objects);
+        builtInFunctions.put(descendant_pairs.getIdentifier(), descendant_pairs);
+        builtInFunctions.put(flatten.getIdentifier(), flatten);
+        builtInFunctions.put(intersect.getIdentifier(), intersect);
+        builtInFunctions.put(project.getIdentifier(), project);
+        builtInFunctions.put(remove_keys.getIdentifier(), remove_keys);
+        builtInFunctions.put(values.getIdentifier(), values);
     }
 
     public static boolean checkBuiltInFunctionExists(FunctionIdentifier identifier) {
@@ -225,6 +536,22 @@ public class Functions {
         );
     }
 
+    public static RuntimeIterator getUserDefinedFunctionCallIterator(
+            FunctionIdentifier identifier,
+            IteratorMetadata metadata,
+            List<RuntimeIterator> arguments
+    ) {
+        return buildUserDefinedFunctionCallIterator(getUserDefinedFunction(identifier), metadata, arguments);
+    }
+
+    public static RuntimeIterator buildUserDefinedFunctionCallIterator(
+            FunctionItem functionItem,
+            IteratorMetadata metadata,
+            List<RuntimeIterator> arguments
+    ) {
+        return new FunctionItemCallIterator(functionItem, arguments, metadata);
+    }
+
     public static void clearUserDefinedFunctions() {
         userDefinedFunctions.clear();
     }
@@ -244,7 +571,81 @@ public class Functions {
         return userDefinedFunctions.containsKey(identifier);
     }
 
-    public static FunctionItem getUserDefinedFunction(FunctionIdentifier identifier, IteratorMetadata metadata) {
+    private static BuiltinFunction createBuiltinFunction(
+            String functionName,
+            String returnType,
+            Class<? extends RuntimeIterator> functionIteratorClass
+    ) {
+        return new BuiltinFunction(
+                new FunctionIdentifier(functionName, 0),
+                new FunctionSignature(
+                        Collections.emptyList(),
+                        sequenceTypes.get(returnType)
+                ),
+                functionIteratorClass
+        );
+    }
+
+    private static BuiltinFunction createBuiltinFunction(
+            String functionName,
+            String param1Type,
+            String returnType,
+            Class<? extends RuntimeIterator> functionIteratorClass
+    ) {
+        return new BuiltinFunction(
+                new FunctionIdentifier(functionName, 1),
+                new FunctionSignature(
+                        Collections.singletonList(sequenceTypes.get(param1Type)),
+                        sequenceTypes.get(returnType)
+                ),
+                functionIteratorClass
+        );
+    }
+
+    private static BuiltinFunction createBuiltinFunction(
+            String functionName,
+            String param1Type,
+            String param2Type,
+            String returnType,
+            Class<? extends RuntimeIterator> functionIteratorClass
+    ) {
+        return new BuiltinFunction(
+                new FunctionIdentifier(functionName, 2),
+                new FunctionSignature(
+                        Collections.unmodifiableList(
+                            Arrays.asList(sequenceTypes.get(param1Type), sequenceTypes.get(param2Type))
+                        ),
+                        sequenceTypes.get(returnType)
+                ),
+                functionIteratorClass
+        );
+    }
+
+    private static BuiltinFunction createBuiltinFunction(
+            String functionName,
+            String param1Type,
+            String param2Type,
+            String param3Type,
+            String returnType,
+            Class<? extends RuntimeIterator> functionIteratorClass
+    ) {
+        return new BuiltinFunction(
+                new FunctionIdentifier(functionName, 3),
+                new FunctionSignature(
+                        Collections.unmodifiableList(
+                            Arrays.asList(
+                                sequenceTypes.get(param1Type),
+                                sequenceTypes.get(param2Type),
+                                sequenceTypes.get(param3Type)
+                            )
+                        ),
+                        sequenceTypes.get(returnType)
+                ),
+                functionIteratorClass
+        );
+    }
+
+    public static FunctionItem getUserDefinedFunction(FunctionIdentifier identifier) {
         FunctionItem fnItem = userDefinedFunctions.get(identifier);
         try {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -260,498 +661,1080 @@ public class Functions {
         }
     }
 
-    public static class FunctionNames {
+    static final class FunctionNames {
         /**
          * function that returns the context position
          */
-        public static final String POSITION = "position";
+        static final BuiltinFunction position = createBuiltinFunction(
+                "position",
+                "integer?",
+                PositionFunctionIterator.class
+        );
         /**
          * function that returns the context size
          */
-        public static final String LAST = "last";
-
+        static final BuiltinFunction last = createBuiltinFunction(
+                "last",
+                "integer?",
+                LastFunctionIterator.class
+        );
         /**
          * function that parses a JSON lines file
          */
-        public static final String JSON_FILE = "json-file";
+        static final BuiltinFunction json_file1 = createBuiltinFunction(
+                "json-file",
+                "string?",
+                "item*",
+                ParseJsonFunctionIterator.class
+        );
+        static final BuiltinFunction json_file2 = createBuiltinFunction(
+                "json-file",
+                "string?",
+                "integer?",
+                "item*",
+                ParseJsonFunctionIterator.class
+        );
         /**
          * function that parses a JSON doc file
          */
-        public static final String JSON_DOC = "json-doc";
+        static final BuiltinFunction json_doc = createBuiltinFunction(
+                "json-doc",
+                "string?",
+                "item*",
+                JsonDocFunctionIterator.class
+        );
         /**
          * function that parses a text file
          */
-        public static final String TEXT_FILE = "text-file";
+        static final BuiltinFunction text_file1 = createBuiltinFunction(
+                "text-file",
+                "string?",
+                "item*",
+                ParseTextFunctionIterator.class
+        );
+        static final BuiltinFunction text_file2 = createBuiltinFunction(
+                "text-file",
+                "string?",
+                "integer?",
+                "item*",
+                ParseTextFunctionIterator.class
+        );
         /**
          * function that parallelizes item collections into a Spark RDD
          */
-        public static final String PARALLELIZE = "parallelize";
-        public static final BuiltinFunction parallelizeFunction1 = new BuiltinFunction(
-                new FunctionIdentifier(PARALLELIZE, 1),
-                new FunctionSignature(
-                        Collections.singletonList(sequenceTypes.get("item*")),
-                        sequenceTypes.get("item*")
-                ),
-                ParallelizeFunctionIterator.class
+        static final BuiltinFunction parallelizeFunction1 = createBuiltinFunction(
+            "parallelize",
+            "item*",
+            "item*",
+            ParallelizeFunctionIterator.class
         );
-        public static final BuiltinFunction parallelizeFunction2 = new BuiltinFunction(
-                new FunctionIdentifier(PARALLELIZE, 2),
-                new FunctionSignature(
-                        Collections.unmodifiableList(
-                            Arrays.asList(sequenceTypes.get("item*"), sequenceTypes.get("integer"))
-                        ),
-                        sequenceTypes.get("item*")
-                ),
-                ParallelizeFunctionIterator.class
+        static final BuiltinFunction parallelizeFunction2 = createBuiltinFunction(
+            "parallelize",
+            "item*",
+            "integer",
+            "item*",
+            ParallelizeFunctionIterator.class
         );
         /**
          * function that parses a parquet file
          */
-        public static final String PARQUET_FILE = "parquet-file";
+        static final BuiltinFunction parquet_file = createBuiltinFunction(
+                "parquet-file",
+                "string?",
+                "item*",
+                ParquetFileFunctionIterator.class
+        );
         /**
          * function that returns the length of a sequence
          */
-        public static final String COUNT = "count";
-
+        static final BuiltinFunction count = createBuiltinFunction(
+                "count",
+                "item*",
+                "integer",
+                CountFunctionIterator.class
+        );
 
         /**
          * function that returns the effective boolean value of the given parameter
          */
-        public static final String BOOLEAN = "boolean";
-
+        static final BuiltinFunction boolean_function = createBuiltinFunction(
+                "boolean",
+                "item*",
+                "boolean",
+                BooleanFunctionIterator.class
+        );
 
         /**
          * function that returns the minimum of a sequence
          */
-        public static final String MIN = "min";
+        static final BuiltinFunction min = createBuiltinFunction(
+                "min",
+                "item*",
+                "atomic?",
+                MinFunctionIterator.class
+        );
         /**
          * function that returns the maximum of a sequence
          */
-        public static final String MAX = "max";
+        static final BuiltinFunction max = createBuiltinFunction(
+                "max",
+                "item*",
+                "atomic?",
+                MaxFunctionIterator.class
+        );
         /**
          * function that returns the average of a sequence
          */
-        public static final String AVG = "avg";
+        static final BuiltinFunction avg = createBuiltinFunction(
+                "avg",
+                "item*",
+                "atomic?",
+                AvgFunctionIterator.class
+        );
         /**
          * function that returns the sum of a sequence
          */
-        public static final String SUM = "sum";
+        static final BuiltinFunction sum1 = createBuiltinFunction(
+                "sum",
+                "item*",
+                "atomic?",
+                SumFunctionIterator.class
+        );
+        static final BuiltinFunction sum2 = createBuiltinFunction(
+                "sum",
+                "item*",
+                "item?",
+                "atomic?",
+                SumFunctionIterator.class
+        );
 
 
         /**
          * function that returns true if the argument is the empty sequence
          */
-        public static final String EMPTY = "empty";
+        static final BuiltinFunction empty = createBuiltinFunction(
+                "empty",
+                "item*",
+                "boolean",
+                EmptyFunctionIterator.class
+        );
         /**
          * function that returns true if the argument is a non-empty sequence
          */
-        public static final String EXISTS = "exists";
+        static final BuiltinFunction exists = createBuiltinFunction(
+                "exists",
+                "item*",
+                "boolean",
+                ExistsFunctionIterator.class
+        );
         /**
          * function that returns the first item in a sequence
          */
-        public static final String HEAD = "head";
+        static final BuiltinFunction head = createBuiltinFunction(
+                "head",
+                "item*",
+                "item?",
+                HeadFunctionIterator.class
+        );
         /**
          * function that returns all but the first item in a sequence
          */
-        public static final String TAIL = "tail";
+        static final BuiltinFunction tail = createBuiltinFunction(
+                "tail",
+                "item*",
+                "item*",
+                TailFunctionIterator.class
+        );
         /**
          * function that returns a sequence constructed by inserting an item or a sequence of items at a given position
          * within an existing sequence
          */
-        public static final String INSERTBEFORE = "insert-before";
+        static final BuiltinFunction insert_before = createBuiltinFunction(
+                "insert-before",
+                "item*",
+                "item*",
+                "item*",
+                "item*",
+                InsertBeforeFunctionIterator.class
+        );
         /**
          * function that returns a new sequence containing all the items of $target except the item at position
          * $position.
          */
-        public static final String REMOVE = "remove";
+        static final BuiltinFunction remove = createBuiltinFunction(
+                "remove",
+                "item*",
+                "item*",
+                "item*",
+                RemoveFunctionIterator.class
+        );
         /**
          * function that reverses the order of items in a sequence.
          */
-        public static final String REVERSE = "reverse";
+        static final BuiltinFunction reverse = createBuiltinFunction(
+                "reverse",
+                "item*",
+                "item*",
+                ReverseFunctionIterator.class
+        );
         /**
          * function that applies a subsequence operation to the given sequence with the given start index and length
          * parameters
          */
-        public static final String SUBSEQUENCE = "subsequence";
-
+        static final BuiltinFunction subsequence2 = createBuiltinFunction(
+                "subsequence",
+                "item*",
+                "item*",
+                "item*",
+                SubsequenceFunctionIterator.class
+        );
+        static final BuiltinFunction subsequence3 = createBuiltinFunction(
+                "subsequence",
+                "item*",
+                "item*",
+                "item*",
+                "item*",
+                SubsequenceFunctionIterator.class
+        );
 
         /**
          * function that returns $arg if it contains zero or one items. Otherwise, raises an error.
          */
-        public static final String ZEROORONE = "zero-or-one";
+        static final BuiltinFunction zero_or_one = createBuiltinFunction(
+                "zero-or-one",
+                "item*",
+                "item?",
+                ZeroOrOneIterator.class
+        );
         /**
          * function that returns $arg if it contains one or more items. Otherwise, raises an error.
          */
-        public static final String ONEORMORE = "one-or-more";
+        static final BuiltinFunction one_or_more = createBuiltinFunction(
+                "one-or-more",
+                "item*",
+                "item+",
+                OneOrMoreIterator.class
+        );
         /**
          * function that returns $arg if it contains exactly one item. Otherwise, raises an error.
          */
-        public static final String EXACTLYONE = "exactly-one";
-
+        static final BuiltinFunction exactly_one = createBuiltinFunction(
+                "exactly-one",
+                "item*",
+                "item",
+                ExactlyOneIterator.class
+        );
 
         /**
          * function that returns the values that appear in a sequence, with duplicates eliminated
          */
-        public static final String DISTINCTVALUES = "distinct-values";
+        static final BuiltinFunction distinct_values = createBuiltinFunction(
+                "distinct-values",
+                "item*",
+                "atomic*",
+                DistinctValuesFunctionIterator.class
+        );
         /**
          * function that returns indices of items that are equal to the search parameter
          */
-        public static final String INDEXOF = "index-of";
+        static final BuiltinFunction index_of = createBuiltinFunction(
+                "index-of",
+                "item*",
+                "item",
+                "integer*",
+                IndexOfFunctionIterator.class
+        );
         /**
          * function that returns whether two sequences are deep-equal to each other
          */
-        public static final String DEEPEQUAL = "deep-equal";
+        static final BuiltinFunction deep_equal = createBuiltinFunction(
+                "deep-equal",
+                "item*",
+                "item*",
+                "boolean",
+                DeepEqualFunctionIterator.class
+        );
 
         /**
          * function that returns the absolute value of the arg
          */
-        public static final String ABS = "abs";
+        static final BuiltinFunction abs = createBuiltinFunction(
+                "abs",
+                "double?",
+                "double?",
+                AbsFunctionIterator.class
+        );
         /**
          * function that rounds $arg upwards to a whole number
          */
-        public static final String CEILING = "ceiling";
+        static final BuiltinFunction ceiling = createBuiltinFunction(
+                "ceiling",
+                "double?",
+                "double?",
+                CeilingFunctionIterator.class
+        );
         /**
          * function that rounds $arg downwards to a whole number
          */
-        public static final String FLOOR = "floor";
+        static final BuiltinFunction floor = createBuiltinFunction(
+                "floor",
+                "double?",
+                "double?",
+                FloorFunctionIterator.class
+        );
         /**
          * function that rounds a value to a specified number of decimal places, rounding upwards if two such values are
          * equally near
          */
-        public static final String ROUND = "round";
+        static final BuiltinFunction round1 = createBuiltinFunction(
+                "round",
+                "double?",
+                "double?",
+                RoundFunctionIterator.class
+        );
+        static final BuiltinFunction round2 = createBuiltinFunction(
+                "round",
+                "double?",
+                "integer",
+                "double?",
+                RoundFunctionIterator.class
+        );
         /**
          * function that rounds a value to a specified number of decimal places, rounding to make the last digit even if
          * two such values are equally near
          */
-        public static final String ROUNDHALFTOEVEN = "round-half-to-even";
-
+        static final BuiltinFunction round_half_to_even1 = createBuiltinFunction(
+                "round-half-to-even",
+                "double?",
+                "double?",
+                RoundHalfToEvenFunctionIterator.class
+        );
+        static final BuiltinFunction round_half_to_even2 = createBuiltinFunction(
+                "round-half-to-even",
+                "double?",
+                "integer",
+                "double?",
+                RoundHalfToEvenFunctionIterator.class
+        );
 
         /**
          * function that returns the approximation the mathematical constant
          */
-        public static final String PI = "pi";
+        static final BuiltinFunction pi = createBuiltinFunction(
+                "pi",
+                "double?",
+                PiFunctionIterator.class
+        );
         /**
          * function that returns the value of e^x
          */
-        public static final String EXP = "exp";
+        static final BuiltinFunction exp = createBuiltinFunction(
+                "exp",
+                "double?",
+                "double?",
+                ExpFunctionIterator.class
+        );
         /**
          * function that returns the value of 10^x
          */
-        public static final String EXP10 = "exp10";
+        static final BuiltinFunction exp10 = createBuiltinFunction(
+                "exp10",
+                "double?",
+                "double?",
+                Exp10FunctionIterator.class
+        );
         /**
          * function that returns the natural logarithm of the argument
          */
-        public static final String LOG = "log";
+        static final BuiltinFunction log = createBuiltinFunction(
+                "log",
+                "double?",
+                "double?",
+                LogFunctionIterator.class
+        );
         /**
          * function that returns the base-ten logarithm of the argument
          */
-        public static final String LOG10 = "log10";
+        static final BuiltinFunction log10 = createBuiltinFunction(
+                "log10",
+                "double?",
+                "double?",
+                Log10FunctionIterator.class
+        );
         /**
          * function that returns the result of raising the first argument to the power of the second
          */
-        public static final String POW = "pow";
+        static final BuiltinFunction pow = createBuiltinFunction(
+                "pow",
+                "double?",
+                "double",
+                "double?",
+                PowFunctionIterator.class
+        );
         /**
          * function that returns the non-negative square root of the argument
          */
-        public static final String SQRT = "sqrt";
+        static final BuiltinFunction sqrt = createBuiltinFunction(
+                "sqrt",
+                "double?",
+                "double?",
+                SqrtFunctionIterator.class
+        );
         /**
          * function that returns the sine of the angle given in radians
          */
-        public static final String SIN = "sin";
+        static final BuiltinFunction sin = createBuiltinFunction(
+                "sin",
+                "double?",
+                "double?",
+                SinFunctionIterator.class
+        );
         /**
          * function that returns the cosine of the angle given in radians
          */
-        public static final String COS = "cos";
+        static final BuiltinFunction cos = createBuiltinFunction(
+                "cos",
+                "double?",
+                "double?",
+                CosFunctionIterator.class
+        );
         /**
          * function that returns the tangent of the angle given in radians
          */
-        public static final String TAN = "tan";
+        static final BuiltinFunction tan = createBuiltinFunction(
+                "tan",
+                "double?",
+                "double?",
+                TanFunctionIterator.class
+        );
         /**
          * function that returns the arc sine of the angle given in radians
          */
-        public static final String ASIN = "asin";
+        static final BuiltinFunction asin = createBuiltinFunction(
+                "asin",
+                "double?",
+                "double?",
+                ASinFunctionIterator.class
+        );
         /**
          * function that returns the arc cosine of the angle given in radians
          */
-        public static final String ACOS = "acos";
+        static final BuiltinFunction acos = createBuiltinFunction(
+                "acos",
+                "double?",
+                "double?",
+                ACosFunctionIterator.class
+        );
         /**
          * function that returns the arc tangent of the angle given in radians
          */
-        public static final String ATAN = "atan";
+        static final BuiltinFunction atan = createBuiltinFunction(
+                "atan",
+                "double?",
+                "double?",
+                ATanFunctionIterator.class
+        );
         /**
          * function that returns the the angle in radians subtended at the origin by the point on a plane with
          * coordinates (x, y) and the positive x-axis.
          */
-        public static final String ATAN2 = "atan2";
+        static final BuiltinFunction atan2 = createBuiltinFunction(
+                "atan2",
+                "double",
+                "double",
+                "double",
+                ATan2FunctionIterator.class
+        );
 
 
         /**
          * function that returns substrings
          */
-        public static final String SUBSTRING = "substring";
+        static final BuiltinFunction substring2 = createBuiltinFunction(
+                "substring",
+                "string?",
+                "double",
+                "string",
+                SubstringFunctionIterator.class
+        );
+        static final BuiltinFunction substring3 = createBuiltinFunction(
+                "substring",
+                "string?",
+                "double",
+                "double",
+                "string",
+                SubstringFunctionIterator.class
+        );
         /**
          * function that returns the part of the first variable that precedes the first occurrence of the second
-         * vairable.
+         * variable.
          */
-        public static final String SUBSTRING_BEFORE = "substring-before";
+        static final BuiltinFunction substring_before = createBuiltinFunction(
+                "substring-before",
+                "string?",
+                "string?",
+                "string",
+                SubstringBeforeFunctionIterator.class
+        );
         /**
          * function that returns the part of the first variable that follows the first occurrence of the second
          * vairable.
          */
-        public static final String SUBSTRING_AFTER = "substring-after";
+        static final BuiltinFunction substring_after = createBuiltinFunction(
+                "substring-after",
+                "string?",
+                "string?",
+                "string",
+                SubstringAfterFunctionIterator.class
+        );
         /**
          * function that returns substrings
          */
-        public static final String CONCAT = "concat";
+        static final BuiltinFunction concat =
+                new BuiltinFunction(
+                        new FunctionIdentifier("concat", 100),
+                        new FunctionSignature(
+                                Collections.nCopies(
+                                        100, sequenceTypes.get("atomic*")
+                                ),
+                                sequenceTypes.get("string")
+                        ),
+                        ConcatFunctionIterator.class
+        );
         /**
          * function that returns substrings
          */
-        public static final String STRINGJOIN = "string-join";
+        static final BuiltinFunction string_join1 = createBuiltinFunction(
+                "string-join",
+                "string*",
+                "string",
+                StringJoinFunctionIterator.class
+        );
+        static final BuiltinFunction string_join2 = createBuiltinFunction(
+                "string-join",
+                "string*",
+                "string",
+                "string",
+                StringJoinFunctionIterator.class
+        );
         /**
          * function that returns the string length
          */
-        public static final String STRINGLENGTH = "string-length";
+        static final BuiltinFunction string_length = createBuiltinFunction(
+                "string-length",
+                "string?",
+                "integer",
+                StringLengthFunctionIterator.class
+        );
         /**
          * function that returns tokens
          */
-        public static final String TOKENIZE = "tokenize";
+        static final BuiltinFunction tokenize1 = createBuiltinFunction(
+                "tokenize",
+                "string?",
+                "string*",
+                TokenizeFunctionIterator.class
+        );
+        static final BuiltinFunction tokenize2 = createBuiltinFunction(
+                "tokenize",
+                "string?",
+                "string",
+                "string*",
+                TokenizeFunctionIterator.class
+        );
         /**
          * function that checks whether a string ends with a substring
          */
-        public static final String ENDSWITH = "ends-with";
-        public static final BuiltinFunction endsWithFunction = new BuiltinFunction(
-                new FunctionIdentifier(ENDSWITH, 2),
-                new FunctionSignature(
-                        Collections.unmodifiableList(
-                            Arrays.asList(sequenceTypes.get("string?"), sequenceTypes.get("string?"))
-                        ),
-                        sequenceTypes.get("boolean")
-                ),
+        static final BuiltinFunction ends_with = createBuiltinFunction(
+                "ends-with",
+                "string?",
+                "string?",
+                "boolean",
                 EndsWithFunctionIterator.class
         );
         /**
          * function that checks whether a string starts with a substring
          */
-        public static final String STARTSWITH = "starts-with";
+        static final BuiltinFunction starts_with = createBuiltinFunction(
+                "starts-with",
+                "string?",
+                "string?",
+                "boolean",
+                StartsWithFunctionIterator.class
+        );
         /**
          * function that checks whether a string contains a substring
          */
-        public static final String CONTAINS = "contains";
+        static final BuiltinFunction contains = createBuiltinFunction(
+                "contains",
+                "string?",
+                "string?",
+                "boolean",
+                ContainsFunctionIterator.class
+        );
         /**
          * function that checks whether a string matches a regular expression
          */
-        public static final String MATCHES = "matches";
+        static final BuiltinFunction matches = createBuiltinFunction(
+                "matches",
+                "string?",
+                "string",
+                "boolean",
+                MatchesFunctionIterator.class
+        );
         /**
          * function that normalizes spaces in a string
          */
-        public static final String NORMALIZESPACE = "normalize-space";
-
+        static final BuiltinFunction normalize_space = createBuiltinFunction(
+                "normalize-space",
+                "string?",
+                "string",
+                NormalizeSpaceFunctionIterator.class
+        );
 
         /**
          * function that returns the duration item from the supplied string
          */
-        public static final String DURATION = "duration";
+        static final BuiltinFunction duration = createBuiltinFunction(
+                "duration",
+                "string?",
+                "duration?",
+                DurationFunctionIterator.class
+        );
         /**
          * function that returns the yearMonthDuration item from the supplied string
          */
-        public static final String YEARMONTHDURATION = "yearMonthDuration";
+        static final BuiltinFunction yearMonthDuration = createBuiltinFunction(
+                "yearMonthDuration",
+                "string?",
+                "yearMonthDuration?",
+                YearMonthDurationFunctionIterator.class
+        );
         /**
          * function that returns the dayTimeDuration item from the supplied string
          */
-        public static final String DAYTIMEDURATION = "dayTimeDuration";
+        static final BuiltinFunction dayTimeDuration = createBuiltinFunction(
+                "dayTimeDuration",
+                "string?",
+                "dayTimeDuration?",
+                DayTimeDurationFunctionIterator.class
+        );
 
 
         /**
          * function that returns the years from a duration
          */
-        public static final String YEARSFROMDURATION = "years-from-duration";
+        static final BuiltinFunction years_from_duration = createBuiltinFunction(
+                "years-from-duration",
+                "duration?",
+                "integer?",
+                YearsFromDurationFunctionIterator.class
+        );
         /**
          * function that returns the months from a duration
          */
-        public static final String MONTHSFROMDURATION = "months-from-duration";
+        static final BuiltinFunction months_from_duration = createBuiltinFunction(
+                "months-from-duration",
+                "duration?",
+                "integer?",
+                MonthsFromDurationFunctionIterator.class
+        );
         /**
          * function that returns the days from a duration
          */
-        public static final String DAYSFROMDURATION = "days-from-duration";
+        static final BuiltinFunction days_from_duration = createBuiltinFunction(
+                "days-from-duration",
+                "duration?",
+                "integer?",
+                DaysFromDurationFunctionIterator.class
+        );
         /**
          * function that returns the hours from a duration
          */
-        public static final String HOURSFROMDURATION = "hours-from-duration";
+        static final BuiltinFunction hours_from_duration = createBuiltinFunction(
+                "hours-from-duration",
+                "duration?",
+                "integer?",
+                HoursFromDurationFunctionIterator.class
+        );
         /**
          * function that returns the minutes from a duration
          */
-        public static final String MINUTESFROMDURATION = "minutes-from-duration";
+        static final BuiltinFunction minutes_from_duration = createBuiltinFunction(
+                "minutes-from-duration",
+                "duration?",
+                "integer?",
+                MinutesFromDurationFunctionIterator.class
+        );
         /**
          * function that returns the seconds from a duration
          */
-        public static final String SECONDSFROMDURATION = "seconds-from-duration";
+        static final BuiltinFunction seconds_from_duration = createBuiltinFunction(
+                "seconds-from-duration",
+                "duration?",
+                "decimal?",
+                SecondsFromDurationFunctionIterator.class
+        );
 
 
         /**
          * function that returns the dateTime item from the supplied string
          */
-        public static final String DATETIME = "dateTime";
+        static final BuiltinFunction dateTime = createBuiltinFunction(
+                "dateTime",
+                "string?",
+                "dateTime?",
+                DateTimeFunctionIterator.class
+        );
+
         /**
          * function that returns the year from a dateTime
          */
-        public static final String YEARFROMDATETIME = "year-from-dateTime";
+        static final BuiltinFunction year_from_dateTime = createBuiltinFunction(
+                "year-from-dateTime",
+                "dateTime?",
+                "integer?",
+                YearFromDateTimeFunctionIterator.class
+        );
         /**
          * function that returns the month from a dateTime
          */
-        public static final String MONTHFROMDATETIME = "month-from-dateTime";
+        static final BuiltinFunction month_from_dateTime = createBuiltinFunction(
+                "month-from-dateTime",
+                "dateTime?",
+                "integer?",
+                MonthFromDateTimeFunctionIterator.class
+        );
         /**
          * function that returns the day from a dateTime
          */
-        public static final String DAYFROMDATETIME = "day-from-dateTime";
+        static final BuiltinFunction day_from_dateTime = createBuiltinFunction(
+                "day-from-dateTime",
+                "dateTime?",
+                "integer?",
+                DayFromDateTimeFunctionIterator.class
+        );
         /**
          * function that returns the hours from a dateTime
          */
-        public static final String HOURSFROMDATETIME = "hours-from-dateTime";
+        static final BuiltinFunction hours_from_dateTime = createBuiltinFunction(
+                "hours-from-dateTime",
+                "dateTime?",
+                "integer?",
+                HoursFromDateTimeFunctionIterator.class
+        );
         /**
          * function that returns the minutes from a dateTime
          */
-        public static final String MINUTESFROMDATETIME = "minutes-from-dateTime";
+        static final BuiltinFunction minutes_from_dateTime = createBuiltinFunction(
+                "minutes-from-dateTime",
+                "dateTime?",
+                "integer?",
+                MinutesFromDateTimeFunctionIterator.class
+        );
         /**
          * function that returns the seconds from a dateTime
          */
-        public static final String SECONDSFROMDATETIME = "seconds-from-dateTime";
+        static final BuiltinFunction seconds_from_dateTime = createBuiltinFunction(
+                "seconds-from-dateTime",
+                "dateTime?",
+                "decimal?",
+                SecondsFromDateTimeFunctionIterator.class
+        );
         /**
          * function that returns the seconds from a dateTime
          */
-        public static final String TIMEZONEFROMDATETIME = "timezone-from-dateTime";
+        static final BuiltinFunction timezone_from_dateTime = createBuiltinFunction(
+                "timezone-from-dateTime",
+                "dateTime?",
+                "dayTimeDuration?",
+                TimezoneFromDateTimeFunctionIterator.class
+        );
 
 
         /**
          * function that adjusts a dateTime value to a specific timezone, or to no timezone at all.
          */
-        public static final String ADJUSTDATETIMETOTIMEZONE = "adjust-dateTime-to-timezone";
+        static final BuiltinFunction adjust_dateTime_to_timezone1 = createBuiltinFunction(
+                "adjust-dateTime-to-timezone",
+                "dateTime?",
+                "dateTime?",
+                AdjustDateTimeToTimezone.class
+        );
+        static final BuiltinFunction adjust_dateTime_to_timezone2 = createBuiltinFunction(
+                "adjust-dateTime-to-timezone",
+                "dateTime?",
+                "dayTimeDuration?",
+                "dateTime?",
+                AdjustDateTimeToTimezone.class
+        );
+
 
 
         /**
          * function that returns the date item from the supplied string
          */
-        public static final String DATE = "date";
+        static final BuiltinFunction date = createBuiltinFunction(
+                "date",
+                "string?",
+                "date?",
+                DateFunctionIterator.class
+        );
         /**
          * function that returns the year from a date
          */
-        public static final String YEARFROMDATE = "year-from-date";
+        static final BuiltinFunction year_from_date = createBuiltinFunction(
+                "year-from-date",
+                "date?",
+                "integer?",
+                YearFromDateFunctionIterator.class
+        );
         /**
          * function that returns the month from a date
          */
-        public static final String MONTHFROMDATE = "month-from-date";
+        static final BuiltinFunction month_from_date = createBuiltinFunction(
+                "month-from-date",
+                "date?",
+                "integer?",
+                MonthFromDateFunctionIterator.class
+        );
         /**
          * function that returns the day from a date
          */
-        public static final String DAYFROMDATE = "day-from-date";
+        static final BuiltinFunction day_from_date = createBuiltinFunction(
+                "day-from-date",
+                "date?",
+                "integer?",
+                DayFromDateFunctionIterator.class
+        );
         /**
          * function that returns the seconds from a date
          */
-        public static final String TIMEZONEFROMDATE = "timezone-from-date";
+        static final BuiltinFunction timezone_from_date = createBuiltinFunction(
+                "timezone-from-date",
+                "date?",
+                "dayTimeDuration?",
+                TimezoneFromDateFunctionIterator.class
+        );
 
 
         /**
-         * function that adjusts a dateTime value to a specific timezone, or to no timezone at all.
+         * function that adjusts a date value to a specific timezone, or to no timezone at all.
          */
-        public static final String ADJUSTDATETOTIMEZONE = "adjust-date-to-timezone";
-
+        static final BuiltinFunction adjust_date_to_timezone1 = createBuiltinFunction(
+                "adjust-date-to-timezone",
+                "date?",
+                "date?",
+                AdjustDateToTimezone.class
+        );
+        static final BuiltinFunction adjust_date_to_timezone2 = createBuiltinFunction(
+                "adjust-date-to-timezone",
+                "date?",
+                "dayTimeDuration?",
+                "date?",
+                AdjustDateToTimezone.class
+        );
 
         /**
          * function that returns the time item from the supplied string
          */
-        public static final String TIME = "time";
+        static final BuiltinFunction time = createBuiltinFunction(
+                "time",
+                "string?",
+                "time?",
+                TimeFunctionIterator.class
+        );
         /**
          * function that returns the hours from a time
          */
-        public static final String HOURSFROMTIME = "hours-from-time";
+        static final BuiltinFunction hours_from_time = createBuiltinFunction(
+                "hours-from-time",
+                "time?",
+                "integer?",
+                HoursFromTimeFunctionIterator.class
+        );
         /**
          * function that returns the minutes from a time
          */
-        public static final String MINUTESFROMTIME = "minutes-from-time";
+        static final BuiltinFunction minutes_from_time = createBuiltinFunction(
+                "minutes-from-time",
+                "time?",
+                "integer?",
+                MinutesFromTimeFunctionIterator.class
+        );
         /**
          * function that returns the seconds from a time
          */
-        public static final String SECONDSFROMTIME = "seconds-from-time";
+        static final BuiltinFunction seconds_from_time = createBuiltinFunction(
+                "seconds-from-time",
+                "time?",
+                "decimal?",
+                SecondsFromTimeFunctionIterator.class
+        );
         /**
          * function that returns the seconds from a time
          */
-        public static final String TIMEZONEFROMTIME = "timezone-from-time";
+        static final BuiltinFunction timezone_from_time = createBuiltinFunction(
+                "timezone-from-time",
+                "time?",
+                "dayTimeDuration?",
+                TimezoneFromTimeFunctionIterator.class
+        );
         /**
          * function that adjusts a time value to a specific timezone, or to no timezone at all.
          */
-        public static final String ADJUSTTIMETOTIMEZONE = "adjust-time-to-timezone";
-
+        static final BuiltinFunction adjust_time_to_timezone1 = createBuiltinFunction(
+                "adjust-time-to-timezone",
+                "time?",
+                "time?",
+                AdjustTimeToTimezone.class
+        );
+        static final BuiltinFunction adjust_time_to_timezone2 = createBuiltinFunction(
+                "adjust-time-to-timezone",
+                "time?",
+                "dayTimeDuration?",
+                "time?",
+                AdjustTimeToTimezone.class
+        );
 
         /**
          * function that returns the hexBinary item from the supplied string
          */
-        public static final String HEXBINARY = "hexBinary";
-        public static final BuiltinFunction hexBinaryFunction = new BuiltinFunction(
-                new FunctionIdentifier(HEXBINARY, 1),
-                new FunctionSignature(
-                        Collections.singletonList(sequenceTypes.get("string?")),
-                        sequenceTypes.get("hexBinary?")
-                ),
+        static final BuiltinFunction hexBinary = createBuiltinFunction(
+                "hexBinary",
+                "string?",
+                "hexBinary?",
                 HexBinaryFunctionIterator.class
         );
         /**
          * function that returns the base64Binary item from the supplied string
          */
-        public static final String BASE64BINARY = "base64Binary";
-
+        static final BuiltinFunction base64Binary = createBuiltinFunction(
+                "base64Binary",
+                "string?",
+                "base64Binary?",
+                Base64BinaryFunctionIterator.class
+        );
 
         /**
          * function that returns the keys of a Json Object
          */
-        public static final String KEYS = "keys";
+        static final BuiltinFunction keys = createBuiltinFunction(
+                "keys",
+                "item*",
+                "item*",
+                ObjectKeysFunctionIterator.class
+        );
         /**
          * function that returns returns all members of all arrays of the supplied sequence
          */
-        public static final String MEMBERS = "members";
+        static final BuiltinFunction members = createBuiltinFunction(
+                "members",
+                "item*",
+                "item*",
+                ArrayMembersFunctionIterator.class
+        );
         /**
          * function that returns the JSON null
          */
-        public static final String NULL = "null";
+        static final BuiltinFunction null_function = createBuiltinFunction(
+                "null",
+                "null?",
+                NullFunctionIterator.class
+        );
         /**
          * function that returns the length of an array
          */
-        public static final String SIZE = "size";
+        static final BuiltinFunction size = createBuiltinFunction(
+                "size",
+                "array?",
+                "integer?",
+                ArraySizeFunctionIterator.class
+        );
         /**
          * function that dynamically creates an object that merges the values of key collisions into arrays
          */
-        public static final String ACCUMULATE = "accumulate";
+        static final BuiltinFunction accumulate = createBuiltinFunction(
+                "accumulate",
+                "item*",
+                "object",
+                ObjectAccumulateFunctionIterator.class
+        );
         /**
          * function that returns all arrays contained within the supplied items, regardless of depth.
          */
-        public static final String DESCENDANTARRAYS = "descendant-arrays";
+        static final BuiltinFunction descendant_arrays = createBuiltinFunction(
+                "descendant-arrays",
+                "item*",
+                "item*",
+                ArrayDescendantFunctionIterator.class
+        );
         /**
          * function that returns all objects contained within the supplied items, regardless of depth
          */
-        public static final String DESCENDANTOBJECTS = "descendant-objects";
+        static final BuiltinFunction descendant_objects = createBuiltinFunction(
+                "descendant-objects",
+                "item*",
+                "item*",
+                ObjectDescendantFunctionIterator.class
+        );
         /**
          * function that returns all objects contained within the supplied items, regardless of depth
          */
-        public static final String DESCENDANTPAIRS = "descendant-pairs";
+        static final BuiltinFunction descendant_pairs = createBuiltinFunction(
+                "descendant-pairs",
+                "item*",
+                "item*",
+                ObjectDescendantPairsFunctionIterator.class
+        );
         /**
          * function that recursively flattens arrays in the input sequence, leaving non-arrays intact
          */
-        public static final String FLATTEN = "flatten";
+        static final BuiltinFunction flatten = createBuiltinFunction(
+                "flatten",
+                "item*",
+                "item*",
+                ArrayFlattenFunctionIterator.class
+        );
         /**
          * function that returns the intersection of the supplied objects, and aggregates values corresponding to the
          * same name into an array
          */
-        public static final String INTERSECT = "intersect";
+        static final BuiltinFunction intersect = createBuiltinFunction(
+                "intersect",
+                "item*",
+                "object+",
+                ObjectIntersectFunctionIterator.class
+        );
         /**
          * function that projects objects by filtering their pairs and leaves non-objects intact
          */
-        public static final String PROJECT = "project";
+        static final BuiltinFunction project = createBuiltinFunction(
+                "project",
+                "item*",
+                "string*",
+                "item*",
+                ObjectProjectFunctionIterator.class
+        );
         /**
          * function that removes the pairs with the given keys from all objects and leaves non-objects intact
          */
-        public static final String REMOVEKEYS = "remove-keys";
+        static final BuiltinFunction remove_keys = createBuiltinFunction(
+                "remove-keys",
+                "item*",
+                "string*",
+                "item*",
+                ObjectRemoveKeysFunctionIterator.class
+        );
         /**
          * function that returns the values of a Json Object
          */
-        public static final String VALUES = "values";
+        static final BuiltinFunction values = createBuiltinFunction(
+                "values",
+                "item*",
+                "item*",
+                ObjectValuesFunctionIterator.class
+        );
 
     }
 

@@ -95,12 +95,13 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         if (_child.hasNext()) {
             FlworTuple inputTuple = _child.next();
             _tupleContext.removeAllVariables(); // clear the previous variables
-            _tupleContext.setBindingsFromTuple(inputTuple); // assign new variables from new tuple
+            _tupleContext.setBindingsFromTuple(inputTuple, getMetadata()); // assign new variables from new tuple
 
             List<Item> results = new ArrayList<>();
             _expression.open(_tupleContext);
-            while (_expression.hasNext())
+            while (_expression.hasNext()) {
                 results.add(_expression.next());
+            }
             _expression.close();
 
             _nextLocalTupleResult = new FlworTuple(inputTuple, _variableName, results);
@@ -123,8 +124,9 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             // expression is materialized
             List<Item> results = new ArrayList<>();
             _expression.open(this._currentDynamicContext);
-            while (_expression.hasNext())
+            while (_expression.hasNext()) {
                 results.add(_expression.next());
+            }
             _expression.close();
 
             _nextLocalTupleResult = new FlworTuple(_variableName, results);

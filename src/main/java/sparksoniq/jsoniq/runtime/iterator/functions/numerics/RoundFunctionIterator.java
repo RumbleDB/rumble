@@ -49,11 +49,7 @@ public class RoundFunctionIterator extends LocalFunctionCallIterator {
         super.open(context);
         _iterator = this._children.get(0);
         _iterator.open(_currentDynamicContext);
-        if (_iterator.hasNext()) {
-            this._hasNext = true;
-        } else {
-            this._hasNext = false;
-        }
+        this._hasNext = _iterator.hasNext();
         _iterator.close();
     }
 
@@ -82,14 +78,12 @@ public class RoundFunctionIterator extends LocalFunctionCallIterator {
             if (value.isNumeric() && precision.isNumeric()) {
                 try {
 
-                    Double val = value.castToDoubleValue();
-                    Integer prec = precision.castToIntegerValue();
+                    double val = value.castToDoubleValue();
+                    int prec = precision.castToIntegerValue();
 
                     BigDecimal bd = new BigDecimal(val);
                     bd = bd.setScale(prec, RoundingMode.HALF_UP);
-                    Double result = bd.doubleValue();
-
-                    return ItemFactory.getInstance().createDoubleItem(result);
+                    return ItemFactory.getInstance().createDoubleItem(bd.doubleValue());
 
                 } catch (IteratorFlowException e) {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());

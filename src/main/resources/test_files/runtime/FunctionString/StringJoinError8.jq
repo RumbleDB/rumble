@@ -1,2 +1,2 @@
 (:JIQS: ShouldCrash; ErrorCode="XPTY0004"; ErrorMetadata="LINE:2:COLUMN:0:" :)
-string-join(("a","b", 3e+1))
+string-join(("Blow, ", "blow, ", "thou ", "winter ", "wind!"), ())

@@ -26,20 +26,20 @@ import java.io.Serializable;
 import java.util.List;
 
 public class FunctionSignature implements Serializable {
-    private List<SequenceType> parameters;
+    private List<SequenceType> parameterTypes;
     private SequenceType returnType;
 
     public FunctionSignature(
-            List<SequenceType> parameters,
+            List<SequenceType> parameterTypes,
             SequenceType returnType
     ) {
-        this.parameters = parameters;
+        this.parameterTypes = parameterTypes;
         this.returnType = returnType;
     }
 
 
     public List<SequenceType> getParameterTypes() {
-        return parameters;
+        return parameterTypes;
     }
 
     public SequenceType getReturnType() {

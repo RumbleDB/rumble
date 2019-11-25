@@ -24,8 +24,10 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import org.rumbledb.api.Item;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.ItemFactory;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.io.Serializable;
@@ -35,21 +37,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.rumbledb.api.Item;
-
 public class DynamicContext implements Serializable, KryoSerializable {
 
     private static final long serialVersionUID = 1L;
-
-    public enum VariableDependency {
-        FULL,
-        COUNT,
-        SUM,
-        AVG,
-        MAX,
-        MIN
-    }
-
     private Map<String, List<Item>> _variableValues;
     private Map<String, Item> _variableCounts;
     private DynamicContext _parent;
@@ -66,22 +56,12 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this._variableCounts = new HashMap<>();
     }
 
-    public DynamicContext(FlworTuple tuple) {
-        this();
-        setBindingsFromTuple(tuple);
-    }
-
-    public DynamicContext(DynamicContext parent, FlworTuple tuple) {
-        this._parent = parent;
-        this._variableValues = new HashMap<>();
-        this._variableCounts = new HashMap<>();
-        setBindingsFromTuple(tuple);
-    }
-
-    public void setBindingsFromTuple(FlworTuple tuple) {
-        for (String key : tuple.getKeys())
-            if (!key.startsWith("."))
-                this.addVariableValue(key, tuple.getValue(key));
+    public void setBindingsFromTuple(FlworTuple tuple, IteratorMetadata metadata) {
+        for (String key : tuple.getLocalKeys()) {
+            if (!key.startsWith(".")) {
+                this.addVariableValue(key, tuple.getLocalValue(key, metadata));
+            }
+        }
     }
 
     public void addVariableValue(String varName, List<Item> value) {
@@ -93,16 +73,19 @@ public class DynamicContext implements Serializable, KryoSerializable {
     }
 
     public List<Item> getVariableValue(String varName) {
-        if (_variableValues.containsKey(varName))
+        if (_variableValues.containsKey(varName)) {
             return _variableValues.get(varName);
+        }
 
-        if (_parent != null)
+        if (_parent != null) {
             return _parent.getVariableValue(varName);
+        }
 
-        if (_variableCounts.containsKey(varName))
+        if (_variableCounts.containsKey(varName)) {
             throw new SparksoniqRuntimeException(
                     "Runtime error retrieving variable " + varName + " value: only count available."
             );
+        }
 
         throw new SparksoniqRuntimeException("Runtime error retrieving variable " + varName + " value");
     }
@@ -112,8 +95,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
             return _variableCounts.get(varName);
         }
         if (_variableValues.containsKey(varName)) {
-            Item count = ItemFactory.getInstance().createIntegerItem(_variableValues.get(varName).size());
-            return count;
+            return ItemFactory.getInstance().createIntegerItem(_variableValues.get(varName).size());
         }
         if (_parent != null) {
             return _parent.getVariableCount(varName);
@@ -148,16 +130,18 @@ public class DynamicContext implements Serializable, KryoSerializable {
         if (_variableValues.containsKey("$position")) {
             return _variableValues.get("$position").get(0);
         }
-        if (_parent != null)
+        if (_parent != null) {
             return _parent.getPosition();
+        }
         return null;
     }
 
     public void setPosition(long position) {
-        List<Item> list = new ArrayList<Item>();
-        Item item = null;
+        List<Item> list = new ArrayList<>();
+        Item item;
         if (position < Integer.MAX_VALUE) {
             item = ItemFactory.getInstance().createIntegerItem((int) position);
+
         } else {
             item = ItemFactory.getInstance().createDecimalItem(new BigDecimal(position));
         }
@@ -169,14 +153,15 @@ public class DynamicContext implements Serializable, KryoSerializable {
         if (_variableValues.containsKey("$last")) {
             return _variableValues.get("$last").get(0);
         }
-        if (_parent != null)
+        if (_parent != null) {
             return _parent.getLast();
+        }
         return null;
     }
 
     public void setLast(long last) {
-        List<Item> list = new ArrayList<Item>();
-        Item item = null;
+        List<Item> list = new ArrayList<>();
+        Item item;
         if (last < Integer.MAX_VALUE) {
             item = ItemFactory.getInstance().createIntegerItem((int) last);
         } else {
@@ -184,6 +169,15 @@ public class DynamicContext implements Serializable, KryoSerializable {
         }
         list.add(item);
         _variableValues.put("$last", list);
+    }
+
+    public enum VariableDependency {
+        FULL,
+        COUNT,
+        SUM,
+        AVG,
+        MAX,
+        MIN
     }
 }
 

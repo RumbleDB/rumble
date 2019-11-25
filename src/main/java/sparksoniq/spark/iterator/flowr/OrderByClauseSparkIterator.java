@@ -145,7 +145,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             List<Item> results = new ArrayList<>(); // results from the expressions will become a key
             for (OrderByClauseSparkIteratorExpression orderByExpression : _expressions) {
                 tupleContext.removeAllVariables(); // clear the previous variables
-                tupleContext.setBindingsFromTuple(inputTuple); // assign new variables from new tuple
+                tupleContext.setBindingsFromTuple(inputTuple, getMetadata()); // assign new variables from new tuple
 
                 boolean isFieldEmpty = true;
                 RuntimeIterator expression = orderByExpression.getExpression();
