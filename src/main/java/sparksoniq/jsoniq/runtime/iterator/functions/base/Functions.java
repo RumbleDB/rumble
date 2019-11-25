@@ -716,10 +716,10 @@ public class Functions {
          * function that parses a structured JSON lines file into a DataFrame
          */
         static final BuiltinFunction structured_json_file = createBuiltinFunction(
-                "structured-json-file",
-                "string?",
-                "item*",
-                StructuredJsonFileFunctionIterator.class
+            "structured-json-file",
+            "string?",
+            "item*",
+            StructuredJsonFileFunctionIterator.class
         );
         /**
          * function that parses a JSON doc file
