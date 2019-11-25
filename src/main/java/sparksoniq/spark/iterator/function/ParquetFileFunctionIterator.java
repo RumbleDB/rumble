@@ -39,14 +39,6 @@ public class ParquetFileFunctionIterator extends RDDRuntimeIterator {
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-
-        long resultSize = this.getRDD(_currentDynamicContext).count();
-        this._hasNext = resultSize != 0;
-    }
-
-    @Override
     public boolean isDataFrame() {
         return true;
     }

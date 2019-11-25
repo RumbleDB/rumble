@@ -40,14 +40,6 @@ public class JsonFileFunctionIterator extends RDDRuntimeIterator {
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-
-        long resultSize = this.getRDD(_currentDynamicContext).count();
-        this._hasNext = resultSize != 0;
-    }
-
-    @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         JavaRDD<String> strings;
         RuntimeIterator urlIterator = this._children.get(0);
