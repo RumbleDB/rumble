@@ -25,8 +25,8 @@ import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.NullFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.FunctionItemCallIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.NullFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayDescendantFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayFlattenFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayMembersFunctionIterator;
@@ -126,10 +126,11 @@ import sparksoniq.jsoniq.runtime.iterator.functions.strings.SubstringBeforeFunct
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.SubstringFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.TokenizeFunctionIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.spark.iterator.function.JsonFileFunctionIterator;
 import sparksoniq.spark.iterator.function.ParallelizeFunctionIterator;
 import sparksoniq.spark.iterator.function.ParquetFileFunctionIterator;
-import sparksoniq.spark.iterator.function.ParseJsonFunctionIterator;
-import sparksoniq.spark.iterator.function.ParseTextFunctionIterator;
+import sparksoniq.spark.iterator.function.StructuredJsonFileFunctionIterator;
+import sparksoniq.spark.iterator.function.TextFileFunctionIterator;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -223,6 +224,7 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.STARTSWITH;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.STRINGJOIN;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.STRINGLENGTH;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.STRUCTURED_JSON_FILE;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SUBSEQUENCE;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SUBSTRING;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SUBSTRING_AFTER;
@@ -254,11 +256,12 @@ public class Functions {
         builtInFunctions.put(new FunctionIdentifier(POSITION, 0), PositionFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(LAST, 0), LastFunctionIterator.class);
 
-        builtInFunctions.put(new FunctionIdentifier(JSON_FILE, 1), ParseJsonFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(JSON_FILE, 2), ParseJsonFunctionIterator.class);
+        builtInFunctions.put(new FunctionIdentifier(JSON_FILE, 1), JsonFileFunctionIterator.class);
+        builtInFunctions.put(new FunctionIdentifier(JSON_FILE, 2), JsonFileFunctionIterator.class);
+        builtInFunctions.put(new FunctionIdentifier(STRUCTURED_JSON_FILE, 1), StructuredJsonFileFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(JSON_DOC, 1), JsonDocFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(TEXT_FILE, 1), ParseTextFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(TEXT_FILE, 2), ParseTextFunctionIterator.class);
+        builtInFunctions.put(new FunctionIdentifier(TEXT_FILE, 1), TextFileFunctionIterator.class);
+        builtInFunctions.put(new FunctionIdentifier(TEXT_FILE, 2), TextFileFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(PARALLELIZE, 1), ParallelizeFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(PARALLELIZE, 2), ParallelizeFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(PARQUET_FILE, 1), ParquetFileFunctionIterator.class);
@@ -475,6 +478,10 @@ public class Functions {
          * function that parses a JSON lines file
          */
         public static final String JSON_FILE = "json-file";
+        /**
+         * function that parses a structured JSON lines file into a DataFrame
+         */
+        public static final String STRUCTURED_JSON_FILE = "structured-json-file";
         /**
          * function that parses a JSON doc file
          */
