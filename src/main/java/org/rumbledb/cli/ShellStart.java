@@ -25,6 +25,8 @@ import java.util.Arrays;
 
 public class ShellStart {
     public static void main(String[] args) throws IOException {
-        System.err.println("ShellStart as a main entry point is deprecated. Please use --shell yes with the Main class.");
+        System.err.println(
+            "ShellStart as a main entry point is deprecated. Please use --shell yes with the Main class."
+        );
     }
 }
