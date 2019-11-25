@@ -20,13 +20,13 @@
 
 package sparksoniq.spark.iterator.flowr;
 
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -76,17 +76,19 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public FlworTuple next() {
-        if (_hasNext) {
-            FlworTuple result = _nextLocalTupleResult; // save the result to be returned
-            setNextLocalTupleResult(); // calculate and store the next result
-            return result;
+    public void open(DynamicContext context) {
+        super.open(context);
+        if (this._child == null) {
+            _nextLocalTupleResult = generateTupleFromExpressionWithContext(null, _currentDynamicContext);
+        } else {
+            _child.open(_currentDynamicContext);
+            _tupleContext = new DynamicContext(_currentDynamicContext); // assign current context as parent
+            setNextLocalTupleResult();
         }
-        throw new IteratorFlowException("Invalid next() call in let flwor clause", getMetadata());
     }
 
     private void setNextLocalTupleResult() {
-        // if first let clause, there are no more tuples
+        // if starting clause: result is a single tuple -> no more tuples after the first next call
         if (this._child == null) {
             this._hasNext = false;
             return;
@@ -95,15 +97,9 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         if (_child.hasNext()) {
             FlworTuple inputTuple = _child.next();
             _tupleContext.removeAllVariables(); // clear the previous variables
-            _tupleContext.setBindingsFromTuple(inputTuple); // assign new variables from new tuple
+            _tupleContext.setBindingsFromTuple(inputTuple, getMetadata()); // assign new variables from new tuple
 
-            List<Item> results = new ArrayList<>();
-            _expression.open(_tupleContext);
-            while (_expression.hasNext())
-                results.add(_expression.next());
-            _expression.close();
-
-            _nextLocalTupleResult = new FlworTuple(inputTuple, _variableName, results);
+            _nextLocalTupleResult = generateTupleFromExpressionWithContext(inputTuple, _tupleContext);
             this._hasNext = true;
         } else {
             _child.close();
@@ -111,25 +107,39 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         }
     }
 
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-
-        if (this._child != null) { // if it's not a start clause
-            _child.open(_currentDynamicContext);
-            _tupleContext = new DynamicContext(_currentDynamicContext); // assign current context as parent
-
-            setNextLocalTupleResult();
-        } else { // if it's a start clause, it returns only one tuple
-            // expression is materialized
-            List<Item> results = new ArrayList<>();
-            _expression.open(this._currentDynamicContext);
-            while (_expression.hasNext())
-                results.add(_expression.next());
-            _expression.close();
-
-            _nextLocalTupleResult = new FlworTuple(_variableName, results);
+    private FlworTuple generateTupleFromExpressionWithContext(FlworTuple inputTuple, DynamicContext context) {
+        FlworTuple resultTuple;
+        if (inputTuple == null) {
+            resultTuple = new FlworTuple();
+        } else {
+            resultTuple = new FlworTuple(inputTuple);
         }
+        if (_expression.isDataFrame()) {
+            Dataset<Row> df = _expression.getDataFrame(context);
+            resultTuple.putValue(_variableName, df);
+        } else if (_expression.isRDD()) {
+            JavaRDD<Item> itemRDD = _expression.getRDD(context);
+            resultTuple.putValue(_variableName, itemRDD);
+        } else {
+            List<Item> results = new ArrayList<>();
+            _expression.open(context);
+            while (_expression.hasNext()) {
+                results.add(_expression.next());
+            }
+            _expression.close();
+            resultTuple.putValue(_variableName, results);
+        }
+        return resultTuple;
+    }
+
+    @Override
+    public FlworTuple next() {
+        if (_hasNext) {
+            FlworTuple result = _nextLocalTupleResult; // save the result to be returned
+            setNextLocalTupleResult(); // calculate and store the next result
+            return result;
+        }
+        throw new IteratorFlowException("Invalid next() call in let flwor clause", getMetadata());
     }
 
     @Override
@@ -145,7 +155,6 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             DynamicContext context,
             Map<String, DynamicContext.VariableDependency> parentProjection
     ) {
-        // if it's not a start clause
         if (this._child != null) {
             Dataset<Row> df = _child.getDataFrame(context, getProjection(parentProjection));
 
@@ -179,7 +188,9 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 );
             return df;
         }
-        throw new SparksoniqRuntimeException("Initial letClauses don't support DataFrames");
+        throw new RuntimeException(
+                "Unexpected program state reached. Initial let clauses are always locally executed."
+        );
     }
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {

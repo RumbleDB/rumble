@@ -53,7 +53,7 @@ public class ForClauseSerializeClosure implements Function<Item, Row> {
      * @return Row object, containing byte array of a singleton list containing the given item
      */
     @Override
-    public Row call(Item item) throws Exception {
+    public Row call(Item item) {
         List<Item> itemList = new ArrayList<>();
         itemList.add(item);
 

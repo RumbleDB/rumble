@@ -23,10 +23,12 @@ package sparksoniq.spark;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SparkSession;
 import org.rumbledb.api.Item;
 
+import sparksoniq.Main;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.BooleanItem;
@@ -41,6 +43,8 @@ import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
+
+import java.util.List;
 
 public class SparkSessionManager {
 
@@ -132,5 +136,24 @@ public class SparkSessionManager {
             javaSparkContext = JavaSparkContext.fromSparkContext(this.getOrCreateSession().sparkContext());
         }
         return javaSparkContext;
+    }
+
+    public static <T> List<T> collectRDDwithLimit(JavaRDD<T> rdd) {
+        String truncationMessage = "Results have been truncated to:"
+            + SparkSessionManager.COLLECT_ITEM_LIMIT
+            + " items. This value can be configured with the --result-size parameter at startup.\n";
+        return collectRDDwithLimit(rdd, truncationMessage);
+    }
+
+    public static <T> List<T> collectRDDwithLimit(JavaRDD<T> rdd, String customTruncationMessage) {
+        if (SparkSessionManager.LIMIT_COLLECT()) {
+            List<T> result = rdd.take(SparkSessionManager.COLLECT_ITEM_LIMIT);
+            if (result.size() == SparkSessionManager.COLLECT_ITEM_LIMIT) {
+                Main.printMessageToLog(customTruncationMessage);
+            }
+            return result;
+        } else {
+            return rdd.collect();
+        }
     }
 }
