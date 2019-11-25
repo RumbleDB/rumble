@@ -219,6 +219,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                     assignmentExpression = new TreatIterator(
                             assignmentExpression,
                             var.getAsSequence().getSequence(),
+                            false,
                             createIteratorMetadata(clause)
                     );
                 VariableReferenceIterator variableReferenceIterator =
@@ -237,6 +238,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                     assignmentExpression = new TreatIterator(
                             assignmentExpression,
                             var.getAsSequence().getSequence(),
+                            false,
                             createIteratorMetadata(clause)
                     );
                 VariableReferenceIterator variableReferenceIterator =
@@ -258,6 +260,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                         groupByExpression = new TreatIterator(
                                 groupByExpression,
                                 groupExpr.getAsSequence().getSequence(),
+                                false,
                                 createIteratorMetadata(clause)
                         );
                 }
@@ -767,6 +770,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
             return new TreatIterator(
                     childExpression,
                     expression.getsequenceType().getSequence(),
+                    true,
                     createIteratorMetadata(expression)
             );
         } else {

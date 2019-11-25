@@ -5,6 +5,7 @@ import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.TreatException;
+import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.TreatAsClosure;
@@ -15,25 +16,33 @@ import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
 
 import java.util.Collections;
-import java.util.List;
 
 
 public class TreatIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator _iterator;
-    private Item _nextResult;
-    private final SequenceType _sequenceType;
-    private int _childIndex;
-    private final ItemType itemType;
-    private final String sequenceTypeName;
+    private SequenceType _sequenceType;
+    private boolean _shouldThrowTreatException;
 
-    public TreatIterator(RuntimeIterator iterator, SequenceType sequenceType, IteratorMetadata iteratorMetadata) {
+    private ItemType itemType;
+    private String sequenceTypeName;
+
+    private Item _nextResult;
+    private int _childIndex;
+
+    public TreatIterator(
+            RuntimeIterator iterator,
+            SequenceType sequenceType,
+            boolean shouldThrowTreatException,
+            IteratorMetadata iteratorMetadata
+    ) {
         super(Collections.singletonList(iterator), iteratorMetadata);
         _iterator = iterator;
         this._sequenceType = sequenceType;
         itemType = _sequenceType.getItemType();
         sequenceTypeName = ItemTypes.getItemTypeName(itemType.getType().toString());
+        this._shouldThrowTreatException = shouldThrowTreatException;
     }
 
     @Override
@@ -86,15 +95,13 @@ public class TreatIterator extends HybridRuntimeIterator {
 
         checkItemsSize(_childIndex);
         if (!_nextResult.isTypeOf(itemType)) {
-            throw new TreatException(
-                    " "
-                        + ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName())
-                        + " cannot be treated as type "
-                        + sequenceTypeName
-                        + _sequenceType.getArity().getSymbol(),
-                    getMetadata()
-            );
-
+            String message = ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName())
+                + " cannot be treated as type "
+                + sequenceTypeName
+                + _sequenceType.getArity().getSymbol();
+            throw _shouldThrowTreatException
+                ? new TreatException(message, getMetadata())
+                : new UnexpectedTypeException(message, getMetadata());
         }
     }
 
@@ -103,7 +110,7 @@ public class TreatIterator extends HybridRuntimeIterator {
         _currentDynamicContext = dynamicContext;
         JavaRDD<Item> childRDD = _iterator.getRDD(dynamicContext);
 
-        long count = childRDD.count();
+        int count = childRDD.take(2).size();
         checkEmptySequence(count);
         checkItemsSize(count);
         Function<Item, Boolean> transformation = new TreatAsClosure(_sequenceType, getMetadata());
@@ -117,23 +124,23 @@ public class TreatIterator extends HybridRuntimeIterator {
                     ||
                     _sequenceType.getArity() == SequenceType.Arity.OneOrMore)
         ) {
-            throw new TreatException(
-                    " Empty sequence cannot be treated as type "
-                        + sequenceTypeName
-                        + _sequenceType.getArity().getSymbol(),
-                    getMetadata()
-            );
+            String message = "Empty sequence cannot be treated as type "
+                + sequenceTypeName
+                + _sequenceType.getArity().getSymbol();
+            throw _shouldThrowTreatException
+                ? new TreatException(message, getMetadata())
+                : new UnexpectedTypeException(message, getMetadata());
         }
     }
 
     private void checkItemsSize(long size) {
-        if (size > 0 && _sequenceType.isEmptySequence())
-            throw new TreatException(
-                    " "
-                        + ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName())
-                        + " cannot be treated as type empty-sequence()",
-                    getMetadata()
-            );
+        if (size > 0 && _sequenceType.isEmptySequence()) {
+            String message = ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName())
+                + " cannot be treated as type empty-sequence()";
+            throw _shouldThrowTreatException
+                ? new TreatException(message, getMetadata())
+                : new UnexpectedTypeException(message, getMetadata());
+        }
 
 
         if (
@@ -142,12 +149,12 @@ public class TreatIterator extends HybridRuntimeIterator {
                     ||
                     _sequenceType.getArity() == SequenceType.Arity.OneOrZero)
         ) {
-            throw new TreatException(
-                    " Sequences of more than one item cannot be treated as type "
-                        + sequenceTypeName
-                        + _sequenceType.getArity().getSymbol(),
-                    getMetadata()
-            );
+            String message = "Sequences of more than one item cannot be treated as type "
+                + sequenceTypeName
+                + _sequenceType.getArity().getSymbol();
+            throw _shouldThrowTreatException
+                ? new TreatException(message, getMetadata())
+                : new UnexpectedTypeException(message, getMetadata());
         }
     }
 
