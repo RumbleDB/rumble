@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -37,8 +37,8 @@ import sparksoniq.semantics.types.ItemTypes;
 public class StringItem extends AtomicItem {
 
 
-	private static final long serialVersionUID = 1L;
-	private String _value;
+    private static final long serialVersionUID = 1L;
+    private String _value;
 
     public StringItem() {
         super();
@@ -70,9 +70,13 @@ public class StringItem extends AtomicItem {
         return Integer.parseInt(this.getValue());
     }
 
-    private boolean isBooleanLiteral(String value) { return "true".equals(value) || "false".equals(value); }
+    private boolean isBooleanLiteral(String value) {
+        return "true".equals(value) || "false".equals(value);
+    }
 
-    private boolean isNullLiteral(String value) { return "null".equals(value); }
+    private boolean isNullLiteral(String value) {
+        return "null".equals(value);
+    }
 
     @Override
     public boolean isString() {
@@ -93,11 +97,20 @@ public class StringItem extends AtomicItem {
             case NullItem:
                 return ItemFactory.getInstance().createNullItem();
             case DurationItem:
-                return ItemFactory.getInstance().createDurationItem(DurationItem.getDurationFromString(this.getStringValue(), AtomicTypes.DurationItem));
+                return ItemFactory.getInstance()
+                    .createDurationItem(
+                        DurationItem.getDurationFromString(this.getStringValue(), AtomicTypes.DurationItem)
+                    );
             case YearMonthDurationItem:
-                return ItemFactory.getInstance().createYearMonthDurationItem(DurationItem.getDurationFromString(this.getStringValue(), AtomicTypes.YearMonthDurationItem));
+                return ItemFactory.getInstance()
+                    .createYearMonthDurationItem(
+                        DurationItem.getDurationFromString(this.getStringValue(), AtomicTypes.YearMonthDurationItem)
+                    );
             case DayTimeDurationItem:
-                return ItemFactory.getInstance().createDayTimeDurationItem(DurationItem.getDurationFromString(this.getStringValue(), AtomicTypes.DayTimeDurationItem));
+                return ItemFactory.getInstance()
+                    .createDayTimeDurationItem(
+                        DurationItem.getDurationFromString(this.getStringValue(), AtomicTypes.DayTimeDurationItem)
+                    );
             case DateTimeItem:
                 return ItemFactory.getInstance().createDateTimeItem(this.getStringValue());
             case DateItem:
@@ -132,7 +145,8 @@ public class StringItem extends AtomicItem {
             if (itemType == AtomicTypes.IntegerItem) {
                 Integer.parseInt(this.getValue());
             } else if (itemType == AtomicTypes.DecimalItem) {
-                if (this.getValue().contains("e") || this.getValue().contains("E")) return false;
+                if (this.getValue().contains("e") || this.getValue().contains("E"))
+                    return false;
                 Float.parseFloat(this.getValue());
             } else if (itemType == AtomicTypes.DoubleItem) {
                 Double.parseDouble(this.getValue());
@@ -154,7 +168,8 @@ public class StringItem extends AtomicItem {
                 HexBinaryItem.parseHexBinaryString(this.getValue());
             } else if (itemType == AtomicTypes.Base64BinaryItem) {
                 Base64BinaryItem.parseBase64BinaryString(this.getValue());
-            } else return isBooleanLiteral(this.getValue());
+            } else
+                return isBooleanLiteral(this.getValue());
         } catch (UnsupportedOperationException | IllegalArgumentException e) {
             return false;
         }
@@ -174,23 +189,19 @@ public class StringItem extends AtomicItem {
     public void read(Kryo kryo, Input input) {
         this._value = input.readString();
     }
-    
-    public boolean equals(Object otherItem)
-    {
-        if(!(otherItem instanceof Item))
-        {
+
+    public boolean equals(Object otherItem) {
+        if (!(otherItem instanceof Item)) {
             return false;
         }
-        Item o = (Item)otherItem;
-        if(!o.isString())
-        {
+        Item o = (Item) otherItem;
+        if (!o.isString()) {
             return false;
         }
         return (getStringValue().equals(o.getStringValue()));
     }
-    
-    public int hashCode()
-    {
+
+    public int hashCode() {
         return getStringValue().hashCode();
     }
 
@@ -202,8 +213,14 @@ public class StringItem extends AtomicItem {
     @Override
     public Item compareItem(Item other, OperationalExpressionBase.Operator operator, IteratorMetadata metadata) {
         if (!other.isString() && !other.isNull()) {
-            throw new UnexpectedTypeException("Invalid args for string comparison " + this.serialize() +
-                    ", " + other.serialize(), metadata);
+            throw new UnexpectedTypeException(
+                    "Invalid args for string comparison "
+                        + this.serialize()
+                        +
+                        ", "
+                        + other.serialize(),
+                    metadata
+            );
         }
         return operator.apply(this, other);
     }

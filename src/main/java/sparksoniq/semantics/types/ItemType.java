@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,8 +26,8 @@ import java.io.Serializable;
 public class ItemType implements Serializable {
 
 
-	private static final long serialVersionUID = 1L;
-	private ItemTypes _type;
+    private static final long serialVersionUID = 1L;
+    private ItemTypes _type;
 
     public ItemType() {
     }
@@ -45,15 +45,24 @@ public class ItemType implements Serializable {
         if (superType.getType() == ItemTypes.Item)
             return true;
         if (superType.getType() == ItemTypes.JSONItem) {
-            if (_type == ItemTypes.ObjectItem || _type == ItemTypes.ArrayItem || _type == ItemTypes.JSONItem
-                    || _type == ItemTypes.NullItem)
+            if (
+                _type == ItemTypes.ObjectItem
+                    || _type == ItemTypes.ArrayItem
+                    || _type == ItemTypes.JSONItem
+                    || _type == ItemTypes.NullItem
+            )
                 return true;
             return false;
         }
 
         if (superType.getType() == ItemTypes.AtomicItem) {
-            if (_type == ItemTypes.StringItem || _type == ItemTypes.IntegerItem || _type == ItemTypes.DecimalItem
-                    || _type == ItemTypes.DoubleItem || _type == ItemTypes.BooleanItem)
+            if (
+                _type == ItemTypes.StringItem
+                    || _type == ItemTypes.IntegerItem
+                    || _type == ItemTypes.DecimalItem
+                    || _type == ItemTypes.DoubleItem
+                    || _type == ItemTypes.BooleanItem
+            )
                 return true;
             return false;
         }

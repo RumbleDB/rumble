@@ -21,7 +21,8 @@ public class SecondsFromDateTimeFunctionIterator extends LocalFunctionCallIterat
 
     public SecondsFromDateTimeFunctionIterator(
             List<RuntimeIterator> arguments,
-            IteratorMetadata iteratorMetadata) {
+            IteratorMetadata iteratorMetadata
+    ) {
         super(arguments, iteratorMetadata);
     }
 
@@ -29,11 +30,18 @@ public class SecondsFromDateTimeFunctionIterator extends LocalFunctionCallIterat
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            return ItemFactory.getInstance().createDecimalItem(BigDecimal.valueOf(_dateTimeItem.getDateTimeValue().getSecondOfMinute() + _dateTimeItem.getDateTimeValue().getMillisOfSecond()*1.0/1000));
+            return ItemFactory.getInstance()
+                .createDecimalItem(
+                    BigDecimal.valueOf(
+                        _dateTimeItem.getDateTimeValue().getSecondOfMinute()
+                            + _dateTimeItem.getDateTimeValue().getMillisOfSecond() * 1.0 / 1000
+                    )
+                );
         } else
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " seconds-from-dateTime function",
-                    getMetadata());
+                    getMetadata()
+            );
     }
 
     @Override
@@ -41,13 +49,20 @@ public class SecondsFromDateTimeFunctionIterator extends LocalFunctionCallIterat
         super.open(context);
         try {
             _dateTimeItem = this.getSingleItemOfTypeFromIterator(
-                    this._children.get(0),
-                    DateTimeItem.class,
-                    new UnknownFunctionCallException("seconds-from-dateTime", this._children.size(), getMetadata()));
+                this._children.get(0),
+                DateTimeItem.class,
+                new UnknownFunctionCallException("seconds-from-dateTime", this._children.size(), getMetadata())
+            );
         } catch (UnexpectedTypeException e) {
-            throw new UnexpectedTypeException(e.getJSONiqErrorMessage() + "? of function seconds-from-dateTime()", this._children.get(0).getMetadata());
+            throw new UnexpectedTypeException(
+                    e.getJSONiqErrorMessage() + "? of function seconds-from-dateTime()",
+                    this._children.get(0).getMetadata()
+            );
         } catch (UnknownFunctionCallException e) {
-            throw new UnexpectedTypeException(" Sequence of more than one item can not be promoted to parameter type dateTime? of function seconds-from-dateTime()", getMetadata());
+            throw new UnexpectedTypeException(
+                    " Sequence of more than one item can not be promoted to parameter type dateTime? of function seconds-from-dateTime()",
+                    getMetadata()
+            );
         }
         this._hasNext = _dateTimeItem != null;
     }

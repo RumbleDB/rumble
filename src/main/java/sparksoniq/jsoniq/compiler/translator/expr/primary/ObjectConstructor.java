@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -36,8 +36,11 @@ public class ObjectConstructor extends PrimaryExpression {
     private List<Expression> _keys;
     private CommaExpression childExpression;
 
-    public ObjectConstructor(List<Expression> keys, List<Expression> values,
-                             ExpressionMetadata metadata) {
+    public ObjectConstructor(
+            List<Expression> keys,
+            List<Expression> values,
+            ExpressionMetadata metadata
+    ) {
         super(metadata);
         this._keys = keys;
         this._values = values;
@@ -87,8 +90,9 @@ public class ObjectConstructor extends PrimaryExpression {
         if (!isMergedConstructor) {
             result += " ";
             for (Expression key : _keys)
-                result += new PairConstructor(key, _values.get(_keys.indexOf(key)), key.getMetadata()).serializationString(true)
-                        + (_keys.indexOf(key) < _keys.size() - 1 ? " , " : " ");
+                result += new PairConstructor(key, _values.get(_keys.indexOf(key)), key.getMetadata())
+                    .serializationString(true)
+                    + (_keys.indexOf(key) < _keys.size() - 1 ? " , " : " ");
         } else
             result += "| " + childExpression.serializationString(prefix) + " |";
         result += "}))";
@@ -117,7 +121,10 @@ public class ObjectConstructor extends PrimaryExpression {
 
         @Override
         public String serializationString(boolean prefix) {
-            String result = "(pairConstructor (exprSingle " + _key.serializationString(false) + ") : (exprSingle " + _value.serializationString(false);
+            String result = "(pairConstructor (exprSingle "
+                + _key.serializationString(false)
+                + ") : (exprSingle "
+                + _value.serializationString(false);
             result += "))";
             return result;
 

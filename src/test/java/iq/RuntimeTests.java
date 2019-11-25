@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -45,8 +45,11 @@ import java.util.List;
 @RunWith(Parameterized.class)
 public class RuntimeTests extends AnnotationsTestsBase {
 
-    public static final File runtimeTestsDirectory = new File(System.getProperty("user.dir") +
-            "/src/main/resources/test_files/runtime");
+    public static final File runtimeTestsDirectory = new File(
+            System.getProperty("user.dir")
+                +
+                "/src/main/resources/test_files/runtime"
+    );
     protected static List<File> _testFiles = new ArrayList<>();
     protected final File _testFile;
 
@@ -62,7 +65,7 @@ public class RuntimeTests extends AnnotationsTestsBase {
     public static Collection<Object[]> testFiles() {
         List<Object[]> result = new ArrayList<>();
         RuntimeTests.readFileList(RuntimeTests.runtimeTestsDirectory);
-        RuntimeTests._testFiles.forEach(file -> result.add(new Object[]{file}));
+        RuntimeTests._testFiles.forEach(file -> result.add(new Object[] { file }));
         return result;
     }
 
@@ -75,7 +78,7 @@ public class RuntimeTests extends AnnotationsTestsBase {
         sparkConfiguration.set("spark.driver.extraClassPath", "lib/");
 
         // sparkConfiguration.set("spark.driver.memory", "2g");
-        // sparkConfiguration.set("spark.executor.memory",   "2g");
+        // sparkConfiguration.set("spark.executor.memory", "2g");
         // sparkConfiguration.set("spark.speculation", "true");
         // sparkConfiguration.set("spark.speculation.quantile", "0.5");
         SparkSessionManager.getInstance().initializeConfigurationAndSession(sparkConfiguration, true);
@@ -97,8 +100,10 @@ public class RuntimeTests extends AnnotationsTestsBase {
         } else {
             actualOutput = getRDDResults(runtimeIterator);
         }
-        Assert.assertTrue("Expected output: " + expectedOutput + " Actual result: " + actualOutput,
-                expectedOutput.equals(actualOutput));
+        Assert.assertTrue(
+            "Expected output: " + expectedOutput + " Actual result: " + actualOutput,
+            expectedOutput.equals(actualOutput)
+        );
         // unorderedItemSequenceStringsAreEqual(expectedOutput, actualOutput));
     }
 
@@ -136,7 +141,7 @@ public class RuntimeTests extends AnnotationsTestsBase {
     private String getRDDResults(RuntimeIterator runtimeIterator) {
         JavaRDD<Item> rdd = runtimeIterator.getRDD(new DynamicContext());
         JavaRDD<String> output = rdd.map(o -> o.serialize());
-        long resultCount = output.count();
+        int resultCount = output.take(2).size();
         if (resultCount == 0) {
             return "";
         }
@@ -145,13 +150,16 @@ public class RuntimeTests extends AnnotationsTestsBase {
         }
         if (resultCount > 1) {
             List<String> collectedOutput;
-            /*if (SparkSessionManager.LIMIT_COLLECT()) {
-                collectedOutput = output.take(SparkSessionManager.COLLECT_ITEM_LIMIT);
-                if (collectedOutput.size() == SparkSessionManager.COLLECT_ITEM_LIMIT) {
-                    ShellStart.terminal.output("\nWarning: Results have been truncated to: " + SparkSessionManager.COLLECT_ITEM_LIMIT
-                            + " items. This value can be configured with the --result-size parameter at startup.\n");
-                }
-            } else {*/
+            /*
+             * if (SparkSessionManager.LIMIT_COLLECT()) {
+             * collectedOutput = output.take(SparkSessionManager.COLLECT_ITEM_LIMIT);
+             * if (collectedOutput.size() == SparkSessionManager.COLLECT_ITEM_LIMIT) {
+             * ShellStart.terminal.output("\nWarning: Results have been truncated to: " +
+             * SparkSessionManager.COLLECT_ITEM_LIMIT
+             * + " items. This value can be configured with the --result-size parameter at startup.\n");
+             * }
+             * } else {
+             */
             collectedOutput = output.collect();
             // }
 

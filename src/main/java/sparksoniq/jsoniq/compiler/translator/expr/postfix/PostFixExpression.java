@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -41,8 +41,11 @@ public class PostFixExpression extends Expression {
         this._primaryExpressionNode = primaryExpressionNode;
     }
 
-    public PostFixExpression(PrimaryExpression primaryExpressionNode, List<PostfixExtension> extensions,
-                             ExpressionMetadata metadata) {
+    public PostFixExpression(
+            PrimaryExpression primaryExpressionNode,
+            List<PostfixExtension> extensions,
+            ExpressionMetadata metadata
+    ) {
         super(metadata);
         this._primaryExpressionNode = primaryExpressionNode;
         this._extensions = new ArrayList<>();
@@ -84,8 +87,9 @@ public class PostFixExpression extends Expression {
         result += get_primaryExpressionNode().serializationString(true);
         if (this._extensions != null && this._extensions.size() > 0) {
             for (PostfixExtension ext : this._extensions)
-                result += " " + ext.serializationString(true)
-                        + (_extensions.indexOf(ext) < _extensions.size() - 1 ? " " : "");
+                result += " "
+                    + ext.serializationString(true)
+                    + (_extensions.indexOf(ext) < _extensions.size() - 1 ? " " : "");
         }
         result += ")";
         return result;

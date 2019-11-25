@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,14 +20,13 @@
 
 package sparksoniq.spark.closures;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.rumbledb.api.Item;
-
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Output;
-
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.DataFrameUtils;
 
@@ -37,15 +36,17 @@ import java.util.List;
 
 public class ForClauseLocalToRowClosure implements Function<Item, Row> {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	private final FlworTuple _inputTuple;
+    private final FlworTuple _inputTuple;
+    private final IteratorMetadata _metadata;
 
     private transient Kryo _kryo;
     private transient Output _output;
 
-    public ForClauseLocalToRowClosure(FlworTuple inputTuple) {
+    public ForClauseLocalToRowClosure(FlworTuple inputTuple, IteratorMetadata metadata) {
         this._inputTuple = inputTuple;
+        this._metadata = metadata;
         _kryo = new Kryo();
         _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);
@@ -53,9 +54,9 @@ public class ForClauseLocalToRowClosure implements Function<Item, Row> {
     }
 
     @Override
-    public Row call(Item item) throws Exception {
+    public Row call(Item item) {
         List<List<Item>> rowColumns = new ArrayList<>();
-        _inputTuple.getKeys().forEach(key -> rowColumns.add(_inputTuple.getValue(key)));
+        _inputTuple.getLocalKeys().forEach(key -> rowColumns.add(_inputTuple.getLocalValue(key, _metadata)));
 
         List<Item> itemList = new ArrayList<>();
         itemList.add(item);
@@ -68,11 +69,12 @@ public class ForClauseLocalToRowClosure implements Function<Item, Row> {
 
         return RowFactory.create(serializedRowColumns.toArray());
     }
-    
+
     private void readObject(java.io.ObjectInputStream in)
-            throws IOException, ClassNotFoundException {
+            throws IOException,
+                ClassNotFoundException {
         in.defaultReadObject();
-        
+
         _kryo = new Kryo();
         _kryo.setReferences(false);
         DataFrameUtils.registerKryoClassesKryo(_kryo);

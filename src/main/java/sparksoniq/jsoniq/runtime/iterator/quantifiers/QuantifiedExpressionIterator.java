@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -37,13 +37,16 @@ import org.rumbledb.api.Item;
 public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
 
 
-	private static final long serialVersionUID = 1L;
-	private final QuantifiedExpression.QuantifiedOperators _operator;
+    private static final long serialVersionUID = 1L;
+    private final QuantifiedExpression.QuantifiedOperators _operator;
     private final RuntimeIterator _evaluationExpression;
 
-    public QuantifiedExpressionIterator(QuantifiedExpression.QuantifiedOperators operator,
-                                        List<QuantifiedExpressionVarIterator> children,
-                                        RuntimeIterator evaluationExpression, IteratorMetadata iteratorMetadata) {
+    public QuantifiedExpressionIterator(
+            QuantifiedExpression.QuantifiedOperators operator,
+            List<QuantifiedExpressionVarIterator> children,
+            RuntimeIterator evaluationExpression,
+            IteratorMetadata iteratorMetadata
+    ) {
         super(null, iteratorMetadata);
         this._operator = operator;
         children.forEach(c -> this._children.add(c));
@@ -74,14 +77,18 @@ public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
 
             boolean result = this._operator == QuantifiedExpression.QuantifiedOperators.EVERY;
             for (BooleanItem res : results)
-                result = this._operator == QuantifiedExpression.QuantifiedOperators.EVERY ?
-                        result && res.getBooleanValue() : result || res.getBooleanValue();
+                result = this._operator == QuantifiedExpression.QuantifiedOperators.EVERY
+                    ? result && res.getBooleanValue()
+                    : result || res.getBooleanValue();
             return ItemFactory.getInstance().createBooleanItem(result);
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "Quantified Expr", getMetadata());
     }
 
-    public List<DynamicContext> generateContexts(List<DynamicContext> previousContexts, QuantifiedExpressionVarIterator var) {
+    public List<DynamicContext> generateContexts(
+            List<DynamicContext> previousContexts,
+            QuantifiedExpressionVarIterator var
+    ) {
         List<DynamicContext> results = new ArrayList<>();
         for (DynamicContext currentContext : previousContexts) {
             var.open(currentContext);

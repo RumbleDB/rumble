@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -56,7 +56,13 @@ public class FunctionItem extends Item {
         super();
     }
 
-    public FunctionItem(FunctionIdentifier identifier, List<String> parameterNames, List<SequenceType> signature, RuntimeIterator bodyIterator, Map<String, List<Item>> nonLocalVariableBindings) {
+    public FunctionItem(
+            FunctionIdentifier identifier,
+            List<String> parameterNames,
+            List<SequenceType> signature,
+            RuntimeIterator bodyIterator,
+            Map<String, List<Item>> nonLocalVariableBindings
+    ) {
         this.identifier = identifier;
         this.parameterNames = parameterNames;
         this.signature = signature;
@@ -64,7 +70,12 @@ public class FunctionItem extends Item {
         this.nonLocalVariableBindings = nonLocalVariableBindings;
     }
 
-    public FunctionItem(String name, Map<String, SequenceType> paramNameToSequenceTypes, SequenceType returnType, RuntimeIterator bodyIterator) {
+    public FunctionItem(
+            String name,
+            Map<String, SequenceType> paramNameToSequenceTypes,
+            SequenceType returnType,
+            RuntimeIterator bodyIterator
+    ) {
         List<String> paramNames = new ArrayList<>();
         List<SequenceType> signature = new ArrayList<>();
         for (Map.Entry<String, SequenceType> paramEntry : paramNameToSequenceTypes.entrySet()) {

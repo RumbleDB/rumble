@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,8 +20,6 @@
 
 package sparksoniq.spark.iterator.flowr;
 
-import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataType;
@@ -29,7 +27,6 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
-
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
@@ -37,50 +34,46 @@ import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
-import sparksoniq.jsoniq.runtime.tupleiterator.SparkRuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworKey;
+import sparksoniq.jsoniq.tuple.FlworKeyComparator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
-import sparksoniq.spark.closures.OrderByClauseSortClosure;
-import sparksoniq.spark.closures.OrderByMapToPairClosure;
 import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 import sparksoniq.spark.udf.OrderClauseCreateColumnsUDF;
 import sparksoniq.spark.udf.OrderClauseDetermineTypeUDF;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeMap;
 
-public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
+public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
-	private static final long serialVersionUID = 1L;
-	private final boolean _isStable;
+    private static final long serialVersionUID = 1L;
+    private final boolean _isStable;
     private final List<OrderByClauseSparkIteratorExpression> _expressions;
-    Map<String, DynamicContext.VariableDependency> _dependencies;
+    private Map<String, DynamicContext.VariableDependency> _dependencies;
 
     private List<FlworTuple> _localTupleResults;
     private int _resultIndex;
 
-    public OrderByClauseSparkIterator(RuntimeTupleIterator child, List<OrderByClauseSparkIteratorExpression> expressions,
-                                      boolean stable, IteratorMetadata iteratorMetadata) {
+    public OrderByClauseSparkIterator(
+            RuntimeTupleIterator child,
+            List<OrderByClauseSparkIteratorExpression> expressions,
+            boolean stable,
+            IteratorMetadata iteratorMetadata
+    ) {
         super(child, iteratorMetadata);
         this._expressions = expressions;
         this._isStable = stable;
-        _dependencies = new TreeMap<String, DynamicContext.VariableDependency>();
-        for(OrderByClauseSparkIteratorExpression e : _expressions)
-        {
+        _dependencies = new TreeMap<>();
+        for (OrderByClauseSparkIteratorExpression e : _expressions) {
             _dependencies.putAll(e.getExpression().getVariableDependencies());
         }
-    }
-
-    @Override
-    public boolean isRDD() {
-        return _child.isRDD();
     }
 
     @Override
@@ -91,17 +84,10 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-
-        // isRDD checks omitted, as open is used for non-RDD(local) operations
-
         if (this._child != null) {
             _child.open(_currentDynamicContext);
 
-            if (_child.hasNext()) {
-                this._hasNext = true;
-            } else {
-                this._hasNext = false;
-            }
+            this._hasNext = _child.hasNext();
         } else {
             throw new SparksoniqRuntimeException("Invalid where clause.");
         }
@@ -109,7 +95,7 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
 
     @Override
     public FlworTuple next() {
-        if (_hasNext == true) {
+        if (_hasNext) {
             if (_localTupleResults == null) {
                 _localTupleResults = new ArrayList<>();
                 _resultIndex = 0;
@@ -131,14 +117,10 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
     private void setAllLocalResults() {
         TreeMap<FlworKey, List<FlworTuple>> keyValuePairs = mapExpressionsToOrderedPairs();
         // get only the values(ordered tuples) and save them in a list for next() calls
-        keyValuePairs.forEach((key, valueList) -> valueList.forEach((value) -> _localTupleResults.add(value)));
+        keyValuePairs.forEach((key, valueList) -> _localTupleResults.addAll(valueList));
 
         _child.close();
-        if (_localTupleResults.size() == 0) {
-            this._hasNext = false;
-        } else {
-            this._hasNext = true;
-        }
+        this._hasNext = _localTupleResults.size() != 0;
     }
 
     /**
@@ -149,8 +131,11 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
      */
     private TreeMap<FlworKey, List<FlworTuple>> mapExpressionsToOrderedPairs() {
         // tree map keeps the natural item order deduced from an implementation of Comparator
-        // OrderByClauseSortClosure implements a comparator and provides the exact desired behavior for local execution as well
-        TreeMap<FlworKey, List<FlworTuple>> keyValuePairs = new TreeMap<>(new OrderByClauseSortClosure(_expressions, true));
+        // OrderByClauseSortClosure implements a comparator and provides the exact desired behavior for local execution
+        // as well
+        TreeMap<FlworKey, List<FlworTuple>> keyValuePairs = new TreeMap<>(
+                new FlworKeyComparator(_expressions, true)
+        );
 
         // assign current context as parent. re-use the same context object for efficiency
         DynamicContext tupleContext = new DynamicContext(_currentDynamicContext);
@@ -159,17 +144,20 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
 
             List<Item> results = new ArrayList<>(); // results from the expressions will become a key
             for (OrderByClauseSparkIteratorExpression orderByExpression : _expressions) {
-                tupleContext.removeAllVariables();                     // clear the previous variables
-                tupleContext.setBindingsFromTuple(inputTuple);        // assign new variables from new tuple
+                tupleContext.removeAllVariables(); // clear the previous variables
+                tupleContext.setBindingsFromTuple(inputTuple, getMetadata()); // assign new variables from new tuple
 
                 boolean isFieldEmpty = true;
                 RuntimeIterator expression = orderByExpression.getExpression();
                 expression.open(tupleContext);
                 while (expression.hasNext()) {
                     Item resultItem = expression.next();
-                    if (resultItem != null && !resultItem.isAtomic())
-                        throw new NonAtomicKeyException("Order by keys must be atomics",
-                                orderByExpression.getIteratorMetadata().getExpressionMetadata());
+                    if (resultItem != null && !resultItem.isAtomic()) {
+                        throw new NonAtomicKeyException(
+                                "Order by keys must be atomics",
+                                orderByExpression.getIteratorMetadata().getExpressionMetadata()
+                        );
+                    }
                     isFieldEmpty = false;
                     results.add(resultItem);
                 }
@@ -180,7 +168,7 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
                 expression.close();
             }
             FlworKey key = new FlworKey(results);
-            List<FlworTuple> values = keyValuePairs.get(key);   // all values for a single matching key are held in a list
+            List<FlworTuple> values = keyValuePairs.get(key); // all values for a single matching key are held in a list
             if (values == null) {
                 values = new ArrayList<>();
                 keyValuePairs.put(key, values);
@@ -191,23 +179,10 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
     }
 
     @Override
-    public JavaRDD<FlworTuple> getRDD(DynamicContext context) {
-        if (this._child == null) {
-            throw new SparksoniqRuntimeException("Invalid orderby clause.");
-        }
-
-        //map to pairs - ArrayItem [sort keys] , tuples
-        JavaPairRDD<FlworKey, FlworTuple> keyTuplePair = this._child.getRDD(context)
-                .mapToPair(new OrderByMapToPairClosure(this._expressions, _isStable));
-        //sort by key
-        keyTuplePair = keyTuplePair.sortByKey(new OrderByClauseSortClosure(this._expressions, _isStable));
-        //map back to tuple RDD
-        return keyTuplePair.map(tuple2 -> tuple2._2());
-    }
-
-    @Override
-    public Dataset<Row> getDataFrame(DynamicContext context, Map<String, DynamicContext.VariableDependency> parentProjection)
-    {
+    public Dataset<Row> getDataFrame(
+            DynamicContext context,
+            Map<String, DynamicContext.VariableDependency> parentProjection
+    ) {
         if (this._child == null) {
             throw new SparksoniqRuntimeException("Invalid orderby clause.");
         }
@@ -217,18 +192,25 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema);
         List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, _dependencies);
 
-        df.sparkSession().udf().register("determineOrderingDataType",
+        df.sparkSession()
+            .udf()
+            .register(
+                "determineOrderingDataType",
                 new OrderClauseDetermineTypeUDF(_expressions, UDFcolumns),
-                DataTypes.createArrayType(DataTypes.StringType));
+                DataTypes.createArrayType(DataTypes.StringType)
+            );
 
         String udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
 
         df.createOrReplaceTempView("input");
         df.sparkSession().table("input").cache();
-        Dataset<Row> columnTypesDf = df.sparkSession().sql(
-                String.format("select distinct(determineOrderingDataType(array(%s))) as `distinct-types` from input",
-                        udfSQL)
-        );
+        Dataset<Row> columnTypesDf = df.sparkSession()
+            .sql(
+                String.format(
+                    "select distinct(determineOrderingDataType(array(%s))) as `distinct-types` from input",
+                    udfSQL
+                )
+            );
         Object columnTypesObject = columnTypesDf.collect();
         Row[] columnTypesOfRows = ((Row[]) columnTypesObject);
 
@@ -236,7 +218,7 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         // Check that every column contains a matching atomic type in all rows (nulls and empty-sequences are allowed)
         Map<Integer, String> typesForAllColumns = new LinkedHashMap<>();
         for (Row columnTypesOfRow : columnTypesOfRows) {
-        	List<Object> columnsTypesOfRowAsList = columnTypesOfRow.getList(0);
+            List<Object> columnsTypesOfRowAsList = columnTypesOfRow.getList(0);
             for (int columnIndex = 0; columnIndex < columnsTypesOfRowAsList.size(); columnIndex++) {
                 String columnType = (String) columnsTypesOfRowAsList.get(columnIndex);
 
@@ -244,8 +226,14 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
                     String currentColumnType = typesForAllColumns.get(columnIndex);
                     if (currentColumnType == null) {
                         typesForAllColumns.put(columnIndex, columnType);
-                    } else if ((currentColumnType.equals("integer") || currentColumnType.equals("double") || currentColumnType.equals("decimal"))
-                            && (columnType.equals("integer") || columnType.equals("double") || columnType.equals("decimal"))) {
+                    } else if (
+                        (currentColumnType.equals("integer")
+                            || currentColumnType.equals("double")
+                            || currentColumnType.equals("decimal"))
+                            && (columnType.equals("integer")
+                                || columnType.equals("double")
+                                || columnType.equals("decimal"))
+                    ) {
                         // the numeric type calculation is identical to Item::getNumericResultType()
                         if (currentColumnType.equals("double") || columnType.equals("double")) {
                             typesForAllColumns.put(columnIndex, "double");
@@ -255,7 +243,10 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
                             // do nothing, type is already set to integer
                         }
                     } else if (!currentColumnType.equals(columnType)) {
-                        throw new UnexpectedTypeException("Order by variable must contain values of a single type.", getMetadata());
+                        throw new UnexpectedTypeException(
+                                "Order by variable must contain values of a single type.",
+                                getMetadata()
+                        );
                         // TODO-can add tests with different types
                     }
                 }
@@ -263,8 +254,8 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
         }
 
 
-        List<StructField> typedFields = new ArrayList<>();  // Determine the return type for ordering UDF
-        StringBuilder orderingSQL = new StringBuilder();    // Prepare the SQL statement for the order by query
+        List<StructField> typedFields = new ArrayList<>(); // Determine the return type for ordering UDF
+        StringBuilder orderingSQL = new StringBuilder(); // Prepare the SQL statement for the order by query
         String appendedOrderingColumnsName = "ordering_columns";
         for (int columnIndex = 0; columnIndex < typesForAllColumns.size(); columnIndex++) {
             String columnTypeString = typesForAllColumns.get(columnIndex);
@@ -277,18 +268,26 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
 
             // create fields for the given value types
             columnName = columnIndex + "-valueField";
-            if (columnTypeString.equals("bool")) {
-                columnType = DataTypes.BooleanType;
-            } else if (columnTypeString.equals("string")) {
-                columnType = DataTypes.StringType;
-            } else if (columnTypeString.equals("integer")) {
-                columnType = DataTypes.IntegerType;
-            } else if (columnTypeString.equals("double")) {
-                columnType = DataTypes.DoubleType;
-            } else if (columnTypeString.equals("decimal")) {
-                columnType = DataTypes.createDecimalType();
-            } else {
-                throw new SparksoniqRuntimeException("Unexpected ordering type found while determining UDF return type.");
+            switch (columnTypeString) {
+                case "bool":
+                    columnType = DataTypes.BooleanType;
+                    break;
+                case "string":
+                    columnType = DataTypes.StringType;
+                    break;
+                case "integer":
+                    columnType = DataTypes.IntegerType;
+                    break;
+                case "double":
+                    columnType = DataTypes.DoubleType;
+                    break;
+                case "decimal":
+                    columnType = DataTypes.createDecimalType();
+                    break;
+                default:
+                    throw new SparksoniqRuntimeException(
+                            "Unexpected ordering type found while determining UDF return type."
+                    );
             }
             typedFields.add(DataTypes.createStructField(columnName, columnType, true));
 
@@ -325,68 +324,72 @@ public class OrderByClauseSparkIterator extends SparkRuntimeTupleIterator {
             }
         }
 
-        df.sparkSession().udf().register("createOrderingColumns",
+        df.sparkSession()
+            .udf()
+            .register(
+                "createOrderingColumns",
                 new OrderClauseCreateColumnsUDF(_expressions, typesForAllColumns, UDFcolumns),
-                DataTypes.createStructType(typedFields));
+                DataTypes.createStructType(typedFields)
+            );
 
         String selectSQL = DataFrameUtils.getSQL(allColumns, true);
-        String projectSQL = selectSQL.substring(0, selectSQL.length() - 1);   // remove trailing comma
+        String projectSQL = selectSQL.substring(0, selectSQL.length() - 1); // remove trailing comma
         udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
 
-        return df.sparkSession().sql(
+        return df.sparkSession()
+            .sql(
                 String.format(
-                        "select %s from (select %s createOrderingColumns(array(%s)) as `%s` from input order by %s)",
-                        projectSQL, selectSQL, udfSQL, appendedOrderingColumnsName, orderingSQL
+                    "select %s from (select %s createOrderingColumns(array(%s)) as `%s` from input order by %s)",
+                    projectSQL,
+                    selectSQL,
+                    udfSQL,
+                    appendedOrderingColumnsName,
+                    orderingSQL
                 )
-        );
+            );
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies()
-    {
-        Map<String, DynamicContext.VariableDependency> result = new TreeMap<String, DynamicContext.VariableDependency>();
-        for(OrderByClauseSparkIteratorExpression iterator : _expressions)
-        {
+    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
+        Map<String, DynamicContext.VariableDependency> result =
+            new TreeMap<String, DynamicContext.VariableDependency>();
+        for (OrderByClauseSparkIteratorExpression iterator : _expressions) {
             result.putAll(iterator.getExpression().getVariableDependencies());
         }
-        for (String var : _child.getVariablesBoundInCurrentFLWORExpression())
-        {
+        for (String var : _child.getVariablesBoundInCurrentFLWORExpression()) {
             result.remove(var);
         }
         result.putAll(_child.getVariableDependencies());
         return result;
     }
 
-    public Set<String> getVariablesBoundInCurrentFLWORExpression()
-    {
+    public Set<String> getVariablesBoundInCurrentFLWORExpression() {
         Set<String> result = new HashSet<String>();
         result.addAll(_child.getVariablesBoundInCurrentFLWORExpression());
         return result;
     }
-    
-    public void print(StringBuffer buffer, int indent)
-    {
+
+    public void print(StringBuffer buffer, int indent) {
         super.print(buffer, indent);
-        for(OrderByClauseSparkIteratorExpression iterator : _expressions)
-        {
-            iterator.getExpression().print(buffer, indent+1);
+        for (OrderByClauseSparkIteratorExpression iterator : _expressions) {
+            iterator.getExpression().print(buffer, indent + 1);
         }
     }
-    
-    public Map<String, DynamicContext.VariableDependency> getProjection(Map<String, DynamicContext.VariableDependency> parentProjection)
-    {
+
+    public Map<String, DynamicContext.VariableDependency> getProjection(
+            Map<String, DynamicContext.VariableDependency> parentProjection
+    ) {
         // start with an empty projection.
-        Map<String, DynamicContext.VariableDependency> projection = new TreeMap<String, DynamicContext.VariableDependency>();
+        Map<String, DynamicContext.VariableDependency> projection =
+            new TreeMap<String, DynamicContext.VariableDependency>();
         projection.putAll(parentProjection);
 
         // add the variable dependencies needed by this for clause's expression.
-        for(OrderByClauseSparkIteratorExpression iterator : _expressions)
-        {
-            Map<String, DynamicContext.VariableDependency> exprDependency = iterator.getExpression().getVariableDependencies();
-            for(String variable : exprDependency.keySet())
-            {
-                if(projection.containsKey(variable)) {
-                    if(projection.get(variable) != exprDependency.get(variable))
-                    {
+        for (OrderByClauseSparkIteratorExpression iterator : _expressions) {
+            Map<String, DynamicContext.VariableDependency> exprDependency = iterator.getExpression()
+                .getVariableDependencies();
+            for (String variable : exprDependency.keySet()) {
+                if (projection.containsKey(variable)) {
+                    if (projection.get(variable) != exprDependency.get(variable)) {
                         projection.put(variable, DynamicContext.VariableDependency.FULL);
                     }
                 } else {

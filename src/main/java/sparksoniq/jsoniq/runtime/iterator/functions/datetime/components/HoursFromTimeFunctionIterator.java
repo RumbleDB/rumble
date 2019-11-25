@@ -20,7 +20,8 @@ public class HoursFromTimeFunctionIterator extends LocalFunctionCallIterator {
 
     public HoursFromTimeFunctionIterator(
             List<RuntimeIterator> arguments,
-            IteratorMetadata iteratorMetadata) {
+            IteratorMetadata iteratorMetadata
+    ) {
         super(arguments, iteratorMetadata);
     }
 
@@ -32,7 +33,8 @@ public class HoursFromTimeFunctionIterator extends LocalFunctionCallIterator {
         } else
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " hours-from-time function",
-                    getMetadata());
+                    getMetadata()
+            );
     }
 
     @Override
@@ -40,13 +42,20 @@ public class HoursFromTimeFunctionIterator extends LocalFunctionCallIterator {
         super.open(context);
         try {
             _dateItem = this.getSingleItemOfTypeFromIterator(
-                    this._children.get(0),
-                    TimeItem.class,
-                    new UnknownFunctionCallException("hours-from-time", this._children.size(), getMetadata()));
+                this._children.get(0),
+                TimeItem.class,
+                new UnknownFunctionCallException("hours-from-time", this._children.size(), getMetadata())
+            );
         } catch (UnexpectedTypeException e) {
-            throw new UnexpectedTypeException(e.getJSONiqErrorMessage() + "? of function hours-from-time()", this._children.get(0).getMetadata());
+            throw new UnexpectedTypeException(
+                    e.getJSONiqErrorMessage() + "? of function hours-from-time()",
+                    this._children.get(0).getMetadata()
+            );
         } catch (UnknownFunctionCallException e) {
-            throw new UnexpectedTypeException(" Sequence of more than one item can not be promoted to parameter type time? of function hours-from-time()", getMetadata());
+            throw new UnexpectedTypeException(
+                    " Sequence of more than one item can not be promoted to parameter type time? of function hours-from-time()",
+                    getMetadata()
+            );
         }
         this._hasNext = _dateItem != null;
     }

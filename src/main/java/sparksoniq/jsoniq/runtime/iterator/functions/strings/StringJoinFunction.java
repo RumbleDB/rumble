@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -34,9 +34,9 @@ import org.rumbledb.api.Item;
 
 public class StringJoinFunction extends LocalFunctionCallIterator {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	public StringJoinFunction(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
+    public StringJoinFunction(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
     }
 
@@ -58,12 +58,17 @@ public class StringJoinFunction extends LocalFunctionCallIterator {
             for (Item item : strings) {
                 if (!(item.isString()))
                     throw new UnexpectedTypeException("String item expected", this._children.get(0).getMetadata());
-                stringBuilder = !stringBuilder.toString().isEmpty() ? stringBuilder.append(joinString.getStringValue()) : stringBuilder;
+                stringBuilder = !stringBuilder.toString().isEmpty()
+                    ? stringBuilder.append(joinString.getStringValue())
+                    : stringBuilder;
                 stringBuilder = stringBuilder.append(((StringItem) item).getStringValue());
             }
             this._hasNext = false;
             return ItemFactory.getInstance().createStringItem(stringBuilder.toString());
         } else
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " string-join function", getMetadata());
+            throw new IteratorFlowException(
+                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " string-join function",
+                    getMetadata()
+            );
     }
 }

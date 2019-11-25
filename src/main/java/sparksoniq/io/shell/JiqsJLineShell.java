@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -111,17 +111,17 @@ public class JiqsJLineShell {
     private void initialize() throws IOException {
         welcomeMessage = IOUtils.toString(Main.class.getResourceAsStream("/assets/banner.txt"), "UTF-8");
         Terminal terminal = TerminalBuilder.builder()
-                .system(true)
-                .build();
+            .system(true)
+            .build();
         DefaultParser parser = new DefaultParser();
         parser.setEscapeChars(null);
         lineReader = LineReaderBuilder.builder()
-                .parser(parser)
-                .terminal(terminal)
-//                .completer(new MyCompleter())
-                .highlighter(new DefaultHighlighter())
-//                .parser(new JiqsJlineParser())
-                .build();
+            .parser(parser)
+            .terminal(terminal)
+            // .completer(new MyCompleter())
+            .highlighter(new DefaultHighlighter())
+            // .parser(new JiqsJlineParser())
+            .build();
         jsoniqQueryExecutor = new JsoniqQueryExecutor(false, _configuration);
     }
 
@@ -135,8 +135,10 @@ public class JiqsJLineShell {
             } else if (ex instanceof SparksoniqRuntimeException) {
                 System.err.println(ex.getMessage());
             } else if (!(ex instanceof UserInterruptException)) {
-            	System.out.println("An error has occured: " + ex.getMessage());
-                System.out.println("We should investigate this 🙈. Please contact us or file an issue on GitHub with your query.");
+                System.out.println("An error has occured: " + ex.getMessage());
+                System.out.println(
+                    "We should investigate this 🙈. Please contact us or file an issue on GitHub with your query."
+                );
                 System.out.println("Link: https://github.com/RumbleDB/rumble/issues");
                 ex.printStackTrace();
             }
@@ -158,9 +160,12 @@ public class JiqsJLineShell {
     }
 
     private boolean isQueryEnd() {
-        return previousLine != null && currentLine != null &&
-                previousLine.equals("") && currentLine.equals("")
-                && !currentQueryContent.isEmpty();
+        return previousLine != null
+            && currentLine != null
+            &&
+            previousLine.equals("")
+            && currentLine.equals("")
+            && !currentQueryContent.isEmpty();
     }
 
     private boolean isConfig() {

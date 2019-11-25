@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -36,11 +36,11 @@ import org.rumbledb.api.Item;
 public class RemoveFunctionIterator extends LocalFunctionCallIterator {
 
 
-	private static final long serialVersionUID = 1L;
-	private RuntimeIterator _sequenceIterator;
+    private static final long serialVersionUID = 1L;
+    private RuntimeIterator _sequenceIterator;
     private Item _nextResult;
-    private int _removePosition;            // position to remove the item
-    private int _currentPosition;           // current position
+    private int _removePosition; // position to remove the item
+    private int _currentPosition; // current position
 
 
     public RemoveFunctionIterator(List<RuntimeIterator> parameters, IteratorMetadata iteratorMetadata) {
@@ -50,8 +50,8 @@ public class RemoveFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public Item next() {
         if (this.hasNext()) {
-            Item result = _nextResult;  // save the result to be returned
-            setNextResult();            // calculate and store the next result
+            Item result = _nextResult; // save the result to be returned
+            setNextResult(); // calculate and store the next result
             return result;
         }
         throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "remove function", getMetadata());
@@ -68,21 +68,25 @@ public class RemoveFunctionIterator extends LocalFunctionCallIterator {
         if (!positionIterator.hasNext()) {
             throw new UnexpectedTypeException(
                     "Invalid args. remove can't be performed with empty sequence as the position",
-                    getMetadata());
+                    getMetadata()
+            );
         }
         Item positionItem = positionIterator.next();
         if (positionItem.isArray()) {
             throw new NonAtomicKeyException(
                     "Invalid args. remove can't be performed with an array parameter as the position",
-                    getMetadata().getExpressionMetadata());
+                    getMetadata().getExpressionMetadata()
+            );
         } else if (positionItem.isObject()) {
             throw new NonAtomicKeyException(
                     "Invalid args. remove can't be performed with an object parameter as the position",
-                    getMetadata().getExpressionMetadata());
+                    getMetadata().getExpressionMetadata()
+            );
         } else if (!(positionItem instanceof IntegerItem)) {
             throw new UnexpectedTypeException(
                     "Invalid args. Position parameter should be an integer",
-                    getMetadata());
+                    getMetadata()
+            );
         }
         _removePosition = ((IntegerItem) positionItem).getIntegerValue();
         positionIterator.close();
@@ -97,7 +101,7 @@ public class RemoveFunctionIterator extends LocalFunctionCallIterator {
 
         if (_sequenceIterator.hasNext()) {
             if (_currentPosition == _removePosition) {
-                _sequenceIterator.next();   // skip item to be removed
+                _sequenceIterator.next(); // skip item to be removed
                 _currentPosition++;
                 if (_sequenceIterator.hasNext()) {
                     _nextResult = _sequenceIterator.next();

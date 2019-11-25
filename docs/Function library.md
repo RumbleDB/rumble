@@ -574,7 +574,7 @@ We support two more functions to read a JSON file from HDFS or send a large sequ
 ### json-file (Rumble specific)
 
 Exists in unary and binary. The first parameter specifies the JSON file (or set of JSON files) to read.
-The second, optional parameter specifies the minimum number of partitions. It is recommended to use it in a local setup, as the default is only one partition, which does not fully use the parallelism. If the input is on HDFS, then blocks are taken as splits by default. This is also similar to Sparks textFile().
+The second, optional parameter specifies the minimum number of partitions. It is recommended to use it in a local setup, as the default is only one partition, which does not fully use the parallelism. If the input is on HDFS, then blocks are taken as splits by default. This is also similar to Spark's textFile().
 
 Example of usage:
 ```
@@ -616,10 +616,21 @@ where $my-json.property eq "some value"
 return $my-json
 ```
 
+### structured-json-file (Rumble specific)
+
+Parses one or more json files that follow [JSON-lines](http://jsonlines.org/) format and returns a sequence of objects. This enables better performance with fully structured data and is recommended to use when such data is available. This is also similar to Spark's spark.read.json().
+
+Example of usage:
+```
+for $my-structured-json in structured-json-file("hdfs://host:port/directory/structured-file.json")
+where $my-structured-json.property eq "some value"
+return $my-structured-json
+```
+
 ### text-file (Rumble specific)
 
 Exists in unary and binary. The first parameter specifies the text file (or set of text files) to read and return as a sequence of strings.
-The second, optional parameter specifies the minimum number of partitions. It is recommended to use it in a local setup, as the default is only one partition, which does not fully use the parallelism. If the input is on HDFS, then blocks are taken as splits by default. This is also similar to Sparks textFile().
+The second, optional parameter specifies the minimum number of partitions. It is recommended to use it in a local setup, as the default is only one partition, which does not fully use the parallelism. If the input is on HDFS, then blocks are taken as splits by default. This is also similar to Spark's textFile().
 
 Example of usage:
 ```
@@ -637,7 +648,7 @@ Several files or whole directories can be read with the same pattern syntax as i
 
 ### parquet-file (Rumble specific)
 
-Parses one or more parquet files and returns a sequence of objects.
+Parses one or more parquet files and returns a sequence of objects. This is also similar to Spark's spark.read.parquet()
 
 ```
 for $my-object in parquet-file("file.parquet")

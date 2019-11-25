@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -34,8 +34,8 @@ import java.util.List;
 public class ZeroOrOneIterator extends CardinalityFunctionIterator {
 
 
-	private static final long serialVersionUID = 1L;
-	private Item _nextResult;
+    private static final long serialVersionUID = 1L;
+    private Item _nextResult;
 
     public ZeroOrOneIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
@@ -47,8 +47,10 @@ public class ZeroOrOneIterator extends CardinalityFunctionIterator {
             this._hasNext = false;
             return _nextResult;
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " ZERO-OR-ONE function",
-                getMetadata());
+        throw new IteratorFlowException(
+                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " ZERO-OR-ONE function",
+                getMetadata()
+        );
     }
 
     @Override
@@ -64,7 +66,10 @@ public class ZeroOrOneIterator extends CardinalityFunctionIterator {
             } else {
                 _nextResult = sequenceIterator.next();
                 if (sequenceIterator.hasNext()) {
-                    throw new SequenceExceptionZeroOrOne("fn:zero-or-one() called with a sequence containing more than one item", getMetadata());
+                    throw new SequenceExceptionZeroOrOne(
+                            "fn:zero-or-one() called with a sequence containing more than one item",
+                            getMetadata()
+                    );
                 } else {
                     this._hasNext = true;
                 }
@@ -79,7 +84,10 @@ public class ZeroOrOneIterator extends CardinalityFunctionIterator {
                 this._hasNext = true;
                 _nextResult = results.get(0);
             } else if (results.size() > 1) {
-                throw new SequenceExceptionZeroOrOne("fn:zero-or-one() called with a sequence containing more than one item", getMetadata());
+                throw new SequenceExceptionZeroOrOne(
+                        "fn:zero-or-one() called with a sequence containing more than one item",
+                        getMetadata()
+                );
             }
         }
     }

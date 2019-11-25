@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,7 +31,6 @@ import sparksoniq.jsoniq.item.DecimalItem;
 import sparksoniq.jsoniq.item.DoubleItem;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.ItemFactory;
-import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.ContextExpressionIterator;
@@ -49,7 +48,11 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     private boolean _contextLookup;
     private Item _nextResult;
 
-    public ObjectLookupIterator(RuntimeIterator object, RuntimeIterator lookupIterator, IteratorMetadata iteratorMetadata) {
+    public ObjectLookupIterator(
+            RuntimeIterator object,
+            RuntimeIterator lookupIterator,
+            IteratorMetadata iteratorMetadata
+    ) {
         super(Arrays.asList(object, lookupIterator), iteratorMetadata);
         _iterator = object;
     }
@@ -58,26 +61,31 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
 
         RuntimeIterator lookupIterator = this._children.get(1);
 
-        if (lookupIterator instanceof ContextExpressionIterator) {
-            _contextLookup = true;
-        } else {
-            _contextLookup = false;
-        }
+        _contextLookup = lookupIterator instanceof ContextExpressionIterator;
 
         if (!_contextLookup) {
             lookupIterator.open(_currentDynamicContext);
             if (lookupIterator.hasNext()) {
                 this._lookupKey = lookupIterator.next();
             } else {
-                throw new InvalidSelectorException("Invalid Lookup Key; Object lookup can't be performed with zero keys: "
-                        , getMetadata());
+                throw new InvalidSelectorException(
+                        "Invalid Lookup Key; Object lookup can't be performed with zero keys: ",
+                        getMetadata()
+                );
             }
-            if (lookupIterator.hasNext())
-                throw new InvalidSelectorException("\"Invalid Lookup Key; Object lookup can't be performed with multiple keys: "
-                        + _lookupKey.serialize(), getMetadata());
+            if (lookupIterator.hasNext()) {
+                throw new InvalidSelectorException(
+                        "\"Invalid Lookup Key; Object lookup can't be performed with multiple keys: "
+                            + _lookupKey.serialize(),
+                        getMetadata()
+                );
+            }
             if (_lookupKey.isNull() || _lookupKey.isObject() || _lookupKey.isArray()) {
-                throw new UnexpectedTypeException("Type error; Object selector can't be converted to a string: "
-                        + _lookupKey.serialize(), getMetadata());
+                throw new UnexpectedTypeException(
+                        "Type error; Object selector can't be converted to a string: "
+                            + _lookupKey.serialize(),
+                        getMetadata()
+                );
             } else {
                 // convert to string
                 if (_lookupKey.isBoolean()) {
@@ -96,8 +104,12 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                     // do nothing
                 }
             }
-            if (!_lookupKey.isString())
-                throw new UnexpectedTypeException("Non string object lookup for " + _lookupKey.serialize(), getMetadata());
+            if (!_lookupKey.isString()) {
+                throw new UnexpectedTypeException(
+                        "Non string object lookup for " + _lookupKey.serialize(),
+                        getMetadata()
+                );
+            }
             lookupIterator.close();
         }
     }
@@ -127,9 +139,9 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
 
     @Override
     public Item nextLocal() {
-        if (_hasNext == true) {
-            Item result = _nextResult;  // save the result to be returned
-            setNextResult();            // calculate and store the next result
+        if (_hasNext) {
+            Item result = _nextResult; // save the result to be returned
+            setNextResult(); // calculate and store the next result
             return result;
         }
         throw new IteratorFlowException("Invalid next() call in Object Lookup", getMetadata());
@@ -148,7 +160,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                         break;
                     }
                 } else {
-                    Item contextItem = _currentDynamicContext.getVariableValue("$$").get(0);
+                    Item contextItem = _currentDynamicContext.getLocalVariableValue("$$", getMetadata()).get(0);
                     _nextResult = item.getItemByKey(contextItem.getStringValue());
                 }
             }
@@ -167,17 +179,16 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         _currentDynamicContext = dynamicContext;
         JavaRDD<Item> childRDD = this._children.get(0).getRDD(dynamicContext);
         initLookupKey();
-        String key = null;
+        String key;
         if (_contextLookup) {
             // For now this will always be an error. Later on we will pass the dynamic context from the parent iterator.
-            key = ((StringItem) _currentDynamicContext.getVariableValue("$$").get(0)).getStringValue();
+            key = _currentDynamicContext.getLocalVariableValue("$$", getMetadata()).get(0).getStringValue();
         } else {
-            key = ((StringItem) _lookupKey).getStringValue();
+            key = _lookupKey.getStringValue();
         }
         FlatMapFunction<Item, Item> transformation = new ObjectLookupClosure(key);
 
-        JavaRDD<Item> resultRDD = childRDD.flatMap(transformation);
-        return resultRDD;
+        return childRDD.flatMap(transformation);
     }
 
     @Override

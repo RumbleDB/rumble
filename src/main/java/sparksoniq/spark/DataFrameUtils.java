@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -79,8 +79,7 @@ public class DataFrameUtils {
         }
     };
 
-    public static void registerKryoClassesKryo(Kryo kryo)
-    {
+    public static void registerKryoClassesKryo(Kryo kryo) {
         kryo.register(Item.class);
         kryo.register(ArrayItem.class);
         kryo.register(ObjectItem.class);
@@ -110,8 +109,7 @@ public class DataFrameUtils {
         output.clear();
         kryo.writeClassAndObject(output, toSerialize);
         byte[] serializedBytes = output.toBytes();
-        if(toSerialize.size() == 1 && toSerialize.get(0).isObject())
-        {
+        if (toSerialize.size() == 1 && toSerialize.get(0).isObject()) {
             lastBytesCache.set(serializedBytes);
             lastObjectItemCache.set(toSerialize);
         }
@@ -119,15 +117,16 @@ public class DataFrameUtils {
     }
 
     /**
-     * @param inputSchema            schema specifies the columns to be used in the query
+     * @param inputSchema schema specifies the columns to be used in the query
      * @param duplicateVariableIndex enables skipping a variable
-     * @param dependencies           restriction of the results to within a specified set
+     * @param dependencies restriction of the results to within a specified set
      * @return list of SQL column names in the schema
      */
     public static List<String> getColumnNames(
             StructType inputSchema,
             int duplicateVariableIndex,
-            Map<String, DynamicContext.VariableDependency> dependencies) {
+            Map<String, DynamicContext.VariableDependency> dependencies
+    ) {
         List<String> result = new ArrayList<String>();
         String[] columnNames = inputSchema.fieldNames();
         for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
@@ -135,8 +134,7 @@ public class DataFrameUtils {
                 continue;
             }
             String var = columnNames[columnIndex];
-            if(dependencies == null || dependencies.containsKey(var))
-            {
+            if (dependencies == null || dependencies.containsKey(var)) {
                 result.add(columnNames[columnIndex]);
             }
         }
@@ -148,33 +146,33 @@ public class DataFrameUtils {
      * @return list of SQL column names in the schema
      */
     public static List<String> getColumnNames(
-            StructType inputSchema) {
+            StructType inputSchema
+    ) {
         return getColumnNames(inputSchema, -1, null);
     }
-   
+
     public static void prepareDynamicContext(
             DynamicContext context,
             List<String> columnNames,
             List<List<Item>> deserializedParams
-        )
-    {
-     // prepare dynamic context
+    ) {
+        // prepare dynamic context
         for (int columnIndex = 0; columnIndex < columnNames.size(); columnIndex++) {
             context.addVariableValue(columnNames.get(columnIndex), deserializedParams.get(columnIndex));
         }
     }
-    
+
     private static String COMMA = ",";
 
     /**
-     * @param inputSchema            schema specifies the columns to be used in the query
-     * @param duplicateVariableIndex enables skipping a variable
-     * @param trailingComma          boolean field to have a trailing comma
+     * @param columnNames schema specifies the columns to be used in the query
+     * @param trailingComma boolean field to have a trailing comma
      * @return comma separated variables to be used in spark SQL
      */
     public static String getSQL(
             List<String> columnNames,
-            boolean trailingComma) {
+            boolean trailingComma
+    ) {
         StringBuilder queryColumnString = new StringBuilder();
         String comma = "";
         for (String var : columnNames) {
@@ -184,17 +182,16 @@ public class DataFrameUtils {
             queryColumnString.append(var);
             queryColumnString.append("`");
         }
-        if(trailingComma)
-        {
+        if (trailingComma) {
             queryColumnString.append(comma);
         }
         return queryColumnString.toString();
     }
 
     /**
-     * @param inputSchema            schema specifies the columns to be used in the query
+     * @param inputSchema schema specifies the columns to be used in the query
      * @param duplicateVariableIndex enables skipping a variable
-     * @param trailingComma          boolean field to have a trailing comma
+     * @param trailingComma boolean field to have a trailing comma
      * @return comma separated variables to be used in spark SQL
      */
     public static String getGroupbyProjectSQL(
@@ -210,36 +207,41 @@ public class DataFrameUtils {
         for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
             String columnName = columnNames[columnIndex];
 
-            boolean applyDistinct = false;
+            boolean groupingKey = false;
             if (columnIndex == duplicateVariableIndex) {
                 continue;
             }
             if (groupbyVariableNames.contains(columnName)) {
-                applyDistinct = true;
+                groupingKey = true;
             }
 
             boolean applyCount = false;
-            if (dependencies.containsKey(columnName) && dependencies.get(columnName) == DynamicContext.VariableDependency.COUNT) {
+            if (
+                dependencies.containsKey(columnName)
+                    && dependencies.get(columnName) == DynamicContext.VariableDependency.COUNT
+            ) {
                 applyCount = true;
             }
-            if(applyCount) {
+            if (applyCount) {
                 queryColumnString.append("count(`");
             } else {
                 queryColumnString.append(serializerUdfName);
                 queryColumnString.append("(");
-                if (applyDistinct) {
-                    queryColumnString.append("array_distinct(");
+                if (groupingKey) {
+                    queryColumnString.append("array(");
+                    queryColumnString.append("first(`");
+                } else {
+                    queryColumnString.append("collect_list(`");
                 }
-                queryColumnString.append("collect_list(`");
             }
 
             queryColumnString.append(columnName);
 
-            if(applyCount) {
+            if (applyCount) {
                 queryColumnString.append("`)");
             } else {
                 queryColumnString.append("`)");
-                if (applyDistinct) {
+                if (groupingKey) {
                     queryColumnString.append(")");
                 }
                 queryColumnString.append(")");
@@ -258,10 +260,8 @@ public class DataFrameUtils {
 
     public static Object deserializeByteArray(byte[] toDeserialize, Kryo kryo, Input input) {
         byte[] bytes = lastBytesCache.get();
-        if(bytes != null)
-        {
-            if(Arrays.equals(bytes, toDeserialize))
-            {
+        if (bytes != null) {
+            if (Arrays.equals(bytes, toDeserialize)) {
                 List<Item> deserializedParam = lastObjectItemCache.get();
                 return deserializedParam;
             }
@@ -270,16 +270,27 @@ public class DataFrameUtils {
         return kryo.readClassAndObject(input);
     }
 
-    public static void deserializeWrappedParameters(WrappedArray<byte[]> wrappedParameters, List<List<Item>> deserializedParams, Kryo kryo, Input input) {
+    public static void deserializeWrappedParameters(
+            WrappedArray<byte[]> wrappedParameters,
+            List<List<Item>> deserializedParams,
+            Kryo kryo,
+            Input input
+    ) {
         Object[] serializedParams = (Object[]) wrappedParameters.array();
-        for (Object serializedParam: serializedParams) {
+        for (Object serializedParam : serializedParams) {
             @SuppressWarnings("unchecked")
-			List<Item> deserializedParam = (List<Item>) deserializeByteArray((byte[]) serializedParam, kryo, input);
+            List<Item> deserializedParam = (List<Item>) deserializeByteArray((byte[]) serializedParam, kryo, input);
             deserializedParams.add(deserializedParam);
         }
     }
 
-    public static Row reserializeRowWithNewData(Row prevRow, List<Item> newColumn, int duplicateColumnIndex, Kryo kryo, Output output) {
+    public static Row reserializeRowWithNewData(
+            Row prevRow,
+            List<Item> newColumn,
+            int duplicateColumnIndex,
+            Kryo kryo,
+            Output output
+    ) {
         List<byte[]> newRowColumns = new ArrayList<>();
         for (int columnIndex = 0; columnIndex < prevRow.length(); columnIndex++) {
             if (duplicateColumnIndex == columnIndex) {
@@ -295,10 +306,9 @@ public class DataFrameUtils {
     }
 
     @SuppressWarnings("unchecked")
-	public static List<Item> deserializeRowField(Row row, int columnIndex, Kryo kryo, Input input) {
+    public static List<Item> deserializeRowField(Row row, int columnIndex, Kryo kryo, Input input) {
         Object o = row.get(columnIndex);
-        if(o instanceof Long)
-        {
+        if (o instanceof Long) {
             List<Item> result = new ArrayList<Item>(1);
             result.add(ItemFactory.getInstance().createIntegerItem(((Long) o).intValue()));
             return result;
@@ -324,26 +334,28 @@ public class DataFrameUtils {
      * Algorithm taken from following link and adapted to Java with minor improvements.
      * https://stackoverflow.com/a/48454000/10707488
      *
-     * @param df        - df to perform the operation on
-     * @param offset    - starting offset for the first index
+     * @param df - df to perform the operation on
+     * @param offset - starting offset for the first index
      * @param indexName - name of the index column
      * @return returns Dataset<Row> with the added 'indexName' column containing indices
      */
     public static Dataset<Row> zipWithIndex(Dataset<Row> df, Long offset, String indexName) {
         Dataset<Row> dfWithPartitionId = df
-                .withColumn("partition_id", spark_partition_id())
-                .withColumn("inc_id", monotonically_increasing_id());
+            .withColumn("partition_id", spark_partition_id())
+            .withColumn("inc_id", monotonically_increasing_id());
 
         Object partitionOffsetsObject = dfWithPartitionId
-                .groupBy("partition_id")
-                .agg(count(lit(1)).alias("cnt"), first("inc_id").alias("inc_id"))
-                .orderBy("partition_id")
-                .select(col("partition_id"),
-                        sum("cnt").over(Window.orderBy("partition_id"))
-                                .minus(col("cnt"))
-                                .minus(col("inc_id"))
-                                .plus(lit(offset).alias("cnt")))
-                .collect();
+            .groupBy("partition_id")
+            .agg(count(lit(1)).alias("cnt"), first("inc_id").alias("inc_id"))
+            .orderBy("partition_id")
+            .select(
+                col("partition_id"),
+                sum("cnt").over(Window.orderBy("partition_id"))
+                    .minus(col("cnt"))
+                    .minus(col("inc_id"))
+                    .plus(lit(offset).alias("cnt"))
+            )
+            .collect();
         Row[] partitionOffsetsArray = ((Row[]) partitionOffsetsObject);
         Map<Integer, Long> partitionOffsets = new HashMap<>();
         for (int i = 0; i < partitionOffsetsArray.length; i++) {
@@ -351,12 +363,13 @@ public class DataFrameUtils {
         }
 
         UserDefinedFunction getPartitionOffset = udf(
-                (partitionId) -> partitionOffsets.get((Integer) partitionId), DataTypes.LongType
+            (partitionId) -> partitionOffsets.get((Integer) partitionId),
+            DataTypes.LongType
         );
 
         return dfWithPartitionId
-                .withColumn("partition_offset", getPartitionOffset.apply(col("partition_id")))
-                .withColumn(indexName, col("partition_offset").plus(col("inc_id")))
-                .drop("partition_id", "partition_offset", "inc_id");
+            .withColumn("partition_offset", getPartitionOffset.apply(col("partition_id")))
+            .withColumn(indexName, col("partition_offset").plus(col("inc_id")))
+            .drop("partition_id", "partition_offset", "inc_id");
     }
 }

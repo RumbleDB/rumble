@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,10 +22,10 @@ package sparksoniq.jsoniq.runtime.iterator.functions.base;
 
 import sparksoniq.exceptions.DuplicateFunctionIdentifierException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
-import sparksoniq.exceptions.UnknownFunctionCallException;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.FunctionItemCallIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.NullFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayDescendantFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayFlattenFunctionIterator;
@@ -34,13 +34,29 @@ import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArraySizeFunctionIter
 import sparksoniq.jsoniq.runtime.iterator.functions.binaries.Base64BinaryFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.binaries.HexBinaryFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.booleans.BooleanFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.io.JsonDocFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.context.PositionFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.context.LastFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.context.PositionFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.datetime.DateFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.datetime.DateTimeFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.datetime.TimeFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.*;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.AdjustDateTimeToTimezone;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.AdjustDateToTimezone;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.AdjustTimeToTimezone;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.DayFromDateFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.DayFromDateTimeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.HoursFromDateTimeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.HoursFromTimeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.MinutesFromDateTimeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.MinutesFromTimeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.MonthFromDateFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.MonthFromDateTimeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.SecondsFromDateTimeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.SecondsFromTimeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.TimezoneFromDateFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.TimezoneFromDateTimeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.TimezoneFromTimeFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.YearFromDateFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.datetime.components.YearFromDateTimeFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.DayTimeDurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.DurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.YearMonthDurationFunctionIterator;
@@ -50,6 +66,7 @@ import sparksoniq.jsoniq.runtime.iterator.functions.durations.components.Minutes
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.components.MonthsFromDurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.components.SecondsFromDurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.components.YearsFromDurationFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.io.JsonDocFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.AbsFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.CeilingFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.FloorFunctionIterator;
@@ -109,10 +126,11 @@ import sparksoniq.jsoniq.runtime.iterator.functions.strings.SubstringBeforeFunct
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.SubstringFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.TokenizeFunctionIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.spark.iterator.function.JsonFileFunctionIterator;
 import sparksoniq.spark.iterator.function.ParallelizeFunctionIterator;
-import sparksoniq.spark.iterator.function.ParseJsonFunctionIterator;
-import sparksoniq.spark.iterator.function.ParseTextFunctionIterator;
 import sparksoniq.spark.iterator.function.ParquetFileFunctionIterator;
+import sparksoniq.spark.iterator.function.StructuredJsonFileFunctionIterator;
+import sparksoniq.spark.iterator.function.TextFileFunctionIterator;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -122,8 +140,110 @@ import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.List;
 
-
-import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.*;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ABS;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ACCUMULATE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ACOS;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ADJUSTDATETIMETOTIMEZONE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ADJUSTDATETOTIMEZONE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ADJUSTTIMETOTIMEZONE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ASIN;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ATAN;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ATAN2;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.AVG;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.BASE64BINARY;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.BOOLEAN;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.CEILING;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.CONCAT;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.CONTAINS;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.COS;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.COUNT;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DATE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DATETIME;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DAYFROMDATE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DAYFROMDATETIME;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DAYSFROMDURATION;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DAYTIMEDURATION;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DEEPEQUAL;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DESCENDANTARRAYS;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DESCENDANTOBJECTS;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DESCENDANTPAIRS;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DISTINCTVALUES;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.DURATION;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.EMPTY;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ENDSWITH;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.EXACTLYONE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.EXISTS;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.EXP;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.EXP10;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.FLATTEN;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.FLOOR;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.HEAD;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.HEXBINARY;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.HOURSFROMDATETIME;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.HOURSFROMDURATION;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.HOURSFROMTIME;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.INDEXOF;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.INSERTBEFORE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.INTERSECT;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.JSON_DOC;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.JSON_FILE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.KEYS;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.LAST;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.LOG;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.LOG10;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MATCHES;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MAX;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MEMBERS;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MIN;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MINUTESFROMDATETIME;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MINUTESFROMDURATION;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MINUTESFROMTIME;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MONTHFROMDATE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MONTHFROMDATETIME;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.MONTHSFROMDURATION;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.NORMALIZESPACE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.NULL;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ONEORMORE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.PARALLELIZE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.PARQUET_FILE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.PI;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.POSITION;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.POW;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.PROJECT;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.REMOVE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.REMOVEKEYS;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.REVERSE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ROUND;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ROUNDHALFTOEVEN;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SECONDSFROMDATETIME;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SECONDSFROMDURATION;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SECONDSFROMTIME;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SIN;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SIZE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SQRT;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.STARTSWITH;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.STRINGJOIN;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.STRINGLENGTH;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.STRUCTURED_JSON_FILE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SUBSEQUENCE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SUBSTRING;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SUBSTRING_AFTER;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SUBSTRING_BEFORE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.SUM;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.TAIL;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.TAN;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.TEXT_FILE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.TIME;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.TIMEZONEFROMDATE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.TIMEZONEFROMDATETIME;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.TIMEZONEFROMTIME;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.TOKENIZE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.VALUES;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.YEARFROMDATE;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.YEARFROMDATETIME;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.YEARMONTHDURATION;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.YEARSFROMDURATION;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ZEROORONE;
 
 public class Functions {
     private static HashMap<FunctionIdentifier, Class<? extends RuntimeIterator>> builtInFunctions;
@@ -136,11 +256,12 @@ public class Functions {
         builtInFunctions.put(new FunctionIdentifier(POSITION, 0), PositionFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(LAST, 0), LastFunctionIterator.class);
 
-        builtInFunctions.put(new FunctionIdentifier(JSON_FILE, 1), ParseJsonFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(JSON_FILE, 2), ParseJsonFunctionIterator.class);
+        builtInFunctions.put(new FunctionIdentifier(JSON_FILE, 1), JsonFileFunctionIterator.class);
+        builtInFunctions.put(new FunctionIdentifier(JSON_FILE, 2), JsonFileFunctionIterator.class);
+        builtInFunctions.put(new FunctionIdentifier(STRUCTURED_JSON_FILE, 1), StructuredJsonFileFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(JSON_DOC, 1), JsonDocFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(TEXT_FILE, 1), ParseTextFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(TEXT_FILE, 2), ParseTextFunctionIterator.class);
+        builtInFunctions.put(new FunctionIdentifier(TEXT_FILE, 1), TextFileFunctionIterator.class);
+        builtInFunctions.put(new FunctionIdentifier(TEXT_FILE, 2), TextFileFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(PARALLELIZE, 1), ParallelizeFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(PARALLELIZE, 2), ParallelizeFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(PARQUET_FILE, 1), ParquetFileFunctionIterator.class);
@@ -199,8 +320,9 @@ public class Functions {
         builtInFunctions.put(new FunctionIdentifier(SUBSTRING, 3), SubstringFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(SUBSTRING_BEFORE, 2), SubstringBeforeFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(SUBSTRING_AFTER, 2), SubstringAfterFunctionIterator.class);
-        for (int i = 0; i <= 100; i++)
+        for (int i = 0; i <= 100; i++) {
             builtInFunctions.put(new FunctionIdentifier(CONCAT, i), ConcatFunctionIterator.class);
+        }
 
         builtInFunctions.put(new FunctionIdentifier(ENDSWITH, 2), EndsWithFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(STRINGJOIN, 1), StringJoinFunction.class);
@@ -230,7 +352,10 @@ public class Functions {
         builtInFunctions.put(new FunctionIdentifier(HOURSFROMDATETIME, 1), HoursFromDateTimeFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(MINUTESFROMDATETIME, 1), MinutesFromDateTimeFunctionIterator.class);
         builtInFunctions.put(new FunctionIdentifier(SECONDSFROMDATETIME, 1), SecondsFromDateTimeFunctionIterator.class);
-        builtInFunctions.put(new FunctionIdentifier(TIMEZONEFROMDATETIME, 1), TimezoneFromDateTimeFunctionIterator.class);
+        builtInFunctions.put(
+            new FunctionIdentifier(TIMEZONEFROMDATETIME, 1),
+            TimezoneFromDateTimeFunctionIterator.class
+        );
         builtInFunctions.put(new FunctionIdentifier(ADJUSTDATETIMETOTIMEZONE, 1), AdjustDateTimeToTimezone.class);
         builtInFunctions.put(new FunctionIdentifier(ADJUSTDATETIMETOTIMEZONE, 2), AdjustDateTimeToTimezone.class);
 
@@ -272,14 +397,37 @@ public class Functions {
         return builtInFunctions.containsKey(identifier);
     }
 
-    public static RuntimeIterator getBuiltInFunctionIterator(FunctionIdentifier identifier, IteratorMetadata metadata, List<RuntimeIterator> arguments) {
+    public static RuntimeIterator getBuiltInFunctionIterator(
+            FunctionIdentifier identifier,
+            IteratorMetadata metadata,
+            List<RuntimeIterator> arguments
+    ) {
         Class<? extends RuntimeIterator> functionClass = builtInFunctions.get(identifier);
         try {
-            Constructor<? extends RuntimeIterator> ctor = functionClass.getConstructor(List.class, IteratorMetadata.class);
+            Constructor<? extends RuntimeIterator> ctor = functionClass.getConstructor(
+                List.class,
+                IteratorMetadata.class
+            );
             return ctor.newInstance(arguments, metadata);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
+    }
+
+    public static RuntimeIterator getUserDefinedFunctionCallIterator(
+            FunctionIdentifier identifier,
+            IteratorMetadata metadata,
+            List<RuntimeIterator> arguments
+    ) {
+        return buildUserDefinedFunctionCallIterator(getUserDefinedFunction(identifier), metadata, arguments);
+    }
+
+    public static RuntimeIterator buildUserDefinedFunctionCallIterator(
+            FunctionItem functionItem,
+            IteratorMetadata metadata,
+            List<RuntimeIterator> arguments
+    ) {
+        return new FunctionItemCallIterator(functionItem, arguments, metadata);
     }
 
     public static void clearUserDefinedFunctions() {
@@ -287,8 +435,10 @@ public class Functions {
     }
 
     public static void addUserDefinedFunction(FunctionItem function, ExpressionMetadata meta) {
-        if (builtInFunctions.containsKey(function.getIdentifier())
-                || userDefinedFunctions.containsKey(function.getIdentifier())) {
+        if (
+            builtInFunctions.containsKey(function.getIdentifier())
+                || userDefinedFunctions.containsKey(function.getIdentifier())
+        ) {
             throw new DuplicateFunctionIdentifierException(function.getIdentifier(), meta);
         }
         userDefinedFunctions.put(function.getIdentifier(), function);
@@ -298,7 +448,7 @@ public class Functions {
         return userDefinedFunctions.containsKey(identifier);
     }
 
-    public static FunctionItem getUserDefinedFunction(FunctionIdentifier identifier, IteratorMetadata metadata) {
+    public static FunctionItem getUserDefinedFunction(FunctionIdentifier identifier) {
         FunctionItem fnItem = userDefinedFunctions.get(identifier);
         try {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -322,12 +472,16 @@ public class Functions {
         /**
          * function that returns the context size
          */
-        public static final String LAST  = "last";
+        public static final String LAST = "last";
 
         /**
          * function that parses a JSON lines file
          */
         public static final String JSON_FILE = "json-file";
+        /**
+         * function that parses a structured JSON lines file into a DataFrame
+         */
+        public static final String STRUCTURED_JSON_FILE = "structured-json-file";
         /**
          * function that parses a JSON doc file
          */
@@ -391,11 +545,13 @@ public class Functions {
          */
         public static final String TAIL = "tail";
         /**
-         * function that returns a sequence constructed by inserting an item or a sequence of items at a given position within an existing sequence
+         * function that returns a sequence constructed by inserting an item or a sequence of items at a given position
+         * within an existing sequence
          */
         public static final String INSERTBEFORE = "insert-before";
         /**
-         * function that returns a new sequence containing all the items of $target except the item at position $position.
+         * function that returns a new sequence containing all the items of $target except the item at position
+         * $position.
          */
         public static final String REMOVE = "remove";
         /**
@@ -403,7 +559,8 @@ public class Functions {
          */
         public static final String REVERSE = "reverse";
         /**
-         * function that applies a subsequence operation to the given sequence with the given start index and length parameters
+         * function that applies a subsequence operation to the given sequence with the given start index and length
+         * parameters
          */
         public static final String SUBSEQUENCE = "subsequence";
 
@@ -448,11 +605,13 @@ public class Functions {
          */
         public static final String FLOOR = "floor";
         /**
-         * function that rounds a value to a specified number of decimal places, rounding upwards if two such values are equally near
+         * function that rounds a value to a specified number of decimal places, rounding upwards if two such values are
+         * equally near
          */
         public static final String ROUND = "round";
         /**
-         * function that rounds a value to a specified number of decimal places, rounding to make the last digit even if two such values are equally near
+         * function that rounds a value to a specified number of decimal places, rounding to make the last digit even if
+         * two such values are equally near
          */
         public static final String ROUNDHALFTOEVEN = "round-half-to-even";
 
@@ -474,7 +633,7 @@ public class Functions {
          */
         public static final String LOG = "log";
         /**
-         * function that returns the  base-ten logarithm of the argument
+         * function that returns the base-ten logarithm of the argument
          */
         public static final String LOG10 = "log10";
         /**
@@ -510,7 +669,8 @@ public class Functions {
          */
         public static final String ATAN = "atan";
         /**
-         * function that returns the the angle in radians subtended at the origin by the point on a plane with coordinates (x, y) and the positive x-axis.
+         * function that returns the the angle in radians subtended at the origin by the point on a plane with
+         * coordinates (x, y) and the positive x-axis.
          */
         public static final String ATAN2 = "atan2";
 
@@ -520,11 +680,13 @@ public class Functions {
          */
         public static final String SUBSTRING = "substring";
         /**
-         * function that returns the part of the first variable that precedes the first occurrence of the second vairable.
+         * function that returns the part of the first variable that precedes the first occurrence of the second
+         * vairable.
          */
         public static final String SUBSTRING_BEFORE = "substring-before";
         /**
-         * function that returns the part of the first variable that follows the first occurrence of the second vairable.
+         * function that returns the part of the first variable that follows the first occurrence of the second
+         * vairable.
          */
         public static final String SUBSTRING_AFTER = "substring-after";
         /**
@@ -746,7 +908,8 @@ public class Functions {
          */
         public static final String FLATTEN = "flatten";
         /**
-         * function that returns the intersection of the supplied objects, and aggregates values corresponding to the same name into an array
+         * function that returns the intersection of the supplied objects, and aggregates values corresponding to the
+         * same name into an array
          */
         public static final String INTERSECT = "intersect";
         /**

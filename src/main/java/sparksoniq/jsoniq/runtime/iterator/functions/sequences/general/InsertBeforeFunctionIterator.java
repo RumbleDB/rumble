@@ -1,12 +1,12 @@
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
+ * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -36,13 +36,13 @@ import org.rumbledb.api.Item;
 public class InsertBeforeFunctionIterator extends LocalFunctionCallIterator {
 
 
-	private static final long serialVersionUID = 1L;
-	private RuntimeIterator _sequenceIterator;
+    private static final long serialVersionUID = 1L;
+    private RuntimeIterator _sequenceIterator;
     private RuntimeIterator _insertIterator;
     private Item _nextResult;
-    private int _insertPosition;            // position to start inserting
-    private int _currentPosition;           // current position
-    private boolean _insertingNow;          // check if currently iterating over insertIterator
+    private int _insertPosition; // position to start inserting
+    private int _currentPosition; // current position
+    private boolean _insertingNow; // check if currently iterating over insertIterator
     private boolean _insertingCompleted;
 
     public InsertBeforeFunctionIterator(List<RuntimeIterator> parameters, IteratorMetadata iteratorMetadata) {
@@ -52,8 +52,8 @@ public class InsertBeforeFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public Item next() {
         if (this.hasNext()) {
-            Item result = _nextResult;  // save the result to be returned
-            setNextResult();            // calculate and store the next result
+            Item result = _nextResult; // save the result to be returned
+            setNextResult(); // calculate and store the next result
             return result;
         }
         throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "insert-before function", getMetadata());
@@ -63,7 +63,7 @@ public class InsertBeforeFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        _currentPosition = 1;      // initialize index as the first item
+        _currentPosition = 1; // initialize index as the first item
         _insertingNow = false;
         _insertingCompleted = false;
 
@@ -72,21 +72,25 @@ public class InsertBeforeFunctionIterator extends LocalFunctionCallIterator {
         if (!positionIterator.hasNext()) {
             throw new UnexpectedTypeException(
                     "Invalid args. insert-before can't be performed with empty sequence as the position",
-                    getMetadata());
+                    getMetadata()
+            );
         }
         Item positionItem = positionIterator.next();
         if (positionItem.isArray()) {
             throw new NonAtomicKeyException(
                     "Invalid args. insert-before can't be performed with an array parameter as the position",
-                    getMetadata().getExpressionMetadata());
+                    getMetadata().getExpressionMetadata()
+            );
         } else if (positionItem.isObject()) {
             throw new NonAtomicKeyException(
                     "Invalid args. insert-before can't be performed with an object parameter as the position",
-                    getMetadata().getExpressionMetadata());
+                    getMetadata().getExpressionMetadata()
+            );
         } else if (!(positionItem.isInteger())) {
             throw new UnexpectedTypeException(
                     "Invalid args. Position parameter should be an integer",
-                    getMetadata());
+                    getMetadata()
+            );
         }
         _insertPosition = ((IntegerItem) positionItem).getIntegerValue();
         positionIterator.close();
@@ -106,7 +110,7 @@ public class InsertBeforeFunctionIterator extends LocalFunctionCallIterator {
         // don't check for insertion triggers once insertion is completed
         if (_insertingCompleted == false) {
             if (!_insertingNow) {
-                if (_insertPosition <= _currentPosition) {  // start inserting if condition is met
+                if (_insertPosition <= _currentPosition) { // start inserting if condition is met
                     if (_insertIterator.hasNext()) {
                         _insertingNow = true;
                         _nextResult = _insertIterator.next();
