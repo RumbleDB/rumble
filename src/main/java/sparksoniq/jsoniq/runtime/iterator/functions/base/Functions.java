@@ -335,9 +335,15 @@ public class Functions {
 
         sequenceTypes.put("duration?", new SequenceType(itemTypes.get("duration"), SequenceType.Arity.OneOrZero));
 
-        sequenceTypes.put("yearMonthDuration?", new SequenceType(itemTypes.get("yearMonthDuration"), SequenceType.Arity.OneOrZero));
+        sequenceTypes.put(
+            "yearMonthDuration?",
+            new SequenceType(itemTypes.get("yearMonthDuration"), SequenceType.Arity.OneOrZero)
+        );
 
-        sequenceTypes.put("dayTimeDuration?", new SequenceType(itemTypes.get("dayTimeDuration"), SequenceType.Arity.OneOrZero));
+        sequenceTypes.put(
+            "dayTimeDuration?",
+            new SequenceType(itemTypes.get("dayTimeDuration"), SequenceType.Arity.OneOrZero)
+        );
 
         sequenceTypes.put("dateTime?", new SequenceType(itemTypes.get("dateTime"), SequenceType.Arity.OneOrZero));
 
@@ -347,7 +353,10 @@ public class Functions {
 
         sequenceTypes.put("hexBinary?", new SequenceType(itemTypes.get("hexBinary"), SequenceType.Arity.OneOrZero));
 
-        sequenceTypes.put("base64Binary?", new SequenceType(itemTypes.get("base64Binary"), SequenceType.Arity.OneOrZero));
+        sequenceTypes.put(
+            "base64Binary?",
+            new SequenceType(itemTypes.get("base64Binary"), SequenceType.Arity.OneOrZero)
+        );
 
         sequenceTypes.put("null?", new SequenceType(itemTypes.get("null"), SequenceType.Arity.OneOrZero));
 
@@ -424,7 +433,7 @@ public class Functions {
         builtInFunctions.put(substring3.getIdentifier(), substring3);
         builtInFunctions.put(substring_before.getIdentifier(), substring_before);
         builtInFunctions.put(substring_after.getIdentifier(), substring_after);
-        for (int i=0; i < 100; i++) {
+        for (int i = 0; i < 100; i++) {
             builtInFunctions.put(new FunctionIdentifier("concat", i), concat);
         }
         builtInFunctions.put(ends_with.getIdentifier(), ends_with);
@@ -666,58 +675,58 @@ public class Functions {
          * function that returns the context position
          */
         static final BuiltinFunction position = createBuiltinFunction(
-                "position",
-                "integer?",
-                PositionFunctionIterator.class
+            "position",
+            "integer?",
+            PositionFunctionIterator.class
         );
         /**
          * function that returns the context size
          */
         static final BuiltinFunction last = createBuiltinFunction(
-                "last",
-                "integer?",
-                LastFunctionIterator.class
+            "last",
+            "integer?",
+            LastFunctionIterator.class
         );
         /**
          * function that parses a JSON lines file
          */
         static final BuiltinFunction json_file1 = createBuiltinFunction(
-                "json-file",
-                "string?",
-                "item*",
-                ParseJsonFunctionIterator.class
+            "json-file",
+            "string?",
+            "item*",
+            ParseJsonFunctionIterator.class
         );
         static final BuiltinFunction json_file2 = createBuiltinFunction(
-                "json-file",
-                "string?",
-                "integer?",
-                "item*",
-                ParseJsonFunctionIterator.class
+            "json-file",
+            "string?",
+            "integer?",
+            "item*",
+            ParseJsonFunctionIterator.class
         );
         /**
          * function that parses a JSON doc file
          */
         static final BuiltinFunction json_doc = createBuiltinFunction(
-                "json-doc",
-                "string?",
-                "item*",
-                JsonDocFunctionIterator.class
+            "json-doc",
+            "string?",
+            "item*",
+            JsonDocFunctionIterator.class
         );
         /**
          * function that parses a text file
          */
         static final BuiltinFunction text_file1 = createBuiltinFunction(
-                "text-file",
-                "string?",
-                "item*",
-                ParseTextFunctionIterator.class
+            "text-file",
+            "string?",
+            "item*",
+            ParseTextFunctionIterator.class
         );
         static final BuiltinFunction text_file2 = createBuiltinFunction(
-                "text-file",
-                "string?",
-                "integer?",
-                "item*",
-                ParseTextFunctionIterator.class
+            "text-file",
+            "string?",
+            "integer?",
+            "item*",
+            ParseTextFunctionIterator.class
         );
         /**
          * function that parallelizes item collections into a Spark RDD
@@ -739,73 +748,73 @@ public class Functions {
          * function that parses a parquet file
          */
         static final BuiltinFunction parquet_file = createBuiltinFunction(
-                "parquet-file",
-                "string?",
-                "item*",
-                ParquetFileFunctionIterator.class
+            "parquet-file",
+            "string?",
+            "item*",
+            ParquetFileFunctionIterator.class
         );
         /**
          * function that returns the length of a sequence
          */
         static final BuiltinFunction count = createBuiltinFunction(
-                "count",
-                "item*",
-                "integer",
-                CountFunctionIterator.class
+            "count",
+            "item*",
+            "integer",
+            CountFunctionIterator.class
         );
 
         /**
          * function that returns the effective boolean value of the given parameter
          */
         static final BuiltinFunction boolean_function = createBuiltinFunction(
-                "boolean",
-                "item*",
-                "boolean",
-                BooleanFunctionIterator.class
+            "boolean",
+            "item*",
+            "boolean",
+            BooleanFunctionIterator.class
         );
 
         /**
          * function that returns the minimum of a sequence
          */
         static final BuiltinFunction min = createBuiltinFunction(
-                "min",
-                "item*",
-                "atomic?",
-                MinFunctionIterator.class
+            "min",
+            "item*",
+            "atomic?",
+            MinFunctionIterator.class
         );
         /**
          * function that returns the maximum of a sequence
          */
         static final BuiltinFunction max = createBuiltinFunction(
-                "max",
-                "item*",
-                "atomic?",
-                MaxFunctionIterator.class
+            "max",
+            "item*",
+            "atomic?",
+            MaxFunctionIterator.class
         );
         /**
          * function that returns the average of a sequence
          */
         static final BuiltinFunction avg = createBuiltinFunction(
-                "avg",
-                "item*",
-                "atomic?",
-                AvgFunctionIterator.class
+            "avg",
+            "item*",
+            "atomic?",
+            AvgFunctionIterator.class
         );
         /**
          * function that returns the sum of a sequence
          */
         static final BuiltinFunction sum1 = createBuiltinFunction(
-                "sum",
-                "item*",
-                "atomic?",
-                SumFunctionIterator.class
+            "sum",
+            "item*",
+            "atomic?",
+            SumFunctionIterator.class
         );
         static final BuiltinFunction sum2 = createBuiltinFunction(
-                "sum",
-                "item*",
-                "item?",
-                "atomic?",
-                SumFunctionIterator.class
+            "sum",
+            "item*",
+            "item?",
+            "atomic?",
+            SumFunctionIterator.class
         );
 
 
@@ -813,337 +822,337 @@ public class Functions {
          * function that returns true if the argument is the empty sequence
          */
         static final BuiltinFunction empty = createBuiltinFunction(
-                "empty",
-                "item*",
-                "boolean",
-                EmptyFunctionIterator.class
+            "empty",
+            "item*",
+            "boolean",
+            EmptyFunctionIterator.class
         );
         /**
          * function that returns true if the argument is a non-empty sequence
          */
         static final BuiltinFunction exists = createBuiltinFunction(
-                "exists",
-                "item*",
-                "boolean",
-                ExistsFunctionIterator.class
+            "exists",
+            "item*",
+            "boolean",
+            ExistsFunctionIterator.class
         );
         /**
          * function that returns the first item in a sequence
          */
         static final BuiltinFunction head = createBuiltinFunction(
-                "head",
-                "item*",
-                "item?",
-                HeadFunctionIterator.class
+            "head",
+            "item*",
+            "item?",
+            HeadFunctionIterator.class
         );
         /**
          * function that returns all but the first item in a sequence
          */
         static final BuiltinFunction tail = createBuiltinFunction(
-                "tail",
-                "item*",
-                "item*",
-                TailFunctionIterator.class
+            "tail",
+            "item*",
+            "item*",
+            TailFunctionIterator.class
         );
         /**
          * function that returns a sequence constructed by inserting an item or a sequence of items at a given position
          * within an existing sequence
          */
         static final BuiltinFunction insert_before = createBuiltinFunction(
-                "insert-before",
-                "item*",
-                "item*",
-                "item*",
-                "item*",
-                InsertBeforeFunctionIterator.class
+            "insert-before",
+            "item*",
+            "item*",
+            "item*",
+            "item*",
+            InsertBeforeFunctionIterator.class
         );
         /**
          * function that returns a new sequence containing all the items of $target except the item at position
          * $position.
          */
         static final BuiltinFunction remove = createBuiltinFunction(
-                "remove",
-                "item*",
-                "item*",
-                "item*",
-                RemoveFunctionIterator.class
+            "remove",
+            "item*",
+            "item*",
+            "item*",
+            RemoveFunctionIterator.class
         );
         /**
          * function that reverses the order of items in a sequence.
          */
         static final BuiltinFunction reverse = createBuiltinFunction(
-                "reverse",
-                "item*",
-                "item*",
-                ReverseFunctionIterator.class
+            "reverse",
+            "item*",
+            "item*",
+            ReverseFunctionIterator.class
         );
         /**
          * function that applies a subsequence operation to the given sequence with the given start index and length
          * parameters
          */
         static final BuiltinFunction subsequence2 = createBuiltinFunction(
-                "subsequence",
-                "item*",
-                "item*",
-                "item*",
-                SubsequenceFunctionIterator.class
+            "subsequence",
+            "item*",
+            "item*",
+            "item*",
+            SubsequenceFunctionIterator.class
         );
         static final BuiltinFunction subsequence3 = createBuiltinFunction(
-                "subsequence",
-                "item*",
-                "item*",
-                "item*",
-                "item*",
-                SubsequenceFunctionIterator.class
+            "subsequence",
+            "item*",
+            "item*",
+            "item*",
+            "item*",
+            SubsequenceFunctionIterator.class
         );
 
         /**
          * function that returns $arg if it contains zero or one items. Otherwise, raises an error.
          */
         static final BuiltinFunction zero_or_one = createBuiltinFunction(
-                "zero-or-one",
-                "item*",
-                "item?",
-                ZeroOrOneIterator.class
+            "zero-or-one",
+            "item*",
+            "item?",
+            ZeroOrOneIterator.class
         );
         /**
          * function that returns $arg if it contains one or more items. Otherwise, raises an error.
          */
         static final BuiltinFunction one_or_more = createBuiltinFunction(
-                "one-or-more",
-                "item*",
-                "item+",
-                OneOrMoreIterator.class
+            "one-or-more",
+            "item*",
+            "item+",
+            OneOrMoreIterator.class
         );
         /**
          * function that returns $arg if it contains exactly one item. Otherwise, raises an error.
          */
         static final BuiltinFunction exactly_one = createBuiltinFunction(
-                "exactly-one",
-                "item*",
-                "item",
-                ExactlyOneIterator.class
+            "exactly-one",
+            "item*",
+            "item",
+            ExactlyOneIterator.class
         );
 
         /**
          * function that returns the values that appear in a sequence, with duplicates eliminated
          */
         static final BuiltinFunction distinct_values = createBuiltinFunction(
-                "distinct-values",
-                "item*",
-                "atomic*",
-                DistinctValuesFunctionIterator.class
+            "distinct-values",
+            "item*",
+            "atomic*",
+            DistinctValuesFunctionIterator.class
         );
         /**
          * function that returns indices of items that are equal to the search parameter
          */
         static final BuiltinFunction index_of = createBuiltinFunction(
-                "index-of",
-                "item*",
-                "item",
-                "integer*",
-                IndexOfFunctionIterator.class
+            "index-of",
+            "item*",
+            "item",
+            "integer*",
+            IndexOfFunctionIterator.class
         );
         /**
          * function that returns whether two sequences are deep-equal to each other
          */
         static final BuiltinFunction deep_equal = createBuiltinFunction(
-                "deep-equal",
-                "item*",
-                "item*",
-                "boolean",
-                DeepEqualFunctionIterator.class
+            "deep-equal",
+            "item*",
+            "item*",
+            "boolean",
+            DeepEqualFunctionIterator.class
         );
 
         /**
          * function that returns the absolute value of the arg
          */
         static final BuiltinFunction abs = createBuiltinFunction(
-                "abs",
-                "double?",
-                "double?",
-                AbsFunctionIterator.class
+            "abs",
+            "double?",
+            "double?",
+            AbsFunctionIterator.class
         );
         /**
          * function that rounds $arg upwards to a whole number
          */
         static final BuiltinFunction ceiling = createBuiltinFunction(
-                "ceiling",
-                "double?",
-                "double?",
-                CeilingFunctionIterator.class
+            "ceiling",
+            "double?",
+            "double?",
+            CeilingFunctionIterator.class
         );
         /**
          * function that rounds $arg downwards to a whole number
          */
         static final BuiltinFunction floor = createBuiltinFunction(
-                "floor",
-                "double?",
-                "double?",
-                FloorFunctionIterator.class
+            "floor",
+            "double?",
+            "double?",
+            FloorFunctionIterator.class
         );
         /**
          * function that rounds a value to a specified number of decimal places, rounding upwards if two such values are
          * equally near
          */
         static final BuiltinFunction round1 = createBuiltinFunction(
-                "round",
-                "double?",
-                "double?",
-                RoundFunctionIterator.class
+            "round",
+            "double?",
+            "double?",
+            RoundFunctionIterator.class
         );
         static final BuiltinFunction round2 = createBuiltinFunction(
-                "round",
-                "double?",
-                "integer",
-                "double?",
-                RoundFunctionIterator.class
+            "round",
+            "double?",
+            "integer",
+            "double?",
+            RoundFunctionIterator.class
         );
         /**
          * function that rounds a value to a specified number of decimal places, rounding to make the last digit even if
          * two such values are equally near
          */
         static final BuiltinFunction round_half_to_even1 = createBuiltinFunction(
-                "round-half-to-even",
-                "double?",
-                "double?",
-                RoundHalfToEvenFunctionIterator.class
+            "round-half-to-even",
+            "double?",
+            "double?",
+            RoundHalfToEvenFunctionIterator.class
         );
         static final BuiltinFunction round_half_to_even2 = createBuiltinFunction(
-                "round-half-to-even",
-                "double?",
-                "integer",
-                "double?",
-                RoundHalfToEvenFunctionIterator.class
+            "round-half-to-even",
+            "double?",
+            "integer",
+            "double?",
+            RoundHalfToEvenFunctionIterator.class
         );
 
         /**
          * function that returns the approximation the mathematical constant
          */
         static final BuiltinFunction pi = createBuiltinFunction(
-                "pi",
-                "double?",
-                PiFunctionIterator.class
+            "pi",
+            "double?",
+            PiFunctionIterator.class
         );
         /**
          * function that returns the value of e^x
          */
         static final BuiltinFunction exp = createBuiltinFunction(
-                "exp",
-                "double?",
-                "double?",
-                ExpFunctionIterator.class
+            "exp",
+            "double?",
+            "double?",
+            ExpFunctionIterator.class
         );
         /**
          * function that returns the value of 10^x
          */
         static final BuiltinFunction exp10 = createBuiltinFunction(
-                "exp10",
-                "double?",
-                "double?",
-                Exp10FunctionIterator.class
+            "exp10",
+            "double?",
+            "double?",
+            Exp10FunctionIterator.class
         );
         /**
          * function that returns the natural logarithm of the argument
          */
         static final BuiltinFunction log = createBuiltinFunction(
-                "log",
-                "double?",
-                "double?",
-                LogFunctionIterator.class
+            "log",
+            "double?",
+            "double?",
+            LogFunctionIterator.class
         );
         /**
          * function that returns the base-ten logarithm of the argument
          */
         static final BuiltinFunction log10 = createBuiltinFunction(
-                "log10",
-                "double?",
-                "double?",
-                Log10FunctionIterator.class
+            "log10",
+            "double?",
+            "double?",
+            Log10FunctionIterator.class
         );
         /**
          * function that returns the result of raising the first argument to the power of the second
          */
         static final BuiltinFunction pow = createBuiltinFunction(
-                "pow",
-                "double?",
-                "double",
-                "double?",
-                PowFunctionIterator.class
+            "pow",
+            "double?",
+            "double",
+            "double?",
+            PowFunctionIterator.class
         );
         /**
          * function that returns the non-negative square root of the argument
          */
         static final BuiltinFunction sqrt = createBuiltinFunction(
-                "sqrt",
-                "double?",
-                "double?",
-                SqrtFunctionIterator.class
+            "sqrt",
+            "double?",
+            "double?",
+            SqrtFunctionIterator.class
         );
         /**
          * function that returns the sine of the angle given in radians
          */
         static final BuiltinFunction sin = createBuiltinFunction(
-                "sin",
-                "double?",
-                "double?",
-                SinFunctionIterator.class
+            "sin",
+            "double?",
+            "double?",
+            SinFunctionIterator.class
         );
         /**
          * function that returns the cosine of the angle given in radians
          */
         static final BuiltinFunction cos = createBuiltinFunction(
-                "cos",
-                "double?",
-                "double?",
-                CosFunctionIterator.class
+            "cos",
+            "double?",
+            "double?",
+            CosFunctionIterator.class
         );
         /**
          * function that returns the tangent of the angle given in radians
          */
         static final BuiltinFunction tan = createBuiltinFunction(
-                "tan",
-                "double?",
-                "double?",
-                TanFunctionIterator.class
+            "tan",
+            "double?",
+            "double?",
+            TanFunctionIterator.class
         );
         /**
          * function that returns the arc sine of the angle given in radians
          */
         static final BuiltinFunction asin = createBuiltinFunction(
-                "asin",
-                "double?",
-                "double?",
-                ASinFunctionIterator.class
+            "asin",
+            "double?",
+            "double?",
+            ASinFunctionIterator.class
         );
         /**
          * function that returns the arc cosine of the angle given in radians
          */
         static final BuiltinFunction acos = createBuiltinFunction(
-                "acos",
-                "double?",
-                "double?",
-                ACosFunctionIterator.class
+            "acos",
+            "double?",
+            "double?",
+            ACosFunctionIterator.class
         );
         /**
          * function that returns the arc tangent of the angle given in radians
          */
         static final BuiltinFunction atan = createBuiltinFunction(
-                "atan",
-                "double?",
-                "double?",
-                ATanFunctionIterator.class
+            "atan",
+            "double?",
+            "double?",
+            ATanFunctionIterator.class
         );
         /**
          * function that returns the the angle in radians subtended at the origin by the point on a plane with
          * coordinates (x, y) and the positive x-axis.
          */
         static final BuiltinFunction atan2 = createBuiltinFunction(
-                "atan2",
-                "double",
-                "double",
-                "double",
-                ATan2FunctionIterator.class
+            "atan2",
+            "double",
+            "double",
+            "double",
+            ATan2FunctionIterator.class
         );
 
 
@@ -1151,173 +1160,174 @@ public class Functions {
          * function that returns substrings
          */
         static final BuiltinFunction substring2 = createBuiltinFunction(
-                "substring",
-                "string?",
-                "double",
-                "string",
-                SubstringFunctionIterator.class
+            "substring",
+            "string?",
+            "double",
+            "string",
+            SubstringFunctionIterator.class
         );
         static final BuiltinFunction substring3 = createBuiltinFunction(
-                "substring",
-                "string?",
-                "double",
-                "double",
-                "string",
-                SubstringFunctionIterator.class
+            "substring",
+            "string?",
+            "double",
+            "double",
+            "string",
+            SubstringFunctionIterator.class
         );
         /**
          * function that returns the part of the first variable that precedes the first occurrence of the second
          * variable.
          */
         static final BuiltinFunction substring_before = createBuiltinFunction(
-                "substring-before",
-                "string?",
-                "string?",
-                "string",
-                SubstringBeforeFunctionIterator.class
+            "substring-before",
+            "string?",
+            "string?",
+            "string",
+            SubstringBeforeFunctionIterator.class
         );
         /**
          * function that returns the part of the first variable that follows the first occurrence of the second
          * vairable.
          */
         static final BuiltinFunction substring_after = createBuiltinFunction(
-                "substring-after",
-                "string?",
-                "string?",
-                "string",
-                SubstringAfterFunctionIterator.class
+            "substring-after",
+            "string?",
+            "string?",
+            "string",
+            SubstringAfterFunctionIterator.class
         );
         /**
          * function that returns substrings
          */
         static final BuiltinFunction concat =
-                new BuiltinFunction(
-                        new FunctionIdentifier("concat", 100),
-                        new FunctionSignature(
-                                Collections.nCopies(
-                                        100, sequenceTypes.get("atomic*")
-                                ),
-                                sequenceTypes.get("string")
-                        ),
-                        ConcatFunctionIterator.class
-        );
+            new BuiltinFunction(
+                    new FunctionIdentifier("concat", 100),
+                    new FunctionSignature(
+                            Collections.nCopies(
+                                100,
+                                sequenceTypes.get("atomic*")
+                            ),
+                            sequenceTypes.get("string")
+                    ),
+                    ConcatFunctionIterator.class
+            );
         /**
          * function that returns substrings
          */
         static final BuiltinFunction string_join1 = createBuiltinFunction(
-                "string-join",
-                "string*",
-                "string",
-                StringJoinFunctionIterator.class
+            "string-join",
+            "string*",
+            "string",
+            StringJoinFunctionIterator.class
         );
         static final BuiltinFunction string_join2 = createBuiltinFunction(
-                "string-join",
-                "string*",
-                "string",
-                "string",
-                StringJoinFunctionIterator.class
+            "string-join",
+            "string*",
+            "string",
+            "string",
+            StringJoinFunctionIterator.class
         );
         /**
          * function that returns the string length
          */
         static final BuiltinFunction string_length = createBuiltinFunction(
-                "string-length",
-                "string?",
-                "integer",
-                StringLengthFunctionIterator.class
+            "string-length",
+            "string?",
+            "integer",
+            StringLengthFunctionIterator.class
         );
         /**
          * function that returns tokens
          */
         static final BuiltinFunction tokenize1 = createBuiltinFunction(
-                "tokenize",
-                "string?",
-                "string*",
-                TokenizeFunctionIterator.class
+            "tokenize",
+            "string?",
+            "string*",
+            TokenizeFunctionIterator.class
         );
         static final BuiltinFunction tokenize2 = createBuiltinFunction(
-                "tokenize",
-                "string?",
-                "string",
-                "string*",
-                TokenizeFunctionIterator.class
+            "tokenize",
+            "string?",
+            "string",
+            "string*",
+            TokenizeFunctionIterator.class
         );
         /**
          * function that checks whether a string ends with a substring
          */
         static final BuiltinFunction ends_with = createBuiltinFunction(
-                "ends-with",
-                "string?",
-                "string?",
-                "boolean",
-                EndsWithFunctionIterator.class
+            "ends-with",
+            "string?",
+            "string?",
+            "boolean",
+            EndsWithFunctionIterator.class
         );
         /**
          * function that checks whether a string starts with a substring
          */
         static final BuiltinFunction starts_with = createBuiltinFunction(
-                "starts-with",
-                "string?",
-                "string?",
-                "boolean",
-                StartsWithFunctionIterator.class
+            "starts-with",
+            "string?",
+            "string?",
+            "boolean",
+            StartsWithFunctionIterator.class
         );
         /**
          * function that checks whether a string contains a substring
          */
         static final BuiltinFunction contains = createBuiltinFunction(
-                "contains",
-                "string?",
-                "string?",
-                "boolean",
-                ContainsFunctionIterator.class
+            "contains",
+            "string?",
+            "string?",
+            "boolean",
+            ContainsFunctionIterator.class
         );
         /**
          * function that checks whether a string matches a regular expression
          */
         static final BuiltinFunction matches = createBuiltinFunction(
-                "matches",
-                "string?",
-                "string",
-                "boolean",
-                MatchesFunctionIterator.class
+            "matches",
+            "string?",
+            "string",
+            "boolean",
+            MatchesFunctionIterator.class
         );
         /**
          * function that normalizes spaces in a string
          */
         static final BuiltinFunction normalize_space = createBuiltinFunction(
-                "normalize-space",
-                "string?",
-                "string",
-                NormalizeSpaceFunctionIterator.class
+            "normalize-space",
+            "string?",
+            "string",
+            NormalizeSpaceFunctionIterator.class
         );
 
         /**
          * function that returns the duration item from the supplied string
          */
         static final BuiltinFunction duration = createBuiltinFunction(
-                "duration",
-                "string?",
-                "duration?",
-                DurationFunctionIterator.class
+            "duration",
+            "string?",
+            "duration?",
+            DurationFunctionIterator.class
         );
         /**
          * function that returns the yearMonthDuration item from the supplied string
          */
         static final BuiltinFunction yearMonthDuration = createBuiltinFunction(
-                "yearMonthDuration",
-                "string?",
-                "yearMonthDuration?",
-                YearMonthDurationFunctionIterator.class
+            "yearMonthDuration",
+            "string?",
+            "yearMonthDuration?",
+            YearMonthDurationFunctionIterator.class
         );
         /**
          * function that returns the dayTimeDuration item from the supplied string
          */
         static final BuiltinFunction dayTimeDuration = createBuiltinFunction(
-                "dayTimeDuration",
-                "string?",
-                "dayTimeDuration?",
-                DayTimeDurationFunctionIterator.class
+            "dayTimeDuration",
+            "string?",
+            "dayTimeDuration?",
+            DayTimeDurationFunctionIterator.class
         );
 
 
@@ -1325,55 +1335,55 @@ public class Functions {
          * function that returns the years from a duration
          */
         static final BuiltinFunction years_from_duration = createBuiltinFunction(
-                "years-from-duration",
-                "duration?",
-                "integer?",
-                YearsFromDurationFunctionIterator.class
+            "years-from-duration",
+            "duration?",
+            "integer?",
+            YearsFromDurationFunctionIterator.class
         );
         /**
          * function that returns the months from a duration
          */
         static final BuiltinFunction months_from_duration = createBuiltinFunction(
-                "months-from-duration",
-                "duration?",
-                "integer?",
-                MonthsFromDurationFunctionIterator.class
+            "months-from-duration",
+            "duration?",
+            "integer?",
+            MonthsFromDurationFunctionIterator.class
         );
         /**
          * function that returns the days from a duration
          */
         static final BuiltinFunction days_from_duration = createBuiltinFunction(
-                "days-from-duration",
-                "duration?",
-                "integer?",
-                DaysFromDurationFunctionIterator.class
+            "days-from-duration",
+            "duration?",
+            "integer?",
+            DaysFromDurationFunctionIterator.class
         );
         /**
          * function that returns the hours from a duration
          */
         static final BuiltinFunction hours_from_duration = createBuiltinFunction(
-                "hours-from-duration",
-                "duration?",
-                "integer?",
-                HoursFromDurationFunctionIterator.class
+            "hours-from-duration",
+            "duration?",
+            "integer?",
+            HoursFromDurationFunctionIterator.class
         );
         /**
          * function that returns the minutes from a duration
          */
         static final BuiltinFunction minutes_from_duration = createBuiltinFunction(
-                "minutes-from-duration",
-                "duration?",
-                "integer?",
-                MinutesFromDurationFunctionIterator.class
+            "minutes-from-duration",
+            "duration?",
+            "integer?",
+            MinutesFromDurationFunctionIterator.class
         );
         /**
          * function that returns the seconds from a duration
          */
         static final BuiltinFunction seconds_from_duration = createBuiltinFunction(
-                "seconds-from-duration",
-                "duration?",
-                "decimal?",
-                SecondsFromDurationFunctionIterator.class
+            "seconds-from-duration",
+            "duration?",
+            "decimal?",
+            SecondsFromDurationFunctionIterator.class
         );
 
 
@@ -1381,74 +1391,74 @@ public class Functions {
          * function that returns the dateTime item from the supplied string
          */
         static final BuiltinFunction dateTime = createBuiltinFunction(
-                "dateTime",
-                "string?",
-                "dateTime?",
-                DateTimeFunctionIterator.class
+            "dateTime",
+            "string?",
+            "dateTime?",
+            DateTimeFunctionIterator.class
         );
 
         /**
          * function that returns the year from a dateTime
          */
         static final BuiltinFunction year_from_dateTime = createBuiltinFunction(
-                "year-from-dateTime",
-                "dateTime?",
-                "integer?",
-                YearFromDateTimeFunctionIterator.class
+            "year-from-dateTime",
+            "dateTime?",
+            "integer?",
+            YearFromDateTimeFunctionIterator.class
         );
         /**
          * function that returns the month from a dateTime
          */
         static final BuiltinFunction month_from_dateTime = createBuiltinFunction(
-                "month-from-dateTime",
-                "dateTime?",
-                "integer?",
-                MonthFromDateTimeFunctionIterator.class
+            "month-from-dateTime",
+            "dateTime?",
+            "integer?",
+            MonthFromDateTimeFunctionIterator.class
         );
         /**
          * function that returns the day from a dateTime
          */
         static final BuiltinFunction day_from_dateTime = createBuiltinFunction(
-                "day-from-dateTime",
-                "dateTime?",
-                "integer?",
-                DayFromDateTimeFunctionIterator.class
+            "day-from-dateTime",
+            "dateTime?",
+            "integer?",
+            DayFromDateTimeFunctionIterator.class
         );
         /**
          * function that returns the hours from a dateTime
          */
         static final BuiltinFunction hours_from_dateTime = createBuiltinFunction(
-                "hours-from-dateTime",
-                "dateTime?",
-                "integer?",
-                HoursFromDateTimeFunctionIterator.class
+            "hours-from-dateTime",
+            "dateTime?",
+            "integer?",
+            HoursFromDateTimeFunctionIterator.class
         );
         /**
          * function that returns the minutes from a dateTime
          */
         static final BuiltinFunction minutes_from_dateTime = createBuiltinFunction(
-                "minutes-from-dateTime",
-                "dateTime?",
-                "integer?",
-                MinutesFromDateTimeFunctionIterator.class
+            "minutes-from-dateTime",
+            "dateTime?",
+            "integer?",
+            MinutesFromDateTimeFunctionIterator.class
         );
         /**
          * function that returns the seconds from a dateTime
          */
         static final BuiltinFunction seconds_from_dateTime = createBuiltinFunction(
-                "seconds-from-dateTime",
-                "dateTime?",
-                "decimal?",
-                SecondsFromDateTimeFunctionIterator.class
+            "seconds-from-dateTime",
+            "dateTime?",
+            "decimal?",
+            SecondsFromDateTimeFunctionIterator.class
         );
         /**
          * function that returns the seconds from a dateTime
          */
         static final BuiltinFunction timezone_from_dateTime = createBuiltinFunction(
-                "timezone-from-dateTime",
-                "dateTime?",
-                "dayTimeDuration?",
-                TimezoneFromDateTimeFunctionIterator.class
+            "timezone-from-dateTime",
+            "dateTime?",
+            "dayTimeDuration?",
+            TimezoneFromDateTimeFunctionIterator.class
         );
 
 
@@ -1456,17 +1466,17 @@ public class Functions {
          * function that adjusts a dateTime value to a specific timezone, or to no timezone at all.
          */
         static final BuiltinFunction adjust_dateTime_to_timezone1 = createBuiltinFunction(
-                "adjust-dateTime-to-timezone",
-                "dateTime?",
-                "dateTime?",
-                AdjustDateTimeToTimezone.class
+            "adjust-dateTime-to-timezone",
+            "dateTime?",
+            "dateTime?",
+            AdjustDateTimeToTimezone.class
         );
         static final BuiltinFunction adjust_dateTime_to_timezone2 = createBuiltinFunction(
-                "adjust-dateTime-to-timezone",
-                "dateTime?",
-                "dayTimeDuration?",
-                "dateTime?",
-                AdjustDateTimeToTimezone.class
+            "adjust-dateTime-to-timezone",
+            "dateTime?",
+            "dayTimeDuration?",
+            "dateTime?",
+            AdjustDateTimeToTimezone.class
         );
 
 
@@ -1475,46 +1485,46 @@ public class Functions {
          * function that returns the date item from the supplied string
          */
         static final BuiltinFunction date = createBuiltinFunction(
-                "date",
-                "string?",
-                "date?",
-                DateFunctionIterator.class
+            "date",
+            "string?",
+            "date?",
+            DateFunctionIterator.class
         );
         /**
          * function that returns the year from a date
          */
         static final BuiltinFunction year_from_date = createBuiltinFunction(
-                "year-from-date",
-                "date?",
-                "integer?",
-                YearFromDateFunctionIterator.class
+            "year-from-date",
+            "date?",
+            "integer?",
+            YearFromDateFunctionIterator.class
         );
         /**
          * function that returns the month from a date
          */
         static final BuiltinFunction month_from_date = createBuiltinFunction(
-                "month-from-date",
-                "date?",
-                "integer?",
-                MonthFromDateFunctionIterator.class
+            "month-from-date",
+            "date?",
+            "integer?",
+            MonthFromDateFunctionIterator.class
         );
         /**
          * function that returns the day from a date
          */
         static final BuiltinFunction day_from_date = createBuiltinFunction(
-                "day-from-date",
-                "date?",
-                "integer?",
-                DayFromDateFunctionIterator.class
+            "day-from-date",
+            "date?",
+            "integer?",
+            DayFromDateFunctionIterator.class
         );
         /**
          * function that returns the seconds from a date
          */
         static final BuiltinFunction timezone_from_date = createBuiltinFunction(
-                "timezone-from-date",
-                "date?",
-                "dayTimeDuration?",
-                TimezoneFromDateFunctionIterator.class
+            "timezone-from-date",
+            "date?",
+            "dayTimeDuration?",
+            TimezoneFromDateFunctionIterator.class
         );
 
 
@@ -1522,218 +1532,218 @@ public class Functions {
          * function that adjusts a date value to a specific timezone, or to no timezone at all.
          */
         static final BuiltinFunction adjust_date_to_timezone1 = createBuiltinFunction(
-                "adjust-date-to-timezone",
-                "date?",
-                "date?",
-                AdjustDateToTimezone.class
+            "adjust-date-to-timezone",
+            "date?",
+            "date?",
+            AdjustDateToTimezone.class
         );
         static final BuiltinFunction adjust_date_to_timezone2 = createBuiltinFunction(
-                "adjust-date-to-timezone",
-                "date?",
-                "dayTimeDuration?",
-                "date?",
-                AdjustDateToTimezone.class
+            "adjust-date-to-timezone",
+            "date?",
+            "dayTimeDuration?",
+            "date?",
+            AdjustDateToTimezone.class
         );
 
         /**
          * function that returns the time item from the supplied string
          */
         static final BuiltinFunction time = createBuiltinFunction(
-                "time",
-                "string?",
-                "time?",
-                TimeFunctionIterator.class
+            "time",
+            "string?",
+            "time?",
+            TimeFunctionIterator.class
         );
         /**
          * function that returns the hours from a time
          */
         static final BuiltinFunction hours_from_time = createBuiltinFunction(
-                "hours-from-time",
-                "time?",
-                "integer?",
-                HoursFromTimeFunctionIterator.class
+            "hours-from-time",
+            "time?",
+            "integer?",
+            HoursFromTimeFunctionIterator.class
         );
         /**
          * function that returns the minutes from a time
          */
         static final BuiltinFunction minutes_from_time = createBuiltinFunction(
-                "minutes-from-time",
-                "time?",
-                "integer?",
-                MinutesFromTimeFunctionIterator.class
+            "minutes-from-time",
+            "time?",
+            "integer?",
+            MinutesFromTimeFunctionIterator.class
         );
         /**
          * function that returns the seconds from a time
          */
         static final BuiltinFunction seconds_from_time = createBuiltinFunction(
-                "seconds-from-time",
-                "time?",
-                "decimal?",
-                SecondsFromTimeFunctionIterator.class
+            "seconds-from-time",
+            "time?",
+            "decimal?",
+            SecondsFromTimeFunctionIterator.class
         );
         /**
          * function that returns the seconds from a time
          */
         static final BuiltinFunction timezone_from_time = createBuiltinFunction(
-                "timezone-from-time",
-                "time?",
-                "dayTimeDuration?",
-                TimezoneFromTimeFunctionIterator.class
+            "timezone-from-time",
+            "time?",
+            "dayTimeDuration?",
+            TimezoneFromTimeFunctionIterator.class
         );
         /**
          * function that adjusts a time value to a specific timezone, or to no timezone at all.
          */
         static final BuiltinFunction adjust_time_to_timezone1 = createBuiltinFunction(
-                "adjust-time-to-timezone",
-                "time?",
-                "time?",
-                AdjustTimeToTimezone.class
+            "adjust-time-to-timezone",
+            "time?",
+            "time?",
+            AdjustTimeToTimezone.class
         );
         static final BuiltinFunction adjust_time_to_timezone2 = createBuiltinFunction(
-                "adjust-time-to-timezone",
-                "time?",
-                "dayTimeDuration?",
-                "time?",
-                AdjustTimeToTimezone.class
+            "adjust-time-to-timezone",
+            "time?",
+            "dayTimeDuration?",
+            "time?",
+            AdjustTimeToTimezone.class
         );
 
         /**
          * function that returns the hexBinary item from the supplied string
          */
         static final BuiltinFunction hexBinary = createBuiltinFunction(
-                "hexBinary",
-                "string?",
-                "hexBinary?",
-                HexBinaryFunctionIterator.class
+            "hexBinary",
+            "string?",
+            "hexBinary?",
+            HexBinaryFunctionIterator.class
         );
         /**
          * function that returns the base64Binary item from the supplied string
          */
         static final BuiltinFunction base64Binary = createBuiltinFunction(
-                "base64Binary",
-                "string?",
-                "base64Binary?",
-                Base64BinaryFunctionIterator.class
+            "base64Binary",
+            "string?",
+            "base64Binary?",
+            Base64BinaryFunctionIterator.class
         );
 
         /**
          * function that returns the keys of a Json Object
          */
         static final BuiltinFunction keys = createBuiltinFunction(
-                "keys",
-                "item*",
-                "item*",
-                ObjectKeysFunctionIterator.class
+            "keys",
+            "item*",
+            "item*",
+            ObjectKeysFunctionIterator.class
         );
         /**
          * function that returns returns all members of all arrays of the supplied sequence
          */
         static final BuiltinFunction members = createBuiltinFunction(
-                "members",
-                "item*",
-                "item*",
-                ArrayMembersFunctionIterator.class
+            "members",
+            "item*",
+            "item*",
+            ArrayMembersFunctionIterator.class
         );
         /**
          * function that returns the JSON null
          */
         static final BuiltinFunction null_function = createBuiltinFunction(
-                "null",
-                "null?",
-                NullFunctionIterator.class
+            "null",
+            "null?",
+            NullFunctionIterator.class
         );
         /**
          * function that returns the length of an array
          */
         static final BuiltinFunction size = createBuiltinFunction(
-                "size",
-                "array?",
-                "integer?",
-                ArraySizeFunctionIterator.class
+            "size",
+            "array?",
+            "integer?",
+            ArraySizeFunctionIterator.class
         );
         /**
          * function that dynamically creates an object that merges the values of key collisions into arrays
          */
         static final BuiltinFunction accumulate = createBuiltinFunction(
-                "accumulate",
-                "item*",
-                "object",
-                ObjectAccumulateFunctionIterator.class
+            "accumulate",
+            "item*",
+            "object",
+            ObjectAccumulateFunctionIterator.class
         );
         /**
          * function that returns all arrays contained within the supplied items, regardless of depth.
          */
         static final BuiltinFunction descendant_arrays = createBuiltinFunction(
-                "descendant-arrays",
-                "item*",
-                "item*",
-                ArrayDescendantFunctionIterator.class
+            "descendant-arrays",
+            "item*",
+            "item*",
+            ArrayDescendantFunctionIterator.class
         );
         /**
          * function that returns all objects contained within the supplied items, regardless of depth
          */
         static final BuiltinFunction descendant_objects = createBuiltinFunction(
-                "descendant-objects",
-                "item*",
-                "item*",
-                ObjectDescendantFunctionIterator.class
+            "descendant-objects",
+            "item*",
+            "item*",
+            ObjectDescendantFunctionIterator.class
         );
         /**
          * function that returns all objects contained within the supplied items, regardless of depth
          */
         static final BuiltinFunction descendant_pairs = createBuiltinFunction(
-                "descendant-pairs",
-                "item*",
-                "item*",
-                ObjectDescendantPairsFunctionIterator.class
+            "descendant-pairs",
+            "item*",
+            "item*",
+            ObjectDescendantPairsFunctionIterator.class
         );
         /**
          * function that recursively flattens arrays in the input sequence, leaving non-arrays intact
          */
         static final BuiltinFunction flatten = createBuiltinFunction(
-                "flatten",
-                "item*",
-                "item*",
-                ArrayFlattenFunctionIterator.class
+            "flatten",
+            "item*",
+            "item*",
+            ArrayFlattenFunctionIterator.class
         );
         /**
          * function that returns the intersection of the supplied objects, and aggregates values corresponding to the
          * same name into an array
          */
         static final BuiltinFunction intersect = createBuiltinFunction(
-                "intersect",
-                "item*",
-                "object+",
-                ObjectIntersectFunctionIterator.class
+            "intersect",
+            "item*",
+            "object+",
+            ObjectIntersectFunctionIterator.class
         );
         /**
          * function that projects objects by filtering their pairs and leaves non-objects intact
          */
         static final BuiltinFunction project = createBuiltinFunction(
-                "project",
-                "item*",
-                "string*",
-                "item*",
-                ObjectProjectFunctionIterator.class
+            "project",
+            "item*",
+            "string*",
+            "item*",
+            ObjectProjectFunctionIterator.class
         );
         /**
          * function that removes the pairs with the given keys from all objects and leaves non-objects intact
          */
         static final BuiltinFunction remove_keys = createBuiltinFunction(
-                "remove-keys",
-                "item*",
-                "string*",
-                "item*",
-                ObjectRemoveKeysFunctionIterator.class
+            "remove-keys",
+            "item*",
+            "string*",
+            "item*",
+            ObjectRemoveKeysFunctionIterator.class
         );
         /**
          * function that returns the values of a Json Object
          */
         static final BuiltinFunction values = createBuiltinFunction(
-                "values",
-                "item*",
-                "item*",
-                ObjectValuesFunctionIterator.class
+            "values",
+            "item*",
+            "item*",
+            ObjectValuesFunctionIterator.class
         );
 
     }

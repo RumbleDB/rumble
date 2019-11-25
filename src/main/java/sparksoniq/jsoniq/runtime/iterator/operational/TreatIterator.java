@@ -28,10 +28,8 @@ public class TreatIterator extends HybridRuntimeIterator {
     private ItemType itemType;
     private String sequenceTypeName;
 
-    Item _nextResult;
-    Item _currentResult;
+    private Item _nextResult;
     private int _childIndex;
-    boolean _shouldCheckForTypePromotion = true;
 
     public TreatIterator(
             RuntimeIterator iterator,
@@ -73,7 +71,7 @@ public class TreatIterator extends HybridRuntimeIterator {
     @Override
     public Item nextLocal() {
         if (this._hasNext) {
-            _currentResult = _nextResult;
+            Item _currentResult = _nextResult;
             setNextResult();
             return _currentResult;
         } else
@@ -119,14 +117,13 @@ public class TreatIterator extends HybridRuntimeIterator {
         return childRDD.filter(transformation);
     }
 
-    void checkEmptySequence(long size) {
+    private void checkEmptySequence(long size) {
         if (
             size == 0
                 && (_sequenceType.getArity() == SequenceType.Arity.One
                     ||
                     _sequenceType.getArity() == SequenceType.Arity.OneOrMore)
         ) {
-            _shouldCheckForTypePromotion = false;
             String message = "Empty sequence cannot be treated as type "
                 + sequenceTypeName
                 + _sequenceType.getArity().getSymbol();
@@ -136,9 +133,8 @@ public class TreatIterator extends HybridRuntimeIterator {
         }
     }
 
-    void checkItemsSize(long size) {
+    private void checkItemsSize(long size) {
         if (size > 0 && _sequenceType.isEmptySequence()) {
-            _shouldCheckForTypePromotion = false;
             String message = ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName())
                 + " cannot be treated as type empty-sequence()";
             throw _shouldThrowTreatException
@@ -153,7 +149,6 @@ public class TreatIterator extends HybridRuntimeIterator {
                     ||
                     _sequenceType.getArity() == SequenceType.Arity.OneOrZero)
         ) {
-            _shouldCheckForTypePromotion = false;
             String message = "Sequences of more than one item cannot be treated as type "
                 + sequenceTypeName
                 + _sequenceType.getArity().getSymbol();

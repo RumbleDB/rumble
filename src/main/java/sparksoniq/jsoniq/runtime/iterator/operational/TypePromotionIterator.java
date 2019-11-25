@@ -3,14 +3,17 @@ package sparksoniq.jsoniq.runtime.iterator.operational;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
+import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.TreatException;
 import sparksoniq.exceptions.UnexpectedTypeException;
-import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.TreatAsClosure;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.TypePromotionClosure;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.semantics.types.ItemType;
+import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
 
 import java.util.Collections;
@@ -19,9 +22,14 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private final String _exceptionMessage;
+    private RuntimeIterator _iterator;
     private SequenceType _sequenceType;
-    private TreatIterator _treatIterator;
-    private RuntimeIterator _child;
+
+    private ItemType itemType;
+    private String sequenceTypeName;
+
+    private Item _nextResult;
+    private int _childIndex;
 
     public TypePromotionIterator(
             String exceptionMessage,
@@ -31,76 +39,135 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     ) {
         super(Collections.singletonList(iterator), iteratorMetadata);
         this._exceptionMessage = exceptionMessage;
-        this._child = iterator;
+        this._iterator = iterator;
         this._sequenceType = sequenceType;
-        this._treatIterator = new TreatIterator(_child, _sequenceType, true, iteratorMetadata);
-    }
-
-    @Override
-    public void openLocal() {
-        try {
-            _treatIterator.open(_currentDynamicContext);
-        } catch (TreatException e) {
-            this.checkTypePromotion(e.getJSONiqErrorMessage());
-        }
-    }
-
-    @Override
-    public void closeLocal() {
-        _treatIterator.close();
-    }
-
-    @Override
-    public void resetLocal(DynamicContext context) {
-        _treatIterator.reset(context);
+        itemType = _sequenceType.getItemType();
+        sequenceTypeName = ItemTypes.getItemTypeName(itemType.getType().toString());
     }
 
     @Override
     public boolean hasNextLocal() {
-        return _treatIterator.hasNext();
+        return _hasNext;
     }
 
     @Override
+    public void resetLocal(DynamicContext context) {
+        _iterator.reset(_currentDynamicContext);
+        setNextResult();
+    }
+
+    @Override
+    public void closeLocal() {
+        _iterator.close();
+    }
+
+    @Override
+    public void openLocal() {
+        this._childIndex = 0;
+        _iterator.open(_currentDynamicContext);
+        this.setNextResult();
+    }
+
+
+    @Override
     public Item nextLocal() {
-        Item result;
-        try {
-            result = _treatIterator.next();
-        } catch (TreatException e) {
-            this.checkTypePromotion(e.getJSONiqErrorMessage());
-            result = _treatIterator._currentResult;
+        if (this._hasNext) {
+            Item _currentResult = _nextResult;
+            setNextResult();
+            return _currentResult;
+        } else
+            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
+    }
+
+    private void setNextResult() {
+        _nextResult = null;
+        if (_iterator.hasNext()) {
+            _nextResult = _iterator.next();
+            if (_nextResult != null)
+                _childIndex++;
+        } else {
+            _iterator.close();
+            checkEmptySequence(_childIndex);
         }
-        return result;
+
+        this._hasNext = _nextResult != null;
+        if (!hasNext())
+            return;
+
+        checkItemsSize(_childIndex);
+        if (!_nextResult.isTypeOf(itemType)) {
+            checkTypePromotion();
+        }
+    }
+
+    private void checkEmptySequence(long size) {
+        if (
+            size == 0
+                && (_sequenceType.getArity() == SequenceType.Arity.One
+                    ||
+                    _sequenceType.getArity() == SequenceType.Arity.OneOrMore)
+        ) {
+            throw new UnexpectedTypeException(
+                    "Empty sequence cannot be promoted to type "
+                        + sequenceTypeName
+                        + _sequenceType.getArity().getSymbol(),
+                    getMetadata()
+            );
+        }
+    }
+
+    private void checkItemsSize(long size) {
+        if (size > 0 && _sequenceType.isEmptySequence()) {
+            throw new UnexpectedTypeException(
+                    ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName())
+                        + " cannot be promoted to type empty-sequence()",
+                    getMetadata()
+            );
+        }
+
+
+        if (
+            size > 1
+                && (_sequenceType.getArity() == SequenceType.Arity.One
+                    ||
+                    _sequenceType.getArity() == SequenceType.Arity.OneOrZero)
+        ) {
+            throw new UnexpectedTypeException(
+                    "Sequences of more than one item cannot be promoted to type "
+                        + sequenceTypeName
+                        + _sequenceType.getArity().getSymbol(),
+                    getMetadata()
+            );
+        }
     }
 
     @Override
     public boolean initIsRDD() {
-        return _treatIterator.isRDD();
+        return _iterator.isRDD();
     }
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         _currentDynamicContext = context;
-        JavaRDD<Item> childRDD = _child.getRDD(context);
+        JavaRDD<Item> childRDD = _iterator.getRDD(context);
 
         int count = childRDD.take(2).size();
-        _treatIterator.checkEmptySequence(count);
-        _treatIterator.checkItemsSize(count);
+        checkEmptySequence(count);
+        checkItemsSize(count);
         Function<Item, Item> transformation = new TypePromotionClosure(_exceptionMessage, _sequenceType, getMetadata());
         return childRDD.map(transformation);
     }
 
-    private boolean resultCanBePromoted() {
-        return _treatIterator._shouldCheckForTypePromotion
-            && _treatIterator._nextResult != null
-            && _treatIterator._nextResult.canBePromotedTo(_sequenceType.getItemType());
-    }
-
-    private void checkTypePromotion(String treatExceptionMessage) {
-        if (!this.resultCanBePromoted())
+    private void checkTypePromotion() {
+        if (_nextResult == null || !_nextResult.canBePromotedTo(_sequenceType.getItemType()))
             throw new UnexpectedTypeException(
-                    _exceptionMessage + treatExceptionMessage.replaceFirst("treated as", "promoted to"),
+                    _exceptionMessage
+                        + ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName())
+                        + " cannot be promoted to type "
+                        + sequenceTypeName
+                        + _sequenceType.getArity().getSymbol(),
                     getMetadata()
             );
-        _treatIterator._nextResult = _treatIterator._nextResult.promoteTo(_sequenceType.getItemType());
+        _nextResult = _nextResult.promoteTo(_sequenceType.getItemType());
     }
 }

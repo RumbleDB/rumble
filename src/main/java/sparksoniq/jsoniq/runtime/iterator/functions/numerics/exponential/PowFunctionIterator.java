@@ -69,7 +69,8 @@ public class PowFunctionIterator extends LocalFunctionCallIterator {
             if (base.isNumeric() && exponent.isNumeric()) {
                 try {
                     this._hasNext = false;
-                    return ItemFactory.getInstance().createDoubleItem(Math.pow(base.castToDoubleValue(), exponent.castToDoubleValue()));
+                    return ItemFactory.getInstance()
+                        .createDoubleItem(Math.pow(base.castToDoubleValue(), exponent.castToDoubleValue()));
                 } catch (IteratorFlowException e) {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
                 }
