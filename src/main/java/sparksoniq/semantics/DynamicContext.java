@@ -198,15 +198,21 @@ public class DynamicContext implements Serializable, KryoSerializable {
         );
     }
 
-    public Item getLocalVariableCount(String varName) {
+    public Item getVariableCount(String varName) {
         if (_localVariableCounts.containsKey(varName)) {
             return _localVariableCounts.get(varName);
+        }
+        if (_dfVariableValues.containsKey(varName)) {
+            return ItemFactory.getInstance().createIntegerItem((int) _dfVariableValues.get(varName).count());
+        }
+        if (_rddVariableValues.containsKey(varName)) {
+            return ItemFactory.getInstance().createIntegerItem((int) _rddVariableValues.get(varName).count());
         }
         if (_localVariableValues.containsKey(varName)) {
             return ItemFactory.getInstance().createIntegerItem(_localVariableValues.get(varName).size());
         }
         if (_parent != null) {
-            return _parent.getLocalVariableCount(varName);
+            return _parent.getVariableCount(varName);
         }
         throw new SparksoniqRuntimeException("Runtime error retrieving variable " + varName + " value");
     }
