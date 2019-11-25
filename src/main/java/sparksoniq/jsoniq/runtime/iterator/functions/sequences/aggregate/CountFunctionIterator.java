@@ -48,24 +48,30 @@ public class CountFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this._hasNext) {
             RuntimeIterator iterator = this._children.get(0);
+
+            // the count($x) case is treated separately because we can short-circuit the
+            // count, e.g., if it comes from the group-by aggregation of a non-grouping
+            // key.
+            if (iterator instanceof VariableReferenceIterator) {
+                VariableReferenceIterator expr = (VariableReferenceIterator) iterator;
+                this._hasNext = false;
+                return _currentDynamicContext.getVariableCount(expr.getVariableName());
+            }
+
             if (!iterator.isRDD()) {
-                if (iterator instanceof VariableReferenceIterator) {
-                    VariableReferenceIterator expr = (VariableReferenceIterator) iterator;
-                    this._hasNext = false;
-                    return _currentDynamicContext.getVariableCount(expr.getVariableName());
-                }
                 List<Item> results = getItemsFromIteratorWithCurrentContext(iterator);
                 this._hasNext = false;
                 return ItemFactory.getInstance().createIntegerItem(results.size());
+            }
+
+            // it is an RDD
+            long count = iterator.getRDD(_currentDynamicContext).count();
+            this._hasNext = false;
+            if (count > (long) Integer.MAX_VALUE) {
+                // TODO: handle too big x values
+                throw new SparksoniqRuntimeException("The count value is too big to convert to integer type.");
             } else {
-                long count = iterator.getRDD(_currentDynamicContext).count();
-                this._hasNext = false;
-                if (count > (long) Integer.MAX_VALUE) {
-                    // TODO: handle too big x values
-                    throw new SparksoniqRuntimeException("The count value is too big to convert to integer type.");
-                } else {
-                    return ItemFactory.getInstance().createIntegerItem((int) count);
-                }
+                return ItemFactory.getInstance().createIntegerItem((int) count);
             }
         } else {
             throw new IteratorFlowException(
