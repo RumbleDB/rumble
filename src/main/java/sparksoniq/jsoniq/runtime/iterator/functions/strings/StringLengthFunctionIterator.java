@@ -46,9 +46,8 @@ public class StringLengthFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             this._hasNext = false;
 
-            StringItem stringItem = this.getSingleItemOfTypeFromIterator(
-                this._children.get(0),
-                StringItem.class
+            Item stringItem = this.getSingleItemFromIterator(
+                this._children.get(0)
             );
 
             if (stringItem == null) {

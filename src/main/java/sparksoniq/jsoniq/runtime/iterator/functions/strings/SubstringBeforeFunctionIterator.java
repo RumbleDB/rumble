@@ -22,13 +22,11 @@ public class SubstringBeforeFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            StringItem stringItem = this.getSingleItemOfTypeFromIterator(
-                this._children.get(0),
-                StringItem.class
+            Item stringItem = this.getSingleItemFromIterator(
+                this._children.get(0)
             );
-            StringItem substringItem = this.getSingleItemOfTypeFromIterator(
-                this._children.get(1),
-                StringItem.class
+            Item substringItem = this.getSingleItemFromIterator(
+                this._children.get(1)
             );
             if (
                 substringItem == null

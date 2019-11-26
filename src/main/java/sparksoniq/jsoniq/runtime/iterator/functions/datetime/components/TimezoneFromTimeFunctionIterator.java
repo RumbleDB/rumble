@@ -17,7 +17,7 @@ import java.util.List;
 public class TimezoneFromTimeFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
-    private TimeItem _timeItem = null;
+    private Item _timeItem = null;
 
     public TimezoneFromTimeFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -44,23 +44,9 @@ public class TimezoneFromTimeFunctionIterator extends LocalFunctionCallIterator 
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        try {
-            _timeItem = this.getSingleItemOfTypeFromIterator(
-                this._children.get(0),
-                TimeItem.class,
-                new UnknownFunctionCallException("timezone-from-dateTime", this._children.size(), getMetadata())
-            );
-        } catch (UnexpectedTypeException e) {
-            throw new UnexpectedTypeException(
-                    e.getJSONiqErrorMessage() + "? of function timezone-from-time()",
-                    this._children.get(0).getMetadata()
-            );
-        } catch (UnknownFunctionCallException e) {
-            throw new UnexpectedTypeException(
-                    " Sequence of more than one item can not be promoted to parameter type time? of function timezone-from-time()",
-                    getMetadata()
-            );
-        }
+        _timeItem = this.getSingleItemFromIterator(
+            this._children.get(0)
+        );
         this._hasNext = _timeItem != null && _timeItem.hasTimeZone();
     }
 }

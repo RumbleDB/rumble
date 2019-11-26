@@ -6,7 +6,6 @@ import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.exceptions.UnknownFunctionCallException;
 import sparksoniq.jsoniq.item.ItemFactory;
-import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -17,7 +16,7 @@ import java.util.List;
 public class HexBinaryFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
-    private StringItem _hexBinaryStringItem = null;
+    private Item _hexBinaryStringItem = null;
 
     public HexBinaryFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -52,18 +51,9 @@ public class HexBinaryFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        try {
-            _hexBinaryStringItem = this.getSingleItemOfTypeFromIterator(
-                this._children.get(0),
-                StringItem.class,
-                new UnknownFunctionCallException("hexBinary", this._children.size(), getMetadata())
-            );
-        } catch (UnknownFunctionCallException e) {
-            throw new UnexpectedTypeException(
-                    " Sequence of more than one item can not be cast to type with quantifier '1' or '?'",
-                    getMetadata()
-            );
-        }
+        _hexBinaryStringItem = this.getSingleItemFromIterator(
+            this._children.get(0)
+        );
         this._hasNext = _hexBinaryStringItem != null;
     }
 }

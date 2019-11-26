@@ -31,10 +31,8 @@ import org.rumbledb.api.Item;
 import sparksoniq.exceptions.InvalidArgumentTypeException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
-import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
 import java.math.BigDecimal;
@@ -201,34 +199,13 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         return result;
     }
 
-    protected <T extends Item> T getSingleItemOfTypeFromIterator(RuntimeIterator iterator, Class<T> type) {
-        return getSingleItemOfTypeFromIterator(
-            iterator,
-            type,
-            new SparksoniqRuntimeException(
-                    "Iterator was expected to return a single item but returned a sequence",
-                    iterator.getMetadata().getExpressionMetadata()
-            )
-        );
-    }
-
-    protected <T extends Item, E extends SparksoniqRuntimeException> T getSingleItemOfTypeFromIterator(
-            RuntimeIterator iterator,
-            Class<T> type,
-            E nonAtomicException
+    protected Item getSingleItemFromIterator(
+            RuntimeIterator iterator
     ) {
         iterator.open(_currentDynamicContext);
-        Item result = null;
-        if (iterator.hasNext()) {
-            result = iterator.next();
-            if (iterator.hasNext()) {
-                throw nonAtomicException;
-            }
-        }
+        Item result = iterator.hasNext() ? iterator.next() : null;
         iterator.close();
-        if (result != null && !(type.isInstance(result)))
-            throw new UnexpectedTypeException("Invalid item type returned by iterator", iterator.getMetadata());
-        return (T) result;
+        return result;
     }
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
@@ -250,7 +227,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         buffer.append("Variable dependencies: ");
         Map<String, DynamicContext.VariableDependency> dependencies = getVariableDependencies();
         for (String v : dependencies.keySet()) {
-            buffer.append(v + "(" + dependencies.get(v) + ")" + " ");
+            buffer.append(v).append("(").append(dependencies.get(v)).append(")").append(" ");
         }
         buffer.append("\n");
         for (RuntimeIterator iterator : this._children) {

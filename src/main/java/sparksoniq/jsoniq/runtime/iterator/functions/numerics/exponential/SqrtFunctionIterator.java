@@ -54,22 +54,13 @@ public class SqrtFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public Item next() {
         if (this._hasNext) {
-            Item value = this.getSingleItemOfTypeFromIterator(_iterator, Item.class);
-            if (value.isNumeric()) {
-                try {
-                    this._hasNext = false;
-                    return ItemFactory.getInstance().createDoubleItem(Math.sqrt(value.castToDoubleValue()));
+            Item value = this.getSingleItemFromIterator(_iterator);
+            try {
+                this._hasNext = false;
+                return ItemFactory.getInstance().createDoubleItem(Math.sqrt(value.castToDoubleValue()));
 
-                } catch (IteratorFlowException e) {
-                    throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-                }
-            } else {
-                throw new UnexpectedTypeException(
-                        "Sqrt expression has non numeric args "
-                            +
-                            value.serialize(),
-                        getMetadata()
-                );
+            } catch (IteratorFlowException e) {
+                throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
             }
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " sqrt function", getMetadata());

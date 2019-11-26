@@ -46,16 +46,14 @@ public class StartsWithFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            StringItem substringItem = this.getSingleItemOfTypeFromIterator(
-                this._children.get(1),
-                StringItem.class
+            Item substringItem = this.getSingleItemFromIterator(
+                this._children.get(1)
             );
             if (substringItem == null || substringItem.getStringValue().isEmpty()) {
                 return new BooleanItem(true);
             }
-            StringItem stringItem = this.getSingleItemOfTypeFromIterator(
-                this._children.get(0),
-                StringItem.class
+            Item stringItem = this.getSingleItemFromIterator(
+                this._children.get(0)
             );
             if (stringItem == null || stringItem.getStringValue().isEmpty()) {
                 return new BooleanItem(false);

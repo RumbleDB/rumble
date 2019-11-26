@@ -6,7 +6,6 @@ import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.exceptions.UnknownFunctionCallException;
 import sparksoniq.jsoniq.item.ItemFactory;
-import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -17,7 +16,7 @@ import java.util.List;
 public class Base64BinaryFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
-    private StringItem _base64BinaryStringItem = null;
+    private Item _base64BinaryStringItem = null;
 
     public Base64BinaryFunctionIterator(
             List<RuntimeIterator> parameters,
@@ -52,18 +51,9 @@ public class Base64BinaryFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        try {
-            _base64BinaryStringItem = this.getSingleItemOfTypeFromIterator(
-                this._children.get(0),
-                StringItem.class,
-                new UnknownFunctionCallException("base64Binary", this._children.size(), getMetadata())
-            );
-        } catch (UnknownFunctionCallException e) {
-            throw new UnexpectedTypeException(
-                    " Sequence of more than one item can not be cast to type with quantifier '1' or '?'",
-                    getMetadata()
-            );
-        }
+        _base64BinaryStringItem = this.getSingleItemFromIterator(
+            this._children.get(0)
+        );
         this._hasNext = _base64BinaryStringItem != null;
     }
 }

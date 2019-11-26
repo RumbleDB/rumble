@@ -73,7 +73,7 @@ public class TypeSwitchRuntimeIterator extends LocalRuntimeIterator {
 
     private void initializeIterator(RuntimeIterator test, List<TypeSwitchCase> cases, TypeSwitchCase defaultCase) {
 
-        testValue = getSingleItemOfTypeFromIterator(test, Item.class);
+        testValue = getSingleItemFromIterator(test);
 
         for (TypeSwitchCase typeSwitchCase : cases) {
             if (testTypeMatch(typeSwitchCase))
