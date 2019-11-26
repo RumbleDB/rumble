@@ -18,7 +18,7 @@
  *
  */
 
-package sparksoniq.config;
+package org.rumbledb.config;
 
 import sparksoniq.exceptions.CliException;
 import sparksoniq.spark.SparkSessionManager;
