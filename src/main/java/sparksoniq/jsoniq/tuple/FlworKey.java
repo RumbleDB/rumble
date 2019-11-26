@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rumbledb.api.Item;
+import sparksoniq.semantics.types.ItemTypes;
 
 public class FlworKey implements KryoSerializable {
 
@@ -102,7 +103,15 @@ public class FlworKey implements KryoSerializable {
                     result = 1;
                 }
             } else {
-                result = currentItem.compareTo(comparisonItem);
+                try {
+                    result = currentItem.compareTo(comparisonItem);
+                } catch (RuntimeException e) {
+                    throw new SparksoniqRuntimeException("Invalid sort key: cannot compare item of type "
+                            + ItemTypes.getItemTypeName(comparisonItem.getClass().getSimpleName())
+                            + " with item of type "
+                            + ItemTypes.getItemTypeName(currentItem.getClass().getSimpleName())
+                            + ".");
+                }
             }
 
             // Simplify comparison result to -1/0/1
