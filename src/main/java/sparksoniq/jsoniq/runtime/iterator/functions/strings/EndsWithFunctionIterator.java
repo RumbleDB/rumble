@@ -22,6 +22,7 @@ package sparksoniq.jsoniq.runtime.iterator.functions.strings;
 
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.BooleanItem;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
@@ -51,20 +52,20 @@ public class EndsWithFunctionIterator extends LocalFunctionCallIterator {
                 StringItem.class
             );
             if (substringItem == null || substringItem.getStringValue().isEmpty()) {
-                return new BooleanItem(true);
+                return ItemFactory.getInstance().createBooleanItem(true);
             }
             StringItem stringItem = this.getSingleItemOfTypeFromIterator(
                 this._children.get(0),
                 StringItem.class
             );
             if (stringItem == null || stringItem.getStringValue().isEmpty()) {
-                return new BooleanItem(false);
+                return ItemFactory.getInstance().createBooleanItem(false);
             }
             boolean result = stringItem.getStringValue()
                 .endsWith(
                     substringItem.getStringValue()
                 );
-            return new BooleanItem(result);
+            return ItemFactory.getInstance().createBooleanItem(result);
         } else
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " ends-with function",

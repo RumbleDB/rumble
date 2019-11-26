@@ -525,7 +525,7 @@ public class Functions {
                             "Invalid argument for function " + identifier.getName() + ". ",
                             arguments.get(i),
                             builtinFunction.getSignature().getParameterTypes().get(i),
-                            metadata
+                            arguments.get(i).getMetadata()
                     )
                 );
             }
@@ -548,7 +548,7 @@ public class Functions {
                     "Invalid return type for function " + identifier.getName() + ". ",
                     functionCallIterator,
                     builtinFunction.getSignature().getReturnType(),
-                    metadata
+                    functionCallIterator.getMetadata()
             );
         }
         return functionCallIterator;
