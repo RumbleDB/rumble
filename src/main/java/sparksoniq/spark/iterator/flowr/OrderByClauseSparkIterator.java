@@ -187,6 +187,9 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             throw new SparksoniqRuntimeException("Invalid orderby clause.");
         }
         Dataset<Row> df = _child.getDataFrame(context, getProjection(parentProjection));
+        if (df.count() == 0) {
+            return df;
+        }
         StructType inputSchema = df.schema();
 
         List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema);
