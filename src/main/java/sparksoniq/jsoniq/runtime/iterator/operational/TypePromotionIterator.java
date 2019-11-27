@@ -106,9 +106,9 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         ) {
             throw new UnexpectedTypeException(
                     _exceptionMessage
-                        + " Expecting "
-                        + ((_sequenceType.getArity() == SequenceType.Arity.OneOrMore) ? "at least" : "")
-                        + " one item, but the value provided is the empty sequence.",
+                        + "Expecting "
+                        + ((_sequenceType.getArity() == SequenceType.Arity.OneOrMore) ? "at least " : "")
+                        + "one item, but the value provided is the empty sequence.",
                     getMetadata()
             );
         }
@@ -118,7 +118,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         if (size > 0 && _sequenceType.isEmptySequence()) {
             throw new UnexpectedTypeException(
                     _exceptionMessage
-                        + " Expecting empty sequence, but the value provided has at least one item.",
+                        + "Expecting empty sequence, but the value provided has at least one item.",
                     getMetadata()
             );
         }
@@ -132,9 +132,9 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         ) {
             throw new UnexpectedTypeException(
                     _exceptionMessage
-                        + " Expecting "
-                        + ((_sequenceType.getArity() == SequenceType.Arity.OneOrZero) ? "at most" : "")
-                        + " one item, but the value provided has at least two items.",
+                        + "Expecting "
+                        + ((_sequenceType.getArity() == SequenceType.Arity.OneOrZero) ? "at most " : "")
+                        + "one item, but the value provided has at least two items.",
                     getMetadata()
             );
         }
@@ -158,6 +158,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     }
 
     private void checkTypePromotion() {
+        if (_nextResult.isFunction()) return;
         if (!_nextResult.canBePromotedTo(_sequenceType.getItemType()))
             throw new UnexpectedTypeException(
                     _exceptionMessage

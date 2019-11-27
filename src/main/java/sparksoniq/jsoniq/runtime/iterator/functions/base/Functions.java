@@ -575,7 +575,20 @@ public class Functions {
             IteratorMetadata metadata,
             List<RuntimeIterator> arguments
     ) {
-        return new FunctionItemCallIterator(functionItem, arguments, metadata);
+        FunctionItemCallIterator functionCallIterator = new FunctionItemCallIterator(functionItem, arguments, metadata);
+        if (!functionItem.getSignature().getReturnType().equals(mostGeneralSequenceType)) {
+            return new TypePromotionIterator(
+                    functionCallIterator,
+                    functionItem.getSignature().getReturnType(),
+                    "Invalid return type for "
+                            + (functionItem.getIdentifier().getName().equals("")
+                            ? ""
+                            : (functionItem.getIdentifier().getName()) + " ")
+                            + "function. ",
+                    metadata
+            );
+        }
+        return functionCallIterator;
     }
 
     public static void clearUserDefinedFunctions() {
