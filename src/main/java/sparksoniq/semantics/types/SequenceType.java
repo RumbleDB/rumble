@@ -70,6 +70,8 @@ public class SequenceType implements Serializable {
             this._arity == superType._arity;
     }
 
+
+
     public enum Arity {
         OneOrZero {
             @Override

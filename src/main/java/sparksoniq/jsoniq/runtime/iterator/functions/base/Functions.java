@@ -518,7 +518,7 @@ public class Functions {
         BuiltinFunction builtinFunction = builtInFunctions.get(identifier);
 
         for (int i = 0; i < arguments.size(); i++) {
-            if (builtinFunction.getSignature().getParameterTypes().get(i) != mostGeneralSequenceType) {
+            if (!builtinFunction.getSignature().getParameterTypes().get(i).equals(mostGeneralSequenceType)) {
                 arguments.set(
                     i,
                     new TypePromotionIterator(
@@ -543,7 +543,7 @@ public class Functions {
             throw new UnknownFunctionCallException(identifier.getName(), arguments.size(), metadata);
         }
 
-        if (builtinFunction.getSignature().getReturnType() != mostGeneralSequenceType) {
+        if (!builtinFunction.getSignature().getReturnType().equals(mostGeneralSequenceType)) {
             return new TypePromotionIterator(
                     "Invalid return type for function " + identifier.getName() + ". ",
                     functionCallIterator,
