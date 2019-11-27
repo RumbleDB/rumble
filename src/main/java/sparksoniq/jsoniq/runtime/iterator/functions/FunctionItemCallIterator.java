@@ -39,6 +39,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static sparksoniq.semantics.types.SequenceType.mostGeneralSequenceType;
+
 public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
@@ -95,7 +97,10 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
         if (_functionItem.getSignature().getParameterTypes() != null) {
             for (int i = 0; i < _functionArguments.size(); i++) {
-                if (_functionArguments.get(i) != null) {
+                if (
+                    _functionArguments.get(i) != null
+                        && _functionItem.getSignature().getParameterTypes().get(i) != mostGeneralSequenceType
+                ) {
                     _functionArguments.set(
                         i,
                         new TypePromotionIterator(
@@ -133,6 +138,8 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 }
             }
 
+            // partial application should return a new FunctionItem with given parameters set as NonLocalVariables
+            // and argument placeholders as new parameters to the new FunctionItem
             FunctionItem partiallyAppliedFunction = new FunctionItem(
                     new FunctionIdentifier("", partialAppParamNames.size()),
                     partialAppParamNames,

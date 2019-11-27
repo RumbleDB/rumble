@@ -92,10 +92,8 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
             Map<RuntimeIterator, RuntimeIterator> cases,
             RuntimeIterator defaultReturn
     ) {
-        Item testValue = getSingleItemOfTypeFromIterator(
-            test,
-            Item.class,
-            new NonAtomicKeyException("Switch test must be atomic", getMetadata().getExpressionMetadata())
+        Item testValue = getSingleItemFromIterator(
+            test
         );
 
         if (testValue != null && testValue.isArray()) {
@@ -111,10 +109,8 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
         }
 
         for (RuntimeIterator caseKey : cases.keySet()) {
-            Item caseValue = getSingleItemOfTypeFromIterator(
-                caseKey,
-                Item.class,
-                new NonAtomicKeyException("Switch case test must be atomic", getMetadata().getExpressionMetadata())
+            Item caseValue = getSingleItemFromIterator(
+                caseKey
             );
 
             if (caseValue != null && caseValue.isArray()) {
@@ -137,7 +133,7 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
                 } else {
                     // no match, do nothing
                 }
-            } else if (caseValue != null && testValue.equals(caseValue)) {
+            } else if (testValue.equals(caseValue)) {
                 matchingIterator = cases.get(caseKey);
                 break;
             }

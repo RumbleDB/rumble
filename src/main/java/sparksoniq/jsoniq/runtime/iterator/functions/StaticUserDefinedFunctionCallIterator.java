@@ -128,7 +128,7 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<String, DynamicContext.VariableDependency> result =
-                new TreeMap<>(super.getVariableDependencies());
+            new TreeMap<>(super.getVariableDependencies());
         for (RuntimeIterator iterator : _functionArguments) {
             if (iterator == null) {
                 continue;

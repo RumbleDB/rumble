@@ -23,7 +23,6 @@ package sparksoniq.jsoniq.runtime.iterator.functions.strings;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.BooleanItem;
 import sparksoniq.jsoniq.item.ItemFactory;
-import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -50,13 +49,11 @@ public class MatchesFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             this._hasNext = false;
 
-            Item regexpItem = this.getSingleItemOfTypeFromIterator(
-                this._children.get(1),
-                StringItem.class
+            Item regexpItem = this.getSingleItemFromIterator(
+                this._children.get(1)
             );
-            Item stringItem = this.getSingleItemOfTypeFromIterator(
-                this._children.get(0),
-                StringItem.class
+            Item stringItem = this.getSingleItemFromIterator(
+                this._children.get(0)
             );
             if (stringItem == null) {
                 stringItem = ItemFactory.getInstance().createStringItem("");
@@ -64,7 +61,7 @@ public class MatchesFunctionIterator extends LocalFunctionCallIterator {
 
             Matcher matcher = Pattern.compile(regexpItem.getStringValue()).matcher(stringItem.getStringValue());
             boolean result = matcher.find();
-            return new BooleanItem(result);
+            return ItemFactory.getInstance().createBooleanItem(result);
         } else
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " matches function",

@@ -91,13 +91,13 @@ public class ObjectDescendantFunctionIterator extends LocalFunctionCallIterator 
         }
     }
 
-    public void getDescendantObjects(List<Item> items) {
+    private void getDescendantObjects(List<Item> items) {
         for (Item item : items) {
             if (item.isArray()) {
                 getDescendantObjects(item.getItems());
             } else if (item.isObject()) {
                 _nextResults.add(item);
-                getDescendantObjects((List<Item>) item.getValues());
+                getDescendantObjects(item.getValues());
             } else {
                 // for atomic types: do nothing
             }

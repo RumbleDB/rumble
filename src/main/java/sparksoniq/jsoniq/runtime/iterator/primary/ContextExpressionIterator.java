@@ -20,17 +20,14 @@
 
 package sparksoniq.jsoniq.runtime.iterator.primary;
 
+import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-
-import org.rumbledb.api.Item;
 
 public class ContextExpressionIterator extends LocalRuntimeIterator {
 
@@ -44,17 +41,13 @@ public class ContextExpressionIterator extends LocalRuntimeIterator {
     public Item next() {
         if (hasNext()) {
             this._hasNext = false;
-            List<Item> results = new ArrayList<>();
-            if (results.size() > 1)
-                throw new IteratorFlowException("Invalid context item expression", getMetadata());
-            return _currentDynamicContext.getVariableValue("$$").get(0);
+            return _currentDynamicContext.getLocalVariableValue("$$", getMetadata()).get(0);
         }
         throw new IteratorFlowException("Invalid next() call in Context Expression!", getMetadata());
     }
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<String, DynamicContext.VariableDependency> result =
-            new TreeMap<String, DynamicContext.VariableDependency>();
+        Map<String, DynamicContext.VariableDependency> result = new TreeMap<>();
         result.put("$", DynamicContext.VariableDependency.FULL);
         return result;
     }

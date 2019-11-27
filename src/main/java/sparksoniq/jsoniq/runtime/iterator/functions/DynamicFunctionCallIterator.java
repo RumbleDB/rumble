@@ -137,15 +137,18 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
 
     private void setFunctionItemAndIteratorWithCurrentContext() {
         try {
-            _functionItem = getSingleItemOfTypeFromIterator(
-                _functionItemIterator,
-                FunctionItem.class,
-                new SequenceExceptionExactlyOne(
+            _functionItemIterator.open(_currentDynamicContext);
+            if (_functionItemIterator.hasNext()) {
+                _functionItem = (FunctionItem) _functionItemIterator.next();
+            }
+            if (_functionItemIterator.hasNext()) {
+                throw new UnexpectedTypeException(
                         "Dynamic function call can not be performed on a sequence.",
                         getMetadata()
-                )
-            );
-        } catch (SequenceExceptionExactlyOne e) {
+                );
+            }
+            _functionItemIterator.close();
+        } catch (ClassCastException e) {
             throw new UnexpectedTypeException(
                     "Dynamic function call can only be performed on functions.",
                     getMetadata()

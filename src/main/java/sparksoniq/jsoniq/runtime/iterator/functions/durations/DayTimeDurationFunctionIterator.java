@@ -20,7 +20,7 @@ import java.util.List;
 public class DayTimeDurationFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
-    private StringItem _durationStringItem = null;
+    private Item _durationStringItem = null;
 
     public DayTimeDurationFunctionIterator(
             List<RuntimeIterator> parameters,
@@ -58,18 +58,9 @@ public class DayTimeDurationFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        try {
-            _durationStringItem = this.getSingleItemOfTypeFromIterator(
-                this._children.get(0),
-                StringItem.class,
-                new UnknownFunctionCallException("dayTimeDuration", this._children.size(), getMetadata())
-            );
-        } catch (UnknownFunctionCallException e) {
-            throw new UnexpectedTypeException(
-                    " Sequence of more than one item can not be cast to type with quantifier '1' or '?'",
-                    getMetadata()
-            );
-        }
+        _durationStringItem = this.getSingleItemFromIterator(
+            this._children.get(0)
+        );
         this._hasNext = _durationStringItem != null;
     }
 }

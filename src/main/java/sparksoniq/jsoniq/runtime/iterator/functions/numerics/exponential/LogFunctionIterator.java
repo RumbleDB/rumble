@@ -47,11 +47,7 @@ public class LogFunctionIterator extends LocalFunctionCallIterator {
         super.open(context);
         _iterator = this._children.get(0);
         _iterator.open(_currentDynamicContext);
-        if (_iterator.hasNext()) {
-            this._hasNext = true;
-        } else {
-            this._hasNext = false;
-        }
+        this._hasNext = _iterator.hasNext();
         _iterator.close();
     }
 
@@ -59,22 +55,12 @@ public class LogFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            Item value = this.getSingleItemOfTypeFromIterator(_iterator, Item.class);
-            if (value.isNumeric()) {
-                try {
-                    Double result = Math.log(value.castToDoubleValue());
-                    return ItemFactory.getInstance().createDoubleItem(result);
+            Item value = this.getSingleItemFromIterator(_iterator);
+            try {
+                return ItemFactory.getInstance().createDoubleItem(Math.log(value.castToDoubleValue()));
 
-                } catch (IteratorFlowException e) {
-                    throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-                }
-            } else {
-                throw new UnexpectedTypeException(
-                        "Log expression has non numeric args "
-                            +
-                            value.serialize(),
-                        getMetadata()
-                );
+            } catch (IteratorFlowException e) {
+                throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
             }
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " log function", getMetadata());

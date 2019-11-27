@@ -6,7 +6,6 @@ import org.rumbledb.api.Item;
 import sparksoniq.exceptions.InvalidTimezoneException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
-import sparksoniq.exceptions.UnknownFunctionCallException;
 import sparksoniq.jsoniq.item.DateTimeItem;
 import sparksoniq.jsoniq.item.DayTimeDurationItem;
 import sparksoniq.jsoniq.item.ItemFactory;
@@ -20,8 +19,8 @@ import java.util.List;
 public class AdjustDateTimeToTimezone extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
-    private DateTimeItem _timeItem = null;
-    private DayTimeDurationItem _timezone = null;
+    private Item _timeItem = null;
+    private Item _timezone = null;
 
     public AdjustDateTimeToTimezone(
             List<RuntimeIterator> arguments,
@@ -84,27 +83,12 @@ public class AdjustDateTimeToTimezone extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        try {
-            _timeItem = this.getSingleItemOfTypeFromIterator(
-                this._children.get(0),
-                DateTimeItem.class,
-                new UnknownFunctionCallException("adjust-dateTime-to-timezone", this._children.size(), getMetadata())
-            );
-            if (this._children.size() == 2) {
-                _timezone = this.getSingleItemOfTypeFromIterator(
-                    this._children.get(1),
-                    DayTimeDurationItem.class,
-                    new UnknownFunctionCallException(
-                            "adjust-dateTime-to-timezone",
-                            this._children.size(),
-                            getMetadata()
-                    )
-                );
-            }
-        } catch (UnexpectedTypeException e) {
-            throw new UnexpectedTypeException(
-                    e.getJSONiqErrorMessage() + "? of function adjust-dateTime-to-timezone()",
-                    this._children.get(0).getMetadata()
+        _timeItem = this.getSingleItemFromIterator(
+            this._children.get(0)
+        );
+        if (this._children.size() == 2) {
+            _timezone = this.getSingleItemFromIterator(
+                this._children.get(1)
             );
         }
         this._hasNext = _timeItem != null;

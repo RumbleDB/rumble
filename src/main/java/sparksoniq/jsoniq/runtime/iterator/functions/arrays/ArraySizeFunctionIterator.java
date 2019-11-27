@@ -49,11 +49,7 @@ public class ArraySizeFunctionIterator extends LocalFunctionCallIterator {
 
         arrayIterator = this._children.get(0);
         arrayIterator.open(context);
-        if (arrayIterator.hasNext() == false) {
-            this._hasNext = false;
-        } else {
-            this._hasNext = true;
-        }
+        this._hasNext = arrayIterator.hasNext();
         arrayIterator.close();
     }
 
@@ -62,7 +58,7 @@ public class ArraySizeFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             this._hasNext = false;
 
-            ArrayItem array = getSingleItemOfTypeFromIterator(arrayIterator, ArrayItem.class);
+            Item array = getSingleItemFromIterator(arrayIterator);
             return ItemFactory.getInstance().createIntegerItem(array.getSize());
         }
         throw new IteratorFlowException(

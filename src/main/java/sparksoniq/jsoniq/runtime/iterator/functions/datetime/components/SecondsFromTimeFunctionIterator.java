@@ -17,7 +17,7 @@ import java.util.List;
 public class SecondsFromTimeFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
-    private TimeItem _timeItem = null;
+    private Item _timeItem = null;
 
     public SecondsFromTimeFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -47,23 +47,9 @@ public class SecondsFromTimeFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        try {
-            _timeItem = this.getSingleItemOfTypeFromIterator(
-                this._children.get(0),
-                TimeItem.class,
-                new UnknownFunctionCallException("seconds-from-time", this._children.size(), getMetadata())
-            );
-        } catch (UnexpectedTypeException e) {
-            throw new UnexpectedTypeException(
-                    e.getJSONiqErrorMessage() + "? of function seconds-from-time()",
-                    this._children.get(0).getMetadata()
-            );
-        } catch (UnknownFunctionCallException e) {
-            throw new UnexpectedTypeException(
-                    " Sequence of more than one item can not be promoted to parameter type time? of function seconds-from-time()",
-                    getMetadata()
-            );
-        }
+        _timeItem = this.getSingleItemFromIterator(
+            this._children.get(0)
+        );
         this._hasNext = _timeItem != null;
     }
 }

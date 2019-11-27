@@ -47,11 +47,7 @@ public class Exp10FunctionIterator extends LocalFunctionCallIterator {
         super.open(context);
         _iterator = this._children.get(0);
         _iterator.open(_currentDynamicContext);
-        if (_iterator.hasNext()) {
-            this._hasNext = true;
-        } else {
-            this._hasNext = false;
-        }
+        this._hasNext = _iterator.hasNext();
         _iterator.close();
     }
 
@@ -59,22 +55,11 @@ public class Exp10FunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            Item exponent = this.getSingleItemOfTypeFromIterator(_iterator, Item.class);
-            if (exponent.isNumeric()) {
-                try {
-                    Double result = Math.pow(10.0, exponent.castToDoubleValue());
-
-                    return ItemFactory.getInstance().createDoubleItem(result);
-                } catch (IteratorFlowException e) {
-                    throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-                }
-            } else {
-                throw new UnexpectedTypeException(
-                        "Exp10 expression has non numeric args "
-                            +
-                            exponent.serialize(),
-                        getMetadata()
-                );
+            Item exponent = this.getSingleItemFromIterator(_iterator);
+            try {
+                return ItemFactory.getInstance().createDoubleItem(Math.pow(10.0, exponent.castToDoubleValue()));
+            } catch (IteratorFlowException e) {
+                throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
             }
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " exp10 function", getMetadata());

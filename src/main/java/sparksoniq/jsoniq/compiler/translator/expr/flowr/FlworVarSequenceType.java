@@ -34,7 +34,7 @@ import java.util.List;
 public class FlworVarSequenceType extends Expression {
 
     private SequenceType _sequence;
-    private boolean isEmpty;
+    private boolean isEmpty = false;
 
     public FlworVarSequenceType(ExpressionMetadata metadata) {
         super(metadata);
@@ -47,14 +47,14 @@ public class FlworVarSequenceType extends Expression {
         this._sequence = new SequenceType(new ItemType(item), arity);
     }
 
-    public FlworVarSequenceType(SequenceType sequenceType, ExpressionMetadata metadata) {
-        super(metadata);
-        this._sequence = sequenceType;
-    }
-
     public FlworVarSequenceType(ItemTypes item, ExpressionMetadata metadata) {
         super(metadata);
         this._sequence = new SequenceType(new ItemType(item), SequenceType.Arity.One);
+    }
+
+    public FlworVarSequenceType(SequenceType sequenceType, ExpressionMetadata metadata) {
+        super(metadata);
+        this._sequence = sequenceType;
     }
 
     public static ItemTypes getItemType(String text) {

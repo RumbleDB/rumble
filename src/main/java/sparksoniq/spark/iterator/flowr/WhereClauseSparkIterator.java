@@ -44,10 +44,10 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
 
 
     private static final long serialVersionUID = 1L;
+    private Map<String, DynamicContext.VariableDependency> _dependencies;
     private RuntimeIterator _expression;
     private DynamicContext _tupleContext; // re-use same DynamicContext object for efficiency
     private FlworTuple _nextLocalTupleResult;
-    Map<String, DynamicContext.VariableDependency> _dependencies;
 
     public WhereClauseSparkIterator(
             RuntimeTupleIterator child,
@@ -97,7 +97,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             // tuple received from child, used for tuple creation
             inputTuple = _child.next();
             _tupleContext.removeAllVariables(); // clear the previous variables
-            _tupleContext.setBindingsFromTuple(inputTuple); // assign new variables from new tuple
+            _tupleContext.setBindingsFromTuple(inputTuple, getMetadata()); // assign new variables from new tuple
 
             _expression.open(_tupleContext);
             boolean effectiveBooleanValue = RuntimeIterator.getEffectiveBooleanValue(_expression);

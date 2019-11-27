@@ -22,7 +22,7 @@ package sparksoniq.jsoniq.runtime.iterator.functions.strings;
 
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
-import sparksoniq.jsoniq.item.IntegerItem;
+import sparksoniq.jsoniq.item.DoubleItem;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -46,22 +46,23 @@ public class SubstringFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             this._hasNext = false;
             String result;
-            StringItem stringItem = this.getSingleItemOfTypeFromIterator(this._children.get(0), StringItem.class);
+            Item stringItem = this.getSingleItemFromIterator(this._children.get(0));
             if (stringItem == null) {
                 return ItemFactory.getInstance().createStringItem("");
             }
-            IntegerItem indexItem = this.getSingleItemOfTypeFromIterator(this._children.get(1), IntegerItem.class);
+            Item indexItem = this.getSingleItemFromIterator(this._children.get(1));
             if (indexItem == null) {
                 throw new UnexpectedTypeException(
                         "Type error; Start index parameter can't be empty sequence ",
                         getMetadata()
                 );
             }
-            int index = sanitizeIndexItem(indexItem);
+            int index = (int) Math.round(indexItem.getDoubleValue() - 1);
+            if (index >= stringItem.getStringValue().length())
+                return ItemFactory.getInstance().createStringItem("");
             if (this._children.size() > 2) {
-                IntegerItem endIndexItem = this.getSingleItemOfTypeFromIterator(
-                    this._children.get(2),
-                    IntegerItem.class
+                Item endIndexItem = this.getSingleItemFromIterator(
+                    this._children.get(2)
                 );
                 if (endIndexItem == null) {
                     throw new UnexpectedTypeException(
@@ -69,8 +70,10 @@ public class SubstringFunctionIterator extends LocalFunctionCallIterator {
                             getMetadata()
                     );
                 }
-                int endIndex = sanitizeEndIndex(stringItem, endIndexItem, index);
-                result = stringItem.getStringValue().substring(index, endIndex);
+                double endIndex = sanitizeEndIndex(stringItem, endIndexItem, index);
+                if (endIndex < index)
+                    return ItemFactory.getInstance().createStringItem("");
+                result = stringItem.getStringValue().substring(Math.max(index, 0), (int) Math.round(endIndex));
             } else {
                 result = stringItem.getStringValue().substring(index);
             }
@@ -83,13 +86,8 @@ public class SubstringFunctionIterator extends LocalFunctionCallIterator {
             );
     }
 
-    private int sanitizeEndIndex(StringItem stringItem, IntegerItem endIndexItem, int startIndex) {
+    private double sanitizeEndIndex(Item stringItem, Item endIndexItem, int startIndex) {
         // char indexing starts from 1 in JSONiq
-        return Math.min(stringItem.getStringValue().length(), startIndex + endIndexItem.getIntegerValue());
-    }
-
-    private int sanitizeIndexItem(IntegerItem indexItem) {
-        // char indexing starts from 1 in JSONiq
-        return indexItem.getIntegerValue() - 1 > 0 ? indexItem.getIntegerValue() - 1 : 0;
+        return Math.min(stringItem.getStringValue().length(), startIndex + endIndexItem.getDoubleValue());
     }
 }

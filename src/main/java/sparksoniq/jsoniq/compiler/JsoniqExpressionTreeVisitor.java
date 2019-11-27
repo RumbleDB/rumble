@@ -99,6 +99,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static sparksoniq.semantics.types.SequenceType.mostGeneralSequenceType;
+
 
 // used to build AST, will override methods
 public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.parser.JsoniqBaseVisitor<Void> {
@@ -167,7 +169,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         String fnName = ctx.fn_name.getText();
         Map<String, FlworVarSequenceType> fnParams = new LinkedHashMap<>();
         FlworVarSequenceType fnReturnType = new FlworVarSequenceType(
-                SequenceType.mostGeneralSequenceType,
+                mostGeneralSequenceType,
                 createMetadataFromContext(ctx)
         );
         CommaExpression fnBody;
@@ -178,7 +180,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
                 paramName = param.NCName().getText();
                 paramType = new FlworVarSequenceType(
-                        SequenceType.mostGeneralSequenceType,
+                        mostGeneralSequenceType,
                         createMetadataFromContext(ctx)
                 );
                 if (fnParams.containsKey(paramName)) {
@@ -1126,7 +1128,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
     public Void visitInlineFunctionExpr(JsoniqParser.InlineFunctionExprContext ctx) {
         Map<String, FlworVarSequenceType> fnParams = new LinkedHashMap<>();
         FlworVarSequenceType fnReturnType = new FlworVarSequenceType(
-                SequenceType.mostGeneralSequenceType,
+                mostGeneralSequenceType,
                 createMetadataFromContext(ctx)
         );
         CommaExpression fnBody;
@@ -1137,7 +1139,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
                 paramName = param.NCName().getText();
                 paramType = new FlworVarSequenceType(
-                        SequenceType.mostGeneralSequenceType,
+                        mostGeneralSequenceType,
                         createMetadataFromContext(ctx)
                 );
                 if (fnParams.containsKey(paramName)) {

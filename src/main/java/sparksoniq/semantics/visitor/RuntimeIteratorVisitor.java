@@ -446,14 +446,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
             }
             return Functions.getBuiltInFunctionIterator(identifier, arguments, iteratorMetadata);
         }
-        if (Functions.checkUserDefinedFunctionExists(identifier)) {
-            return new StaticUserDefinedFunctionCallIterator(identifier, arguments, iteratorMetadata);
-        }
-        throw new UnknownFunctionCallException(
-                identifier.getName(),
-                identifier.getArity(),
-                createIteratorMetadata(expression)
-        );
+        return new StaticUserDefinedFunctionCallIterator(identifier, arguments, iteratorMetadata);
     }
 
     @Override

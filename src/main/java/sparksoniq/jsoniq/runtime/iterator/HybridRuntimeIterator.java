@@ -24,7 +24,8 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
-import sparksoniq.Main;
+import org.rumbledb.cli.Main;
+
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparkRuntimeException;
 import sparksoniq.io.json.JiqsItemParser;
@@ -99,26 +100,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         if (result == null) {
             currentResultIndex = 0;
             JavaRDD<Item> rdd = this.getRDD(_currentDynamicContext);
-            if (SparkSessionManager.LIMIT_COLLECT()) {
-                result = rdd.take(SparkSessionManager.COLLECT_ITEM_LIMIT);
-                if (result.size() == SparkSessionManager.COLLECT_ITEM_LIMIT) {
-                    if (Main.terminal == null) {
-                        System.out.println(
-                            "Results have been truncated to:"
-                                + SparkSessionManager.COLLECT_ITEM_LIMIT
-                                + " items. This value can be configured with the --result-size parameter at startup.\n"
-                        );
-                    } else {
-                        Main.terminal.output(
-                            "\nWarning: Results have been truncated to: "
-                                + SparkSessionManager.COLLECT_ITEM_LIMIT
-                                + " items. This value can be configured with the --result-size parameter at startup.\n"
-                        );
-                    }
-                }
-            } else {
-                result = rdd.collect();
-            }
+            result = SparkSessionManager.collectRDDwithLimit(rdd);
             _hasNext = !result.isEmpty();
         }
         return _hasNext;

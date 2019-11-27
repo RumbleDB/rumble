@@ -18,7 +18,7 @@
  *
  */
 
-package sparksoniq;
+package org.rumbledb.cli;
 
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CharStream;
@@ -30,8 +30,8 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.Path;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
+import org.rumbledb.config.SparksoniqRuntimeConfiguration;
 
-import sparksoniq.config.SparksoniqRuntimeConfiguration;
 import sparksoniq.exceptions.ParsingException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
@@ -295,27 +295,7 @@ public class JsoniqQueryExecutor {
             return output.collect().get(0);
         }
         if (resultCount > 1) {
-            List<String> collectedOutput;
-            if (SparkSessionManager.LIMIT_COLLECT()) {
-                collectedOutput = output.take(SparkSessionManager.COLLECT_ITEM_LIMIT);
-                if (collectedOutput.size() == SparkSessionManager.COLLECT_ITEM_LIMIT) {
-                    if (Main.terminal == null) {
-                        System.out.println(
-                            "Results have been truncated to:"
-                                + SparkSessionManager.COLLECT_ITEM_LIMIT
-                                + " items. This value can be configured with the --result-size parameter at startup.\n"
-                        );
-                    } else {
-                        Main.terminal.output(
-                            "\nWarning: Results have been truncated to: "
-                                + SparkSessionManager.COLLECT_ITEM_LIMIT
-                                + " items. This value can be configured with the --result-size parameter at startup.\n"
-                        );
-                    }
-                }
-            } else {
-                collectedOutput = output.collect();
-            }
+            List<String> collectedOutput = SparkSessionManager.collectRDDwithLimit(output);
 
             StringBuilder sb = new StringBuilder();
             for (String item : collectedOutput) {

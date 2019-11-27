@@ -102,7 +102,7 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
             List<Item> results = new ArrayList<>();
             results.add(ItemFactory.getInstance().createIntegerItem(_currentCountIndex++));
 
-            _nextLocalTupleResult = new FlworTuple(inputTuple, _variableName, results);
+            _nextLocalTupleResult = new FlworTuple(inputTuple).putValue(_variableName, results);
             this._hasNext = true;
         } else {
             _child.close();

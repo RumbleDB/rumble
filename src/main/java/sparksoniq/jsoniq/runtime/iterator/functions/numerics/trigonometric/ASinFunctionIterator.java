@@ -47,11 +47,7 @@ public class ASinFunctionIterator extends LocalFunctionCallIterator {
         super.open(context);
         _iterator = this._children.get(0);
         _iterator.open(_currentDynamicContext);
-        if (_iterator.hasNext()) {
-            this._hasNext = true;
-        } else {
-            this._hasNext = false;
-        }
+        this._hasNext = _iterator.hasNext();
         _iterator.close();
     }
 
@@ -59,23 +55,8 @@ public class ASinFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            Item radians = this.getSingleItemOfTypeFromIterator(_iterator, Item.class);
-            if (radians.isNumeric()) {
-                try {
-                    Double result = Math.asin(radians.castToDoubleValue());
-                    return ItemFactory.getInstance().createDoubleItem(result);
-
-                } catch (IteratorFlowException e) {
-                    throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-                }
-            } else {
-                throw new UnexpectedTypeException(
-                        "ASin expression has non numeric args "
-                            +
-                            radians.serialize(),
-                        getMetadata()
-                );
-            }
+            return ItemFactory.getInstance()
+                .createDoubleItem(Math.asin(this.getSingleItemFromIterator(_iterator).castToDoubleValue()));
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " asin function", getMetadata());
     }

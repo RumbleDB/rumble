@@ -47,11 +47,7 @@ public class CeilingFunctionIterator extends LocalFunctionCallIterator {
         super.open(context);
         _iterator = this._children.get(0);
         _iterator.open(_currentDynamicContext);
-        if (_iterator.hasNext()) {
-            this._hasNext = true;
-        } else {
-            this._hasNext = false;
-        }
+        this._hasNext = _iterator.hasNext();
         _iterator.close();
     }
 
@@ -59,24 +55,8 @@ public class CeilingFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            Item value = this.getSingleItemOfTypeFromIterator(_iterator, Item.class);
-            if (value.isNumeric()) {
-                try {
-                    Double result = Math.ceil(value.castToDoubleValue());
-                    return ItemFactory.getInstance().createDoubleItem(result);
-
-                } catch (IteratorFlowException e) {
-                    throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-                }
-            } else {
-                throw new UnexpectedTypeException(
-                        "Ceiling expression has non numeric args "
-                            +
-                            value.serialize(),
-                        getMetadata()
-                );
-            }
-
+            return ItemFactory.getInstance()
+                .createDoubleItem(Math.ceil(this.getSingleItemFromIterator(_iterator).castToDoubleValue()));
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " ceiling function", getMetadata());
     }

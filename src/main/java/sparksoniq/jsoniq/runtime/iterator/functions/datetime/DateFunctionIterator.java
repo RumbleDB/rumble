@@ -1,19 +1,16 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.datetime;
 
-import org.joda.time.DateTime;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.CastException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.exceptions.UnknownFunctionCallException;
-import sparksoniq.jsoniq.item.DateTimeItem;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.semantics.types.AtomicTypes;
 
 import java.util.List;
 
@@ -21,7 +18,7 @@ public class DateFunctionIterator extends LocalFunctionCallIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private StringItem _dateStringItem = null;
+    private Item _dateStringItem = null;
 
     public DateFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -55,18 +52,9 @@ public class DateFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        try {
-            _dateStringItem = this.getSingleItemOfTypeFromIterator(
-                this._children.get(0),
-                StringItem.class,
-                new UnknownFunctionCallException("date", this._children.size(), getMetadata())
-            );
-        } catch (UnknownFunctionCallException e) {
-            throw new UnexpectedTypeException(
-                    " Sequence of more than one item can not be cast to type with quantifier '1' or '?'",
-                    getMetadata()
-            );
-        }
+        _dateStringItem = this.getSingleItemFromIterator(
+            this._children.get(0)
+        );
         this._hasNext = _dateStringItem != null;
     }
 }

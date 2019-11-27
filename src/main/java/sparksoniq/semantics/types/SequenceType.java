@@ -28,7 +28,9 @@ public class SequenceType implements Serializable {
     private Arity _arity;
     private ItemType _itemType;
     private boolean _isEmptySequence = false;
-    public static final SequenceType mostGeneralSequenceType = new SequenceType(
+
+
+    public final static SequenceType mostGeneralSequenceType = new SequenceType(
             new ItemType(ItemTypes.Item),
             Arity.ZeroOrMore
     );
@@ -37,13 +39,11 @@ public class SequenceType implements Serializable {
     public SequenceType(ItemType itemType, Arity arity) {
         this._itemType = itemType;
         this._arity = arity;
-
     }
 
     public SequenceType(ItemType itemType) {
         this._itemType = itemType;
         this._arity = Arity.One;
-
     }
 
     public SequenceType() {

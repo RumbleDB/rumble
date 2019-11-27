@@ -6,7 +6,6 @@ import org.rumbledb.api.Item;
 import sparksoniq.exceptions.InvalidTimezoneException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
-import sparksoniq.exceptions.UnknownFunctionCallException;
 import sparksoniq.jsoniq.item.DateItem;
 import sparksoniq.jsoniq.item.DayTimeDurationItem;
 import sparksoniq.jsoniq.item.ItemFactory;
@@ -20,8 +19,8 @@ import java.util.List;
 public class AdjustDateToTimezone extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
-    private DateItem _dateItem = null;
-    private DayTimeDurationItem _timezone = null;
+    private Item _dateItem = null;
+    private Item _timezone = null;
 
     public AdjustDateToTimezone(
             List<RuntimeIterator> arguments,
@@ -83,23 +82,12 @@ public class AdjustDateToTimezone extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        try {
-            _dateItem = this.getSingleItemOfTypeFromIterator(
-                this._children.get(0),
-                DateItem.class,
-                new UnknownFunctionCallException("adjust-date-to-timezone", this._children.size(), getMetadata())
-            );
-            if (this._children.size() == 2) {
-                _timezone = this.getSingleItemOfTypeFromIterator(
-                    this._children.get(1),
-                    DayTimeDurationItem.class,
-                    new UnknownFunctionCallException("adjust-date-to-timezone", this._children.size(), getMetadata())
-                );
-            }
-        } catch (UnexpectedTypeException e) {
-            throw new UnexpectedTypeException(
-                    e.getJSONiqErrorMessage() + "? of function adjust-date-to-timezone()",
-                    this._children.get(0).getMetadata()
+        _dateItem = this.getSingleItemFromIterator(
+            this._children.get(0)
+        );
+        if (this._children.size() == 2) {
+            _timezone = this.getSingleItemFromIterator(
+                this._children.get(1)
             );
         }
         this._hasNext = _dateItem != null;
