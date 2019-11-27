@@ -161,19 +161,6 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                                     expression.getIteratorMetadata().getExpressionMetadata()
                             );
                         }
-                        if (resultItem.isDuration())
-                            resultItem = ItemFactory.getInstance()
-                                .createStringItem(
-                                    String.valueOf(
-                                        resultItem.getDurationValue().toDurationFrom(Instant.now()).getMillis()
-                                    )
-                                );
-                        else if (resultItem.hasDateTime())
-                            resultItem = ItemFactory.getInstance()
-                                .createStringItem(String.valueOf(resultItem.getDateTimeValue().getMillis()));
-                        else if (resultItem.isBase64Binary() || resultItem.isHexBinary())
-                            resultItem = ItemFactory.getInstance()
-                                .createStringItem(Arrays.toString(resultItem.getBinaryValue()));
                         newVariableResults.add(resultItem);
                     }
                     groupVariableExpression.close();
@@ -195,18 +182,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
 
                     groupVariableReference.open(tupleContext);
                     while (groupVariableReference.hasNext()) {
-                        Item next = groupVariableReference.next();
-                        if (next.isDuration())
-                            next = ItemFactory.getInstance()
-                                .createStringItem(
-                                    String.valueOf(next.getDurationValue().toDurationFrom(Instant.now()).getMillis())
-                                );
-                        else if (next.hasDateTime())
-                            next = ItemFactory.getInstance()
-                                .createStringItem(String.valueOf(next.getDateTimeValue().getMillis()));
-                        else if (next.isBase64Binary() || next.isHexBinary())
-                            next = ItemFactory.getInstance().createStringItem(Arrays.toString(next.getBinaryValue()));
-                        results.add(next);
+                        results.add(groupVariableReference.next());
                     }
                     groupVariableReference.close();
                 }

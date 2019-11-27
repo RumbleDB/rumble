@@ -151,14 +151,17 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, R
                                 break;
                             default:
                                 throw new SparksoniqRuntimeException(
-                                        "Unexpected ordering type found while creating columns.");
+                                        "Unexpected ordering type found while creating columns."
+                                );
                         }
                     } catch (RuntimeException e) {
-                        throw new SparksoniqRuntimeException("Invalid sort key: cannot compare item of type "
-                                + typeName
-                                + " with item of type "
-                                + ItemTypes.getItemTypeName(nextItem.getClass().getSimpleName())
-                                + ".");
+                        throw new SparksoniqRuntimeException(
+                                "Invalid sort key: cannot compare item of type "
+                                    + typeName
+                                    + " with item of type "
+                                    + ItemTypes.getItemTypeName(nextItem.getClass().getSimpleName())
+                                    + "."
+                        );
                     }
                 }
             }

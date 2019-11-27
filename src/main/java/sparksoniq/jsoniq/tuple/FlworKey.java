@@ -42,16 +42,16 @@ public class FlworKey implements KryoSerializable {
 
     }
 
-    public List<Item> getKeyItems() {
+    List<Item> getKeyItems() {
         return keyItems;
     }
 
     @Override
     public int hashCode() {
-        String result = "";
+        StringBuilder result = new StringBuilder();
         for (Item key : this.keyItems)
-            result += key.serialize();
-        return result.hashCode();
+            result.append(key.hashCode());
+        return result.toString().hashCode();
     }
 
     @Override
@@ -106,11 +106,13 @@ public class FlworKey implements KryoSerializable {
                 try {
                     result = currentItem.compareTo(comparisonItem);
                 } catch (RuntimeException e) {
-                    throw new SparksoniqRuntimeException("Invalid sort key: cannot compare item of type "
-                            + ItemTypes.getItemTypeName(comparisonItem.getClass().getSimpleName())
-                            + " with item of type "
-                            + ItemTypes.getItemTypeName(currentItem.getClass().getSimpleName())
-                            + ".");
+                    throw new SparksoniqRuntimeException(
+                            "Invalid sort key: cannot compare item of type "
+                                + ItemTypes.getItemTypeName(comparisonItem.getClass().getSimpleName())
+                                + " with item of type "
+                                + ItemTypes.getItemTypeName(currentItem.getClass().getSimpleName())
+                                + "."
+                    );
                 }
             }
 
