@@ -83,8 +83,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         _nextResult = null;
         if (_iterator.hasNext()) {
             _nextResult = _iterator.next();
-            if (_nextResult != null)
-                _childIndex++;
+            _childIndex++;
         } else {
             _iterator.close();
             checkEmptySequence(_childIndex);
@@ -108,9 +107,10 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
                     _sequenceType.getArity() == SequenceType.Arity.OneOrMore)
         ) {
             throw new UnexpectedTypeException(
-                    "Empty sequence cannot be promoted to type "
-                        + sequenceTypeName
-                        + _sequenceType.getArity().getSymbol(),
+                    _exceptionMessage
+                        + " Expecting "
+                        + ((_sequenceType.getArity() == SequenceType.Arity.OneOrMore) ? "at least" : "")
+                        + " one item, but the value provided is the empty sequence.",
                     getMetadata()
             );
         }
@@ -119,8 +119,8 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     private void checkItemsSize(long size) {
         if (size > 0 && _sequenceType.isEmptySequence()) {
             throw new UnexpectedTypeException(
-                    ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName())
-                        + " cannot be promoted to type empty-sequence()",
+                    _exceptionMessage
+                        + " Expecting empty sequence, but the value provided has at least one item.",
                     getMetadata()
             );
         }
@@ -133,9 +133,10 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
                     _sequenceType.getArity() == SequenceType.Arity.OneOrZero)
         ) {
             throw new UnexpectedTypeException(
-                    "Sequences of more than one item cannot be promoted to type "
-                        + sequenceTypeName
-                        + _sequenceType.getArity().getSymbol(),
+                    _exceptionMessage
+                        + " Expecting "
+                        + ((_sequenceType.getArity() == SequenceType.Arity.OneOrZero) ? "at most" : "")
+                        + " one item, but the value provided has at least two items.",
                     getMetadata()
             );
         }
@@ -165,7 +166,8 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
                         + ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName())
                         + " cannot be promoted to type "
                         + sequenceTypeName
-                        + _sequenceType.getArity().getSymbol(),
+                        + _sequenceType.getArity().getSymbol()
+                        + ".",
                     getMetadata()
             );
         _nextResult = _nextResult.promoteTo(_sequenceType.getItemType());

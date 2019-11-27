@@ -82,8 +82,7 @@ public class TreatIterator extends HybridRuntimeIterator {
         _nextResult = null;
         if (_iterator.hasNext()) {
             _nextResult = _iterator.next();
-            if (_nextResult != null)
-                _childIndex++;
+            _childIndex++;
         } else {
             _iterator.close();
             checkEmptySequence(_childIndex);
