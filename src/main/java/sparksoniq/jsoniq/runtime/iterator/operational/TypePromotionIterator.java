@@ -108,7 +108,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         ) {
             throw new UnexpectedTypeException(
                     _exceptionMessage
-                        + " Expecting "
+                        + "Expecting "
                         + ((_sequenceType.getArity() == SequenceType.Arity.OneOrMore) ? "at least" : "")
                         + " one item, but the value provided is the empty sequence.",
                     getMetadata()
@@ -120,7 +120,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         if (size > 0 && _sequenceType.isEmptySequence()) {
             throw new UnexpectedTypeException(
                     _exceptionMessage
-                        + " Expecting empty sequence, but the value provided has at least one item.",
+                        + "Expecting empty sequence, but the value provided has at least one item.",
                     getMetadata()
             );
         }
@@ -134,7 +134,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         ) {
             throw new UnexpectedTypeException(
                     _exceptionMessage
-                        + " Expecting "
+                        + "Expecting "
                         + ((_sequenceType.getArity() == SequenceType.Arity.OneOrZero) ? "at most" : "")
                         + " one item, but the value provided has at least two items.",
                     getMetadata()
