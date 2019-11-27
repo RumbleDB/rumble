@@ -71,6 +71,12 @@ public class SequenceType implements Serializable {
     }
 
 
+    @Override public boolean equals(Object o) {
+        if (!(o instanceof SequenceType))
+            return false;
+        SequenceType sequenceType = (SequenceType) o;
+        return this.getItemType().equals(sequenceType.getItemType()) && this.getArity().equals(sequenceType.getArity());
+    }
 
     public enum Arity {
         OneOrZero {
