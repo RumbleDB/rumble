@@ -99,7 +99,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
             for (int i = 0; i < _functionArguments.size(); i++) {
                 if (
                     _functionArguments.get(i) != null
-                        && _functionItem.getSignature().getParameterTypes().get(i) != mostGeneralSequenceType
+                        && !_functionItem.getSignature().getParameterTypes().get(i).equals(mostGeneralSequenceType)
                 ) {
                     _functionArguments.set(
                         i,
