@@ -559,7 +559,15 @@ public class Functions {
             IteratorMetadata metadata,
             List<RuntimeIterator> arguments
     ) {
-        return buildUserDefinedFunctionCallIterator(getUserDefinedFunction(identifier), metadata, arguments);
+        if (Functions.checkUserDefinedFunctionExists(identifier)) {
+            return buildUserDefinedFunctionCallIterator(getUserDefinedFunction(identifier), metadata, arguments);
+        }
+        throw new UnknownFunctionCallException(
+                identifier.getName(),
+                identifier.getArity(),
+                metadata
+        );
+
     }
 
     public static RuntimeIterator buildUserDefinedFunctionCallIterator(
@@ -567,20 +575,7 @@ public class Functions {
             IteratorMetadata metadata,
             List<RuntimeIterator> arguments
     ) {
-        FunctionItemCallIterator functionCallIterator = new FunctionItemCallIterator(functionItem, arguments, metadata);
-        if (!functionItem.getSignature().getReturnType().equals(mostGeneralSequenceType)) {
-            return new TypePromotionIterator(
-                    functionCallIterator,
-                    functionItem.getSignature().getReturnType(),
-                    "Invalid return type for "
-                        + (functionItem.getIdentifier().getName().equals("")
-                            ? ""
-                            : functionItem.getIdentifier().getName())
-                        + " function. ",
-                    metadata
-            );
-        }
-        return functionCallIterator;
+        return new FunctionItemCallIterator(functionItem, arguments, metadata);
     }
 
     public static void clearUserDefinedFunctions() {
@@ -677,11 +672,11 @@ public class Functions {
     }
 
     public static FunctionItem getUserDefinedFunction(FunctionIdentifier identifier) {
-        FunctionItem fnItem = userDefinedFunctions.get(identifier);
+        FunctionItem functionItem = userDefinedFunctions.get(identifier);
         try {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(bos);
-            oos.writeObject(fnItem);
+            oos.writeObject(functionItem);
             oos.flush();
             byte[] data = bos.toByteArray();
             ByteArrayInputStream bis = new ByteArrayInputStream(data);
