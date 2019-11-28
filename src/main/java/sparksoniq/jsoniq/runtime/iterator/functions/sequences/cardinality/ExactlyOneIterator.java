@@ -59,8 +59,8 @@ public class ExactlyOneIterator extends CardinalityFunctionIterator {
 
         RuntimeIterator sequenceIterator = this._children.get(0);
 
-        if (!sequenceIterator.isRDD()) {
-            sequenceIterator.open(context);
+        if (!sequenceIterator.isRDD(_currentDynamicContext)) {
+            sequenceIterator.open(_currentDynamicContext);
             if (!sequenceIterator.hasNext()) {
                 throw new SequenceExceptionExactlyOne(
                         "fn:exactly-one() called with a sequence that doesn't contain exactly one item",

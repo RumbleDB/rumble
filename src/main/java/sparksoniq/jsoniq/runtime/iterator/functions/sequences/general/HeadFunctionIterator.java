@@ -64,7 +64,7 @@ public class HeadFunctionIterator extends LocalFunctionCallIterator {
     }
 
     public void setResult() {
-        if (_iterator.isRDD()) {
+        if (_iterator.isRDD(_currentDynamicContext)) {
             List<Item> i = _iterator.getRDD(_currentDynamicContext).take(1);
             if (i.isEmpty()) {
                 this._hasNext = false;

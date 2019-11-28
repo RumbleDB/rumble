@@ -205,11 +205,11 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public boolean initIsRDD() {
+    public boolean initIsRDD(DynamicContext context) {
         if (_isPartialApplication) {
             return false;
         }
         _functionBodyIterator = _functionItem.getBodyIterator();
-        return _functionBodyIterator.isRDD();
+        return _functionBodyIterator.isRDD(context);
     }
 }

@@ -83,7 +83,7 @@ public class SequenceOfItems {
      * @return true if it is available as an RDD of Items.
      */
     public boolean availableAsRDD() {
-        return _iterator.isRDD();
+        return _iterator.isRDD(new DynamicContext());
     }
 
     /**

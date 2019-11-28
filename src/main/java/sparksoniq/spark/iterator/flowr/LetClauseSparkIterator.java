@@ -67,11 +67,11 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public boolean isDataFrame() {
+    public boolean isDataFrame(DynamicContext context) {
         if (this._child == null) {
             return false;
         } else {
-            return _child.isDataFrame();
+            return _child.isDataFrame(context);
         }
     }
 
@@ -114,10 +114,10 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         } else {
             resultTuple = new FlworTuple(inputTuple);
         }
-        if (_expression.isDataFrame()) {
+        if (_expression.isDataFrame(context)) {
             Dataset<Row> df = _expression.getDataFrame(context);
             resultTuple.putValue(_variableName, df);
-        } else if (_expression.isRDD()) {
+        } else if (_expression.isRDD(context)) {
             JavaRDD<Item> itemRDD = _expression.getRDD(context);
             resultTuple.putValue(_variableName, itemRDD);
         } else {

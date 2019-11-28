@@ -39,7 +39,7 @@ public abstract class RDDRuntimeIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected boolean initIsRDD() {
+    protected boolean initIsRDD(DynamicContext context) {
         return true;
     }
 

@@ -57,8 +57,8 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected boolean initIsRDD() {
-        return _child.isDataFrame();
+    protected boolean initIsRDD(DynamicContext context) {
+        return _child.isDataFrame(context);
     }
 
     @Override

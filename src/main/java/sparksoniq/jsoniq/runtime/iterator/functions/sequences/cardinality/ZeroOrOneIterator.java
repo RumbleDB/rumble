@@ -59,8 +59,8 @@ public class ZeroOrOneIterator extends CardinalityFunctionIterator {
 
         RuntimeIterator sequenceIterator = this._children.get(0);
 
-        if (!sequenceIterator.isRDD()) {
-            sequenceIterator.open(context);
+        if (!sequenceIterator.isRDD(_currentDynamicContext)) {
+            sequenceIterator.open(_currentDynamicContext);
             if (!sequenceIterator.hasNext()) {
                 this._hasNext = false;
             } else {

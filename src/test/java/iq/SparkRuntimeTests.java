@@ -24,6 +24,7 @@ import org.junit.Assert;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.semantics.DynamicContext;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -54,7 +55,8 @@ public class SparkRuntimeTests extends RuntimeTests {
 
     @Override
     protected void checkExpectedOutput(String expectedOutput, RuntimeIterator runtimeIterator) {
-        String actualOutput = runIterators(runtimeIterator);
+        DynamicContext context = new DynamicContext();
+        String actualOutput = getLocalExecutionResults(runtimeIterator, context);
         Assert.assertTrue(
             "Expected output: " + expectedOutput + " Actual result: " + actualOutput,
             expectedOutput.equals(actualOutput)

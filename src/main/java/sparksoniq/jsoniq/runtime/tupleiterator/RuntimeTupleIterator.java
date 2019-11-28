@@ -38,8 +38,8 @@ import java.util.TreeMap;
 
 public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterface, KryoSerializable {
 
-    private static final long serialVersionUID = 1L;
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
+    private static final long serialVersionUID = 1L;
     private final IteratorMetadata metadata;
     protected boolean _hasNext;
     protected boolean _isOpen;
@@ -53,11 +53,12 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     }
 
     public void open(DynamicContext context) {
-        if (this._isOpen)
+        if (this._isOpen) {
             throw new IteratorFlowException(
                     "Runtime tuple iterator cannot be opened twice" + ", this: " + this.toString(),
                     getMetadata()
             );
+        }
         this._isOpen = true;
         this._hasNext = true;
         this._currentDynamicContext = context;
@@ -104,7 +105,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         return metadata;
     }
 
-    public abstract boolean isDataFrame();
+    public abstract boolean isDataFrame(DynamicContext context);
 
     /**
      * Obtains the dataframe from the child clause.
@@ -124,9 +125,9 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
      * Builds the DataFrame projection that this clause needs to receive from its child clause.
      * The intent is that the result of this method is forwarded to the child clause in getDataFrame() so it can
      * optimize some values away.
-     * 
-     * @parentProjection the projection needed by the parent clause.
+     *
      * @return the projection needed by this clause.
+     * @parentProjection the projection needed by the parent clause.
      */
     public abstract Map<String, DynamicContext.VariableDependency> getProjection(
             Map<String, DynamicContext.VariableDependency> parentProjection
@@ -135,7 +136,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     /**
      * Variable dependencies are variables that MUST be provided by the parent clause in the dynamic context
      * for successful execution of this clause.
-     * 
+     * <p>
      * These variables are:
      * 1. All variables that the expression of the clause depends on (recursive call of getVariableDependencies on the
      * expression)
@@ -143,7 +144,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
      * getVariablesBoundInCurrentFLWORExpression), because those are provided in the Tuples
      * 3. Plus (recursively calling getVariableDependencies) all the Variable Dependencies of the child clause if it
      * exists.
-     * 
+     *
      * @return a map of variable names to dependencies (FULL, COUNT, ...) that this clause needs to obtain from the
      *         dynamic context.
      */
@@ -158,7 +159,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
      * Returns the variables bound in descendant (previous) clauses of the current FLWOR.
      * These variables can be removed from the dependencies of expressions in ascendent (subsequent) clauses,
      * because their values are provided in the tuples rather than the dynamic context object.
-     * 
+     *
      * @return the set of variable names that are bound by descendant clauses.
      */
     public Set<String> getVariablesBoundInCurrentFLWORExpression() {

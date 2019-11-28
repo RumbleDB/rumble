@@ -192,7 +192,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public boolean initIsRDD() {
-        return _iterator.isRDD();
+    public boolean initIsRDD(DynamicContext context) {
+        return _iterator.isRDD(context);
     }
 }

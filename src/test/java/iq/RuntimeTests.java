@@ -95,10 +95,11 @@ public class RuntimeTests extends AnnotationsTestsBase {
     @Override
     protected void checkExpectedOutput(String expectedOutput, RuntimeIterator runtimeIterator) {
         String actualOutput;
-        if (!runtimeIterator.isRDD()) {
-            actualOutput = runIterators(runtimeIterator);
+        DynamicContext context = new DynamicContext();
+        if (!runtimeIterator.isRDD(context)) {
+            actualOutput = getLocalExecutionResults(runtimeIterator, context);
         } else {
-            actualOutput = getRDDResults(runtimeIterator);
+            actualOutput = getRDDResults(runtimeIterator, context);
         }
         Assert.assertTrue(
             "Expected output: " + expectedOutput + " Actual result: " + actualOutput,
@@ -107,13 +108,8 @@ public class RuntimeTests extends AnnotationsTestsBase {
         // unorderedItemSequenceStringsAreEqual(expectedOutput, actualOutput));
     }
 
-    protected String runIterators(RuntimeIterator iterator) {
-        String actualOutput = getIteratorOutput(iterator);
-        return actualOutput;
-    }
-
-    protected String getIteratorOutput(RuntimeIterator iterator) {
-        iterator.open(new DynamicContext());
+    protected String getLocalExecutionResults(RuntimeIterator iterator, DynamicContext context) {
+        iterator.open(context);
         Item result = null;
         if (iterator.hasNext()) {
             result = iterator.next();
@@ -138,8 +134,8 @@ public class RuntimeTests extends AnnotationsTestsBase {
         }
     }
 
-    private String getRDDResults(RuntimeIterator runtimeIterator) {
-        JavaRDD<Item> rdd = runtimeIterator.getRDD(new DynamicContext());
+    private String getRDDResults(RuntimeIterator runtimeIterator, DynamicContext context) {
+        JavaRDD<Item> rdd = runtimeIterator.getRDD(context);
         JavaRDD<String> output = rdd.map(o -> o.serialize());
         long resultCount = output.count();
         if (resultCount == 0) {

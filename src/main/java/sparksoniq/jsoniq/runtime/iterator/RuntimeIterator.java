@@ -59,8 +59,9 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         this.metadata = metadata;
         this._isOpen = false;
         this._children = new ArrayList<>();
-        if (children != null && !children.isEmpty())
+        if (children != null && !children.isEmpty()) {
             this._children.addAll(children);
+        }
     }
 
     /**
@@ -77,29 +78,29 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         if (iterator.hasNext()) {
             Item item = iterator.next();
             boolean result;
-            if (item.isBoolean())
+            if (item.isBoolean()) {
                 result = item.getBooleanValue();
-            else if (item.isNumeric()) {
-                if (item.isInteger())
+            } else if (item.isNumeric()) {
+                if (item.isInteger()) {
                     result = item.getIntegerValue() != 0;
-                else if (item.isDouble())
+                } else if (item.isDouble()) {
                     result = item.getDoubleValue() != 0;
-                else if (item.isDecimal())
+                } else if (item.isDecimal()) {
                     result = !item.getDecimalValue().equals(BigDecimal.ZERO);
-                else {
+                } else {
                     throw new SparksoniqRuntimeException(
                             "Unexpected numeric type found while calculating effective boolean value."
                     );
                 }
-            } else if (item.isNull())
+            } else if (item.isNull()) {
                 result = false;
-            else if (item.isString())
+            } else if (item.isString()) {
                 result = !item.getStringValue().isEmpty();
-            else if (item.isObject())
+            } else if (item.isObject()) {
                 return true;
-            else if (item.isArray())
+            } else if (item.isArray()) {
                 return true;
-            else {
+            } else {
                 throw new InvalidArgumentTypeException(
                         "Effective boolean value not defined for items of type "
                             +
@@ -126,8 +127,9 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     }
 
     public void open(DynamicContext context) {
-        if (this._isOpen)
+        if (this._isOpen) {
             throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
+        }
         this._isOpen = true;
         this._hasNext = true;
         this._currentDynamicContext = context;
@@ -170,11 +172,11 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         return metadata;
     }
 
-    public abstract boolean isRDD();
+    public abstract boolean isRDD(DynamicContext context);
 
     public abstract JavaRDD<Item> getRDD(DynamicContext context);
 
-    public abstract boolean isDataFrame();
+    public abstract boolean isDataFrame(DynamicContext context);
 
     public abstract Dataset<Row> getDataFrame(DynamicContext context);
 
@@ -184,8 +186,9 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         List<Item> values = new ArrayList<>();
         for (RuntimeIterator iterator : this._children) {
             iterator.open(context);
-            while (iterator.hasNext())
+            while (iterator.hasNext()) {
                 values.add(iterator.next());
+            }
             iterator.close();
         }
         return values;
@@ -194,8 +197,9 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     protected List<Item> getItemsFromIteratorWithCurrentContext(RuntimeIterator iterator) {
         List<Item> result = new ArrayList<>();
         iterator.open(_currentDynamicContext);
-        while (iterator.hasNext())
+        while (iterator.hasNext()) {
             result.add(iterator.next());
+        }
         iterator.close();
         return result;
     }
@@ -225,8 +229,9 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
             }
         }
         iterator.close();
-        if (result != null && !(type.isInstance(result)))
+        if (result != null && !(type.isInstance(result))) {
             throw new UnexpectedTypeException("Invalid item type returned by iterator", iterator.getMetadata());
+        }
         return (T) result;
     }
 

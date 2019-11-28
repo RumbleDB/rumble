@@ -39,7 +39,7 @@ public class ParquetFileFunctionIterator extends RDDRuntimeIterator {
     }
 
     @Override
-    public boolean isDataFrame() {
+    public boolean isDataFrame(DynamicContext context) {
         return true;
     }
 

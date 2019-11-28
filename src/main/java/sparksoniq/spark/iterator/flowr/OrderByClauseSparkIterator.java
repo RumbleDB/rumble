@@ -77,8 +77,8 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public boolean isDataFrame() {
-        return _child.isDataFrame();
+    public boolean isDataFrame(DynamicContext context) {
+        return _child.isDataFrame(context);
     }
 
     @Override

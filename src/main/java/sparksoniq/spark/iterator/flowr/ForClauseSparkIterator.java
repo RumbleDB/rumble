@@ -72,8 +72,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public boolean isDataFrame() {
-        return (_expression.isRDD() || (_child != null && _child.isDataFrame()));
+    public boolean isDataFrame(DynamicContext context) {
+        return (_expression.isRDD(context) || (_child != null && _child.isDataFrame(context)));
     }
 
 
@@ -184,7 +184,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
         }
 
-        if (_child.isDataFrame()) {
+        if (_child.isDataFrame(context)) {
             Dataset<Row> df = this._child.getDataFrame(context, getProjection(parentProjection));
 
             StructType inputSchema = df.schema();

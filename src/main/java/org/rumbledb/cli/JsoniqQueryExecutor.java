@@ -89,22 +89,23 @@ public class JsoniqQueryExecutor {
         CharStream charStream = CharStreams.fromFileName(queryFile);
         long startTime = System.currentTimeMillis();
         JsoniqExpressionTreeVisitor visitor = this.parse(new JsoniqLexer(charStream));
-        // generate static context
         generateStaticContext(visitor.getMainModule());
-        // generate iterators
         RuntimeIterator result = generateRuntimeIterators(visitor.getMainModule());
+
         if (_configuration.isPrintIteratorTree()) {
             StringBuffer sb = new StringBuffer();
             result.print(sb, 0);
             System.out.println(sb);
             return;
         }
-        if (result.isRDD() && outputPath != null) {
-            JavaRDD<Item> rdd = result.getRDD(new DynamicContext());
+
+        DynamicContext context = new DynamicContext();
+        if (result.isRDD(context) && outputPath != null) {
+            JavaRDD<Item> rdd = result.getRDD(context);
             JavaRDD<String> output = rdd.map(o -> o.serialize());
             output.saveAsTextFile(outputPath);
         } else {
-            String output = runIterators(result);
+            String output = getLocalExecutionResults(result, context);
             if (outputPath != null) {
                 List<String> lines = Arrays.asList(output);
                 org.apache.commons.io.FileUtils.writeLines(outputFile, "UTF-8", lines);
@@ -123,24 +124,22 @@ public class JsoniqQueryExecutor {
         JsoniqLexer lexer = getInputSource(queryFile);
         long startTime = System.currentTimeMillis();
         JsoniqExpressionTreeVisitor visitor = this.parse(lexer);
-        // generate static context
         generateStaticContext(visitor.getMainModule());
-        // generate iterators
         RuntimeIterator result = generateRuntimeIterators(visitor.getMainModule());
-        // collect output in memory and write to filesystem from java
-        if (_useLocalOutputLog) {
-            String output = runIterators(result);
+        DynamicContext context = new DynamicContext();
+
+        if (_useLocalOutputLog) { // collect output in memory and write to filesystem from java
+            String output = getLocalExecutionResults(result, context);
             org.apache.hadoop.fs.FileSystem fileSystem = org.apache.hadoop.fs.FileSystem
                 .get(SparkSessionManager.getInstance().getJavaSparkContext().hadoopConfiguration());
             FSDataOutputStream fsDataOutputStream = fileSystem.create(new Path(outputPath));
             BufferedOutputStream stream = new BufferedOutputStream(fsDataOutputStream);
             stream.write(output.getBytes());
             stream.close();
-            // else write from Spark RDD
-        } else {
-            if (!result.isRDD())
+        } else { // else write from Spark RDD
+            if (!result.isRDD(context))
                 throw new SparksoniqRuntimeException("Could not find any RDD iterators in executor");
-            JavaRDD<Item> rdd = result.getRDD(new DynamicContext());
+            JavaRDD<Item> rdd = result.getRDD(context);
             JavaRDD<String> output = rdd.map(o -> o.serialize());
             output.saveAsTextFile(outputPath);
         }
@@ -175,20 +174,16 @@ public class JsoniqQueryExecutor {
     }
 
     public String runInteractive(java.nio.file.Path queryFile) throws IOException {
-        // create temp file
         JsoniqLexer lexer = getInputSource(queryFile.toString());
         JsoniqExpressionTreeVisitor visitor = this.parse(lexer);
-        // generate static context
         generateStaticContext(visitor.getMainModule());
-        // generate iterators
         RuntimeIterator runtimeIterator = generateRuntimeIterators(visitor.getMainModule());
-        // execute locally for simple expressions
-        if (!runtimeIterator.isRDD()) {
-            String localOutput = this.runIterators(runtimeIterator);
-            return localOutput;
+        DynamicContext context = new DynamicContext();
+
+        if (!runtimeIterator.isRDD(context)) {
+            return this.getLocalExecutionResults(runtimeIterator, context);
         }
-        String rddOutput = this.getRDDResults(runtimeIterator);
-        return rddOutput;
+        return this.getRDDResults(runtimeIterator, context);
     }
 
     private JsoniqLexer getInputSource(String arg) throws IOException {
@@ -242,17 +237,11 @@ public class JsoniqQueryExecutor {
     }
 
     private RuntimeIterator generateRuntimeIterators(Expression expression) {
-        RuntimeIterator result = new RuntimeIteratorVisitor().visit(expression, null);
-        return result;
+        return new RuntimeIteratorVisitor().visit(expression, null);
     }
 
-    protected String runIterators(RuntimeIterator iterator) {
-        String actualOutput = getIteratorOutput(iterator);
-        return actualOutput;
-    }
-
-    private String getIteratorOutput(RuntimeIterator iterator) {
-        iterator.open(new DynamicContext());
+    protected String getLocalExecutionResults(RuntimeIterator iterator, DynamicContext context) {
+        iterator.open(context);
         Item result = null;
         if (iterator.hasNext()) {
             result = iterator.next();
@@ -284,8 +273,8 @@ public class JsoniqQueryExecutor {
         }
     }
 
-    private String getRDDResults(RuntimeIterator result) {
-        JavaRDD<Item> rdd = result.getRDD(new DynamicContext());
+    private String getRDDResults(RuntimeIterator result, DynamicContext context) {
+        JavaRDD<Item> rdd = result.getRDD(context);
         JavaRDD<String> output = rdd.map(o -> o.serialize());
         long resultCount = output.count();
         if (resultCount == 0) {

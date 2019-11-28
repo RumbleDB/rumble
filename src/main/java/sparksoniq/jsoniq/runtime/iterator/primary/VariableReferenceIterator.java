@@ -51,7 +51,7 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected boolean initIsRDD() {
+    protected boolean initIsRDD(DynamicContext context) {
         // TODO: figure out how to set isRDD for varRefIter.
         // return _currentDynamicContext.isRDD(_variableName, getMetadata());
         return false;

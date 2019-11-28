@@ -39,12 +39,12 @@ public abstract class LocalRuntimeIterator extends RuntimeIterator {
     }
 
     @Override
-    public boolean isRDD() {
+    public boolean isRDD(DynamicContext context) {
         return false;
     }
 
     @Override
-    public boolean isDataFrame() {
+    public boolean isDataFrame(DynamicContext context) {
         return false;
     }
 

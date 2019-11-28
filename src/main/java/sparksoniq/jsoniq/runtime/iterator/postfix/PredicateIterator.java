@@ -209,8 +209,8 @@ public class PredicateIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected boolean initIsRDD() {
-        return this._iterator.isRDD();
+    protected boolean initIsRDD(DynamicContext context) {
+        return this._iterator.isRDD(context);
     }
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {

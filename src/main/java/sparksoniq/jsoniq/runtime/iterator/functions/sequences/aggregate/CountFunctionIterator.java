@@ -58,7 +58,7 @@ public class CountFunctionIterator extends LocalFunctionCallIterator {
                 return _currentDynamicContext.getVariableCount(expr.getVariableName());
             }
 
-            if (!iterator.isRDD()) {
+            if (!iterator.isRDD(_currentDynamicContext)) {
                 List<Item> results = getItemsFromIteratorWithCurrentContext(iterator);
                 this._hasNext = false;
                 return ItemFactory.getInstance().createIntegerItem(results.size());

@@ -51,7 +51,7 @@ public class InstanceOfIterator extends UnaryOperationBaseIterator {
     @Override
     public Item next() {
         if (this._hasNext) {
-            if (!_child.isRDD()) {
+            if (!_child.isRDD(_currentDynamicContext)) {
                 List<Item> items = new ArrayList<>();
                 _child.open(_currentDynamicContext);
                 while (_child.hasNext())

@@ -117,13 +117,13 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
     }
 
     @Override
-    public boolean initIsRDD() {
+    public boolean initIsRDD(DynamicContext context) {
         _userDefinedFunctionCallIterator = Functions.getUserDefinedFunctionCallIterator(
             _functionIdentifier,
             getMetadata(),
             _functionArguments
         );
-        return _userDefinedFunctionCallIterator.isRDD();
+        return _userDefinedFunctionCallIterator.isRDD(context);
     }
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {

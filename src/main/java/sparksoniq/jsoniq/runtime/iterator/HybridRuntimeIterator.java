@@ -24,8 +24,6 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
-import org.rumbledb.cli.Main;
-
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparkRuntimeException;
 import sparksoniq.io.json.JiqsItemParser;
@@ -51,23 +49,23 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     }
 
     @Override
-    public boolean isRDD() {
+    public boolean isRDD(DynamicContext context) {
         if (!isRDDInitialized) {
-            _isRDD = initIsRDD();
+            _isRDD = initIsRDD(context);
             isRDDInitialized = true;
         }
         return _isRDD;
     }
 
     @Override
-    public boolean isDataFrame() {
+    public boolean isDataFrame(DynamicContext context) {
         return false;
     }
 
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        if (!isRDD()) {
+        if (!isRDD(context)) {
             openLocal();
         }
     }
@@ -111,16 +109,19 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         if (!_isRDD) {
             return nextLocal();
         }
-        if (!this._isOpen)
+        if (!this._isOpen) {
             throw new IteratorFlowException("Runtime iterator is not open", getMetadata());
+        }
 
-        if (!(currentResultIndex <= result.size() - 1))
+        if (!(currentResultIndex <= result.size() - 1)) {
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.getClass().getSimpleName(),
                     getMetadata()
             );
-        if (currentResultIndex == result.size() - 1)
+        }
+        if (currentResultIndex == result.size() - 1) {
             this._hasNext = false;
+        }
 
         Item item = result.get(currentResultIndex);
         currentResultIndex++;
@@ -130,7 +131,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDD(DynamicContext context) {
-        if (isDataFrame()) {
+        if (isDataFrame(context)) {
             Dataset<Row> df = this.getDataFrame(context);
             JavaRDD<Row> rowRDD = df.javaRDD();
             return rowRDD.map(new RowToItemMapper(getMetadata()));
@@ -146,7 +147,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
     protected abstract JavaRDD<Item> getRDDAux(DynamicContext context);
 
-    protected abstract boolean initIsRDD();
+    protected abstract boolean initIsRDD(DynamicContext context);
 
     protected abstract void openLocal();
 

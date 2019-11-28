@@ -120,7 +120,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public boolean initIsRDD() {
-        return _sequenceIterator.isRDD();
+    public boolean initIsRDD(DynamicContext context) {
+        return _sequenceIterator.isRDD(context);
     }
 }

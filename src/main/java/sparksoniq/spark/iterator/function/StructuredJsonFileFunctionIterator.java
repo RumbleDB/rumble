@@ -20,7 +20,6 @@
 
 package sparksoniq.spark.iterator.function;
 
-import org.apache.spark.SparkException;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
@@ -41,7 +40,7 @@ public class StructuredJsonFileFunctionIterator extends RDDRuntimeIterator {
     }
 
     @Override
-    public boolean isDataFrame() {
+    public boolean isDataFrame(DynamicContext context) {
         return true;
     }
 
