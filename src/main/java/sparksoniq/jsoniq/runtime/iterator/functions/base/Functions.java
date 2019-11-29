@@ -877,7 +877,7 @@ public class Functions {
          * function that returns the integer from the supplied argument
          */
         static final BuiltinFunction decimal_function = createBuiltinFunction(
-                "decimal?",
+                "decimal",
                 "item?",
                 "decimal?",
                 DecimalFunctionIterator.class
