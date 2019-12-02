@@ -64,7 +64,7 @@ public class MatchesFunctionIterator extends LocalFunctionCallIterator {
 
             Matcher matcher = Pattern.compile(regexpItem.getStringValue()).matcher(stringItem.getStringValue());
             boolean result = matcher.find();
-            return new BooleanItem(result);
+            return ItemFactory.getInstance().createBooleanItem(result);
         } else
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " matches function",

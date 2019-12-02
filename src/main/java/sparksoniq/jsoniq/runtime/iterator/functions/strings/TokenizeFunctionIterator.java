@@ -122,11 +122,7 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
             if (_children.size() == 1 && _results.length != 0 && _results[0].equals("")) {
                 _currentPosition++;
             }
-            if (_children.size() == 2 && input.matches(".*" + separator + "$")) {
-                _lastEmptyString = true;
-            } else {
-                _lastEmptyString = false;
-            }
+            _lastEmptyString = _children.size() == 2 && input.matches(".*" + separator + "$");
         }
         if (_currentPosition < _results.length) {
             _nextResult = ItemFactory.getInstance().createStringItem(_results[_currentPosition]);

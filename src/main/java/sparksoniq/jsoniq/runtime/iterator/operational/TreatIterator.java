@@ -5,6 +5,7 @@ import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.TreatException;
+import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.TreatAsClosure;
@@ -15,41 +16,49 @@ import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
 
 import java.util.Collections;
-import java.util.List;
 
 
 public class TreatIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator _iterator;
+    private final SequenceType _sequenceType;
+    private boolean _shouldThrowTreatException;
+
+    private ItemType itemType;
+    private String sequenceTypeName;
+
     private Item _nextResult;
     private Item _currentResult;
-    private final SequenceType _sequenceType;
     private int _childIndex;
-    private final ItemType itemType;
-    private final String sequenceTypeName;
 
-    public TreatIterator(RuntimeIterator iterator, SequenceType sequenceType, IteratorMetadata iteratorMetadata) {
+    public TreatIterator(
+            RuntimeIterator iterator,
+            SequenceType sequenceType,
+            boolean shouldThrowTreatException,
+            IteratorMetadata iteratorMetadata
+    ) {
         super(Collections.singletonList(iterator), iteratorMetadata);
         _iterator = iterator;
         this._sequenceType = sequenceType;
         itemType = _sequenceType.getItemType();
         sequenceTypeName = ItemTypes.getItemTypeName(itemType.getType().toString());
+        this._shouldThrowTreatException = shouldThrowTreatException;
     }
 
     @Override
-    protected boolean hasNextLocal() {
+    public boolean hasNextLocal() {
         return _hasNext;
     }
 
     @Override
-    protected void resetLocal(DynamicContext context) {
+    public void resetLocal(DynamicContext context) {
         _iterator.reset(_currentDynamicContext);
         setNextResult();
     }
 
     @Override
-    protected void closeLocal() {
+    public void closeLocal() {
         _iterator.close();
     }
 
@@ -129,12 +138,12 @@ public class TreatIterator extends HybridRuntimeIterator {
                     ||
                     _sequenceType.getArity() == SequenceType.Arity.OneOrMore)
         ) {
-            throw new TreatException(
-                    " Empty sequence cannot be treated as type "
-                        + sequenceTypeName
-                        + _sequenceType.getArity().getSymbol(),
-                    getMetadata()
-            );
+            String message = "Empty sequence cannot be treated as type "
+                + sequenceTypeName
+                + _sequenceType.getArity().getSymbol();
+            throw _shouldThrowTreatException
+                ? new TreatException(message, getMetadata())
+                : new UnexpectedTypeException(message, getMetadata());
         }
     }
 

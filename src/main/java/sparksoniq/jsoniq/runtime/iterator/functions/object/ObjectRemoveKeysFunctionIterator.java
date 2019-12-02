@@ -106,7 +106,7 @@ public class ObjectRemoveKeysFunctionIterator extends LocalFunctionCallIterator 
         }
     }
 
-    public Item removeKeys(Item objItem, List<String> removalKeys) {
+    private Item removeKeys(Item objItem, List<String> removalKeys) {
         ArrayList<String> finalKeylist = new ArrayList<>();
         ArrayList<Item> finalValueList = new ArrayList<>();
 

@@ -47,11 +47,7 @@ public class FloorFunctionIterator extends LocalFunctionCallIterator {
         super.open(context);
         _iterator = this._children.get(0);
         _iterator.open(_currentDynamicContext);
-        if (_iterator.hasNext()) {
-            this._hasNext = true;
-        } else {
-            this._hasNext = false;
-        }
+        this._hasNext = _iterator.hasNext();
         _iterator.close();
     }
 
@@ -62,8 +58,7 @@ public class FloorFunctionIterator extends LocalFunctionCallIterator {
             Item value = this.getSingleItemOfTypeFromIterator(_iterator, Item.class);
             if (value.isNumeric()) {
                 try {
-                    Double result = Math.floor(value.castToDoubleValue());
-                    return ItemFactory.getInstance().createDoubleItem(result);
+                    return ItemFactory.getInstance().createDoubleItem(Math.floor(value.castToDoubleValue()));
 
                 } catch (IteratorFlowException e) {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());

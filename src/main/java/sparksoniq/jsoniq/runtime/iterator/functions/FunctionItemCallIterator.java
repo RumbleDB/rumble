@@ -28,6 +28,7 @@ import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionSignature;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.SequenceType;
@@ -100,7 +101,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
             // Argument placeholders form the parameters of the new FunctionItem
 
             List<String> partialAppParamNames = new ArrayList<>();
-            List<SequenceType> partialAppSignature = new ArrayList<>();
+            List<SequenceType> partialAppParamTypes = new ArrayList<>();
 
             for (int i = 0; i < _functionArguments.size(); i++) {
                 argIterator = _functionArguments.get(i);
@@ -108,20 +109,22 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
                 if (argIterator == null) { // == ArgumentPlaceholder
                     partialAppParamNames.add(argName);
-                    partialAppSignature.add(_functionItem.getSignature().get(i));
+                    partialAppParamTypes.add(_functionItem.getSignature().getParameterTypes().get(i));
                 } else {
                     List<Item> argValue = getItemsFromIteratorWithCurrentContext(argIterator);
                     argumentValues.put(argName, argValue);
                 }
             }
 
-            // add return type (found last in the signature list) to the signature
-            partialAppSignature.add(_functionItem.getSignature().get(_functionItem.getSignature().size() - 1));
-
+            // partial application should return a new FunctionItem with given parameters set as NonLocalVariables
+            // and argument placeholders as new parameters to the new FunctionItem
             FunctionItem partiallyAppliedFunction = new FunctionItem(
                     new FunctionIdentifier("", partialAppParamNames.size()),
                     partialAppParamNames,
-                    partialAppSignature,
+                    new FunctionSignature(
+                            partialAppParamTypes,
+                            _functionItem.getSignature().getReturnType()
+                    ),
                     _functionItem.getBodyIterator(),
                     argumentValues
             );

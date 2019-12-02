@@ -27,6 +27,7 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -46,7 +47,7 @@ public class ArrayFlattenFunctionIterator extends LocalFunctionCallIterator {
 
     @Override
     public Item next() {
-        if (_hasNext == true) {
+        if (_hasNext) {
             Item result = _nextResults.remove(); // save the result to be returned
             if (_nextResults.isEmpty()) {
                 // if there are no more results left in the queue, trigger calculation for the next result
@@ -74,9 +75,7 @@ public class ArrayFlattenFunctionIterator extends LocalFunctionCallIterator {
     public void setNextResult() {
         while (_iterator.hasNext()) {
             Item item = _iterator.next();
-            List<Item> singleItemList = new ArrayList<>();
-            singleItemList.add(item);
-            flatten(singleItemList);
+            flatten(Collections.singletonList(item));
             if (!(_nextResults.isEmpty())) {
                 break;
             }
@@ -89,7 +88,7 @@ public class ArrayFlattenFunctionIterator extends LocalFunctionCallIterator {
         }
     }
 
-    public void flatten(List<Item> items) {
+    private void flatten(List<Item> items) {
         for (Item item : items) {
             if (item.isArray()) {
                 flatten(item.getItems());

@@ -32,11 +32,11 @@ import java.util.List;
 
 import org.rumbledb.api.Item;
 
-public class StringJoinFunction extends LocalFunctionCallIterator {
+public class StringJoinFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
 
-    public StringJoinFunction(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
+    public StringJoinFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
     }
 
@@ -49,19 +49,18 @@ public class StringJoinFunction extends LocalFunctionCallIterator {
                 RuntimeIterator joinStringIterator = this._children.get(1);
                 joinStringIterator.open(_currentDynamicContext);
                 if (joinStringIterator.hasNext()) {
-                    Item item = joinStringIterator.next();
-                    joinString = (StringItem) item;
+                    joinString = joinStringIterator.next();
                 }
             }
 
-            StringBuilder stringBuilder = new StringBuilder("");
+            StringBuilder stringBuilder = new StringBuilder();
             for (Item item : strings) {
                 if (!(item.isString()))
                     throw new UnexpectedTypeException("String item expected", this._children.get(0).getMetadata());
-                stringBuilder = !stringBuilder.toString().isEmpty()
-                    ? stringBuilder.append(joinString.getStringValue())
-                    : stringBuilder;
-                stringBuilder = stringBuilder.append(((StringItem) item).getStringValue());
+                if (!stringBuilder.toString().isEmpty()) {
+                    stringBuilder.append(joinString.getStringValue());
+                }
+                stringBuilder.append(item.getStringValue());
             }
             this._hasNext = false;
             return ItemFactory.getInstance().createStringItem(stringBuilder.toString());

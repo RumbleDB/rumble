@@ -17,10 +17,9 @@
  * Authors: Stefan Irimescu, Can Berker Cikis
  *
  */
-package sparksoniq;
+package org.rumbledb.cli;
 
 
-import sparksoniq.config.SparksoniqRuntimeConfiguration;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.io.shell.JiqsJLineShell;
 import sparksoniq.spark.SparkSessionManager;
@@ -28,6 +27,7 @@ import sparksoniq.spark.SparkSessionManager;
 import java.io.IOException;
 
 import org.apache.spark.SparkException;
+import org.rumbledb.config.SparksoniqRuntimeConfiguration;
 
 public class Main {
     public static JiqsJLineShell terminal = null;

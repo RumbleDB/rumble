@@ -18,7 +18,7 @@
  *
  */
 
-package sparksoniq;
+package org.rumbledb.cli;
 
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CharStream;
@@ -30,8 +30,8 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.Path;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
+import org.rumbledb.config.SparksoniqRuntimeConfiguration;
 
-import sparksoniq.config.SparksoniqRuntimeConfiguration;
 import sparksoniq.exceptions.ParsingException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
