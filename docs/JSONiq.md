@@ -83,7 +83,7 @@ The type system is not quite complete yet, although a lot of progress was made. 
 
 |  Type | Status |
 |-------|--------|
-| anyAtomicType | not supported |
+| atomic | supported |
 | base64Binary | supported |
 | boolean | supported |
 | byte | not supported |
