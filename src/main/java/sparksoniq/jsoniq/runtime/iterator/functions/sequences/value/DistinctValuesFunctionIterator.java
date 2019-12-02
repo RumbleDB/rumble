@@ -110,7 +110,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
         _currentDynamicContext = dynamicContext;
         JavaRDD<Item> childRDD = _sequenceIterator.getRDD(dynamicContext);
         Function<Item, Boolean> transformation = new FilterNonAtomicClosure();
-        if (childRDD.filter(transformation).count() == 0) {
+        if (childRDD.filter(transformation).isEmpty()) {
             return childRDD.distinct();
         }
         throw new NonAtomicKeyException(
