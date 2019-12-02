@@ -19,25 +19,30 @@ public class StringFunctionIterator extends LocalFunctionCallIterator {
 
     public StringFunctionIterator(
             List<RuntimeIterator> parameters,
-            IteratorMetadata iteratorMetadata) {
+            IteratorMetadata iteratorMetadata
+    ) {
         super(parameters, iteratorMetadata);
     }
 
-    @Override public Item next() {
+    @Override
+    public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
             try {
                 if (!item.isAtomic()) {
                     throw new StringOfJSONiqItemException(
-                            ItemTypes.getItemTypeName(item.getClass().getSimpleName()) +
-                            " items do not have string value",
-                            getMetadata());
+                            ItemTypes.getItemTypeName(item.getClass().getSimpleName())
+                                +
+                                " items do not have string value",
+                            getMetadata()
+                    );
                 }
                 AtomicItem atomicItem = (AtomicItem) item;
-                String message = atomicItem.serialize() +
-                        ": value of type "
-                        + ItemTypes.getItemTypeName(item.getClass().getSimpleName())
-                        + " is not castable to type string.";
+                String message = atomicItem.serialize()
+                    +
+                    ": value of type "
+                    + ItemTypes.getItemTypeName(item.getClass().getSimpleName())
+                    + " is not castable to type string.";
                 if (atomicItem.isCastableAs(AtomicTypes.StringItem)) {
                     try {
                         return atomicItem.castAs(AtomicTypes.StringItem);
@@ -49,10 +54,10 @@ public class StringFunctionIterator extends LocalFunctionCallIterator {
                 throw new UnexpectedTypeException(message, getMetadata());
             } catch (IllegalArgumentException e) {
                 String message = String.format(
-                        "\"%s\": value of type %s is not castable to type %s",
-                        item.serialize(),
-                        "string",
-                        "string"
+                    "\"%s\": value of type %s is not castable to type %s",
+                    item.serialize(),
+                    "string",
+                    "string"
                 );
                 throw new CastException(message, getMetadata());
             }
@@ -68,9 +73,9 @@ public class StringFunctionIterator extends LocalFunctionCallIterator {
         super.open(context);
         try {
             item = this.getSingleItemOfTypeFromIterator(
-                    this._children.get(0),
-                    Item.class,
-                    new UnknownFunctionCallException("string", this._children.size(), getMetadata())
+                this._children.get(0),
+                Item.class,
+                new UnknownFunctionCallException("string", this._children.size(), getMetadata())
             );
         } catch (UnknownFunctionCallException e) {
             throw new UnexpectedTypeException(

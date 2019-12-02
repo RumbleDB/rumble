@@ -9,9 +9,9 @@ public class StringOfJSONiqItemException extends SparksoniqRuntimeException {
 
     public StringOfJSONiqItemException(String message, IteratorMetadata metadata) {
         super(
-                message,
-                ErrorCodes.StringOfJSONiqItemsErrorCode,
-                metadata.getExpressionMetadata()
+            message,
+            ErrorCodes.StringOfJSONiqItemsErrorCode,
+            metadata.getExpressionMetadata()
         );
     }
 }

@@ -19,26 +19,29 @@ public class DecimalFunctionIterator extends LocalFunctionCallIterator {
 
     public DecimalFunctionIterator(
             List<RuntimeIterator> parameters,
-            IteratorMetadata iteratorMetadata) {
+            IteratorMetadata iteratorMetadata
+    ) {
         super(parameters, iteratorMetadata);
     }
 
-    @Override public Item next() {
+    @Override
+    public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
             try {
                 if (!item.isAtomic()) {
                     String message = String.format(
-                            "Can not atomize an %1$s item: an %1$s has probably been passed where an atomic value is expected.",
-                            ItemTypes.getItemTypeName(item.getClass().getSimpleName())
+                        "Can not atomize an %1$s item: an %1$s has probably been passed where an atomic value is expected.",
+                        ItemTypes.getItemTypeName(item.getClass().getSimpleName())
                     );
                     throw new NonAtomicKeyException(message, getMetadata().getExpressionMetadata());
                 }
                 AtomicItem atomicItem = (AtomicItem) item;
-                String message = atomicItem.serialize() +
-                        ": value of type "
-                        + ItemTypes.getItemTypeName(item.getClass().getSimpleName())
-                        + " is not castable to type decimal.";
+                String message = atomicItem.serialize()
+                    +
+                    ": value of type "
+                    + ItemTypes.getItemTypeName(item.getClass().getSimpleName())
+                    + " is not castable to type decimal.";
                 if (atomicItem.isNull())
                     throw new InvalidLexicalValueException(message, getMetadata());
                 if (atomicItem.isCastableAs(AtomicTypes.DecimalItem)) {
@@ -52,10 +55,10 @@ public class DecimalFunctionIterator extends LocalFunctionCallIterator {
                 throw new UnexpectedTypeException(message, getMetadata());
             } catch (IllegalArgumentException e) {
                 String message = String.format(
-                        "\"%s\": value of type %s is not castable to type %s",
-                        item.serialize(),
-                        "string",
-                        "decimal"
+                    "\"%s\": value of type %s is not castable to type %s",
+                    item.serialize(),
+                    "string",
+                    "decimal"
                 );
                 throw new CastException(message, getMetadata());
             }
@@ -71,9 +74,9 @@ public class DecimalFunctionIterator extends LocalFunctionCallIterator {
         super.open(context);
         try {
             item = this.getSingleItemOfTypeFromIterator(
-                    this._children.get(0),
-                    Item.class,
-                    new UnknownFunctionCallException("decimal", this._children.size(), getMetadata())
+                this._children.get(0),
+                Item.class,
+                new UnknownFunctionCallException("decimal", this._children.size(), getMetadata())
             );
         } catch (UnknownFunctionCallException e) {
             throw new UnexpectedTypeException(
