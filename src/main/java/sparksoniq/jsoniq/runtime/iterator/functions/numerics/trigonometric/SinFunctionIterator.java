@@ -55,7 +55,8 @@ public class SinFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            return ItemFactory.getInstance().createDoubleItem(Math.sin(this.getSingleItemFromIterator(_iterator).castToDoubleValue()));
+            return ItemFactory.getInstance()
+                .createDoubleItem(Math.sin(this.getSingleItemFromIterator(_iterator).castToDoubleValue()));
         } else
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " sin function", getMetadata());
     }

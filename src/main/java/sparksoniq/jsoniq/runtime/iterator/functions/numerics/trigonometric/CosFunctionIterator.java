@@ -55,7 +55,8 @@ public class CosFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            return ItemFactory.getInstance().createDoubleItem(Math.cos(this.getSingleItemFromIterator(_iterator).castToDoubleValue()));
+            return ItemFactory.getInstance()
+                .createDoubleItem(Math.cos(this.getSingleItemFromIterator(_iterator).castToDoubleValue()));
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " cos function", getMetadata());
     }

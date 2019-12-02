@@ -559,7 +559,15 @@ public class Functions {
             IteratorMetadata metadata,
             List<RuntimeIterator> arguments
     ) {
-        return buildUserDefinedFunctionCallIterator(getUserDefinedFunction(identifier), metadata, arguments);
+        if (Functions.checkUserDefinedFunctionExists(identifier)) {
+            return buildUserDefinedFunctionCallIterator(getUserDefinedFunction(identifier), metadata, arguments);
+        }
+        throw new UnknownFunctionCallException(
+                identifier.getName(),
+                identifier.getArity(),
+                metadata
+        );
+
     }
 
     public static RuntimeIterator buildUserDefinedFunctionCallIterator(
@@ -664,11 +672,11 @@ public class Functions {
     }
 
     public static FunctionItem getUserDefinedFunction(FunctionIdentifier identifier) {
-        FunctionItem fnItem = userDefinedFunctions.get(identifier);
+        FunctionItem functionItem = userDefinedFunctions.get(identifier);
         try {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(bos);
-            oos.writeObject(fnItem);
+            oos.writeObject(functionItem);
             oos.flush();
             byte[] data = bos.toByteArray();
             ByteArrayInputStream bis = new ByteArrayInputStream(data);
