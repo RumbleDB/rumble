@@ -618,7 +618,7 @@ return $my-json
 
 ### structured-json-file (Rumble specific)
 
-Parses one or more json files that follow [JSON-lines](http://jsonlines.org/) format and returns a sequence of objects. This enables better performance with fully structured data and is recommended to use when such data is available. This is also similar to Spark's spark.read.json().
+Parses one or more json files that follow [JSON-lines](http://jsonlines.org/) format and returns a sequence of objects. This enables better performance with fully structured data and is recommended to use only when such data is available. When data has nested structure or multiple types for the same field, this field and contained values will be treated as strings. This is also similar to Spark's spark.read.json().
 
 Example of usage:
 ```
