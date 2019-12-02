@@ -40,10 +40,10 @@ public enum ItemTypes {
 
     DateTimeItem,
     DateItem,
+    TimeItem,
 
     HexBinaryItem,
     Base64BinaryItem,
-    TimeItem,
 
     FunctionItem,
 

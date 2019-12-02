@@ -34,6 +34,7 @@ import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
 import java.math.BigDecimal;
@@ -232,7 +233,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<String, DynamicContext.VariableDependency> result =
-            new TreeMap<String, DynamicContext.VariableDependency>();
+            new TreeMap<>();
         for (RuntimeIterator iterator : _children) {
             result.putAll(iterator.getVariableDependencies());
         }

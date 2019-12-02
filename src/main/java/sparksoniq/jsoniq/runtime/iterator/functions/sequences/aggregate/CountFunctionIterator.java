@@ -64,8 +64,12 @@ public class CountFunctionIterator extends LocalFunctionCallIterator {
                 return ItemFactory.getInstance().createIntegerItem(results.size());
             }
 
-            // it is an RDD
-            long count = iterator.getRDD(_currentDynamicContext).count();
+            long count;
+            if (iterator.isDataFrame()) {
+                count = iterator.getDataFrame(_currentDynamicContext).count();
+            } else {
+                count = iterator.getRDD(_currentDynamicContext).count();
+            }
             this._hasNext = false;
             if (count > (long) Integer.MAX_VALUE) {
                 // TODO: handle too big x values

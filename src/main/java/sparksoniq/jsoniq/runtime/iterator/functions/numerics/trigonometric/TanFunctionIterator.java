@@ -47,11 +47,7 @@ public class TanFunctionIterator extends LocalFunctionCallIterator {
         super.open(context);
         _iterator = this._children.get(0);
         _iterator.open(_currentDynamicContext);
-        if (_iterator.hasNext()) {
-            this._hasNext = true;
-        } else {
-            this._hasNext = false;
-        }
+        this._hasNext = _iterator.hasNext();
         _iterator.close();
     }
 
@@ -62,8 +58,7 @@ public class TanFunctionIterator extends LocalFunctionCallIterator {
             Item radians = this.getSingleItemOfTypeFromIterator(_iterator, Item.class);
             if (radians.isNumeric()) {
                 try {
-                    Double result = Math.tan(radians.castToDoubleValue());
-                    return ItemFactory.getInstance().createDoubleItem(result);
+                    return ItemFactory.getInstance().createDoubleItem(Math.tan(radians.castToDoubleValue()));
 
                 } catch (IteratorFlowException e) {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());

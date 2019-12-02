@@ -89,6 +89,11 @@ public class DecimalItem extends AtomicItem {
     }
 
     @Override
+    public boolean canBePromotedTo(ItemType type) {
+        return type.getType().equals(ItemTypes.DoubleItem) || super.canBePromotedTo(type);
+    }
+
+    @Override
     public Item castAs(AtomicTypes itemType) {
         switch (itemType) {
             case BooleanItem:

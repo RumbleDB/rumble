@@ -47,11 +47,7 @@ public class ExpFunctionIterator extends LocalFunctionCallIterator {
         super.open(context);
         _iterator = this._children.get(0);
         _iterator.open(_currentDynamicContext);
-        if (_iterator.hasNext()) {
-            this._hasNext = true;
-        } else {
-            this._hasNext = false;
-        }
+        this._hasNext = _iterator.hasNext();
         _iterator.close();
     }
 
@@ -62,8 +58,7 @@ public class ExpFunctionIterator extends LocalFunctionCallIterator {
             Item exponent = this.getSingleItemOfTypeFromIterator(_iterator, Item.class);
             if (exponent.isNumeric()) {
                 try {
-                    Double result = Math.exp(exponent.castToDoubleValue());
-                    return ItemFactory.getInstance().createDoubleItem(result);
+                    return ItemFactory.getInstance().createDoubleItem(Math.exp(exponent.castToDoubleValue()));
 
                 } catch (IteratorFlowException e) {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());

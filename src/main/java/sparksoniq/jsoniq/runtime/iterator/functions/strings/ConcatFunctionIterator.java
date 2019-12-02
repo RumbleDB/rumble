@@ -42,12 +42,12 @@ public class ConcatFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public Item next() {
         if (this._hasNext) {
-            StringBuilder builder = new StringBuilder("");
+            StringBuilder builder = new StringBuilder();
             for (RuntimeIterator iterator : this._children) {
                 Item item = this.getSingleItemOfTypeFromIterator(iterator, Item.class);
                 // if not empty sequence
                 if (item != null) {
-                    String stringValue = "";
+                    String stringValue;
                     if (item.isAtomic()) {
                         stringValue = item.serialize(); // for atomic items (not array or object) returns the equivalent
                                                         // string value
@@ -59,7 +59,7 @@ public class ConcatFunctionIterator extends LocalFunctionCallIterator {
                                 getMetadata()
                         );
                     }
-                    if (stringValue != "") {
+                    if (!stringValue.equals("")) {
                         builder.append(stringValue);
                     }
                 }
