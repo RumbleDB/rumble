@@ -54,12 +54,15 @@ public class PredicateClosureZipped implements Function<Tuple2<Item, Long>, Bool
 
         _expression.open(dynamicContext);
         if (_expression.hasNext()) {
-            Item result = _expression.next();
-            _expression.close();
-            if (result.isNumeric()) {
-                return new Boolean(result.equals(dynamicContext.getPosition()));
+            Item value = _expression.next();
+            if (value.isNumeric() && !_expression.hasNext()) {
+                _expression.close();
+                return new Boolean(value.equals(dynamicContext.getPosition()));
             } else {
-                return result.getBooleanValue();
+                _expression.reset(dynamicContext);
+                boolean result = RuntimeIterator.getEffectiveBooleanValue(_expression);
+                _expression.close();
+                return result;
             }
         } else {
             _expression.close();

@@ -23,7 +23,6 @@ package sparksoniq.jsoniq.runtime.iterator.postfix;
 import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
 
-import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
 
@@ -49,14 +48,10 @@ public class PredicateClosure implements Function<Item, Boolean> {
         dynamicContext.addVariableValue("$$", currentItems);
 
         _expression.open(dynamicContext);
-        if (_expression.hasNext()) {
-            Item result = _expression.next();
-            _expression.close();
-            return result.getBooleanValue();
-        } else {
-            _expression.close();
-            return false;
-        }
+        boolean result = RuntimeIterator.getEffectiveBooleanValue(_expression);
+        _expression.close();
+        return result;
+
     }
 
 };
