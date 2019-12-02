@@ -53,7 +53,6 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     @Override
     public void resetLocal(DynamicContext context) {
         _iterator.reset(_currentDynamicContext);
-        this._childIndex = 0;
         setNextResult();
     }
 
