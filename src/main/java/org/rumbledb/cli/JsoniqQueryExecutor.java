@@ -287,7 +287,7 @@ public class JsoniqQueryExecutor {
     private String getRDDResults(RuntimeIterator result) {
         JavaRDD<Item> rdd = result.getRDD(new DynamicContext());
         JavaRDD<String> output = rdd.map(o -> o.serialize());
-        long resultCount = output.count();
+        long resultCount = output.take(2).size();
         if (resultCount == 0) {
             return "";
         }

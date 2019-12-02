@@ -141,7 +141,7 @@ public class RuntimeTests extends AnnotationsTestsBase {
     private String getRDDResults(RuntimeIterator runtimeIterator) {
         JavaRDD<Item> rdd = runtimeIterator.getRDD(new DynamicContext());
         JavaRDD<String> output = rdd.map(o -> o.serialize());
-        long resultCount = output.count();
+        int resultCount = output.take(2).size();
         if (resultCount == 0) {
             return "";
         }

@@ -21,6 +21,8 @@
 package sparksoniq.semantics.types;
 
 
+import org.rumbledb.api.Item;
+
 import java.io.Serializable;
 
 public class ItemType implements Serializable {
@@ -70,5 +72,11 @@ public class ItemType implements Serializable {
         return false;
     }
 
-
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof ItemType))
+            return false;
+        ItemType itemType = (ItemType) o;
+        return this.getType().equals(itemType.getType());
+    }
 }

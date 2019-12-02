@@ -56,6 +56,7 @@ public class SparkSessionManager {
     private SparkSession session;
     private JavaSparkContext javaSparkContext;
 
+    public static String atomicJSONiqItemColumnName = "0d08af5d-10bb-4a73-af84-c6aac917a830";
 
     private SparkSessionManager() {
     }

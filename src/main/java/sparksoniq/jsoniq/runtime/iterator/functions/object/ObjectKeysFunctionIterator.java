@@ -22,6 +22,8 @@ package sparksoniq.jsoniq.runtime.iterator.functions.object;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.ItemFactory;
@@ -40,7 +42,7 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
     private static final long serialVersionUID = 1L;
     private RuntimeIterator _iterator;
     private Queue<Item> _nextResults; // queue that holds the results created by the current item in inspection
-    private List<Item> _prevResults;
+    private List<Item> _alreadyFoundKeys;
 
     public ObjectKeysFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
@@ -48,21 +50,72 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
+    public boolean initIsRDD() {
+        return _iterator.isRDD() && !_iterator.isDataFrame();
+    }
+
+    @Override
+    public boolean isDataFrame() {
+        return false;
+    }
+
+    @Override
     public void openLocal() {
-        _iterator.open(_currentDynamicContext);
-        _prevResults = new ArrayList<>();
+        _alreadyFoundKeys = new ArrayList<>();
         _nextResults = new LinkedList<>();
 
-        setNextResult();
+        if (_iterator.isDataFrame()) {
+            setResultsFromDF();
+        } else {
+            _iterator.open(_currentDynamicContext);
+            setResultsFromNextObjectItem();
+        }
+    }
+
+    private void setResultsFromDF() {
+        Dataset<Row> childDF = _iterator.getDataFrame(_currentDynamicContext);
+        String[] keys = childDF.schema().fieldNames();
+        for (String key : keys) {
+            _nextResults.add(ItemFactory.getInstance().createStringItem(key));
+        }
+    }
+
+    private void setResultsFromNextObjectItem() {
+        while (_iterator.hasNext()) {
+            Item item = _iterator.next();
+            if (item.isObject()) { // ignore non-object items
+                Item result;
+                for (String key : item.getKeys()) {
+                    result = ItemFactory.getInstance().createStringItem(key);
+                    if (!_alreadyFoundKeys.contains(result)) {
+                        _alreadyFoundKeys.add(result);
+                        _nextResults.add(result);
+                    }
+                }
+                if (!_nextResults.isEmpty()) {
+                    break;
+                }
+            }
+        }
+
+        if (_nextResults.isEmpty()) {
+            this._hasNext = false;
+            _iterator.close();
+        } else {
+            this._hasNext = true;
+        }
     }
 
     @Override
     public Item nextLocal() {
         if (this._hasNext) {
-            Item result = _nextResults.remove(); // save the result to be returned
+            Item result = _nextResults.remove();
             if (_nextResults.isEmpty()) {
-                // if there are no more results left in the queue, trigger calculation for the next result
-                setNextResult();
+                if (_iterator.isDataFrame()) {
+                    this._hasNext = false;
+                } else {
+                    setResultsFromNextObjectItem();
+                }
             }
             return result;
         }
@@ -79,8 +132,15 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void resetLocal(DynamicContext context) {
-        _iterator.reset(_currentDynamicContext);
-        setNextResult();
+        _alreadyFoundKeys = new ArrayList<>();
+        _nextResults = new LinkedList<>();
+
+        if (_iterator.isDataFrame()) {
+            setResultsFromDF();
+        } else {
+            _iterator.reset(_currentDynamicContext);
+            setResultsFromNextObjectItem();
+        }
     }
 
     @Override
@@ -88,45 +148,11 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
         _iterator.close();
     }
 
-    public void setNextResult() {
-        while (_iterator.hasNext()) {
-            Item item = _iterator.next();
-            // ignore non-object items
-            if (item.isObject()) {
-                Item result;
-                for (String key : item.getKeys()) {
-                    result = ItemFactory.getInstance().createStringItem(key);
-                    // check if key was met earlier
-                    if (!_prevResults.contains(result)) {
-                        _prevResults.add(result);
-                        _nextResults.add(result);
-                    }
-                }
-                // if some results are found from the current item, break out of while loop
-                if (_nextResults.isEmpty()) {
-                    break;
-                }
-            }
-        }
-
-        if (_nextResults.isEmpty()) {
-            this._hasNext = false;
-            _iterator.close();
-        } else {
-            this._hasNext = true;
-        }
-    }
-
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        _currentDynamicContext = dynamicContext;
-        JavaRDD<Item> childRDD = _iterator.getRDD(dynamicContext);
+    public JavaRDD<Item> getRDDAux(DynamicContext context) {
+        _currentDynamicContext = context;
+        JavaRDD<Item> childRDD = _iterator.getRDD(context);
         FlatMapFunction<Item, Item> transformation = new ObjectKeysClosure();
         return childRDD.flatMap(transformation).distinct();
-    }
-
-    @Override
-    public boolean initIsRDD() {
-        return _iterator.isRDD();
     }
 }
