@@ -1,5 +1,8 @@
-(:JIQS: ShouldRun; Output="(Spock, cde, abcde, cde)" :)
-substring("Mister Spock", 8, 5),
-substring("abcde",3),
-substring("abcde",-1),
-substring("abcde",3, 15)
+(:JIQS: ShouldRun; Output="(car, ada, 234, 12, , 1, )" :)
+substring("motor car", 7),
+substring("metadata", 4, 3),
+substring("12345", 1.5, 2.6),
+substring("12345", 0, 3),
+substring("12345", 5, -3),
+substring("12345", -3, 5),
+substring((), 1, 3)

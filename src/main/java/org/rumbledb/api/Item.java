@@ -23,9 +23,12 @@ package org.rumbledb.api;
 import org.joda.time.Period;
 import org.joda.time.DateTime;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemType;
+import sparksoniq.semantics.types.ItemTypes;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -291,6 +294,27 @@ public abstract class Item implements SerializableItem {
      * @return true if it matches the item type.
      */
     public abstract boolean isTypeOf(ItemType type);
+
+    /**
+     * Please do not use, item type API not publicly released yet.
+     * 
+     * @param type an ItemType.
+     * @return true if the item can be promoted to the type passed in as argument.
+     */
+    public boolean canBePromotedTo(ItemType type) {
+        return this.isTypeOf(type);
+    }
+
+
+    public Item promoteTo(ItemType type) {
+        if (!this.canBePromotedTo(type))
+            throw new RuntimeException(
+                    ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                        + " cannot be promoted to type "
+                        + ItemTypes.getItemTypeName(type.getType().toString())
+            );
+        return this;
+    }
 
     /**
      * Tests whether the item is a function.

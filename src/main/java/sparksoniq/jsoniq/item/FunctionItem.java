@@ -25,9 +25,10 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.FunctionsNonSerializableException;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionSignature;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
@@ -48,7 +49,7 @@ public class FunctionItem extends Item {
     private List<String> parameterNames;
 
     // signature contains type information for all parameters and the return value
-    private List<SequenceType> signature;
+    private FunctionSignature signature;
     private RuntimeIterator bodyIterator;
     private Map<String, List<Item>> nonLocalVariableBindings;
 
@@ -59,7 +60,7 @@ public class FunctionItem extends Item {
     public FunctionItem(
             FunctionIdentifier identifier,
             List<String> parameterNames,
-            List<SequenceType> signature,
+            FunctionSignature signature,
             RuntimeIterator bodyIterator,
             Map<String, List<Item>> nonLocalVariableBindings
     ) {
@@ -77,16 +78,15 @@ public class FunctionItem extends Item {
             RuntimeIterator bodyIterator
     ) {
         List<String> paramNames = new ArrayList<>();
-        List<SequenceType> signature = new ArrayList<>();
+        List<SequenceType> parameters = new ArrayList<>();
         for (Map.Entry<String, SequenceType> paramEntry : paramNameToSequenceTypes.entrySet()) {
             paramNames.add(paramEntry.getKey());
-            signature.add(paramEntry.getValue());
+            parameters.add(paramEntry.getValue());
         }
-        signature.add(returnType);
 
         this.identifier = new FunctionIdentifier(name, paramNames.size());
         this.parameterNames = paramNames;
-        this.signature = signature;
+        this.signature = new FunctionSignature(parameters, returnType);
         this.bodyIterator = bodyIterator;
         this.nonLocalVariableBindings = new HashMap<>();
     }
@@ -99,7 +99,7 @@ public class FunctionItem extends Item {
         return parameterNames;
     }
 
-    public List<SequenceType> getSignature() {
+    public FunctionSignature getSignature() {
         return signature;
     }
 
@@ -144,14 +144,15 @@ public class FunctionItem extends Item {
 
     @Override
     public int hashCode() {
-        return this.identifier.hashCode() + String.join("", this.parameterNames).hashCode();
+        return this.identifier.hashCode() + String.join("", this.parameterNames).hashCode() + this.signature.hashCode();
     }
 
     @Override
     public void write(Kryo kryo, Output output) {
         kryo.writeObject(output, this.identifier);
         kryo.writeObject(output, this.parameterNames);
-        kryo.writeObject(output, this.signature);
+        kryo.writeObject(output, this.signature.getParameterTypes());
+        kryo.writeObject(output, this.signature.getReturnType());
         // kryo.writeObject(output, this.bodyIterator);
         kryo.writeObject(output, this.nonLocalVariableBindings);
 
@@ -176,7 +177,9 @@ public class FunctionItem extends Item {
     public void read(Kryo kryo, Input input) {
         this.identifier = kryo.readObject(input, FunctionIdentifier.class);
         this.parameterNames = kryo.readObject(input, ArrayList.class);
-        this.signature = kryo.readObject(input, ArrayList.class);
+        List<SequenceType> parameters = kryo.readObject(input, ArrayList.class);
+        SequenceType returnType = kryo.readObject(input, SequenceType.class);
+        this.signature = new FunctionSignature(parameters, returnType);
         // this.bodyIterator = kryo.readObject(input, RuntimeIterator.class);
         this.nonLocalVariableBindings = kryo.readObject(input, HashMap.class);
 

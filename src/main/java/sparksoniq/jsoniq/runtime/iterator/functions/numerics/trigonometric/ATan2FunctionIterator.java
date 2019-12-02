@@ -62,9 +62,9 @@ public class ATan2FunctionIterator extends LocalFunctionCallIterator {
 
             if (y.isNumeric() && x.isNumeric()) {
                 try {
-                    Double result = Math.atan2(y.castToDoubleValue(), x.castToDoubleValue());
                     this._hasNext = false;
-                    return ItemFactory.getInstance().createDoubleItem(result);
+                    return ItemFactory.getInstance()
+                        .createDoubleItem(Math.atan2(y.castToDoubleValue(), x.castToDoubleValue()));
 
                 } catch (IteratorFlowException e) {
                     throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());

@@ -30,17 +30,20 @@ public class SequenceType implements Serializable {
     private ItemType _itemType;
     private boolean _isEmptySequence = false;
 
+    public final static SequenceType mostGeneralSequenceType = new SequenceType(
+            new ItemType(ItemTypes.Item),
+            SequenceType.Arity.ZeroOrMore
+    );
+
 
     public SequenceType(ItemType itemType, Arity arity) {
         this._itemType = itemType;
         this._arity = arity;
-
     }
 
     public SequenceType(ItemType itemType) {
         this._itemType = itemType;
         this._arity = Arity.One;
-
     }
 
     public SequenceType() {
@@ -65,6 +68,14 @@ public class SequenceType implements Serializable {
         return this._itemType.isSubtypeOf(superType.getItemType())
             &&
             this._arity == superType._arity;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof SequenceType))
+            return false;
+        SequenceType sequenceType = (SequenceType) o;
+        return this.getItemType().equals(sequenceType.getItemType()) && this.getArity().equals(sequenceType.getArity());
     }
 
     public enum Arity {

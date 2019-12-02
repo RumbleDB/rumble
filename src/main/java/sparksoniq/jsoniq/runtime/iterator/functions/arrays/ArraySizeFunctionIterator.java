@@ -49,11 +49,7 @@ public class ArraySizeFunctionIterator extends LocalFunctionCallIterator {
 
         arrayIterator = this._children.get(0);
         arrayIterator.open(context);
-        if (arrayIterator.hasNext() == false) {
-            this._hasNext = false;
-        } else {
-            this._hasNext = true;
-        }
+        this._hasNext = arrayIterator.hasNext();
         arrayIterator.close();
     }
 
