@@ -51,7 +51,7 @@ count(json-file("file.json")[$$.field eq "foo"].bar[].foo[[1]])
 What is pushed down so far is:
 
 - FLWOR expressions (as soon as a for clause is encountered, binding a variable to a sequence generated with json-file() or parallelize())
-- aggregation functionssuch as count
+- aggregation functions such as count
 - JSON navigation expressions: object lookup (as well as keys() call), array lookup, array unboxing, filtering predicates
 - predicates on positions, include use of context-dependent functions position() and last(), e.g.,
 
@@ -60,6 +60,8 @@ json-file("file.json")[position() ge 10 and position() le last() - 2]
 ```
 
 More expressions working on sequences will be pushed down in the future, prioritized on the feedback we receive.
+
+We also started to push down some expressions to DataFrames and Spark SQL. In particular, keys() pushes down the schema lookup if used on parquet-file() and structured-json-file(). Likewise, count() on these is also pushed down.
 
 When an expression does not support pushdown, it will materialize automaticaly. To avoid issues, the materializion is capped by default at 100 items, but this can be changed on the command line with --result-size. A warning is issued if a materialization happened and the sequence was truncated.
 
