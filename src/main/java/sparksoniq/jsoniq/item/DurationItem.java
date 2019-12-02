@@ -119,9 +119,7 @@ public class DurationItem extends AtomicItem {
 
     @Override
     public int hashCode() {
-        return String.valueOf(
-            this.getValue().toDurationFrom(Instant.now()).getMillis()
-        ).hashCode();
+        return Long.hashCode(this.getValue().toDurationFrom(Instant.now()).getMillis());
     }
 
     @Override

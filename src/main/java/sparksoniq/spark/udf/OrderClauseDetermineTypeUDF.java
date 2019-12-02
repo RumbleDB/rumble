@@ -106,7 +106,7 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray<byte[]>, L
             } else if (_nextItem.isNull()) {
                 result.add("null");
             } else if (_nextItem.isBoolean()) {
-                result.add("bool");
+                result.add("boolean");
             } else if (_nextItem.isString()) {
                 result.add("string");
             } else if (_nextItem.isInteger()) {
@@ -115,9 +115,9 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray<byte[]>, L
                 result.add("double");
             } else if (_nextItem.isDecimal()) {
                 result.add("decimal");
-            } else if (_nextItem.isDayTimeDuration()) {
-                result.add("yearMonthDuration");
             } else if (_nextItem.isYearMonthDuration()) {
+                result.add("yearMonthDuration");
+            } else if (_nextItem.isDayTimeDuration()) {
                 result.add("dayTimeDuration");
             } else if (_nextItem.isDuration()) {
                 result.add("duration");

@@ -255,18 +255,15 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                         } else {
                             // do nothing, type is already set to integer
                         }
-                    } else if (currentColumnType.equals("duration")) {
+                    } else if (
+                        (currentColumnType.equals("dayTimeDuration")
+                            || currentColumnType.equals("yearMonthDuration")
+                            || currentColumnType.equals("duration"))
+                            && (columnType.equals("dayTimeDuration")
+                                || columnType.equals("yearMonthDuration")
+                                || columnType.equals("duration"))
+                    ) {
                         typesForAllColumns.put(columnIndex, "duration");
-                    } else if (currentColumnType.equals("dayTimeDuration")) {
-                        typesForAllColumns.put(columnIndex, "dayTimeDuration");
-                    } else if (currentColumnType.equals("yearMonthDuration")) {
-                        typesForAllColumns.put(columnIndex, "dayTimeDuration");
-                    } else if (currentColumnType.equals("dateTime")) {
-                        typesForAllColumns.put(columnIndex, "dateTime");
-                    } else if (currentColumnType.equals("date")) {
-                        typesForAllColumns.put(columnIndex, "date");
-                    } else if (currentColumnType.equals("time")) {
-                        typesForAllColumns.put(columnIndex, "time");
                     } else if (!currentColumnType.equals(columnType)) {
                         throw new UnexpectedTypeException(
                                 "Order by variable must contain values of a single type.",
@@ -294,7 +291,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             // create fields for the given value types
             columnName = columnIndex + "-valueField";
             switch (columnTypeString) {
-                case "bool":
+                case "boolean":
                     columnType = DataTypes.BooleanType;
                     break;
                 case "string":

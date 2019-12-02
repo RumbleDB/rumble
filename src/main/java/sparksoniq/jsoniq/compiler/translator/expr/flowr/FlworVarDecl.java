@@ -33,6 +33,7 @@ public abstract class FlworVarDecl extends FlworClause {
 
     protected VariableReference variableReferenceNode;
     protected Expression expression;
+    // asSequence is null by default if the type of the variable in the for/let/groupBy clause is not specified.
     protected FlworVarSequenceType asSequence;
 
 

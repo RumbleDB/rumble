@@ -46,6 +46,10 @@ public class ForClauseVar extends FlworVarDecl {
         super(FLWOR_CLAUSES.FOR_VAR, varRef, seq, expression, metadataFromContext);
         this.allowEmpty = emptyFlag;
         this.positionalVariableReference = atVarRef;
+
+        // If the sequenceType is specified, we have to "extend" its arity to *
+        // because TreatIterator is wrapping the whole assignment expression,
+        // meaning there is not one TreatIterator for each variable we loop over.
         if (seq != null)
             this.asSequence = new FlworVarSequenceType(
                     seq.getSequence().getItemType().getType(),

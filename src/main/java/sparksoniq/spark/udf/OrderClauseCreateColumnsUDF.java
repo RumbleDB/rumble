@@ -124,7 +124,7 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, R
                     String typeName = _allColumnTypes.get(expressionIndex);
                     try {
                         switch (typeName) {
-                            case "bool":
+                            case "boolean":
                                 _results.add(nextItem.getBooleanValue());
                                 break;
                             case "string":
