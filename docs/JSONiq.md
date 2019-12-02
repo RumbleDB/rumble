@@ -69,6 +69,8 @@ Prologs with user-defined functions are now supported, but not yet global global
 
 Dynamic functions (aka, function items that can be passed as values and dynamically called) are now supported.
 
+Builtin function calls are type-checked, but user-defined function calls and dynamic calls are not type-checked yet.
+
 ### Unsupported try/catch
 
 Try/catch expressions. Exceptions raised remotely may not be displayed in a user-friendly way yet, but we are working on it.
