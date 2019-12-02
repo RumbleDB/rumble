@@ -132,8 +132,16 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void resetLocal(DynamicContext context) {
+        _alreadyFoundKeys = new ArrayList<>();
+        _nextResults = new LinkedList<>();
         _iterator.reset(_currentDynamicContext);
-        setResultsFromNextObjectItem();
+
+        if (_iterator.isDataFrame()) {
+            setResultsFromDF();
+        } else {
+            _iterator.open(_currentDynamicContext);
+            setResultsFromNextObjectItem();
+        }
     }
 
     @Override
