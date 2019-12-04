@@ -212,6 +212,14 @@ jSONItemTest            : 'object'
                         | 'array'
                         | Kjson;
 
+keyWordString           : 'string';
+
+keyWordInteger          : 'integer';
+
+keyWordDecimal          : 'decimal';
+
+keyWordDouble           : 'double';
+
 keyWordBoolean          : 'boolean';
 
 keyWordDuration         : 'duration';
@@ -230,7 +238,11 @@ keyWordDate             : 'date';
 
 keyWordTime             : 'time';
 
-typesKeywords           : keyWordBoolean
+typesKeywords           : keyWordString
+                        | keyWordInteger
+                        | keyWordDecimal
+                        | keyWordDouble
+                        | keyWordBoolean
                         | keyWordDuration
                         | keyWordYearMonthDuration
                         | keyWordDayTimeDuration
@@ -243,10 +255,6 @@ typesKeywords           : keyWordBoolean
 singleType              : item=atomicType (question +='?')?;
 
 atomicType              : 'atomic'
-                        | 'string'
-                        | 'integer'
-                        | 'decimal'
-                        | 'double'
                         | typesKeywords
                         | NullLiteral;
 
