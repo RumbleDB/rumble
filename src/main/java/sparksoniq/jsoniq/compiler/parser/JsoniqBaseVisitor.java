@@ -933,6 +933,58 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
      * </p>
      */
     @Override
+    public T visitKeyWordString(JsoniqParser.KeyWordStringContext ctx) {
+        return visitChildren(ctx);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
+     */
+    @Override
+    public T visitKeyWordInteger(JsoniqParser.KeyWordIntegerContext ctx) {
+        return visitChildren(ctx);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
+     */
+    @Override
+    public T visitKeyWordDecimal(JsoniqParser.KeyWordDecimalContext ctx) {
+        return visitChildren(ctx);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
+     */
+    @Override
+    public T visitKeyWordDouble(JsoniqParser.KeyWordDoubleContext ctx) {
+        return visitChildren(ctx);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
+     */
+    @Override
     public T visitKeyWordBoolean(JsoniqParser.KeyWordBooleanContext ctx) {
         return visitChildren(ctx);
     }
