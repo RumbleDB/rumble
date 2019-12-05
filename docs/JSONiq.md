@@ -16,11 +16,11 @@ A tutorial aimed at Python users can be found [here](https://github.com/ghislain
 
 ## Unsupported/Unimplemented features (alpha release)
 
-Many core features of JSONiq are in place, but please be aware that the function features are not yet implemented. We are working on them for subsequent releases.
+Many core features of JSONiq are in place, but please be aware that some features (less and less, though) are not yet implemented. We are working on them for subsequent releases.
 
 ### Nested FLWOR expressions
 
-FLWOR expressions now supported nestedness, for example like so:
+FLWOR expressions now support nestedness, for example like so:
 
 ```
 let $x := for $x in json-file("file.json")
@@ -51,16 +51,27 @@ count(json-file("file.json")[$$.field eq "foo"].bar[].foo[[1]])
 What is pushed down so far is:
 
 - FLWOR expressions (as soon as a for clause is encountered, binding a variable to a sequence generated with json-file() or parallelize())
-- aggregation functions: count, sum, avg, max, min
-- JSON navigation expressions: object lookup, array lookup, array unboxing, filtering predicates
+- aggregation functions such as count
+- JSON navigation expressions: object lookup (as well as keys() call), array lookup, array unboxing, filtering predicates
+- predicates on positions, include use of context-dependent functions position() and last(), e.g.,
 
-More expressions working on sequences will be pushed down in the future, partly depending on the feedback we receive.
+```
+json-file("file.json")[position() ge 10 and position() le last() - 2]
+```
+
+More expressions working on sequences will be pushed down in the future, prioritized on the feedback we receive.
+
+We also started to push down some expressions to DataFrames and Spark SQL. In particular, keys() pushes down the schema lookup if used on parquet-file() and structured-json-file(). Likewise, count() on these is also pushed down.
 
 When an expression does not support pushdown, it will materialize automaticaly. To avoid issues, the materializion is capped by default at 100 items, but this can be changed on the command line with --result-size. A warning is issued if a materialization happened and the sequence was truncated.
 
-### Unsupported prologs
+### Unsupported global variables, settings and modules
 
-Prologs are not supported. This includes user-defined functions, global variables, settings and library modules.
+Prologs with user-defined functions are now supported, but not yet global global variables, settings and library modules.
+
+Dynamic functions (aka, function items that can be passed as values and dynamically called) are now supported.
+
+Builtin function calls are type-checked, but user-defined function calls and dynamic calls are not type-checked yet.
 
 ### Unsupported try/catch
 
@@ -72,11 +83,47 @@ Nested object lookup keys: nested expressions on the rhs of the dot syntax are n
 
 ### Unsupported types
 
-The type system is not complete yet: we have objects, arrays, strings, numbers, booleans and null, but not yet: dates, durations, binaries and so on.
+The type system is not quite complete yet, although a lot of progress was made. Below is a complete list of JSONiq types and their support status.
+
+|  Type | Status |
+|-------|--------|
+| atomic | supported |
+| base64Binary | supported |
+| boolean | supported |
+| byte | not supported |
+| date | supported |
+| dateTime | supported |
+| dateTimeStamp | not supported |
+| dayTimeDuration | supported |
+| decimal | supported |
+| double | supported |
+| duration | supported |
+| float | not supported |
+| gDay | not supported |
+| gMonth | not supported |
+| gYear | not supported |
+| gYearMonth | not supported |
+| hexBinary | supported |
+| int | not supported |
+| integer | supported |
+| long | not supported |
+| negativeInteger | not supported |
+| nonPositiveInteger | not supported |
+| nonNegativeInteger | not supported |
+| positiveInteger | not supported |
+| short | not supported |
+| string | supported |
+| time | supported |
+| unsignedByte | not supported |
+| unsignedInt | not supported |
+| unsignedLong | not supported |
+| unsignedShort | not supported |
+| yearMonthDuration | supported |
+
 
 ### Unsupported functions
 
-Not all JSONiq functions are supported (see function documentation), even though they get added continuously. Please take a look at the function library documentation to know which functions are available.
+Not all JSONiq functions in the library are supported (see function documentation), even though they get added continuously. Please take a look at the function library documentation to know which functions are available.
 
 ### Unsupported updates and scripting
 

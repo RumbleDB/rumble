@@ -22,6 +22,8 @@ package sparksoniq.exceptions.codes;
 
 public class ErrorCodes {
 
+    public static final String InvalidLexicalValueErrorCode = "FOCA0002";
+
     public static final String ErrorRetrievingResourceCode = "FODC0002";
 
     public static final String CastErrorCode = "FORG0001";
@@ -32,6 +34,9 @@ public class ErrorCodes {
 
 
     public static final String DuplicatePairNameErrorCode = "JNDY0003";
+
+
+    public static final String StringOfJSONiqItemsErrorCode = "JNTY0024";
 
 
     public static final String NonAtomicElementErrorCode = "JNTY0004";

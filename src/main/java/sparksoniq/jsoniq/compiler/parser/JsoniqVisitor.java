@@ -574,6 +574,38 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
     T visitJSONItemTest(JsoniqParser.JSONItemTestContext ctx);
 
     /**
+     * Visit a parse tree produced by {@link JsoniqParser#keyWordString}.
+     * 
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    T visitKeyWordString(JsoniqParser.KeyWordStringContext ctx);
+
+    /**
+     * Visit a parse tree produced by {@link JsoniqParser#keyWordInteger}.
+     * 
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    T visitKeyWordInteger(JsoniqParser.KeyWordIntegerContext ctx);
+
+    /**
+     * Visit a parse tree produced by {@link JsoniqParser#keyWordDecimal}.
+     * 
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    T visitKeyWordDecimal(JsoniqParser.KeyWordDecimalContext ctx);
+
+    /**
+     * Visit a parse tree produced by {@link JsoniqParser#keyWordDouble}.
+     * 
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    T visitKeyWordDouble(JsoniqParser.KeyWordDoubleContext ctx);
+
+    /**
      * Visit a parse tree produced by {@link JsoniqParser#keyWordBoolean}.
      * 
      * @param ctx the parse tree
