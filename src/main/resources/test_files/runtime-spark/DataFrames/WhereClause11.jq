@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="{ "Rank" : 1, "Count" : 0 }, { "Rank" : 2, "Count" : 2 }, { "Rank" : 3, "Count" : 2 }, { "Rank" : 4, "Count" : 1 }" :)
+(:JIQS: ShouldRun; Output="({ "Rank" : 1, "Count" : 0 }, { "Rank" : 2, "Count" : 2 }, { "Rank" : 3, "Count" : 2 }, { "Rank" : 4, "Count" : 1 })" :)
 for $rank in 1 to 4
 return {
   "Rank" : $rank,
