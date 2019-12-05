@@ -23,6 +23,7 @@ package sparksoniq.spark.udf;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.api.java.UDF1;
+import org.joda.time.Instant;
 import org.rumbledb.api.Item;
 
 import com.esotericsoftware.kryo.Kryo;
@@ -33,6 +34,7 @@ import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
 import sparksoniq.jsoniq.item.NullItem;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 
@@ -120,19 +122,46 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, R
 
                     // extract type information for the sorting column
                     String typeName = _allColumnTypes.get(expressionIndex);
-
-                    if (typeName.equals("bool")) {
-                        _results.add(nextItem.getBooleanValue());
-                    } else if (typeName.equals("string")) {
-                        _results.add(nextItem.getStringValue());
-                    } else if (typeName.equals("integer")) {
-                        _results.add(nextItem.castToIntegerValue());
-                    } else if (typeName.equals("double")) {
-                        _results.add(nextItem.castToDoubleValue());
-                    } else if (typeName.equals("decimal")) {
-                        _results.add(nextItem.castToDecimalValue());
-                    } else {
-                        throw new SparksoniqRuntimeException("Unexpected ordering type found while creating columns.");
+                    try {
+                        switch (typeName) {
+                            case "boolean":
+                                _results.add(nextItem.getBooleanValue());
+                                break;
+                            case "string":
+                                _results.add(nextItem.getStringValue());
+                                break;
+                            case "integer":
+                                _results.add(nextItem.castToIntegerValue());
+                                break;
+                            case "double":
+                                _results.add(nextItem.castToDoubleValue());
+                                break;
+                            case "decimal":
+                                _results.add(nextItem.castToDecimalValue());
+                                break;
+                            case "duration":
+                            case "yearMonthDuration":
+                            case "dayTimeDuration":
+                                _results.add(nextItem.getDurationValue().toDurationFrom(Instant.now()).getMillis());
+                                break;
+                            case "dateTime":
+                            case "date":
+                            case "time":
+                                _results.add(nextItem.getDateTimeValue().getMillis());
+                                break;
+                            default:
+                                throw new SparksoniqRuntimeException(
+                                        "Unexpected ordering type found while creating columns."
+                                );
+                        }
+                    } catch (RuntimeException e) {
+                        throw new SparksoniqRuntimeException(
+                                "Invalid sort key: cannot compare item of type "
+                                    + typeName
+                                    + " with item of type "
+                                    + ItemTypes.getItemTypeName(nextItem.getClass().getSimpleName())
+                                    + "."
+                        );
                     }
                 }
             }

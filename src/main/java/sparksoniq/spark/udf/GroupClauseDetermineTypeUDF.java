@@ -100,7 +100,7 @@ public class GroupClauseDetermineTypeUDF implements UDF1<WrappedArray<byte[]>, L
             } else if (_nextItem.isNull()) {
                 result.add("null");
             } else if (_nextItem.isBoolean()) {
-                result.add("bool");
+                result.add("boolean");
             } else if (_nextItem.isString()) {
                 result.add("string");
             } else if (_nextItem.isInteger()) {

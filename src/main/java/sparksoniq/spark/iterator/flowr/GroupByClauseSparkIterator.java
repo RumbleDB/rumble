@@ -26,11 +26,13 @@ import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+import org.joda.time.Instant;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.InvalidGroupVariableException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -89,7 +91,6 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         super.open(context);
         if (this._child != null) {
             _child.open(_currentDynamicContext);
-
             this._hasNext = _child.hasNext();
         } else {
             throw new SparksoniqRuntimeException("Invalid groupby clause.");
@@ -303,6 +304,9 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             columnName = columnIndex + "-doubleField";
             columnType = DataTypes.DoubleType;
             typedFields.add(DataTypes.createStructField(columnName, columnType, true));
+            columnName = columnIndex + "-durationField";
+            columnType = DataTypes.LongType;
+            typedFields.add(DataTypes.createStructField(columnName, columnType, true));
         }
 
         String serializerUDFName = "serialize";
@@ -390,8 +394,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             for (int i = 0; i < indent + 1; ++i) {
                 buffer.append("  ");
             }
-            buffer.append("Variable ").append(iterator.getVariableReference().getVariableName());
-            buffer.append("\n");
+            buffer.append("Variable ").append(iterator.getVariableReference().getVariableName()).append("\n");
             if (iterator.getExpression() != null) {
                 iterator.getExpression().print(buffer, indent + 1);
             }

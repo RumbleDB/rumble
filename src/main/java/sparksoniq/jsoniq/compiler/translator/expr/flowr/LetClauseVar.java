@@ -35,9 +35,6 @@ public class LetClauseVar extends FlworVarDecl {
             ExpressionMetadata metadataFromContext
     ) {
         super(FLWOR_CLAUSES.LET_VAR, varRef, sequence, expr, metadataFromContext);
-        this.variableReferenceNode = varRef;
-        this.asSequence = sequence;
-        this.expression = expr;
     }
 
     @Override

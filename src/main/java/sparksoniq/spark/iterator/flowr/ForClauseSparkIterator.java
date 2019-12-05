@@ -80,6 +80,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
+
         if (this._child != null) { // if it's not a start clause
             _child.open(_currentDynamicContext);
             _tupleContext = new DynamicContext(_currentDynamicContext); // assign current context as parent
@@ -256,8 +257,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<String, DynamicContext.VariableDependency> result =
-            new TreeMap<String, DynamicContext.VariableDependency>();
-        result.putAll(_expression.getVariableDependencies());
+            new TreeMap<>(_expression.getVariableDependencies());
         if (_child != null) {
             for (String var : _child.getVariablesBoundInCurrentFLWORExpression()) {
                 result.remove(var);
@@ -268,7 +268,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     public Set<String> getVariablesBoundInCurrentFLWORExpression() {
-        Set<String> result = new HashSet<String>();
+        Set<String> result = new HashSet<>();
         if (_child != null) {
             result.addAll(_child.getVariablesBoundInCurrentFLWORExpression());
         }
@@ -281,8 +281,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         for (int i = 0; i < indent + 1; ++i) {
             buffer.append("  ");
         }
-        buffer.append("Variable ").append(_variableName);
-        buffer.append("\n");
+        buffer.append("Variable ").append(_variableName).append("\n");
         _expression.print(buffer, indent + 1);
     }
 
@@ -294,11 +293,10 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         // start with an empty projection.
-        Map<String, DynamicContext.VariableDependency> projection =
-            new TreeMap<String, DynamicContext.VariableDependency>();
 
         // copy over the projection needed by the parent clause.
-        projection.putAll(parentProjection);
+        Map<String, DynamicContext.VariableDependency> projection =
+            new TreeMap<>(parentProjection);
 
         // remove the variable that this for clause binds.
         projection.remove(_variableName);
