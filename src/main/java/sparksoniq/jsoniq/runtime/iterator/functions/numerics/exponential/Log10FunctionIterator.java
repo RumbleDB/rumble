@@ -55,21 +55,12 @@ public class Log10FunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            Item value = this.getSingleItemOfTypeFromIterator(_iterator, Item.class);
-            if (value.isNumeric()) {
-                try {
-                    return ItemFactory.getInstance().createDoubleItem(Math.log10(value.castToDoubleValue()));
+            Item value = this.getSingleItemFromIterator(_iterator);
+            try {
+                return ItemFactory.getInstance().createDoubleItem(Math.log10(value.castToDoubleValue()));
 
-                } catch (IteratorFlowException e) {
-                    throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-                }
-            } else {
-                throw new UnexpectedTypeException(
-                        "Log10 expression has non numeric args "
-                            +
-                            value.serialize(),
-                        getMetadata()
-                );
+            } catch (IteratorFlowException e) {
+                throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
             }
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " log10 function", getMetadata());

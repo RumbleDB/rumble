@@ -119,7 +119,7 @@ public class JiqsItemParser implements Serializable {
         return ItemFactory.getInstance().createObjectItem(keys, values, ItemMetadata.fromIteratorMetadata(metadata));
     }
 
-    public static void addValue(
+    private static void addValue(
             Row row,
             int i,
             Object o,
@@ -141,35 +141,35 @@ public class JiqsItemParser implements Serializable {
             if (row != null)
                 b = row.getBoolean(i);
             else
-                b = ((Boolean) o).booleanValue();
+                b = (Boolean) o;
             values.add(ItemFactory.getInstance().createBooleanItem(b));
         } else if (fieldType.equals(DataTypes.DoubleType)) {
             double value;
             if (row != null)
                 value = row.getDouble(i);
             else
-                value = ((Double) o).doubleValue();
+                value = (Double) o;
             values.add(ItemFactory.getInstance().createDoubleItem(value));
         } else if (fieldType.equals(DataTypes.IntegerType)) {
             int value;
             if (row != null)
                 value = row.getInt(i);
             else
-                value = ((Integer) o).intValue();
+                value = (Integer) o;
             values.add(ItemFactory.getInstance().createIntegerItem(value));
         } else if (fieldType.equals(DataTypes.FloatType)) {
             float value;
             if (row != null)
                 value = row.getFloat(i);
             else
-                value = ((Float) o).floatValue();
+                value = (Float) o;
             values.add(ItemFactory.getInstance().createDoubleItem(value));
         } else if (fieldType.equals(DataTypes.LongType)) {
             BigDecimal value;
             if (row != null)
                 value = new BigDecimal(row.getLong(i));
             else
-                value = new BigDecimal(((Long) o).longValue());
+                value = new BigDecimal((Long) o);
             values.add(ItemFactory.getInstance().createDecimalItem(value));
         } else if (fieldType.equals(DataTypes.NullType)) {
             values.add(ItemFactory.getInstance().createNullItem());
@@ -178,7 +178,7 @@ public class JiqsItemParser implements Serializable {
             if (row != null)
                 value = row.getShort(i);
             else
-                value = ((Short) o).shortValue();
+                value = (Short) o;
             values.add(ItemFactory.getInstance().createIntegerItem(value));
         } else if (fieldType.equals(DataTypes.TimestampType)) {
             Timestamp value;
@@ -221,8 +221,8 @@ public class JiqsItemParser implements Serializable {
                 objects = row.getList(i);
             else
                 objects = (List<Object>) o;
-            for (int j = 0; j < objects.size(); ++j) {
-                addValue(null, 0, objects.get(j), dataType, members, metadata);
+            for (Object object : objects) {
+                addValue(null, 0, object, dataType, members, metadata);
             }
             values.add(ItemFactory.getInstance().createArrayItem(members));
         } else {

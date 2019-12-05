@@ -73,10 +73,6 @@ public class ReverseFunctionIterator extends LocalFunctionCallIterator {
             results.add(items.get(i));
         }
 
-        if (results.size() == 0) {
-            this._hasNext = false;
-        } else {
-            this._hasNext = true;
-        }
+        this._hasNext = results.size() != 0;
     }
 }

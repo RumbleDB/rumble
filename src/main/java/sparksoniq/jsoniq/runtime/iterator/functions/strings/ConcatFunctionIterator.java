@@ -44,21 +44,10 @@ public class ConcatFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             StringBuilder builder = new StringBuilder();
             for (RuntimeIterator iterator : this._children) {
-                Item item = this.getSingleItemOfTypeFromIterator(iterator, Item.class);
+                Item item = this.getSingleItemFromIterator(iterator);
                 // if not empty sequence
                 if (item != null) {
-                    String stringValue;
-                    if (item.isAtomic()) {
-                        stringValue = item.serialize(); // for atomic items (not array or object) returns the equivalent
-                                                        // string value
-                    } else {
-                        throw new UnexpectedTypeException(
-                                "String concat function has arguments that can't be converted to a string "
-                                    +
-                                    item.serialize(),
-                                getMetadata()
-                        );
-                    }
+                    String stringValue = item.serialize();
                     if (!stringValue.equals("")) {
                         builder.append(stringValue);
                     }

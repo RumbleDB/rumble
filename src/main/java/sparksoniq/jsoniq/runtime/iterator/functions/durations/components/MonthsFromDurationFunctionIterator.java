@@ -16,7 +16,7 @@ import java.util.List;
 public class MonthsFromDurationFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
-    private DurationItem _durationItem = null;
+    private Item _durationItem = null;
 
     public MonthsFromDurationFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -40,23 +40,9 @@ public class MonthsFromDurationFunctionIterator extends LocalFunctionCallIterato
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        try {
-            _durationItem = this.getSingleItemOfTypeFromIterator(
-                this._children.get(0),
-                DurationItem.class,
-                new UnknownFunctionCallException("months-from-duration", this._children.size(), getMetadata())
-            );
-        } catch (UnexpectedTypeException e) {
-            throw new UnexpectedTypeException(
-                    e.getJSONiqErrorMessage() + "? of function months-from-duration()",
-                    this._children.get(0).getMetadata()
-            );
-        } catch (UnknownFunctionCallException e) {
-            throw new UnexpectedTypeException(
-                    " Sequence of more than one item can not be promoted to parameter type duration? of function months-from-duration()",
-                    getMetadata()
-            );
-        }
+        _durationItem = this.getSingleItemFromIterator(
+            this._children.get(0)
+        );
         this._hasNext = _durationItem != null;
     }
 }

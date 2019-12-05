@@ -54,37 +54,15 @@ public class PowFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public Item next() {
         if (this._hasNext) {
-            Item base = this.getSingleItemOfTypeFromIterator(_iterator, Item.class);
-            Item exponent;
-            RuntimeIterator exponentIterator = this._children.get(1);
-            exponentIterator.open(_currentDynamicContext);
-            if (exponentIterator.hasNext()) {
-                exponent = exponentIterator.next();
-            } else {
-                throw new UnexpectedTypeException(
-                        "Type error; Exponent parameter can't be empty sequence ",
-                        getMetadata()
-                );
+            Item base = this.getSingleItemFromIterator(_iterator);
+            Item exponent = this.getSingleItemFromIterator(this._children.get(1));
+            try {
+                this._hasNext = false;
+                return ItemFactory.getInstance()
+                    .createDoubleItem(Math.pow(base.castToDoubleValue(), exponent.castToDoubleValue()));
+            } catch (IteratorFlowException e) {
+                throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
             }
-            if (base.isNumeric() && exponent.isNumeric()) {
-                try {
-                    this._hasNext = false;
-                    return ItemFactory.getInstance()
-                        .createDoubleItem(Math.pow(base.castToDoubleValue(), exponent.castToDoubleValue()));
-                } catch (IteratorFlowException e) {
-                    throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-                }
-            } else {
-                throw new UnexpectedTypeException(
-                        "Pow expression has non numeric args "
-                            +
-                            base.serialize()
-                            + ", "
-                            + exponent.serialize(),
-                        getMetadata()
-                );
-            }
-
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " pow function", getMetadata());
     }

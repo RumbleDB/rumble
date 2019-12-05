@@ -11,7 +11,6 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.semantics.types.AtomicTypes;
 
 
 import java.util.List;
@@ -19,7 +18,7 @@ import java.util.List;
 public class DateTimeFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
-    private StringItem _dateTimeStringItem = null;
+    private Item _dateTimeStringItem = null;
 
     public DateTimeFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -53,18 +52,9 @@ public class DateTimeFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        try {
-            _dateTimeStringItem = this.getSingleItemOfTypeFromIterator(
-                this._children.get(0),
-                StringItem.class,
-                new UnknownFunctionCallException("dateTime", this._children.size(), getMetadata())
-            );
-        } catch (UnknownFunctionCallException e) {
-            throw new UnexpectedTypeException(
-                    " Sequence of more than one item can not be cast to type with quantifier '1' or '?'",
-                    getMetadata()
-            );
-        }
+        _dateTimeStringItem = this.getSingleItemFromIterator(
+            this._children.get(0)
+        );
         this._hasNext = _dateTimeStringItem != null;
     }
 }

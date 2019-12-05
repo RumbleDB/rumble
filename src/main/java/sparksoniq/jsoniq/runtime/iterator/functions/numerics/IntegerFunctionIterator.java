@@ -73,18 +73,7 @@ public class IntegerFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        try {
-            item = this.getSingleItemOfTypeFromIterator(
-                this._children.get(0),
-                Item.class,
-                new UnknownFunctionCallException("integer", this._children.size(), getMetadata())
-            );
-        } catch (UnknownFunctionCallException e) {
-            throw new UnexpectedTypeException(
-                    " Sequence of more than one item can not be cast to type with quantifier '1' or '?'",
-                    getMetadata()
-            );
-        }
+        item = this.getSingleItemFromIterator(this._children.get(0));
         this._hasNext = item != null;
     }
 }

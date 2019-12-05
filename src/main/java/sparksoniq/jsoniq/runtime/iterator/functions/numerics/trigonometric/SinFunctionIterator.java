@@ -55,22 +55,8 @@ public class SinFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            Item radians = this.getSingleItemOfTypeFromIterator(_iterator, Item.class);
-            if (radians.isNumeric()) {
-                try {
-                    return ItemFactory.getInstance().createDoubleItem(Math.sin(radians.castToDoubleValue()));
-
-                } catch (IteratorFlowException e) {
-                    throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-                }
-            } else {
-                throw new UnexpectedTypeException(
-                        "Sin expression has non numeric args "
-                            +
-                            radians.serialize(),
-                        getMetadata()
-                );
-            }
+            return ItemFactory.getInstance()
+                .createDoubleItem(Math.sin(this.getSingleItemFromIterator(_iterator).castToDoubleValue()));
         } else
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " sin function", getMetadata());
     }

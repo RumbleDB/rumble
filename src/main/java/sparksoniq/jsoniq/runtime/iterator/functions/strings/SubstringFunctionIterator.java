@@ -23,7 +23,6 @@ package sparksoniq.jsoniq.runtime.iterator.functions.strings;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.DoubleItem;
-import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -47,11 +46,11 @@ public class SubstringFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             this._hasNext = false;
             String result;
-            StringItem stringItem = this.getSingleItemOfTypeFromIterator(this._children.get(0), StringItem.class);
+            Item stringItem = this.getSingleItemFromIterator(this._children.get(0));
             if (stringItem == null) {
                 return ItemFactory.getInstance().createStringItem("");
             }
-            DoubleItem indexItem = this.getSingleItemOfTypeFromIterator(this._children.get(1), DoubleItem.class);
+            Item indexItem = this.getSingleItemFromIterator(this._children.get(1));
             if (indexItem == null) {
                 throw new UnexpectedTypeException(
                         "Type error; Start index parameter can't be empty sequence ",
@@ -62,9 +61,8 @@ public class SubstringFunctionIterator extends LocalFunctionCallIterator {
             if (index >= stringItem.getStringValue().length())
                 return ItemFactory.getInstance().createStringItem("");
             if (this._children.size() > 2) {
-                DoubleItem endIndexItem = this.getSingleItemOfTypeFromIterator(
-                    this._children.get(2),
-                    DoubleItem.class
+                Item endIndexItem = this.getSingleItemFromIterator(
+                    this._children.get(2)
                 );
                 if (endIndexItem == null) {
                     throw new UnexpectedTypeException(
@@ -88,7 +86,7 @@ public class SubstringFunctionIterator extends LocalFunctionCallIterator {
             );
     }
 
-    private double sanitizeEndIndex(StringItem stringItem, DoubleItem endIndexItem, int startIndex) {
+    private double sanitizeEndIndex(Item stringItem, Item endIndexItem, int startIndex) {
         // char indexing starts from 1 in JSONiq
         return Math.min(stringItem.getStringValue().length(), startIndex + endIndexItem.getDoubleValue());
     }

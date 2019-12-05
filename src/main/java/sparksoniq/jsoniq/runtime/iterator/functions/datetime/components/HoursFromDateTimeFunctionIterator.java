@@ -16,7 +16,7 @@ import java.util.List;
 public class HoursFromDateTimeFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
-    private DateTimeItem _dateTimeItem = null;
+    private Item _dateTimeItem = null;
 
     public HoursFromDateTimeFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -40,23 +40,9 @@ public class HoursFromDateTimeFunctionIterator extends LocalFunctionCallIterator
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        try {
-            _dateTimeItem = this.getSingleItemOfTypeFromIterator(
-                this._children.get(0),
-                DateTimeItem.class,
-                new UnknownFunctionCallException("hours-from-dateTime", this._children.size(), getMetadata())
-            );
-        } catch (UnexpectedTypeException e) {
-            throw new UnexpectedTypeException(
-                    e.getJSONiqErrorMessage() + "? of function hours-from-dateTime()",
-                    this._children.get(0).getMetadata()
-            );
-        } catch (UnknownFunctionCallException e) {
-            throw new UnexpectedTypeException(
-                    " Sequence of more than one item can not be promoted to parameter type dateTime? of function hours-from-dateTime()",
-                    getMetadata()
-            );
-        }
+        _dateTimeItem = this.getSingleItemFromIterator(
+            this._children.get(0)
+        );
         this._hasNext = _dateTimeItem != null;
     }
 }

@@ -57,48 +57,23 @@ public class RoundFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            Item value = this.getSingleItemOfTypeFromIterator(_iterator, Item.class);
+            Item value = this.getSingleItemFromIterator(_iterator);
             Item precision;
             if (this._children.size() > 1) {
-                RuntimeIterator precisionIterator = this._children.get(1);
-                precisionIterator.open(_currentDynamicContext);
-                if (precisionIterator.hasNext()) {
-                    precision = precisionIterator.next();
-                } else {
-                    throw new UnexpectedTypeException(
-                            "Type error; Precision parameter can't be empty sequence ",
-                            getMetadata()
-                    );
-                }
+                precision = this.getSingleItemFromIterator(this._children.get(1));
             }
             // if second param is not given precision is set as 0 (rounds to a whole number)
             else {
                 precision = ItemFactory.getInstance().createIntegerItem(0);
             }
-            if (value.isNumeric() && precision.isNumeric()) {
-                try {
+            try {
+                BigDecimal bd = new BigDecimal(value.castToDoubleValue());
+                bd = bd.setScale(precision.getIntegerValue(), RoundingMode.HALF_UP);
+                return ItemFactory.getInstance().createDoubleItem(bd.doubleValue());
 
-                    double val = value.castToDoubleValue();
-                    int prec = precision.castToIntegerValue();
-
-                    BigDecimal bd = new BigDecimal(val);
-                    bd = bd.setScale(prec, RoundingMode.HALF_UP);
-                    return ItemFactory.getInstance().createDoubleItem(bd.doubleValue());
-
-                } catch (IteratorFlowException e) {
-                    throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-                }
-            } else {
-                throw new UnexpectedTypeException(
-                        "Round expression has non numeric args "
-                            +
-                            value.serialize()
-                            + ", "
-                            + precision.serialize(),
-                        getMetadata()
-                );
+            } catch (IteratorFlowException e) {
+                throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
             }
-
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " round function", getMetadata());
     }
