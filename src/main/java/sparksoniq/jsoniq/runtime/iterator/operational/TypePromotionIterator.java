@@ -51,6 +51,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     @Override
     public void resetLocal(DynamicContext context) {
         _iterator.reset(_currentDynamicContext);
+        this._childIndex = 0;
         setNextResult();
     }
 
@@ -106,9 +107,9 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         ) {
             throw new UnexpectedTypeException(
                     _exceptionMessage
-                        + "Expecting "
-                        + ((_sequenceType.getArity() == SequenceType.Arity.OneOrMore) ? "at least " : "")
-                        + "one item, but the value provided is the empty sequence.",
+                        + "Expecting"
+                        + ((_sequenceType.getArity() == SequenceType.Arity.OneOrMore) ? " at least" : "")
+                        + " one item, but the value provided is the empty sequence.",
                     getMetadata()
             );
         }
@@ -132,9 +133,9 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         ) {
             throw new UnexpectedTypeException(
                     _exceptionMessage
-                        + "Expecting "
-                        + ((_sequenceType.getArity() == SequenceType.Arity.OneOrZero) ? "at most " : "")
-                        + "one item, but the value provided has at least two items.",
+                        + "Expecting"
+                        + ((_sequenceType.getArity() == SequenceType.Arity.OneOrZero) ? " at most" : "")
+                        + " one item, but the value provided has at least two items.",
                     getMetadata()
             );
         }
@@ -158,7 +159,8 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     }
 
     private void checkTypePromotion() {
-        if (_nextResult.isFunction()) return;
+        if (_nextResult.isFunction())
+            return;
         if (!_nextResult.canBePromotedTo(_sequenceType.getItemType()))
             throw new UnexpectedTypeException(
                     _exceptionMessage
@@ -170,9 +172,5 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
                     getMetadata()
             );
         _nextResult = _nextResult.promoteTo(_sequenceType.getItemType());
-    }
-
-    public void setSequenceType(SequenceType _sequenceType) {
-
     }
 }

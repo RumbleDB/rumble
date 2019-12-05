@@ -22,31 +22,29 @@ package sparksoniq.io.json;
 
 import com.jsoniter.JsonIterator;
 import com.jsoniter.ValueType;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
-import sparksoniq.jsoniq.item.ItemFactory;
-import sparksoniq.jsoniq.item.ObjectItem;
-import sparksoniq.jsoniq.item.metadata.ItemMetadata;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
-
-import java.io.IOException;
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.sql.Date;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.commons.codec.binary.Hex;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.expressions.javalang.typed;
 import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.joda.time.DateTime;
-import java.time.Instant;
 import org.rumbledb.api.Item;
+import sparksoniq.exceptions.SparksoniqRuntimeException;
+import sparksoniq.jsoniq.item.ItemFactory;
+import sparksoniq.jsoniq.item.metadata.ItemMetadata;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.spark.SparkSessionManager;
+
+import java.io.IOException;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.sql.Date;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 public class JiqsItemParser implements Serializable {
 
@@ -74,16 +72,16 @@ public class JiqsItemParser implements Serializable {
             if (object.whatIsNext().equals(ValueType.BOOLEAN))
                 return ItemFactory.getInstance().createBooleanItem(object.readBoolean());
             if (object.whatIsNext().equals(ValueType.ARRAY)) {
-                List<Item> values = new ArrayList<Item>();
+                List<Item> values = new ArrayList<>();
                 while (object.readArray()) {
                     values.add(getItemFromObject(object, metadata));
                 }
                 return ItemFactory.getInstance().createArrayItem(values);
             }
             if (object.whatIsNext().equals(ValueType.OBJECT)) {
-                List<String> keys = new ArrayList<String>();
-                List<Item> values = new ArrayList<Item>();
-                String s = null;
+                List<String> keys = new ArrayList<>();
+                List<Item> values = new ArrayList<>();
+                String s;
                 while ((s = object.readObject()) != null) {
                     keys.add(s);
                     values.add(getItemFromObject(object, metadata));
@@ -101,17 +99,22 @@ public class JiqsItemParser implements Serializable {
         }
     }
 
-    static Item getItemFromRow(Row row, IteratorMetadata metadata) {
-        List<String> keys = new ArrayList<String>();
-        List<Item> values = new ArrayList<Item>();
+    public static Item getItemFromRow(Row row, IteratorMetadata metadata) {
+        List<String> keys = new ArrayList<>();
+        List<Item> values = new ArrayList<>();
         StructType schema = row.schema();
-        String[] fieldnames = schema.fieldNames();
         StructField[] fields = schema.fields();
-        for (int i = 0; i < fieldnames.length; ++i) {
+        String[] fieldnames = schema.fieldNames();
+
+        for (int i = 0; i < fields.length; ++i) {
             StructField field = fields[i];
             DataType fieldType = field.dataType();
             keys.add(field.name());
             addValue(row, i, null, fieldType, values, metadata);
+        }
+
+        if (fields.length == 1 && fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
+            return values.get(0);
         }
         return ItemFactory.getInstance().createObjectItem(keys, values, ItemMetadata.fromIteratorMetadata(metadata));
     }
@@ -212,7 +215,7 @@ public class JiqsItemParser implements Serializable {
         } else if (fieldType instanceof ArrayType) {
             ArrayType arrayType = (ArrayType) fieldType;
             DataType dataType = arrayType.elementType();
-            List<Item> members = new ArrayList<Item>();
+            List<Item> members = new ArrayList<>();
             List<Object> objects;
             if (row != null)
                 objects = row.getList(i);

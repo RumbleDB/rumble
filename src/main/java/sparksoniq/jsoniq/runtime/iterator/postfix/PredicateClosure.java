@@ -48,9 +48,10 @@ public class PredicateClosure implements Function<Item, Boolean> {
         dynamicContext.addVariableValue("$$", currentItems);
 
         _expression.open(dynamicContext);
-        Item result = _expression.next();
+        boolean result = RuntimeIterator.getEffectiveBooleanValue(_expression);
         _expression.close();
-        return result.getBooleanValue();
+        return result;
+
     }
 
 };

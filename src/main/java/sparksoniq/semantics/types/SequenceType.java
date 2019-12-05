@@ -29,7 +29,6 @@ public class SequenceType implements Serializable {
     private ItemType _itemType;
     private boolean _isEmptySequence = false;
 
-
     public final static SequenceType mostGeneralSequenceType = new SequenceType(
             new ItemType(ItemTypes.Item),
             Arity.ZeroOrMore
@@ -70,8 +69,8 @@ public class SequenceType implements Serializable {
             this._arity == superType._arity;
     }
 
-
-    @Override public boolean equals(Object o) {
+    @Override
+    public boolean equals(Object o) {
         if (!(o instanceof SequenceType))
             return false;
         SequenceType sequenceType = (SequenceType) o;

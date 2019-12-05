@@ -22,13 +22,14 @@ public class TreatIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator _iterator;
-    private SequenceType _sequenceType;
+    private final SequenceType _sequenceType;
     private boolean _shouldThrowTreatException;
 
     private ItemType itemType;
     private String sequenceTypeName;
 
     private Item _nextResult;
+    private Item _currentResult;
     private int _childIndex;
 
     public TreatIterator(
@@ -52,6 +53,7 @@ public class TreatIterator extends HybridRuntimeIterator {
 
     @Override
     public void resetLocal(DynamicContext context) {
+        this._childIndex = 0;
         _iterator.reset(_currentDynamicContext);
         setNextResult();
     }
@@ -71,7 +73,7 @@ public class TreatIterator extends HybridRuntimeIterator {
     @Override
     public Item nextLocal() {
         if (this._hasNext) {
-            Item _currentResult = _nextResult;
+            _currentResult = _nextResult;
             setNextResult();
             return _currentResult;
         } else
@@ -81,8 +83,20 @@ public class TreatIterator extends HybridRuntimeIterator {
     private void setNextResult() {
         _nextResult = null;
         if (_iterator.hasNext()) {
-            _nextResult = _iterator.next();
-            _childIndex++;
+            if (_iterator.isRDD()) {
+                if (_currentResult == null) {
+                    JavaRDD<Item> childRDD = _iterator.getRDD(_currentDynamicContext);
+                    int size = childRDD.take(2).size();
+                    checkMoreThanOneItemSequence(size);
+                    _nextResult = childRDD.first();
+                } else {
+                    _nextResult = null;
+                }
+            } else {
+                _nextResult = _iterator.next();
+            }
+            if (_nextResult != null)
+                _childIndex++;
         } else {
             _iterator.close();
             checkEmptySequence(_childIndex);
@@ -92,7 +106,8 @@ public class TreatIterator extends HybridRuntimeIterator {
         if (!hasNext())
             return;
 
-        checkItemsSize(_childIndex);
+        checkTreatAsEmptySequence(_childIndex);
+        checkMoreThanOneItemSequence(_childIndex);
         if (!_nextResult.isTypeOf(itemType)) {
             String message = ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName())
                 + " cannot be treated as type "
@@ -109,14 +124,14 @@ public class TreatIterator extends HybridRuntimeIterator {
         _currentDynamicContext = dynamicContext;
         JavaRDD<Item> childRDD = _iterator.getRDD(dynamicContext);
 
-        int count = childRDD.take(2).size();
-        checkEmptySequence(count);
-        checkItemsSize(count);
+        if (_sequenceType.getArity() != SequenceType.Arity.ZeroOrMore)
+            checkEmptySequence(childRDD.take(2).size());
+
         Function<Item, Boolean> transformation = new TreatAsClosure(_sequenceType, getMetadata());
         return childRDD.filter(transformation);
     }
 
-    private void checkEmptySequence(long size) {
+    private void checkEmptySequence(int size) {
         if (
             size == 0
                 && (_sequenceType.getArity() == SequenceType.Arity.One
@@ -132,7 +147,7 @@ public class TreatIterator extends HybridRuntimeIterator {
         }
     }
 
-    private void checkItemsSize(long size) {
+    private void checkTreatAsEmptySequence(int size) {
         if (size > 0 && _sequenceType.isEmptySequence()) {
             String message = ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName())
                 + " cannot be treated as type empty-sequence()";
@@ -140,8 +155,9 @@ public class TreatIterator extends HybridRuntimeIterator {
                 ? new TreatException(message, getMetadata())
                 : new UnexpectedTypeException(message, getMetadata());
         }
+    }
 
-
+    private void checkMoreThanOneItemSequence(int size) {
         if (
             size > 1
                 && (_sequenceType.getArity() == SequenceType.Arity.One
@@ -159,13 +175,9 @@ public class TreatIterator extends HybridRuntimeIterator {
 
     @Override
     public boolean initIsRDD() {
-        return _iterator.isRDD();
-    }
-
-    public void setSequenceType(SequenceType _sequenceType) {
-        this._sequenceType = _sequenceType;
-        this.itemType = _sequenceType.getItemType();
-        this.sequenceTypeName = ItemTypes.getItemTypeName(itemType.getType().toString());
+        return _sequenceType.getArity() != SequenceType.Arity.One
+            && _sequenceType.getArity() != SequenceType.Arity.OneOrZero
+            && _iterator.isRDD();
     }
 }
 

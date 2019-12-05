@@ -57,7 +57,7 @@ public class ForClauseSerializeClosure implements Function<Item, Row> {
         List<Item> itemList = new ArrayList<>();
         itemList.add(item);
 
-        return RowFactory.create(DataFrameUtils.serializeItemList(itemList, _kryo, _output));
+        return RowFactory.create((Object) DataFrameUtils.serializeItemList(itemList, _kryo, _output));
     }
 
     private void readObject(java.io.ObjectInputStream in)

@@ -30,6 +30,7 @@ import scala.collection.mutable.WrappedArray;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 
@@ -105,7 +106,7 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray<byte[]>, L
             } else if (_nextItem.isNull()) {
                 result.add("null");
             } else if (_nextItem.isBoolean()) {
-                result.add("bool");
+                result.add("boolean");
             } else if (_nextItem.isString()) {
                 result.add("string");
             } else if (_nextItem.isInteger()) {
@@ -114,9 +115,31 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray<byte[]>, L
                 result.add("double");
             } else if (_nextItem.isDecimal()) {
                 result.add("decimal");
+            } else if (_nextItem.isYearMonthDuration()) {
+                result.add("yearMonthDuration");
+            } else if (_nextItem.isDayTimeDuration()) {
+                result.add("dayTimeDuration");
+            } else if (_nextItem.isDuration()) {
+                result.add("duration");
+            } else if (_nextItem.isDateTime()) {
+                result.add("dateTime");
+            } else if (_nextItem.isDate()) {
+                result.add("date");
+            } else if (_nextItem.isTime()) {
+                result.add("time");
             } else if (_nextItem.isArray() || _nextItem.isObject()) {
                 throw new UnexpectedTypeException(
                         "Order by variable can not contain arrays or objects.",
+                        expression.getIteratorMetadata()
+                );
+            } else if (_nextItem.isBinary()) {
+                String itemType = ItemTypes.getItemTypeName(_nextItem.getClass().getSimpleName());
+                throw new UnexpectedTypeException(
+                        "\""
+                            + itemType
+                            + "\": invalid type: can not compare for equality to type \""
+                            + itemType
+                            + "\"",
                         expression.getIteratorMetadata()
                 );
             } else {

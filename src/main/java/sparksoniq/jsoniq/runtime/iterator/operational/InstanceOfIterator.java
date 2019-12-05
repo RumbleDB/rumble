@@ -54,12 +54,15 @@ public class InstanceOfIterator extends UnaryOperationBaseIterator {
             if (!_child.isRDD()) {
                 List<Item> items = new ArrayList<>();
                 _child.open(_currentDynamicContext);
+
                 while (_child.hasNext())
                     items.add(_child.next());
                 _child.close();
                 this._hasNext = false;
+
                 if (isInvalidArity(items.size()))
                     return ItemFactory.getInstance().createBooleanItem(false);
+
                 ItemType itemType = _sequenceType.getItemType();
                 for (Item item : items) {
                     if (!item.isTypeOf(itemType)) {
@@ -70,8 +73,10 @@ public class InstanceOfIterator extends UnaryOperationBaseIterator {
             } else {
                 JavaRDD<Item> childRDD = _child.getRDD(_currentDynamicContext);
                 this._hasNext = false;
-                if (isInvalidArity(childRDD.count()))
+
+                if (isInvalidArity(childRDD.take(2).size()))
                     return ItemFactory.getInstance().createBooleanItem(false);
+
                 JavaRDD<Item> result = childRDD.filter(new InstanceOfClosure(_sequenceType.getItemType()));
                 return ItemFactory.getInstance().createBooleanItem(result.isEmpty());
             }

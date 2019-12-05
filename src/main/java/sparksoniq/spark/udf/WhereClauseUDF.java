@@ -83,10 +83,9 @@ public class WhereClauseUDF implements UDF1<WrappedArray<byte[]>, Boolean> {
 
         // apply expression in the dynamic context
         _expression.open(_context);
-        Item nextItem = _expression.next();
+        boolean result = RuntimeIterator.getEffectiveBooleanValue(_expression);
         _expression.close();
-
-        return ((BooleanItem) nextItem).getBooleanValue();
+        return result;
     }
 
     private void readObject(java.io.ObjectInputStream in)

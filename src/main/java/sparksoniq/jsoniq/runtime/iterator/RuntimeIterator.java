@@ -69,26 +69,34 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
      * Singleton atomic values are evaluated to their effective boolean value.
      * Multiple atomic values throw an exception.
      *
+     * If the sequence is a single numeric item and a non-null position is supplied, then instead
+     * it is checked whether the numeric item is equal to the position.
+     * 
      * @param iterator has to be opened before calling this function
+     * @param position the context position, or null if none
      * @return
      */
-    public static boolean getEffectiveBooleanValue(RuntimeIterator iterator) {
+    public static boolean getEffectiveBooleanValueOrCheckPosition(RuntimeIterator iterator, Item position) {
         if (iterator.hasNext()) {
             Item item = iterator.next();
             boolean result;
             if (item.isBoolean())
                 result = item.getBooleanValue();
             else if (item.isNumeric()) {
-                if (item.isInteger())
-                    result = item.getIntegerValue() != 0;
-                else if (item.isDouble())
-                    result = item.getDoubleValue() != 0;
-                else if (item.isDecimal())
-                    result = !item.getDecimalValue().equals(BigDecimal.ZERO);
-                else {
-                    throw new SparksoniqRuntimeException(
-                            "Unexpected numeric type found while calculating effective boolean value."
-                    );
+                if (position == null) {
+                    if (item.isInteger())
+                        result = item.getIntegerValue() != 0;
+                    else if (item.isDouble())
+                        result = item.getDoubleValue() != 0;
+                    else if (item.isDecimal())
+                        result = !item.getDecimalValue().equals(BigDecimal.ZERO);
+                    else {
+                        throw new SparksoniqRuntimeException(
+                                "Unexpected numeric type found while calculating effective boolean value."
+                        );
+                    }
+                } else {
+                    result = item.equals(position);
                 }
             } else if (item.isNull())
                 result = false;
@@ -122,6 +130,20 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
             return false;
         }
 
+    }
+
+    /**
+     * This function calculates the effective boolean value of the sequence given by iterator.
+     * Non-empty objects and arrays always return true.
+     * Empty sequence returns false.
+     * Singleton atomic values are evaluated to their effective boolean value.
+     * Multiple atomic values throw an exception.
+     *
+     * @param iterator has to be opened before calling this function
+     * @return
+     */
+    public static boolean getEffectiveBooleanValue(RuntimeIterator iterator) {
+        return getEffectiveBooleanValueOrCheckPosition(iterator, null);
     }
 
     public void open(DynamicContext context) {

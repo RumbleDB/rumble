@@ -68,12 +68,7 @@ import sparksoniq.jsoniq.runtime.iterator.functions.durations.components.MonthsF
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.components.SecondsFromDurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.components.YearsFromDurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.io.JsonDocFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.numerics.AbsFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.numerics.CeilingFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.numerics.FloorFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.numerics.PiFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.numerics.RoundFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.numerics.RoundHalfToEvenFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.*;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential.Exp10FunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential.ExpFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential.Log10FunctionIterator;
@@ -120,6 +115,7 @@ import sparksoniq.jsoniq.runtime.iterator.functions.strings.EndsWithFunctionIter
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.MatchesFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.NormalizeSpaceFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.StartsWithFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.strings.StringFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.StringJoinFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.StringLengthFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.SubstringAfterFunctionIterator;
@@ -176,11 +172,13 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.day_from_date;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.day_from_dateTime;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.days_from_duration;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.decimal_function;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.deep_equal;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.descendant_arrays;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.descendant_objects;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.descendant_pairs;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.distinct_values;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.double_function;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.duration;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.empty;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.ends_with;
@@ -197,6 +195,7 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.hours_from_time;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.index_of;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.insert_before;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.integer_function;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.intersect;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.json_doc;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.json_file1;
@@ -239,6 +238,7 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.size;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.sqrt;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.starts_with;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.string_function;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.string_join1;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.string_join2;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.string_length;
@@ -410,6 +410,9 @@ public class Functions {
         builtInFunctions.put(index_of.getIdentifier(), index_of);
         builtInFunctions.put(deep_equal.getIdentifier(), deep_equal);
 
+        builtInFunctions.put(integer_function.getIdentifier(), integer_function);
+        builtInFunctions.put(decimal_function.getIdentifier(), decimal_function);
+        builtInFunctions.put(double_function.getIdentifier(), double_function);
         builtInFunctions.put(abs.getIdentifier(), abs);
         builtInFunctions.put(ceiling.getIdentifier(), ceiling);
         builtInFunctions.put(floor.getIdentifier(), floor);
@@ -433,6 +436,7 @@ public class Functions {
         builtInFunctions.put(atan.getIdentifier(), atan);
         builtInFunctions.put(atan2.getIdentifier(), atan2);
 
+        builtInFunctions.put(string_function.getIdentifier(), string_function);
         builtInFunctions.put(substring2.getIdentifier(), substring2);
         builtInFunctions.put(substring3.getIdentifier(), substring3);
         builtInFunctions.put(substring_before.getIdentifier(), substring_before);
@@ -581,10 +585,10 @@ public class Functions {
                     functionCallIterator,
                     functionItem.getSignature().getReturnType(),
                     "Invalid return type for "
-                            + (functionItem.getIdentifier().getName().equals("")
+                        + (functionItem.getIdentifier().getName().equals("")
                             ? ""
                             : (functionItem.getIdentifier().getName()) + " ")
-                            + "function. ",
+                        + "function. ",
                     metadata
             );
         }
@@ -1003,6 +1007,34 @@ public class Functions {
             DeepEqualFunctionIterator.class
         );
 
+
+        /**
+         * function that returns the integer from the supplied argument
+         */
+        static final BuiltinFunction integer_function = createBuiltinFunction(
+            "integer",
+            "item?",
+            "integer?",
+            IntegerFunctionIterator.class
+        );
+        /**
+         * function that returns the integer from the supplied argument
+         */
+        static final BuiltinFunction double_function = createBuiltinFunction(
+            "double",
+            "item?",
+            "double?",
+            DoubleFunctionIterator.class
+        );
+        /**
+         * function that returns the integer from the supplied argument
+         */
+        static final BuiltinFunction decimal_function = createBuiltinFunction(
+            "decimal",
+            "item?",
+            "decimal?",
+            DecimalFunctionIterator.class
+        );
         /**
          * function that returns the absolute value of the arg
          */
@@ -1195,6 +1227,15 @@ public class Functions {
         );
 
 
+        /**
+         * function that returns the string from the supplied argument
+         */
+        static final BuiltinFunction string_function = createBuiltinFunction(
+            "string",
+            "item?",
+            "string?",
+            StringFunctionIterator.class
+        );
         /**
          * function that returns substrings
          */

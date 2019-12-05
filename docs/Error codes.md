@@ -1,5 +1,7 @@
 # Error codes
 
+- [FOCA0002] - A value that is not lexically valid for a particular type has been encountered.
+
 - [FODC0002] - Error retrieving resource.
 
 - [JNDY0003] - Duplicate pair name. It is a dynamic error if two pairs in an object
@@ -7,6 +9,8 @@
 
 - [JNTY0004] - Unexpected non-atomic element. Raised when objects
 or arrays are supplied where an atomic element is expected.
+
+- [JNTY0024] - Error getting the string value for array and object items
 
 - [JNTY0018] - Invalid selector error code.
 It is a type error if there is not exactly one supplied parameter
