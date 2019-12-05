@@ -4,6 +4,8 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.net.util.Base64;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
@@ -183,12 +185,14 @@ public class Base64BinaryItem extends AtomicItem {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.getStringValue());
+        output.writeInt(this.getValue().length);
+        output.writeBytes(this.getValue());
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this._stringValue = kryo.readObject(input, String.class);
-        this._value = parseBase64BinaryString(this._stringValue);
+        int bytesLength = input.readInt();
+        this._value = input.readBytes(bytesLength);
+        this._stringValue = StringUtils.chomp(Base64.encodeBase64String(this._value));
     }
 }

@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rumbledb.api.Item;
+import sparksoniq.semantics.types.ItemTypes;
 
 public class FlworKey implements KryoSerializable {
 
@@ -41,16 +42,16 @@ public class FlworKey implements KryoSerializable {
 
     }
 
-    public List<Item> getKeyItems() {
+    List<Item> getKeyItems() {
         return keyItems;
     }
 
     @Override
     public int hashCode() {
-        String result = "";
+        StringBuilder result = new StringBuilder();
         for (Item key : this.keyItems)
-            result += key.serialize();
-        return result.hashCode();
+            result.append(key.hashCode());
+        return result.toString().hashCode();
     }
 
     @Override
@@ -90,13 +91,6 @@ public class FlworKey implements KryoSerializable {
             ) {
                 throw new SparksoniqRuntimeException("Non atomic key not allowed");
             }
-            if (
-                (currentItem != null && comparisonItem != null)
-                    && (!currentItem.getClass().getSimpleName().equals(comparisonItem.getClass().getSimpleName()))
-                    && ((!comparisonItem.isNumeric() || !currentItem.isNumeric()))
-            ) {
-                throw new SparksoniqRuntimeException("Invalid sort key: Item types can't be different.");
-            }
 
             // handle the Java null placeholder used in orderByClauseSparkIterator
             if (currentItem == null || comparisonItem == null) {
@@ -109,7 +103,17 @@ public class FlworKey implements KryoSerializable {
                     result = 1;
                 }
             } else {
-                result = currentItem.compareTo(comparisonItem);
+                try {
+                    result = currentItem.compareTo(comparisonItem);
+                } catch (RuntimeException e) {
+                    throw new SparksoniqRuntimeException(
+                            "Invalid sort key: cannot compare item of type "
+                                + ItemTypes.getItemTypeName(comparisonItem.getClass().getSimpleName())
+                                + " with item of type "
+                                + ItemTypes.getItemTypeName(currentItem.getClass().getSimpleName())
+                                + "."
+                    );
+                }
             }
 
             // Simplify comparison result to -1/0/1

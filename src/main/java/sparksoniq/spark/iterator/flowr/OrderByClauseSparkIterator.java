@@ -38,6 +38,7 @@ import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworKeyComparator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 import sparksoniq.spark.udf.OrderClauseCreateColumnsUDF;
@@ -152,11 +153,23 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                 expression.open(tupleContext);
                 while (expression.hasNext()) {
                     Item resultItem = expression.next();
-                    if (resultItem != null && !resultItem.isAtomic()) {
-                        throw new NonAtomicKeyException(
-                                "Order by keys must be atomics",
-                                orderByExpression.getIteratorMetadata().getExpressionMetadata()
-                        );
+                    if (resultItem != null) {
+                        if (!resultItem.isAtomic())
+                            throw new NonAtomicKeyException(
+                                    "Order by keys must be atomics",
+                                    orderByExpression.getIteratorMetadata().getExpressionMetadata()
+                            );
+                        if (resultItem.isBinary()) {
+                            String itemType = ItemTypes.getItemTypeName(resultItem.getClass().getSimpleName());
+                            throw new UnexpectedTypeException(
+                                    "\""
+                                        + itemType
+                                        + "\": invalid type: can not compare for equality to type \""
+                                        + itemType
+                                        + "\"",
+                                    getMetadata()
+                            );
+                        }
                     }
                     isFieldEmpty = false;
                     results.add(resultItem);
@@ -245,6 +258,15 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                         } else {
                             // do nothing, type is already set to integer
                         }
+                    } else if (
+                        (currentColumnType.equals("dayTimeDuration")
+                            || currentColumnType.equals("yearMonthDuration")
+                            || currentColumnType.equals("duration"))
+                            && (columnType.equals("dayTimeDuration")
+                                || columnType.equals("yearMonthDuration")
+                                || columnType.equals("duration"))
+                    ) {
+                        typesForAllColumns.put(columnIndex, "duration");
                     } else if (!currentColumnType.equals(columnType)) {
                         throw new UnexpectedTypeException(
                                 "Order by variable must contain values of a single type.",
@@ -272,7 +294,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             // create fields for the given value types
             columnName = columnIndex + "-valueField";
             switch (columnTypeString) {
-                case "bool":
+                case "boolean":
                     columnType = DataTypes.BooleanType;
                     break;
                 case "string":
@@ -286,6 +308,14 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                     break;
                 case "decimal":
                     columnType = DataTypes.createDecimalType();
+                    break;
+                case "duration":
+                case "yearMonthDuration":
+                case "dayTimeDuration":
+                case "dateTime":
+                case "date":
+                case "time":
+                    columnType = DataTypes.LongType;
                     break;
                 default:
                     throw new SparksoniqRuntimeException(
@@ -353,8 +383,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<String, DynamicContext.VariableDependency> result =
-            new TreeMap<String, DynamicContext.VariableDependency>();
+        Map<String, DynamicContext.VariableDependency> result = new TreeMap<>();
         for (OrderByClauseSparkIteratorExpression iterator : _expressions) {
             result.putAll(iterator.getExpression().getVariableDependencies());
         }
@@ -366,9 +395,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     public Set<String> getVariablesBoundInCurrentFLWORExpression() {
-        Set<String> result = new HashSet<String>();
-        result.addAll(_child.getVariablesBoundInCurrentFLWORExpression());
-        return result;
+        return new HashSet<>(_child.getVariablesBoundInCurrentFLWORExpression());
     }
 
     public void print(StringBuffer buffer, int indent) {
@@ -383,8 +410,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
     ) {
         // start with an empty projection.
         Map<String, DynamicContext.VariableDependency> projection =
-            new TreeMap<String, DynamicContext.VariableDependency>();
-        projection.putAll(parentProjection);
+            new TreeMap<>(parentProjection);
 
         // add the variable dependencies needed by this for clause's expression.
         for (OrderByClauseSparkIteratorExpression iterator : _expressions) {

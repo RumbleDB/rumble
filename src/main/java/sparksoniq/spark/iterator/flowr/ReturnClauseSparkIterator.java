@@ -35,6 +35,7 @@ import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.closures.ReturnFlatMapClosure;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -51,7 +52,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             RuntimeIterator expression,
             IteratorMetadata iteratorMetadata
     ) {
-        super(Arrays.asList(expression), iteratorMetadata);
+        super(Collections.singletonList(expression), iteratorMetadata);
         _child = child;
         _expression = expression;
     }
@@ -147,8 +148,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<String, DynamicContext.VariableDependency> result =
-            new TreeMap<String, DynamicContext.VariableDependency>();
-        result.putAll(_expression.getVariableDependencies());
+            new TreeMap<>(_expression.getVariableDependencies());
         for (String variable : _child.getVariablesBoundInCurrentFLWORExpression()) {
             result.remove(variable);
         }

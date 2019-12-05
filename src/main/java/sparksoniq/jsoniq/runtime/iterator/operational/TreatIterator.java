@@ -108,14 +108,13 @@ public class TreatIterator extends HybridRuntimeIterator {
         checkTreatAsEmptySequence(_childIndex);
         checkMoreThanOneItemSequence(_childIndex);
         if (!_nextResult.isTypeOf(itemType)) {
-            throw new TreatException(
-                    " "
-                        + ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName())
-                        + " cannot be treated as type "
-                        + sequenceTypeName
-                        + _sequenceType.getArity().getSymbol(),
-                    getMetadata()
-            );
+            String message = ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName())
+                + " cannot be treated as type "
+                + sequenceTypeName
+                + _sequenceType.getArity().getSymbol();
+            throw _shouldThrowTreatException
+                ? new TreatException(message, getMetadata())
+                : new UnexpectedTypeException(message, getMetadata());
         }
     }
 
@@ -148,12 +147,13 @@ public class TreatIterator extends HybridRuntimeIterator {
     }
 
     private void checkTreatAsEmptySequence(int size) {
-        if (size > 0 && _sequenceType.isEmptySequence())
-            throw new TreatException(
-                    ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName())
-                        + " cannot be treated as type empty-sequence()",
-                    getMetadata()
-            );
+        if (size > 0 && _sequenceType.isEmptySequence()) {
+            String message = ItemTypes.getItemTypeName(_nextResult.getClass().getSimpleName())
+                + " cannot be treated as type empty-sequence()";
+            throw _shouldThrowTreatException
+                ? new TreatException(message, getMetadata())
+                : new UnexpectedTypeException(message, getMetadata());
+        }
     }
 
     private void checkMoreThanOneItemSequence(int size) {
@@ -163,12 +163,12 @@ public class TreatIterator extends HybridRuntimeIterator {
                     ||
                     _sequenceType.getArity() == SequenceType.Arity.OneOrZero)
         ) {
-            throw new TreatException(
-                    "Sequences of more than one item cannot be treated as type "
-                        + sequenceTypeName
-                        + _sequenceType.getArity().getSymbol(),
-                    getMetadata()
-            );
+            String message = "Sequences of more than one item cannot be treated as type "
+                + sequenceTypeName
+                + _sequenceType.getArity().getSymbol();
+            throw _shouldThrowTreatException
+                ? new TreatException(message, getMetadata())
+                : new UnexpectedTypeException(message, getMetadata());
         }
     }
 

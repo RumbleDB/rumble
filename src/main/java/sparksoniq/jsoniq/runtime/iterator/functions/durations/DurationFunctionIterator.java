@@ -1,5 +1,6 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.durations;
 
+import org.joda.time.Instant;
 import org.joda.time.Period;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.CastException;
