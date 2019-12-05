@@ -130,7 +130,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             .udf()
             .register(
                 "whereClauseUDF",
-                new WhereClauseUDF(_expression, inputSchema, UDFcolumns),
+                new WhereClauseUDF(_expression, context, inputSchema, UDFcolumns),
                 DataTypes.BooleanType
             );
 

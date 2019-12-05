@@ -47,19 +47,22 @@ public class WhereClauseUDF implements UDF1<WrappedArray<byte[]>, Boolean> {
 
     private List<List<Item>> _deserializedParams;
     private DynamicContext _context;
+    private DynamicContext _parentContext;
 
     private transient Kryo _kryo;
     private transient Input _input;
 
     public WhereClauseUDF(
             RuntimeIterator expression,
+            DynamicContext context,
             StructType inputSchema,
             List<String> columnNames
     ) {
         _expression = expression;
 
         _deserializedParams = new ArrayList<>();
-        _context = new DynamicContext();
+        _parentContext = context;
+        _context = new DynamicContext(_parentContext);
 
         _kryo = new Kryo();
         _kryo.setReferences(false);

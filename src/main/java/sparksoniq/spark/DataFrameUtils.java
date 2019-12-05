@@ -345,6 +345,8 @@ public class DataFrameUtils {
             .withColumn("partition_id", spark_partition_id())
             .withColumn("inc_id", monotonically_increasing_id());
 
+        dfWithPartitionId.persist();
+
         Object partitionOffsetsObject = dfWithPartitionId
             .groupBy("partition_id")
             .agg(count(lit(1)).alias("cnt"), first("inc_id").alias("inc_id"))
