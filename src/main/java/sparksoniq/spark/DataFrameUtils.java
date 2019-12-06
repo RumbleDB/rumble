@@ -161,6 +161,56 @@ public class DataFrameUtils {
 
     /**
      * @param inputSchema schema specifies the columns to be used in the query
+     * @param duplicateVariableIndex enables skipping a variable
+     * @param dependencies restriction of the results to within a specified set
+     * @return list of SQL column names in the schema
+     */
+    public static List<String> getBinaryColumnNames(
+            StructType inputSchema,
+            int duplicateVariableIndex,
+            Map<String, DynamicContext.VariableDependency> dependencies
+    ) {
+        List<String> result = new ArrayList<String>();
+        String[] columnNames = inputSchema.fieldNames();
+        for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
+            if (columnIndex == duplicateVariableIndex) {
+                continue;
+            }
+            String var = columnNames[columnIndex];
+            if (dependencies == null || (dependencies.containsKey(var) && !dependencies.get(var).equals(DynamicContext.VariableDependency.COUNT))) {
+                result.add(columnNames[columnIndex]);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * @param inputSchema schema specifies the columns to be used in the query
+     * @param duplicateVariableIndex enables skipping a variable
+     * @param dependencies restriction of the results to within a specified set
+     * @return list of SQL column names in the schema
+     */
+    public static List<String> getLongColumnNames(
+            StructType inputSchema,
+            int duplicateVariableIndex,
+            Map<String, DynamicContext.VariableDependency> dependencies
+    ) {
+        List<String> result = new ArrayList<String>();
+        String[] columnNames = inputSchema.fieldNames();
+        for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
+            if (columnIndex == duplicateVariableIndex) {
+                continue;
+            }
+            String var = columnNames[columnIndex];
+            if (dependencies != null && dependencies.containsKey(var) && dependencies.get(var).equals(DynamicContext.VariableDependency.COUNT)) {
+                result.add(columnNames[columnIndex]);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * @param inputSchema schema specifies the columns to be used in the query
      * @return list of SQL column names in the schema
      */
     public static List<String> getColumnNames(

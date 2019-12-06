@@ -244,26 +244,29 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 int duplicateVariableIndex = columnNames.indexOf(newVariableName);
 
                 List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
-                List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, _dependencies);
+                List<String> UDFbinarycolumns = DataFrameUtils.getBinaryColumnNames(inputSchema, -1, _dependencies);
+                List<String> UDFlongcolumns = DataFrameUtils.getLongColumnNames(inputSchema, -1, _dependencies);
 
                 df.sparkSession()
                     .udf()
                     .register(
                         "letClauseUDF",
-                        new LetClauseUDF(newVariableExpression, UDFcolumns),
+                        new LetClauseUDF(newVariableExpression, UDFbinarycolumns, UDFlongcolumns),
                         DataTypes.BinaryType
                     );
 
                 String selectSQL = DataFrameUtils.getSQL(allColumns, true);
-                String udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
+                String udfBinarySQL = DataFrameUtils.getSQL(UDFbinarycolumns, false);
+                String udfLongSQL = DataFrameUtils.getSQL(UDFlongcolumns, false);
 
                 df.createOrReplaceTempView("input");
                 df = df.sparkSession()
                     .sql(
                         String.format(
-                            "select %s letClauseUDF(array(%s)) as `%s` from input",
+                            "select %s letClauseUDF(array(%s), array(%s)) as `%s` from input",
                             selectSQL,
-                            udfSQL,
+                            udfBinarySQL,
+                            udfLongSQL,
                             newVariableName
                         )
                     );
