@@ -22,7 +22,6 @@ package sparksoniq.jsoniq.runtime.iterator.postfix;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
-
 import sparksoniq.jsoniq.item.ArrayItem;
 
 import java.util.ArrayList;

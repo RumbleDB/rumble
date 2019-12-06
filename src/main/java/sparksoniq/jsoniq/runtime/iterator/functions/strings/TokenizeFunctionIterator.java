@@ -20,6 +20,7 @@
 
 package sparksoniq.jsoniq.runtime.iterator.functions.strings;
 
+import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.ItemFactory;
@@ -29,8 +30,6 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
-
-import org.rumbledb.api.Item;
 
 public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
 

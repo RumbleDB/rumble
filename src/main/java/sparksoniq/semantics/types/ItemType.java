@@ -21,8 +21,6 @@
 package sparksoniq.semantics.types;
 
 
-import org.rumbledb.api.Item;
-
 import java.io.Serializable;
 
 public class ItemType implements Serializable {

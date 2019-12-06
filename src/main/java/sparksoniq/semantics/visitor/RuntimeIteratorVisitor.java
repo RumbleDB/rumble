@@ -43,7 +43,6 @@ import sparksoniq.jsoniq.compiler.translator.expr.flowr.LetClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.LetClauseVar;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
-import sparksoniq.jsoniq.compiler.translator.expr.flowr.ReturnClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.WhereClause;
 import sparksoniq.jsoniq.compiler.translator.expr.module.MainModule;
 import sparksoniq.jsoniq.compiler.translator.expr.module.Prolog;

@@ -20,11 +20,9 @@
 
 package sparksoniq.io.json;
 
+import com.jsoniter.JsonIterator;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
-
-import com.jsoniter.JsonIterator;
-
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.Iterator;

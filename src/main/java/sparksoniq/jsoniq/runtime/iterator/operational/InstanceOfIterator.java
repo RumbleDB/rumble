@@ -21,7 +21,7 @@
 package sparksoniq.jsoniq.runtime.iterator.operational;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.function.Function;
+import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.item.ItemFactory;
@@ -34,8 +34,6 @@ import sparksoniq.semantics.types.SequenceType;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.rumbledb.api.Item;
 
 
 public class InstanceOfIterator extends UnaryOperationBaseIterator {

@@ -20,12 +20,10 @@
 
 package sparksoniq.spark.udf;
 
-import org.apache.spark.sql.api.java.UDF1;
-import org.rumbledb.api.Item;
-
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Output;
-
+import org.apache.spark.sql.api.java.UDF1;
+import org.rumbledb.api.Item;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.spark.DataFrameUtils;
 

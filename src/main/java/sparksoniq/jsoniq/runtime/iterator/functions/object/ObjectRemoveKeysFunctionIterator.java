@@ -20,6 +20,7 @@
 
 package sparksoniq.jsoniq.runtime.iterator.functions.object;
 
+import org.rumbledb.api.Item;
 import sparksoniq.exceptions.InvalidSelectorException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
@@ -32,8 +33,6 @@ import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.rumbledb.api.Item;
 
 public class ObjectRemoveKeysFunctionIterator extends LocalFunctionCallIterator {
 

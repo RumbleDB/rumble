@@ -1,18 +1,18 @@
 package sparksoniq.jsoniq.runtime.iterator.operational;
 
 import org.rumbledb.api.Item;
+import sparksoniq.exceptions.CastableException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
-import sparksoniq.exceptions.CastableException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.UnaryOperationBaseIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
-import sparksoniq.semantics.types.SingleType;
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemTypes;
+import sparksoniq.semantics.types.SingleType;
 
 import java.util.ArrayList;
 import java.util.List;

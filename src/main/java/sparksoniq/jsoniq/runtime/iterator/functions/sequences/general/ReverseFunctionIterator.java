@@ -20,6 +20,7 @@
 
 package sparksoniq.jsoniq.runtime.iterator.functions.sequences.general;
 
+import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
@@ -28,8 +29,6 @@ import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.rumbledb.api.Item;
 
 public class ReverseFunctionIterator extends LocalFunctionCallIterator {
 

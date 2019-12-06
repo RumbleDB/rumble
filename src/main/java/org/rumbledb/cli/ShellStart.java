@@ -21,7 +21,6 @@
 package org.rumbledb.cli;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 public class ShellStart {
     public static void main(String[] args) throws IOException {

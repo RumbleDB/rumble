@@ -6,13 +6,12 @@ import com.esotericsoftware.kryo.io.ByteBufferOutput;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import com.esotericsoftware.kryo.util.Pool;
-
-import java.util.ArrayList;
-
 import org.rumbledb.api.Item;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.SequenceType;
+
+import java.util.ArrayList;
 
 public class KryoManager {
 

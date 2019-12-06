@@ -21,9 +21,10 @@
 
 package sparksoniq.jsoniq.runtime.iterator.functions.io;
 
+import com.jsoniter.JsonIterator;
+import org.rumbledb.api.Item;
 import sparksoniq.exceptions.ErrorRetrievingResourceException;
 import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.io.json.JiqsItemParser;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
@@ -34,10 +35,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.List;
-
-import org.rumbledb.api.Item;
-
-import com.jsoniter.JsonIterator;
 
 public class JsonDocFunctionIterator extends LocalFunctionCallIterator {
 

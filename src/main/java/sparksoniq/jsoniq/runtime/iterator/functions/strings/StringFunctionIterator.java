@@ -1,7 +1,10 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.strings;
 
 import org.rumbledb.api.Item;
-import sparksoniq.exceptions.*;
+import sparksoniq.exceptions.CastException;
+import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.StringOfJSONiqItemException;
+import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
