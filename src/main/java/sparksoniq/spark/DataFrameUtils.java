@@ -31,9 +31,25 @@ import org.apache.spark.sql.expressions.Window;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
-
 import scala.collection.mutable.WrappedArray;
-import sparksoniq.jsoniq.item.*;
+import sparksoniq.jsoniq.item.ArrayItem;
+import sparksoniq.jsoniq.item.Base64BinaryItem;
+import sparksoniq.jsoniq.item.BooleanItem;
+import sparksoniq.jsoniq.item.DateItem;
+import sparksoniq.jsoniq.item.DateTimeItem;
+import sparksoniq.jsoniq.item.DayTimeDurationItem;
+import sparksoniq.jsoniq.item.DecimalItem;
+import sparksoniq.jsoniq.item.DoubleItem;
+import sparksoniq.jsoniq.item.DurationItem;
+import sparksoniq.jsoniq.item.FunctionItem;
+import sparksoniq.jsoniq.item.HexBinaryItem;
+import sparksoniq.jsoniq.item.IntegerItem;
+import sparksoniq.jsoniq.item.ItemFactory;
+import sparksoniq.jsoniq.item.NullItem;
+import sparksoniq.jsoniq.item.ObjectItem;
+import sparksoniq.jsoniq.item.StringItem;
+import sparksoniq.jsoniq.item.TimeItem;
+import sparksoniq.jsoniq.item.YearMonthDurationItem;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.ItemType;
@@ -44,6 +60,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.count;
 import static org.apache.spark.sql.functions.first;
@@ -163,8 +180,6 @@ public class DataFrameUtils {
         }
     }
 
-    private static String COMMA = ",";
-
     /**
      * @param columnNames schema specifies the columns to be used in the query
      * @param trailingComma boolean field to have a trailing comma
@@ -178,7 +193,7 @@ public class DataFrameUtils {
         String comma = "";
         for (String var : columnNames) {
             queryColumnString.append(comma);
-            comma = COMMA;
+            comma = ",";
             queryColumnString.append("`");
             queryColumnString.append(var);
             queryColumnString.append("`");
@@ -344,6 +359,8 @@ public class DataFrameUtils {
         Dataset<Row> dfWithPartitionId = df
             .withColumn("partition_id", spark_partition_id())
             .withColumn("inc_id", monotonically_increasing_id());
+
+        dfWithPartitionId.persist();
 
         Object partitionOffsetsObject = dfWithPartitionId
             .groupBy("partition_id")
