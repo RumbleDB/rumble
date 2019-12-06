@@ -177,7 +177,11 @@ public class DataFrameUtils {
                 continue;
             }
             String var = columnNames[columnIndex];
-            if (dependencies == null || (dependencies.containsKey(var) && !dependencies.get(var).equals(DynamicContext.VariableDependency.COUNT))) {
+            if (
+                dependencies == null
+                    || (dependencies.containsKey(var)
+                        && !dependencies.get(var).equals(DynamicContext.VariableDependency.COUNT))
+            ) {
                 result.add(columnNames[columnIndex]);
             }
         }
@@ -202,7 +206,11 @@ public class DataFrameUtils {
                 continue;
             }
             String var = columnNames[columnIndex];
-            if (dependencies != null && dependencies.containsKey(var) && dependencies.get(var).equals(DynamicContext.VariableDependency.COUNT)) {
+            if (
+                dependencies != null
+                    && dependencies.containsKey(var)
+                    && dependencies.get(var).equals(DynamicContext.VariableDependency.COUNT)
+            ) {
                 result.add(columnNames[columnIndex]);
             }
         }
@@ -227,6 +235,23 @@ public class DataFrameUtils {
         // prepare dynamic context
         for (int columnIndex = 0; columnIndex < columnNames.size(); columnIndex++) {
             context.addVariableValue(columnNames.get(columnIndex), deserializedParams.get(columnIndex));
+        }
+    }
+
+    public static void prepareDynamicContext(
+            DynamicContext context,
+            List<String> binaryColumnNames,
+            List<String> longColumnNames,
+            List<List<Item>> deserializedParams,
+            List<Item> longParams
+    ) {
+        // prepare dynamic context
+        for (int columnIndex = 0; columnIndex < binaryColumnNames.size(); columnIndex++) {
+            context.addVariableValue(binaryColumnNames.get(columnIndex), deserializedParams.get(columnIndex));
+        }
+        // prepare dynamic context
+        for (int columnIndex = 0; columnIndex < longColumnNames.size(); columnIndex++) {
+            context.addVariableCount(longColumnNames.get(columnIndex), longParams.get(columnIndex));
         }
     }
 

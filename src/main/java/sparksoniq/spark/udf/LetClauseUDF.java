@@ -45,9 +45,9 @@ public class LetClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
 
     List<String> _binaryColumnNames;
     List<String> _longColumnNames;
-    List<String> _allColumnNames;
 
     private List<List<Item>> _deserializedParams;
+    private List<Item> _longParams;
     private DynamicContext _context;
     private List<Item> _nextResult;
 
@@ -63,6 +63,7 @@ public class LetClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
         _expression = expression;
 
         _deserializedParams = new ArrayList<>();
+        _longParams = new ArrayList<>();
         _context = new DynamicContext();
         _nextResult = new ArrayList<>();
 
@@ -74,29 +75,32 @@ public class LetClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
 
         _binaryColumnNames = binaryColumnNames;
         _longColumnNames = longColumnNames;
-        _allColumnNames = new ArrayList<>(_binaryColumnNames);
-        _allColumnNames.addAll(_longColumnNames);
     }
 
 
     @Override
     public byte[] call(WrappedArray<byte[]> wrappedParameters, WrappedArray<Long> wrappedParametersLong) {
         _deserializedParams.clear();
+        _longParams.clear();
         _context.removeAllVariables();
         _nextResult.clear();
 
         DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
 
         Object[] longParams = (Object[]) wrappedParametersLong.array();
-        for (int i = 0; i < wrappedParametersLong.size(); ++i) {
-            List<Item> longItemList = new ArrayList<>();
-            for (Object longParam : longParams) {
-                longItemList.add(ItemFactory.getInstance().createIntegerItem((int) ((Long) longParam).longValue()));
-            }
-            _deserializedParams.add(longItemList);
+        for (Object longParam : longParams) {
+            System.out.println("Found " + ((Long) longParam).intValue());
+            Item count = ItemFactory.getInstance().createIntegerItem(((Long) longParam).intValue());
+            _longParams.add(count);
         }
 
-        DataFrameUtils.prepareDynamicContext(_context, _allColumnNames, _deserializedParams);
+        DataFrameUtils.prepareDynamicContext(
+            _context,
+            _binaryColumnNames,
+            _longColumnNames,
+            _deserializedParams,
+            _longParams
+        );
 
         // apply expression in the dynamic context
         _expression.open(_context);
