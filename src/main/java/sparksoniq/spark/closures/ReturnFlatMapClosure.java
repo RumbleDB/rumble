@@ -20,14 +20,12 @@
 
 package sparksoniq.spark.closures;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
-
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
@@ -42,15 +40,19 @@ import java.util.Map;
 public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
 
     private static final long serialVersionUID = 1L;
-    RuntimeIterator _expression;
-    StructType _oldSchema;
+    private RuntimeIterator _expression;
+    private StructType _oldSchema;
+    private DynamicContext _parentContext;
+    private DynamicContext _context;
 
     private transient Kryo _kryo;
     private transient Input _input;
 
-    public ReturnFlatMapClosure(RuntimeIterator expression, StructType oldSchema) {
+    public ReturnFlatMapClosure(RuntimeIterator expression, DynamicContext context, StructType oldSchema) {
         this._expression = expression;
         this._oldSchema = oldSchema;
+        _parentContext = context;
+        _context = new DynamicContext(_parentContext);
 
         _kryo = new Kryo();
         _kryo.setReferences(false);
@@ -62,24 +64,23 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
     public Iterator<Item> call(Row row) {
         String[] columnNames = _oldSchema.fieldNames();
         Map<String, DynamicContext.VariableDependency> dependencies = _expression.getVariableDependencies();
-
+        _context.removeAllVariables();
         // Create dynamic context with deserialized data but only with dependencies
-        DynamicContext context = new DynamicContext();
         for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
             String field = columnNames[columnIndex];
             if (dependencies.containsKey(field)) {
                 List<Item> i = DataFrameUtils.deserializeRowField(row, columnIndex, _kryo, _input); // rowColumns.get(columnIndex);
                 if (dependencies.get(field).equals(DynamicContext.VariableDependency.COUNT)) {
-                    context.addVariableCount(field, i.get(0));
+                    _context.addVariableCount(field, i.get(0));
                 } else {
-                    context.addVariableValue(field, i);
+                    _context.addVariableValue(field, i);
                 }
             }
         }
 
         // Apply expression to the context
         List<Item> results = new ArrayList<>();
-        _expression.open(context);
+        _expression.open(_context);
         while (_expression.hasNext()) {
             results.add(_expression.next());
         }
