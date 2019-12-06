@@ -39,8 +39,4 @@ public class UnknownFunctionCallException extends SparksoniqRuntimeException {
             iteratorMetadata.getExpressionMetadata()
         );
     }
-
-    public UnknownFunctionCallException(String message, IteratorMetadata iteratorMetadata) {
-        super(message, ErrorCodes.InvalidFunctionCallErrorCode, iteratorMetadata.getExpressionMetadata());
-    }
 }
