@@ -20,15 +20,12 @@
 
 package sparksoniq.spark.udf;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
 import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
-
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-
 import scala.collection.mutable.WrappedArray;
-import sparksoniq.jsoniq.item.BooleanItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
@@ -41,9 +38,9 @@ import java.util.Map;
 public class WhereClauseUDF implements UDF1<WrappedArray<byte[]>, Boolean> {
     private static final long serialVersionUID = 1L;
     private RuntimeIterator _expression;
-    Map<String, DynamicContext.VariableDependency> _dependencies;
+    private Map<String, DynamicContext.VariableDependency> _dependencies;
 
-    List<String> _columnNames;
+    private List<String> _columnNames;
 
     private List<List<Item>> _deserializedParams;
     private DynamicContext _context;

@@ -145,9 +145,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<String, DynamicContext.VariableDependency> result =
-            new TreeMap<String, DynamicContext.VariableDependency>();
-        result.putAll(_expression.getVariableDependencies());
+        Map<String, DynamicContext.VariableDependency> result = new TreeMap<>(_expression.getVariableDependencies());
         for (String var : _child.getVariablesBoundInCurrentFLWORExpression()) {
             result.remove(var);
         }
@@ -156,9 +154,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     public Set<String> getVariablesBoundInCurrentFLWORExpression() {
-        Set<String> result = new HashSet<String>();
-        result.addAll(_child.getVariablesBoundInCurrentFLWORExpression());
-        return result;
+        return new HashSet<>(_child.getVariablesBoundInCurrentFLWORExpression());
     }
 
     public void print(StringBuffer buffer, int indent) {
@@ -169,12 +165,8 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
     public Map<String, DynamicContext.VariableDependency> getProjection(
             Map<String, DynamicContext.VariableDependency> parentProjection
     ) {
-        // start with an empty projection.
-        Map<String, DynamicContext.VariableDependency> projection =
-            new TreeMap<String, DynamicContext.VariableDependency>();
-
         // copy over the projection needed by the parent clause.
-        projection.putAll(parentProjection);
+        Map<String, DynamicContext.VariableDependency> projection = new TreeMap<>(parentProjection);
 
         // add the variable dependencies needed by this for clause's expression.
         Map<String, DynamicContext.VariableDependency> exprDependency = _expression.getVariableDependencies();
