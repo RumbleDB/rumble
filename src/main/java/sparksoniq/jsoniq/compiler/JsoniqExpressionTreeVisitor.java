@@ -34,6 +34,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.control.IfExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.control.SwitchCaseExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.control.SwitchExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.control.TryCatchExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.control.TypeSwitchCaseExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.control.TypeSwitchExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.CountClause;
@@ -95,6 +96,7 @@ import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -111,6 +113,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
     private PrimaryExpression currentPrimaryExpression;
     private PostfixExtension currentPostFixExtension;
     private FlworClause currentFlworClause;
+    private List<String> currentErrorCodes;
 
     public JsoniqExpressionTreeVisitor() {
     }
@@ -1311,6 +1314,51 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         int tokenLineNumber = ctx.getStart().getLine();
         int tokenColumnNumber = ctx.getStart().getCharPositionInLine();
         return new ExpressionMetadata(tokenLineNumber, tokenColumnNumber);
+    }
+    
+    @Override
+    public Void visitTryCatchExpr(JsoniqParser.TryCatchExprContext ctx) {
+        TryCatchExpression node;
+        Expression tryExpression;
+        Expression catchAllExpression = null;
+        
+        this.visitExpr(ctx.try_expression);
+        tryExpression = this.currentExpression;
+        
+        Map<String, Expression> catchExpressions = new HashMap<>();
+        for (JsoniqParser.CatchClauseContext expr : ctx.catches) {
+            this.visitCatchClause(expr);
+            for(String s : this.currentErrorCodes)
+            {
+            	if(s == null && catchAllExpression == null)
+            	{
+                	catchAllExpression = this.currentExpression;
+            	} else if (s != null && !catchExpressions.containsKey(s)) {
+            		catchExpressions.put(s, this.currentExpression);
+            	}
+            }
+        }
+
+        node = new TryCatchExpression(tryExpression, catchExpressions, catchAllExpression, createMetadataFromContext(ctx));
+        this.currentExpression = node;
+        return null;
+    }
+    
+    @Override
+    public Void visitCatchClause(JsoniqParser.CatchClauseContext ctx) {
+        Expression catchExpression;
+        List<String> errors = new ArrayList<>();
+        
+        this.visitExpr(ctx.catch_expression);
+        catchExpression = this.currentExpression;
+        
+        for (JsoniqParser.StringLiteralContext c : ctx.errors) {
+        	errors.add(ValueTypeHandler.getStringValue(c));
+        }
+
+        this.currentErrorCodes = errors;
+        this.currentExpression = catchExpression;
+        return null;
     }
 
 }
