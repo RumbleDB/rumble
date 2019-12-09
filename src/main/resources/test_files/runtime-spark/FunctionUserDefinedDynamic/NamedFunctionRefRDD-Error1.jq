@@ -1,3 +1,5 @@
-(:JIQS: ShouldRun; Output="3" :)
+(:JIQS: ShouldCrash; ErrorCode="SENR0001"; :)
 declare function fn1() {3};
-parallelize(fn1#0)()
+parallelize(fn1#0)
+
+(: Named function ref - serialization error :)

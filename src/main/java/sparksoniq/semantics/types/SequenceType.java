@@ -24,7 +24,6 @@ import java.io.Serializable;
 
 public class SequenceType implements Serializable {
 
-
     private static final long serialVersionUID = 1L;
     private Arity _arity;
     private ItemType _itemType;
@@ -32,7 +31,7 @@ public class SequenceType implements Serializable {
 
     public final static SequenceType mostGeneralSequenceType = new SequenceType(
             new ItemType(ItemTypes.Item),
-            SequenceType.Arity.ZeroOrMore
+            Arity.ZeroOrMore
     );
 
 

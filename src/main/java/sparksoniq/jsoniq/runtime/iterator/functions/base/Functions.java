@@ -533,9 +533,9 @@ public class Functions {
                 arguments.set(
                     i,
                     new TypePromotionIterator(
-                            "Invalid argument for function " + identifier.getName() + ". ",
                             arguments.get(i),
                             builtinFunction.getSignature().getParameterTypes().get(i),
+                            "Invalid argument for function " + identifier.getName() + ". ",
                             arguments.get(i).getMetadata()
                     )
                 );
@@ -556,9 +556,9 @@ public class Functions {
 
         if (!builtinFunction.getSignature().getReturnType().equals(mostGeneralSequenceType)) {
             return new TypePromotionIterator(
-                    "Invalid return type for function " + identifier.getName() + ". ",
                     functionCallIterator,
                     builtinFunction.getSignature().getReturnType(),
+                    "Invalid return type for function " + identifier.getName() + ". ",
                     functionCallIterator.getMetadata()
             );
         }
@@ -586,7 +586,20 @@ public class Functions {
             IteratorMetadata metadata,
             List<RuntimeIterator> arguments
     ) {
-        return new FunctionItemCallIterator(functionItem, arguments, metadata);
+        FunctionItemCallIterator functionCallIterator = new FunctionItemCallIterator(functionItem, arguments, metadata);
+        if (!functionItem.getSignature().getReturnType().equals(mostGeneralSequenceType)) {
+            return new TypePromotionIterator(
+                    functionCallIterator,
+                    functionItem.getSignature().getReturnType(),
+                    "Invalid return type for "
+                        + (functionItem.getIdentifier().getName().equals("")
+                            ? ""
+                            : (functionItem.getIdentifier().getName()) + " ")
+                        + "function. ",
+                    metadata
+            );
+        }
+        return functionCallIterator;
     }
 
     public static void clearUserDefinedFunctions() {

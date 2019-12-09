@@ -39,11 +39,11 @@ public class TreatIterator extends HybridRuntimeIterator {
             IteratorMetadata iteratorMetadata
     ) {
         super(Collections.singletonList(iterator), iteratorMetadata);
-        _iterator = iterator;
+        this._iterator = iterator;
         this._sequenceType = sequenceType;
-        itemType = _sequenceType.getItemType();
-        sequenceTypeName = ItemTypes.getItemTypeName(itemType.getType().toString());
         this._shouldThrowTreatException = shouldThrowTreatException;
+        this.itemType = _sequenceType.getItemType();
+        this.sequenceTypeName = ItemTypes.getItemTypeName(itemType.getType().toString());
     }
 
     @Override
@@ -53,6 +53,7 @@ public class TreatIterator extends HybridRuntimeIterator {
 
     @Override
     public void resetLocal(DynamicContext context) {
+        this._childIndex = 0;
         _iterator.reset(_currentDynamicContext);
         setNextResult();
     }

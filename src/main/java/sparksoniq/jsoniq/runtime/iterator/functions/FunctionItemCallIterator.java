@@ -29,6 +29,7 @@ import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionSignature;
+import sparksoniq.jsoniq.runtime.iterator.operational.TypePromotionIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.SequenceType;
@@ -37,6 +38,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import static sparksoniq.semantics.types.SequenceType.mostGeneralSequenceType;
 
 public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
@@ -77,10 +80,10 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     }
 
     private void processArguments() {
+        String formattedName = (!_functionItem.getIdentifier().getName().equals(""))
+            ? _functionItem.getIdentifier().getName() + " "
+            : "";
         if (_functionItem.getParameterNames().size() != _functionArguments.size()) {
-            String formattedName = (!_functionItem.getIdentifier().getName().equals(""))
-                ? _functionItem.getIdentifier().getName() + " "
-                : "";
             throw new UnexpectedTypeException(
                     "Dynamic function "
                         + formattedName
@@ -90,6 +93,25 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                         + _functionArguments.size(),
                     getMetadata()
             );
+        }
+
+        if (_functionItem.getSignature().getParameterTypes() != null) {
+            for (int i = 0; i < _functionArguments.size(); i++) {
+                if (
+                    _functionArguments.get(i) != null
+                        && !_functionItem.getSignature().getParameterTypes().get(i).equals(mostGeneralSequenceType)
+                ) {
+                    _functionArguments.set(
+                        i,
+                        new TypePromotionIterator(
+                                _functionArguments.get(i),
+                                _functionItem.getSignature().getParameterTypes().get(i),
+                                "Invalid argument for " + formattedName + "function. ",
+                                getMetadata()
+                        )
+                    );
+                }
+            }
         }
 
         RuntimeIterator argIterator;
