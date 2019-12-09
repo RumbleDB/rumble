@@ -158,10 +158,10 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, R
                     } catch (RuntimeException e) {
                         throw new SparksoniqRuntimeException(
                                 "Invalid sort key: cannot compare item of type "
-                                        + typeName
-                                        + " with item of type "
-                                        + ItemTypes.getItemTypeName(nextItem.getClass().getSimpleName())
-                                        + "."
+                                    + typeName
+                                    + " with item of type "
+                                    + ItemTypes.getItemTypeName(nextItem.getClass().getSimpleName())
+                                    + "."
                         );
                     }
                 }
@@ -178,7 +178,7 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, R
 
     private void readObject(java.io.ObjectInputStream in)
             throws IOException,
-            ClassNotFoundException {
+                ClassNotFoundException {
         in.defaultReadObject();
 
         _kryo = new Kryo();

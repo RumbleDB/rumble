@@ -97,7 +97,7 @@ public class ForClauseUDF implements UDF1<WrappedArray<byte[]>, List<byte[]>> {
 
     private void readObject(java.io.ObjectInputStream in)
             throws IOException,
-            ClassNotFoundException {
+                ClassNotFoundException {
         in.defaultReadObject();
 
         _kryo = new Kryo();

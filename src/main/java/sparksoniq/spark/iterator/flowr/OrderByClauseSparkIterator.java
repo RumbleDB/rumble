@@ -164,10 +164,10 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                             String itemType = ItemTypes.getItemTypeName(resultItem.getClass().getSimpleName());
                             throw new UnexpectedTypeException(
                                     "\""
-                                            + itemType
-                                            + "\": invalid type: can not compare for equality to type \""
-                                            + itemType
-                                            + "\"",
+                                        + itemType
+                                        + "\": invalid type: can not compare for equality to type \""
+                                        + itemType
+                                        + "\"",
                                     getMetadata()
                             );
                         }
@@ -210,24 +210,24 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, _dependencies);
 
         df.sparkSession()
-                .udf()
-                .register(
-                        "determineOrderingDataType",
-                        new OrderClauseDetermineTypeUDF(_expressions, context, UDFcolumns),
-                        DataTypes.createArrayType(DataTypes.StringType)
-                );
+            .udf()
+            .register(
+                "determineOrderingDataType",
+                new OrderClauseDetermineTypeUDF(_expressions, context, UDFcolumns),
+                DataTypes.createArrayType(DataTypes.StringType)
+            );
 
         String udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
 
         df.createOrReplaceTempView("input");
         df.sparkSession().table("input").cache();
         Dataset<Row> columnTypesDf = df.sparkSession()
-                .sql(
-                        String.format(
-                                "select distinct(determineOrderingDataType(array(%s))) as `distinct-types` from input",
-                                udfSQL
-                        )
-                );
+            .sql(
+                String.format(
+                    "select distinct(determineOrderingDataType(array(%s))) as `distinct-types` from input",
+                    udfSQL
+                )
+            );
         Object columnTypesObject = columnTypesDf.collect();
         Row[] columnTypesOfRows = ((Row[]) columnTypesObject);
 
@@ -244,12 +244,12 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                     if (currentColumnType == null) {
                         typesForAllColumns.put(columnIndex, columnType);
                     } else if (
-                            (currentColumnType.equals("integer")
-                                    || currentColumnType.equals("double")
-                                    || currentColumnType.equals("decimal"))
-                                    && (columnType.equals("integer")
-                                    || columnType.equals("double")
-                                    || columnType.equals("decimal"))
+                        (currentColumnType.equals("integer")
+                            || currentColumnType.equals("double")
+                            || currentColumnType.equals("decimal"))
+                            && (columnType.equals("integer")
+                                || columnType.equals("double")
+                                || columnType.equals("decimal"))
                     ) {
                         // the numeric type calculation is identical to Item::getNumericResultType()
                         if (currentColumnType.equals("double") || columnType.equals("double")) {
@@ -260,12 +260,12 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                             // do nothing, type is already set to integer
                         }
                     } else if (
-                            (currentColumnType.equals("dayTimeDuration")
-                                    || currentColumnType.equals("yearMonthDuration")
-                                    || currentColumnType.equals("duration"))
-                                    && (columnType.equals("dayTimeDuration")
-                                    || columnType.equals("yearMonthDuration")
-                                    || columnType.equals("duration"))
+                        (currentColumnType.equals("dayTimeDuration")
+                            || currentColumnType.equals("yearMonthDuration")
+                            || currentColumnType.equals("duration"))
+                            && (columnType.equals("dayTimeDuration")
+                                || columnType.equals("yearMonthDuration")
+                                || columnType.equals("duration"))
                     ) {
                         typesForAllColumns.put(columnIndex, "duration");
                     } else if (!currentColumnType.equals(columnType)) {
@@ -359,28 +359,28 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         df.sparkSession()
-                .udf()
-                .register(
-                        "createOrderingColumns",
-                        new OrderClauseCreateColumnsUDF(_expressions, context, typesForAllColumns, UDFcolumns),
-                        DataTypes.createStructType(typedFields)
-                );
+            .udf()
+            .register(
+                "createOrderingColumns",
+                new OrderClauseCreateColumnsUDF(_expressions, context, typesForAllColumns, UDFcolumns),
+                DataTypes.createStructType(typedFields)
+            );
 
         String selectSQL = DataFrameUtils.getSQL(allColumns, true);
         String projectSQL = selectSQL.substring(0, selectSQL.length() - 1); // remove trailing comma
         udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
 
         return df.sparkSession()
-                .sql(
-                        String.format(
-                                "select %s from (select %s createOrderingColumns(array(%s)) as `%s` from input order by %s)",
-                                projectSQL,
-                                selectSQL,
-                                udfSQL,
-                                appendedOrderingColumnsName,
-                                orderingSQL
-                        )
-                );
+            .sql(
+                String.format(
+                    "select %s from (select %s createOrderingColumns(array(%s)) as `%s` from input order by %s)",
+                    projectSQL,
+                    selectSQL,
+                    udfSQL,
+                    appendedOrderingColumnsName,
+                    orderingSQL
+                )
+            );
     }
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
@@ -411,12 +411,12 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
     ) {
         // start with an empty projection.
         Map<String, DynamicContext.VariableDependency> projection =
-                new TreeMap<>(parentProjection);
+            new TreeMap<>(parentProjection);
 
         // add the variable dependencies needed by this for clause's expression.
         for (OrderByClauseSparkIteratorExpression iterator : _expressions) {
             Map<String, DynamicContext.VariableDependency> exprDependency = iterator.getExpression()
-                    .getVariableDependencies();
+                .getVariableDependencies();
             for (String variable : exprDependency.keySet()) {
                 if (projection.containsKey(variable)) {
                     if (projection.get(variable) != exprDependency.get(variable)) {

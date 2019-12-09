@@ -135,10 +135,10 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray<byte[]>, L
                 String itemType = ItemTypes.getItemTypeName(_nextItem.getClass().getSimpleName());
                 throw new UnexpectedTypeException(
                         "\""
-                                + itemType
-                                + "\": invalid type: can not compare for equality to type \""
-                                + itemType
-                                + "\"",
+                            + itemType
+                            + "\": invalid type: can not compare for equality to type \""
+                            + itemType
+                            + "\"",
                         expression.getIteratorMetadata()
                 );
             } else {
@@ -150,7 +150,7 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray<byte[]>, L
 
     private void readObject(java.io.ObjectInputStream in)
             throws IOException,
-            ClassNotFoundException {
+                ClassNotFoundException {
         in.defaultReadObject();
 
         _kryo = new Kryo();

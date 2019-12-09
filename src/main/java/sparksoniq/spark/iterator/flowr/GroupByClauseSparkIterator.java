@@ -172,8 +172,8 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                     if (!inputTuple.contains(groupVariableReference.getVariableName())) {
                         throw new InvalidGroupVariableException(
                                 "Variable "
-                                        + groupVariableReference.getVariableName()
-                                        + " cannot be used in group clause",
+                                    + groupVariableReference.getVariableName()
+                                    + " cannot be used in group clause",
                                 expression.getIteratorMetadata()
                         );
                     }
@@ -243,23 +243,23 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
 
                 List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
                 List<String> UDFbinarycolumns = DataFrameUtils.getColumnNamesExceptPrecomputedCounts(
-                        inputSchema,
-                        -1,
-                        _dependencies
+                    inputSchema,
+                    -1,
+                    _dependencies
                 );
                 List<String> UDFlongcolumns = DataFrameUtils.getPrecomputedCountColumnNames(
-                        inputSchema,
-                        -1,
-                        _dependencies
+                    inputSchema,
+                    -1,
+                    _dependencies
                 );
 
                 df.sparkSession()
-                        .udf()
-                        .register(
-                                "letClauseUDF",
-                                new LetClauseUDF(newVariableExpression, context, UDFbinarycolumns, UDFlongcolumns),
-                                DataTypes.BinaryType
-                        );
+                    .udf()
+                    .register(
+                        "letClauseUDF",
+                        new LetClauseUDF(newVariableExpression, context, UDFbinarycolumns, UDFlongcolumns),
+                        DataTypes.BinaryType
+                    );
 
                 String selectSQL = DataFrameUtils.getSQL(allColumns, true);
                 String udfBinarySQL = DataFrameUtils.getSQL(UDFbinarycolumns, false);
@@ -267,22 +267,22 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
 
                 df.createOrReplaceTempView("input");
                 df = df.sparkSession()
-                        .sql(
-                                String.format(
-                                        "select %s letClauseUDF(array(%s), array(%s)) as `%s` from input",
-                                        selectSQL,
-                                        udfBinarySQL,
-                                        udfLongSQL,
-                                        newVariableName
-                                )
-                        );
+                    .sql(
+                        String.format(
+                            "select %s letClauseUDF(array(%s), array(%s)) as `%s` from input",
+                            selectSQL,
+                            udfBinarySQL,
+                            udfLongSQL,
+                            newVariableName
+                        )
+                    );
 
             } else {
                 if (!columnNames.contains(expression.getVariableReference().getVariableName())) {
                     throw new InvalidGroupVariableException(
                             "Variable "
-                                    + expression.getVariableReference().getVariableName()
-                                    + " cannot be used in group clause",
+                                + expression.getVariableReference().getVariableName()
+                                + " cannot be used in group clause",
                             expression.getIteratorMetadata()
                     );
                 }
@@ -300,8 +300,8 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         String appendedGroupingColumnsName = "grouping_columns";
         for (int columnIndex = 0; columnIndex < _expressions.size(); columnIndex++) {
             groupingVariables.put(
-                    _expressions.get(columnIndex).getVariableReference().getVariableName(),
-                    DynamicContext.VariableDependency.FULL
+                _expressions.get(columnIndex).getVariableReference().getVariableName(),
+                DynamicContext.VariableDependency.FULL
             );
             // every expression contains an int column for null/empty/true/false/string/double check
             String columnName = columnIndex + "-nullEmptyBooleanCheckField";
@@ -319,32 +319,32 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
 
         String serializerUDFName = "serialize";
         df.sparkSession()
-                .udf()
-                .register(
-                        serializerUDFName,
-                        new GroupClauseSerializeAggregateResultsUDF(),
-                        DataTypes.BinaryType
-                );
+            .udf()
+            .register(
+                serializerUDFName,
+                new GroupClauseSerializeAggregateResultsUDF(),
+                DataTypes.BinaryType
+            );
 
         List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema);
         List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, groupingVariables);
 
         df.sparkSession()
-                .udf()
-                .register(
-                        "createGroupingColumns",
-                        new GroupClauseCreateColumnsUDF(variableAccessExpressions, context, UDFcolumns),
-                        DataTypes.createStructType(typedFields)
-                );
+            .udf()
+            .register(
+                "createGroupingColumns",
+                new GroupClauseCreateColumnsUDF(variableAccessExpressions, context, UDFcolumns),
+                DataTypes.createStructType(typedFields)
+            );
 
         String selectSQL = DataFrameUtils.getSQL(allColumns, true);
         String udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
 
         String createColumnsSQL = String.format(
-                "select %s createGroupingColumns(array(%s)) as `%s` from input",
-                selectSQL,
-                udfSQL,
-                appendedGroupingColumnsName
+            "select %s createGroupingColumns(array(%s)) as `%s` from input",
+            selectSQL,
+            udfSQL,
+            appendedGroupingColumnsName
         );
 
         List<String> groupbyVariableNames = new ArrayList<>();
@@ -352,23 +352,23 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             groupbyVariableNames.add(variableAccessExpression.getVariableName());
         }
         String projectSQL = DataFrameUtils.getGroupbyProjectSQL(
-                inputSchema,
-                -1,
-                false,
-                serializerUDFName,
-                groupbyVariableNames,
-                parentProjection
+            inputSchema,
+            -1,
+            false,
+            serializerUDFName,
+            groupbyVariableNames,
+            parentProjection
         );
 
         return df.sparkSession()
-                .sql(
-                        String.format(
-                                "select %s from (%s) group by `%s`",
-                                projectSQL,
-                                createColumnsSQL,
-                                appendedGroupingColumnsName
-                        )
-                );
+            .sql(
+                String.format(
+                    "select %s from (%s) group by `%s`",
+                    projectSQL,
+                    createColumnsSQL,
+                    appendedGroupingColumnsName
+                )
+            );
     }
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
@@ -428,7 +428,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 continue;
             }
             Map<String, DynamicContext.VariableDependency> exprDependency = iterator.getExpression()
-                    .getVariableDependencies();
+                .getVariableDependencies();
             for (String variable : exprDependency.keySet()) {
                 if (projection.containsKey(variable)) {
                     if (projection.get(variable) != exprDependency.get(variable)) {
