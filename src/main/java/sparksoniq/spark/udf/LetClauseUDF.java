@@ -87,9 +87,10 @@ public class LetClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
 
         DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
 
+        // Long parameters correspond to pre-computed counts, when a materialization of the
+        // actual sequence was avoided upfront.
         Object[] longParams = (Object[]) wrappedParametersLong.array();
         for (Object longParam : longParams) {
-            System.out.println("Found " + ((Long) longParam).intValue());
             Item count = ItemFactory.getInstance().createIntegerItem(((Long) longParam).intValue());
             _longParams.add(count);
         }

@@ -241,17 +241,17 @@ public class DataFrameUtils {
     public static void prepareDynamicContext(
             DynamicContext context,
             List<String> binaryColumnNames,
-            List<String> longColumnNames,
+            List<String> countColumnNames,
             List<List<Item>> deserializedParams,
-            List<Item> longParams
+            List<Item> counts
     ) {
         // prepare dynamic context
         for (int columnIndex = 0; columnIndex < binaryColumnNames.size(); columnIndex++) {
             context.addVariableValue(binaryColumnNames.get(columnIndex), deserializedParams.get(columnIndex));
         }
         // prepare dynamic context
-        for (int columnIndex = 0; columnIndex < longColumnNames.size(); columnIndex++) {
-            context.addVariableCount(longColumnNames.get(columnIndex), longParams.get(columnIndex));
+        for (int columnIndex = 0; columnIndex < countColumnNames.size(); columnIndex++) {
+            context.addVariableCount(countColumnNames.get(columnIndex), counts.get(columnIndex));
         }
     }
 
