@@ -165,7 +165,7 @@ public class DataFrameUtils {
      * @param dependencies restriction of the results to within a specified set
      * @return list of SQL column names in the schema
      */
-    public static List<String> getBinaryColumnNames(
+    public static List<String> getColumnNamesExceptPrecomputedCounts(
             StructType inputSchema,
             int duplicateVariableIndex,
             Map<String, DynamicContext.VariableDependency> dependencies
@@ -194,7 +194,7 @@ public class DataFrameUtils {
      * @param dependencies restriction of the results to within a specified set
      * @return list of SQL column names in the schema
      */
-    public static List<String> getLongColumnNames(
+    public static List<String> getPrecomputedCountColumnNames(
             StructType inputSchema,
             int duplicateVariableIndex,
             Map<String, DynamicContext.VariableDependency> dependencies

@@ -244,8 +244,8 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 int duplicateVariableIndex = columnNames.indexOf(newVariableName);
 
                 List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
-                List<String> UDFbinarycolumns = DataFrameUtils.getBinaryColumnNames(inputSchema, -1, _dependencies);
-                List<String> UDFlongcolumns = DataFrameUtils.getLongColumnNames(inputSchema, -1, _dependencies);
+                List<String> UDFbinarycolumns = DataFrameUtils.getColumnNamesExceptPrecomputedCounts(inputSchema, -1, _dependencies);
+                List<String> UDFlongcolumns = DataFrameUtils.getPrecomputedCountColumnNames(inputSchema, -1, _dependencies);
 
                 df.sparkSession()
                     .udf()
