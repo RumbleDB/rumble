@@ -40,12 +40,11 @@ import java.util.TreeMap;
 
 public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray<byte[]>, List<String>> {
     private static final long serialVersionUID = 1L;
+    private Map<String, DynamicContext.VariableDependency> _dependencies;
+    private List<String> _columnNames;
     private List<OrderByClauseSparkIteratorExpression> _expressions;
-    Map<String, DynamicContext.VariableDependency> _dependencies;
-
-    List<String> _columnNames;
-
     private List<List<Item>> _deserializedParams;
+    private DynamicContext _parentContext;
     private DynamicContext _context;
     private Item _nextItem;
     private List<String> result;
@@ -55,12 +54,14 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray<byte[]>, L
 
     public OrderClauseDetermineTypeUDF(
             List<OrderByClauseSparkIteratorExpression> expressions,
+            DynamicContext context,
             List<String> columnNames
     ) {
         _expressions = expressions;
 
         _deserializedParams = new ArrayList<>();
-        _context = new DynamicContext();
+        _parentContext = context;
+        _context = new DynamicContext(_parentContext);
         result = new ArrayList<>();
 
         _dependencies = new TreeMap<String, DynamicContext.VariableDependency>();
@@ -134,10 +135,10 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray<byte[]>, L
                 String itemType = ItemTypes.getItemTypeName(_nextItem.getClass().getSimpleName());
                 throw new UnexpectedTypeException(
                         "\""
-                            + itemType
-                            + "\": invalid type: can not compare for equality to type \""
-                            + itemType
-                            + "\"",
+                                + itemType
+                                + "\": invalid type: can not compare for equality to type \""
+                                + itemType
+                                + "\"",
                         expression.getIteratorMetadata()
                 );
             } else {
@@ -149,7 +150,7 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray<byte[]>, L
 
     private void readObject(java.io.ObjectInputStream in)
             throws IOException,
-                ClassNotFoundException {
+            ClassNotFoundException {
         in.defaultReadObject();
 
         _kryo = new Kryo();

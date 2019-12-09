@@ -45,6 +45,7 @@ public class LetClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
 
     private List<List<Item>> _deserializedParams;
     private List<Item> _longParams;
+    private DynamicContext _parentContext;
     private DynamicContext _context;
     private List<Item> _nextResult;
 
@@ -54,6 +55,7 @@ public class LetClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
 
     public LetClauseUDF(
             RuntimeIterator expression,
+            DynamicContext context,
             List<String> binaryColumnNames,
             List<String> longColumnNames
     ) {
@@ -61,7 +63,8 @@ public class LetClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
 
         _deserializedParams = new ArrayList<>();
         _longParams = new ArrayList<>();
-        _context = new DynamicContext();
+        _parentContext = context;
+        _context = new DynamicContext(_parentContext);
         _nextResult = new ArrayList<>();
 
         _kryo = new Kryo();

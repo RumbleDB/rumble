@@ -26,6 +26,7 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.api.java.UDF1;
 import org.joda.time.Instant;
+import org.omg.DynamicAny.DynAny;
 import org.rumbledb.api.Item;
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.exceptions.UnexpectedTypeException;
@@ -44,6 +45,7 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, R
     private List<String> _inputColumnNames;
 
     private List<List<Item>> _deserializedParams;
+    private DynamicContext _parentContext;
     private DynamicContext _context;
     private List<Object> _results;
 
@@ -52,13 +54,15 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, R
 
     public GroupClauseCreateColumnsUDF(
             List<VariableReferenceIterator> expressions,
+            DynamicContext context,
             List<String> inputColumnNames
     ) {
         _expressions = expressions;
         _inputColumnNames = inputColumnNames;
 
         _deserializedParams = new ArrayList<>();
-        _context = new DynamicContext();
+        _parentContext = context;
+        _context = new DynamicContext(_parentContext);
         _results = new ArrayList<>();
 
         _kryo = new Kryo();
