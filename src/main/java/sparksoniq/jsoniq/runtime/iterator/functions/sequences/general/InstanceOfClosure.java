@@ -2,7 +2,6 @@ package sparksoniq.jsoniq.runtime.iterator.functions.sequences.general;
 
 import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
-import scala.Tuple2;
 import sparksoniq.semantics.types.ItemType;
 
 public class InstanceOfClosure implements Function<Item, Boolean> {

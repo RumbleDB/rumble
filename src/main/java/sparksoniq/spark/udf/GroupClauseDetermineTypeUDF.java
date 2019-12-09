@@ -20,12 +20,10 @@
 
 package sparksoniq.spark.udf;
 
-import org.apache.spark.sql.api.java.UDF1;
-import org.rumbledb.api.Item;
-
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
-
+import org.apache.spark.sql.api.java.UDF1;
+import org.rumbledb.api.Item;
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnexpectedTypeException;

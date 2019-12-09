@@ -27,7 +27,6 @@ import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.api.java.UDF1;
 import org.joda.time.Instant;
 import org.rumbledb.api.Item;
-
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;

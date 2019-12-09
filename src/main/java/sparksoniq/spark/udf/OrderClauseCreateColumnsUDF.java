@@ -20,15 +20,13 @@
 
 package sparksoniq.spark.udf;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.api.java.UDF1;
 import org.joda.time.Instant;
 import org.rumbledb.api.Item;
-
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;

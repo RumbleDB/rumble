@@ -23,12 +23,7 @@ package sparksoniq.io.json;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
-
-import com.jsoniter.JsonIterator;
-
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
-
-import java.util.Iterator;
 
 public class RowToItemMapper implements Function<Row, Item> {
 

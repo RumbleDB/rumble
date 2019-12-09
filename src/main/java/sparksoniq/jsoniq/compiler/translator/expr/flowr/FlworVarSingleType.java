@@ -3,7 +3,8 @@ package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-import sparksoniq.semantics.types.*;
+import sparksoniq.semantics.types.AtomicTypes;
+import sparksoniq.semantics.types.SingleType;
 
 import java.util.ArrayList;
 import java.util.List;

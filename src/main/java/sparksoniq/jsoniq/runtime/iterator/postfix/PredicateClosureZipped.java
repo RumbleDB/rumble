@@ -22,7 +22,6 @@ package sparksoniq.jsoniq.runtime.iterator.postfix;
 
 import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
-
 import scala.Tuple2;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;

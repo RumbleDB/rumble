@@ -20,6 +20,7 @@
 
 package sparksoniq.jsoniq.runtime.iterator.operational;
 
+import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
@@ -30,8 +31,6 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.math.BigDecimal;
-
-import org.rumbledb.api.Item;
 
 public class UnaryOperationIterator extends UnaryOperationBaseIterator {
 
