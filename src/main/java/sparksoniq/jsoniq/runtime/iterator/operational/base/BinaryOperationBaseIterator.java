@@ -20,17 +20,16 @@
 
 package sparksoniq.jsoniq.runtime.iterator.operational.base;
 
+import org.rumbledb.api.Item;
 import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.semantics.types.ItemTypes;
 
 import java.util.ArrayList;
-
-import org.rumbledb.api.Item;
-import sparksoniq.semantics.types.ItemTypes;
 
 public abstract class BinaryOperationBaseIterator extends LocalRuntimeIterator {
 

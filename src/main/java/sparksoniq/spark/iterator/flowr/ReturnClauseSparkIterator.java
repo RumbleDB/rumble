@@ -34,7 +34,6 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.closures.ReturnFlatMapClosure;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
@@ -67,7 +66,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         RuntimeIterator expression = this._children.get(0);
         Dataset<Row> df = this._child.getDataFrame(context, expression.getVariableDependencies());
         StructType oldSchema = df.schema();
-        return df.javaRDD().flatMap(new ReturnFlatMapClosure(expression, oldSchema));
+        return df.javaRDD().flatMap(new ReturnFlatMapClosure(expression, context, oldSchema));
     }
 
     @Override

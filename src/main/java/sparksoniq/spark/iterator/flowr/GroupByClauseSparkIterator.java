@@ -26,13 +26,11 @@ import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.joda.time.Instant;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.InvalidGroupVariableException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
-import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -244,26 +242,37 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 int duplicateVariableIndex = columnNames.indexOf(newVariableName);
 
                 List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
-                List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, _dependencies);
+                List<String> UDFbinarycolumns = DataFrameUtils.getColumnNamesExceptPrecomputedCounts(
+                    inputSchema,
+                    -1,
+                    _dependencies
+                );
+                List<String> UDFlongcolumns = DataFrameUtils.getPrecomputedCountColumnNames(
+                    inputSchema,
+                    -1,
+                    _dependencies
+                );
 
                 df.sparkSession()
                     .udf()
                     .register(
                         "letClauseUDF",
-                        new LetClauseUDF(newVariableExpression, UDFcolumns),
+                        new LetClauseUDF(newVariableExpression, UDFbinarycolumns, UDFlongcolumns),
                         DataTypes.BinaryType
                     );
 
                 String selectSQL = DataFrameUtils.getSQL(allColumns, true);
-                String udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
+                String udfBinarySQL = DataFrameUtils.getSQL(UDFbinarycolumns, false);
+                String udfLongSQL = DataFrameUtils.getSQL(UDFlongcolumns, false);
 
                 df.createOrReplaceTempView("input");
                 df = df.sparkSession()
                     .sql(
                         String.format(
-                            "select %s letClauseUDF(array(%s)) as `%s` from input",
+                            "select %s letClauseUDF(array(%s), array(%s)) as `%s` from input",
                             selectSQL,
-                            udfSQL,
+                            udfBinarySQL,
+                            udfLongSQL,
                             newVariableName
                         )
                     );

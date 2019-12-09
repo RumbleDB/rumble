@@ -20,8 +20,8 @@
 
 package sparksoniq.jsoniq.runtime.iterator.functions.numerics;
 
+import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
@@ -31,8 +31,6 @@ import sparksoniq.semantics.DynamicContext;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
-
-import org.rumbledb.api.Item;
 
 public class RoundHalfToEvenFunctionIterator extends LocalFunctionCallIterator {
 

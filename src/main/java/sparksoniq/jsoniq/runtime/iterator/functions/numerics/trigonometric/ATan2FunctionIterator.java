@@ -20,6 +20,7 @@
 
 package sparksoniq.jsoniq.runtime.iterator.functions.numerics.trigonometric;
 
+import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.ItemFactory;
@@ -28,8 +29,6 @@ import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterat
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.List;
-
-import org.rumbledb.api.Item;
 
 public class ATan2FunctionIterator extends LocalFunctionCallIterator {
 
