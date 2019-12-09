@@ -96,7 +96,6 @@ import sparksoniq.jsoniq.runtime.iterator.functions.DynamicFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.FunctionRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.StaticUserDefinedFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
-import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionSignature;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 import sparksoniq.jsoniq.runtime.iterator.operational.AdditiveOperationIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.AndOperationIterator;
@@ -110,7 +109,6 @@ import sparksoniq.jsoniq.runtime.iterator.operational.OrOperationIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.RangeOperationIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.StringConcatIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.TreatIterator;
-import sparksoniq.jsoniq.runtime.iterator.operational.TypePromotionIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.UnaryOperationIterator;
 import sparksoniq.jsoniq.runtime.iterator.postfix.ArrayLookupIterator;
 import sparksoniq.jsoniq.runtime.iterator.postfix.ArrayUnboxingIterator;
@@ -142,7 +140,6 @@ import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpr
 import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
