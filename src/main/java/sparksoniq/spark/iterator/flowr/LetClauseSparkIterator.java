@@ -163,7 +163,11 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(_variableName);
 
             List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
-            List<String> UDFbinarycolumns = DataFrameUtils.getColumnNamesExceptPrecomputedCounts(inputSchema, -1, _dependencies);
+            List<String> UDFbinarycolumns = DataFrameUtils.getColumnNamesExceptPrecomputedCounts(
+                inputSchema,
+                -1,
+                _dependencies
+            );
             List<String> UDFlongcolumns = DataFrameUtils.getPrecomputedCountColumnNames(inputSchema, -1, _dependencies);
 
             df.sparkSession()
