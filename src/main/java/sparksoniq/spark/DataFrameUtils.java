@@ -72,19 +72,9 @@ import static org.apache.spark.sql.functions.udf;
 
 public class DataFrameUtils {
 
-    private static ThreadLocal<byte[]> lastBytesCache = new ThreadLocal<byte[]>() {
-        @Override
-        protected byte[] initialValue() {
-            return null;
-        }
-    };
+    private static ThreadLocal<byte[]> lastBytesCache = ThreadLocal.withInitial(() -> null);
 
-    private static ThreadLocal<List<Item>> lastObjectItemCache = new ThreadLocal<List<Item>>() {
-        @Override
-        protected List<Item> initialValue() {
-            return null;
-        }
-    };
+    private static ThreadLocal<List<Item>> lastObjectItemCache = ThreadLocal.withInitial(() -> null);
 
     public static void registerKryoClassesKryo(Kryo kryo) {
         kryo.register(Item.class);
@@ -145,7 +135,7 @@ public class DataFrameUtils {
             int duplicateVariableIndex,
             Map<String, DynamicContext.VariableDependency> dependencies
     ) {
-        List<String> result = new ArrayList<String>();
+        List<String> result = new ArrayList<>();
         String[] columnNames = inputSchema.fieldNames();
         for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
             if (columnIndex == duplicateVariableIndex) {
@@ -170,7 +160,7 @@ public class DataFrameUtils {
             int duplicateVariableIndex,
             Map<String, DynamicContext.VariableDependency> dependencies
     ) {
-        List<String> result = new ArrayList<String>();
+        List<String> result = new ArrayList<>();
         String[] columnNames = inputSchema.fieldNames();
         for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
             if (columnIndex == duplicateVariableIndex) {
@@ -199,7 +189,7 @@ public class DataFrameUtils {
             int duplicateVariableIndex,
             Map<String, DynamicContext.VariableDependency> dependencies
     ) {
-        List<String> result = new ArrayList<String>();
+        List<String> result = new ArrayList<>();
         String[] columnNames = inputSchema.fieldNames();
         for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
             if (columnIndex == duplicateVariableIndex) {
@@ -232,7 +222,6 @@ public class DataFrameUtils {
             List<String> columnNames,
             List<List<Item>> deserializedParams
     ) {
-        // prepare dynamic context
         for (int columnIndex = 0; columnIndex < columnNames.size(); columnIndex++) {
             context.addVariableValue(columnNames.get(columnIndex), deserializedParams.get(columnIndex));
         }
@@ -245,11 +234,9 @@ public class DataFrameUtils {
             List<List<Item>> deserializedParams,
             List<Item> counts
     ) {
-        // prepare dynamic context
         for (int columnIndex = 0; columnIndex < binaryColumnNames.size(); columnIndex++) {
             context.addVariableValue(binaryColumnNames.get(columnIndex), deserializedParams.get(columnIndex));
         }
-        // prepare dynamic context
         for (int columnIndex = 0; columnIndex < countColumnNames.size(); columnIndex++) {
             context.addVariableCount(countColumnNames.get(columnIndex), counts.get(columnIndex));
         }
@@ -349,12 +336,11 @@ public class DataFrameUtils {
         return queryColumnString.toString();
     }
 
-    public static Object deserializeByteArray(byte[] toDeserialize, Kryo kryo, Input input) {
+    private static Object deserializeByteArray(byte[] toDeserialize, Kryo kryo, Input input) {
         byte[] bytes = lastBytesCache.get();
         if (bytes != null) {
             if (Arrays.equals(bytes, toDeserialize)) {
-                List<Item> deserializedParam = lastObjectItemCache.get();
-                return deserializedParam;
+                return lastObjectItemCache.get();
             }
         }
         input.setBuffer(toDeserialize);
@@ -400,7 +386,7 @@ public class DataFrameUtils {
     public static List<Item> deserializeRowField(Row row, int columnIndex, Kryo kryo, Input input) {
         Object o = row.get(columnIndex);
         if (o instanceof Long) {
-            List<Item> result = new ArrayList<Item>(1);
+            List<Item> result = new ArrayList<>(1);
             result.add(ItemFactory.getInstance().createIntegerItem(((Long) o).intValue()));
             return result;
         } else {
@@ -451,12 +437,12 @@ public class DataFrameUtils {
             .collect();
         Row[] partitionOffsetsArray = ((Row[]) partitionOffsetsObject);
         Map<Integer, Long> partitionOffsets = new HashMap<>();
-        for (int i = 0; i < partitionOffsetsArray.length; i++) {
-            partitionOffsets.put(partitionOffsetsArray[i].getInt(0), partitionOffsetsArray[i].getLong(1));
+        for (Row row : partitionOffsetsArray) {
+            partitionOffsets.put(row.getInt(0), row.getLong(1));
         }
 
         UserDefinedFunction getPartitionOffset = udf(
-            (partitionId) -> partitionOffsets.get((Integer) partitionId),
+            (partitionId) -> partitionOffsets.get(partitionId),
             DataTypes.LongType
         );
 
