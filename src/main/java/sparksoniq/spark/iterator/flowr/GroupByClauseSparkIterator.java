@@ -257,7 +257,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                     .udf()
                     .register(
                         "letClauseUDF",
-                        new LetClauseUDF(newVariableExpression, UDFbinarycolumns, UDFlongcolumns),
+                        new LetClauseUDF(newVariableExpression, context, UDFbinarycolumns, UDFlongcolumns),
                         DataTypes.BinaryType
                     );
 
@@ -290,7 +290,6 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             }
         }
 
-        // determine grouping data types after all variable introductions are completed
         inputSchema = df.schema();
         Map<String, DynamicContext.VariableDependency> groupingVariables = new TreeMap<>();
 
@@ -334,7 +333,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             .udf()
             .register(
                 "createGroupingColumns",
-                new GroupClauseCreateColumnsUDF(variableAccessExpressions, UDFcolumns),
+                new GroupClauseCreateColumnsUDF(variableAccessExpressions, context, UDFcolumns),
                 DataTypes.createStructType(typedFields)
             );
 
@@ -413,11 +412,8 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
     public Map<String, DynamicContext.VariableDependency> getProjection(
             Map<String, DynamicContext.VariableDependency> parentProjection
     ) {
-        // start with an empty projection.
-        Map<String, DynamicContext.VariableDependency> projection = new TreeMap<>();
-
         // copy over the projection needed by the parent clause.
-        projection.putAll(parentProjection);
+        Map<String, DynamicContext.VariableDependency> projection = new TreeMap<>(parentProjection);
 
         // remove the variables that this clause binds.
         for (GroupByClauseSparkIteratorExpression iterator : _expressions) {

@@ -36,12 +36,11 @@ import java.util.List;
 
 public class ForClauseUDF implements UDF1<WrappedArray<byte[]>, List<byte[]>> {
     /**
-     * 
+     *
      */
     private static final long serialVersionUID = 1L;
+    private List<String> _columnNames;
     private RuntimeIterator _expression;
-    List<String> _columnNames;
-
     private List<List<Item>> _deserializedParams;
     private DynamicContext _context;
     private List<Item> _nextResult;
@@ -53,13 +52,15 @@ public class ForClauseUDF implements UDF1<WrappedArray<byte[]>, List<byte[]>> {
 
     public ForClauseUDF(
             RuntimeIterator expression,
+            DynamicContext context,
             List<String> columnNames
     ) {
         _expression = expression;
         _columnNames = columnNames;
 
         _deserializedParams = new ArrayList<>();
-        _context = new DynamicContext();
+
+        _context = new DynamicContext(context);
         _nextResult = new ArrayList<>();
         _results = new ArrayList<>();
 

@@ -154,11 +154,12 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                 while (expression.hasNext()) {
                     Item resultItem = expression.next();
                     if (resultItem != null) {
-                        if (!resultItem.isAtomic())
+                        if (!resultItem.isAtomic()) {
                             throw new NonAtomicKeyException(
                                     "Order by keys must be atomics",
                                     orderByExpression.getIteratorMetadata().getExpressionMetadata()
                             );
+                        }
                         if (resultItem.isBinary()) {
                             String itemType = ItemTypes.getItemTypeName(resultItem.getClass().getSimpleName());
                             throw new UnexpectedTypeException(
@@ -212,7 +213,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             .udf()
             .register(
                 "determineOrderingDataType",
-                new OrderClauseDetermineTypeUDF(_expressions, UDFcolumns),
+                new OrderClauseDetermineTypeUDF(_expressions, context, UDFcolumns),
                 DataTypes.createArrayType(DataTypes.StringType)
             );
 
@@ -361,7 +362,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             .udf()
             .register(
                 "createOrderingColumns",
-                new OrderClauseCreateColumnsUDF(_expressions, typesForAllColumns, UDFcolumns),
+                new OrderClauseCreateColumnsUDF(_expressions, context, typesForAllColumns, UDFcolumns),
                 DataTypes.createStructType(typedFields)
             );
 

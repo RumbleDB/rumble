@@ -46,12 +46,13 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, R
 
     private static final long serialVersionUID = 1L;
     private List<OrderByClauseSparkIteratorExpression> _expressions;
-    Map<String, DynamicContext.VariableDependency> _dependencies;
+    private Map<String, DynamicContext.VariableDependency> _dependencies;
 
-    List<String> _columnNames;
+    private List<String> _columnNames;
     private Map<Integer, String> _allColumnTypes;
 
     private List<List<Item>> _deserializedParams;
+    private DynamicContext _parentContext;
     private DynamicContext _context;
     private List<Object> _results;
 
@@ -60,6 +61,7 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, R
 
     public OrderClauseCreateColumnsUDF(
             List<OrderByClauseSparkIteratorExpression> expressions,
+            DynamicContext context,
             Map<Integer, String> allColumnTypes,
             List<String> columnNames
     ) {
@@ -67,7 +69,8 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, R
         _allColumnTypes = allColumnTypes;
 
         _deserializedParams = new ArrayList<>();
-        _context = new DynamicContext();
+        _parentContext = context;
+        _context = new DynamicContext(_parentContext);
         _results = new ArrayList<>();
 
         _dependencies = new TreeMap<String, DynamicContext.VariableDependency>();

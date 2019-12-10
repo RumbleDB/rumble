@@ -44,6 +44,7 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, R
     private List<String> _inputColumnNames;
 
     private List<List<Item>> _deserializedParams;
+    private DynamicContext _parentContext;
     private DynamicContext _context;
     private List<Object> _results;
 
@@ -52,13 +53,15 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, R
 
     public GroupClauseCreateColumnsUDF(
             List<VariableReferenceIterator> expressions,
+            DynamicContext context,
             List<String> inputColumnNames
     ) {
         _expressions = expressions;
         _inputColumnNames = inputColumnNames;
 
         _deserializedParams = new ArrayList<>();
-        _context = new DynamicContext();
+        _parentContext = context;
+        _context = new DynamicContext(_parentContext);
         _results = new ArrayList<>();
 
         _kryo = new Kryo();
