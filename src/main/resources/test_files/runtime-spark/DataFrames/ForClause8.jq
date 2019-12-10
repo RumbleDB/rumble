@@ -1,6 +1,6 @@
-(:JIQS: ShouldRun; Output="({ "left" : "Latvian", "right" : "Latvian" }, { "left" : "Latvian", "right" : "Russian" }, { "left" : "Latvian", "right" : "Czech" }, { "left" : "Latvian", "right" : "Greek" }, { "left" : "Latvian", "right" : "Serbian" }, { "left" : "Russian", "right" : "Latvian" }, { "left" : "Russian", "right" : "Russian" }, { "left" : "Russian", "right" : "Czech" }, { "left" : "Russian", "right" : "Greek" }, { "left" : "Russian", "right" : "Serbian" }, { "left" : "Czech", "right" : "Latvian" }, { "left" : "Czech", "right" : "Russian" }, { "left" : "Czech", "right" : "Czech" }, { "left" : "Czech", "right" : "Greek" }, { "left" : "Czech", "right" : "Serbian" }, { "left" : "Greek", "right" : "Latvian" }, { "left" : "Greek", "right" : "Russian" }, { "left" : "Greek", "right" : "Czech" }, { "left" : "Greek", "right" : "Greek" }, { "left" : "Greek", "right" : "Serbian" }, { "left" : "Serbian", "right" : "Latvian" }, { "left" : "Serbian", "right" : "Russian" }, { "left" : "Serbian", "right" : "Czech" }, { "left" : "Serbian", "right" : "Greek" }, { "left" : "Serbian", "right" : "Serbian" })" :)
-for $i in json-file("./src/main/resources/queries/conf-ex.json")
-for $j in json-file("./src/main/resources/queries/conf-ex.json")
-return { left: $i.guess, right: $j.guess }
+(:JIQS: ShouldRun; Output="({ "left" : 1, "right" : 1 }, { "left" : 1, "right" : 2 }, { "left" : 1, "right" : 3 }, { "left" : 2, "right" : 1 }, { "left" : 2, "right" : 2 }, { "left" : 2, "right" : 3 }, { "left" : 3, "right" : 1 }, { "left" : 3, "right" : 2 }, { "left" : 3, "right" : 3 })" :)
+for $i in parallelize((1,2,3))
+for $j in parallelize((1,2,3))
+return { left: $i, right: $j }
 
 (: Cartesion product with two Spark-enabled for clauses :)

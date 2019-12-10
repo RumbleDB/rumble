@@ -1,8 +1,8 @@
-(:JIQS: ShouldRun; Output="({ "left" : "Latvian", "right" : "Latvian", "$k" : "foo" }, { "left" : "Latvian", "right" : "Russian", "$k" : "foo" }, { "left" : "Latvian", "right" : "Czech", "$k" : "foo" }, { "left" : "Latvian", "right" : "Greek", "$k" : "foo" }, { "left" : "Latvian", "right" : "Serbian", "$k" : "foo" }, { "left" : "Russian", "right" : "Latvian", "$k" : "foo" }, { "left" : "Russian", "right" : "Russian", "$k" : "foo" }, { "left" : "Russian", "right" : "Czech", "$k" : "foo" }, { "left" : "Russian", "right" : "Greek", "$k" : "foo" }, { "left" : "Russian", "right" : "Serbian", "$k" : "foo" }, { "left" : "Czech", "right" : "Latvian", "$k" : "foo" }, { "left" : "Czech", "right" : "Russian", "$k" : "foo" }, { "left" : "Czech", "right" : "Czech", "$k" : "foo" }, { "left" : "Czech", "right" : "Greek", "$k" : "foo" }, { "left" : "Czech", "right" : "Serbian", "$k" : "foo" }, { "left" : "Greek", "right" : "Latvian", "$k" : "foo" }, { "left" : "Greek", "right" : "Russian", "$k" : "foo" }, { "left" : "Greek", "right" : "Czech", "$k" : "foo" }, { "left" : "Greek", "right" : "Greek", "$k" : "foo" }, { "left" : "Greek", "right" : "Serbian", "$k" : "foo" }, { "left" : "Serbian", "right" : "Latvian", "$k" : "foo" }, { "left" : "Serbian", "right" : "Russian", "$k" : "foo" }, { "left" : "Serbian", "right" : "Czech", "$k" : "foo" }, { "left" : "Serbian", "right" : "Greek", "$k" : "foo" }, { "left" : "Serbian", "right" : "Serbian", "$k" : "foo" })" :)
+(:JIQS: ShouldRun; Output="({ "left" : 1, "right" : 1, "$k" : "foo" }, { "left" : 1, "right" : 2, "$k" : "foo" }, { "left" : 1, "right" : 3, "$k" : "foo" }, { "left" : 2, "right" : 1, "$k" : "foo" }, { "left" : 2, "right" : 2, "$k" : "foo" }, { "left" : 2, "right" : 3, "$k" : "foo" }, { "left" : 3, "right" : 1, "$k" : "foo" }, { "left" : 3, "right" : 2, "$k" : "foo" }, { "left" : 3, "right" : 3, "$k" : "foo" })" :)
 let $k := "foo"
 return
-for $i in json-file("./src/main/resources/queries/conf-ex.json")
-for $j in json-file("./src/main/resources/queries/conf-ex.json")
-return { left: $i.guess, right: $j.guess, "$k": $k }
+for $i in parallelize((1,2,3))
+for $j in parallelize((1,2,3))
+return { left: $i, right: $j, "$k": $k }
 
 (: Cartesion product with two Spark-enabled for clauses with an outer flwor clause :)
