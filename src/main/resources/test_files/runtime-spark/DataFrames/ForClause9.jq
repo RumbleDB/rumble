@@ -1,0 +1,8 @@
+(:JIQS: ShouldRun; Output="({ "left" : "Latvian", "right" : "Latvian", "$k" : "foo" }, { "left" : "Latvian", "right" : "Russian", "$k" : "foo" }, { "left" : "Latvian", "right" : "Czech", "$k" : "foo" }, { "left" : "Latvian", "right" : "Greek", "$k" : "foo" }, { "left" : "Latvian", "right" : "Serbian", "$k" : "foo" }, { "left" : "Russian", "right" : "Latvian", "$k" : "foo" }, { "left" : "Russian", "right" : "Russian", "$k" : "foo" }, { "left" : "Russian", "right" : "Czech", "$k" : "foo" }, { "left" : "Russian", "right" : "Greek", "$k" : "foo" }, { "left" : "Russian", "right" : "Serbian", "$k" : "foo" }, { "left" : "Czech", "right" : "Latvian", "$k" : "foo" }, { "left" : "Czech", "right" : "Russian", "$k" : "foo" }, { "left" : "Czech", "right" : "Czech", "$k" : "foo" }, { "left" : "Czech", "right" : "Greek", "$k" : "foo" }, { "left" : "Czech", "right" : "Serbian", "$k" : "foo" }, { "left" : "Greek", "right" : "Latvian", "$k" : "foo" }, { "left" : "Greek", "right" : "Russian", "$k" : "foo" }, { "left" : "Greek", "right" : "Czech", "$k" : "foo" }, { "left" : "Greek", "right" : "Greek", "$k" : "foo" }, { "left" : "Greek", "right" : "Serbian", "$k" : "foo" }, { "left" : "Serbian", "right" : "Latvian", "$k" : "foo" }, { "left" : "Serbian", "right" : "Russian", "$k" : "foo" }, { "left" : "Serbian", "right" : "Czech", "$k" : "foo" }, { "left" : "Serbian", "right" : "Greek", "$k" : "foo" }, { "left" : "Serbian", "right" : "Serbian", "$k" : "foo" })" :)
+let $k := "foo"
+return
+for $i in json-file("./src/main/resources/queries/conf-ex.json")
+for $j in json-file("./src/main/resources/queries/conf-ex.json")
+return { left: $i.guess, right: $j.guess, "$k": $k }
+
+(: Cartesion product with two Spark-enabled for clauses with an outer flwor clause :)
