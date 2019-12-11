@@ -203,9 +203,9 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 StructType inputSchema = inputDF.schema();
                 int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(_variableName);
                 List<String> columnsToSelect = DataFrameUtils.getColumnNames(
-                        inputSchema,
-                        duplicateVariableIndex,
-                        null
+                    inputSchema,
+                    duplicateVariableIndex,
+                    null
                 );
 
                 if (duplicateVariableIndex == -1) {
@@ -219,14 +219,14 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 expressionDF.createOrReplaceTempView(expressionDFTableName);
 
                 return inputDF.sparkSession()
-                        .sql(
-                                String.format(
-                                        "select %s from %s, %s",
-                                        selectSQL,
-                                        inputDFTableName,
-                                        expressionDFTableName
-                                )
-                        );
+                    .sql(
+                        String.format(
+                            "select %s from %s, %s",
+                            selectSQL,
+                            inputDFTableName,
+                            expressionDFTableName
+                        )
+                    );
             }
 
             Dataset<Row> df = this._child.getDataFrame(context, getProjection(parentProjection));
@@ -235,25 +235,25 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
             List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, _dependencies);
             df.sparkSession()
-                    .udf()
-                    .register(
-                            "forClauseUDF",
-                            new ForClauseUDF(_expression, context, UDFcolumns),
-                            DataTypes.createArrayType(DataTypes.BinaryType)
-                    );
+                .udf()
+                .register(
+                    "forClauseUDF",
+                    new ForClauseUDF(_expression, context, UDFcolumns),
+                    DataTypes.createArrayType(DataTypes.BinaryType)
+                );
 
             String selectSQL = DataFrameUtils.getSQL(allColumns, true);
             String udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
             df.createOrReplaceTempView("input");
             df = df.sparkSession()
-                    .sql(
-                            String.format(
-                                    "select %s explode(forClauseUDF(array(%s))) as `%s` from input",
-                                    selectSQL,
-                                    udfSQL,
-                                    _variableName
-                            )
-                    );
+                .sql(
+                    String.format(
+                        "select %s explode(forClauseUDF(array(%s))) as `%s` from input",
+                        selectSQL,
+                        udfSQL,
+                        _variableName
+                    )
+                );
             return df;
         }
 
@@ -326,7 +326,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<String, DynamicContext.VariableDependency> result =
-                new TreeMap<>(_expression.getVariableDependencies());
+            new TreeMap<>(_expression.getVariableDependencies());
         if (_child != null) {
             for (String var : _child.getVariablesBoundInCurrentFLWORExpression()) {
                 result.remove(var);
@@ -365,7 +365,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
         // copy over the projection needed by the parent clause.
         Map<String, DynamicContext.VariableDependency> projection =
-                new TreeMap<>(parentProjection);
+            new TreeMap<>(parentProjection);
 
         // remove the variable that this for clause binds.
         projection.remove(_variableName);
