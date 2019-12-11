@@ -169,35 +169,16 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     ) {
         // if it's a starting clause
         if (this._child == null) {
-            // create initial RDD from expression
-            JavaRDD<Item> initialRdd = _expression.getRDD(context);
-
-            // define a schema
-            List<StructField> fields = new ArrayList<>();
-            StructField field = DataTypes.createStructField(_variableName, DataTypes.BinaryType, true);
-            fields.add(field);
-            StructType schema = DataTypes.createStructType(fields);
-
-            JavaRDD<Row> rowRDD = initialRdd.map(new ForClauseSerializeClosure());
-
-            // apply the schema to row RDD
-            return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
+            return getDataFrameFromRDDExpression(context);
         }
 
         if (_child.isDataFrame()) {
-            // getRDD on expresion with current context
-            JavaRDD<Item> expressionRDD = _expression.getRDD(context);
-
-            // convert to DF
-            List<StructField> fields = new ArrayList<>();
-            StructField field = DataTypes.createStructField(_variableName, DataTypes.BinaryType, true);
-            fields.add(field);
-            StructType schema = DataTypes.createStructType(fields);
-
-            JavaRDD<Row> rowRDD = expressionRDD.map(new ForClauseSerializeClosure());
-            Dataset<Row> expressionDF = SparkSessionManager.getInstance()
-                .getOrCreateSession()
-                .createDataFrame(rowRDD, schema);
+            Dataset<Row> expressionDF;
+            if (_expression.isRDD()) {
+                expressionDF = getDataFrameFromRDDExpression(context);
+            } else {
+                expressionDF = getDataFrameFromLocalExpression(context);
+            }
 
             // get childDF and cartesian product these DFs together
             String inputDFTableName = "input";
@@ -263,6 +244,37 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         }
         _child.close();
         return df;
+    }
+
+    private Dataset<Row> getDataFrameFromRDDExpression(DynamicContext context) {
+        // create initial RDD from expression
+        JavaRDD<Item> expressionRDD = _expression.getRDD(context);
+        return getDataFrameFromItemRDD(expressionRDD);
+    }
+
+    private Dataset<Row> getDataFrameFromLocalExpression(DynamicContext context) {
+        List<Item> items = new ArrayList<>();
+        _expression.open(context);
+        while (_expression.hasNext()) {
+            items.add(_expression.next());
+        }
+        _expression.close();
+
+        JavaRDD<Item> expressionRDD = SparkSessionManager.getInstance().getJavaSparkContext().parallelize(items);
+        return getDataFrameFromItemRDD(expressionRDD);
+    }
+
+    private Dataset<Row> getDataFrameFromItemRDD(JavaRDD<Item> expressionRDD) {
+        // define a schema
+        List<StructField> fields = new ArrayList<>();
+        StructField field = DataTypes.createStructField(_variableName, DataTypes.BinaryType, true);
+        fields.add(field);
+        StructType schema = DataTypes.createStructType(fields);
+
+        JavaRDD<Row> rowRDD = expressionRDD.map(new ForClauseSerializeClosure());
+
+        // apply the schema to row RDD
+        return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
     }
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
