@@ -5,4 +5,4 @@ for $i in parallelize((1,2,3))
 for $j in parallelize((1,2,3))
 return { left: $i, right: $j, "$k": $k }
 
-(: Cartesion product with two Spark-enabled for clauses with an outer flwor clause :)
+(: Cartesian product with two Spark-enabled for clauses with an outer flwor clause :)
