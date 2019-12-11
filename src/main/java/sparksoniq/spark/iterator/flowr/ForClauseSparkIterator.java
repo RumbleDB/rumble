@@ -192,7 +192,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             if (duplicateVariableIndex == -1) {
                 columnsToSelect.add(_variableName);
             } else {
-                columnsToSelect.add(expressionDFTableName + "." + _variableName);
+                columnsToSelect.add(expressionDFTableName + "`.`" + _variableName);
             }
             String selectSQL = DataFrameUtils.getSQL(columnsToSelect, false);
 
