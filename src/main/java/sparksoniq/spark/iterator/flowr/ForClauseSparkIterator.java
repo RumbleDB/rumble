@@ -28,6 +28,7 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -38,6 +39,7 @@ import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.SparkSessionManager;
 import sparksoniq.spark.closures.ForClauseLocalToRowClosure;
 import sparksoniq.spark.closures.ForClauseSerializeClosure;
+import sparksoniq.spark.udf.ForClauseUDF;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -173,41 +175,87 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         if (_child.isDataFrame()) {
-            Dataset<Row> expressionDF;
             if (_expression.isRDD()) {
-                expressionDF = getDataFrameFromRDDExpression(context);
-            } else {
-                expressionDF = getDataFrameFromLocalExpression(context);
+                Set<String> intersection = new HashSet<>(_expression.getVariableDependencies().keySet());
+                intersection.retainAll(getVariablesBoundInCurrentFLWORExpression());
+                boolean expressionUsesVariablesOfCurrentFlwor = !intersection.isEmpty();
+
+                if (expressionUsesVariablesOfCurrentFlwor) {
+                    throw new SparksoniqRuntimeException(
+                            "Suitable error message",
+                            getMetadata().getExpressionMetadata()
+                    );
+                }
+
+                // since no variable dependency to the current FLWOR expression exists for the expression
+                // evaluate the DF with the parent context and calculate the cartesian product
+                Dataset<Row> expressionDF;
+                if (_expression.isRDD()) {
+                    expressionDF = getDataFrameFromRDDExpression(context);
+                } else {
+                    expressionDF = getDataFrameFromLocalExpression(context);
+                }
+
+                String inputDFTableName = "input";
+                String expressionDFTableName = "expression";
+
+                Dataset<Row> inputDF = this._child.getDataFrame(context, getProjection(parentProjection));
+                StructType inputSchema = inputDF.schema();
+                int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(_variableName);
+                List<String> columnsToSelect = DataFrameUtils.getColumnNames(
+                    inputSchema,
+                    duplicateVariableIndex,
+                    null
+                );
+
+                if (duplicateVariableIndex == -1) {
+                    columnsToSelect.add(_variableName);
+                } else {
+                    columnsToSelect.add(expressionDFTableName + "`.`" + _variableName);
+                }
+                String selectSQL = DataFrameUtils.getSQL(columnsToSelect, false);
+
+                inputDF.createOrReplaceTempView(inputDFTableName);
+                expressionDF.createOrReplaceTempView(expressionDFTableName);
+
+                return inputDF.sparkSession()
+                    .sql(
+                        String.format(
+                            "select %s from %s, %s",
+                            selectSQL,
+                            inputDFTableName,
+                            expressionDFTableName
+                        )
+                    );
             }
 
-            // get childDF and cartesian product these DFs together
-            String inputDFTableName = "input";
-            String expressionDFTableName = "expression";
-
-            Dataset<Row> inputDF = this._child.getDataFrame(context, getProjection(parentProjection));
-            StructType inputSchema = inputDF.schema();
+            Dataset<Row> df = this._child.getDataFrame(context, getProjection(parentProjection));
+            StructType inputSchema = df.schema();
             int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(_variableName);
-            List<String> columnsToSelect = DataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
+            List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
+            List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, _dependencies);
+            df.sparkSession()
+                .udf()
+                .register(
+                    "forClauseUDF",
+                    new ForClauseUDF(_expression, context, UDFcolumns),
+                    DataTypes.createArrayType(DataTypes.BinaryType)
+                );
 
-            if (duplicateVariableIndex == -1) {
-                columnsToSelect.add(_variableName);
-            } else {
-                columnsToSelect.add(expressionDFTableName + "`.`" + _variableName);
-            }
-            String selectSQL = DataFrameUtils.getSQL(columnsToSelect, false);
-
-            inputDF.createOrReplaceTempView(inputDFTableName);
-            expressionDF.createOrReplaceTempView(expressionDFTableName);
-
-            return inputDF.sparkSession()
+            String selectSQL = DataFrameUtils.getSQL(allColumns, true);
+            String udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
+            df.createOrReplaceTempView("input");
+            df = df.sparkSession()
                 .sql(
                     String.format(
-                        "select %s from %s, %s",
+                        "select %s explode(forClauseUDF(array(%s))) as `%s` from input",
                         selectSQL,
-                        inputDFTableName,
-                        expressionDFTableName
+                        udfSQL,
+                        _variableName
                     )
                 );
+            return df;
+
         }
 
         // if child is locally evaluated
