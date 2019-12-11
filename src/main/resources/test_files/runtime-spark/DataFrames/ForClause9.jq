@@ -3,6 +3,7 @@ let $k := "foo"
 return
 for $i in parallelize((1,2,3))
 for $j in parallelize((1,2,3))
+order by $i, $j
 return { left: $i, right: $j, "$k": $k }
 
 (: Cartesian product with two Spark-enabled for clauses with an outer flwor clause :)
