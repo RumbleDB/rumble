@@ -38,7 +38,6 @@ import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.SparkSessionManager;
 import sparksoniq.spark.closures.ForClauseLocalToRowClosure;
 import sparksoniq.spark.closures.ForClauseSerializeClosure;
-import sparksoniq.spark.udf.ForClauseUDF;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -186,37 +185,48 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         if (_child.isDataFrame()) {
-            Dataset<Row> df = this._child.getDataFrame(context, getProjection(parentProjection));
+            // getRDD on expresion with current context
+            JavaRDD<Item> expressionRDD = _expression.getRDD(context);
 
-            StructType inputSchema = df.schema();
+            // convert to DF
+            List<StructField> fields = new ArrayList<>();
+            StructField field = DataTypes.createStructField(_variableName, DataTypes.BinaryType, true);
+            fields.add(field);
+            StructType schema = DataTypes.createStructType(fields);
 
+            JavaRDD<Row> rowRDD = expressionRDD.map(new ForClauseSerializeClosure());
+            Dataset<Row> expressionDF = SparkSessionManager.getInstance()
+                .getOrCreateSession()
+                .createDataFrame(rowRDD, schema);
+
+            // get childDF and cartesian product these DFs together
+            String inputDFTableName = "input";
+            String expressionDFTableName = "expression";
+
+            Dataset<Row> inputDF = this._child.getDataFrame(context, getProjection(parentProjection));
+            StructType inputSchema = inputDF.schema();
             int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(_variableName);
+            List<String> columnsToSelect = DataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
 
-            List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
-            List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, _dependencies);
+            if (duplicateVariableIndex == -1) {
+                columnsToSelect.add(_variableName);
+            } else {
+                columnsToSelect.add(expressionDFTableName + "." + _variableName);
+            }
+            String selectSQL = DataFrameUtils.getSQL(columnsToSelect, false);
 
-            df.sparkSession()
-                .udf()
-                .register(
-                    "forClauseUDF",
-                    new ForClauseUDF(_expression, context, UDFcolumns),
-                    DataTypes.createArrayType(DataTypes.BinaryType)
-                );
+            inputDF.createOrReplaceTempView(inputDFTableName);
+            expressionDF.createOrReplaceTempView(expressionDFTableName);
 
-            String selectSQL = DataFrameUtils.getSQL(allColumns, true);
-            String udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
-
-            df.createOrReplaceTempView("input");
-            df = df.sparkSession()
+            return inputDF.sparkSession()
                 .sql(
                     String.format(
-                        "select %s explode(forClauseUDF(array(%s))) as `%s` from input",
+                        "select %s from %s, %s",
                         selectSQL,
-                        udfSQL,
-                        _variableName
+                        inputDFTableName,
+                        expressionDFTableName
                     )
                 );
-            return df;
         }
 
         // if child is locally evaluated

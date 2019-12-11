@@ -81,7 +81,9 @@ public class SparkSessionManager {
     }
 
     private void setDefaultConfiguration() {
-        configuration = new SparkConf().setAppName(APP_NAME);
+        configuration = new SparkConf()
+            .setAppName(APP_NAME)
+            .set("spark.sql.crossJoin.enabled", "true"); // enables cartesian product
     }
 
     private void initialize() {
