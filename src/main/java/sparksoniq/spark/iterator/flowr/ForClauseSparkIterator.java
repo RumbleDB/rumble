@@ -225,6 +225,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     );
             }
 
+            // the expression is locally evaluated
             Dataset<Row> df = this._child.getDataFrame(context, getProjection(parentProjection));
             StructType inputSchema = df.schema();
             int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(_variableName);
