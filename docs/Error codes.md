@@ -28,8 +28,6 @@ Raised when an expression produces a different,
 big sequence of items for each binding within a big tuple,
 which would lead to a data flow explosion and to a nesting of jobs on the Spark cluster.
 
-which depends on the is used within an RDD enabled FLWOR expression
-
 - [XPDY0002] - It is a dynamic error if evaluation of an expression relies on some part of the dynamic context that is absent.
 
 - [XPDY0050] - Dynamic type treat error. It is a dynamic error
