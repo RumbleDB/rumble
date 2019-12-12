@@ -24,9 +24,9 @@ for an object or array selector.
 Raised when a JSONiq feature that is not yet implemented in Rumble is used.
 
 - [RBST0003] - Invalid for clause expression error.
-Raised when an RDD enabled expression is located within the body of 
-a Spark enabled FLWOR expression, and the said expression
-references variables defined by the encapsulating FLWOR expression.
+Raised when an expression produces a different,
+big sequence of items for each binding within a big tuple,
+which would lead to a data flow explosion and to a nesting of jobs on the Spark cluster.
 
 which depends on the is used within an RDD enabled FLWOR expression
 

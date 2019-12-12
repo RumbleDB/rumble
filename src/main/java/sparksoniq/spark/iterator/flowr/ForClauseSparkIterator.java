@@ -27,7 +27,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
-import sparksoniq.exceptions.InvalidForClauseExpressionException;
+import sparksoniq.exceptions.JobWithinAJobException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
@@ -181,8 +181,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 boolean expressionUsesVariablesOfCurrentFlwor = !intersection.isEmpty();
 
                 if (expressionUsesVariablesOfCurrentFlwor) {
-                    throw new InvalidForClauseExpressionException(
-                            "An RDD-enabled for clause expression cannot reference the variables defined in the encapsulating, RDD-enabled FLWOR expression.",
+                    throw new JobWithinAJobException(
+                            "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
                             getMetadata().getExpressionMetadata()
                     );
                 }

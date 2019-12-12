@@ -23,11 +23,11 @@ package sparksoniq.exceptions;
 import sparksoniq.exceptions.codes.ErrorCodes;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 
-public class InvalidForClauseExpressionException extends SparksoniqRuntimeException {
+public class JobWithinAJobException extends SparksoniqRuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    public InvalidForClauseExpressionException(String message, ExpressionMetadata metadata) {
-        super(message, ErrorCodes.InvalidForClauseExpressionErrorCode, metadata);
+    public JobWithinAJobException(String message, ExpressionMetadata metadata) {
+        super(message, ErrorCodes.JobWithinAJobErrorCode, metadata);
     }
 }
