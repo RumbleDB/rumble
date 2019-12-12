@@ -1,0 +1,5 @@
+(:JIQS: ShouldCrash; ErrorCode="RBS0003"; ErrorMetadata="LINE:2:COLUMN:0:" :)
+for $i in parallelize(1)
+for $k in parallelize(1 to $i) return 1
+return $i
+
