@@ -190,11 +190,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 // since no variable dependency to the current FLWOR expression exists for the expression
                 // evaluate the DF with the parent context and calculate the cartesian product
                 Dataset<Row> expressionDF;
-                if (_expression.isRDD()) {
-                    expressionDF = getDataFrameFromRDDExpression(context);
-                } else {
-                    expressionDF = getDataFrameFromLocalExpression(context);
-                }
+                expressionDF = getDataFrameFromRDDExpression(context);
 
                 String inputDFTableName = "input";
                 String expressionDFTableName = "expression";
@@ -296,18 +292,6 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     private Dataset<Row> getDataFrameFromRDDExpression(DynamicContext context) {
         // create initial RDD from expression
         JavaRDD<Item> expressionRDD = _expression.getRDD(context);
-        return getDataFrameFromItemRDD(expressionRDD);
-    }
-
-    private Dataset<Row> getDataFrameFromLocalExpression(DynamicContext context) {
-        List<Item> items = new ArrayList<>();
-        _expression.open(context);
-        while (_expression.hasNext()) {
-            items.add(_expression.next());
-        }
-        _expression.close();
-
-        JavaRDD<Item> expressionRDD = SparkSessionManager.getInstance().getJavaSparkContext().parallelize(items);
         return getDataFrameFromItemRDD(expressionRDD);
     }
 
