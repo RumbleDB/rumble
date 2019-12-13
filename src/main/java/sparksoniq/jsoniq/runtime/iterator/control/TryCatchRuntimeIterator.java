@@ -70,7 +70,7 @@ public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
     @Override
     public Item next() {
         if (this._hasNext) {
-        	Item nextItem = _nextResult;
+            Item nextItem = _nextResult;
             setNextResult();
             return nextItem;
         }
@@ -94,49 +94,42 @@ public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
     }
 
     private void setNextResult() {
-		if(_results == null)
-		{
-			_nextPosition = 0;
-	        _results = new ArrayList<>();
-	    	try {
-		    	_tryExpression.open(_currentDynamicContext);
-		    	while(_tryExpression.hasNext())
-		    	{
-		    		_results.add(_tryExpression.next());
-		    	}
-		    	_tryExpression.close();
-		    	
-	    	} catch (Throwable throwable) {
-	    		SparksoniqRuntimeException exception = SparksoniqRuntimeException.unnestException(throwable);
-	    		String code = exception.getErrorCode();
-	    		_results.clear();
-    	    	if(_catchExpressions.containsKey(code))
-	    		{
-	    			RuntimeIterator catchingExpression = _catchExpressions.get(code);
-	    			catchingExpression.open(_currentDynamicContext);
-	    	        while(catchingExpression.hasNext())
-	    	    	{
-	    	    		_results.add(catchingExpression.next());
-	    	    	}
-	    	    	catchingExpression.close();
-	    		} else if(_catchAllExpression != null)
-	    		{
-	    			_catchAllExpression.open(_currentDynamicContext);
-	    	        while(_catchAllExpression.hasNext())
-	    	    	{
-	    	    		_results.add(_catchAllExpression.next());
-	    	    	}
-	    	        _catchAllExpression.close();
-	    		} else {
-	    			throw throwable;
-	    		}
-	    	}
-		}
-		if(_nextPosition < _results.size())
-		{
-			_nextResult = _results.get(_nextPosition++);
-		} else {
-			_hasNext = false;
-		}
+        if (_results == null) {
+            _nextPosition = 0;
+            _results = new ArrayList<>();
+            try {
+                _tryExpression.open(_currentDynamicContext);
+                while (_tryExpression.hasNext()) {
+                    _results.add(_tryExpression.next());
+                }
+                _tryExpression.close();
+
+            } catch (Throwable throwable) {
+                SparksoniqRuntimeException exception = SparksoniqRuntimeException.unnestException(throwable);
+                String code = exception.getErrorCode();
+                _results.clear();
+                if (_catchExpressions.containsKey(code)) {
+                    RuntimeIterator catchingExpression = _catchExpressions.get(code);
+                    catchingExpression.open(_currentDynamicContext);
+                    while (catchingExpression.hasNext()) {
+                        _results.add(catchingExpression.next());
+                    }
+                    catchingExpression.close();
+                } else if (_catchAllExpression != null) {
+                    _catchAllExpression.open(_currentDynamicContext);
+                    while (_catchAllExpression.hasNext()) {
+                        _results.add(_catchAllExpression.next());
+                    }
+                    _catchAllExpression.close();
+                } else {
+                    throw throwable;
+                }
+            }
+        }
+        if (_nextPosition < _results.size()) {
+            _nextResult = _results.get(_nextPosition++);
+        } else {
+            _hasNext = false;
+        }
     }
 }
