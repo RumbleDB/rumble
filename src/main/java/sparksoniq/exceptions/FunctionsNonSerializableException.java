@@ -21,7 +21,6 @@
 package sparksoniq.exceptions;
 
 import sparksoniq.exceptions.codes.ErrorCodes;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class FunctionsNonSerializableException extends SparksoniqRuntimeException {
 

@@ -22,7 +22,6 @@ package sparksoniq.jsoniq.runtime.iterator.primary;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.rumbledb.api.Item;
-
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;

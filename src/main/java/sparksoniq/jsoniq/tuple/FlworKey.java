@@ -24,13 +24,12 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import org.rumbledb.api.Item;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
+import sparksoniq.semantics.types.ItemTypes;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.rumbledb.api.Item;
-import sparksoniq.semantics.types.ItemTypes;
 
 public class FlworKey implements KryoSerializable {
 

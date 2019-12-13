@@ -20,6 +20,7 @@
 
 package sparksoniq.jsoniq.runtime.iterator.primary;
 
+import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.ItemFactory;
@@ -31,8 +32,6 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.rumbledb.api.Item;
 
 public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
 

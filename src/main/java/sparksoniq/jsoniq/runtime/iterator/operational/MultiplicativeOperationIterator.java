@@ -20,22 +20,14 @@
 
 package sparksoniq.jsoniq.runtime.iterator.operational;
 
+import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
-import sparksoniq.jsoniq.item.DecimalItem;
-import sparksoniq.jsoniq.item.DoubleItem;
-import sparksoniq.jsoniq.item.IntegerItem;
-import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
-
-import java.lang.reflect.Type;
-import java.math.BigDecimal;
-
-import org.rumbledb.api.Item;
 import sparksoniq.semantics.types.ItemTypes;
 
 public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator {

@@ -23,8 +23,6 @@ package sparksoniq.utils;
 import org.apache.hadoop.fs.Path;
 import org.rumbledb.cli.JsoniqQueryExecutor;
 
-import static org.rumbledb.cli.JsoniqQueryExecutor.TEMP_QUERY_FILE_NAME;
-
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
@@ -33,6 +31,8 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+
+import static org.rumbledb.cli.JsoniqQueryExecutor.TEMP_QUERY_FILE_NAME;
 
 public class FileUtils {
 

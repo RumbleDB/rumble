@@ -20,14 +20,11 @@
 
 package sparksoniq.spark.udf;
 
-import org.apache.spark.sql.api.java.UDF1;
-import org.apache.spark.sql.api.java.UDF2;
-import org.rumbledb.api.Item;
-
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-
+import org.apache.spark.sql.api.java.UDF2;
+import org.rumbledb.api.Item;
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -48,6 +45,7 @@ public class LetClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
 
     private List<List<Item>> _deserializedParams;
     private List<Item> _longParams;
+    private DynamicContext _parentContext;
     private DynamicContext _context;
     private List<Item> _nextResult;
 
@@ -57,6 +55,7 @@ public class LetClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
 
     public LetClauseUDF(
             RuntimeIterator expression,
+            DynamicContext context,
             List<String> binaryColumnNames,
             List<String> longColumnNames
     ) {
@@ -64,7 +63,8 @@ public class LetClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
 
         _deserializedParams = new ArrayList<>();
         _longParams = new ArrayList<>();
-        _context = new DynamicContext();
+        _parentContext = context;
+        _context = new DynamicContext(_parentContext);
         _nextResult = new ArrayList<>();
 
         _kryo = new Kryo();

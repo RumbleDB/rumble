@@ -1,5 +1,5 @@
 (:JIQS: ShouldRun; Output="true" :)
-declare function udf1 ($i) as integer {
+declare function udf1 ($i) as boolean {
     1 < $i
 };
 udf1(3)

@@ -1,21 +1,16 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.durations;
 
-import org.joda.time.Instant;
 import org.joda.time.Period;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.CastException;
 import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.exceptions.UnexpectedTypeException;
-import sparksoniq.exceptions.UnknownFunctionCallException;
 import sparksoniq.jsoniq.item.DurationItem;
 import sparksoniq.jsoniq.item.ItemFactory;
-import sparksoniq.jsoniq.item.StringItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.AtomicTypes;
-
 
 import java.util.List;
 

@@ -26,11 +26,11 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.rumbledb.api.Item;
-import org.rumbledb.api.SequenceOfItems;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.api.RumbleConf;
-
+import org.rumbledb.api.SequenceOfItems;
 import sparksoniq.spark.SparkSessionManager;
+
 import java.util.List;
 
 public class JavaAPITest {

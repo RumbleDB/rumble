@@ -20,19 +20,16 @@
 
 package sparksoniq.jsoniq.runtime.iterator.functions.context;
 
+import org.rumbledb.api.Item;
 import sparksoniq.exceptions.AbsentPartOfDynamicContextException;
-import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-
-import org.rumbledb.api.Item;
 
 public class PositionFunctionIterator extends LocalFunctionCallIterator {
 

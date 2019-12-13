@@ -20,13 +20,12 @@
 
 package sparksoniq.jsoniq.item;
 
+import org.rumbledb.api.Item;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Comparator;
-
-import org.rumbledb.api.Item;
 
 public class ItemComparatorForSequences implements Comparator<Item>, Serializable {
 

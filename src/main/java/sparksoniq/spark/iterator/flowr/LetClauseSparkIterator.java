@@ -174,7 +174,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 .udf()
                 .register(
                     "letClauseUDF",
-                    new LetClauseUDF(_expression, UDFbinarycolumns, UDFlongcolumns),
+                    new LetClauseUDF(_expression, context, UDFbinarycolumns, UDFlongcolumns),
                     DataTypes.BinaryType
                 );
 
