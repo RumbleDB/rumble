@@ -249,6 +249,8 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
             this.visitSwitchExpr((JsoniqParser.SwitchExprContext) content);
         else if (content instanceof JsoniqParser.TypeSwitchExprContext)
             this.visitTypeSwitchExpr((JsoniqParser.TypeSwitchExprContext) content);
+        else if (content instanceof JsoniqParser.TryCatchExprContext)
+            this.visitTryCatchExpr((JsoniqParser.TryCatchExprContext) content);
         node = this.currentExpression;
         this.currentExpression = node;
         return null;
@@ -1318,6 +1320,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
 
     @Override
     public Void visitTryCatchExpr(JsoniqParser.TryCatchExprContext ctx) {
+        System.out.println("Visiting node !");
         TryCatchExpression node;
         Expression tryExpression;
         Expression catchAllExpression = null;

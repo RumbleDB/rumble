@@ -81,6 +81,7 @@ public class TryCatchExpression extends Expression {
 
     @Override
     public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
+        System.out.println("Accept!");
         return visitor.visitTryCatchExpression(this, argument);
     }
 

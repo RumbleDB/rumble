@@ -150,6 +150,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
 
     @Override
     public RuntimeIterator visit(ExpressionOrClause expression, RuntimeIterator argument) {
+        System.out.println("Visiting" + expression.getClass().getName());
         return expression.accept(this, argument);
     }
 
@@ -165,7 +166,9 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
     @Override
     public RuntimeIterator visitCommaExpression(CommaExpression expression, RuntimeIterator argument) {
         List<RuntimeIterator> result = new ArrayList<>();
+        System.out.println("Children: " + expression.getExpressions().size());
         for (Expression childExpr : expression.getExpressions()) {
+            System.out.println("Child expression " + childExpr.getClass().getName());
             result.add(this.visit(childExpr, argument));
         }
         if (result.size() == 1) {
@@ -901,6 +904,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
 
     @Override
     public RuntimeIterator visitTryCatchExpression(TryCatchExpression expression, RuntimeIterator argument) {
+        System.out.println("Visiting!");
         Map<String, RuntimeIterator> cases = new LinkedHashMap<>();
         for (String code : expression.getErrorsCaught()) {
             cases.put(
@@ -908,12 +912,21 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 this.visit(expression.getExpressionCatching(code), argument)
             );
         }
-        return new TryCatchRuntimeIterator(
-                this.visit(expression.getTryExpression(), argument),
-                cases,
-                this.visit(expression.getExpressionCatchingAll(), argument),
-                createIteratorMetadata(expression)
-        );
+        if (expression.getExpressionCatchingAll() == null) {
+            return new TryCatchRuntimeIterator(
+                    this.visit(expression.getTryExpression(), argument),
+                    cases,
+                    null,
+                    createIteratorMetadata(expression)
+            );
+        } else {
+            return new TryCatchRuntimeIterator(
+                    this.visit(expression.getTryExpression(), argument),
+                    cases,
+                    this.visit(expression.getExpressionCatchingAll(), argument),
+                    createIteratorMetadata(expression)
+            );
+        }
     }
     // endregion
 
