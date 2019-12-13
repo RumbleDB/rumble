@@ -27,6 +27,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.JobWithinAJobException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -157,6 +158,13 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
     ) {
         if (this._child != null) {
             Dataset<Row> df = _child.getDataFrame(context, getProjection(parentProjection));
+
+            if (_expression.isRDD()) {
+                throw new JobWithinAJobException(
+                        "A let clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
+                        getMetadata().getExpressionMetadata()
+                );
+            }
 
             StructType inputSchema = df.schema();
 
