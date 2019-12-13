@@ -2,9 +2,7 @@ package sparksoniq.jsoniq.runtime.iterator.functions.sequences.general;
 
 import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
-import sparksoniq.exceptions.TreatException;
 import sparksoniq.exceptions.UnexpectedTypeException;
-import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;

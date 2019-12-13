@@ -43,7 +43,6 @@ import sparksoniq.jsoniq.compiler.translator.expr.flowr.LetClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.LetClauseVar;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
-import sparksoniq.jsoniq.compiler.translator.expr.flowr.ReturnClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.WhereClause;
 import sparksoniq.jsoniq.compiler.translator.expr.module.MainModule;
 import sparksoniq.jsoniq.compiler.translator.expr.module.Prolog;
@@ -97,7 +96,6 @@ import sparksoniq.jsoniq.runtime.iterator.functions.DynamicFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.FunctionRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.StaticUserDefinedFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
-import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionSignature;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 import sparksoniq.jsoniq.runtime.iterator.operational.AdditiveOperationIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.AndOperationIterator;
@@ -142,7 +140,6 @@ import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpr
 import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -373,11 +370,8 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                                 arguments.add(this.visit(arg, argument));
                             }
                         }
-                        previous = new DynamicFunctionCallIterator(
-                                previous,
-                                arguments,
-                                createIteratorMetadata(expression)
-                        );
+                        IteratorMetadata metadata = createIteratorMetadata(expression);
+                        previous = new DynamicFunctionCallIterator(previous, arguments, metadata);
                     }
                 } catch (Exception ex) {
                     ex.printStackTrace();
@@ -430,23 +424,12 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
             paramNameToSequenceTypes.put(paramEntry.getKey(), paramEntry.getValue().getSequence());
         }
         SequenceType returnType = expression.get_returnType().getSequence();
-
         RuntimeIterator bodyIterator = this.visit(expression.get_body(), argument);
-        List<String> parametersNames = new ArrayList<>();
-        List<SequenceType> parameters = new ArrayList<>();
-        for (Map.Entry<String, SequenceType> paramEntry : paramNameToSequenceTypes.entrySet()) {
-            parametersNames.add(paramEntry.getKey());
-            parameters.add(paramEntry.getValue());
-        }
         FunctionItem function = new FunctionItem(
-                new FunctionIdentifier(expression.get_name(), parameters.size()),
-                parametersNames,
-                new FunctionSignature(
-                        parameters,
-                        returnType
-                ),
-                bodyIterator,
-                new HashMap<>()
+                expression.get_name(),
+                paramNameToSequenceTypes,
+                returnType,
+                bodyIterator
         );
         if (expression.get_name().equals("")) {
             // unnamed (inline function declaration)

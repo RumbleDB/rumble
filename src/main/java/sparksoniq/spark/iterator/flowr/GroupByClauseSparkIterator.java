@@ -26,13 +26,11 @@ import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.joda.time.Instant;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.InvalidGroupVariableException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
-import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -259,7 +257,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                     .udf()
                     .register(
                         "letClauseUDF",
-                        new LetClauseUDF(newVariableExpression, UDFbinarycolumns, UDFlongcolumns),
+                        new LetClauseUDF(newVariableExpression, context, UDFbinarycolumns, UDFlongcolumns),
                         DataTypes.BinaryType
                     );
 
@@ -292,7 +290,6 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             }
         }
 
-        // determine grouping data types after all variable introductions are completed
         inputSchema = df.schema();
         Map<String, DynamicContext.VariableDependency> groupingVariables = new TreeMap<>();
 
@@ -336,7 +333,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             .udf()
             .register(
                 "createGroupingColumns",
-                new GroupClauseCreateColumnsUDF(variableAccessExpressions, UDFcolumns),
+                new GroupClauseCreateColumnsUDF(variableAccessExpressions, context, UDFcolumns),
                 DataTypes.createStructType(typedFields)
             );
 
@@ -415,11 +412,8 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
     public Map<String, DynamicContext.VariableDependency> getProjection(
             Map<String, DynamicContext.VariableDependency> parentProjection
     ) {
-        // start with an empty projection.
-        Map<String, DynamicContext.VariableDependency> projection = new TreeMap<>();
-
         // copy over the projection needed by the parent clause.
-        projection.putAll(parentProjection);
+        Map<String, DynamicContext.VariableDependency> projection = new TreeMap<>(parentProjection);
 
         // remove the variables that this clause binds.
         for (GroupByClauseSparkIteratorExpression iterator : _expressions) {

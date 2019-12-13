@@ -199,7 +199,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 .udf()
                 .register(
                     "forClauseUDF",
-                    new ForClauseUDF(_expression, UDFcolumns),
+                    new ForClauseUDF(_expression, context, UDFcolumns),
                     DataTypes.createArrayType(DataTypes.BinaryType)
                 );
 

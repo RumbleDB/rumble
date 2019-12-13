@@ -20,12 +20,10 @@
 
 package sparksoniq.spark.udf;
 
-import org.apache.spark.sql.api.java.UDF1;
-import org.rumbledb.api.Item;
-
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
-
+import org.apache.spark.sql.api.java.UDF1;
+import org.rumbledb.api.Item;
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnexpectedTypeException;
@@ -42,12 +40,11 @@ import java.util.TreeMap;
 
 public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray<byte[]>, List<String>> {
     private static final long serialVersionUID = 1L;
+    private Map<String, DynamicContext.VariableDependency> _dependencies;
+    private List<String> _columnNames;
     private List<OrderByClauseSparkIteratorExpression> _expressions;
-    Map<String, DynamicContext.VariableDependency> _dependencies;
-
-    List<String> _columnNames;
-
     private List<List<Item>> _deserializedParams;
+    private DynamicContext _parentContext;
     private DynamicContext _context;
     private Item _nextItem;
     private List<String> result;
@@ -57,12 +54,14 @@ public class OrderClauseDetermineTypeUDF implements UDF1<WrappedArray<byte[]>, L
 
     public OrderClauseDetermineTypeUDF(
             List<OrderByClauseSparkIteratorExpression> expressions,
+            DynamicContext context,
             List<String> columnNames
     ) {
         _expressions = expressions;
 
         _deserializedParams = new ArrayList<>();
-        _context = new DynamicContext();
+        _parentContext = context;
+        _context = new DynamicContext(_parentContext);
         result = new ArrayList<>();
 
         _dependencies = new TreeMap<String, DynamicContext.VariableDependency>();

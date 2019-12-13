@@ -26,14 +26,14 @@ import sparksoniq.exceptions.UnknownFunctionCallException;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.binaries.HexBinaryFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.NullFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.FunctionItemCallIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.NullFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayDescendantFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayFlattenFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArrayMembersFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.arrays.ArraySizeFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.binaries.Base64BinaryFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.binaries.HexBinaryFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.booleans.BooleanFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.context.LastFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.context.PositionFunctionIterator;
@@ -68,7 +68,15 @@ import sparksoniq.jsoniq.runtime.iterator.functions.durations.components.MonthsF
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.components.SecondsFromDurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.durations.components.YearsFromDurationFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.io.JsonDocFunctionIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.numerics.*;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.AbsFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.CeilingFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.DecimalFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.DoubleFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.FloorFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.IntegerFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.PiFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.RoundFunctionIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.numerics.RoundHalfToEvenFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential.Exp10FunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential.ExpFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential.Log10FunctionIterator;
@@ -129,22 +137,21 @@ import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
 import sparksoniq.spark.iterator.function.JsonFileFunctionIterator;
 import sparksoniq.spark.iterator.function.ParallelizeFunctionIterator;
-
-import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import sparksoniq.spark.iterator.function.ParquetFileFunctionIterator;
 import sparksoniq.spark.iterator.function.StructuredJsonFileFunctionIterator;
 import sparksoniq.spark.iterator.function.TextFileFunctionIterator;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.lang.reflect.Constructor;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.abs;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.accumulate;
@@ -526,9 +533,9 @@ public class Functions {
                 arguments.set(
                     i,
                     new TypePromotionIterator(
-                            "Invalid argument for function " + identifier.getName() + ". ",
                             arguments.get(i),
                             builtinFunction.getSignature().getParameterTypes().get(i),
+                            "Invalid argument for function " + identifier.getName() + ". ",
                             arguments.get(i).getMetadata()
                     )
                 );
@@ -549,9 +556,9 @@ public class Functions {
 
         if (!builtinFunction.getSignature().getReturnType().equals(mostGeneralSequenceType)) {
             return new TypePromotionIterator(
-                    "Invalid return type for function " + identifier.getName() + ". ",
                     functionCallIterator,
                     builtinFunction.getSignature().getReturnType(),
+                    "Invalid return type for function " + identifier.getName() + ". ",
                     functionCallIterator.getMetadata()
             );
         }
@@ -579,7 +586,20 @@ public class Functions {
             IteratorMetadata metadata,
             List<RuntimeIterator> arguments
     ) {
-        return new FunctionItemCallIterator(functionItem, arguments, metadata);
+        FunctionItemCallIterator functionCallIterator = new FunctionItemCallIterator(functionItem, arguments, metadata);
+        if (!functionItem.getSignature().getReturnType().equals(mostGeneralSequenceType)) {
+            return new TypePromotionIterator(
+                    functionCallIterator,
+                    functionItem.getSignature().getReturnType(),
+                    "Invalid return type for "
+                        + (functionItem.getIdentifier().getName().equals("")
+                            ? ""
+                            : (functionItem.getIdentifier().getName()) + " ")
+                        + "function. ",
+                    metadata
+            );
+        }
+        return functionCallIterator;
     }
 
     public static void clearUserDefinedFunctions() {

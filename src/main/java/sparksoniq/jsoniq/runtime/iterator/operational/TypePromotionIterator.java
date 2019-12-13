@@ -4,11 +4,9 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.exceptions.TreatException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.TreatAsClosure;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.TypePromotionClosure;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
@@ -32,9 +30,9 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     private int _childIndex;
 
     public TypePromotionIterator(
-            String exceptionMessage,
             RuntimeIterator iterator,
             SequenceType sequenceType,
+            String exceptionMessage,
             IteratorMetadata iteratorMetadata
     ) {
         super(Collections.singletonList(iterator), iteratorMetadata);
@@ -109,8 +107,8 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         ) {
             throw new UnexpectedTypeException(
                     _exceptionMessage
-                        + "Expecting "
-                        + ((_sequenceType.getArity() == SequenceType.Arity.OneOrMore) ? "at least" : "")
+                        + "Expecting"
+                        + ((_sequenceType.getArity() == SequenceType.Arity.OneOrMore) ? " at least" : "")
                         + " one item, but the value provided is the empty sequence.",
                     getMetadata()
             );
@@ -135,8 +133,8 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         ) {
             throw new UnexpectedTypeException(
                     _exceptionMessage
-                        + "Expecting "
-                        + ((_sequenceType.getArity() == SequenceType.Arity.OneOrZero) ? "at most" : "")
+                        + "Expecting"
+                        + ((_sequenceType.getArity() == SequenceType.Arity.OneOrZero) ? " at most" : "")
                         + " one item, but the value provided has at least two items.",
                     getMetadata()
             );
@@ -161,6 +159,8 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     }
 
     private void checkTypePromotion() {
+        if (_nextResult.isFunction())
+            return;
         if (!_nextResult.canBePromotedTo(_sequenceType.getItemType()))
             throw new UnexpectedTypeException(
                     _exceptionMessage

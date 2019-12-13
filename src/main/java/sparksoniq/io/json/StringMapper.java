@@ -22,7 +22,6 @@ package sparksoniq.io.json;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
-
 import sparksoniq.jsoniq.item.ItemFactory;
 
 import java.util.Iterator;
