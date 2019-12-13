@@ -29,6 +29,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.expr.control.IfExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.control.SwitchCaseExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.control.SwitchExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.control.TryCatchExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.control.TypeSwitchCaseExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.control.TypeSwitchExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.CountClause;
@@ -91,6 +92,7 @@ import sparksoniq.jsoniq.runtime.iterator.EmptySequenceIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.control.IfRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.control.SwitchRuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.control.TryCatchRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.control.TypeSwitchCase;
 import sparksoniq.jsoniq.runtime.iterator.control.TypeSwitchRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.DynamicFunctionCallIterator;
@@ -913,4 +915,24 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
     private IteratorMetadata createIteratorMetadata(ExpressionOrClause expression) {
         return new IteratorMetadata(expression.getMetadata());
     }
+
+    @Override
+    public RuntimeIterator visitTryCatchExpression(TryCatchExpression expression, RuntimeIterator argument) {
+        Map<String, RuntimeIterator> cases = new LinkedHashMap<>();
+        for (String code : expression.getErrorsCaught()) {
+            cases.put(
+                code,
+                this.visit(expression.getExpressionCatching(code), argument)
+            );
+        }
+        return new TryCatchRuntimeIterator(
+                this.visit(expression.getTryExpression(), argument),
+                cases,
+                this.visit(expression.getExpressionCatchingAll(), argument),
+                createIteratorMetadata(expression)
+        );
+    }
+    // endregion
+
+    
 }

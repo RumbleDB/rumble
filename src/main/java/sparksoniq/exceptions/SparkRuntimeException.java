@@ -20,6 +20,8 @@
 
 package sparksoniq.exceptions;
 
+import org.apache.spark.SparkException;
+
 import sparksoniq.exceptions.codes.ErrorCodes;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 

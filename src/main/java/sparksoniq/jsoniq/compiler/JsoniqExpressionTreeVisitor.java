@@ -1315,45 +1315,48 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         int tokenColumnNumber = ctx.getStart().getCharPositionInLine();
         return new ExpressionMetadata(tokenLineNumber, tokenColumnNumber);
     }
-    
+
     @Override
     public Void visitTryCatchExpr(JsoniqParser.TryCatchExprContext ctx) {
         TryCatchExpression node;
         Expression tryExpression;
         Expression catchAllExpression = null;
-        
+
         this.visitExpr(ctx.try_expression);
         tryExpression = this.currentExpression;
-        
+
         Map<String, Expression> catchExpressions = new HashMap<>();
         for (JsoniqParser.CatchClauseContext expr : ctx.catches) {
             this.visitCatchClause(expr);
-            for(String s : this.currentErrorCodes)
-            {
-            	if(s == null && catchAllExpression == null)
-            	{
-                	catchAllExpression = this.currentExpression;
-            	} else if (s != null && !catchExpressions.containsKey(s)) {
-            		catchExpressions.put(s, this.currentExpression);
-            	}
+            for (String s : this.currentErrorCodes) {
+                if (s == null && catchAllExpression == null) {
+                    catchAllExpression = this.currentExpression;
+                } else if (s != null && !catchExpressions.containsKey(s)) {
+                    catchExpressions.put(s, this.currentExpression);
+                }
             }
         }
 
-        node = new TryCatchExpression(tryExpression, catchExpressions, catchAllExpression, createMetadataFromContext(ctx));
+        node = new TryCatchExpression(
+                tryExpression,
+                catchExpressions,
+                catchAllExpression,
+                createMetadataFromContext(ctx)
+        );
         this.currentExpression = node;
         return null;
     }
-    
+
     @Override
     public Void visitCatchClause(JsoniqParser.CatchClauseContext ctx) {
         Expression catchExpression;
         List<String> errors = new ArrayList<>();
-        
+
         this.visitExpr(ctx.catch_expression);
         catchExpression = this.currentExpression;
-        
+
         for (JsoniqParser.StringLiteralContext c : ctx.errors) {
-        	errors.add(ValueTypeHandler.getStringValue(c));
+            errors.add(ValueTypeHandler.getStringValue(c));
         }
 
         this.currentErrorCodes = errors;

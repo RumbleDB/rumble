@@ -25,6 +25,8 @@ import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 
 import java.util.Arrays;
 
+import org.apache.spark.SparkException;
+
 public class SparksoniqRuntimeException extends RuntimeException {
 
 
@@ -114,5 +116,17 @@ public class SparksoniqRuntimeException extends RuntimeException {
 
     public String getJSONiqErrorMessage() {
         return errorMessage;
+    }
+    
+    public static SparksoniqRuntimeException unnestException(Throwable ex)
+    {
+        if (ex instanceof SparkException) {
+            Throwable sparkExceptionCause = ex.getCause();
+            return unnestException(sparkExceptionCause);
+        } else if (ex instanceof SparksoniqRuntimeException) {
+            return (SparksoniqRuntimeException)ex;
+        } else {
+        	return null;
+        }
     }
 }
