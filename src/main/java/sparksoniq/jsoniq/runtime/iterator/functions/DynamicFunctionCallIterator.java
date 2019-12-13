@@ -130,8 +130,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
 
     @Override
     public boolean initIsRDD() {
-        setFunctionItemAndIteratorWithCurrentContext();
-        return _functionCallIterator.isRDD();
+        return false;
     }
 
     private void setFunctionItemAndIteratorWithCurrentContext() {
