@@ -1,4 +1,4 @@
-(:JIQS: ShouldCrash; ErrorCode="RBS0003"; ErrorMetadata="LINE:2:COLUMN:0:" :)
+(:JIQS: ShouldCrash; ErrorCode="RBST0003"; ErrorMetadata="LINE:2:COLUMN:0:" :)
 for $i in parallelize(1)
 for $l in (for $k in parallelize($i) return $k)
 return $l
