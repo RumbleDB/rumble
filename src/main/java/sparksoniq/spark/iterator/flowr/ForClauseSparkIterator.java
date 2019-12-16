@@ -27,6 +27,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
+import sparksoniq.exceptions.JobWithinAJobException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
@@ -170,31 +171,66 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     ) {
         // if it's a starting clause
         if (this._child == null) {
-            // create initial RDD from expression
-            JavaRDD<Item> initialRdd = _expression.getRDD(context);
-
-            // define a schema
-            List<StructField> fields = new ArrayList<>();
-            StructField field = DataTypes.createStructField(_variableName, DataTypes.BinaryType, true);
-            fields.add(field);
-            StructType schema = DataTypes.createStructType(fields);
-
-            JavaRDD<Row> rowRDD = initialRdd.map(new ForClauseSerializeClosure());
-
-            // apply the schema to row RDD
-            return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
+            return getDataFrameFromRDDExpression(context);
         }
 
         if (_child.isDataFrame()) {
+            if (_expression.isRDD()) {
+                Set<String> intersection = new HashSet<>(_expression.getVariableDependencies().keySet());
+                intersection.retainAll(getVariablesBoundInCurrentFLWORExpression());
+                boolean expressionUsesVariablesOfCurrentFlwor = !intersection.isEmpty();
+
+                if (expressionUsesVariablesOfCurrentFlwor) {
+                    throw new JobWithinAJobException(
+                            "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
+                            getMetadata().getExpressionMetadata()
+                    );
+                }
+
+                // since no variable dependency to the current FLWOR expression exists for the expression
+                // evaluate the DF with the parent context and calculate the cartesian product
+                Dataset<Row> expressionDF;
+                expressionDF = getDataFrameFromRDDExpression(context);
+
+                String inputDFTableName = "input";
+                String expressionDFTableName = "expression";
+
+                Dataset<Row> inputDF = this._child.getDataFrame(context, getProjection(parentProjection));
+                StructType inputSchema = inputDF.schema();
+                int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(_variableName);
+                List<String> columnsToSelect = DataFrameUtils.getColumnNames(
+                    inputSchema,
+                    duplicateVariableIndex,
+                    null
+                );
+
+                if (duplicateVariableIndex == -1) {
+                    columnsToSelect.add(_variableName);
+                } else {
+                    columnsToSelect.add(expressionDFTableName + "`.`" + _variableName);
+                }
+                String selectSQL = DataFrameUtils.getSQL(columnsToSelect, false);
+
+                inputDF.createOrReplaceTempView(inputDFTableName);
+                expressionDF.createOrReplaceTempView(expressionDFTableName);
+
+                return inputDF.sparkSession()
+                    .sql(
+                        String.format(
+                            "select %s from %s, %s",
+                            selectSQL,
+                            inputDFTableName,
+                            expressionDFTableName
+                        )
+                    );
+            }
+
+            // the expression is locally evaluated
             Dataset<Row> df = this._child.getDataFrame(context, getProjection(parentProjection));
-
             StructType inputSchema = df.schema();
-
             int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(_variableName);
-
             List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
             List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, _dependencies);
-
             df.sparkSession()
                 .udf()
                 .register(
@@ -205,7 +241,6 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
             String selectSQL = DataFrameUtils.getSQL(allColumns, true);
             String udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
-
             df.createOrReplaceTempView("input");
             df = df.sparkSession()
                 .sql(
@@ -253,6 +288,25 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         }
         _child.close();
         return df;
+    }
+
+    private Dataset<Row> getDataFrameFromRDDExpression(DynamicContext context) {
+        // create initial RDD from expression
+        JavaRDD<Item> expressionRDD = _expression.getRDD(context);
+        return getDataFrameFromItemRDD(expressionRDD);
+    }
+
+    private Dataset<Row> getDataFrameFromItemRDD(JavaRDD<Item> expressionRDD) {
+        // define a schema
+        List<StructField> fields = new ArrayList<>();
+        StructField field = DataTypes.createStructField(_variableName, DataTypes.BinaryType, true);
+        fields.add(field);
+        StructType schema = DataTypes.createStructType(fields);
+
+        JavaRDD<Row> rowRDD = expressionRDD.map(new ForClauseSerializeClosure());
+
+        // apply the schema to row RDD
+        return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
     }
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
