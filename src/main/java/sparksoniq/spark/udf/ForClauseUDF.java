@@ -65,6 +65,7 @@ public class ForClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
         _longColumnNames = longColumnNames;
 
         _deserializedParams = new ArrayList<>();
+        _longParams = new ArrayList<>();
 
         _context = new DynamicContext(context);
         _nextResult = new ArrayList<>();

@@ -65,6 +65,7 @@ public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, W
         _expressions = expressions;
 
         _deserializedParams = new ArrayList<>();
+        _longParams = new ArrayList<>();
         _parentContext = context;
         _context = new DynamicContext(_parentContext);
         result = new ArrayList<>();
