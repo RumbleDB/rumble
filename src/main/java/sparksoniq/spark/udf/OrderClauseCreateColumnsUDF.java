@@ -108,12 +108,12 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
         }
 
         DataFrameUtils.prepareDynamicContext(
-                _context,
-                _binaryColumnNames,
-                _longColumnNames,
-                _deserializedParams,
-                _longParams
-            );
+            _context,
+            _binaryColumnNames,
+            _longColumnNames,
+            _deserializedParams,
+            _longParams
+        );
 
         for (int expressionIndex = 0; expressionIndex < _expressions.size(); expressionIndex++) {
             OrderByClauseSparkIteratorExpression expression = _expressions.get(expressionIndex);

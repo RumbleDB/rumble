@@ -90,7 +90,7 @@ public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, W
 
         DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
 
-     // Long parameters correspond to pre-computed counts, when a materialization of the
+        // Long parameters correspond to pre-computed counts, when a materialization of the
         // actual sequence was avoided upfront.
         Object[] longParams = (Object[]) wrappedParametersLong.array();
         for (Object longParam : longParams) {
@@ -99,12 +99,12 @@ public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, W
         }
 
         DataFrameUtils.prepareDynamicContext(
-                _context,
-                _binaryColumnNames,
-                _longColumnNames,
-                _deserializedParams,
-                _longParams
-            );
+            _context,
+            _binaryColumnNames,
+            _longColumnNames,
+            _deserializedParams,
+            _longParams
+        );
 
         for (OrderByClauseSparkIteratorExpression expression : _expressions) {
             // apply expression in the dynamic context

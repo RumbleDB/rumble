@@ -126,13 +126,13 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         StructType inputSchema = df.schema();
 
         List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, _dependencies);
-            List<String> UDFbinarycolumns = DataFrameUtils.getColumnNamesExceptPrecomputedCounts(
-                inputSchema,
-                -1,
-                _dependencies
-            );
-            List<String> UDFlongcolumns = DataFrameUtils.getPrecomputedCountColumnNames(inputSchema, -1, _dependencies);
-            
+        List<String> UDFbinarycolumns = DataFrameUtils.getColumnNamesExceptPrecomputedCounts(
+            inputSchema,
+            -1,
+            _dependencies
+        );
+        List<String> UDFlongcolumns = DataFrameUtils.getPrecomputedCountColumnNames(inputSchema, -1, _dependencies);
+
         df.sparkSession()
             .udf()
             .register(
@@ -147,7 +147,11 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         df.createOrReplaceTempView("input");
         df = df.sparkSession()
             .sql(
-                String.format("select * from input where whereClauseUDF(array(%s), array(%s)) = 'true'", udfBinarySQL, udfLongSQL)
+                String.format(
+                    "select * from input where whereClauseUDF(array(%s), array(%s)) = 'true'",
+                    udfBinarySQL,
+                    udfLongSQL
+                )
             );
         return df;
     }

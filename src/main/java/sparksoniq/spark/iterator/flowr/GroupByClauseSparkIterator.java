@@ -328,11 +328,11 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
 
         List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema);
         List<String> UDFbinarycolumns = DataFrameUtils.getColumnNamesExceptPrecomputedCounts(
-                inputSchema,
-                -1,
-                groupingVariables
-            );
-            List<String> UDFlongcolumns = DataFrameUtils.getPrecomputedCountColumnNames(inputSchema, -1, groupingVariables);
+            inputSchema,
+            -1,
+            groupingVariables
+        );
+        List<String> UDFlongcolumns = DataFrameUtils.getPrecomputedCountColumnNames(inputSchema, -1, groupingVariables);
 
         df.sparkSession()
             .udf()

@@ -207,12 +207,12 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         StructType inputSchema = df.schema();
 
         List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema);
-            List<String> UDFbinarycolumns = DataFrameUtils.getColumnNamesExceptPrecomputedCounts(
-                inputSchema,
-                -1,
-                _dependencies
-            );
-            List<String> UDFlongcolumns = DataFrameUtils.getPrecomputedCountColumnNames(inputSchema, -1, _dependencies);
+        List<String> UDFbinarycolumns = DataFrameUtils.getColumnNamesExceptPrecomputedCounts(
+            inputSchema,
+            -1,
+            _dependencies
+        );
+        List<String> UDFlongcolumns = DataFrameUtils.getPrecomputedCountColumnNames(inputSchema, -1, _dependencies);
 
         df.sparkSession()
             .udf()
@@ -370,7 +370,13 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             .udf()
             .register(
                 "createOrderingColumns",
-                new OrderClauseCreateColumnsUDF(_expressions, context, typesForAllColumns, UDFbinarycolumns, UDFlongcolumns),
+                new OrderClauseCreateColumnsUDF(
+                        _expressions,
+                        context,
+                        typesForAllColumns,
+                        UDFbinarycolumns,
+                        UDFlongcolumns
+                ),
                 DataTypes.createStructType(typedFields)
             );
 

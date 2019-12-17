@@ -83,7 +83,7 @@ public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
 
         DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
 
-     // Long parameters correspond to pre-computed counts, when a materialization of the
+        // Long parameters correspond to pre-computed counts, when a materialization of the
         // actual sequence was avoided upfront.
         Object[] longParams = (Object[]) wrappedParametersLong.array();
         for (Object longParam : longParams) {

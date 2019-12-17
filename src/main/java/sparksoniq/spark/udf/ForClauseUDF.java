@@ -86,7 +86,7 @@ public class ForClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
 
         DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
 
-     // Long parameters correspond to pre-computed counts, when a materialization of the
+        // Long parameters correspond to pre-computed counts, when a materialization of the
         // actual sequence was avoided upfront.
         Object[] longParams = (Object[]) wrappedParametersLong.array();
         for (Object longParam : longParams) {
@@ -95,12 +95,12 @@ public class ForClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
         }
 
         DataFrameUtils.prepareDynamicContext(
-                _context,
-                _binaryColumnNames,
-                _longColumnNames,
-                _deserializedParams,
-                _longParams
-            );
+            _context,
+            _binaryColumnNames,
+            _longColumnNames,
+            _deserializedParams,
+            _longParams
+        );
 
         // apply expression in the dynamic context
         _expression.open(_context);

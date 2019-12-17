@@ -194,11 +194,11 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
             List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
             List<String> UDFbinarycolumns = DataFrameUtils.getColumnNamesExceptPrecomputedCounts(
-                    inputSchema,
-                    -1,
-                    _dependencies
-                );
-                List<String> UDFlongcolumns = DataFrameUtils.getPrecomputedCountColumnNames(inputSchema, -1, _dependencies);
+                inputSchema,
+                -1,
+                _dependencies
+            );
+            List<String> UDFlongcolumns = DataFrameUtils.getPrecomputedCountColumnNames(inputSchema, -1, _dependencies);
 
             df.sparkSession()
                 .udf()

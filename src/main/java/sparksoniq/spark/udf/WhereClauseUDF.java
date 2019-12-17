@@ -93,7 +93,13 @@ public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<L
             _longParams.add(count);
         }
 
-        DataFrameUtils.prepareDynamicContext(_context, _binaryColumnNames, _longColumnNames, _deserializedParams, _longParams);
+        DataFrameUtils.prepareDynamicContext(
+            _context,
+            _binaryColumnNames,
+            _longColumnNames,
+            _deserializedParams,
+            _longParams
+        );
 
         // apply expression in the dynamic context
         _expression.open(_context);
