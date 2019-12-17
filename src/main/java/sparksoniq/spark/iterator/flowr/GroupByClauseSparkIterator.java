@@ -348,7 +348,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         String udfLongSQL = DataFrameUtils.getSQL(UDFlongcolumns, false);
 
         String createColumnsSQL = String.format(
-            "select %s createGroupingColumns(array(%s)) as `%s` from input",
+            "select %s createGroupingColumns(array(%s), array(%s)) as `%s` from input",
             selectSQL,
             udfBinarySQL,
             udfLongSQL,
