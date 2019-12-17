@@ -75,6 +75,7 @@ public class RuntimeTests extends AnnotationsTestsBase {
         sparkConfiguration.set("spark.submit.deployMode", "client");
         sparkConfiguration.set("spark.executor.extraClassPath", "lib/");
         sparkConfiguration.set("spark.driver.extraClassPath", "lib/");
+        sparkConfiguration.set("spark.sql.crossJoin.enabled", "true"); // enables cartesian product
 
         // sparkConfiguration.set("spark.driver.memory", "2g");
         // sparkConfiguration.set("spark.executor.memory", "2g");

@@ -26,6 +26,7 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.JobWithinAJobException;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -33,6 +34,7 @@ import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.closures.ReturnFlatMapClosure;
+import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 
 import java.util.Collections;
 import java.util.Map;
@@ -64,6 +66,14 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         RuntimeIterator expression = this._children.get(0);
+        if (expression.isRDD()) {
+            throw new JobWithinAJobException(
+                    "A let clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
+                    getMetadata().getExpressionMetadata()
+            );
+        }
+
+
         Dataset<Row> df = this._child.getDataFrame(context, expression.getVariableDependencies());
         StructType oldSchema = df.schema();
         return df.javaRDD().flatMap(new ReturnFlatMapClosure(expression, context, oldSchema));

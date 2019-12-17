@@ -18,10 +18,15 @@ for an object or array selector.
 
 - [SENR0001] - Serialization error. Function items can not be serialized
 
-- [SPRKIQ0001] - CLI error. Raised when invalid parameters are supplied at launch.
+- [RBST0001] - CLI error. Raised when invalid parameters are supplied at launch.
 
-- [SPRKIQ0002] - CLI error. Unimplemented feature error.
+- [RBST0002] - Unimplemented feature error.
 Raised when a JSONiq feature that is not yet implemented in Rumble is used.
+
+- [RBST0003] - Invalid for clause expression error.
+Raised when an expression produces a different,
+big sequence of items for each binding within a big tuple,
+which would lead to a data flow explosion and to a nesting of jobs on the Spark cluster.
 
 - [XPDY0002] - It is a dynamic error if evaluation of an expression relies on some part of the dynamic context that is absent.
 

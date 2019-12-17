@@ -28,6 +28,7 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.JobWithinAJobException;
 import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnexpectedTypeException;
@@ -200,6 +201,16 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         if (this._child == null) {
             throw new SparksoniqRuntimeException("Invalid orderby clause.");
         }
+
+        for (OrderByClauseSparkIteratorExpression expression : _expressions) {
+            if (expression.getExpression().isRDD()) {
+                throw new JobWithinAJobException(
+                        "An order by clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
+                        getMetadata().getExpressionMetadata()
+                );
+            }
+        }
+
         Dataset<Row> df = _child.getDataFrame(context, getProjection(parentProjection));
         if (df.count() == 0) {
             return df;

@@ -46,8 +46,9 @@ public class ErrorCodes {
     public static final String FunctionsNonSerializable = "SENR0001";
 
 
-    public static final String CliErrorCode = "SPRKIQ0001";
-    public static final String UnimplementedErrorCode = "SPRKIQ0002";
+    public static final String CliErrorCode = "RBST0001";
+    public static final String UnimplementedErrorCode = "RBST0002";
+    public static final String JobWithinAJobErrorCode = "RBST0003";
 
 
     public static final String AbsentPartOfDynamicContextCode = "XPDY0002";

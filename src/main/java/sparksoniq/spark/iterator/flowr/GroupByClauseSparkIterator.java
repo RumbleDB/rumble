@@ -29,6 +29,7 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.InvalidGroupVariableException;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.JobWithinAJobException;
 import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -40,6 +41,7 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
+import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 import sparksoniq.spark.udf.GroupClauseCreateColumnsUDF;
 import sparksoniq.spark.udf.GroupClauseSerializeAggregateResultsUDF;
 import sparksoniq.spark.udf.LetClauseUDF;
@@ -223,6 +225,16 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         if (this._child == null) {
             throw new SparksoniqRuntimeException("Invalid groupby clause.");
         }
+
+        for (GroupByClauseSparkIteratorExpression expression : _expressions) {
+            if (expression.getExpression() != null && expression.getExpression().isRDD()) {
+                throw new JobWithinAJobException(
+                        "A group by clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
+                        getMetadata().getExpressionMetadata()
+                );
+            }
+        }
+
         Dataset<Row> df = _child.getDataFrame(context, getProjection(parentProjection));
         StructType inputSchema;
         String[] columnNamesArray;
