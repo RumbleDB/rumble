@@ -236,6 +236,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         Dataset<Row> df = _child.getDataFrame(context, getProjection(parentProjection));
+        df.show();
         StructType inputSchema;
         String[] columnNamesArray;
         List<String> columnNames;
@@ -459,6 +460,6 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 }
             }
         }
-        return parentProjection;
+        return projection;
     }
 }

@@ -28,7 +28,9 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.expressions.UserDefinedFunction;
 import org.apache.spark.sql.expressions.Window;
+import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import scala.collection.mutable.WrappedArray;
@@ -202,6 +204,38 @@ public class DataFrameUtils {
                     && dependencies.get(var).equals(DynamicContext.VariableDependency.COUNT)
             ) {
                 result.add(columnNames[columnIndex]);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * @param inputSchema schema specifies the columns to be used in the query
+     * @param duplicateVariableIndex enables skipping a variable
+     * @param dependencies restriction of the results to within a specified set
+     * @return list of SQL column names in the schema
+     */
+    public static Map<String, List<String>> getColumnNamesByType(
+            StructType inputSchema,
+            int duplicateVariableIndex,
+            Map<String, DynamicContext.VariableDependency> dependencies
+    ) {
+        Map<String, List<String>> result = new HashMap<>();
+        result.put("byte[]", new ArrayList<>());
+        result.put("Long", new ArrayList<>());
+        StructField[] columns = inputSchema.fields();
+        for (int columnIndex = 0; columnIndex < columns.length; columnIndex++) {
+            if (columnIndex == duplicateVariableIndex) {
+                continue;
+            }
+            String var = columns[columnIndex].name();
+            DataType type = columns[columnIndex].dataType();
+            if(type.equals(DataTypes.BinaryType))
+            {
+                result.get("byte[]").add(var);
+            } else if(type.equals(DataTypes.LongType))
+            {
+                result.get("Long").add(var);
             }
         }
         return result;

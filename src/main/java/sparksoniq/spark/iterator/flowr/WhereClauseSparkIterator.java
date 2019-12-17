@@ -135,7 +135,6 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         Dataset<Row> df = _child.getDataFrame(context, getProjection(parentProjection));
         StructType inputSchema = df.schema();
 
-        List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, _dependencies);
         List<String> UDFbinarycolumns = DataFrameUtils.getColumnNamesExceptPrecomputedCounts(
             inputSchema,
             -1,

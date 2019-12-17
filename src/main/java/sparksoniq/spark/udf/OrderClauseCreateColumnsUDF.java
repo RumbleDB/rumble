@@ -74,6 +74,7 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
         _allColumnTypes = allColumnTypes;
 
         _deserializedParams = new ArrayList<>();
+        _longParams = new ArrayList<>();
         _parentContext = context;
         _context = new DynamicContext(_parentContext);
         _results = new ArrayList<>();

@@ -35,14 +35,14 @@ import sparksoniq.spark.DataFrameUtils;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class ForClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, List<byte[]>> {
     /**
      *
      */
     private static final long serialVersionUID = 1L;
-    List<String> _binaryColumnNames;
-    List<String> _longColumnNames;
+    Map<String, List<String>> _columnNamesByType;
     private RuntimeIterator _expression;
     private List<List<Item>> _deserializedParams;
     private List<Item> _longParams;
@@ -57,12 +57,10 @@ public class ForClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
     public ForClauseUDF(
             RuntimeIterator expression,
             DynamicContext context,
-            List<String> binaryColumnNames,
-            List<String> longColumnNames
+            Map<String, List<String>> columnNamesByType
     ) {
         _expression = expression;
-        _binaryColumnNames = binaryColumnNames;
-        _longColumnNames = longColumnNames;
+        _columnNamesByType = columnNamesByType;
 
         _deserializedParams = new ArrayList<>();
         _longParams = new ArrayList<>();
@@ -97,8 +95,8 @@ public class ForClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
 
         DataFrameUtils.prepareDynamicContext(
             _context,
-            _binaryColumnNames,
-            _longColumnNames,
+            _columnNamesByType.get("byte[]"),
+            _columnNamesByType.get("Long"),
             _deserializedParams,
             _longParams
         );
