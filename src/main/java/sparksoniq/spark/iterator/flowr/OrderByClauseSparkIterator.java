@@ -207,25 +207,33 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         StructType inputSchema = df.schema();
 
         List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema);
-        List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, _dependencies);
+            List<String> UDFbinarycolumns = DataFrameUtils.getColumnNamesExceptPrecomputedCounts(
+                inputSchema,
+                -1,
+                _dependencies
+            );
+            List<String> UDFlongcolumns = DataFrameUtils.getPrecomputedCountColumnNames(inputSchema, -1, _dependencies);
 
         df.sparkSession()
             .udf()
             .register(
                 "determineOrderingDataType",
-                new OrderClauseDetermineTypeUDF(_expressions, context, UDFcolumns),
+                new OrderClauseDetermineTypeUDF(_expressions, context, UDFbinarycolumns, UDFlongcolumns),
                 DataTypes.createArrayType(DataTypes.StringType)
             );
 
-        String udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
+
+        String udfBinarySQL = DataFrameUtils.getSQL(UDFbinarycolumns, false);
+        String udfLongSQL = DataFrameUtils.getSQL(UDFlongcolumns, false);
 
         df.createOrReplaceTempView("input");
         df.sparkSession().table("input").cache();
         Dataset<Row> columnTypesDf = df.sparkSession()
             .sql(
                 String.format(
-                    "select distinct(determineOrderingDataType(array(%s))) as `distinct-types` from input",
-                    udfSQL
+                    "select distinct(determineOrderingDataType(array(%s), array(%s))) as `distinct-types` from input",
+                    udfBinarySQL,
+                    udfLongSQL
                 )
             );
         Object columnTypesObject = columnTypesDf.collect();
@@ -362,21 +370,23 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             .udf()
             .register(
                 "createOrderingColumns",
-                new OrderClauseCreateColumnsUDF(_expressions, context, typesForAllColumns, UDFcolumns),
+                new OrderClauseCreateColumnsUDF(_expressions, context, typesForAllColumns, UDFbinarycolumns, UDFlongcolumns),
                 DataTypes.createStructType(typedFields)
             );
 
         String selectSQL = DataFrameUtils.getSQL(allColumns, true);
         String projectSQL = selectSQL.substring(0, selectSQL.length() - 1); // remove trailing comma
-        udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
+        udfBinarySQL = DataFrameUtils.getSQL(UDFbinarycolumns, false);
+        udfLongSQL = DataFrameUtils.getSQL(UDFlongcolumns, false);
 
         return df.sparkSession()
             .sql(
                 String.format(
-                    "select %s from (select %s createOrderingColumns(array(%s)) as `%s` from input order by %s)",
+                    "select %s from (select %s createOrderingColumns(array(%s), array(%s)) as `%s` from input order by %s)",
                     projectSQL,
                     selectSQL,
-                    udfSQL,
+                    udfBinarySQL,
+                    udfLongSQL,
                     appendedOrderingColumnsName,
                     orderingSQL
                 )

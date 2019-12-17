@@ -327,23 +327,31 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             );
 
         List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema);
-        List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, groupingVariables);
+        List<String> UDFbinarycolumns = DataFrameUtils.getColumnNamesExceptPrecomputedCounts(
+                inputSchema,
+                -1,
+                groupingVariables
+            );
+            List<String> UDFlongcolumns = DataFrameUtils.getPrecomputedCountColumnNames(inputSchema, -1, groupingVariables);
 
         df.sparkSession()
             .udf()
             .register(
                 "createGroupingColumns",
-                new GroupClauseCreateColumnsUDF(variableAccessExpressions, context, UDFcolumns),
+                new GroupClauseCreateColumnsUDF(variableAccessExpressions, context, UDFbinarycolumns, UDFlongcolumns),
                 DataTypes.createStructType(typedFields)
             );
 
         String selectSQL = DataFrameUtils.getSQL(allColumns, true);
-        String udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
+
+        String udfBinarySQL = DataFrameUtils.getSQL(UDFbinarycolumns, false);
+        String udfLongSQL = DataFrameUtils.getSQL(UDFlongcolumns, false);
 
         String createColumnsSQL = String.format(
             "select %s createGroupingColumns(array(%s)) as `%s` from input",
             selectSQL,
-            udfSQL,
+            udfBinarySQL,
+            udfLongSQL,
             appendedGroupingColumnsName
         );
 
