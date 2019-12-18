@@ -38,13 +38,13 @@ import sparksoniq.spark.DataFrameUtils;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, Row> {
 
     private static final long serialVersionUID = 1L;
     private List<VariableReferenceIterator> _expressions;
-    List<String> _binaryColumnNames;
-    List<String> _longColumnNames;
+    Map<String, List<String>> _columnNamesByType;
 
     private List<List<Item>> _deserializedParams;
     private List<Item> _longParams;
@@ -58,12 +58,10 @@ public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
     public GroupClauseCreateColumnsUDF(
             List<VariableReferenceIterator> expressions,
             DynamicContext context,
-            List<String> binaryColumnNames,
-            List<String> longColumnNames
+            Map<String, List<String>> columnNamesByType
     ) {
         _expressions = expressions;
-        _binaryColumnNames = binaryColumnNames;
-        _longColumnNames = longColumnNames;
+        _columnNamesByType = columnNamesByType;
 
         _deserializedParams = new ArrayList<>();
         _longParams = new ArrayList<>();
@@ -107,11 +105,11 @@ public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
 
             // prepare dynamic context
             _context.removeAllVariables();
-            for (int columnIndex = 0; columnIndex < _binaryColumnNames.size(); columnIndex++) {
-                _context.addVariableValue(_binaryColumnNames.get(columnIndex), _deserializedParams.get(columnIndex));
+            for (int columnIndex = 0; columnIndex < _columnNamesByType.get("byte[]").size(); columnIndex++) {
+                _context.addVariableValue(_columnNamesByType.get("byte[]").get(columnIndex), _deserializedParams.get(columnIndex));
             }
-            for (int columnIndex = 0; columnIndex < _longColumnNames.size(); columnIndex++) {
-                _context.addVariableCount(_longColumnNames.get(columnIndex), _longParams.get(columnIndex));
+            for (int columnIndex = 0; columnIndex < _columnNamesByType.get("Long").size(); columnIndex++) {
+                _context.addVariableCount(_columnNamesByType.get("Long").get(columnIndex), _longParams.get(columnIndex));
             }
 
             // apply expression in the dynamic context
