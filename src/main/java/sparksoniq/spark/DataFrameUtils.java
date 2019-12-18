@@ -230,15 +230,26 @@ public class DataFrameUtils {
             }
             String var = columns[columnIndex].name();
             DataType type = columns[columnIndex].dataType();
-            if(type.equals(DataTypes.BinaryType))
-            {
+            if (type.equals(DataTypes.BinaryType)) {
                 result.get("byte[]").add(var);
-            } else if(type.equals(DataTypes.LongType))
-            {
+            } else if (type.equals(DataTypes.LongType)) {
                 result.get("Long").add(var);
             }
         }
         return result;
+    }
+
+    public static String getUDFParameters(
+            Map<String, List<String>> columnNamesByType
+    ) {
+        String udfBinarySQL = DataFrameUtils.getSQL(columnNamesByType.get("byte[]"), false);
+        String udfLongSQL = DataFrameUtils.getSQL(columnNamesByType.get("Long"), false);
+
+        return String.format(
+            "array(%s), array(%s)",
+            udfBinarySQL,
+            udfLongSQL
+        );
     }
 
     /**

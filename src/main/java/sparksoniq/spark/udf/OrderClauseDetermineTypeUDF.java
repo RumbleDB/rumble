@@ -43,8 +43,7 @@ import java.util.TreeMap;
 public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, List<String>> {
     private static final long serialVersionUID = 1L;
     private Map<String, DynamicContext.VariableDependency> _dependencies;
-    List<String> _binaryColumnNames;
-    List<String> _longColumnNames;
+    Map<String, List<String>> _columnNamesByType;
     private List<OrderByClauseSparkIteratorExpression> _expressions;
     private List<List<Item>> _deserializedParams;
     private List<Item> _longParams;
@@ -59,8 +58,7 @@ public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, W
     public OrderClauseDetermineTypeUDF(
             List<OrderByClauseSparkIteratorExpression> expressions,
             DynamicContext context,
-            List<String> binaryColumnNames,
-            List<String> longColumnNames
+            Map<String, List<String>> columnNamesByType
     ) {
         _expressions = expressions;
 
@@ -74,8 +72,7 @@ public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, W
         for (OrderByClauseSparkIteratorExpression expression : _expressions) {
             _dependencies.putAll(expression.getExpression().getVariableDependencies());
         }
-        _binaryColumnNames = binaryColumnNames;
-        _longColumnNames = longColumnNames;
+        _columnNamesByType = columnNamesByType;
 
         _kryo = new Kryo();
         _kryo.setReferences(false);
@@ -101,8 +98,8 @@ public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, W
 
         DataFrameUtils.prepareDynamicContext(
             _context,
-            _binaryColumnNames,
-            _longColumnNames,
+            _columnNamesByType.get("byte[]"),
+            _columnNamesByType.get("Long"),
             _deserializedParams,
             _longParams
         );

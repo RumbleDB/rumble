@@ -42,8 +42,7 @@ public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<L
     private RuntimeIterator _expression;
     private Map<String, DynamicContext.VariableDependency> _dependencies;
 
-    List<String> _binaryColumnNames;
-    List<String> _longColumnNames;
+    Map<String, List<String>> _columnNamesByType;
 
     private List<List<Item>> _deserializedParams;
     private List<Item> _longParams;
@@ -57,8 +56,7 @@ public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<L
             RuntimeIterator expression,
             DynamicContext context,
             StructType inputSchema,
-            List<String> binaryColumnNames,
-            List<String> longColumnNames
+            Map<String, List<String>> columnNamesByType
     ) {
         _expression = expression;
 
@@ -72,8 +70,7 @@ public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<L
         DataFrameUtils.registerKryoClassesKryo(_kryo);
         _input = new Input();
 
-        _binaryColumnNames = binaryColumnNames;
-        _longColumnNames = longColumnNames;
+        _columnNamesByType = columnNamesByType;
         _dependencies = _expression.getVariableDependencies();
 
     }
@@ -96,8 +93,8 @@ public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<L
 
         DataFrameUtils.prepareDynamicContext(
             _context,
-            _binaryColumnNames,
-            _longColumnNames,
+            _columnNamesByType.get("byte[]"),
+            _columnNamesByType.get("Long"),
             _deserializedParams,
             _longParams
         );

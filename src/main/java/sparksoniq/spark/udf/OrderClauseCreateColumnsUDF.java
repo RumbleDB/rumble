@@ -50,8 +50,7 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
     private List<OrderByClauseSparkIteratorExpression> _expressions;
     private Map<String, DynamicContext.VariableDependency> _dependencies;
 
-    List<String> _binaryColumnNames;
-    List<String> _longColumnNames;
+    Map<String, List<String>> _columnNamesByType;
     private Map<Integer, String> _allColumnTypes;
 
     private List<List<Item>> _deserializedParams;
@@ -67,8 +66,7 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
             List<OrderByClauseSparkIteratorExpression> expressions,
             DynamicContext context,
             Map<Integer, String> allColumnTypes,
-            List<String> binaryColumnNames,
-            List<String> longColumnNames
+            Map<String, List<String>> columnNamesByType
     ) {
         _expressions = expressions;
         _allColumnTypes = allColumnTypes;
@@ -83,8 +81,7 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
         for (OrderByClauseSparkIteratorExpression expression : _expressions) {
             _dependencies.putAll(expression.getExpression().getVariableDependencies());
         }
-        _binaryColumnNames = binaryColumnNames;
-        _longColumnNames = longColumnNames;
+        _columnNamesByType = columnNamesByType;
 
         _kryo = new Kryo();
         _kryo.setReferences(false);
@@ -110,8 +107,8 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
 
         DataFrameUtils.prepareDynamicContext(
             _context,
-            _binaryColumnNames,
-            _longColumnNames,
+            _columnNamesByType.get("byte[]"),
+            _columnNamesByType.get("Long"),
             _deserializedParams,
             _longParams
         );

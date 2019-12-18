@@ -236,7 +236,6 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         Dataset<Row> df = _child.getDataFrame(context, getProjection(parentProjection));
-        df.show();
         StructType inputSchema;
         String[] columnNamesArray;
         List<String> columnNames;
@@ -255,12 +254,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 int duplicateVariableIndex = columnNames.indexOf(newVariableName);
 
                 List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
-                List<String> UDFbinarycolumns = DataFrameUtils.getColumnNamesExceptPrecomputedCounts(
-                    inputSchema,
-                    -1,
-                    _dependencies
-                );
-                List<String> UDFlongcolumns = DataFrameUtils.getPrecomputedCountColumnNames(
+                Map<String, List<String>> UDFcolumnsByType = DataFrameUtils.getColumnNamesByType(
                     inputSchema,
                     -1,
                     _dependencies
@@ -270,22 +264,20 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                     .udf()
                     .register(
                         "letClauseUDF",
-                        new LetClauseUDF(newVariableExpression, context, UDFbinarycolumns, UDFlongcolumns),
+                        new LetClauseUDF(newVariableExpression, context, UDFcolumnsByType),
                         DataTypes.BinaryType
                     );
 
                 String selectSQL = DataFrameUtils.getSQL(allColumns, true);
-                String udfBinarySQL = DataFrameUtils.getSQL(UDFbinarycolumns, false);
-                String udfLongSQL = DataFrameUtils.getSQL(UDFlongcolumns, false);
+                String UDFParameters = DataFrameUtils.getUDFParameters(UDFcolumnsByType);
 
                 df.createOrReplaceTempView("input");
                 df = df.sparkSession()
                     .sql(
                         String.format(
-                            "select %s letClauseUDF(array(%s), array(%s)) as `%s` from input",
+                            "select %s letClauseUDF(%s) as `%s` from input",
                             selectSQL,
-                            udfBinarySQL,
-                            udfLongSQL,
+                            UDFParameters,
                             newVariableName
                         )
                     );
