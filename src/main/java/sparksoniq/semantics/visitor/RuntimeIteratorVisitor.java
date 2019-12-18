@@ -512,7 +512,10 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
     // region literal
     @Override
     public RuntimeIterator visitInteger(IntegerLiteral expression, RuntimeIterator argument) {
-        RuntimeIterator iterator = new IntegerRuntimeIterator(expression.getValue(), createIteratorMetadata(expression));
+        RuntimeIterator iterator = new IntegerRuntimeIterator(
+                expression.getValue(),
+                createIteratorMetadata(expression)
+        );
         iterator.setIsRDD(expression.isRDD());
         return iterator;
     }
@@ -533,7 +536,10 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
 
     @Override
     public RuntimeIterator visitDecimal(DecimalLiteral expression, RuntimeIterator argument) {
-        RuntimeIterator iterator = new DecimalRuntimeIterator(expression.getValue(), createIteratorMetadata(expression));
+        RuntimeIterator iterator = new DecimalRuntimeIterator(
+                expression.getValue(),
+                createIteratorMetadata(expression)
+        );
         iterator.setIsRDD(expression.isRDD());
         return iterator;
     }
@@ -547,7 +553,10 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
 
     @Override
     public RuntimeIterator visitBoolean(BooleanLiteral expression, RuntimeIterator argument) {
-        RuntimeIterator iterator = new BooleanRuntimeIterator(expression.getValue(), createIteratorMetadata(expression));
+        RuntimeIterator iterator = new BooleanRuntimeIterator(
+                expression.getValue(),
+                createIteratorMetadata(expression)
+        );
         iterator.setIsRDD(expression.isRDD());
         return iterator;
     }
