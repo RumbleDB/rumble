@@ -481,8 +481,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                         expression.getMetadata()
                 );
             }
-            // TODO: handle function isRDD
-            return Functions.getBuiltInFunctionIterator(identifier, arguments, iteratorMetadata);
+            return Functions.getBuiltInFunctionIterator(identifier, arguments, expression.isRDD(), iteratorMetadata);
         }
         return new StaticUserDefinedFunctionCallIterator(identifier, arguments, iteratorMetadata);
     }

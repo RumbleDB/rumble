@@ -526,9 +526,14 @@ public class Functions {
         return builtInFunctions.containsKey(identifier);
     }
 
+    public static BuiltinFunction getBuiltInFunction(FunctionIdentifier identifier) {
+        return builtInFunctions.get(identifier);
+    }
+
     public static RuntimeIterator getBuiltInFunctionIterator(
             FunctionIdentifier identifier,
             List<RuntimeIterator> arguments,
+            boolean isRDD,
             IteratorMetadata metadata
     ) {
         BuiltinFunction builtinFunction = builtInFunctions.get(identifier);
@@ -555,17 +560,20 @@ public class Functions {
                     IteratorMetadata.class
                 );
             functionCallIterator = constructor.newInstance(arguments, metadata);
+            functionCallIterator.setIsRDD(isRDD);
         } catch (ReflectiveOperationException e) {
             throw new UnknownFunctionCallException(identifier.getName(), arguments.size(), metadata);
         }
 
         if (!builtinFunction.getSignature().getReturnType().equals(mostGeneralSequenceType)) {
-            return new TypePromotionIterator(
+            TypePromotionIterator typePromotionIterator = new TypePromotionIterator(
                     functionCallIterator,
                     builtinFunction.getSignature().getReturnType(),
                     "Invalid return type for function " + identifier.getName() + ". ",
                     functionCallIterator.getMetadata()
             );
+            typePromotionIterator.setIsRDD(isRDD);
+            return typePromotionIterator;
         }
         return functionCallIterator;
     }

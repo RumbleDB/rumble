@@ -32,9 +32,15 @@ import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworVarDecl;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.ForClauseVar;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.GroupByClauseVar;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.LetClauseVar;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionCall;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpressionVar;
+import sparksoniq.jsoniq.runtime.iterator.RDDFunctionCallIterator;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.BuiltinFunction;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 import sparksoniq.semantics.StaticContext;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
@@ -182,4 +188,21 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
         return result;
     }
 
+    // region primary
+    @Override
+    public StaticContext visitFunctionCall(FunctionCall expression, StaticContext argument) {
+        String fnName = expression.getFunctionName();
+        int arity = expression.getArguments().size();
+        FunctionIdentifier identifier = new FunctionIdentifier(fnName, arity);
+
+        if (Functions.checkBuiltInFunctionExists(identifier)) {
+            BuiltinFunction builtinFunction = Functions.getBuiltInFunction(identifier);
+            Class<? extends RuntimeIterator> functionIteratorClass = builtinFunction.getFunctionIteratorClass();
+            if (RDDFunctionCallIterator.class.isAssignableFrom(functionIteratorClass)) {
+                expression.setIsRDD(true);
+            }
+        }
+        return super.visitFunctionCall(expression, argument);
+    }
+    // endregion
 }
