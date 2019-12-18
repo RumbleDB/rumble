@@ -6,16 +6,16 @@ public class BuiltinFunction {
 
     private FunctionIdentifier identifier;
     private final FunctionSignature signature;
-    private final Class<? extends RuntimeIterator> functionIterator;
+    private final Class<? extends RuntimeIterator> functionIteratorClass;
 
     BuiltinFunction(
             FunctionIdentifier identifier,
             FunctionSignature signature,
-            Class<? extends RuntimeIterator> functionIterator
+            Class<? extends RuntimeIterator> functionIteratorClass
     ) {
         this.identifier = identifier;
         this.signature = signature;
-        this.functionIterator = functionIterator;
+        this.functionIteratorClass = functionIteratorClass;
     }
 
     public FunctionIdentifier getIdentifier() {
@@ -26,8 +26,8 @@ public class BuiltinFunction {
         return signature;
     }
 
-    public Class<? extends RuntimeIterator> getFunctionIterator() {
-        return functionIterator;
+    public Class<? extends RuntimeIterator> getFunctionIteratorClass() {
+        return functionIteratorClass;
     }
 
 
@@ -36,12 +36,14 @@ public class BuiltinFunction {
         return instance instanceof BuiltinFunction
             && this.getIdentifier().equals(((BuiltinFunction) instance).getIdentifier())
             && this.getSignature().equals(((BuiltinFunction) instance).getSignature())
-            && this.getFunctionIterator().equals(((BuiltinFunction) instance).getFunctionIterator());
+            && this.getFunctionIteratorClass().equals(((BuiltinFunction) instance).getFunctionIteratorClass());
     }
 
     @Override
     public int hashCode() {
-        return this.getIdentifier().hashCode() + this.getSignature().hashCode() + this.getFunctionIterator().hashCode();
+        return this.getIdentifier().hashCode()
+            + this.getSignature().hashCode()
+            + this.getFunctionIteratorClass().hashCode();
     }
 
 }

@@ -545,7 +545,7 @@ public class Functions {
 
         RuntimeIterator functionCallIterator;
         try {
-            Constructor<? extends RuntimeIterator> constructor = builtinFunction.getFunctionIterator()
+            Constructor<? extends RuntimeIterator> constructor = builtinFunction.getFunctionIteratorClass()
                 .getConstructor(
                     List.class,
                     IteratorMetadata.class
