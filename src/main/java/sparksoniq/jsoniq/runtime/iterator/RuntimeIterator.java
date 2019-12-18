@@ -31,7 +31,7 @@ import org.rumbledb.api.Item;
 import sparksoniq.exceptions.InvalidArgumentTypeException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.OurBadException;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
+import sparksoniq.exceptions.SparkRuntimeException;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.ItemTypes;
@@ -210,7 +210,9 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         this.isRDD = isRDD;
     }
 
-    public abstract JavaRDD<Item> getRDD(DynamicContext context);
+    public JavaRDD<Item> getRDD(DynamicContext context) {
+        throw new SparkRuntimeException("RDDs are not implemented for the iterator", getMetadata());
+    }
 
     public boolean isDataFrame() {
         if (!isDataFrameIsSet) {
@@ -224,7 +226,9 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         this.isDataFrame = isDataFrame;
     }
 
-    public abstract Dataset<Row> getDataFrame(DynamicContext context);
+    public Dataset<Row> getDataFrame(DynamicContext context) {
+        throw new SparkRuntimeException("DataFrames are not implemented for the iterator", getMetadata());
+    }
 
     public abstract Item next();
 

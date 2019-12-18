@@ -20,13 +20,7 @@
 
 package sparksoniq.jsoniq.runtime.iterator;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.rumbledb.api.Item;
-import sparksoniq.exceptions.SparkRuntimeException;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
-import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
 
@@ -36,25 +30,5 @@ public abstract class LocalRuntimeIterator extends RuntimeIterator {
 
     protected LocalRuntimeIterator(List<RuntimeIterator> children, IteratorMetadata iteratorMetadata) {
         super(children, iteratorMetadata);
-    }
-
-    @Override
-    public boolean isRDD() {
-        return false;
-    }
-
-    @Override
-    public boolean isDataFrame() {
-        return false;
-    }
-
-    @Override
-    public JavaRDD<Item> getRDD(DynamicContext context) {
-        throw new SparkRuntimeException("RDDs are not implemented for the iterator", getMetadata());
-    }
-
-    @Override
-    public Dataset<Row> getDataFrame(DynamicContext context) {
-        throw new SparkRuntimeException("DataFrames are not implemented for the iterator", getMetadata());
     }
 }

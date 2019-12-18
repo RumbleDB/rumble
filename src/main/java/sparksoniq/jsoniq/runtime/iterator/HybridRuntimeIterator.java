@@ -137,11 +137,6 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         }
     }
 
-    @Override
-    public Dataset<Row> getDataFrame(DynamicContext context) {
-        throw new SparkRuntimeException("DataFrames are not implemented for the iterator", getMetadata());
-    }
-
     protected abstract JavaRDD<Item> getRDDAux(DynamicContext context);
 
     protected abstract boolean initIsRDD();
