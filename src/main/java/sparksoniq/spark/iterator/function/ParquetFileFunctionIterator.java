@@ -20,14 +20,11 @@
 
 package sparksoniq.spark.iterator.function;
 
-import org.apache.hadoop.mapred.InvalidInputException;
-import org.apache.spark.SparkException;
 import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import sparksoniq.exceptions.CannotRetrieveResourceException;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
-import sparksoniq.jsoniq.runtime.iterator.RDDRuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.RDDFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
@@ -35,7 +32,7 @@ import sparksoniq.spark.SparkSessionManager;
 
 import java.util.List;
 
-public class ParquetFileFunctionIterator extends RDDRuntimeIterator {
+public class ParquetFileFunctionIterator extends RDDFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
 
