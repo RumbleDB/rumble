@@ -281,6 +281,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                         )
                     );
 
+
             } else {
                 if (!columnNames.contains(expression.getVariableReference().getVariableName())) {
                     throw new InvalidGroupVariableException(
@@ -332,10 +333,10 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
 
         List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema);
         Map<String, List<String>> UDFcolumnsByType = DataFrameUtils.getColumnNamesByType(
-                inputSchema,
-                -1,
-                groupingVariables
-            );
+            inputSchema,
+            -1,
+            groupingVariables
+        );
 
         df.sparkSession()
             .udf()
@@ -366,7 +367,8 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             false,
             serializerUDFName,
             groupbyVariableNames,
-            parentProjection
+            parentProjection,
+            UDFcolumnsByType
         );
 
         return df.sparkSession()

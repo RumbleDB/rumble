@@ -265,7 +265,8 @@ public class DataFrameUtils {
             boolean trailingComma,
             String serializerUdfName,
             List<String> groupbyVariableNames,
-            Map<String, DynamicContext.VariableDependency> dependencies
+            Map<String, DynamicContext.VariableDependency> dependencies,
+            Map<String, List<String>> columnNamesByType
     ) {
         String[] columnNames = inputSchema.fieldNames();
         StringBuilder queryColumnString = new StringBuilder();
@@ -279,6 +280,10 @@ public class DataFrameUtils {
             if (groupbyVariableNames.contains(columnName)) {
                 groupingKey = true;
             }
+            boolean precomputedCount = false;
+            if (columnNamesByType.get("Long").contains(columnName)) {
+                precomputedCount = true;
+            }
 
             boolean applyCount = false;
             if (
@@ -287,7 +292,9 @@ public class DataFrameUtils {
             ) {
                 applyCount = true;
             }
-            if (applyCount) {
+            if (precomputedCount) {
+                queryColumnString.append("sum(`");
+            } else if (applyCount) {
                 queryColumnString.append("count(`");
             } else {
                 queryColumnString.append(serializerUdfName);
@@ -302,7 +309,7 @@ public class DataFrameUtils {
 
             queryColumnString.append(columnName);
 
-            if (applyCount) {
+            if (precomputedCount || applyCount) {
                 queryColumnString.append("`)");
             } else {
                 queryColumnString.append("`)");

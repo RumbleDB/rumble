@@ -105,10 +105,16 @@ public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
             // prepare dynamic context
             _context.removeAllVariables();
             for (int columnIndex = 0; columnIndex < _columnNamesByType.get("byte[]").size(); columnIndex++) {
-                _context.addVariableValue(_columnNamesByType.get("byte[]").get(columnIndex), _deserializedParams.get(columnIndex));
+                _context.addVariableValue(
+                    _columnNamesByType.get("byte[]").get(columnIndex),
+                    _deserializedParams.get(columnIndex)
+                );
             }
             for (int columnIndex = 0; columnIndex < _columnNamesByType.get("Long").size(); columnIndex++) {
-                _context.addVariableCount(_columnNamesByType.get("Long").get(columnIndex), _longParams.get(columnIndex));
+                _context.addVariableCount(
+                    _columnNamesByType.get("Long").get(columnIndex),
+                    _longParams.get(columnIndex)
+                );
             }
 
             // apply expression in the dynamic context
