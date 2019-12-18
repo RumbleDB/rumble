@@ -41,7 +41,6 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
-import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 import sparksoniq.spark.udf.GroupClauseCreateColumnsUDF;
 import sparksoniq.spark.udf.GroupClauseSerializeAggregateResultsUDF;
 import sparksoniq.spark.udf.LetClauseUDF;
@@ -335,7 +334,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         Map<String, List<String>> UDFcolumnsByType = DataFrameUtils.getColumnNamesByType(
                 inputSchema,
                 -1,
-                _dependencies
+                groupingVariables
             );
 
         df.sparkSession()

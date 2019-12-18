@@ -23,7 +23,6 @@ package sparksoniq.spark.udf;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.api.java.UDF2;
 import org.rumbledb.api.Item;
 import scala.collection.mutable.WrappedArray;
@@ -42,7 +41,7 @@ public class ForClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
      *
      */
     private static final long serialVersionUID = 1L;
-    Map<String, List<String>> _columnNamesByType;
+    private Map<String, List<String>> _columnNamesByType;
     private RuntimeIterator _expression;
     private List<List<Item>> _deserializedParams;
     private List<Item> _longParams;

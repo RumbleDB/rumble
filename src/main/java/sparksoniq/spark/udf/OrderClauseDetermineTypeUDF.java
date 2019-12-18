@@ -22,7 +22,6 @@ package sparksoniq.spark.udf;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
-import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.api.java.UDF2;
 import org.rumbledb.api.Item;
 import scala.collection.mutable.WrappedArray;
@@ -43,7 +42,7 @@ import java.util.TreeMap;
 public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, List<String>> {
     private static final long serialVersionUID = 1L;
     private Map<String, DynamicContext.VariableDependency> _dependencies;
-    Map<String, List<String>> _columnNamesByType;
+    private Map<String, List<String>> _columnNamesByType;
     private List<OrderByClauseSparkIteratorExpression> _expressions;
     private List<List<Item>> _deserializedParams;
     private List<Item> _longParams;

@@ -41,7 +41,7 @@ public class LetClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
     private static final long serialVersionUID = 1L;
     private RuntimeIterator _expression;
 
-    Map<String, List<String>> _columnNamesByType;
+    private Map<String, List<String>> _columnNamesByType;
 
     private List<List<Item>> _deserializedParams;
     private List<Item> _longParams;

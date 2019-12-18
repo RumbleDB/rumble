@@ -22,7 +22,6 @@ package sparksoniq.spark.udf;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
-import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.api.java.UDF2;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
@@ -42,7 +41,7 @@ public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<L
     private RuntimeIterator _expression;
     private Map<String, DynamicContext.VariableDependency> _dependencies;
 
-    Map<String, List<String>> _columnNamesByType;
+    private Map<String, List<String>> _columnNamesByType;
 
     private List<List<Item>> _deserializedParams;
     private List<Item> _longParams;

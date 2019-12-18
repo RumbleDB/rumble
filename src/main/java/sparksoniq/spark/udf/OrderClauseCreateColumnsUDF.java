@@ -24,7 +24,6 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
-import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.api.java.UDF2;
 import org.joda.time.Instant;
 import org.rumbledb.api.Item;
@@ -50,7 +49,7 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
     private List<OrderByClauseSparkIteratorExpression> _expressions;
     private Map<String, DynamicContext.VariableDependency> _dependencies;
 
-    Map<String, List<String>> _columnNamesByType;
+    private Map<String, List<String>> _columnNamesByType;
     private Map<Integer, String> _allColumnTypes;
 
     private List<List<Item>> _deserializedParams;
