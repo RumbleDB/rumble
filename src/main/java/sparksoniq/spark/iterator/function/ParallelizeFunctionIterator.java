@@ -24,7 +24,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnexpectedTypeException;
-import sparksoniq.jsoniq.runtime.iterator.RDDFunctionCallIterator;
+import sparksoniq.jsoniq.runtime.iterator.RDDRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
@@ -33,7 +33,7 @@ import sparksoniq.spark.SparkSessionManager;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ParallelizeFunctionIterator extends RDDFunctionCallIterator {
+public class ParallelizeFunctionIterator extends RDDRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 

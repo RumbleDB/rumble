@@ -27,7 +27,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import sparksoniq.exceptions.CannotRetrieveResourceException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
-import sparksoniq.jsoniq.runtime.iterator.RDDFunctionCallIterator;
+import sparksoniq.jsoniq.runtime.iterator.DataFrameRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
@@ -35,17 +35,12 @@ import sparksoniq.spark.SparkSessionManager;
 
 import java.util.List;
 
-public class StructuredJsonFileFunctionIterator extends RDDFunctionCallIterator {
+public class StructuredJsonFileFunctionIterator extends DataFrameRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
     public StructuredJsonFileFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
         super(arguments, iteratorMetadata);
-    }
-
-    @Override
-    public boolean isDataFrame() {
-        return true;
     }
 
     @Override

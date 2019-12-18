@@ -20,20 +20,20 @@
 
 package sparksoniq.jsoniq.runtime.iterator;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.rumbledb.api.Item;
-import sparksoniq.exceptions.SparkRuntimeException;
-import sparksoniq.io.json.JiqsItemParser;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
-import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
 
-public abstract class RDDFunctionCallIterator extends RDDRuntimeIterator {
+public abstract class DataFrameRuntimeIterator extends RDDRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
-    protected RDDFunctionCallIterator(List<RuntimeIterator> children, IteratorMetadata iteratorMetadata) {
+    protected DataFrameRuntimeIterator(List<RuntimeIterator> children, IteratorMetadata iteratorMetadata) {
         super(children, iteratorMetadata);
+    }
+
+    @Override
+    public boolean isDataFrame() {
+        return true;
     }
 }

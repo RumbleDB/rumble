@@ -36,7 +36,8 @@ import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionCall;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpressionVar;
-import sparksoniq.jsoniq.runtime.iterator.RDDFunctionCallIterator;
+import sparksoniq.jsoniq.runtime.iterator.DataFrameRuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.RDDRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.BuiltinFunction;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
@@ -45,6 +46,8 @@ import sparksoniq.semantics.StaticContext;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
+import sparksoniq.spark.iterator.function.ParquetFileFunctionIterator;
+import sparksoniq.spark.iterator.function.StructuredJsonFileFunctionIterator;
 
 public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<StaticContext> {
 
@@ -92,9 +95,9 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
         StaticContext result = visitFlowrVarDeclaration(expression, argument);
         if (expression.getPositionalVariableReference() != null) {
             result.addVariable(
-                expression.getPositionalVariableReference().getVariableName(),
-                new SequenceType(new ItemType(ItemTypes.IntegerItem)),
-                expression.getMetadata()
+                    expression.getPositionalVariableReference().getVariableName(),
+                    new SequenceType(new ItemType(ItemTypes.IntegerItem)),
+                    expression.getMetadata()
             );
         }
         return result;
@@ -121,9 +124,9 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
     public StaticContext visitCountClause(CountClause expression, StaticContext argument) {
         StaticContext result = new StaticContext(argument);
         result.addVariable(
-            expression.getCountVariable().getVariableName(),
-            new SequenceType(new ItemType(ItemTypes.IntegerItem), SequenceType.Arity.One),
-            expression.getMetadata()
+                expression.getCountVariable().getVariableName(),
+                new SequenceType(new ItemType(ItemTypes.IntegerItem), SequenceType.Arity.One),
+                expression.getMetadata()
         );
         return result;
     }
@@ -132,8 +135,8 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
         StaticContext result = new StaticContext(argument);
         // TODO for now we only suppot as/default, no inference, flags
         SequenceType type = expression.getAsSequence() == null
-            ? new SequenceType()
-            : expression.getAsSequence().getSequence();
+                ? new SequenceType()
+                : expression.getAsSequence().getSequence();
         result.addVariable(expression.getVariableReference().getVariableName(), type, expression.getMetadata());
         return result;
     }
@@ -198,8 +201,13 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
         if (Functions.checkBuiltInFunctionExists(identifier)) {
             BuiltinFunction builtinFunction = Functions.getBuiltInFunction(identifier);
             Class<? extends RuntimeIterator> functionIteratorClass = builtinFunction.getFunctionIteratorClass();
-            if (RDDFunctionCallIterator.class.isAssignableFrom(functionIteratorClass)) {
+            // if subclass of RDDRuntimeIterator
+            if (RDDRuntimeIterator.class.isAssignableFrom(functionIteratorClass)) {
                 expression.setIsRDD(true);
+                // if subclass of DataFrameRuntimeIterator
+                if (DataFrameRuntimeIterator.class.isAssignableFrom(functionIteratorClass)) {
+                    expression.setIsDataFrame(true);
+                }
             }
         }
         return super.visitFunctionCall(expression, argument);
