@@ -534,6 +534,7 @@ public class Functions {
             FunctionIdentifier identifier,
             List<RuntimeIterator> arguments,
             boolean isRDD,
+            boolean isDataFrame,
             IteratorMetadata metadata
     ) {
         BuiltinFunction builtinFunction = builtInFunctions.get(identifier);
@@ -561,6 +562,7 @@ public class Functions {
                 );
             functionCallIterator = constructor.newInstance(arguments, metadata);
             functionCallIterator.setIsRDD(isRDD);
+            functionCallIterator.setIsDataFrame(isDataFrame);
         } catch (ReflectiveOperationException e) {
             throw new UnknownFunctionCallException(identifier.getName(), arguments.size(), metadata);
         }
@@ -573,6 +575,7 @@ public class Functions {
                     functionCallIterator.getMetadata()
             );
             typePromotionIterator.setIsRDD(isRDD);
+            typePromotionIterator.setIsDataFrame(isDataFrame);
             return typePromotionIterator;
         }
         return functionCallIterator;
