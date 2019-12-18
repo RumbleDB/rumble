@@ -45,6 +45,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     protected boolean _isOpen;
     protected RuntimeTupleIterator _child;
     protected DynamicContext _currentDynamicContext;
+    private boolean isDataFrame;
 
     protected RuntimeTupleIterator(RuntimeTupleIterator child, IteratorMetadata metadata) {
         this.metadata = metadata;
@@ -104,7 +105,13 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         return metadata;
     }
 
-    public abstract boolean isDataFrame();
+    public boolean isDataFrame() {
+        return isDataFrame;
+    }
+
+    public void setIsDataFrame(boolean isDataFrame) {
+        this.isDataFrame = isDataFrame;
+    }
 
     /**
      * Obtains the dataframe from the child clause.
