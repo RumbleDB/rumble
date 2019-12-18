@@ -33,16 +33,35 @@ import java.util.function.Predicate;
 public abstract class ExpressionOrClause {
 
     private ExpressionMetadata metadata;
-
-    // Visitor pattern implementation
+    private boolean isRDD;
+    private boolean isDataFrame;
 
     protected ExpressionOrClause() {
     }
 
     protected ExpressionOrClause(ExpressionMetadata metadata) {
         this.metadata = metadata;
+        this.isRDD = false;
+        this.isDataFrame = false;
     }
 
+    public boolean isRDD() {
+        return isRDD;
+    }
+
+    public void setIsRDD(boolean isRDD) {
+        this.isRDD = isRDD;
+    }
+
+    public boolean isDataFrame() {
+        return isDataFrame;
+    }
+
+    public void setIsDataFrame(boolean isDataFrame) {
+        this.isDataFrame = isDataFrame;
+    }
+
+    // Visitor pattern implementation
     public abstract List<ExpressionOrClause> getDescendants(boolean depthSearch);
 
     /**
@@ -50,7 +69,6 @@ public abstract class ExpressionOrClause {
      */
     public abstract <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument);
 
-    // serialization
     public abstract String serializationString(boolean prefix);
 
     public final List<ExpressionOrClause> getDescendants() {
