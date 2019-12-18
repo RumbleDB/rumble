@@ -51,8 +51,12 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     protected List<RuntimeIterator> _children;
     protected transient DynamicContext _currentDynamicContextForLocalExecution;
     private IteratorMetadata metadata;
+
     private boolean isRDD;
+    private boolean isRDDIsSet;
     private boolean isDataFrame;
+    private boolean isDataFrameIsSet;
+
 
     public RuntimeIterator() {
     }
@@ -195,20 +199,28 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     }
 
     public boolean isRDD() {
+        if (!isRDDIsSet) {
+            throw new RuntimeException("isRDD field accessed in iterator without being set.");
+        }
         return isRDD;
     }
 
     public void setIsRDD(boolean isRDD) {
+        this.isRDDIsSet = true;
         this.isRDD = isRDD;
     }
 
     public abstract JavaRDD<Item> getRDD(DynamicContext context);
 
     public boolean isDataFrame() {
+        if (!isDataFrameIsSet) {
+            throw new RuntimeException("isDataFrame field accessed in iterator without being set.");
+        }
         return isDataFrame;
     }
 
     public void setIsDataFrame(boolean isDataFrame) {
+        this.isDataFrameIsSet = true;
         this.isDataFrame = isDataFrame;
     }
 

@@ -46,6 +46,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     protected RuntimeTupleIterator _child;
     protected DynamicContext _currentDynamicContext;
     private boolean isDataFrame;
+    private boolean isDataFrameIsSet;
 
     protected RuntimeTupleIterator(RuntimeTupleIterator child, IteratorMetadata metadata) {
         this.metadata = metadata;
@@ -106,10 +107,14 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     }
 
     public boolean isDataFrame() {
+        if (!isDataFrameIsSet) {
+            throw new RuntimeException("isDataFrame field accessed in iterator without being set.");
+        }
         return isDataFrame;
     }
 
     public void setIsDataFrame(boolean isDataFrame) {
+        this.isDataFrameIsSet = true;
         this.isDataFrame = isDataFrame;
     }
 
