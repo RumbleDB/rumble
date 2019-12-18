@@ -48,7 +48,7 @@ public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
     ) {
         super(null, iteratorMetadata);
         this._operator = operator;
-        children.forEach(c -> this._children.add(c));
+        this._children.addAll(children);
         this._evaluationExpression = evaluationExpression;
         _children.add(_evaluationExpression);
     }

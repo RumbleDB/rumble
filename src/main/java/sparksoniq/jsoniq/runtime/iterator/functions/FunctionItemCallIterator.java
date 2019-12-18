@@ -176,7 +176,10 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 RDDArgumentValues,
                 DFArgumentValues
         );
-        return new FunctionRuntimeIterator(partiallyAppliedFunction, getMetadata());
+        FunctionRuntimeIterator iterator = new FunctionRuntimeIterator(partiallyAppliedFunction, getMetadata());
+        iterator.setIsRDD(false);
+
+        return iterator;
     }
 
     private DynamicContext createNewDynamicContextWithArguments(DynamicContext context) {
