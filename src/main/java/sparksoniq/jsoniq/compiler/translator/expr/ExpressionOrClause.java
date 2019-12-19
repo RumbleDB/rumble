@@ -21,12 +21,6 @@
 package sparksoniq.jsoniq.compiler.translator.expr;
 
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-import sparksoniq.jsoniq.runtime.iterator.DataFrameRuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.RDDRuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.base.BuiltinFunction;
-import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
-import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
@@ -72,7 +66,6 @@ public abstract class ExpressionOrClause {
         return this.isDataFrame;
     }
 
-    // TODO: make this method abstract
     protected void initIsRDD() {
         this.isRDD = false;
         this.isDataFrame = false;
