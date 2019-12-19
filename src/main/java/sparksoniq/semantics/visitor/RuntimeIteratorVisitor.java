@@ -496,7 +496,10 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 iteratorMetadata
             );
         }
-        return new StaticUserDefinedFunctionCallIterator(identifier, arguments, iteratorMetadata);
+        RuntimeIterator iterator = new StaticUserDefinedFunctionCallIterator(identifier, arguments, iteratorMetadata);
+        iterator.setIsRDD(expression.isRDD());
+        iterator.setIsDataFrame(expression.isDataFrame());
+        return iterator;
     }
 
     @Override
@@ -518,7 +521,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         throw new UnknownFunctionCallException(
                 identifier.getName(),
                 identifier.getArity(),
-                createIteratorMetadata(expression)
+                expression.getMetadata()
         );
     }
     // endregion

@@ -20,6 +20,7 @@
 
 package sparksoniq.jsoniq.compiler.translator.expr.primary;
 
+import sparksoniq.exceptions.UnknownFunctionCallException;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
@@ -30,6 +31,7 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.BuiltinFunction;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
@@ -90,7 +92,17 @@ public class FunctionCall extends PrimaryExpression {
                 // Local function call -> isRDD & isDF are false
             }
         }
-        // TODO: Handle staticUserDefinedFunctionCalls
+        else if (Functions.checkUserDefinedFunctionIsRDDExists(identifier)) {
+            this.isRDD = Functions.getUserDefinedFunctionIsRDD(identifier, getMetadata());
+            this.isDataFrame = Functions.getUserDefinedFunctionIsDataFrame(identifier, getMetadata());
+        }
+        else {
+            throw new UnknownFunctionCallException(
+                    identifier.getName(),
+                    identifier.getArity(),
+                    this.getMetadata()
+            );
+        }
     }
 
     @Override

@@ -568,7 +568,7 @@ public class Functions {
             functionCallIterator.setIsRDD(isRDD);
             functionCallIterator.setIsDataFrame(isDataFrame);
         } catch (ReflectiveOperationException e) {
-            throw new UnknownFunctionCallException(identifier.getName(), arguments.size(), metadata);
+            throw new UnknownFunctionCallException(identifier.getName(), arguments.size(), metadata.getExpressionMetadata());
         }
 
         if (!builtinFunction.getSignature().getReturnType().equals(mostGeneralSequenceType)) {
@@ -592,6 +592,36 @@ public class Functions {
     ) {
         if (Functions.checkUserDefinedFunctionExists(identifier)) {
             return buildUserDefinedFunctionCallIterator(getUserDefinedFunction(identifier), metadata, arguments);
+        }
+        throw new UnknownFunctionCallException(
+                identifier.getName(),
+                identifier.getArity(),
+                metadata.getExpressionMetadata()
+        );
+
+    }
+
+    public static boolean getUserDefinedFunctionIsRDD(
+            FunctionIdentifier identifier,
+            ExpressionMetadata metadata
+    ) {
+        if (userDefinedFunctionsIsRDD.containsKey(identifier)) {
+            return userDefinedFunctionsIsRDD.get(identifier);
+        }
+        throw new UnknownFunctionCallException(
+                identifier.getName(),
+                identifier.getArity(),
+                metadata
+        );
+
+    }
+
+    public static boolean getUserDefinedFunctionIsDataFrame(
+            FunctionIdentifier identifier,
+            ExpressionMetadata metadata
+    ) {
+        if (userDefinedFunctionsIsDataFrame.containsKey(identifier)) {
+            return userDefinedFunctionsIsDataFrame.get(identifier);
         }
         throw new UnknownFunctionCallException(
                 identifier.getName(),

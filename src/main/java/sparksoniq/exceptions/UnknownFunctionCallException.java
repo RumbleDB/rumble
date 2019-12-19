@@ -21,13 +21,14 @@
 package sparksoniq.exceptions;
 
 import sparksoniq.exceptions.codes.ErrorCodes;
+import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class UnknownFunctionCallException extends SparksoniqRuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    public UnknownFunctionCallException(String fnName, int arity, IteratorMetadata iteratorMetadata) {
+    public UnknownFunctionCallException(String fnName, int arity, ExpressionMetadata metadata) {
         super(
             "Undefined function call; Entered function name and arity doesn't match a defined function signature: \""
                 +
@@ -36,7 +37,7 @@ public class UnknownFunctionCallException extends SparksoniqRuntimeException {
                 + arity
                 + " parameters.",
             ErrorCodes.InvalidFunctionCallErrorCode,
-            iteratorMetadata.getExpressionMetadata()
+            metadata
         );
     }
 }
