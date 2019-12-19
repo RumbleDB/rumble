@@ -33,7 +33,6 @@ import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
-import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 import sparksoniq.spark.udf.WhereClauseUDF;
 
 import java.util.HashSet;
@@ -135,21 +134,29 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         Dataset<Row> df = _child.getDataFrame(context, getProjection(parentProjection));
         StructType inputSchema = df.schema();
 
-        List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, _dependencies);
+        Map<String, List<String>> UDFcolumnsByType = DataFrameUtils.getColumnNamesByType(
+            inputSchema,
+            -1,
+            _dependencies
+        );
+
         df.sparkSession()
             .udf()
             .register(
                 "whereClauseUDF",
-                new WhereClauseUDF(_expression, context, inputSchema, UDFcolumns),
+                new WhereClauseUDF(_expression, context, inputSchema, UDFcolumnsByType),
                 DataTypes.BooleanType
             );
 
-        String udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
+        String UDFParameters = DataFrameUtils.getUDFParameters(UDFcolumnsByType);
 
         df.createOrReplaceTempView("input");
         df = df.sparkSession()
             .sql(
-                String.format("select * from input where whereClauseUDF(array(%s)) = 'true'", udfSQL)
+                String.format(
+                    "select * from input where whereClauseUDF(%s) = 'true'",
+                    UDFParameters
+                )
             );
         return df;
     }

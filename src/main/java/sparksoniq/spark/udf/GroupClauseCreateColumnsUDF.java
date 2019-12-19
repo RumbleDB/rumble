@@ -24,11 +24,12 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
-import org.apache.spark.sql.api.java.UDF1;
+import org.apache.spark.sql.api.java.UDF2;
 import org.joda.time.Instant;
 import org.rumbledb.api.Item;
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.exceptions.UnexpectedTypeException;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
@@ -36,14 +37,16 @@ import sparksoniq.spark.DataFrameUtils;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
-public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, Row> {
+public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, Row> {
 
     private static final long serialVersionUID = 1L;
     private List<VariableReferenceIterator> _expressions;
-    private List<String> _inputColumnNames;
+    private Map<String, List<String>> _columnNamesByType;
 
     private List<List<Item>> _deserializedParams;
+    private List<Item> _longParams;
     private DynamicContext _parentContext;
     private DynamicContext _context;
     private List<Object> _results;
@@ -54,12 +57,13 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, R
     public GroupClauseCreateColumnsUDF(
             List<VariableReferenceIterator> expressions,
             DynamicContext context,
-            List<String> inputColumnNames
+            Map<String, List<String>> columnNamesByType
     ) {
         _expressions = expressions;
-        _inputColumnNames = inputColumnNames;
+        _columnNamesByType = columnNamesByType;
 
         _deserializedParams = new ArrayList<>();
+        _longParams = new ArrayList<>();
         _parentContext = context;
         _context = new DynamicContext(_parentContext);
         _results = new ArrayList<>();
@@ -71,11 +75,19 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, R
     }
 
     @Override
-    public Row call(WrappedArray<byte[]> wrappedParameters) {
+    public Row call(WrappedArray<byte[]> wrappedParameters, WrappedArray<Long> wrappedParametersLong) {
         _deserializedParams.clear();
         _results.clear();
 
         DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
+
+        // Long parameters correspond to pre-computed counts, when a materialization of the
+        // actual sequence was avoided upfront.
+        Object[] longParams = (Object[]) wrappedParametersLong.array();
+        for (Object longParam : longParams) {
+            Item count = ItemFactory.getInstance().createIntegerItem(((Long) longParam).intValue());
+            _longParams.add(count);
+        }
 
         for (VariableReferenceIterator expression : _expressions) {
             // nulls, true, false and empty sequences have special grouping captured in the first grouping column.
@@ -92,8 +104,17 @@ public class GroupClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, R
 
             // prepare dynamic context
             _context.removeAllVariables();
-            for (int columnIndex = 0; columnIndex < _inputColumnNames.size(); columnIndex++) {
-                _context.addVariableValue(_inputColumnNames.get(columnIndex), _deserializedParams.get(columnIndex));
+            for (int columnIndex = 0; columnIndex < _columnNamesByType.get("byte[]").size(); columnIndex++) {
+                _context.addVariableValue(
+                    _columnNamesByType.get("byte[]").get(columnIndex),
+                    _deserializedParams.get(columnIndex)
+                );
+            }
+            for (int columnIndex = 0; columnIndex < _columnNamesByType.get("Long").size(); columnIndex++) {
+                _context.addVariableCount(
+                    _columnNamesByType.get("Long").get(columnIndex),
+                    _longParams.get(columnIndex)
+                );
             }
 
             // apply expression in the dynamic context

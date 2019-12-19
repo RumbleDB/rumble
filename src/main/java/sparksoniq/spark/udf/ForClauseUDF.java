@@ -23,9 +23,10 @@ package sparksoniq.spark.udf;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import org.apache.spark.sql.api.java.UDF1;
+import org.apache.spark.sql.api.java.UDF2;
 import org.rumbledb.api.Item;
 import scala.collection.mutable.WrappedArray;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
@@ -33,15 +34,17 @@ import sparksoniq.spark.DataFrameUtils;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
-public class ForClauseUDF implements UDF1<WrappedArray<byte[]>, List<byte[]>> {
+public class ForClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, List<byte[]>> {
     /**
      *
      */
     private static final long serialVersionUID = 1L;
-    private List<String> _columnNames;
+    private Map<String, List<String>> _columnNamesByType;
     private RuntimeIterator _expression;
     private List<List<Item>> _deserializedParams;
+    private List<Item> _longParams;
     private DynamicContext _context;
     private List<Item> _nextResult;
     private List<byte[]> _results;
@@ -53,12 +56,13 @@ public class ForClauseUDF implements UDF1<WrappedArray<byte[]>, List<byte[]>> {
     public ForClauseUDF(
             RuntimeIterator expression,
             DynamicContext context,
-            List<String> columnNames
+            Map<String, List<String>> columnNamesByType
     ) {
         _expression = expression;
-        _columnNames = columnNames;
+        _columnNamesByType = columnNamesByType;
 
         _deserializedParams = new ArrayList<>();
+        _longParams = new ArrayList<>();
 
         _context = new DynamicContext(context);
         _nextResult = new ArrayList<>();
@@ -73,14 +77,28 @@ public class ForClauseUDF implements UDF1<WrappedArray<byte[]>, List<byte[]>> {
 
 
     @Override
-    public List<byte[]> call(WrappedArray<byte[]> wrappedParameters) {
+    public List<byte[]> call(WrappedArray<byte[]> wrappedParameters, WrappedArray<Long> wrappedParametersLong) {
         _deserializedParams.clear();
         _context.removeAllVariables();
         _results.clear();
 
         DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
 
-        DataFrameUtils.prepareDynamicContext(_context, _columnNames, _deserializedParams);
+        // Long parameters correspond to pre-computed counts, when a materialization of the
+        // actual sequence was avoided upfront.
+        Object[] longParams = (Object[]) wrappedParametersLong.array();
+        for (Object longParam : longParams) {
+            Item count = ItemFactory.getInstance().createIntegerItem(((Long) longParam).intValue());
+            _longParams.add(count);
+        }
+
+        DataFrameUtils.prepareDynamicContext(
+            _context,
+            _columnNamesByType.get("byte[]"),
+            _columnNamesByType.get("Long"),
+            _deserializedParams,
+            _longParams
+        );
 
         // apply expression in the dynamic context
         _expression.open(_context);

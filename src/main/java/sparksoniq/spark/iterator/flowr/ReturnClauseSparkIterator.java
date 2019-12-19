@@ -34,7 +34,6 @@ import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.closures.ReturnFlatMapClosure;
-import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 
 import java.util.Collections;
 import java.util.Map;

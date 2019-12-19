@@ -41,7 +41,6 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
-import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
 import sparksoniq.spark.udf.GroupClauseCreateColumnsUDF;
 import sparksoniq.spark.udf.GroupClauseSerializeAggregateResultsUDF;
 import sparksoniq.spark.udf.LetClauseUDF;
@@ -254,12 +253,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 int duplicateVariableIndex = columnNames.indexOf(newVariableName);
 
                 List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
-                List<String> UDFbinarycolumns = DataFrameUtils.getColumnNamesExceptPrecomputedCounts(
-                    inputSchema,
-                    -1,
-                    _dependencies
-                );
-                List<String> UDFlongcolumns = DataFrameUtils.getPrecomputedCountColumnNames(
+                Map<String, List<String>> UDFcolumnsByType = DataFrameUtils.getColumnNamesByType(
                     inputSchema,
                     -1,
                     _dependencies
@@ -269,25 +263,24 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                     .udf()
                     .register(
                         "letClauseUDF",
-                        new LetClauseUDF(newVariableExpression, context, UDFbinarycolumns, UDFlongcolumns),
+                        new LetClauseUDF(newVariableExpression, context, UDFcolumnsByType),
                         DataTypes.BinaryType
                     );
 
                 String selectSQL = DataFrameUtils.getSQL(allColumns, true);
-                String udfBinarySQL = DataFrameUtils.getSQL(UDFbinarycolumns, false);
-                String udfLongSQL = DataFrameUtils.getSQL(UDFlongcolumns, false);
+                String UDFParameters = DataFrameUtils.getUDFParameters(UDFcolumnsByType);
 
                 df.createOrReplaceTempView("input");
                 df = df.sparkSession()
                     .sql(
                         String.format(
-                            "select %s letClauseUDF(array(%s), array(%s)) as `%s` from input",
+                            "select %s letClauseUDF(%s) as `%s` from input",
                             selectSQL,
-                            udfBinarySQL,
-                            udfLongSQL,
+                            UDFParameters,
                             newVariableName
                         )
                     );
+
 
             } else {
                 if (!columnNames.contains(expression.getVariableReference().getVariableName())) {
@@ -339,23 +332,28 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             );
 
         List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema);
-        List<String> UDFcolumns = DataFrameUtils.getColumnNames(inputSchema, -1, groupingVariables);
+        Map<String, List<String>> UDFcolumnsByType = DataFrameUtils.getColumnNamesByType(
+            inputSchema,
+            -1,
+            groupingVariables
+        );
 
         df.sparkSession()
             .udf()
             .register(
                 "createGroupingColumns",
-                new GroupClauseCreateColumnsUDF(variableAccessExpressions, context, UDFcolumns),
+                new GroupClauseCreateColumnsUDF(variableAccessExpressions, context, UDFcolumnsByType),
                 DataTypes.createStructType(typedFields)
             );
 
         String selectSQL = DataFrameUtils.getSQL(allColumns, true);
-        String udfSQL = DataFrameUtils.getSQL(UDFcolumns, false);
+
+        String UDFParameters = DataFrameUtils.getUDFParameters(UDFcolumnsByType);
 
         String createColumnsSQL = String.format(
-            "select %s createGroupingColumns(array(%s)) as `%s` from input",
+            "select %s createGroupingColumns(%s) as `%s` from input",
             selectSQL,
-            udfSQL,
+            UDFParameters,
             appendedGroupingColumnsName
         );
 
@@ -369,7 +367,8 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             false,
             serializerUDFName,
             groupbyVariableNames,
-            parentProjection
+            parentProjection,
+            UDFcolumnsByType
         );
 
         return df.sparkSession()
@@ -451,6 +450,6 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 }
             }
         }
-        return parentProjection;
+        return projection;
     }
 }

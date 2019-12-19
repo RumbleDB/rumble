@@ -24,12 +24,13 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
-import org.apache.spark.sql.api.java.UDF1;
+import org.apache.spark.sql.api.java.UDF2;
 import org.joda.time.Instant;
 import org.rumbledb.api.Item;
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.NullItem;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.ItemTypes;
@@ -42,16 +43,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, Row> {
+public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, Row> {
 
     private static final long serialVersionUID = 1L;
     private List<OrderByClauseSparkIteratorExpression> _expressions;
     private Map<String, DynamicContext.VariableDependency> _dependencies;
 
-    private List<String> _columnNames;
+    private Map<String, List<String>> _columnNamesByType;
     private Map<Integer, String> _allColumnTypes;
 
     private List<List<Item>> _deserializedParams;
+    private List<Item> _longParams;
     private DynamicContext _parentContext;
     private DynamicContext _context;
     private List<Object> _results;
@@ -63,12 +65,13 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, R
             List<OrderByClauseSparkIteratorExpression> expressions,
             DynamicContext context,
             Map<Integer, String> allColumnTypes,
-            List<String> columnNames
+            Map<String, List<String>> columnNamesByType
     ) {
         _expressions = expressions;
         _allColumnTypes = allColumnTypes;
 
         _deserializedParams = new ArrayList<>();
+        _longParams = new ArrayList<>();
         _parentContext = context;
         _context = new DynamicContext(_parentContext);
         _results = new ArrayList<>();
@@ -77,7 +80,7 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, R
         for (OrderByClauseSparkIteratorExpression expression : _expressions) {
             _dependencies.putAll(expression.getExpression().getVariableDependencies());
         }
-        _columnNames = columnNames;
+        _columnNamesByType = columnNamesByType;
 
         _kryo = new Kryo();
         _kryo.setReferences(false);
@@ -86,14 +89,28 @@ public class OrderClauseCreateColumnsUDF implements UDF1<WrappedArray<byte[]>, R
     }
 
     @Override
-    public Row call(WrappedArray<byte[]> wrappedParameters) {
+    public Row call(WrappedArray<byte[]> wrappedParameters, WrappedArray<Long> wrappedParametersLong) {
         _deserializedParams.clear();
         _context.removeAllVariables();
         _results.clear();
 
         DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
 
-        DataFrameUtils.prepareDynamicContext(_context, _columnNames, _deserializedParams);
+        // Long parameters correspond to pre-computed counts, when a materialization of the
+        // actual sequence was avoided upfront.
+        Object[] longParams = (Object[]) wrappedParametersLong.array();
+        for (Object longParam : longParams) {
+            Item count = ItemFactory.getInstance().createIntegerItem(((Long) longParam).intValue());
+            _longParams.add(count);
+        }
+
+        DataFrameUtils.prepareDynamicContext(
+            _context,
+            _columnNamesByType.get("byte[]"),
+            _columnNamesByType.get("Long"),
+            _deserializedParams,
+            _longParams
+        );
 
         for (int expressionIndex = 0; expressionIndex < _expressions.size(); expressionIndex++) {
             OrderByClauseSparkIteratorExpression expression = _expressions.get(expressionIndex);

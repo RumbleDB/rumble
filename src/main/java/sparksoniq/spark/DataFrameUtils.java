@@ -28,7 +28,9 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.expressions.UserDefinedFunction;
 import org.apache.spark.sql.expressions.Window;
+import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import scala.collection.mutable.WrappedArray;
@@ -155,56 +157,41 @@ public class DataFrameUtils {
      * @param dependencies restriction of the results to within a specified set
      * @return list of SQL column names in the schema
      */
-    public static List<String> getColumnNamesExceptPrecomputedCounts(
+    public static Map<String, List<String>> getColumnNamesByType(
             StructType inputSchema,
             int duplicateVariableIndex,
             Map<String, DynamicContext.VariableDependency> dependencies
     ) {
-        List<String> result = new ArrayList<>();
-        String[] columnNames = inputSchema.fieldNames();
-        for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
+        Map<String, List<String>> result = new HashMap<>();
+        result.put("byte[]", new ArrayList<>());
+        result.put("Long", new ArrayList<>());
+        StructField[] columns = inputSchema.fields();
+        for (int columnIndex = 0; columnIndex < columns.length; columnIndex++) {
             if (columnIndex == duplicateVariableIndex) {
                 continue;
             }
-            String var = columnNames[columnIndex];
-            if (
-                dependencies == null
-                    || (dependencies.containsKey(var)
-                        && !dependencies.get(var).equals(DynamicContext.VariableDependency.COUNT))
-            ) {
-                result.add(columnNames[columnIndex]);
+            String var = columns[columnIndex].name();
+            DataType type = columns[columnIndex].dataType();
+            if (type.equals(DataTypes.BinaryType)) {
+                result.get("byte[]").add(var);
+            } else if (type.equals(DataTypes.LongType)) {
+                result.get("Long").add(var);
             }
         }
         return result;
     }
 
-    /**
-     * @param inputSchema schema specifies the columns to be used in the query
-     * @param duplicateVariableIndex enables skipping a variable
-     * @param dependencies restriction of the results to within a specified set
-     * @return list of SQL column names in the schema
-     */
-    public static List<String> getPrecomputedCountColumnNames(
-            StructType inputSchema,
-            int duplicateVariableIndex,
-            Map<String, DynamicContext.VariableDependency> dependencies
+    public static String getUDFParameters(
+            Map<String, List<String>> columnNamesByType
     ) {
-        List<String> result = new ArrayList<>();
-        String[] columnNames = inputSchema.fieldNames();
-        for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
-            if (columnIndex == duplicateVariableIndex) {
-                continue;
-            }
-            String var = columnNames[columnIndex];
-            if (
-                dependencies != null
-                    && dependencies.containsKey(var)
-                    && dependencies.get(var).equals(DynamicContext.VariableDependency.COUNT)
-            ) {
-                result.add(columnNames[columnIndex]);
-            }
-        }
-        return result;
+        String udfBinarySQL = DataFrameUtils.getSQL(columnNamesByType.get("byte[]"), false);
+        String udfLongSQL = DataFrameUtils.getSQL(columnNamesByType.get("Long"), false);
+
+        return String.format(
+            "array(%s), array(%s)",
+            udfBinarySQL,
+            udfLongSQL
+        );
     }
 
     /**
@@ -229,13 +216,13 @@ public class DataFrameUtils {
 
     public static void prepareDynamicContext(
             DynamicContext context,
-            List<String> binaryColumnNames,
+            List<String> fullColumnNames,
             List<String> countColumnNames,
             List<List<Item>> deserializedParams,
             List<Item> counts
     ) {
-        for (int columnIndex = 0; columnIndex < binaryColumnNames.size(); columnIndex++) {
-            context.addVariableValue(binaryColumnNames.get(columnIndex), deserializedParams.get(columnIndex));
+        for (int columnIndex = 0; columnIndex < fullColumnNames.size(); columnIndex++) {
+            context.addVariableValue(fullColumnNames.get(columnIndex), deserializedParams.get(columnIndex));
         }
         for (int columnIndex = 0; columnIndex < countColumnNames.size(); columnIndex++) {
             context.addVariableCount(countColumnNames.get(columnIndex), counts.get(columnIndex));
@@ -278,7 +265,8 @@ public class DataFrameUtils {
             boolean trailingComma,
             String serializerUdfName,
             List<String> groupbyVariableNames,
-            Map<String, DynamicContext.VariableDependency> dependencies
+            Map<String, DynamicContext.VariableDependency> dependencies,
+            Map<String, List<String>> columnNamesByType
     ) {
         String[] columnNames = inputSchema.fieldNames();
         StringBuilder queryColumnString = new StringBuilder();
@@ -292,6 +280,10 @@ public class DataFrameUtils {
             if (groupbyVariableNames.contains(columnName)) {
                 groupingKey = true;
             }
+            boolean precomputedCount = false;
+            if (columnNamesByType.get("Long").contains(columnName)) {
+                precomputedCount = true;
+            }
 
             boolean applyCount = false;
             if (
@@ -300,7 +292,9 @@ public class DataFrameUtils {
             ) {
                 applyCount = true;
             }
-            if (applyCount) {
+            if (precomputedCount) {
+                queryColumnString.append("sum(`");
+            } else if (applyCount) {
                 queryColumnString.append("count(`");
             } else {
                 queryColumnString.append(serializerUdfName);
@@ -315,7 +309,7 @@ public class DataFrameUtils {
 
             queryColumnString.append(columnName);
 
-            if (applyCount) {
+            if (precomputedCount || applyCount) {
                 queryColumnString.append("`)");
             } else {
                 queryColumnString.append("`)");
