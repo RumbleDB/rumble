@@ -347,6 +347,8 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
             return defaultAction(expression, argument);
         } else {
             RuntimeIterator previous = this.visit(expression.get_primaryExpressionNode(), argument);
+            previous.setIsRDD(expression.isRDD());
+            previous.setIsDataFrame(expression.isDataFrame());
             for (PostfixExtension extension : expression.getExtensions()) {
                 try {
                     if (extension instanceof ArrayLookupExtension) {
@@ -379,6 +381,8 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                         IteratorMetadata metadata = createIteratorMetadata(expression);
                         previous = new DynamicFunctionCallIterator(previous, arguments, metadata);
                     }
+                    previous.setIsRDD(extension.isRDD());
+                    previous.setIsDataFrame(extension.isDataFrame());
                 } catch (Exception ex) {
                     ex.printStackTrace();
                     throw new UnsupportedFeatureException("Invalid Postfix extension", expression.getMetadata());

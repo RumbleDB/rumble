@@ -49,6 +49,12 @@ public class DynamicFunctionCallExtension extends PostfixExtension {
     }
 
     @Override
+    protected void initIsRDD() {
+        this.isRDD = false;
+        this.isDataFrame = false;
+    }
+
+    @Override
     public String serializationString(boolean prefix) {
         StringBuilder result = new StringBuilder("(argumentList ( ");
         for (Expression arg : this._arguments) {

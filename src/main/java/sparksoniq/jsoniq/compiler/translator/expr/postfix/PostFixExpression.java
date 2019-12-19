@@ -82,6 +82,12 @@ public class PostFixExpression extends Expression {
     }
 
     @Override
+    protected void initIsRDD() {
+        this.isRDD = this._primaryExpressionNode.isRDD();
+        this.isDataFrame = this._primaryExpressionNode.isDataFrame();
+    }
+
+    @Override
     public String serializationString(boolean prefix) {
         String result = "(postFixExpr ";
         result += get_primaryExpressionNode().serializationString(true);

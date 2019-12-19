@@ -60,6 +60,17 @@ public abstract class PostfixExtension extends ExpressionOrClause {
     }
 
     @Override
+    protected void initIsRDD() {
+        if (previous != null) {
+            this.isRDD = this.previous.isRDD();
+            this.isDataFrame = this.previous.isDataFrame();
+        } else {
+            this.isRDD = this.parent.isRDD();
+            this.isDataFrame = this.parent.isDataFrame();
+        }
+    }
+
+    @Override
     public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
         return visitor.visitDescendants(this, argument);
     }
