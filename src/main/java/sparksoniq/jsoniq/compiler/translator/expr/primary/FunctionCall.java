@@ -24,6 +24,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.jsoniq.runtime.iterator.DataFrameRuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RDDRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.BuiltinFunction;
@@ -71,9 +72,17 @@ public class FunctionCall extends PrimaryExpression {
             // if subclass of RDDRuntimeIterator
             if (RDDRuntimeIterator.class.isAssignableFrom(functionIteratorClass)) {
                 this.isRDD = true;
-                // if subclass of DataFrameRuntimeIterator
                 if (DataFrameRuntimeIterator.class.isAssignableFrom(functionIteratorClass)) {
                     this.isDataFrame = true;
+                }
+            } else if (HybridRuntimeIterator.class.isAssignableFrom(functionIteratorClass)) {
+                for (ExpressionOrClause child: this.getDescendants()) {
+                    if (child.isRDD()) {
+                        this.isRDD = true;
+                    }
+                    if (child.isDataFrame()) {
+                        this.isDataFrame = true;
+                    }
                 }
             }
         }
