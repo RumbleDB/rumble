@@ -54,6 +54,24 @@ public class ParenthesizedExpression extends PrimaryExpression {
     }
 
     @Override
+    public boolean isRDD() {
+        // if not an empty sequence(null expression), bypass this node during an isRDD check
+        if (expression != null) {
+            return this.expression.isRDD();
+        }
+        return super.isRDD();
+    }
+
+    @Override
+    public boolean isDataFrame() {
+        // if not an empty sequence(null expression), bypass this node during an isRDD check
+        if (expression != null) {
+            return this.expression.isDataFrame();
+        }
+        return super.isDataFrame();
+    }
+
+    @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
         List<ExpressionOrClause> result = new ArrayList<>();
         if (this.expression != null)
