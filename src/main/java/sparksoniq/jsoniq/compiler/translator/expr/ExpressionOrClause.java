@@ -55,6 +55,7 @@ public abstract class ExpressionOrClause {
     public boolean isRDD() {
         if (!isRDDInitialized) {
             initIsRDD();
+            isRDDInitialized = true;
         }
         return this.isRDD;
     }
@@ -62,6 +63,7 @@ public abstract class ExpressionOrClause {
     public boolean isDataFrame() {
         if (!isRDDInitialized) {
             initIsRDD();
+            isRDDInitialized = true;
         }
         return this.isDataFrame;
     }
