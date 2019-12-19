@@ -21,6 +21,12 @@
 package sparksoniq.jsoniq.compiler.translator.expr;
 
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import sparksoniq.jsoniq.runtime.iterator.DataFrameRuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.RDDRuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.BuiltinFunction;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
@@ -35,30 +41,40 @@ public abstract class ExpressionOrClause {
     private ExpressionMetadata metadata;
     protected boolean isRDD;
     protected boolean isDataFrame;
+    private boolean isRDDInitialized = false;
 
     protected ExpressionOrClause() {
     }
 
     protected ExpressionOrClause(ExpressionMetadata metadata) {
         this.metadata = metadata;
-        this.isRDD = false;
-        this.isDataFrame = false;
-    }
-
-    public boolean isRDD() {
-        return isRDD;
     }
 
     public void setIsRDD(boolean isRDD) {
         this.isRDD = isRDD;
     }
 
-    public boolean isDataFrame() {
-        return isDataFrame;
-    }
-
     public void setIsDataFrame(boolean isDataFrame) {
         this.isDataFrame = isDataFrame;
+    }
+
+    public boolean isRDD() {
+        if (!isRDDInitialized) {
+            initIsRDD();
+        }
+        return this.isRDD;
+    }
+
+    public boolean isDataFrame() {
+        if (!isRDDInitialized) {
+            initIsRDD();
+        }
+        return this.isDataFrame;
+    }
+
+    protected void initIsRDD() {
+        this.isRDD = false;
+        this.isDataFrame = false;
     }
 
     // Visitor pattern implementation

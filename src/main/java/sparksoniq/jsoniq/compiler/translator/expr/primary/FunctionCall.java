@@ -40,7 +40,6 @@ public class FunctionCall extends PrimaryExpression {
 
     private final String _functionName;
     private final List<Expression> _arguments;
-    private boolean isRDDInitialized = false;
 
     public FunctionCall(String functionName, List<Expression> arguments, ExpressionMetadata metadata) {
         super(metadata);
@@ -63,22 +62,7 @@ public class FunctionCall extends PrimaryExpression {
     }
 
     @Override
-    public boolean isRDD() {
-        if (!isRDDInitialized) {
-            initIsRDD();
-        }
-        return this.isRDD;
-    }
-
-    @Override
-    public boolean isDataFrame() {
-        if (!isRDDInitialized) {
-            initIsRDD();
-        }
-        return this.isDataFrame;
-    }
-
-    private void initIsRDD() {
+    protected void initIsRDD() {
         FunctionIdentifier identifier = new FunctionIdentifier(this._functionName, this._arguments.size());
 
         if (Functions.checkBuiltInFunctionExists(identifier)) {
