@@ -82,8 +82,9 @@ public class FunctionDeclaration extends PrimaryExpression {
         this.isDataFrame = false;
 
         FunctionIdentifier identifier = new FunctionIdentifier(this._name, this._params.size());
+        // if named(static) function declaration
         if (!this._name.equals("")) {
-            // named (static function declaration)
+            // current .g4 implementation defines function body as a comma expression which is always local
             Functions.addUserDefinedFunctionIsRDD(identifier, this._body.isRDD(), this.getMetadata());
             Functions.addUserDefinedFunctionIsDataFrame(identifier, this._body.isDataFrame(), this.getMetadata());
         }
