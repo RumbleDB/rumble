@@ -488,7 +488,13 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                         expression.getMetadata()
                 );
             }
-            return Functions.getBuiltInFunctionIterator(identifier, arguments, expression.isRDD(), expression.isDataFrame(), iteratorMetadata);
+            return Functions.getBuiltInFunctionIterator(
+                identifier,
+                arguments,
+                expression.isRDD(),
+                expression.isDataFrame(),
+                iteratorMetadata
+            );
         }
         return new StaticUserDefinedFunctionCallIterator(identifier, arguments, iteratorMetadata);
     }

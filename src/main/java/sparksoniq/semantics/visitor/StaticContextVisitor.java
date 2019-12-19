@@ -94,9 +94,9 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
         StaticContext result = visitFlowrVarDeclaration(expression, argument);
         if (expression.getPositionalVariableReference() != null) {
             result.addVariable(
-                    expression.getPositionalVariableReference().getVariableName(),
-                    new SequenceType(new ItemType(ItemTypes.IntegerItem)),
-                    expression.getMetadata()
+                expression.getPositionalVariableReference().getVariableName(),
+                new SequenceType(new ItemType(ItemTypes.IntegerItem)),
+                expression.getMetadata()
             );
         }
         return result;
@@ -123,9 +123,9 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
     public StaticContext visitCountClause(CountClause expression, StaticContext argument) {
         StaticContext result = new StaticContext(argument);
         result.addVariable(
-                expression.getCountVariable().getVariableName(),
-                new SequenceType(new ItemType(ItemTypes.IntegerItem), SequenceType.Arity.One),
-                expression.getMetadata()
+            expression.getCountVariable().getVariableName(),
+            new SequenceType(new ItemType(ItemTypes.IntegerItem), SequenceType.Arity.One),
+            expression.getMetadata()
         );
         return result;
     }
@@ -134,8 +134,8 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
         StaticContext result = new StaticContext(argument);
         // TODO for now we only suppot as/default, no inference, flags
         SequenceType type = expression.getAsSequence() == null
-                ? new SequenceType()
-                : expression.getAsSequence().getSequence();
+            ? new SequenceType()
+            : expression.getAsSequence().getSequence();
         result.addVariable(expression.getVariableReference().getVariableName(), type, expression.getMetadata());
         return result;
     }
