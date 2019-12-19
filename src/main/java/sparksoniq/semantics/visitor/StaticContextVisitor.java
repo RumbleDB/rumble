@@ -46,8 +46,6 @@ import sparksoniq.semantics.StaticContext;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
-import sparksoniq.spark.iterator.function.ParquetFileFunctionIterator;
-import sparksoniq.spark.iterator.function.StructuredJsonFileFunctionIterator;
 
 public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<StaticContext> {
 
@@ -62,6 +60,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
         return expression.accept(this, argument);
     }
 
+    // region FLWOR
     @Override
     public StaticContext visitVariableReference(VariableReference expression, StaticContext argument) {
         if (!argument.isInScope(expression.getVariableName())) {
@@ -86,7 +85,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
         return result;
     }
 
-    // region FLOWR vars
+    // region FLWOR vars
     @Override
     public StaticContext visitForClauseVar(ForClauseVar expression, StaticContext argument) {
         // TODO visit at...
@@ -141,7 +140,34 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
         return result;
     }
     // endregion
+    // endregion
 
+
+    // region primary
+    @Override
+    public StaticContext visitFunctionCall(FunctionCall expression, StaticContext argument) {
+        String fnName = expression.getFunctionName();
+        int arity = expression.getArguments().size();
+        FunctionIdentifier identifier = new FunctionIdentifier(fnName, arity);
+
+        if (Functions.checkBuiltInFunctionExists(identifier)) {
+            BuiltinFunction builtinFunction = Functions.getBuiltInFunction(identifier);
+            Class<? extends RuntimeIterator> functionIteratorClass = builtinFunction.getFunctionIteratorClass();
+            // if subclass of RDDRuntimeIterator
+            if (RDDRuntimeIterator.class.isAssignableFrom(functionIteratorClass)) {
+                expression.setIsRDD(true);
+                // if subclass of DataFrameRuntimeIterator
+                if (DataFrameRuntimeIterator.class.isAssignableFrom(functionIteratorClass)) {
+                    expression.setIsDataFrame(true);
+                }
+            }
+        }
+        return super.visitFunctionCall(expression, argument);
+    }
+
+    // endregion
+
+    // region quantifiers
     @Override
     public StaticContext visitQuantifiedExpression(QuantifiedExpression expression, StaticContext argument) {
         StaticContext context = argument;
@@ -159,7 +185,9 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
         this.visit(expression.getExpression(), argument);
         return result;
     }
+    // endregion
 
+    // region control
     @Override
     public StaticContext visitTypeSwitchExpression(TypeSwitchExpression expression, StaticContext argument) {
         this.visit(expression.getTestCondition(), argument);
@@ -190,27 +218,6 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
         this.visit(expression.getReturnExpression(), result);
         return result;
     }
-
-    // region primary
-    @Override
-    public StaticContext visitFunctionCall(FunctionCall expression, StaticContext argument) {
-        String fnName = expression.getFunctionName();
-        int arity = expression.getArguments().size();
-        FunctionIdentifier identifier = new FunctionIdentifier(fnName, arity);
-
-        if (Functions.checkBuiltInFunctionExists(identifier)) {
-            BuiltinFunction builtinFunction = Functions.getBuiltInFunction(identifier);
-            Class<? extends RuntimeIterator> functionIteratorClass = builtinFunction.getFunctionIteratorClass();
-            // if subclass of RDDRuntimeIterator
-            if (RDDRuntimeIterator.class.isAssignableFrom(functionIteratorClass)) {
-                expression.setIsRDD(true);
-                // if subclass of DataFrameRuntimeIterator
-                if (DataFrameRuntimeIterator.class.isAssignableFrom(functionIteratorClass)) {
-                    expression.setIsDataFrame(true);
-                }
-            }
-        }
-        return super.visitFunctionCall(expression, argument);
-    }
     // endregion
+
 }
