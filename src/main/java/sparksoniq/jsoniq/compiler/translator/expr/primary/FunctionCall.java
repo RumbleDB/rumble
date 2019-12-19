@@ -23,6 +23,12 @@ package sparksoniq.jsoniq.compiler.translator.expr.primary;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import sparksoniq.jsoniq.runtime.iterator.DataFrameRuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.RDDRuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.BuiltinFunction;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
@@ -34,7 +40,7 @@ public class FunctionCall extends PrimaryExpression {
 
     private final String _functionName;
     private final List<Expression> _arguments;
-
+    private boolean isRDDInitialized = false;
 
     public FunctionCall(String functionName, List<Expression> arguments, ExpressionMetadata metadata) {
         super(metadata);
@@ -52,9 +58,41 @@ public class FunctionCall extends PrimaryExpression {
 
     @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result = new ArrayList<>();
-        result.addAll(this._arguments);
+        List<ExpressionOrClause> result = new ArrayList<>(this._arguments);
         return getDescendantsFromChildren(result, depthSearch);
+    }
+
+    @Override
+    public boolean isRDD() {
+        if (!isRDDInitialized) {
+            initIsRDD();
+        }
+        return this.isRDD;
+    }
+
+    @Override
+    public boolean isDataFrame() {
+        if (!isRDDInitialized) {
+            initIsRDD();
+        }
+        return this.isDataFrame;
+    }
+
+    private void initIsRDD() {
+        FunctionIdentifier identifier = new FunctionIdentifier(this._functionName, this._arguments.size());
+
+        if (Functions.checkBuiltInFunctionExists(identifier)) {
+            BuiltinFunction builtinFunction = Functions.getBuiltInFunction(identifier);
+            Class<? extends RuntimeIterator> functionIteratorClass = builtinFunction.getFunctionIteratorClass();
+            // if subclass of RDDRuntimeIterator
+            if (RDDRuntimeIterator.class.isAssignableFrom(functionIteratorClass)) {
+                this.isRDD = true;
+                // if subclass of DataFrameRuntimeIterator
+                if (DataFrameRuntimeIterator.class.isAssignableFrom(functionIteratorClass)) {
+                    this.isDataFrame = true;
+                }
+            }
+        }
     }
 
     @Override

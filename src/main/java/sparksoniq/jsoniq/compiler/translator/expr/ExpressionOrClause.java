@@ -33,8 +33,8 @@ import java.util.function.Predicate;
 public abstract class ExpressionOrClause {
 
     private ExpressionMetadata metadata;
-    private boolean isRDD;
-    private boolean isDataFrame;
+    protected boolean isRDD;
+    protected boolean isDataFrame;
 
     protected ExpressionOrClause() {
     }
