@@ -61,6 +61,25 @@ public abstract class OperationalExpressionBase extends Expression {
 
     }
 
+    @Override
+    public boolean isRDD() {
+        // if not active, bypass this node during an isRDD check
+        if (!_isActive) {
+            return this._mainExpression.isRDD();
+        }
+        return super.isRDD();
+    }
+
+    @Override
+    public boolean isDataFrame() {
+        // if not active, bypass this node during an isRDD check
+        if (!_isActive) {
+            return this._mainExpression.isDataFrame();
+        }
+        return super.isDataFrame();
+    }
+
+
     public static List<Operator> getOperatorFromOpList(List<Token> ops) {
         List<Operator> result = new ArrayList<>();
         ops.forEach(op -> result.add(getOperatorFromString(op.getText())));
