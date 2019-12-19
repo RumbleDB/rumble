@@ -70,7 +70,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
 
     @Override
     public StaticContext visitFunctionDeclaration(FunctionDeclaration expression, StaticContext argument) {
-        expression.isRDD();     // initialize isRDD status // TODO: potentially improve initialization
+        expression.isRDD(); // initialize isRDD status // TODO: potentially improve initialization
         return super.visitFunctionDeclaration(expression, argument);
     }
 

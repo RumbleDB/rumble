@@ -568,7 +568,11 @@ public class Functions {
             functionCallIterator.setIsRDD(isRDD);
             functionCallIterator.setIsDataFrame(isDataFrame);
         } catch (ReflectiveOperationException e) {
-            throw new UnknownFunctionCallException(identifier.getName(), arguments.size(), metadata.getExpressionMetadata());
+            throw new UnknownFunctionCallException(
+                    identifier.getName(),
+                    arguments.size(),
+                    metadata.getExpressionMetadata()
+            );
         }
 
         if (!builtinFunction.getSignature().getReturnType().equals(mostGeneralSequenceType)) {
@@ -658,20 +662,28 @@ public class Functions {
         userDefinedFunctionsIsDataFrame.clear();
     }
 
-    public static void addUserDefinedFunctionIsRDD(FunctionIdentifier functionIdentifier, boolean isRDD, ExpressionMetadata meta) {
+    public static void addUserDefinedFunctionIsRDD(
+            FunctionIdentifier functionIdentifier,
+            boolean isRDD,
+            ExpressionMetadata meta
+    ) {
         if (
-                builtInFunctions.containsKey(functionIdentifier)
-                        || userDefinedFunctionsIsRDD.containsKey(functionIdentifier)
+            builtInFunctions.containsKey(functionIdentifier)
+                || userDefinedFunctionsIsRDD.containsKey(functionIdentifier)
         ) {
             throw new DuplicateFunctionIdentifierException(functionIdentifier, meta);
         }
         userDefinedFunctionsIsRDD.put(functionIdentifier, isRDD);
     }
 
-    public static void addUserDefinedFunctionIsDataFrame(FunctionIdentifier functionIdentifier, boolean isDataFrame, ExpressionMetadata meta) {
+    public static void addUserDefinedFunctionIsDataFrame(
+            FunctionIdentifier functionIdentifier,
+            boolean isDataFrame,
+            ExpressionMetadata meta
+    ) {
         if (
-                builtInFunctions.containsKey(functionIdentifier)
-                        || userDefinedFunctionsIsDataFrame.containsKey(functionIdentifier)
+            builtInFunctions.containsKey(functionIdentifier)
+                || userDefinedFunctionsIsDataFrame.containsKey(functionIdentifier)
         ) {
             throw new DuplicateFunctionIdentifierException(functionIdentifier, meta);
         }
