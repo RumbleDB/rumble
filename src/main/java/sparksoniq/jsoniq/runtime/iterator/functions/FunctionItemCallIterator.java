@@ -178,6 +178,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         );
         FunctionRuntimeIterator iterator = new FunctionRuntimeIterator(partiallyAppliedFunction, getMetadata());
         iterator.setIsRDD(false);
+        iterator.setIsDataFrame(false);
 
         return iterator;
     }
