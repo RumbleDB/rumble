@@ -64,6 +64,8 @@ public class FunctionCall extends PrimaryExpression {
 
     @Override
     protected void initIsRDD() {
+        this.isRDD = false;
+        this.isDataFrame = false;
         FunctionIdentifier identifier = new FunctionIdentifier(this._functionName, this._arguments.size());
 
         if (Functions.checkBuiltInFunctionExists(identifier)) {
@@ -84,8 +86,11 @@ public class FunctionCall extends PrimaryExpression {
                         this.isDataFrame = true;
                     }
                 }
+            } else {
+                // Local function call -> isRDD & isDF are false
             }
         }
+        // TODO: Handle staticUserDefinedFunctionCalls
     }
 
     @Override

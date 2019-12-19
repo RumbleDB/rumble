@@ -72,6 +72,7 @@ public abstract class ExpressionOrClause {
         return this.isDataFrame;
     }
 
+    // TODO: make this method abstract
     protected void initIsRDD() {
         this.isRDD = false;
         this.isDataFrame = false;
