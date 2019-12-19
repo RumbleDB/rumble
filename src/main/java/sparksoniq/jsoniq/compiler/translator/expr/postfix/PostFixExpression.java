@@ -65,6 +65,30 @@ public class PostFixExpression extends Expression {
     }
 
     @Override
+    public boolean isRDD() {
+        // if it's a primary expression(not a postfix) bypass this node during an isRDD check
+        if (isPrimary()) {
+            return this._primaryExpressionNode.isRDD();
+        }
+        return super.isRDD();
+    }
+
+    @Override
+    public boolean isDataFrame() {
+        // if it's a primary expression(not a postfix) bypass this node during an isRDD check
+        if (isPrimary()) {
+            return this._primaryExpressionNode.isDataFrame();
+        }
+        return super.isDataFrame();
+    }
+
+    @Override
+    protected void initIsRDD() {
+        this.isRDD = this._primaryExpressionNode.isRDD();
+        this.isDataFrame = this._primaryExpressionNode.isDataFrame();
+    }
+
+    @Override
     public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
         return visitor.visitPostfixExpression(this, argument);
     }
@@ -79,12 +103,6 @@ public class PostFixExpression extends Expression {
                     result.add(e);
             });
         return getDescendantsFromChildren(result, depthSearch);
-    }
-
-    @Override
-    protected void initIsRDD() {
-        this.isRDD = this._primaryExpressionNode.isRDD();
-        this.isDataFrame = this._primaryExpressionNode.isDataFrame();
     }
 
     @Override
