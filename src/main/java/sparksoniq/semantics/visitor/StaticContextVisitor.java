@@ -32,6 +32,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworVarDecl;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.ForClauseVar;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.GroupByClauseVar;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.LetClauseVar;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionDeclaration;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpressionVar;
@@ -53,7 +54,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
         return expression.accept(this, argument);
     }
 
-    // region FLWOR
+    // region primary
     @Override
     public StaticContext visitVariableReference(VariableReference expression, StaticContext argument) {
         if (!argument.isInScope(expression.getVariableName())) {
@@ -67,6 +68,15 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
         }
     }
 
+    @Override
+    public StaticContext visitFunctionDeclaration(FunctionDeclaration expression, StaticContext argument) {
+        expression.isRDD();     // initialize isRDD status // TODO: potentially improve initialization
+        return super.visitFunctionDeclaration(expression, argument);
+    }
+
+    // endregion
+
+    // region FLWOR
     @Override
     public StaticContext visitFlowrExpression(FlworExpression expression, StaticContext argument) {
         StaticContext result = this.visit(expression.getStartClause(), argument);
