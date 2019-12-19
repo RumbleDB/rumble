@@ -282,6 +282,8 @@ import static sparksoniq.semantics.types.SequenceType.mostGeneralSequenceType;
 public class Functions {
     private static final HashMap<FunctionIdentifier, BuiltinFunction> builtInFunctions;
     private static HashMap<FunctionIdentifier, FunctionItem> userDefinedFunctions;
+    private static HashMap<FunctionIdentifier, Boolean> userDefinedFunctionsIsRDD;
+    private static HashMap<FunctionIdentifier, Boolean> userDefinedFunctionsIsDataFrame;
 
     private static final Map<String, ItemType> itemTypes;
 
@@ -377,8 +379,10 @@ public class Functions {
 
 
     static {
-        userDefinedFunctions = new HashMap<>();
         builtInFunctions = new HashMap<>();
+        userDefinedFunctions = new HashMap<>();
+        userDefinedFunctionsIsRDD = new HashMap<>();
+        userDefinedFunctionsIsDataFrame = new HashMap<>();
 
         builtInFunctions.put(position.getIdentifier(), position);
         builtInFunctions.put(last.getIdentifier(), last);
@@ -620,6 +624,28 @@ public class Functions {
 
     public static void clearUserDefinedFunctions() {
         userDefinedFunctions.clear();
+        userDefinedFunctionsIsRDD.clear();
+        userDefinedFunctionsIsDataFrame.clear();
+    }
+
+    public static void addUserDefinedFunctionIsRDD(FunctionIdentifier functionIdentifier, boolean isRDD, ExpressionMetadata meta) {
+        if (
+                builtInFunctions.containsKey(functionIdentifier)
+                        || userDefinedFunctionsIsRDD.containsKey(functionIdentifier)
+        ) {
+            throw new DuplicateFunctionIdentifierException(functionIdentifier, meta);
+        }
+        userDefinedFunctionsIsRDD.put(functionIdentifier, isRDD);
+    }
+
+    public static void addUserDefinedFunctionIsDataFrame(FunctionIdentifier functionIdentifier, boolean isDataFrame, ExpressionMetadata meta) {
+        if (
+                builtInFunctions.containsKey(functionIdentifier)
+                        || userDefinedFunctionsIsDataFrame.containsKey(functionIdentifier)
+        ) {
+            throw new DuplicateFunctionIdentifierException(functionIdentifier, meta);
+        }
+        userDefinedFunctionsIsDataFrame.put(functionIdentifier, isDataFrame);
     }
 
     public static void addUserDefinedFunction(FunctionItem function, ExpressionMetadata meta) {
@@ -631,6 +657,14 @@ public class Functions {
             throw new DuplicateFunctionIdentifierException(functionIdentifier, meta);
         }
         userDefinedFunctions.put(functionIdentifier, function);
+    }
+
+    public static boolean checkUserDefinedFunctionIsRDDExists(FunctionIdentifier identifier) {
+        return userDefinedFunctionsIsRDD.containsKey(identifier);
+    }
+
+    public static boolean checkUserDefinedFunctionIsDataFrameExists(FunctionIdentifier identifier) {
+        return userDefinedFunctionsIsDataFrame.containsKey(identifier);
     }
 
     public static boolean checkUserDefinedFunctionExists(FunctionIdentifier identifier) {

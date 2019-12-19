@@ -25,6 +25,8 @@ import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworVarSequenceType;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
@@ -72,6 +74,19 @@ public class FunctionDeclaration extends PrimaryExpression {
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
         List<ExpressionOrClause> result = new ArrayList<>();
         return getDescendantsFromChildren(result, depthSearch);
+    }
+
+    @Override
+    protected void initIsRDD() {
+        this.isRDD = false;
+        this.isDataFrame = false;
+
+        FunctionIdentifier identifier = new FunctionIdentifier(this._name, this._params.size());
+        if (!this._name.equals("")) {
+            // named (static function declaration)
+            Functions.addUserDefinedFunctionIsRDD(identifier, this._body.isRDD(), this.getMetadata());
+            Functions.addUserDefinedFunctionIsDataFrame(identifier, this._body.isDataFrame(), this.getMetadata());
+        }
     }
 
     @Override
