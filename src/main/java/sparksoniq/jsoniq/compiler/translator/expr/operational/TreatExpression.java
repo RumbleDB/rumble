@@ -41,8 +41,8 @@ public class TreatExpression extends UnaryExpressionBase {
 
     private static boolean calculateIsRDDForTreatExpression(SequenceType sequenceType, Expression expression) {
         return sequenceType.getArity() != SequenceType.Arity.One
-                && sequenceType.getArity() != SequenceType.Arity.OneOrZero
-                && expression.isRDD();
+            && sequenceType.getArity() != SequenceType.Arity.OneOrZero
+            && expression.isRDD();
     }
 
     public static void setIsRDDIsDataFrameOfTreatIteratorGeneratedWithoutTreatExpression(

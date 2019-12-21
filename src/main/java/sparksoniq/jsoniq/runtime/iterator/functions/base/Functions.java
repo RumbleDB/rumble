@@ -598,7 +598,13 @@ public class Functions {
             List<RuntimeIterator> arguments
     ) {
         if (Functions.checkUserDefinedFunctionExists(identifier)) {
-            return buildUserDefinedFunctionCallIterator(getUserDefinedFunction(identifier), isRDD, isDataFrame, metadata, arguments);
+            return buildUserDefinedFunctionCallIterator(
+                getUserDefinedFunction(identifier),
+                isRDD,
+                isDataFrame,
+                metadata,
+                arguments
+            );
         }
         throw new UnknownFunctionCallException(
                 identifier.getName(),
@@ -653,10 +659,10 @@ public class Functions {
                     functionCallIterator,
                     functionItem.getSignature().getReturnType(),
                     "Invalid return type for "
-                            + (functionItem.getIdentifier().getName().equals("")
+                        + (functionItem.getIdentifier().getName().equals("")
                             ? ""
                             : (functionItem.getIdentifier().getName()) + " ")
-                            + "function. ",
+                        + "function. ",
                     metadata
             );
             typePromotionIterator.setIsRDD(isRDD);

@@ -36,7 +36,13 @@ public class StaticContext {
         private boolean isRDD;
         private boolean isDataFrame;
 
-        public InScopeVariable(String name, SequenceType sequenceType, ExpressionMetadata metadata, boolean isRDD, boolean isDataFrame) {
+        public InScopeVariable(
+                String name,
+                SequenceType sequenceType,
+                ExpressionMetadata metadata,
+                boolean isRDD,
+                boolean isDataFrame
+        ) {
             this.name = name;
             this.sequenceType = sequenceType;
             this.metadata = metadata;
@@ -127,7 +133,13 @@ public class StaticContext {
         return getInScopeVariable(varName).isDataFrame();
     }
 
-    public void addVariable(String varName, SequenceType type, ExpressionMetadata metadata, boolean isRDD, boolean isDataFrame) {
+    public void addVariable(
+            String varName,
+            SequenceType type,
+            ExpressionMetadata metadata,
+            boolean isRDD,
+            boolean isDataFrame
+    ) {
         this._inScopeVariables.put(varName, new InScopeVariable(varName, type, metadata, isRDD, isDataFrame));
     }
 

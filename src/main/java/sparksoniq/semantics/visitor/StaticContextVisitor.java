@@ -103,8 +103,8 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
                 expression.getPositionalVariableReference().getVariableName(),
                 new SequenceType(new ItemType(ItemTypes.IntegerItem)),
                 expression.getMetadata(),
-                    false,
-                    false
+                false,
+                false
             );
         }
         return result;
@@ -134,8 +134,8 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
             expression.getCountVariable().getVariableName(),
             new SequenceType(new ItemType(ItemTypes.IntegerItem), SequenceType.Arity.One),
             expression.getMetadata(),
-                false,
-                false
+            false,
+            false
         );
         return result;
     }
@@ -147,11 +147,11 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
             ? new SequenceType()
             : expression.getAsSequence().getSequence();
         result.addVariable(
-                expression.getVariableReference().getVariableName(),
-                type,
-                expression.getMetadata(),
-                expression.getVariableIsRDD(),
-                expression.getVariableIsDataFrame()
+            expression.getVariableReference().getVariableName(),
+            type,
+            expression.getMetadata(),
+            expression.getVariableIsRDD(),
+            expression.getVariableIsDataFrame()
         );
         return result;
     }
@@ -173,11 +173,11 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
         StaticContext result = new StaticContext(argument);
         SequenceType type = expression.getSequenceType() == null ? new SequenceType() : expression.getSequenceType();
         result.addVariable(
-                expression.getVariableReference().getVariableName(),
-                type,
-                expression.getMetadata(),
-                false,
-                false
+            expression.getVariableReference().getVariableName(),
+            type,
+            expression.getMetadata(),
+            false,
+            false
         );
         this.visit(expression.getExpression(), argument);
         return result;
@@ -213,11 +213,11 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
         StaticContext result = new StaticContext(argument);
         if (expression.getVariableReference() != null) {
             result.addVariable(
-                    expression.getVariableReference().getVariableName(),
-                    null,
-                    expression.getMetadata(),
-                    false,
-                    false
+                expression.getVariableReference().getVariableName(),
+                null,
+                expression.getMetadata(),
+                false,
+                false
             );
         }
         this.visit(expression.getReturnExpression(), result);

@@ -227,9 +227,9 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                             createIteratorMetadata(clause)
                     );
                     TreatExpression.setIsRDDIsDataFrameOfTreatIteratorGeneratedWithoutTreatExpression(
-                            assignmentExpression,
-                            var.getAsSequence().getSequence(),
-                            var.getExpression()
+                        assignmentExpression,
+                        var.getAsSequence().getSequence(),
+                        var.getExpression()
                     );
                 }
 
@@ -252,9 +252,9 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                             createIteratorMetadata(clause)
                     );
                     TreatExpression.setIsRDDIsDataFrameOfTreatIteratorGeneratedWithoutTreatExpression(
-                            assignmentExpression,
-                            var.getAsSequence().getSequence(),
-                            var.getExpression()
+                        assignmentExpression,
+                        var.getAsSequence().getSequence(),
+                        var.getExpression()
                     );
                 }
 
@@ -280,16 +280,16 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                                 createIteratorMetadata(clause)
                         );
                         TreatExpression.setIsRDDIsDataFrameOfTreatIteratorGeneratedWithoutTreatExpression(
-                                groupByExpression,
-                                groupExpr.getAsSequence().getSequence(),
-                                groupExpr.getExpression()
+                            groupByExpression,
+                            groupExpr.getAsSequence().getSequence(),
+                            groupExpr.getExpression()
                         );
                     }
                 }
 
                 VariableReference variableReference = groupExpr.getVariableReference();
                 VariableReferenceIterator variableReferenceIterator =
-                        (VariableReferenceIterator) this.visit(variableReference, argument);
+                    (VariableReferenceIterator) this.visit(variableReference, argument);
                 variableReferenceIterator.setIsRDD(variableReference.isRDD());
                 variableReferenceIterator.setIsDataFrame(variableReference.isDataFrame());
 

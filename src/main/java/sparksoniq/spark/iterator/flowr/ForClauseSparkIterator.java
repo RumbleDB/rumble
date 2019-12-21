@@ -70,7 +70,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         _assignmentIterator = assignmentIterator;
         _dependencies = _assignmentIterator.getVariableDependencies();
     }
-    
+
     public void open(DynamicContext context) {
         super.open(context);
 
