@@ -123,8 +123,6 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
     protected abstract JavaRDD<Item> getRDDAux(DynamicContext context);
 
-    protected abstract boolean initIsRDD();
-
     protected abstract void openLocal();
 
     protected abstract void closeLocal();
