@@ -31,9 +31,4 @@ public abstract class DataFrameRuntimeIterator extends RDDRuntimeIterator {
     protected DataFrameRuntimeIterator(List<RuntimeIterator> children, IteratorMetadata iteratorMetadata) {
         super(children, iteratorMetadata);
     }
-
-    @Override
-    public boolean isDataFrame() {
-        return true;
-    }
 }
