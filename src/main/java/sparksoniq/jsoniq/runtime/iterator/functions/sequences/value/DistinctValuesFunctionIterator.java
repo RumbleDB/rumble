@@ -117,9 +117,4 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
                 getMetadata().getExpressionMetadata()
         );
     }
-
-    @Override
-    public boolean initIsRDD() {
-        return _sequenceIterator.isRDD();
-    }
 }

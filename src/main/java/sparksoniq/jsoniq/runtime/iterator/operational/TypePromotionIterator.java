@@ -142,11 +142,6 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public boolean initIsRDD() {
-        return _iterator.isRDD();
-    }
-
-    @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         JavaRDD<Item> childRDD = _iterator.getRDD(context);
 

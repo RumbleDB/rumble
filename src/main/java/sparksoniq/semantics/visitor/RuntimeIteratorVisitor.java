@@ -478,7 +478,10 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 arguments.add(null);
                 isPartialApplication = true;
             } else {
-                arguments.add(this.visit(arg, argument));
+                RuntimeIterator argumentIterator = this.visit(arg, argument);
+                argumentIterator.setIsRDD(expression.isRDD());
+                argumentIterator.setIsDataFrame(expression.isDataFrame());
+                arguments.add(argumentIterator);
             }
         }
         String fnName = expression.getFunctionName();

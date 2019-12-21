@@ -40,26 +40,10 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     protected JiqsItemParser parser;
     protected List<Item> result = null;
     private int currentResultIndex = 0;
-    private boolean _isRDDInitialized = false;
-    private boolean _isRDD;
 
     protected HybridRuntimeIterator(List<RuntimeIterator> children, IteratorMetadata iteratorMetadata) {
         super(children, iteratorMetadata);
         this.parser = new JiqsItemParser();
-    }
-
-    @Override
-    public boolean isRDD() {
-        if (!_isRDDInitialized) {
-            _isRDD = initIsRDD();
-            _isRDDInitialized = true;
-        }
-        return _isRDD;
-    }
-
-    @Override
-    public boolean isDataFrame() {
-        return false;
     }
 
     @Override
@@ -73,7 +57,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     @Override
     public void reset(DynamicContext context) {
         super.reset(context);
-        if (!isRDD()) {
+        if (!isRDD) {
             resetLocal(context);
             return;
         }
@@ -83,7 +67,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     @Override
     public void close() {
         super.close();
-        if (!isRDD()) {
+        if (!isRDD) {
             closeLocal();
             return;
         }
@@ -92,7 +76,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
     @Override
     public boolean hasNext() {
-        if (!isRDD()) {
+        if (!isRDD) {
             return hasNextLocal();
         }
         if (result == null) {
@@ -106,7 +90,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
     @Override
     public Item next() {
-        if (!isRDD()) {
+        if (!isRDD) {
             return nextLocal();
         }
         if (!this._isOpen)

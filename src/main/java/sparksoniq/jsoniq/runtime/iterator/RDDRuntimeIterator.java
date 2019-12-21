@@ -39,11 +39,6 @@ public abstract class RDDRuntimeIterator extends HybridRuntimeIterator {
         this.parser = new JiqsItemParser();
     }
 
-    @Override
-    protected boolean initIsRDD() {
-        return true;
-    }
-
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
         throw new OurBadException("RDDs are not implemented for the iterator", getMetadata());
     }

@@ -50,16 +50,6 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public boolean initIsRDD() {
-        return _iterator.isRDD() && !_iterator.isDataFrame();
-    }
-
-    @Override
-    public boolean isDataFrame() {
-        return false;
-    }
-
-    @Override
     public void openLocal() {
         _alreadyFoundKeys = new ArrayList<>();
         _nextResults = new LinkedList<>();

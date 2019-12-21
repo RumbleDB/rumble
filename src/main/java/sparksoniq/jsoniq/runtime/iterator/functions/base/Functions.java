@@ -545,15 +545,16 @@ public class Functions {
 
         for (int i = 0; i < arguments.size(); i++) {
             if (!builtinFunction.getSignature().getParameterTypes().get(i).equals(mostGeneralSequenceType)) {
-                arguments.set(
-                    i,
-                    new TypePromotionIterator(
-                            arguments.get(i),
-                            builtinFunction.getSignature().getParameterTypes().get(i),
-                            "Invalid argument for function " + identifier.getName() + ". ",
-                            arguments.get(i).getMetadata()
-                    )
+                TypePromotionIterator typePromotionIterator = new TypePromotionIterator(
+                        arguments.get(i),
+                        builtinFunction.getSignature().getParameterTypes().get(i),
+                        "Invalid argument for function " + identifier.getName() + ". ",
+                        arguments.get(i).getMetadata()
                 );
+                typePromotionIterator.setIsRDD(arguments.get(i).isRDD());
+                typePromotionIterator.setIsDataFrame(arguments.get(i).isDataFrame());
+
+                arguments.set(i, typePromotionIterator);
             }
         }
 
@@ -591,11 +592,13 @@ public class Functions {
 
     public static RuntimeIterator getUserDefinedFunctionCallIterator(
             FunctionIdentifier identifier,
+            boolean isRDD,
+            boolean isDataFrame,
             IteratorMetadata metadata,
             List<RuntimeIterator> arguments
     ) {
         if (Functions.checkUserDefinedFunctionExists(identifier)) {
-            return buildUserDefinedFunctionCallIterator(getUserDefinedFunction(identifier), metadata, arguments);
+            return buildUserDefinedFunctionCallIterator(getUserDefinedFunction(identifier), isRDD, isDataFrame, metadata, arguments);
         }
         throw new UnknownFunctionCallException(
                 identifier.getName(),
@@ -637,21 +640,28 @@ public class Functions {
 
     public static RuntimeIterator buildUserDefinedFunctionCallIterator(
             FunctionItem functionItem,
+            boolean isRDD,
+            boolean isDataFrame,
             IteratorMetadata metadata,
             List<RuntimeIterator> arguments
     ) {
         FunctionItemCallIterator functionCallIterator = new FunctionItemCallIterator(functionItem, arguments, metadata);
+        functionCallIterator.setIsRDD(isRDD);
+        functionCallIterator.setIsDataFrame(isDataFrame);
         if (!functionItem.getSignature().getReturnType().equals(mostGeneralSequenceType)) {
-            return new TypePromotionIterator(
+            TypePromotionIterator typePromotionIterator = new TypePromotionIterator(
                     functionCallIterator,
                     functionItem.getSignature().getReturnType(),
                     "Invalid return type for "
-                        + (functionItem.getIdentifier().getName().equals("")
+                            + (functionItem.getIdentifier().getName().equals("")
                             ? ""
                             : (functionItem.getIdentifier().getName()) + " ")
-                        + "function. ",
+                            + "function. ",
                     metadata
             );
+            typePromotionIterator.setIsRDD(isRDD);
+            typePromotionIterator.setIsDataFrame(isDataFrame);
+            return typePromotionIterator;
         }
         return functionCallIterator;
     }

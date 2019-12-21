@@ -112,15 +112,16 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                     _functionArguments.get(i) != null
                         && !_functionItem.getSignature().getParameterTypes().get(i).equals(mostGeneralSequenceType)
                 ) {
-                    _functionArguments.set(
-                        i,
-                        new TypePromotionIterator(
-                                _functionArguments.get(i),
-                                _functionItem.getSignature().getParameterTypes().get(i),
-                                "Invalid argument for " + formattedName + "function. ",
-                                getMetadata()
-                        )
+                    TypePromotionIterator typePromotionIterator = new TypePromotionIterator(
+                            _functionArguments.get(i),
+                            _functionItem.getSignature().getParameterTypes().get(i),
+                            "Invalid argument for " + formattedName + "function. ",
+                            getMetadata()
                     );
+                    typePromotionIterator.setIsRDD(_functionArguments.get(i).isRDD());
+                    typePromotionIterator.setIsDataFrame(_functionArguments.get(i).isDataFrame());
+
+                    _functionArguments.set(i, typePromotionIterator);
                 }
             }
         }
@@ -269,14 +270,5 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         _functionBodyIterator = _functionItem.getBodyIterator();
         contextWithArguments = this.createNewDynamicContextWithArguments(contextWithArguments);
         return _functionBodyIterator.getRDD(contextWithArguments);
-    }
-
-    @Override
-    public boolean initIsRDD() {
-        if (_isPartialApplication) {
-            return false;
-        }
-        _functionBodyIterator = _functionItem.getBodyIterator();
-        return _functionBodyIterator.isRDD();
     }
 }

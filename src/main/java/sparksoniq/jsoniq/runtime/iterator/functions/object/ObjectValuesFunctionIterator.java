@@ -109,9 +109,4 @@ public class ObjectValuesFunctionIterator extends HybridRuntimeIterator {
         FlatMapFunction<Item, Item> transformation = new ObjectValuesClosure();
         return childRDD.flatMap(transformation);
     }
-
-    @Override
-    public boolean initIsRDD() {
-        return _iterator.isRDD();
-    }
 }

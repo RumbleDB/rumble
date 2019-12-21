@@ -123,6 +123,8 @@ public class DynamicFunctionCallIterator extends LocalRuntimeIterator {
         }
         _functionCallIterator = Functions.buildUserDefinedFunctionCallIterator(
             _functionItem,
+            this.isRDD,
+            this.isDataFrame,
             getMetadata(),
             _functionArguments
         );

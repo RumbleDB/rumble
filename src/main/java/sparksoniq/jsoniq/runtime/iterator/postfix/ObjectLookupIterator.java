@@ -192,9 +192,4 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
 
         return childRDD.flatMap(transformation);
     }
-
-    @Override
-    public boolean initIsRDD() {
-        return _iterator.isRDD();
-    }
 }

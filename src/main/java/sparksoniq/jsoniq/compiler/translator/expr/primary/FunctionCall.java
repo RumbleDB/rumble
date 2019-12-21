@@ -31,6 +31,7 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.BuiltinFunction;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
+import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectKeysFunctionIterator;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
@@ -79,12 +80,21 @@ public class FunctionCall extends PrimaryExpression {
                     this.isDataFrame = true;
                 }
             } else if (HybridRuntimeIterator.class.isAssignableFrom(functionIteratorClass)) {
-                for (ExpressionOrClause child : this.getDescendants()) {
-                    if (child.isRDD()) {
-                        this.isRDD = true;
+                if (functionIteratorClass.isInstance(ObjectKeysFunctionIterator.class)) {
+                    for (ExpressionOrClause child : this.getDescendants()) {
+                        if (child.isRDD() && !child.isDataFrame()) {
+                            this.isRDD = true;
+                        }
                     }
-                    if (child.isDataFrame()) {
-                        this.isDataFrame = true;
+                    this.isDataFrame = false;
+                } else {
+                    for (ExpressionOrClause child : this.getDescendants()) {
+                        if (child.isRDD()) {
+                            this.isRDD = true;
+                        }
+                        if (child.isDataFrame()) {
+                            this.isDataFrame = true;
+                        }
                     }
                 }
             } else {

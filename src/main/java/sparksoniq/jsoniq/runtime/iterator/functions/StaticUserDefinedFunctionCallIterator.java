@@ -60,6 +60,13 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
 
     @Override
     public void openLocal() {
+        _userDefinedFunctionCallIterator = Functions.getUserDefinedFunctionCallIterator(
+                _functionIdentifier,
+                this.isRDD,
+                this.isDataFrame,
+                getMetadata(),
+                _functionArguments
+        );
         _userDefinedFunctionCallIterator.open(_currentDynamicContextForLocalExecution);
         setNextResult();
     }
@@ -113,17 +120,14 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        return _userDefinedFunctionCallIterator.getRDD(dynamicContext);
-    }
-
-    @Override
-    public boolean initIsRDD() {
         _userDefinedFunctionCallIterator = Functions.getUserDefinedFunctionCallIterator(
-            _functionIdentifier,
-            getMetadata(),
-            _functionArguments
+                _functionIdentifier,
+                this.isRDD,
+                this.isDataFrame,
+                getMetadata(),
+                _functionArguments
         );
-        return _userDefinedFunctionCallIterator.isRDD();
+        return _userDefinedFunctionCallIterator.getRDD(dynamicContext);
     }
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
@@ -137,5 +141,4 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
         }
         return result;
     }
-
 }

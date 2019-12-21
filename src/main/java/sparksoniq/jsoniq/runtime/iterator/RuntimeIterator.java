@@ -52,9 +52,9 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     protected transient DynamicContext _currentDynamicContextForLocalExecution;
     private IteratorMetadata metadata;
 
-    private boolean isRDD;
+    protected boolean isRDD;
     private boolean isRDDIsSet;
-    private boolean isDataFrame;
+    protected boolean isDataFrame;
     private boolean isDataFrameIsSet;
 
 

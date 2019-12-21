@@ -109,9 +109,4 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
         JavaRDD<Item> resultRDD = childRDD.flatMap(transformation);
         return resultRDD;
     }
-
-    @Override
-    public boolean initIsRDD() {
-        return _iterator.isRDD();
-    }
 }
