@@ -35,7 +35,6 @@ public class FlworExpression extends Expression {
     private List<FlworClause> _contentClauses;
     private ReturnClause _returnClause;
 
-
     public FlworExpression(
             FlworClause startClause,
             List<FlworClause> containingClauses,
@@ -74,6 +73,12 @@ public class FlworExpression extends Expression {
 
     private void set_returnClause(ReturnClause returnClause) {
         this._returnClause = returnClause;
+    }
+
+    @Override
+    protected void initIsRDD() {
+        this.isRDD = _returnClause.isDataFrame();
+        this.isDataFrame = false;
     }
 
     @Override

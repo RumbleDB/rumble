@@ -67,6 +67,11 @@ public class ForClauseVar extends FlworVarDecl {
     }
 
     @Override
+    protected void initIsRDD() {
+        this.isDataFrame = (this.expression.isDataFrame() || (previousClause != null && previousClause.isDataFrame()));
+    }
+
+    @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
         List<ExpressionOrClause> result = super.getDescendants(depthSearch);
 

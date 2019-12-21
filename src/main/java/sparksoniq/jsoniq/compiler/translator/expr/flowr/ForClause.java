@@ -56,6 +56,15 @@ public class ForClause extends FlworClause {
         forVariables.get(0).previousClause = this.previousClause;
     }
 
+    protected void initIsRDD() {
+        // chain forVariables with previousClause relationship
+        for (int varIndex = forVariables.size()-1; varIndex > 0; varIndex--) {
+            forVariables.get(varIndex).setPreviousClause(forVariables.get(varIndex-1));
+        }
+        // call isDF on the last forVariable
+        this.isDataFrame = forVariables.get(forVariables.size()-1).isDataFrame();
+    }
+
     @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
         List<ExpressionOrClause> result = new ArrayList<>();

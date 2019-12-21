@@ -55,6 +55,15 @@ public class LetClause extends FlworClause {
         letVars.get(0).previousClause = this.previousClause;
     }
 
+    protected void initIsRDD() {
+        // chain letVariables with previousClause relationship
+        for (int varIndex = letVars.size()-1; varIndex > 0; varIndex--) {
+            letVars.get(varIndex).setPreviousClause(letVars.get(varIndex-1));
+        }
+        // call isDF on the last letVariable
+        this.isDataFrame = letVars.get(letVars.size()-1).isDataFrame();
+    }
+
     @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
         List<ExpressionOrClause> result = new ArrayList<>();

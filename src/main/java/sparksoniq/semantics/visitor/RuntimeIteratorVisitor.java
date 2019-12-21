@@ -198,7 +198,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         for (FlworClause clause : expression.get_contentClauses()) {
             previous = this.visitFlowrClause(clause, argument, previous);
         }
-        return new ReturnClauseSparkIterator(
+        RuntimeIterator returnIterator = new ReturnClauseSparkIterator(
                 previous,
                 this.visit(
                     (expression.get_returnClause()).getReturnExpr(),
@@ -206,6 +206,9 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 ),
                 createIteratorMetadata(expression.get_returnClause())
         );
+        returnIterator.setIsRDD(expression.isRDD());
+        returnIterator.setIsDataFrame(expression.isDataFrame());
+        return returnIterator;
     }
 
     private RuntimeTupleIterator visitFlowrClause(
@@ -231,6 +234,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                         assignmentExpression,
                         createIteratorMetadata(clause)
                 );
+                previousIterator.setIsDataFrame(var.isDataFrame());
             }
         } else if (clause instanceof LetClause) {
             for (LetClauseVar var : ((LetClause) clause).getLetVariables()) {
@@ -250,6 +254,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                         assignmentExpression,
                         createIteratorMetadata(clause)
                 );
+                previousIterator.setIsDataFrame(var.isDataFrame());
             }
         } else if (clause instanceof GroupByClause) {
             List<GroupByClauseSparkIteratorExpression> expressions = new ArrayList<>();
@@ -280,6 +285,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                     expressions,
                     createIteratorMetadata(clause)
             );
+            previousIterator.setIsDataFrame(clause.isDataFrame());
         } else if (clause instanceof OrderByClause) {
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator = new ArrayList<>();
             for (OrderByClauseExpr orderExpr : ((OrderByClause) clause).getExpressions()) {
@@ -298,18 +304,21 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                     ((OrderByClause) clause).isStable(),
                     createIteratorMetadata(clause)
             );
+            previousIterator.setIsDataFrame(clause.isDataFrame());
         } else if (clause instanceof WhereClause) {
             previousIterator = new WhereClauseSparkIterator(
                     previousIterator,
                     this.visit(((WhereClause) clause).getWhereExpression(), argument),
                     createIteratorMetadata(clause)
             );
+            previousIterator.setIsDataFrame(clause.isDataFrame());
         } else if (clause instanceof CountClause) {
             previousIterator = new CountClauseSparkIterator(
                     previousIterator,
                     this.visit(((CountClause) clause).getCountVariable(), argument),
                     createIteratorMetadata(clause)
             );
+            previousIterator.setIsDataFrame(clause.isDataFrame());
         }
         return previousIterator;
     }

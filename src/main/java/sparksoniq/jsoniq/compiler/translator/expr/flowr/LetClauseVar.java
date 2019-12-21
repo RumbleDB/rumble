@@ -38,6 +38,15 @@ public class LetClauseVar extends FlworVarDecl {
     }
 
     @Override
+    protected void initIsRDD() {
+        if (this.previousClause == null) {
+            this.isDataFrame = false;
+        } else {
+            this.isDataFrame = previousClause.isDataFrame();
+        }
+    }
+
+    @Override
     public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
         return visitor.visitLetClauseVar(this, argument);
     }
