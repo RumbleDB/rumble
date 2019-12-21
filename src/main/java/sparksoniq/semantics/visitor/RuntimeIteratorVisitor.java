@@ -512,8 +512,8 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 isPartialApplication = true;
             } else {
                 RuntimeIterator argumentIterator = this.visit(arg, argument);
-                argumentIterator.setIsRDD(expression.isRDD());
-                argumentIterator.setIsDataFrame(expression.isDataFrame());
+                argumentIterator.setIsRDD(arg.isRDD());
+                argumentIterator.setIsDataFrame(arg.isDataFrame());
                 arguments.add(argumentIterator);
             }
         }
