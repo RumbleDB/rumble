@@ -206,8 +206,8 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 ),
                 createIteratorMetadata(expression.get_returnClause())
         );
-        returnIterator.setIsRDD(expression.isRDD());
-        returnIterator.setIsDataFrame(expression.isDataFrame());
+        returnIterator.setIsRDD(expression.get_returnClause().isRDD());
+        returnIterator.setIsDataFrame(expression.get_returnClause().isDataFrame());
         return returnIterator;
     }
 

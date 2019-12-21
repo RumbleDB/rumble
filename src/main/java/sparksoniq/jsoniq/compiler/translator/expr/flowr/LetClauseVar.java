@@ -39,6 +39,7 @@ public class LetClauseVar extends FlworVarDecl {
 
     @Override
     protected void initIsRDD() {
+        initializeVariableIsRDDIsDataFrame();
         if (this.previousClause == null) {
             this.isDataFrame = false;
         } else {

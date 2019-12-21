@@ -21,6 +21,7 @@
 package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
 import sparksoniq.exceptions.SemanticException;
+import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
@@ -76,9 +77,23 @@ public class FlworExpression extends Expression {
     }
 
     @Override
-    protected void initIsRDD() {
-        this.isRDD = _returnClause.isDataFrame();
-        this.isDataFrame = false;
+    public boolean isRDD() {
+        return this._returnClause.isRDD();
+    }
+
+    @Override
+    public void setIsRDD(boolean isRDD) {
+        throw new SparksoniqRuntimeException("The FLWOR Expression class does not implement this", getMetadata());
+    }
+
+    @Override
+    public boolean isDataFrame() {
+        return this._returnClause.isDataFrame();
+    }
+
+    @Override
+    public void setIsDataFrame(boolean isRDD) {
+        throw new SparksoniqRuntimeException("The FLWOR Expression class does not implement this", getMetadata());
     }
 
     @Override

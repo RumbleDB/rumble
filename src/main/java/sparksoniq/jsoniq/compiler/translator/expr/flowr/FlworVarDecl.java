@@ -33,8 +33,14 @@ public abstract class FlworVarDecl extends FlworClause {
 
     protected VariableReference variableReferenceNode;
     protected Expression expression;
+
     // asSequence is null by default if the type of the variable in the for/let/groupBy clause is not specified.
     protected FlworVarSequenceType asSequence;
+
+    // isRDD/isDataFrame status of the declared variable.
+    // Notice that these are different from isRDD/isDataFrame of the expression which converts to iterator
+    protected boolean variableIsRDD;
+    protected boolean variableIsDataFrame;
 
 
     private FlworVarDecl(FLWOR_CLAUSES clauseType, ExpressionMetadata metadata) {
@@ -76,9 +82,19 @@ public abstract class FlworVarDecl extends FlworClause {
     }
 
     @Override
-    protected void initIsRDD() {
-        this.isRDD = expression.isRDD();
-        this.isDataFrame = expression.isDataFrame();
+    protected abstract void initIsRDD();
+
+    protected void initializeVariableIsRDDIsDataFrame() {
+        this.variableIsRDD = expression.isRDD();
+        this.variableIsDataFrame = expression.isDataFrame();
+    }
+
+    public boolean getVariableIsRDD() {
+        return this.variableIsRDD;
+    }
+
+    public boolean getVariableIsDataFrame() {
+        return this.variableIsDataFrame;
     }
 
     @Override

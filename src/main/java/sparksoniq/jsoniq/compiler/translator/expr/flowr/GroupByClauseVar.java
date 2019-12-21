@@ -47,6 +47,11 @@ public class GroupByClauseVar extends FlworVarDecl {
     }
 
     @Override
+    protected void initIsRDD() {
+        initializeVariableIsRDDIsDataFrame();
+    }
+
+    @Override
     public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
         return visitor.visitGroupByClauseVar(this, argument);
     }

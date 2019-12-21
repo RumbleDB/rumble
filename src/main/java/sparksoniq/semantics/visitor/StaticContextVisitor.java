@@ -150,8 +150,8 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
                 expression.getVariableReference().getVariableName(),
                 type,
                 expression.getMetadata(),
-                expression.isRDD(),
-                expression.isDataFrame()
+                expression.getVariableIsRDD(),
+                expression.getVariableIsDataFrame()
         );
         return result;
     }
