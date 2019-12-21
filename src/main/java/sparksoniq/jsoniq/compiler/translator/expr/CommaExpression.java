@@ -52,6 +52,24 @@ public class CommaExpression extends Expression {
     }
 
     @Override
+    public boolean isRDD() {
+        // if there is only a single expression, bypass the comma expression
+        if (_expressions.size() == 1) {
+            return this._expressions.get(0).isRDD();
+        }
+        return super.isRDD();
+    }
+
+    @Override
+    public boolean isDataFrame() {
+        // if there is only a single expression, bypass the comma expression
+        if (_expressions.size() == 1) {
+            return this._expressions.get(0).isDataFrame();
+        }
+        return super.isDataFrame();
+    }
+
+    @Override
     public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
         return visitor.visitCommaExpression(this, argument);
     }
