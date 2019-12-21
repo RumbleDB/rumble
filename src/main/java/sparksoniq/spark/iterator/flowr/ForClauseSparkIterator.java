@@ -70,14 +70,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         _assignmentIterator = assignmentIterator;
         _dependencies = _assignmentIterator.getVariableDependencies();
     }
-
-    @Override
-    public boolean isDataFrame() {
-        return (_assignmentIterator.isRDD() || (_child != null && _child.isDataFrame()));
-    }
-
-
-    @Override
+    
     public void open(DynamicContext context) {
         super.open(context);
 

@@ -67,15 +67,6 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public boolean isDataFrame() {
-        if (this._child == null) {
-            return false;
-        } else {
-            return _child.isDataFrame();
-        }
-    }
-
-    @Override
     public void open(DynamicContext context) {
         super.open(context);
         if (this._child == null) {
