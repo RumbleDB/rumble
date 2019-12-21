@@ -583,8 +583,8 @@ public class Functions {
                     "Invalid return type for function " + identifier.getName() + ". ",
                     functionCallIterator.getMetadata()
             );
-            typePromotionIterator.setIsRDD(isRDD);
-            typePromotionIterator.setIsDataFrame(isDataFrame);
+            typePromotionIterator.setIsRDD(functionCallIterator.isRDD());
+            typePromotionIterator.setIsDataFrame(functionCallIterator.isDataFrame());
             return typePromotionIterator;
         }
         return functionCallIterator;
