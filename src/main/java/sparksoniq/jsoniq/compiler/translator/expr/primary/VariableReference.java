@@ -53,6 +53,11 @@ public class VariableReference extends PrimaryExpression implements Serializable
     }
 
     @Override
+    protected void initIsRDD() {
+        // Do nothing, initialization is implemented in staticContextVisitor - visitVariableReference
+    }
+
+    @Override
     public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
         return visitor.visitVariableReference(this, argument);
     }

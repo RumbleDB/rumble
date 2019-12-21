@@ -76,6 +76,12 @@ public abstract class FlworVarDecl extends FlworClause {
     }
 
     @Override
+    protected void initIsRDD() {
+        this.isRDD = expression.isRDD();
+        this.isDataFrame = expression.isDataFrame();
+    }
+
+    @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
         List<ExpressionOrClause> result = new ArrayList<>();
         result.add(variableReferenceNode);

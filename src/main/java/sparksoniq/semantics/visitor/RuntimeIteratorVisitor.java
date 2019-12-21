@@ -272,10 +272,16 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                     }
                 }
 
+                VariableReference variableReference = groupExpr.getVariableReference();
+                VariableReferenceIterator variableReferenceIterator =
+                        (VariableReferenceIterator) this.visit(variableReference, argument);
+                variableReferenceIterator.setIsRDD(variableReference.isRDD());
+                variableReferenceIterator.setIsDataFrame(variableReference.isDataFrame());
+
                 expressions.add(
                     new GroupByClauseSparkIteratorExpression(
                             groupByExpression,
-                            (VariableReferenceIterator) this.visit(groupExpr.getVariableReference(), argument),
+                            variableReferenceIterator,
                             createIteratorMetadata(groupExpr)
                     )
                 );
@@ -330,11 +336,14 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
 
     @Override
     public RuntimeIterator visitVariableReference(VariableReference expression, RuntimeIterator argument) {
-        return new VariableReferenceIterator(
+        RuntimeIterator variableReferenceIterator = new VariableReferenceIterator(
                 expression.getVariableName(),
                 expression.getType(),
                 createIteratorMetadata(expression)
         );
+        variableReferenceIterator.setIsRDD(expression.isRDD());
+        variableReferenceIterator.setIsDataFrame(expression.isDataFrame());
+        return variableReferenceIterator;
     }
     // endregion
 

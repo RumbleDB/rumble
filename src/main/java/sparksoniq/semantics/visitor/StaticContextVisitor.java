@@ -57,13 +57,16 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
     // region primary
     @Override
     public StaticContext visitVariableReference(VariableReference expression, StaticContext argument) {
-        if (!argument.isInScope(expression.getVariableName())) {
+        String variableName = expression.getVariableName();
+        if (!argument.isInScope(variableName)) {
             throw new UndeclaredVariableException(
-                    "Uninitialized variable reference: " + expression.getVariableName(),
+                    "Uninitialized variable reference: " + variableName,
                     expression.getMetadata()
             );
         } else {
-            expression.setType(argument.getVariableSequenceType(expression.getVariableName()));
+            expression.setType(argument.getVariableSequenceType(variableName));
+            expression.setIsRDD(argument.getVariableIsRDD(variableName));
+            expression.setIsDataFrame(argument.getVariableIsDataFrame(variableName));
             return defaultAction(expression, argument);
         }
     }
@@ -99,7 +102,9 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
             result.addVariable(
                 expression.getPositionalVariableReference().getVariableName(),
                 new SequenceType(new ItemType(ItemTypes.IntegerItem)),
-                expression.getMetadata()
+                expression.getMetadata(),
+                    false,
+                    false
             );
         }
         return result;
@@ -128,7 +133,9 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
         result.addVariable(
             expression.getCountVariable().getVariableName(),
             new SequenceType(new ItemType(ItemTypes.IntegerItem), SequenceType.Arity.One),
-            expression.getMetadata()
+            expression.getMetadata(),
+                false,
+                false
         );
         return result;
     }
@@ -139,7 +146,13 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
         SequenceType type = expression.getAsSequence() == null
             ? new SequenceType()
             : expression.getAsSequence().getSequence();
-        result.addVariable(expression.getVariableReference().getVariableName(), type, expression.getMetadata());
+        result.addVariable(
+                expression.getVariableReference().getVariableName(),
+                type,
+                expression.getMetadata(),
+                expression.isRDD(),
+                expression.isDataFrame()
+        );
         return result;
     }
     // endregion
@@ -159,7 +172,13 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
     public StaticContext visitQuantifiedExpressionVar(QuantifiedExpressionVar expression, StaticContext argument) {
         StaticContext result = new StaticContext(argument);
         SequenceType type = expression.getSequenceType() == null ? new SequenceType() : expression.getSequenceType();
-        result.addVariable(expression.getVariableReference().getVariableName(), type, expression.getMetadata());
+        result.addVariable(
+                expression.getVariableReference().getVariableName(),
+                type,
+                expression.getMetadata(),
+                false,
+                false
+        );
         this.visit(expression.getExpression(), argument);
         return result;
     }
@@ -179,7 +198,9 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
             defaultCaseStaticContext.addVariable(
                 defaultCaseVariableReference.getVariableName(),
                 null,
-                expression.getMetadata()
+                expression.getMetadata(),
+                false,
+                false
             );
         }
         this.visit(expression.getDefaultExpression(), defaultCaseStaticContext);
@@ -191,7 +212,13 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
     public StaticContext visitTypeSwitchCaseExpression(TypeSwitchCaseExpression expression, StaticContext argument) {
         StaticContext result = new StaticContext(argument);
         if (expression.getVariableReference() != null) {
-            result.addVariable(expression.getVariableReference().getVariableName(), null, expression.getMetadata());
+            result.addVariable(
+                    expression.getVariableReference().getVariableName(),
+                    null,
+                    expression.getMetadata(),
+                    false,
+                    false
+            );
         }
         this.visit(expression.getReturnExpression(), result);
         return result;
