@@ -20,8 +20,6 @@
 
 package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
-import sparksoniq.exceptions.OurBadException;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
@@ -29,6 +27,7 @@ import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.Collections;
 import java.util.List;
+
 
 public class CountClause extends FlworClause {
     private VariableReference countClauseVar;
@@ -41,16 +40,6 @@ public class CountClause extends FlworClause {
     @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
         return getDescendantsFromChildren(Collections.singletonList(countClauseVar), depthSearch);
-    }
-
-    @Override
-    public boolean isRDD() {
-        throw new OurBadException("FLWOR clauses do not use RDDs. Use either local or DataFrame API");
-    }
-
-    @Override
-    public void setIsRDD(boolean isRDD) {
-        throw new OurBadException("FLWOR clauses do not use RDDs. Use either local or DataFrame API");
     }
 
     @Override

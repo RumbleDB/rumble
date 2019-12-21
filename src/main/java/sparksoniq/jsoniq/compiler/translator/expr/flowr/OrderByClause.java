@@ -20,9 +20,7 @@
 
 package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
-import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.SemanticException;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
@@ -42,16 +40,6 @@ public class OrderByClause extends FlworClause {
             throw new SemanticException("Group clause must have at least one variable", metadata);
         this.expressions = exprs;
         this.isStable = stable;
-    }
-
-    @Override
-    public boolean isRDD() {
-        throw new OurBadException("FLWOR clauses do not use RDDs. Use either local or DataFrame API");
-    }
-
-    @Override
-    public void setIsRDD(boolean isRDD) {
-        throw new OurBadException("FLWOR clauses do not use RDDs. Use either local or DataFrame API");
     }
 
     @Override

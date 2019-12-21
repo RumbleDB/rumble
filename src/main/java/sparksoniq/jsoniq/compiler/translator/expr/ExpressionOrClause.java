@@ -35,7 +35,7 @@ public abstract class ExpressionOrClause {
     private ExpressionMetadata metadata;
     protected boolean isRDD;
     protected boolean isDataFrame;
-    private boolean isRDDInitialized = false;
+    protected boolean isRDDInitialized = false;
 
     protected ExpressionOrClause() {
     }

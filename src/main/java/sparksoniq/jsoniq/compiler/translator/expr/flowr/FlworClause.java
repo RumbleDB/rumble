@@ -21,7 +21,6 @@
 package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
 import sparksoniq.exceptions.OurBadException;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
@@ -58,6 +57,16 @@ public class FlworClause extends ExpressionOrClause {
 
     protected void initIsRDD() {
         this.isDataFrame = previousClause.isDataFrame();
+    }
+
+    @Override
+    public boolean isRDD() {
+        throw new OurBadException("FLWOR clauses(except return) do not use RDDs. Use either local or DataFrame API");
+    }
+
+    @Override
+    public void setIsRDD(boolean isRDD) {
+        throw new OurBadException("FLWOR clauses(except return) do not use RDDs. Use either local or DataFrame API");
     }
 
     @Override
