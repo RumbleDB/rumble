@@ -43,6 +43,12 @@ public class ReturnClause extends FlworClause {
     }
 
     @Override
+    protected void initIsRDD() {
+        this.isRDD = previousClause.isDataFrame();
+        this.isDataFrame = false;
+    }
+
+    @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
         List<ExpressionOrClause> result = new ArrayList<>();
         if (returnExpr != null)

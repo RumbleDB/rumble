@@ -20,7 +20,9 @@
 
 package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
+import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.SemanticException;
+import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
@@ -56,6 +58,16 @@ public class ForClause extends FlworClause {
         forVariables.get(0).previousClause = this.previousClause;
     }
 
+    public boolean isRDD() {
+        throw new OurBadException("FLWOR clauses do not use RDDs. Use either local or DataFrame API");
+    }
+
+    @Override
+    public void setIsRDD(boolean isRDD) {
+        throw new OurBadException("FLWOR clauses do not use RDDs. Use either local or DataFrame API");
+    }
+
+    @Override
     protected void initIsRDD() {
         // chain forVariables with previousClause relationship
         for (int varIndex = forVariables.size()-1; varIndex > 0; varIndex--) {

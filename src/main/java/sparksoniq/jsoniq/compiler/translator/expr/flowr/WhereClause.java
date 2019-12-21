@@ -20,6 +20,8 @@
 
 package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
+import sparksoniq.exceptions.OurBadException;
+import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
@@ -38,6 +40,16 @@ public class WhereClause extends FlworClause {
 
     public Expression getWhereExpression() {
         return whereExpression;
+    }
+
+    @Override
+    public boolean isRDD() {
+        throw new OurBadException("FLWOR clauses do not use RDDs. Use either local or DataFrame API");
+    }
+
+    @Override
+    public void setIsRDD(boolean isRDD) {
+        throw new OurBadException("FLWOR clauses do not use RDDs. Use either local or DataFrame API");
     }
 
     @Override
