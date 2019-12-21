@@ -226,6 +226,11 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                             false,
                             createIteratorMetadata(clause)
                     );
+                    TreatExpression.setIsRDDIsDataFrameOfTreatIteratorGeneratedWithoutTreatExpression(
+                            assignmentExpression,
+                            var.getAsSequence().getSequence(),
+                            var.getExpression()
+                    );
                 }
 
                 previousIterator = new ForClauseSparkIterator(
@@ -245,6 +250,11 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                             var.getAsSequence().getSequence(),
                             false,
                             createIteratorMetadata(clause)
+                    );
+                    TreatExpression.setIsRDDIsDataFrameOfTreatIteratorGeneratedWithoutTreatExpression(
+                            assignmentExpression,
+                            var.getAsSequence().getSequence(),
+                            var.getExpression()
                     );
                 }
 
@@ -268,6 +278,11 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                                 groupExpr.getAsSequence().getSequence(),
                                 false,
                                 createIteratorMetadata(clause)
+                        );
+                        TreatExpression.setIsRDDIsDataFrameOfTreatIteratorGeneratedWithoutTreatExpression(
+                                groupByExpression,
+                                groupExpr.getAsSequence().getSequence(),
+                                groupExpr.getExpression()
                         );
                     }
                 }
@@ -870,12 +885,15 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
     public RuntimeIterator visitTreatExpression(TreatExpression expression, RuntimeIterator argument) {
         if (expression.isActive()) {
             RuntimeIterator childExpression = this.visit(expression.getMainExpression(), argument);
-            return new TreatIterator(
+            RuntimeIterator treatIterator = new TreatIterator(
                     childExpression,
                     expression.getsequenceType().getSequence(),
                     true,
                     createIteratorMetadata(expression)
             );
+            treatIterator.setIsRDD(expression.isRDD());
+            treatIterator.setIsDataFrame(expression.isDataFrame());
+            return treatIterator;
         } else {
             return defaultAction(expression, argument);
         }

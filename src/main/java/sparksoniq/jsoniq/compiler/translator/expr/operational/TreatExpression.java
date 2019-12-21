@@ -4,12 +4,15 @@ import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworVarSequenceType;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.UnaryExpressionBase;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import sparksoniq.semantics.types.SequenceType;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 
 public class TreatExpression extends UnaryExpressionBase {
 
     private FlworVarSequenceType _sequenceType;
+    private static boolean isDataFrameOfTreatExpression = false;
 
     public TreatExpression(Expression _mainExpression, ExpressionMetadata metadata) {
         super(_mainExpression, metadata);
@@ -30,8 +33,25 @@ public class TreatExpression extends UnaryExpressionBase {
     }
 
     @Override
-    public boolean isActive() {
-        return this._isActive;
+    protected void initIsRDD() {
+        SequenceType sequenceType = _sequenceType.getSequence();
+        this.isRDD = calculateIsRDDForTreatExpression(sequenceType, this._mainExpression);
+        this.isDataFrame = isDataFrameOfTreatExpression;
+    }
+
+    private static boolean calculateIsRDDForTreatExpression(SequenceType sequenceType, Expression expression) {
+        return sequenceType.getArity() != SequenceType.Arity.One
+                && sequenceType.getArity() != SequenceType.Arity.OneOrZero
+                && expression.isRDD();
+    }
+
+    public static void setIsRDDIsDataFrameOfTreatIteratorGeneratedWithoutTreatExpression(
+            RuntimeIterator iterator,
+            SequenceType sequenceType,
+            Expression expression
+    ) {
+        iterator.setIsRDD(calculateIsRDDForTreatExpression(sequenceType, expression));
+        iterator.setIsDataFrame(isDataFrameOfTreatExpression);
     }
 
     @Override

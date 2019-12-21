@@ -171,12 +171,5 @@ public class TreatIterator extends HybridRuntimeIterator {
                 : new UnexpectedTypeException(message, getMetadata());
         }
     }
-
-    @Override
-    public boolean initIsRDD() {
-        return _sequenceType.getArity() != SequenceType.Arity.One
-            && _sequenceType.getArity() != SequenceType.Arity.OneOrZero
-            && _iterator.isRDD();
-    }
 }
 
