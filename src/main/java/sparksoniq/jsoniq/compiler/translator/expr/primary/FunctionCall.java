@@ -86,17 +86,15 @@ public class FunctionCall extends PrimaryExpression {
                             this.isRDD = true;
                         }
                     }
-                    this.isDataFrame = false;
                 } else {
                     for (ExpressionOrClause child : this.getDescendants()) {
                         if (child.isRDD()) {
                             this.isRDD = true;
                         }
-                        if (child.isDataFrame()) {
-                            this.isDataFrame = true;
-                        }
                     }
                 }
+                // no hybridRI implements dataframes at the moment
+                this.isDataFrame = false;
             } else {
                 // Local function call -> isRDD & isDF are false
             }
