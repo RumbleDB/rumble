@@ -58,10 +58,6 @@ public class ForClause extends FlworClause {
 
     @Override
     protected void initIsRDD() {
-        // chain forVariables with previousClause relationship
-        for (int varIndex = forVariables.size() - 1; varIndex > 0; varIndex--) {
-            forVariables.get(varIndex).setPreviousClause(forVariables.get(varIndex - 1));
-        }
         // call isDF on the last forVariable
         this.isDataFrame = forVariables.get(forVariables.size() - 1).isDataFrame();
     }
