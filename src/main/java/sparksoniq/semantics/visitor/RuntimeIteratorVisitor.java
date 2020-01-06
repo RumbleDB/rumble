@@ -475,7 +475,10 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
     public RuntimeIterator visitNamedFunctionRef(NamedFunctionRef expression, RuntimeIterator argument) {
         FunctionIdentifier identifier = expression.getIdentifier();
         if (Functions.checkBuiltInFunctionExists(identifier)) {
-            throw new UnsupportedFeatureException("Higher order functions using builtin functions are not supported.", expression.getMetadata());
+            throw new UnsupportedFeatureException(
+                    "Higher order functions using builtin functions are not supported.",
+                    expression.getMetadata()
+            );
         }
         if (Functions.checkUserDefinedFunctionExists(identifier)) {
             FunctionItem function = Functions.getUserDefinedFunction(identifier);
