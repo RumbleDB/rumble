@@ -162,6 +162,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         if (_child != null) {
             this._child.close();
         }
+        _expression.close();
     }
 
     @Override

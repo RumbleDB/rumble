@@ -74,17 +74,20 @@ public class Main {
                 );
             }
         } catch (Exception ex) {
-            handleException(ex);
+            handleException(ex, sparksoniqConf.getErrorInfo());
         }
     }
 
-    private static void handleException(Throwable ex) {
+    private static void handleException(Throwable ex, boolean errorInfo) {
         if (ex != null) {
             if (ex instanceof SparkException) {
                 Throwable sparkExceptionCause = ex.getCause();
-                handleException(sparkExceptionCause);;
+                handleException(sparkExceptionCause, errorInfo);
             } else if (ex instanceof SparksoniqRuntimeException) {
                 System.err.println("⚠️  ️" + ex.getMessage());
+                if(errorInfo) {
+                	ex.printStackTrace();
+                }
             } else {
                 System.out.println("An error has occured: " + ex.getMessage());
                 System.out.println(
