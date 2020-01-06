@@ -22,6 +22,9 @@ package org.rumbledb.cli;
 
 import org.apache.spark.SparkException;
 import org.rumbledb.config.SparksoniqRuntimeConfiguration;
+
+import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.io.shell.JiqsJLineShell;
 import sparksoniq.spark.SparkSessionManager;
@@ -83,10 +86,10 @@ public class Main {
             if (ex instanceof SparkException) {
                 Throwable sparkExceptionCause = ex.getCause();
                 handleException(sparkExceptionCause, errorInfo);
-            } else if (ex instanceof SparksoniqRuntimeException) {
+            } else if (ex instanceof SparksoniqRuntimeException && !(ex instanceof OurBadException)) {
                 System.err.println("⚠️  ️" + ex.getMessage());
-                if(errorInfo) {
-                	ex.printStackTrace();
+                if (errorInfo) {
+                    ex.printStackTrace();
                 }
             } else {
                 System.out.println("An error has occured: " + ex.getMessage());
@@ -94,7 +97,9 @@ public class Main {
                     "We should investigate this 🙈. Please contact us or file an issue on GitHub with your query."
                 );
                 System.out.println("Link: https://github.com/RumbleDB/rumble/issues");
-                ex.printStackTrace();
+                if (errorInfo) {
+                    ex.printStackTrace();
+                }
             }
         }
     }

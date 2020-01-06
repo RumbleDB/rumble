@@ -25,6 +25,7 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.FunctionsNonSerializableException;
+import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
@@ -166,7 +167,7 @@ public class FunctionItem extends Item {
             output.writeInt(data.length);
             output.writeBytes(data);
         } catch (Exception e) {
-            throw new SparksoniqRuntimeException(
+            throw new OurBadException(
                     "Error converting functionItem-bodyRuntimeIterator to byte[]:" + e.getMessage()
             );
         }
@@ -190,7 +191,7 @@ public class FunctionItem extends Item {
             ObjectInputStream ois = new ObjectInputStream(bis);
             this.bodyIterator = (RuntimeIterator) ois.readObject();
         } catch (Exception e) {
-            throw new SparksoniqRuntimeException(
+            throw new OurBadException(
                     "Error converting functionItem-bodyRuntimeIterator to functionItem:" + e.getMessage()
             );
         }

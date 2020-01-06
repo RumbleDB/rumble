@@ -26,6 +26,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -75,7 +76,7 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
 
             setNextLocalTupleResult();
         } else {
-            throw new SparksoniqRuntimeException("Invalid count clause.");
+            throw new OurBadException("Invalid count clause.");
         }
     }
 
@@ -116,7 +117,7 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
             Map<String, DynamicContext.VariableDependency> parentProjection
     ) {
         if (this._child == null) {
-            throw new SparksoniqRuntimeException("Invalid count clause.");
+            throw new OurBadException("Invalid count clause.");
         }
         Dataset<Row> df = _child.getDataFrame(context, getProjection(parentProjection));
         StructType inputSchema = df.schema();

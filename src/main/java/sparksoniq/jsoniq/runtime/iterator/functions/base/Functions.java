@@ -21,6 +21,7 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.base;
 
 import sparksoniq.exceptions.DuplicateFunctionIdentifierException;
+import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnknownFunctionCallException;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
@@ -707,7 +708,7 @@ public class Functions {
             ObjectInputStream ois = new ObjectInputStream(bis);
             return (FunctionItem) ois.readObject();
         } catch (IOException | ClassNotFoundException e) {
-            throw new SparksoniqRuntimeException("Error while deep copying the function body runtimeIterator");
+            throw new OurBadException("Error while deep copying the function body runtimeIterator");
         }
     }
 

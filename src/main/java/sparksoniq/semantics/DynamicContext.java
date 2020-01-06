@@ -28,6 +28,8 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
+
+import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.io.json.RowToItemMapper;
 import sparksoniq.jsoniq.item.ItemFactory;
@@ -100,9 +102,9 @@ public class DynamicContext implements Serializable, KryoSerializable {
 
     public boolean isRDD(String varName, IteratorMetadata metadata) {
         if (!contains(varName)) {
-            throw new SparksoniqRuntimeException(
+            throw new OurBadException(
                     "Runtime error retrieving variable " + varName + " value.",
-                    metadata.getExpressionMetadata()
+                    metadata
             );
         }
         return _rddVariableValues.containsKey(varName)
@@ -111,9 +113,9 @@ public class DynamicContext implements Serializable, KryoSerializable {
 
     public boolean isDF(String varName, IteratorMetadata metadata) {
         if (!contains(varName)) {
-            throw new SparksoniqRuntimeException(
+            throw new OurBadException(
                     "Runtime error retrieving variable " + varName + " value.",
-                    metadata.getExpressionMetadata()
+                    metadata
             );
         }
         return _dfVariableValues.containsKey(varName);
@@ -150,9 +152,9 @@ public class DynamicContext implements Serializable, KryoSerializable {
         }
 
         if (_localVariableCounts.containsKey(varName)) {
-            throw new SparksoniqRuntimeException(
+            throw new OurBadException(
                     "Runtime error retrieving variable " + varName + " value: only count available.",
-                    metadata.getExpressionMetadata()
+                    metadata
             );
         }
 
@@ -177,9 +179,9 @@ public class DynamicContext implements Serializable, KryoSerializable {
             return _parent.getRDDVariableValue(varName, metadata);
         }
 
-        throw new SparksoniqRuntimeException(
+        throw new OurBadException(
                 "Runtime error retrieving variable " + varName + " value",
-                metadata.getExpressionMetadata()
+                metadata
         );
     }
 
@@ -192,9 +194,9 @@ public class DynamicContext implements Serializable, KryoSerializable {
             return _parent.getDFVariableValue(varName, metadata);
         }
 
-        throw new SparksoniqRuntimeException(
+        throw new OurBadException(
                 "Runtime error retrieving variable " + varName + " value",
-                metadata.getExpressionMetadata()
+                metadata
         );
     }
 
@@ -214,7 +216,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         if (_parent != null) {
             return _parent.getVariableCount(varName);
         }
-        throw new SparksoniqRuntimeException("Runtime error retrieving variable " + varName + " value");
+        throw new OurBadException("Runtime error retrieving variable " + varName + " value");
     }
 
     public void removeVariable(String varName) {

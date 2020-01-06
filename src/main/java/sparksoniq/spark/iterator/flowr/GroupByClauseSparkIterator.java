@@ -31,6 +31,7 @@ import sparksoniq.exceptions.InvalidGroupVariableException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.JobWithinAJobException;
 import sparksoniq.exceptions.NonAtomicKeyException;
+import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
@@ -92,7 +93,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             _child.open(_currentDynamicContext);
             this._hasNext = _child.hasNext();
         } else {
-            throw new SparksoniqRuntimeException("Invalid groupby clause.");
+            throw new OurBadException("Invalid groupby clause.");
         }
     }
 
@@ -222,7 +223,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             Map<String, DynamicContext.VariableDependency> parentProjection
     ) {
         if (this._child == null) {
-            throw new SparksoniqRuntimeException("Invalid groupby clause.");
+            throw new OurBadException("Invalid groupby clause.");
         }
 
         for (GroupByClauseSparkIteratorExpression expression : _expressions) {

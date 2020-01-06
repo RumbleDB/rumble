@@ -25,6 +25,8 @@ import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
+
+import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.semantics.types.ItemTypes;
 
@@ -69,7 +71,7 @@ public class FlworKey implements KryoSerializable {
      */
     public int compareWithFlworKey(FlworKey flworKey) {
         if (this.keyItems.size() != flworKey.keyItems.size()) {
-            throw new SparksoniqRuntimeException("Invalid sort key: Key sizes can't be different.");
+            throw new OurBadException("Invalid sort key: Key sizes can't be different.");
         }
 
         int result = 0;

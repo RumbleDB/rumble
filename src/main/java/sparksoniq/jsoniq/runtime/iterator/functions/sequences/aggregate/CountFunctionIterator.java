@@ -22,6 +22,7 @@ package sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate;
 
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -73,7 +74,7 @@ public class CountFunctionIterator extends LocalFunctionCallIterator {
             this._hasNext = false;
             if (count > (long) Integer.MAX_VALUE) {
                 // TODO: handle too big x values
-                throw new SparksoniqRuntimeException("The count value is too big to convert to integer type.");
+                throw new OurBadException("The count value is too big to convert to integer type.");
             } else {
                 return ItemFactory.getInstance().createIntegerItem((int) count);
             }

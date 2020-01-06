@@ -68,7 +68,7 @@ public class SparksoniqRuntimeConfiguration {
         else
             return false;
     }
-    
+
     public String getLogPath() {
         if (this._arguments.containsKey("log-path"))
             return this._arguments.get("log-path");

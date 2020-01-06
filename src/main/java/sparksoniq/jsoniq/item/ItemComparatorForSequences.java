@@ -21,6 +21,8 @@
 package sparksoniq.jsoniq.item;
 
 import org.rumbledb.api.Item;
+
+import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 
 import java.io.Serializable;
@@ -53,7 +55,7 @@ public class ItemComparatorForSequences implements Comparator<Item>, Serializabl
             String value2 = v2.getStringValue();
             result = value1.compareTo(value2);
         } else {
-            throw new SparksoniqRuntimeException(v1.serialize() + " " + v2.serialize());
+            throw new OurBadException(v1.serialize() + " " + v2.serialize());
         }
         return result;
     }

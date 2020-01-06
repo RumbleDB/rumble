@@ -73,7 +73,7 @@ public class ParallelizeFunctionIterator extends RDDRuntimeIterator {
                     .parallelize(contents, partitions.getIntegerValue());
             } catch (Exception e) {
                 if (!partitionsIterator.hasNext())
-                    throw new SparksoniqRuntimeException("The second parameter of parallelize must be an integer.");
+                    throw new UnexpectedTypeException("The second parameter of parallelize must be an integer.", getMetadata());
             }
             partitionsIterator.close();
         }
