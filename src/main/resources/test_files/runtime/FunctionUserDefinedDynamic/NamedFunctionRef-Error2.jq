@@ -1,4 +1,4 @@
-(:JIQS: ShouldCrash; ErrorCode="XPDY0130"; :)
+(:JIQS: ShouldCrash; ErrorCode="RBST0002"; :)
 max#1
 
 (: referencing built-in functions - not supported :)
