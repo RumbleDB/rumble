@@ -31,6 +31,8 @@ import org.apache.hadoop.fs.Path;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.SparksoniqRuntimeConfiguration;
+
+import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.ParsingException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
@@ -138,7 +140,7 @@ public class JsoniqQueryExecutor {
             // else write from Spark RDD
         } else {
             if (!result.isRDD())
-                throw new SparksoniqRuntimeException("Could not find any RDD iterators in executor");
+                throw new OurBadException("Could not find any RDD iterators in executor");
             JavaRDD<Item> rdd = result.getRDD(new DynamicContext());
             JavaRDD<String> output = rdd.map(o -> o.serialize());
             output.saveAsTextFile(outputPath);
@@ -304,6 +306,6 @@ public class JsoniqQueryExecutor {
 
             return sb.toString();
         }
-        throw new SparksoniqRuntimeException("Unexpected rdd result count in getRDDResults()");
+        throw new OurBadException("Unexpected rdd result count in getRDDResults()");
     }
 }

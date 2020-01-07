@@ -28,6 +28,8 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SparkSession;
 import org.rumbledb.api.Item;
 import org.rumbledb.cli.Main;
+
+import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.BooleanItem;
@@ -94,7 +96,7 @@ public class SparkSessionManager {
 
             session = SparkSession.builder().config(this.configuration).getOrCreate();
         } else {
-            throw new SparksoniqRuntimeException("Session already exists: new session initialization prevented.");
+            throw new OurBadException("Session already exists: new session initialization prevented.");
         }
     }
 

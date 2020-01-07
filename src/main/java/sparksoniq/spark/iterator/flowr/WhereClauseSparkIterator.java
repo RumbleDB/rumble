@@ -26,6 +26,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.JobWithinAJobException;
+import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -75,7 +76,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             setNextLocalTupleResult();
 
         } else {
-            throw new SparksoniqRuntimeException("Invalid where clause.");
+            throw new OurBadException("Invalid where clause.");
         }
     }
 
@@ -121,7 +122,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             Map<String, DynamicContext.VariableDependency> parentProjection
     ) {
         if (this._child == null) {
-            throw new SparksoniqRuntimeException("Invalid where clause.");
+            throw new OurBadException("Invalid where clause.");
         }
 
         if (_expression.isRDD()) {

@@ -30,6 +30,7 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.InvalidArgumentTypeException;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
@@ -91,7 +92,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                     else if (item.isDecimal())
                         result = !item.getDecimalValue().equals(BigDecimal.ZERO);
                     else {
-                        throw new SparksoniqRuntimeException(
+                        throw new OurBadException(
                                 "Unexpected numeric type found while calculating effective boolean value."
                         );
                     }

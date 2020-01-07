@@ -28,6 +28,8 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
+
+import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.io.json.RowToItemMapper;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -96,7 +98,7 @@ public class FlworTuple implements Serializable, KryoSerializable {
 
     public boolean isRDD(String key, IteratorMetadata metadata) {
         if (!contains(key)) {
-            throw new SparksoniqRuntimeException("Undeclared FLWOR variable", metadata.getExpressionMetadata());
+            throw new OurBadException("Undeclared FLWOR variable", metadata);
         }
         return rddVariables.containsKey(key)
             || dfVariables.containsKey(key);
@@ -104,7 +106,7 @@ public class FlworTuple implements Serializable, KryoSerializable {
 
     public boolean isDF(String key, IteratorMetadata metadata) {
         if (!contains(key)) {
-            throw new SparksoniqRuntimeException("Undeclared FLWOR variable", metadata.getExpressionMetadata());
+            throw new OurBadException("Undeclared FLWOR variable", metadata);
         }
         return dfVariables.containsKey(key);
     }
@@ -118,7 +120,7 @@ public class FlworTuple implements Serializable, KryoSerializable {
             return SparkSessionManager.collectRDDwithLimit(rdd);
         }
 
-        throw new SparksoniqRuntimeException("Undeclared FLOWR variable", metadata.getExpressionMetadata());
+        throw new OurBadException("Undeclared FLOWR variable", metadata);
     }
 
     public JavaRDD<Item> getRDDValue(String key, IteratorMetadata metadata) {
@@ -130,14 +132,14 @@ public class FlworTuple implements Serializable, KryoSerializable {
             JavaRDD<Row> rowRDD = df.javaRDD();
             return rowRDD.map(new RowToItemMapper(metadata));
         }
-        throw new SparksoniqRuntimeException("Undeclared FLOWR variable", metadata.getExpressionMetadata());
+        throw new OurBadException("Undeclared FLOWR variable", metadata);
     }
 
     public Dataset<Row> getDFValue(String key, IteratorMetadata metadata) {
         if (dfVariables.containsKey(key)) {
             return dfVariables.get(key);
         }
-        throw new SparksoniqRuntimeException("Undeclared FLOWR variable", metadata.getExpressionMetadata());
+        throw new OurBadException("Undeclared FLOWR variable", metadata);
     }
 
     public void putValue(String key, Item value) {

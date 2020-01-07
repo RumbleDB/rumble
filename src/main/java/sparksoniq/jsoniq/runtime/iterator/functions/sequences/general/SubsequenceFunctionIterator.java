@@ -23,6 +23,7 @@ package sparksoniq.jsoniq.runtime.iterator.functions.sequences.general;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
+import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.ObjectItem;
@@ -179,8 +180,8 @@ public class SubsequenceFunctionIterator extends LocalFunctionCallIterator {
                 } else if (_length == -1) { // _length not specified -> take all items until the end
                     _nextResult = _sequenceIterator.next();
                 } else {
-                    throw new SparksoniqRuntimeException(
-                            "Unexpected length value found. Please report the bug with subsequence function iterator."
+                    throw new OurBadException(
+                            "Unexpected length value found."
                     );
                 }
             }

@@ -29,7 +29,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.rumbledb.api.Item;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
+
+import sparksoniq.exceptions.OurBadException;
 import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
@@ -173,6 +174,6 @@ public class RuntimeTests extends AnnotationsTestsBase {
             sb.append(")");
             return sb.toString();
         }
-        throw new SparksoniqRuntimeException("Unexpected rdd result count in getRDDResults()");
+        throw new OurBadException("Unexpected rdd result count in getRDDResults()");
     }
 }

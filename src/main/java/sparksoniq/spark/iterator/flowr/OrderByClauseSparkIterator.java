@@ -30,6 +30,7 @@ import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.JobWithinAJobException;
 import sparksoniq.exceptions.NonAtomicKeyException;
+import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -91,7 +92,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
             this._hasNext = _child.hasNext();
         } else {
-            throw new SparksoniqRuntimeException("Invalid where clause.");
+            throw new OurBadException("Invalid where clause.");
         }
     }
 
@@ -199,7 +200,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             Map<String, DynamicContext.VariableDependency> parentProjection
     ) {
         if (this._child == null) {
-            throw new SparksoniqRuntimeException("Invalid orderby clause.");
+            throw new OurBadException("Invalid orderby clause.");
         }
 
         for (OrderByClauseSparkIteratorExpression expression : _expressions) {

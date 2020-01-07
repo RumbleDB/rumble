@@ -22,6 +22,9 @@ package org.rumbledb.cli;
 
 import org.apache.spark.SparkException;
 import org.rumbledb.config.SparksoniqRuntimeConfiguration;
+
+import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.io.shell.JiqsJLineShell;
 import sparksoniq.spark.SparkSessionManager;
@@ -74,24 +77,29 @@ public class Main {
                 );
             }
         } catch (Exception ex) {
-            handleException(ex);
+            handleException(ex, sparksoniqConf.getShowErrorInfo());
         }
     }
 
-    private static void handleException(Throwable ex) {
+    private static void handleException(Throwable ex, boolean showErrorInfo) {
         if (ex != null) {
             if (ex instanceof SparkException) {
                 Throwable sparkExceptionCause = ex.getCause();
-                handleException(sparkExceptionCause);;
-            } else if (ex instanceof SparksoniqRuntimeException) {
+                handleException(sparkExceptionCause, showErrorInfo);
+            } else if (ex instanceof SparksoniqRuntimeException && !(ex instanceof OurBadException)) {
                 System.err.println("⚠️  ️" + ex.getMessage());
+                if (showErrorInfo) {
+                    ex.printStackTrace();
+                }
             } else {
                 System.out.println("An error has occured: " + ex.getMessage());
                 System.out.println(
                     "We should investigate this 🙈. Please contact us or file an issue on GitHub with your query."
                 );
                 System.out.println("Link: https://github.com/RumbleDB/rumble/issues");
-                ex.printStackTrace();
+                if (showErrorInfo) {
+                    ex.printStackTrace();
+                }
             }
         }
     }

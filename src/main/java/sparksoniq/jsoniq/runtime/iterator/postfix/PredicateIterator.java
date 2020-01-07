@@ -26,6 +26,7 @@ import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
 import scala.Tuple2;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
@@ -104,7 +105,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
     @Override
     protected void openLocal() {
         if (this._children.size() < 2) {
-            throw new SparksoniqRuntimeException("Invalid Predicate! Must initialize filter before calling next");
+            throw new OurBadException("Invalid Predicate! Must initialize filter before calling next");
         }
         _filterDynamicContext = new DynamicContext(_currentDynamicContext);
         if (_filter.getVariableDependencies().containsKey("$last")) {

@@ -25,6 +25,7 @@ import com.esotericsoftware.kryo.io.Input;
 import org.apache.spark.sql.api.java.UDF2;
 import org.rumbledb.api.Item;
 import scala.collection.mutable.WrappedArray;
+import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.ItemFactory;
@@ -159,7 +160,7 @@ public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, W
                         expression.getIteratorMetadata()
                 );
             } else {
-                throw new SparksoniqRuntimeException("Unexpected type found.");
+                throw new OurBadException("Unexpected type found.");
             }
         }
         return result;

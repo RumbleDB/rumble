@@ -28,6 +28,7 @@ import org.apache.spark.sql.api.java.UDF2;
 import org.joda.time.Instant;
 import org.rumbledb.api.Item;
 import scala.collection.mutable.WrappedArray;
+import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
 import sparksoniq.jsoniq.item.ItemFactory;
@@ -168,12 +169,12 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
                                 _results.add(nextItem.getDateTimeValue().getMillis());
                                 break;
                             default:
-                                throw new SparksoniqRuntimeException(
+                                throw new OurBadException(
                                         "Unexpected ordering type found while creating columns."
                                 );
                         }
                     } catch (RuntimeException e) {
-                        throw new SparksoniqRuntimeException(
+                        throw new OurBadException(
                                 "Invalid sort key: cannot compare item of type "
                                     + typeName
                                     + " with item of type "

@@ -78,7 +78,7 @@ public class JiqsJLineShell {
                 }
                 previousLine = currentLine;
             } catch (Exception ex) {
-                handleException(ex);
+                handleException(ex, _configuration.getShowErrorInfo());
             }
         }
     }
@@ -94,7 +94,7 @@ public class JiqsJLineShell {
                 output("[EXEC TIME]: " + time);
             removeQueryFile(file);
         } catch (Exception ex) {
-            handleException(ex);
+            handleException(ex, _configuration.getShowErrorInfo());
             removeQueryFile(file);
         }
         queryStarted = false;
@@ -125,22 +125,27 @@ public class JiqsJLineShell {
         jsoniqQueryExecutor = new JsoniqQueryExecutor(false, _configuration);
     }
 
-    private void handleException(Throwable ex) {
+    private void handleException(Throwable ex, boolean showErrorInfo) {
         if (ex != null) {
             if (ex instanceof EndOfFileException) {
                 this.currentLine = JiqsJLineShell.EXIT_COMMAND;
             } else if (ex instanceof SparkException) {
                 Throwable sparkExceptionCause = ex.getCause();
-                handleException(sparkExceptionCause);;
+                handleException(sparkExceptionCause, showErrorInfo);;
             } else if (ex instanceof SparksoniqRuntimeException) {
-                System.err.println(ex.getMessage());
+                System.err.println("⚠️  ️" + ex.getMessage());
+                if (showErrorInfo) {
+                    ex.printStackTrace();
+                }
             } else if (!(ex instanceof UserInterruptException)) {
                 System.out.println("An error has occured: " + ex.getMessage());
                 System.out.println(
                     "We should investigate this 🙈. Please contact us or file an issue on GitHub with your query."
                 );
                 System.out.println("Link: https://github.com/RumbleDB/rumble/issues");
-                ex.printStackTrace();
+                if (showErrorInfo) {
+                    ex.printStackTrace();
+                }
             }
         }
     }

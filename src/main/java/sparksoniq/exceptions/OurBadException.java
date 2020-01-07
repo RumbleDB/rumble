@@ -20,17 +20,18 @@
 
 package sparksoniq.exceptions;
 
+import sparksoniq.exceptions.codes.ErrorCodes;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
-public class IteratorFlowException extends OurBadException {
+public class OurBadException extends SparksoniqRuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    public IteratorFlowException(String message, IteratorMetadata metadata) {
-        super(message, metadata);
+    public OurBadException(String message, IteratorMetadata metadata) {
+        super(message, ErrorCodes.OurBadErrorCode, metadata.getExpressionMetadata());
     }
 
-    public IteratorFlowException(String message) {
-        super(message);
+    public OurBadException(String message) {
+        super(message, ErrorCodes.OurBadErrorCode);
     }
 }
