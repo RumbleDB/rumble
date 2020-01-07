@@ -62,9 +62,9 @@ public class SparksoniqRuntimeConfiguration {
             return false;
     }
 
-    public boolean getErrorInfo() {
-        if (this._arguments.containsKey("error-info"))
-            return this._arguments.get("error-info").equals("yes");
+    public boolean getShowErrorInfo() {
+        if (this._arguments.containsKey("show-error-info"))
+            return this._arguments.get("show-error-info").equals("yes");
         else
             return false;
     }

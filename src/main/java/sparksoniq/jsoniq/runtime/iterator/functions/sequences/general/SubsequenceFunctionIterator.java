@@ -181,7 +181,7 @@ public class SubsequenceFunctionIterator extends LocalFunctionCallIterator {
                     _nextResult = _sequenceIterator.next();
                 } else {
                     throw new OurBadException(
-                            "Unexpected length value found. Please report the bug with subsequence function iterator."
+                            "Unexpected length value found."
                     );
                 }
             }
