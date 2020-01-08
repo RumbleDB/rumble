@@ -56,7 +56,7 @@ public class LetClause extends FlworClause {
     }
     
     @Override
-    protected void initIsRDD() {
+    protected void initIsRDDAndIsDataFrame() {
         // call isDF on the last letVariable
         this.isDataFrame = letVars.get(letVars.size() - 1).isDataFrame();
     }

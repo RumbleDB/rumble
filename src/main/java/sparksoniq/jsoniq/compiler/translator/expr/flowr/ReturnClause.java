@@ -43,19 +43,21 @@ public class ReturnClause extends FlworClause {
     }
 
     @Override
-    protected void initIsRDD() {
+    protected void initIsRDDAndIsDataFrame() {
         this.isRDD = previousClause.isDataFrame();
         this.isDataFrame = false;
     }
 
+    @Override
     public void setIsRDD(boolean isRDD) {
         this.isRDD = isRDD;
     }
 
+    @Override
     public boolean isRDD() {
-        if (!isRDDInitialized) {
-            initIsRDD();
-            isRDDInitialized = true;
+        if (!isRDDAndIsDataFrameInitialized) {
+            initIsRDDAndIsDataFrame();
+            isRDDAndIsDataFrameInitialized = true;
         }
         return this.isRDD;
     }

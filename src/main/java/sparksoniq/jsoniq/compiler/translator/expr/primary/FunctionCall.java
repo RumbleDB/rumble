@@ -65,7 +65,7 @@ public class FunctionCall extends PrimaryExpression {
     }
 
     @Override
-    protected void initIsRDD() {
+    protected void initIsRDDAndIsDataFrame() {
         this.isRDD = false;
         this.isDataFrame = false;
         FunctionIdentifier identifier = new FunctionIdentifier(this._functionName, this._arguments.size());

@@ -82,7 +82,7 @@ public abstract class FlworVarDecl extends FlworClause {
     }
 
     @Override
-    protected abstract void initIsRDD();
+    protected abstract void initIsRDDAndIsDataFrame();
 
     protected void initializeVariableIsRDDIsDataFrame() {
         this.variableIsRDD = expression.isRDD();

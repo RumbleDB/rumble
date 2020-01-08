@@ -83,7 +83,7 @@ public class PostFixExpression extends Expression {
     }
 
     @Override
-    protected void initIsRDD() {
+    protected void initIsRDDAndIsDataFrame() {
         this.isRDD = this._primaryExpressionNode.isRDD();
         this.isDataFrame = this._primaryExpressionNode.isDataFrame();
     }

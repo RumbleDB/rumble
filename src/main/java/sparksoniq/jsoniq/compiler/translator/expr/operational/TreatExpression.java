@@ -33,7 +33,7 @@ public class TreatExpression extends UnaryExpressionBase {
     }
 
     @Override
-    protected void initIsRDD() {
+    protected void initIsRDDAndIsDataFrame() {
         SequenceType sequenceType = _sequenceType.getSequence();
         this.isRDD = calculateIsRDDForTreatExpression(sequenceType, this._mainExpression);
         this.isDataFrame = isDataFrameOfTreatExpression;

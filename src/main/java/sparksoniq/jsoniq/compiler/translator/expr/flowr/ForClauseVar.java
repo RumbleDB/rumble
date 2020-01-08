@@ -67,7 +67,7 @@ public class ForClauseVar extends FlworVarDecl {
     }
 
     @Override
-    protected void initIsRDD() {
+    protected void initIsRDDAndIsDataFrame() {
         initializeVariableIsRDDIsDataFrame();
         this.isDataFrame = (this.expression.isRDD() || (previousClause != null && previousClause.isDataFrame()));
     }

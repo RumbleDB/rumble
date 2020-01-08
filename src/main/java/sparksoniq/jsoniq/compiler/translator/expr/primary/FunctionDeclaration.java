@@ -77,7 +77,7 @@ public class FunctionDeclaration extends PrimaryExpression {
     }
 
     @Override
-    protected void initIsRDD() {
+    protected void initIsRDDAndIsDataFrame() {
         this.isRDD = false;
         this.isDataFrame = false;
 

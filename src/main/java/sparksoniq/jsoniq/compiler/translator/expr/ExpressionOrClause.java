@@ -35,7 +35,7 @@ public abstract class ExpressionOrClause {
     private ExpressionMetadata metadata;
     protected boolean isRDD;
     protected boolean isDataFrame;
-    protected boolean isRDDInitialized = false;
+    protected boolean isRDDAndIsDataFrameInitialized = false;
 
     protected ExpressionOrClause() {
     }
@@ -53,22 +53,22 @@ public abstract class ExpressionOrClause {
     }
 
     public boolean isRDD() {
-        if (!isRDDInitialized) {
-            initIsRDD();
-            isRDDInitialized = true;
+        if (!isRDDAndIsDataFrameInitialized) {
+            initIsRDDAndIsDataFrame();
+            isRDDAndIsDataFrameInitialized = true;
         }
         return this.isRDD;
     }
 
     public boolean isDataFrame() {
-        if (!isRDDInitialized) {
-            initIsRDD();
-            isRDDInitialized = true;
+        if (!isRDDAndIsDataFrameInitialized) {
+            initIsRDDAndIsDataFrame();
+            isRDDAndIsDataFrameInitialized = true;
         }
         return this.isDataFrame;
     }
 
-    protected void initIsRDD() {
+    protected void initIsRDDAndIsDataFrame() {
         this.isRDD = false;
         this.isDataFrame = false;
     }

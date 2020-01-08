@@ -57,7 +57,7 @@ public class ForClause extends FlworClause {
     }
 
     @Override
-    protected void initIsRDD() {
+    protected void initIsRDDAndIsDataFrame() {
         // call isDF on the last forVariable
         this.isDataFrame = forVariables.get(forVariables.size() - 1).isDataFrame();
     }

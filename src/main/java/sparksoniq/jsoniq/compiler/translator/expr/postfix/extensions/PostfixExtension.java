@@ -60,7 +60,7 @@ public abstract class PostfixExtension extends ExpressionOrClause {
     }
 
     @Override
-    protected void initIsRDD() {
+    protected void initIsRDDAndIsDataFrame() {
         if (previous != null) {
             this.isRDD = this.previous.isRDD();
             this.isDataFrame = this.previous.isDataFrame();

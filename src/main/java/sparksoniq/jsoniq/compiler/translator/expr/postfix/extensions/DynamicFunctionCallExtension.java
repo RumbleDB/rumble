@@ -49,7 +49,7 @@ public class DynamicFunctionCallExtension extends PostfixExtension {
     }
 
     @Override
-    protected void initIsRDD() {
+    protected void initIsRDDAndIsDataFrame() {
         this.isRDD = false;
         this.isDataFrame = false;
     }

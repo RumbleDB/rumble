@@ -53,7 +53,7 @@ public class VariableReference extends PrimaryExpression implements Serializable
     }
 
     @Override
-    protected void initIsRDD() {
+    protected void initIsRDDAndIsDataFrame() {
         // Do nothing, initialization is implemented in staticContextVisitor - visitVariableReference
     }
 

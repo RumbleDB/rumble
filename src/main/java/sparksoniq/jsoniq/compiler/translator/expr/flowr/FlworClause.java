@@ -55,7 +55,8 @@ public class FlworClause extends ExpressionOrClause {
         this.previousClause = previousClause;
     }
 
-    protected void initIsRDD() {
+    @Override
+    protected void initIsRDDAndIsDataFrame() {
         this.isDataFrame = previousClause.isDataFrame();
     }
 

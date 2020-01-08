@@ -47,7 +47,7 @@ public class GroupByClauseVar extends FlworVarDecl {
     }
 
     @Override
-    protected void initIsRDD() {
+    protected void initIsRDDAndIsDataFrame() {
         initializeVariableIsRDDIsDataFrame();
     }
 
