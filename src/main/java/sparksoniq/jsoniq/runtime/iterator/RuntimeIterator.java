@@ -235,7 +235,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         Map<String, DynamicContext.VariableDependency> result =
             new TreeMap<>();
         for (RuntimeIterator iterator : _children) {
-            result.putAll(iterator.getVariableDependencies());
+            DynamicContext.mergeVariableDependencies(result, iterator.getVariableDependencies());
         }
         return result;
     }

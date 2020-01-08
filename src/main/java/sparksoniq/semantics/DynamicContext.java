@@ -304,5 +304,27 @@ public class DynamicContext implements Serializable, KryoSerializable {
         MAX,
         MIN
     }
+
+    private static VariableDependency mergeSingleVariableDependency(VariableDependency left, VariableDependency right) {
+        if (left.equals(right)) {
+            return left;
+        }
+        return VariableDependency.FULL;
+    }
+
+    public static void mergeVariableDependencies(
+            Map<String, DynamicContext.VariableDependency> into,
+            Map<String, DynamicContext.VariableDependency> from
+    ) {
+        for (String v : from.keySet()) {
+            if (into.containsKey(v)) {
+                into.put(v, DynamicContext.mergeSingleVariableDependency(into.get(v), from.get(v)));
+            } else {
+                into.put(v, from.get(v));
+            }
+        }
+    }
+
+
 }
 
