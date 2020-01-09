@@ -38,6 +38,8 @@ public class VariableReference extends PrimaryExpression implements Serializable
     public VariableReference(String _name, ExpressionMetadata metadata) {
         super(metadata);
         this.name = _name;
+        // TODO: can we eliminate this assignment by properly visiting VariableReferences in staticContextVisitor
+        _highestExecutionMode = ExecutionMode.LOCAL;
     }
 
     public void setHighestExecutionMode(ExecutionMode highestExecutionMode) {
@@ -58,7 +60,9 @@ public class VariableReference extends PrimaryExpression implements Serializable
 
     @Override
     protected void initHighestExecutionMode() {
-        // Do nothing, initialization is implemented in staticContextVisitor - visitVariableReference
+        // Variable reference execution mode can only be resolved in conjunction with a static context
+        // variable reference's execution mode gets initialized by staticContextVisitor
+        throw new RuntimeException("Make sure StaticContextVisitor visits the variable reference.");
     }
 
     @Override

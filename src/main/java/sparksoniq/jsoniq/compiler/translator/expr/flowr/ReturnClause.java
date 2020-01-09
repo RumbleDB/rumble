@@ -46,13 +46,9 @@ public class ReturnClause extends FlworClause {
     @Override
     protected void initHighestExecutionMode() {
         this._highestExecutionMode =
-            previousClause.isDataFrame() ? ExecutionMode.RDD : ExecutionMode.LOCAL;
-    }
-
-    @Override
-    public boolean isRDD() {
-        // this implementation is identical to the expressionOrClause base class
-        return this.getHighestExecutionMode().isRDD();
+            previousClause.getHighestExecutionMode().isDF()
+                    ? ExecutionMode.RDD
+                    : ExecutionMode.LOCAL;
     }
 
     @Override

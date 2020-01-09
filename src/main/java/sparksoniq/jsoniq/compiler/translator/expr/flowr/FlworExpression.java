@@ -21,6 +21,7 @@
 package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
 import sparksoniq.exceptions.SemanticException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
@@ -76,12 +77,9 @@ public class FlworExpression extends Expression {
     }
 
     @Override
-    public boolean isRDD() {
-        return this._returnClause.isRDD();
-    }
-
-    public boolean isDataFrame() {
-        return this._returnClause.isDataFrame();
+    public ExecutionMode getHighestExecutionMode() {
+        // overall flwor expression's execution mode is stored in the return clause
+        return this._returnClause.getHighestExecutionMode();
     }
 
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {

@@ -27,6 +27,7 @@ import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.UnexpectedTypeException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -118,9 +119,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                             "Invalid argument for " + formattedName + "function. ",
                             getMetadata()
                     );
-                    typePromotionIterator.setIsRDD(_functionArguments.get(i).isRDD());
-                    typePromotionIterator.setIsDataFrame(_functionArguments.get(i).isDataFrame());
-
+                    typePromotionIterator.setHighestExecutionMode(_functionArguments.get(i).getHighestExecutionMode());
                     _functionArguments.set(i, typePromotionIterator);
                 }
             }
@@ -178,8 +177,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 DFArgumentValues
         );
         FunctionRuntimeIterator iterator = new FunctionRuntimeIterator(partiallyAppliedFunction, getMetadata());
-        iterator.setIsRDD(false);
-        iterator.setIsDataFrame(false);
+        iterator.setHighestExecutionMode(ExecutionMode.LOCAL);
 
         return iterator;
     }

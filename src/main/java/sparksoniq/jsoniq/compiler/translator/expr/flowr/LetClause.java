@@ -60,7 +60,9 @@ public class LetClause extends FlworClause {
     protected void initHighestExecutionMode() {
         // call isDF on the last letVariable
         this._highestExecutionMode =
-            letVars.get(letVars.size() - 1).isDataFrame() ? ExecutionMode.DF : ExecutionMode.LOCAL;
+            letVars.get(letVars.size() - 1).getHighestExecutionMode().isDF()
+                    ? ExecutionMode.DF
+                    : ExecutionMode.LOCAL;
     }
 
     @Override

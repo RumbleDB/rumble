@@ -536,8 +536,7 @@ public class Functions {
     public static RuntimeIterator getBuiltInFunctionIterator(
             FunctionIdentifier identifier,
             List<RuntimeIterator> arguments,
-            boolean isRDD,
-            boolean isDataFrame,
+            ExecutionMode executionMode,
             IteratorMetadata metadata
     ) {
         BuiltinFunction builtinFunction = builtInFunctions.get(identifier);
@@ -550,8 +549,7 @@ public class Functions {
                         "Invalid argument for function " + identifier.getName() + ". ",
                         arguments.get(i).getMetadata()
                 );
-                typePromotionIterator.setIsRDD(arguments.get(i).isRDD());
-                typePromotionIterator.setIsDataFrame(arguments.get(i).isDataFrame());
+                typePromotionIterator.setHighestExecutionMode(arguments.get(i).getHighestExecutionMode());
 
                 arguments.set(i, typePromotionIterator);
             }
@@ -565,8 +563,7 @@ public class Functions {
                     IteratorMetadata.class
                 );
             functionCallIterator = constructor.newInstance(arguments, metadata);
-            functionCallIterator.setIsRDD(isRDD);
-            functionCallIterator.setIsDataFrame(isDataFrame);
+            functionCallIterator.setHighestExecutionMode(executionMode);
         } catch (ReflectiveOperationException e) {
             throw new UnknownFunctionCallException(
                     identifier.getName(),
@@ -582,8 +579,7 @@ public class Functions {
                     "Invalid return type for function " + identifier.getName() + ". ",
                     functionCallIterator.getMetadata()
             );
-            typePromotionIterator.setIsRDD(functionCallIterator.isRDD());
-            typePromotionIterator.setIsDataFrame(functionCallIterator.isDataFrame());
+            typePromotionIterator.setHighestExecutionMode(functionCallIterator.getHighestExecutionMode());
             return typePromotionIterator;
         }
         return functionCallIterator;
@@ -591,16 +587,14 @@ public class Functions {
 
     public static RuntimeIterator getUserDefinedFunctionCallIterator(
             FunctionIdentifier identifier,
-            boolean isRDD,
-            boolean isDataFrame,
+            ExecutionMode executionMode,
             IteratorMetadata metadata,
             List<RuntimeIterator> arguments
     ) {
         if (Functions.checkUserDefinedFunctionExists(identifier)) {
             return buildUserDefinedFunctionCallIterator(
                 getUserDefinedFunction(identifier),
-                isRDD,
-                isDataFrame,
+                executionMode,
                 metadata,
                 arguments
             );
@@ -630,14 +624,12 @@ public class Functions {
 
     public static RuntimeIterator buildUserDefinedFunctionCallIterator(
             FunctionItem functionItem,
-            boolean isRDD,
-            boolean isDataFrame,
+            ExecutionMode executionMode,
             IteratorMetadata metadata,
             List<RuntimeIterator> arguments
     ) {
         FunctionItemCallIterator functionCallIterator = new FunctionItemCallIterator(functionItem, arguments, metadata);
-        functionCallIterator.setIsRDD(isRDD);
-        functionCallIterator.setIsDataFrame(isDataFrame);
+        functionCallIterator.setHighestExecutionMode(executionMode);
         if (!functionItem.getSignature().getReturnType().equals(mostGeneralSequenceType)) {
             TypePromotionIterator typePromotionIterator = new TypePromotionIterator(
                     functionCallIterator,
@@ -649,8 +641,7 @@ public class Functions {
                         + "function. ",
                     metadata
             );
-            typePromotionIterator.setIsRDD(isRDD);
-            typePromotionIterator.setIsDataFrame(isDataFrame);
+            typePromotionIterator.setHighestExecutionMode(executionMode);
             return typePromotionIterator;
         }
         return functionCallIterator;

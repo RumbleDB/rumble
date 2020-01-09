@@ -20,7 +20,6 @@
 
 package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
-import sparksoniq.exceptions.OurBadException;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
@@ -58,11 +57,6 @@ public class FlworClause extends ExpressionOrClause {
     @Override
     protected void initHighestExecutionMode() {
         this._highestExecutionMode = previousClause.getHighestExecutionMode();
-    }
-
-    @Override
-    public boolean isRDD() {
-        throw new OurBadException("FLWOR clauses(except return) do not use RDDs. Use either local or DataFrame API");
     }
 
     @Override

@@ -56,7 +56,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     @Override
     public void reset(DynamicContext context) {
         super.reset(context);
-        if (!isRDD) {
+        if (!isRDD()) {
             resetLocal(context);
             return;
         }
@@ -66,7 +66,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     @Override
     public void close() {
         super.close();
-        if (!isRDD) {
+        if (!isRDD()) {
             closeLocal();
             return;
         }
@@ -75,7 +75,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
     @Override
     public boolean hasNext() {
-        if (!isRDD) {
+        if (!isRDD()) {
             return hasNextLocal();
         }
         if (result == null) {
@@ -89,7 +89,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
     @Override
     public Item next() {
-        if (!isRDD) {
+        if (!isRDD()) {
             return nextLocal();
         }
         if (!this._isOpen)

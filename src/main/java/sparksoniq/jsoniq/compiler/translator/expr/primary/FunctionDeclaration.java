@@ -77,15 +77,16 @@ public class FunctionDeclaration extends PrimaryExpression {
         return getDescendantsFromChildren(result, depthSearch);
     }
 
-    @Override
-    protected void initHighestExecutionMode() {
-        this._highestExecutionMode = ExecutionMode.LOCAL;
-
+    public void registerUserDefinedFunctionExecutionMode() {
         FunctionIdentifier identifier = new FunctionIdentifier(this._name, this._params.size());
         // if named(static) function declaration
         if (!this._name.equals("")) {
-            // TODO: find a way to set executionMode(isRDD/isDF) based on information from this._body
-            Functions.addUserDefinedFunctionExecutionMode(identifier, ExecutionMode.LOCAL, this.getMetadata());
+            Functions.addUserDefinedFunctionExecutionMode(
+                    identifier,
+                    // _body.getHighestExecutionMode(),     // can't find referenced function w/ recursive functions calling each other
+                    ExecutionMode.LOCAL,
+                    this.getMetadata()
+            );
         }
     }
 

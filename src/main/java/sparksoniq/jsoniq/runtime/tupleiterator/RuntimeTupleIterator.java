@@ -27,6 +27,7 @@ import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
@@ -45,8 +46,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     protected boolean _isOpen;
     protected RuntimeTupleIterator _child;
     protected DynamicContext _currentDynamicContext;
-    private boolean isDataFrame;
-    private boolean isDataFrameIsSet;
+    protected ExecutionMode _highestExecutionMode = ExecutionMode.UNSET;
 
     protected RuntimeTupleIterator(RuntimeTupleIterator child, IteratorMetadata metadata) {
         this.metadata = metadata;
@@ -106,16 +106,19 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         return metadata;
     }
 
-    public boolean isDataFrame() {
-        if (!isDataFrameIsSet) {
-            throw new RuntimeException("isDataFrame field accessed in iterator without being set.");
-        }
-        return isDataFrame;
+    public void setHighestExecutionMode(ExecutionMode executionMode) {
+        this._highestExecutionMode = executionMode;
     }
 
-    public void setIsDataFrame(boolean isDataFrame) {
-        this.isDataFrameIsSet = true;
-        this.isDataFrame = isDataFrame;
+    public ExecutionMode getHighestExecutionMode() {
+        return _highestExecutionMode;
+    }
+
+    public boolean isDataFrame() {
+        if (_highestExecutionMode == ExecutionMode.UNSET) {
+            throw new RuntimeException("isDataFrame accessed in iterator without execution mode being set.");
+        }
+        return _highestExecutionMode.isDF();
     }
 
     /**

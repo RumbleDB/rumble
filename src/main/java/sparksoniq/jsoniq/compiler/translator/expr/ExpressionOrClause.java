@@ -48,14 +48,6 @@ public abstract class ExpressionOrClause {
         _highestExecutionMode = ExecutionMode.LOCAL;
     }
 
-    public boolean isRDD() {
-        return this.getHighestExecutionMode().isRDD();
-    }
-
-    public boolean isDataFrame() {
-        return this.getHighestExecutionMode().isDF();
-    }
-
     public ExecutionMode getHighestExecutionMode() {
         if (_highestExecutionMode == ExecutionMode.UNSET) {
             initHighestExecutionMode();

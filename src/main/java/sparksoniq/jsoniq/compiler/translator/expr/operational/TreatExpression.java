@@ -13,7 +13,6 @@ import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 public class TreatExpression extends UnaryExpressionBase {
 
     private FlworVarSequenceType _sequenceType;
-    private static boolean isDataFrameOfTreatExpression = false;
 
     public TreatExpression(Expression _mainExpression, ExpressionMetadata metadata) {
         super(_mainExpression, metadata);
@@ -45,7 +44,7 @@ public class TreatExpression extends UnaryExpressionBase {
     private static boolean calculateIsRDDForTreatExpression(SequenceType sequenceType, Expression expression) {
         return sequenceType.getArity() != SequenceType.Arity.One
             && sequenceType.getArity() != SequenceType.Arity.OneOrZero
-            && expression.isRDD();
+            && expression.getHighestExecutionMode().isRDD();
     }
 
     public static void setExecutionModeOfTreatIteratorGeneratedWithoutTreatExpression(
@@ -53,9 +52,11 @@ public class TreatExpression extends UnaryExpressionBase {
             SequenceType sequenceType,
             Expression expression
     ) {
-        // TODO: set Execution mode of iterator while refactoring RuntimeIterators
-        iterator.setIsRDD(calculateIsRDDForTreatExpression(sequenceType, expression));
-        iterator.setIsDataFrame(isDataFrameOfTreatExpression);
+        if (calculateIsRDDForTreatExpression(sequenceType, expression)) {
+            iterator.setHighestExecutionMode(ExecutionMode.RDD);
+        } else {
+            iterator.setHighestExecutionMode(ExecutionMode.LOCAL);
+        }
     }
 
     @Override

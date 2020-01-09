@@ -32,6 +32,7 @@ import sparksoniq.exceptions.InvalidArgumentTypeException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.SparkRuntimeException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.ItemTypes;
@@ -51,12 +52,8 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     protected List<RuntimeIterator> _children;
     protected transient DynamicContext _currentDynamicContextForLocalExecution;
     private IteratorMetadata metadata;
-
-    protected boolean isRDD;
-    private boolean isRDDIsSet;
-    protected boolean isDataFrame;
-    private boolean isDataFrameIsSet;
-
+    
+    protected ExecutionMode _highestExecutionMode = ExecutionMode.UNSET;
 
     public RuntimeIterator() {
     }
@@ -198,16 +195,19 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         return metadata;
     }
 
-    public boolean isRDD() {
-        if (!isRDDIsSet) {
-            throw new RuntimeException("isRDD field accessed in iterator without being set.");
-        }
-        return isRDD;
+    public void setHighestExecutionMode(ExecutionMode executionMode) {
+        this._highestExecutionMode = executionMode;
     }
 
-    public void setIsRDD(boolean isRDD) {
-        this.isRDDIsSet = true;
-        this.isRDD = isRDD;
+    public ExecutionMode getHighestExecutionMode() {
+        return _highestExecutionMode;
+    }
+
+    public boolean isRDD() {
+        if (_highestExecutionMode == ExecutionMode.UNSET) {
+            throw new RuntimeException("isRDD field in iterator without execution mode being set.");
+        }
+        return _highestExecutionMode.isRDD();
     }
 
     public JavaRDD<Item> getRDD(DynamicContext context) {
@@ -215,15 +215,10 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     }
 
     public boolean isDataFrame() {
-        if (!isDataFrameIsSet) {
-            throw new RuntimeException("isDataFrame field accessed in iterator without being set.");
+        if (_highestExecutionMode == ExecutionMode.UNSET) {
+            throw new RuntimeException("isDataFrame accessed in iterator without execution mode being set.");
         }
-        return isDataFrame;
-    }
-
-    public void setIsDataFrame(boolean isDataFrame) {
-        this.isDataFrameIsSet = true;
-        this.isDataFrame = isDataFrame;
+        return _highestExecutionMode.isDF();
     }
 
     public Dataset<Row> getDataFrame(DynamicContext context) {

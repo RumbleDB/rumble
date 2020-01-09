@@ -82,13 +82,13 @@ public class FunctionCall extends PrimaryExpression {
             } else if (HybridRuntimeIterator.class.isAssignableFrom(functionIteratorClass)) {
                 if (functionIteratorClass.isInstance(ObjectKeysFunctionIterator.class)) {
                     for (ExpressionOrClause child : this.getDescendants()) {
-                        if (child.isRDD() && !child.isDataFrame()) {
+                        if (child.getHighestExecutionMode().isRDD() && !child.getHighestExecutionMode().isDF()) {
                             this._highestExecutionMode = ExecutionMode.RDD;
                         }
                     }
                 } else {
                     for (ExpressionOrClause child : this.getDescendants()) {
-                        if (child.isRDD()) {
+                        if (child.getHighestExecutionMode().isRDD()) {
                             this._highestExecutionMode = ExecutionMode.RDD;
                         }
                     }

@@ -73,8 +73,18 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
 
     @Override
     public StaticContext visitFunctionDeclaration(FunctionDeclaration expression, StaticContext argument) {
-        expression.isRDD(); // initialize isRDD status // TODO: potentially improve initialization
-        return super.visitFunctionDeclaration(expression, argument);
+        expression.registerUserDefinedFunctionExecutionMode();
+
+        // define a static context for the function body, add params to the context and visit the body expression
+        StaticContext functionDeclarationContext = new StaticContext(argument);
+        expression.get_params().forEach((paramName, flworVarSequenceType) -> functionDeclarationContext.addVariable(
+                paramName,
+                flworVarSequenceType.getSequence(),
+                expression.getMetadata(),
+                ExecutionMode.LOCAL     // static udf currently supports materialized(local) params, not RDDs or DFs
+        ));
+        this.visit(expression.get_body(), functionDeclarationContext);
+        return functionDeclarationContext;
     }
 
     // endregion
@@ -206,9 +216,10 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
     @Override
     public StaticContext visitTypeSwitchCaseExpression(TypeSwitchCaseExpression expression, StaticContext argument) {
         StaticContext result = new StaticContext(argument);
-        if (expression.getVariableReference() != null) {
+        VariableReference variableReference = expression.getVariableReference();
+        if (variableReference != null) {
             result.addVariable(
-                expression.getVariableReference().getVariableName(),
+                variableReference.getVariableName(),
                 null,
                 expression.getMetadata(),
                 ExecutionMode.LOCAL

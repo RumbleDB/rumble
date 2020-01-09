@@ -169,15 +169,12 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
             return result.get(0);
         } else {
             CommaExpressionIterator iterator = new CommaExpressionIterator(result, createIteratorMetadata(expression));
-            iterator.setIsRDD(expression.isRDD());
-            iterator.setIsDataFrame(expression.isDataFrame());
+            iterator.setHighestExecutionMode(expression.getHighestExecutionMode());
             return iterator;
         }
     }
 
     // region module
-
-
     @Override
     public RuntimeIterator visitMainModule(MainModule expression, RuntimeIterator argument) {
         return super.visitMainModule(expression, argument);
@@ -206,8 +203,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 ),
                 createIteratorMetadata(expression.get_returnClause())
         );
-        returnIterator.setIsRDD(expression.get_returnClause().isRDD());
-        returnIterator.setIsDataFrame(expression.get_returnClause().isDataFrame());
+        returnIterator.setHighestExecutionMode(expression.get_returnClause().getHighestExecutionMode());
         return returnIterator;
     }
 
@@ -239,7 +235,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                         assignmentExpression,
                         createIteratorMetadata(clause)
                 );
-                previousIterator.setIsDataFrame(var.isDataFrame());
+                previousIterator.setHighestExecutionMode(var.getHighestExecutionMode());
             }
         } else if (clause instanceof LetClause) {
             for (LetClauseVar var : ((LetClause) clause).getLetVariables()) {
@@ -264,7 +260,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                         assignmentExpression,
                         createIteratorMetadata(clause)
                 );
-                previousIterator.setIsDataFrame(var.isDataFrame());
+                previousIterator.setHighestExecutionMode(var.getHighestExecutionMode());
             }
         } else if (clause instanceof GroupByClause) {
             List<GroupByClauseSparkIteratorExpression> expressions = new ArrayList<>();
@@ -291,8 +287,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 VariableReference variableReference = groupExpr.getVariableReference();
                 VariableReferenceIterator variableReferenceIterator =
                     (VariableReferenceIterator) this.visit(variableReference, argument);
-                variableReferenceIterator.setIsRDD(variableReference.isRDD());
-                variableReferenceIterator.setIsDataFrame(variableReference.isDataFrame());
+                variableReferenceIterator.setHighestExecutionMode(variableReference.getHighestExecutionMode());
 
                 expressions.add(
                     new GroupByClauseSparkIteratorExpression(
@@ -307,7 +302,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                     expressions,
                     createIteratorMetadata(clause)
             );
-            previousIterator.setIsDataFrame(clause.isDataFrame());
+            previousIterator.setHighestExecutionMode(clause.getHighestExecutionMode());
         } else if (clause instanceof OrderByClause) {
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator = new ArrayList<>();
             for (OrderByClauseExpr orderExpr : ((OrderByClause) clause).getExpressions()) {
@@ -326,21 +321,21 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                     ((OrderByClause) clause).isStable(),
                     createIteratorMetadata(clause)
             );
-            previousIterator.setIsDataFrame(clause.isDataFrame());
+            previousIterator.setHighestExecutionMode(clause.getHighestExecutionMode());
         } else if (clause instanceof WhereClause) {
             previousIterator = new WhereClauseSparkIterator(
                     previousIterator,
                     this.visit(((WhereClause) clause).getWhereExpression(), argument),
                     createIteratorMetadata(clause)
             );
-            previousIterator.setIsDataFrame(clause.isDataFrame());
+            previousIterator.setHighestExecutionMode(clause.getHighestExecutionMode());
         } else if (clause instanceof CountClause) {
             previousIterator = new CountClauseSparkIterator(
                     previousIterator,
                     this.visit(((CountClause) clause).getCountVariable(), argument),
                     createIteratorMetadata(clause)
             );
-            previousIterator.setIsDataFrame(clause.isDataFrame());
+            previousIterator.setHighestExecutionMode(clause.getHighestExecutionMode());
         }
         return previousIterator;
     }
@@ -357,8 +352,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 expression.getType(),
                 createIteratorMetadata(expression)
         );
-        variableReferenceIterator.setIsRDD(expression.isRDD());
-        variableReferenceIterator.setIsDataFrame(expression.isDataFrame());
+        variableReferenceIterator.setHighestExecutionMode(expression.getHighestExecutionMode());
         return variableReferenceIterator;
     }
     // endregion
@@ -370,8 +364,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
             return defaultAction(expression, argument);
         }
         RuntimeIterator iterator = new EmptySequenceIterator(createIteratorMetadata(expression));
-        iterator.setIsRDD(expression.isRDD());
-        iterator.setIsDataFrame(expression.isDataFrame());
+        iterator.setHighestExecutionMode(expression.getHighestExecutionMode());
         return iterator;
     }
 
@@ -381,8 +374,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
             return defaultAction(expression, argument);
         } else {
             RuntimeIterator previous = this.visit(expression.get_primaryExpressionNode(), argument);
-            previous.setIsRDD(expression.isRDD());
-            previous.setIsDataFrame(expression.isDataFrame());
+            previous.setHighestExecutionMode(expression.getHighestExecutionMode());
             for (PostfixExtension extension : expression.getExtensions()) {
                 try {
                     if (extension instanceof ArrayLookupExtension) {
@@ -415,8 +407,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                         IteratorMetadata metadata = createIteratorMetadata(expression);
                         previous = new DynamicFunctionCallIterator(previous, arguments, metadata);
                     }
-                    previous.setIsRDD(extension.isRDD());
-                    previous.setIsDataFrame(extension.isDataFrame());
+                    previous.setHighestExecutionMode(extension.getHighestExecutionMode());
                 } catch (Exception ex) {
                     ex.printStackTrace();
                     throw new UnsupportedFeatureException("Invalid Postfix extension", expression.getMetadata());
@@ -433,8 +424,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
             result = this.visit(expression.getExpression(), argument);
         }
         RuntimeIterator iterator = new ArrayRuntimeIterator(result, createIteratorMetadata(expression));
-        iterator.setIsRDD(expression.isRDD());
-        iterator.setIsDataFrame(expression.isDataFrame());
+        iterator.setHighestExecutionMode(expression.getHighestExecutionMode());
         return iterator;
     }
 
@@ -447,8 +437,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 childExpressions.add((this.visit(child, argument)));
             }
             iterator = new ObjectConstructorRuntimeIterator(childExpressions, createIteratorMetadata(expression));
-            iterator.setIsRDD(expression.isRDD());
-            iterator.setIsDataFrame(expression.isDataFrame());
+            iterator.setHighestExecutionMode(expression.getHighestExecutionMode());
             return iterator;
         } else {
             List<RuntimeIterator> keys = new ArrayList<>();
@@ -460,8 +449,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 values.add(this.visit(value, argument));
             }
             iterator = new ObjectConstructorRuntimeIterator(keys, values, createIteratorMetadata(expression));
-            iterator.setIsRDD(expression.isRDD());
-            iterator.setIsDataFrame(expression.isDataFrame());
+            iterator.setHighestExecutionMode(expression.getHighestExecutionMode());
             return iterator;
         }
     }
@@ -469,8 +457,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
     @Override
     public RuntimeIterator visitContextExpr(ContextExpression expression, RuntimeIterator argument) {
         RuntimeIterator iterator = new ContextExpressionIterator(createIteratorMetadata(expression));
-        iterator.setIsRDD(expression.isRDD());
-        iterator.setIsDataFrame(expression.isDataFrame());
+        iterator.setHighestExecutionMode(expression.getHighestExecutionMode());
         return iterator;
     }
 
@@ -491,8 +478,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         if (expression.get_name().equals("")) {
             // unnamed (inline function declaration)
             RuntimeIterator iterator = new FunctionRuntimeIterator(function, createIteratorMetadata(expression));
-            iterator.setIsRDD(expression.isRDD());
-            iterator.setIsDataFrame(expression.isDataFrame());
+            iterator.setHighestExecutionMode(expression.getHighestExecutionMode());
             return iterator;
         } else {
             // named (static function declaration)
@@ -513,8 +499,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 isPartialApplication = true;
             } else {
                 RuntimeIterator argumentIterator = this.visit(arg, argument);
-                argumentIterator.setIsRDD(arg.isRDD());
-                argumentIterator.setIsDataFrame(arg.isDataFrame());
+                argumentIterator.setHighestExecutionMode(arg.getHighestExecutionMode());
                 arguments.add(argumentIterator);
             }
         }
@@ -532,14 +517,12 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
             return Functions.getBuiltInFunctionIterator(
                 identifier,
                 arguments,
-                expression.isRDD(),
-                expression.isDataFrame(),
+                expression.getHighestExecutionMode(),
                 iteratorMetadata
             );
         }
         RuntimeIterator iterator = new StaticUserDefinedFunctionCallIterator(identifier, arguments, iteratorMetadata);
-        iterator.setIsRDD(expression.isRDD());
-        iterator.setIsDataFrame(expression.isDataFrame());
+        iterator.setHighestExecutionMode(expression.getHighestExecutionMode());
         return iterator;
     }
 
@@ -555,8 +538,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         if (Functions.checkUserDefinedFunctionExists(identifier)) {
             FunctionItem function = Functions.getUserDefinedFunction(identifier);
             RuntimeIterator iterator = new FunctionRuntimeIterator(function, createIteratorMetadata(expression));
-            iterator.setIsRDD(expression.isRDD());
-            iterator.setIsDataFrame(expression.isDataFrame());
+            iterator.setHighestExecutionMode(expression.getHighestExecutionMode());
             return iterator;
         }
         throw new UnknownFunctionCallException(
@@ -574,24 +556,21 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 expression.getValue(),
                 createIteratorMetadata(expression)
         );
-        iterator.setIsRDD(expression.isRDD());
-        iterator.setIsDataFrame(expression.isDataFrame());
+        iterator.setHighestExecutionMode(expression.getHighestExecutionMode());
         return iterator;
     }
 
     @Override
     public RuntimeIterator visitString(StringLiteral expression, RuntimeIterator argument) {
         RuntimeIterator iterator = new StringRuntimeIterator(expression.getValue(), createIteratorMetadata(expression));
-        iterator.setIsRDD(expression.isRDD());
-        iterator.setIsDataFrame(expression.isDataFrame());
+        iterator.setHighestExecutionMode(expression.getHighestExecutionMode());
         return iterator;
     }
 
     @Override
     public RuntimeIterator visitDouble(DoubleLiteral expression, RuntimeIterator argument) {
         RuntimeIterator iterator = new DoubleRuntimeIterator(expression.getValue(), createIteratorMetadata(expression));
-        iterator.setIsRDD(expression.isRDD());
-        iterator.setIsDataFrame(expression.isDataFrame());
+        iterator.setHighestExecutionMode(expression.getHighestExecutionMode());
         return iterator;
     }
 
@@ -601,16 +580,14 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 expression.getValue(),
                 createIteratorMetadata(expression)
         );
-        iterator.setIsRDD(expression.isRDD());
-        iterator.setIsDataFrame(expression.isDataFrame());
+        iterator.setHighestExecutionMode(expression.getHighestExecutionMode());
         return iterator;
     }
 
     @Override
     public RuntimeIterator visitNull(NullLiteral expression, RuntimeIterator argument) {
         RuntimeIterator iterator = new NullRuntimeIterator(createIteratorMetadata(expression));
-        iterator.setIsRDD(expression.isRDD());
-        iterator.setIsDataFrame(expression.isDataFrame());
+        iterator.setHighestExecutionMode(expression.getHighestExecutionMode());
         return iterator;
     }
 
@@ -620,8 +597,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 expression.getValue(),
                 createIteratorMetadata(expression)
         );
-        iterator.setIsRDD(expression.isRDD());
-        iterator.setIsDataFrame(expression.isDataFrame());
+        iterator.setHighestExecutionMode(expression.getHighestExecutionMode());
         return iterator;
     }
     // endregion
@@ -657,8 +633,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                     expression.getOperators().get(expression.getOperators().size() - 1),
                     createIteratorMetadata(expression)
             );
-            iterator.setIsRDD(expression.isRDD());
-            iterator.setIsDataFrame(expression.isDataFrame());
+            iterator.setHighestExecutionMode(expression.getHighestExecutionMode());
             return iterator;
         }
         return defaultAction(expression, argument);
@@ -694,8 +669,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                     expression.getOperators().get(expression.getOperators().size() - 1),
                     createIteratorMetadata(expression)
             );
-            iterator.setIsRDD(expression.isRDD());
-            iterator.setIsDataFrame(expression.isDataFrame());
+            iterator.setHighestExecutionMode(expression.getHighestExecutionMode());
             return iterator;
         }
         return defaultAction(expression, argument);
@@ -725,8 +699,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
             }
 
             RuntimeIterator iterator = new AndOperationIterator(left, right, createIteratorMetadata(expression));
-            iterator.setIsRDD(expression.isRDD());
-            iterator.setIsDataFrame(expression.isDataFrame());
+            iterator.setHighestExecutionMode(expression.getHighestExecutionMode());
             return iterator;
         }
         return defaultAction(expression, argument);
@@ -757,8 +730,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
             }
 
             RuntimeIterator iterator = new OrOperationIterator(left, right, createIteratorMetadata(expression));
-            iterator.setIsRDD(expression.isRDD());
-            iterator.setIsDataFrame(expression.isDataFrame());
+            iterator.setHighestExecutionMode(expression.getHighestExecutionMode());
             return iterator;
         }
         return defaultAction(expression, argument);
@@ -771,8 +743,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                     this.visit(expression.getMainExpression(), argument),
                     createIteratorMetadata(expression)
             );
-            iterator.setIsRDD(expression.isRDD());
-            iterator.setIsDataFrame(expression.isDataFrame());
+            iterator.setHighestExecutionMode(expression.getHighestExecutionMode());
             return iterator;
         }
         return defaultAction(expression, argument);
@@ -793,8 +764,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                     result == -1 ? OperationalExpressionBase.Operator.MINUS : OperationalExpressionBase.Operator.PLUS,
                     createIteratorMetadata(expression)
             );
-            iterator.setIsRDD(expression.isRDD());
-            iterator.setIsDataFrame(expression.isDataFrame());
+            iterator.setHighestExecutionMode(expression.getHighestExecutionMode());
             return iterator;
         }
         return defaultAction(expression, argument);
@@ -806,8 +776,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
             RuntimeIterator left = this.visit(expression.getMainExpression(), argument);
             RuntimeIterator right = this.visit(expression.getRightExpression(), argument);
             RuntimeIterator iterator = new RangeOperationIterator(left, right, createIteratorMetadata(expression));
-            iterator.setIsRDD(expression.isRDD());
-            iterator.setIsDataFrame(expression.isDataFrame());
+            iterator.setHighestExecutionMode(expression.getHighestExecutionMode());
             return iterator;
         } else {
             return defaultAction(expression, argument);
@@ -825,8 +794,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                     expression.getOperator(),
                     createIteratorMetadata(expression)
             );
-            iterator.setIsRDD(expression.isRDD());
-            iterator.setIsDataFrame(expression.isDataFrame());
+            iterator.setHighestExecutionMode(expression.getHighestExecutionMode());
             return iterator;
         } else {
             return defaultAction(expression, argument);
@@ -858,8 +826,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
             }
 
             RuntimeIterator iterator = new StringConcatIterator(left, right, createIteratorMetadata(expression));
-            iterator.setIsRDD(expression.isRDD());
-            iterator.setIsDataFrame(expression.isDataFrame());
+            iterator.setHighestExecutionMode(expression.getHighestExecutionMode());
             return iterator;
         }
         return defaultAction(expression, argument);
@@ -874,8 +841,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                     expression.getsequenceType().getSequence(),
                     createIteratorMetadata(expression)
             );
-            iterator.setIsRDD(expression.isRDD());
-            iterator.setIsDataFrame(expression.isDataFrame());
+            iterator.setHighestExecutionMode(expression.getHighestExecutionMode());
             return iterator;
         } else {
             return defaultAction(expression, argument);
@@ -892,8 +858,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                     true,
                     createIteratorMetadata(expression)
             );
-            treatIterator.setIsRDD(expression.isRDD());
-            treatIterator.setIsDataFrame(expression.isDataFrame());
+            treatIterator.setHighestExecutionMode(expression.getHighestExecutionMode());
             return treatIterator;
         } else {
             return defaultAction(expression, argument);
@@ -909,8 +874,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                     expression.get_atomicType().getSingleType(),
                     createIteratorMetadata(expression)
             );
-            iterator.setIsRDD(expression.isRDD());
-            iterator.setIsDataFrame(expression.isDataFrame());
+            iterator.setHighestExecutionMode(expression.getHighestExecutionMode());
             return iterator;
         } else {
             return defaultAction(expression, argument);
@@ -926,8 +890,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                     expression.getFlworVarSingleType().getSingleType(),
                     createIteratorMetadata(expression)
             );
-            iterator.setIsRDD(expression.isRDD());
-            iterator.setIsDataFrame(expression.isDataFrame());
+            iterator.setHighestExecutionMode(expression.getHighestExecutionMode());
             return iterator;
         } else {
             return defaultAction(expression, argument);
@@ -948,8 +911,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 evaluationExpression,
                 createIteratorMetadata(expression)
         );
-        iterator.setIsRDD(expression.isRDD());
-        iterator.setIsDataFrame(expression.isDataFrame());
+        iterator.setHighestExecutionMode(expression.getHighestExecutionMode());
         return iterator;
     }
 
@@ -962,8 +924,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 this.visit(expression.getExpression(), argument),
                 createIteratorMetadata(expression)
         );
-        iterator.setIsRDD(expression.isRDD());
-        iterator.setIsDataFrame(expression.isDataFrame());
+        iterator.setHighestExecutionMode(expression.getHighestExecutionMode());
         return iterator;
     }
     // endregion
@@ -977,8 +938,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 this.visit(expression.getElseBranch(), argument),
                 createIteratorMetadata(expression)
         );
-        iterator.setIsRDD(expression.isRDD());
-        iterator.setIsDataFrame(expression.isDataFrame());
+        iterator.setHighestExecutionMode(expression.getHighestExecutionMode());
         return iterator;
     }
 
@@ -997,8 +957,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 this.visit(expression.getDefaultExpression(), argument),
                 createIteratorMetadata(expression)
         );
-        iterator.setIsRDD(expression.isRDD());
-        iterator.setIsDataFrame(expression.isDataFrame());
+        iterator.setHighestExecutionMode(expression.getHighestExecutionMode());
         return iterator;
     }
     // endregion
@@ -1036,8 +995,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 defaultCase,
                 createIteratorMetadata(expression)
         );
-        iterator.setIsRDD(expression.isRDD());
-        iterator.setIsDataFrame(expression.isDataFrame());
+        iterator.setHighestExecutionMode(expression.getHighestExecutionMode());
         return iterator;
     }
 
