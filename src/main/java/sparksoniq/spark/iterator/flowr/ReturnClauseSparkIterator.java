@@ -67,7 +67,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         RuntimeIterator expression = this._children.get(0);
         if (expression.isRDD()) {
             throw new JobWithinAJobException(
-                    "A let clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
+                    "A return clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
                     getMetadata().getExpressionMetadata()
             );
         }
