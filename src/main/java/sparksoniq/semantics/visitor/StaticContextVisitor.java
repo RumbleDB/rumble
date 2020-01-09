@@ -21,6 +21,7 @@
 package sparksoniq.semantics.visitor;
 
 import sparksoniq.exceptions.UndeclaredVariableException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.expr.control.TypeSwitchCaseExpression;
@@ -65,8 +66,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
             );
         } else {
             expression.setType(argument.getVariableSequenceType(variableName));
-            expression.setIsRDD(argument.getVariableIsRDD(variableName));
-            expression.setIsDataFrame(argument.getVariableIsDataFrame(variableName));
+            expression.setHighestExecutionMode(argument.getVariableExecutionMode(variableName));
             return defaultAction(expression, argument);
         }
     }
@@ -103,8 +103,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
                 expression.getPositionalVariableReference().getVariableName(),
                 new SequenceType(new ItemType(ItemTypes.IntegerItem)),
                 expression.getMetadata(),
-                false,
-                false
+                ExecutionMode.LOCAL
             );
         }
         return result;
@@ -134,8 +133,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
             expression.getCountVariable().getVariableName(),
             new SequenceType(new ItemType(ItemTypes.IntegerItem), SequenceType.Arity.One),
             expression.getMetadata(),
-            false,
-            false
+            ExecutionMode.LOCAL
         );
         return result;
     }
@@ -150,8 +148,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
             expression.getVariableReference().getVariableName(),
             type,
             expression.getMetadata(),
-            expression.getVariableIsRDD(),
-            expression.getVariableIsDataFrame()
+            expression.getVariableHighestExecutionMode()
         );
         return result;
     }
@@ -176,8 +173,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
             expression.getVariableReference().getVariableName(),
             type,
             expression.getMetadata(),
-            false,
-            false
+            ExecutionMode.LOCAL
         );
         this.visit(expression.getExpression(), argument);
         return result;
@@ -199,8 +195,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
                 defaultCaseVariableReference.getVariableName(),
                 null,
                 expression.getMetadata(),
-                false,
-                false
+                ExecutionMode.LOCAL
             );
         }
         this.visit(expression.getDefaultExpression(), defaultCaseStaticContext);
@@ -216,8 +211,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
                 expression.getVariableReference().getVariableName(),
                 null,
                 expression.getMetadata(),
-                false,
-                false
+                ExecutionMode.LOCAL
             );
         }
         this.visit(expression.getReturnExpression(), result);

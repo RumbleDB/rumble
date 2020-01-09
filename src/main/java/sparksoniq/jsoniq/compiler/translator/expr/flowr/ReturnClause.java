@@ -20,6 +20,7 @@
 
 package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
@@ -43,23 +44,15 @@ public class ReturnClause extends FlworClause {
     }
 
     @Override
-    protected void initIsRDDAndIsDataFrame() {
-        this.isRDD = previousClause.isDataFrame();
-        this.isDataFrame = false;
-    }
-
-    @Override
-    public void setIsRDD(boolean isRDD) {
-        this.isRDD = isRDD;
+    protected void initHighestExecutionMode() {
+        this._highestExecutionMode =
+            previousClause.isDataFrame() ? ExecutionMode.RDD : ExecutionMode.LOCAL;
     }
 
     @Override
     public boolean isRDD() {
-        if (!isRDDAndIsDataFrameInitialized) {
-            initIsRDDAndIsDataFrame();
-            isRDDAndIsDataFrameInitialized = true;
-        }
-        return this.isRDD;
+        // this implementation is identical to the expressionOrClause base class
+        return this.getHighestExecutionMode().isRDD();
     }
 
     @Override

@@ -21,6 +21,7 @@
 package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
 import sparksoniq.exceptions.SemanticException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
@@ -56,9 +57,10 @@ public class LetClause extends FlworClause {
     }
     
     @Override
-    protected void initIsRDDAndIsDataFrame() {
+    protected void initHighestExecutionMode() {
         // call isDF on the last letVariable
-        this.isDataFrame = letVars.get(letVars.size() - 1).isDataFrame();
+        this._highestExecutionMode =
+            letVars.get(letVars.size() - 1).isDataFrame() ? ExecutionMode.DF : ExecutionMode.LOCAL;
     }
 
     @Override

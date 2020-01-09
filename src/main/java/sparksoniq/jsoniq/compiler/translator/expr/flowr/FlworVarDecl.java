@@ -20,6 +20,7 @@
 
 package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
@@ -37,16 +38,12 @@ public abstract class FlworVarDecl extends FlworClause {
     // asSequence is null by default if the type of the variable in the for/let/groupBy clause is not specified.
     protected FlworVarSequenceType asSequence;
 
-    // isRDD/isDataFrame status of the declared variable.
-    // Notice that these are different from isRDD/isDataFrame of the expression which converts to iterator
-    protected boolean variableIsRDD;
-    protected boolean variableIsDataFrame;
-
+    // Holds whether the variable will be stored in materialized(local) or native/spark(RDD or DF) format in a tuple
+    protected ExecutionMode _variableHighestExecutionMode = ExecutionMode.UNSET;
 
     private FlworVarDecl(FLWOR_CLAUSES clauseType, ExpressionMetadata metadata) {
         super(clauseType, metadata);
     }
-
 
     public FlworVarDecl(
             FLWOR_CLAUSES forVar,
@@ -82,19 +79,15 @@ public abstract class FlworVarDecl extends FlworClause {
     }
 
     @Override
-    protected abstract void initIsRDDAndIsDataFrame();
+    protected abstract void initHighestExecutionMode();
 
-    protected void initializeVariableIsRDDIsDataFrame() {
-        this.variableIsRDD = expression.isRDD();
-        this.variableIsDataFrame = expression.isDataFrame();
-    }
+    protected abstract void initVariableHighestExecutionMode();
 
-    public boolean getVariableIsRDD() {
-        return this.variableIsRDD;
-    }
-
-    public boolean getVariableIsDataFrame() {
-        return this.variableIsDataFrame;
+    public ExecutionMode getVariableHighestExecutionMode() {
+        if (_variableHighestExecutionMode == ExecutionMode.UNSET) {
+            this.initVariableHighestExecutionMode();
+        }
+        return _variableHighestExecutionMode;
     }
 
     @Override

@@ -226,7 +226,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                             false,
                             createIteratorMetadata(clause)
                     );
-                    TreatExpression.setIsRDDIsDataFrameOfTreatIteratorGeneratedWithoutTreatExpression(
+                    TreatExpression.setExecutionModeOfTreatIteratorGeneratedWithoutTreatExpression(
                         assignmentExpression,
                         var.getAsSequence().getSequence(),
                         var.getExpression()
@@ -251,7 +251,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                             false,
                             createIteratorMetadata(clause)
                     );
-                    TreatExpression.setIsRDDIsDataFrameOfTreatIteratorGeneratedWithoutTreatExpression(
+                    TreatExpression.setExecutionModeOfTreatIteratorGeneratedWithoutTreatExpression(
                         assignmentExpression,
                         var.getAsSequence().getSequence(),
                         var.getExpression()
@@ -279,7 +279,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                                 false,
                                 createIteratorMetadata(clause)
                         );
-                        TreatExpression.setIsRDDIsDataFrameOfTreatIteratorGeneratedWithoutTreatExpression(
+                        TreatExpression.setExecutionModeOfTreatIteratorGeneratedWithoutTreatExpression(
                             groupByExpression,
                             groupExpr.getAsSequence().getSequence(),
                             groupExpr.getExpression()
@@ -287,6 +287,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                     }
                 }
 
+                // TODO: this is locally evaluated in the group iterator, set varRefIter as local
                 VariableReference variableReference = groupExpr.getVariableReference();
                 VariableReferenceIterator variableReferenceIterator =
                     (VariableReferenceIterator) this.visit(variableReference, argument);

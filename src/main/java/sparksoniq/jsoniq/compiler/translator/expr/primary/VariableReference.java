@@ -21,6 +21,7 @@
 package sparksoniq.jsoniq.compiler.translator.expr.primary;
 
 
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.types.SequenceType;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
@@ -28,7 +29,6 @@ import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 import java.io.Serializable;
 
 public class VariableReference extends PrimaryExpression implements Serializable {
-
 
     private static final long serialVersionUID = 1L;
     private String name;
@@ -38,6 +38,10 @@ public class VariableReference extends PrimaryExpression implements Serializable
     public VariableReference(String _name, ExpressionMetadata metadata) {
         super(metadata);
         this.name = _name;
+    }
+
+    public void setHighestExecutionMode(ExecutionMode highestExecutionMode) {
+        this._highestExecutionMode = highestExecutionMode;
     }
 
     public String getVariableName() {
@@ -53,7 +57,7 @@ public class VariableReference extends PrimaryExpression implements Serializable
     }
 
     @Override
-    protected void initIsRDDAndIsDataFrame() {
+    protected void initHighestExecutionMode() {
         // Do nothing, initialization is implemented in staticContextVisitor - visitVariableReference
     }
 

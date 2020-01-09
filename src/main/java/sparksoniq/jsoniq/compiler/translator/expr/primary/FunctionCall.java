@@ -21,6 +21,7 @@
 package sparksoniq.jsoniq.compiler.translator.expr.primary;
 
 import sparksoniq.exceptions.UnknownFunctionCallException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
@@ -65,42 +66,38 @@ public class FunctionCall extends PrimaryExpression {
     }
 
     @Override
-    protected void initIsRDDAndIsDataFrame() {
-        this.isRDD = false;
-        this.isDataFrame = false;
+    protected void initHighestExecutionMode() {
+        this._highestExecutionMode = ExecutionMode.LOCAL;
         FunctionIdentifier identifier = new FunctionIdentifier(this._functionName, this._arguments.size());
-
         if (Functions.checkBuiltInFunctionExists(identifier)) {
             BuiltinFunction builtinFunction = Functions.getBuiltInFunction(identifier);
             Class<? extends RuntimeIterator> functionIteratorClass = builtinFunction.getFunctionIteratorClass();
             // if subclass of RDDRuntimeIterator
             if (RDDRuntimeIterator.class.isAssignableFrom(functionIteratorClass)) {
-                this.isRDD = true;
                 if (DataFrameRuntimeIterator.class.isAssignableFrom(functionIteratorClass)) {
-                    this.isDataFrame = true;
+                    this._highestExecutionMode = ExecutionMode.DF;
+                } else {
+                    this._highestExecutionMode = ExecutionMode.RDD;
                 }
             } else if (HybridRuntimeIterator.class.isAssignableFrom(functionIteratorClass)) {
                 if (functionIteratorClass.isInstance(ObjectKeysFunctionIterator.class)) {
                     for (ExpressionOrClause child : this.getDescendants()) {
                         if (child.isRDD() && !child.isDataFrame()) {
-                            this.isRDD = true;
+                            this._highestExecutionMode = ExecutionMode.RDD;
                         }
                     }
                 } else {
                     for (ExpressionOrClause child : this.getDescendants()) {
                         if (child.isRDD()) {
-                            this.isRDD = true;
+                            this._highestExecutionMode = ExecutionMode.RDD;
                         }
                     }
                 }
-                // no hybridRI implements dataframes at the moment
-                this.isDataFrame = false;
             } else {
                 // Local function call -> isRDD & isDF are false
             }
-        } else if (Functions.checkUserDefinedFunctionIsRDDExists(identifier)) {
-            this.isRDD = Functions.getUserDefinedFunctionIsRDD(identifier, getMetadata());
-            this.isDataFrame = Functions.getUserDefinedFunctionIsDataFrame(identifier, getMetadata());
+        } else if (Functions.checkUserDefinedFunctionExecutionModeExists(identifier)) {
+            this._highestExecutionMode = Functions.getUserDefinedFunctionExecutionMode(identifier, getMetadata());
         } else {
             throw new UnknownFunctionCallException(
                     identifier.getName(),

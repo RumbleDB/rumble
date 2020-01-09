@@ -20,6 +20,7 @@
 
 package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
@@ -67,9 +68,16 @@ public class ForClauseVar extends FlworVarDecl {
     }
 
     @Override
-    protected void initIsRDDAndIsDataFrame() {
-        initializeVariableIsRDDIsDataFrame();
-        this.isDataFrame = (this.expression.isRDD() || (previousClause != null && previousClause.isDataFrame()));
+    protected void initHighestExecutionMode() {
+        this._highestExecutionMode =
+            (this.expression.isRDD() || (previousClause != null && previousClause.isDataFrame()))
+                ? ExecutionMode.DF
+                : ExecutionMode.LOCAL;
+    }
+
+    @Override
+    protected void initVariableHighestExecutionMode() {
+        this._variableHighestExecutionMode = ExecutionMode.LOCAL;
     }
 
     @Override

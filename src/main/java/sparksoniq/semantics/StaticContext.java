@@ -21,6 +21,7 @@
 package sparksoniq.semantics;
 
 import sparksoniq.exceptions.SemanticException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.types.SequenceType;
 
@@ -33,21 +34,18 @@ public class StaticContext {
         private String name;
         private SequenceType sequenceType;
         private ExpressionMetadata metadata;
-        private boolean isRDD;
-        private boolean isDataFrame;
+        private ExecutionMode executionMode;
 
         public InScopeVariable(
                 String name,
                 SequenceType sequenceType,
                 ExpressionMetadata metadata,
-                boolean isRDD,
-                boolean isDataFrame
+                ExecutionMode executionMode
         ) {
             this.name = name;
             this.sequenceType = sequenceType;
             this.metadata = metadata;
-            this.isRDD = isRDD;
-            this.isDataFrame = isDataFrame;
+            this.executionMode = executionMode;
         }
 
         public String getName() {
@@ -60,14 +58,6 @@ public class StaticContext {
 
         public ExpressionMetadata getMetadata() {
             return metadata;
-        }
-
-        public boolean isRDD() {
-            return isRDD;
-        }
-
-        public boolean isDataFrame() {
-            return isDataFrame;
         }
     }
 
@@ -125,22 +115,17 @@ public class StaticContext {
         return getInScopeVariable(varName).getMetadata();
     }
 
-    public boolean getVariableIsRDD(String varName) {
-        return getInScopeVariable(varName).isRDD();
-    }
-
-    public boolean getVariableIsDataFrame(String varName) {
-        return getInScopeVariable(varName).isDataFrame();
+    public ExecutionMode getVariableExecutionMode(String varName) {
+        return getInScopeVariable(varName).executionMode;
     }
 
     public void addVariable(
             String varName,
             SequenceType type,
             ExpressionMetadata metadata,
-            boolean isRDD,
-            boolean isDataFrame
+            ExecutionMode executionMode
     ) {
-        this._inScopeVariables.put(varName, new InScopeVariable(varName, type, metadata, isRDD, isDataFrame));
+        this._inScopeVariables.put(varName, new InScopeVariable(varName, type, metadata, executionMode));
     }
 
     protected Map<String, InScopeVariable> getInScopeVariables() {

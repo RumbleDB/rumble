@@ -1,5 +1,6 @@
 package sparksoniq.jsoniq.compiler.translator.expr.operational;
 
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworVarSequenceType;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.UnaryExpressionBase;
@@ -33,10 +34,12 @@ public class TreatExpression extends UnaryExpressionBase {
     }
 
     @Override
-    protected void initIsRDDAndIsDataFrame() {
+    protected void initHighestExecutionMode() {
         SequenceType sequenceType = _sequenceType.getSequence();
-        this.isRDD = calculateIsRDDForTreatExpression(sequenceType, this._mainExpression);
-        this.isDataFrame = isDataFrameOfTreatExpression;
+        this._highestExecutionMode =
+            calculateIsRDDForTreatExpression(sequenceType, this._mainExpression)
+                ? ExecutionMode.RDD
+                : ExecutionMode.LOCAL;
     }
 
     private static boolean calculateIsRDDForTreatExpression(SequenceType sequenceType, Expression expression) {
@@ -45,11 +48,12 @@ public class TreatExpression extends UnaryExpressionBase {
             && expression.isRDD();
     }
 
-    public static void setIsRDDIsDataFrameOfTreatIteratorGeneratedWithoutTreatExpression(
+    public static void setExecutionModeOfTreatIteratorGeneratedWithoutTreatExpression(
             RuntimeIterator iterator,
             SequenceType sequenceType,
             Expression expression
     ) {
+        // TODO: set Execution mode of iterator while refactoring RuntimeIterators
         iterator.setIsRDD(calculateIsRDDForTreatExpression(sequenceType, expression));
         iterator.setIsDataFrame(isDataFrameOfTreatExpression);
     }

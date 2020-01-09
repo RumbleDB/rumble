@@ -21,6 +21,7 @@
 package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
 
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
@@ -38,12 +39,18 @@ public class LetClauseVar extends FlworVarDecl {
     }
 
     @Override
-    protected void initIsRDDAndIsDataFrame() {
-        initializeVariableIsRDDIsDataFrame();
-        if (this.previousClause == null) {
-            this.isDataFrame = false;
+    protected void initHighestExecutionMode() {
+        this._highestExecutionMode =
+            (previousClause == null) ? ExecutionMode.LOCAL : previousClause.getHighestExecutionMode();
+    }
+
+    @Override
+    protected void initVariableHighestExecutionMode() {
+        if (this.getHighestExecutionMode() == ExecutionMode.LOCAL) {
+            // if let clause is local, defined variables are stored according to the execution mode of the expression
+            this._variableHighestExecutionMode = expression.getHighestExecutionMode();
         } else {
-            this.isDataFrame = previousClause.isDataFrame();
+            this._variableHighestExecutionMode = ExecutionMode.LOCAL;
         }
     }
 

@@ -24,6 +24,7 @@ import sparksoniq.exceptions.DuplicateFunctionIdentifierException;
 import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnknownFunctionCallException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -282,8 +283,7 @@ import static sparksoniq.semantics.types.SequenceType.mostGeneralSequenceType;
 public class Functions {
     private static final HashMap<FunctionIdentifier, BuiltinFunction> builtInFunctions;
     private static HashMap<FunctionIdentifier, FunctionItem> userDefinedFunctions;
-    private static HashMap<FunctionIdentifier, Boolean> userDefinedFunctionsIsRDD;
-    private static HashMap<FunctionIdentifier, Boolean> userDefinedFunctionsIsDataFrame;
+    private static HashMap<FunctionIdentifier, ExecutionMode> userDefinedFunctionsExecutionMode;
 
     private static final Map<String, ItemType> itemTypes;
 
@@ -381,8 +381,7 @@ public class Functions {
     static {
         builtInFunctions = new HashMap<>();
         userDefinedFunctions = new HashMap<>();
-        userDefinedFunctionsIsRDD = new HashMap<>();
-        userDefinedFunctionsIsDataFrame = new HashMap<>();
+        userDefinedFunctionsExecutionMode = new HashMap<>();
 
         builtInFunctions.put(position.getIdentifier(), position);
         builtInFunctions.put(last.getIdentifier(), last);
@@ -614,27 +613,12 @@ public class Functions {
 
     }
 
-    public static boolean getUserDefinedFunctionIsRDD(
+    public static ExecutionMode getUserDefinedFunctionExecutionMode(
             FunctionIdentifier identifier,
             ExpressionMetadata metadata
     ) {
-        if (userDefinedFunctionsIsRDD.containsKey(identifier)) {
-            return userDefinedFunctionsIsRDD.get(identifier);
-        }
-        throw new UnknownFunctionCallException(
-                identifier.getName(),
-                identifier.getArity(),
-                metadata
-        );
-
-    }
-
-    public static boolean getUserDefinedFunctionIsDataFrame(
-            FunctionIdentifier identifier,
-            ExpressionMetadata metadata
-    ) {
-        if (userDefinedFunctionsIsDataFrame.containsKey(identifier)) {
-            return userDefinedFunctionsIsDataFrame.get(identifier);
+        if (userDefinedFunctionsExecutionMode.containsKey(identifier)) {
+            return userDefinedFunctionsExecutionMode.get(identifier);
         }
         throw new UnknownFunctionCallException(
                 identifier.getName(),
@@ -674,36 +658,21 @@ public class Functions {
 
     public static void clearUserDefinedFunctions() {
         userDefinedFunctions.clear();
-        userDefinedFunctionsIsRDD.clear();
-        userDefinedFunctionsIsDataFrame.clear();
+        userDefinedFunctionsExecutionMode.clear();
     }
 
-    public static void addUserDefinedFunctionIsRDD(
+    public static void addUserDefinedFunctionExecutionMode(
             FunctionIdentifier functionIdentifier,
-            boolean isRDD,
+            ExecutionMode executionMode,
             ExpressionMetadata meta
     ) {
         if (
             builtInFunctions.containsKey(functionIdentifier)
-                || userDefinedFunctionsIsRDD.containsKey(functionIdentifier)
+                || userDefinedFunctionsExecutionMode.containsKey(functionIdentifier)
         ) {
             throw new DuplicateFunctionIdentifierException(functionIdentifier, meta);
         }
-        userDefinedFunctionsIsRDD.put(functionIdentifier, isRDD);
-    }
-
-    public static void addUserDefinedFunctionIsDataFrame(
-            FunctionIdentifier functionIdentifier,
-            boolean isDataFrame,
-            ExpressionMetadata meta
-    ) {
-        if (
-            builtInFunctions.containsKey(functionIdentifier)
-                || userDefinedFunctionsIsDataFrame.containsKey(functionIdentifier)
-        ) {
-            throw new DuplicateFunctionIdentifierException(functionIdentifier, meta);
-        }
-        userDefinedFunctionsIsDataFrame.put(functionIdentifier, isDataFrame);
+        userDefinedFunctionsExecutionMode.put(functionIdentifier, executionMode);
     }
 
     public static void addUserDefinedFunction(FunctionItem function, ExpressionMetadata meta) {
@@ -717,12 +686,8 @@ public class Functions {
         userDefinedFunctions.put(functionIdentifier, function);
     }
 
-    public static boolean checkUserDefinedFunctionIsRDDExists(FunctionIdentifier identifier) {
-        return userDefinedFunctionsIsRDD.containsKey(identifier);
-    }
-
-    public static boolean checkUserDefinedFunctionIsDataFrameExists(FunctionIdentifier identifier) {
-        return userDefinedFunctionsIsDataFrame.containsKey(identifier);
+    public static boolean checkUserDefinedFunctionExecutionModeExists(FunctionIdentifier identifier) {
+        return userDefinedFunctionsExecutionMode.containsKey(identifier);
     }
 
     public static boolean checkUserDefinedFunctionExists(FunctionIdentifier identifier) {

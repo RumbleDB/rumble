@@ -20,6 +20,7 @@
 
 package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
@@ -47,8 +48,14 @@ public class GroupByClauseVar extends FlworVarDecl {
     }
 
     @Override
-    protected void initIsRDDAndIsDataFrame() {
-        initializeVariableIsRDDIsDataFrame();
+    protected void initHighestExecutionMode() {
+        // Execution mode of variable definitions is not used while defining execution mode of GroupByClauseRuntimeIterator
+        this._highestExecutionMode = null;
+    }
+
+    @Override
+    protected void initVariableHighestExecutionMode() {
+        this._variableHighestExecutionMode = ExecutionMode.LOCAL;
     }
 
     @Override

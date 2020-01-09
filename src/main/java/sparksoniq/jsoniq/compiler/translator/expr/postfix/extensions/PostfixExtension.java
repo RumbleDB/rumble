@@ -60,13 +60,11 @@ public abstract class PostfixExtension extends ExpressionOrClause {
     }
 
     @Override
-    protected void initIsRDDAndIsDataFrame() {
+    protected void initHighestExecutionMode() {
         if (previous != null) {
-            this.isRDD = this.previous.isRDD();
-            this.isDataFrame = this.previous.isDataFrame();
+            this._highestExecutionMode = this.previous.getHighestExecutionMode();
         } else {
-            this.isRDD = this.parent.isRDD();
-            this.isDataFrame = this.parent.isDataFrame();
+            this._highestExecutionMode = this.parent.getHighestExecutionMode();
         }
     }
 

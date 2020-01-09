@@ -22,6 +22,7 @@ package sparksoniq.jsoniq.compiler.translator.expr.operational.base;
 
 import org.antlr.v4.runtime.Token;
 import org.rumbledb.api.Item;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
@@ -62,23 +63,13 @@ public abstract class OperationalExpressionBase extends Expression {
     }
 
     @Override
-    public boolean isRDD() {
-        // if not active, bypass this node during an isRDD check
+    public ExecutionMode getHighestExecutionMode() {
+        // if not active, bypass this node while calculating execution mode
         if (!_isActive) {
-            return this._mainExpression.isRDD();
+            return this._mainExpression.getHighestExecutionMode();
         }
-        return super.isRDD();
+        return super.getHighestExecutionMode();
     }
-
-    @Override
-    public boolean isDataFrame() {
-        // if not active, bypass this node during an isRDD check
-        if (!_isActive) {
-            return this._mainExpression.isDataFrame();
-        }
-        return super.isDataFrame();
-    }
-
 
     public static List<Operator> getOperatorFromOpList(List<Token> ops) {
         List<Operator> result = new ArrayList<>();

@@ -80,22 +80,10 @@ public class FlworExpression extends Expression {
         return this._returnClause.isRDD();
     }
 
-    @Override
-    public void setIsRDD(boolean isRDD) {
-        throw new SparksoniqRuntimeException("The FLWOR Expression class does not implement this", getMetadata());
-    }
-
-    @Override
     public boolean isDataFrame() {
         return this._returnClause.isDataFrame();
     }
 
-    @Override
-    public void setIsDataFrame(boolean isRDD) {
-        throw new SparksoniqRuntimeException("The FLWOR Expression class does not implement this", getMetadata());
-    }
-
-    @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
         List<ExpressionOrClause> result = new ArrayList<>();
         result.add(_startClause);

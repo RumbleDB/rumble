@@ -21,6 +21,7 @@
 package sparksoniq.jsoniq.compiler.translator.expr.primary;
 
 
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworVarSequenceType;
@@ -77,16 +78,14 @@ public class FunctionDeclaration extends PrimaryExpression {
     }
 
     @Override
-    protected void initIsRDDAndIsDataFrame() {
-        this.isRDD = false;
-        this.isDataFrame = false;
+    protected void initHighestExecutionMode() {
+        this._highestExecutionMode = ExecutionMode.LOCAL;
 
         FunctionIdentifier identifier = new FunctionIdentifier(this._name, this._params.size());
         // if named(static) function declaration
         if (!this._name.equals("")) {
-            // TODO: find a way to set isRDD and isDF from this._body
-            Functions.addUserDefinedFunctionIsRDD(identifier, false, this.getMetadata());
-            Functions.addUserDefinedFunctionIsDataFrame(identifier, false, this.getMetadata());
+            // TODO: find a way to set executionMode(isRDD/isDF) based on information from this._body
+            Functions.addUserDefinedFunctionExecutionMode(identifier, ExecutionMode.LOCAL, this.getMetadata());
         }
     }
 

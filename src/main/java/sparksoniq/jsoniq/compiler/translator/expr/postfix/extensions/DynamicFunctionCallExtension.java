@@ -20,6 +20,7 @@
 
 package sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions;
 
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
@@ -49,9 +50,8 @@ public class DynamicFunctionCallExtension extends PostfixExtension {
     }
 
     @Override
-    protected void initIsRDDAndIsDataFrame() {
-        this.isRDD = false;
-        this.isDataFrame = false;
+    protected void initHighestExecutionMode() {
+        this._highestExecutionMode = ExecutionMode.LOCAL;
     }
 
     @Override

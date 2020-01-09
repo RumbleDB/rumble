@@ -20,6 +20,7 @@
 
 package sparksoniq.jsoniq.compiler.translator.expr.primary;
 
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.CommaExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
@@ -54,21 +55,12 @@ public class ParenthesizedExpression extends PrimaryExpression {
     }
 
     @Override
-    public boolean isRDD() {
-        // if not an empty sequence(null expression), bypass this node during an isRDD check
+    public ExecutionMode getHighestExecutionMode() {
+        // if not an empty sequence(null expression), bypass this node while calculating execution mode
         if (expression != null) {
-            return this.expression.isRDD();
+            return this.expression.getHighestExecutionMode();
         }
-        return super.isRDD();
-    }
-
-    @Override
-    public boolean isDataFrame() {
-        // if not an empty sequence(null expression), bypass this node during an isRDD check
-        if (expression != null) {
-            return this.expression.isDataFrame();
-        }
-        return super.isDataFrame();
+        return super.getHighestExecutionMode();
     }
 
     @Override

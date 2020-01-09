@@ -20,6 +20,7 @@
 
 package sparksoniq.jsoniq.compiler.translator.expr.postfix;
 
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.PostfixExtension;
@@ -65,27 +66,17 @@ public class PostFixExpression extends Expression {
     }
 
     @Override
-    public boolean isRDD() {
-        // if it's a primary expression(not a postfix) bypass this node during an isRDD check
-        if (isPrimary()) {
-            return this._primaryExpressionNode.isRDD();
-        }
-        return super.isRDD();
+    protected void initHighestExecutionMode() {
+        this._highestExecutionMode = this._primaryExpressionNode.getHighestExecutionMode();
     }
 
     @Override
-    public boolean isDataFrame() {
-        // if it's a primary expression(not a postfix) bypass this node during an isRDD check
+    public ExecutionMode getHighestExecutionMode() {
+        // if it's a primary expression(not a postfix) bypass this node while calculating execution mode
         if (isPrimary()) {
-            return this._primaryExpressionNode.isDataFrame();
+            return this._primaryExpressionNode.getHighestExecutionMode();
         }
-        return super.isDataFrame();
-    }
-
-    @Override
-    protected void initIsRDDAndIsDataFrame() {
-        this.isRDD = this._primaryExpressionNode.isRDD();
-        this.isDataFrame = this._primaryExpressionNode.isDataFrame();
+        return super.getHighestExecutionMode();
     }
 
     @Override

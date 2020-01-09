@@ -20,6 +20,7 @@
 
 package sparksoniq.jsoniq.compiler.translator.expr;
 
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
@@ -33,9 +34,8 @@ import java.util.function.Predicate;
 public abstract class ExpressionOrClause {
 
     private ExpressionMetadata metadata;
-    protected boolean isRDD;
-    protected boolean isDataFrame;
-    protected boolean isRDDAndIsDataFrameInitialized = false;
+
+    protected ExecutionMode _highestExecutionMode = ExecutionMode.UNSET;
 
     protected ExpressionOrClause() {
     }
@@ -44,33 +44,23 @@ public abstract class ExpressionOrClause {
         this.metadata = metadata;
     }
 
-    public void setIsRDD(boolean isRDD) {
-        this.isRDD = isRDD;
-    }
-
-    public void setIsDataFrame(boolean isDataFrame) {
-        this.isDataFrame = isDataFrame;
+    protected void initHighestExecutionMode() {
+        _highestExecutionMode = ExecutionMode.LOCAL;
     }
 
     public boolean isRDD() {
-        if (!isRDDAndIsDataFrameInitialized) {
-            initIsRDDAndIsDataFrame();
-            isRDDAndIsDataFrameInitialized = true;
-        }
-        return this.isRDD;
+        return this.getHighestExecutionMode().isRDD();
     }
 
     public boolean isDataFrame() {
-        if (!isRDDAndIsDataFrameInitialized) {
-            initIsRDDAndIsDataFrame();
-            isRDDAndIsDataFrameInitialized = true;
-        }
-        return this.isDataFrame;
+        return this.getHighestExecutionMode().isDF();
     }
 
-    protected void initIsRDDAndIsDataFrame() {
-        this.isRDD = false;
-        this.isDataFrame = false;
+    public ExecutionMode getHighestExecutionMode() {
+        if (_highestExecutionMode == ExecutionMode.UNSET) {
+            initHighestExecutionMode();
+        }
+        return _highestExecutionMode;
     }
 
     // Visitor pattern implementation

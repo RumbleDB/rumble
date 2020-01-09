@@ -21,6 +21,7 @@
 package sparksoniq.jsoniq.compiler.translator.expr;
 
 
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
@@ -52,21 +53,12 @@ public class CommaExpression extends Expression {
     }
 
     @Override
-    public boolean isRDD() {
-        // if there is only a single expression, bypass the comma expression
+    public ExecutionMode getHighestExecutionMode() {
+        // if there is only a single expression, bypass the comma expression while calculating execution mode
         if (_expressions.size() == 1) {
-            return this._expressions.get(0).isRDD();
+            return this._expressions.get(0).getHighestExecutionMode();
         }
-        return super.isRDD();
-    }
-
-    @Override
-    public boolean isDataFrame() {
-        // if there is only a single expression, bypass the comma expression
-        if (_expressions.size() == 1) {
-            return this._expressions.get(0).isDataFrame();
-        }
-        return super.isDataFrame();
+        return super.getHighestExecutionMode();
     }
 
     @Override

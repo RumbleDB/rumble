@@ -56,17 +56,12 @@ public class FlworClause extends ExpressionOrClause {
     }
 
     @Override
-    protected void initIsRDDAndIsDataFrame() {
-        this.isDataFrame = previousClause.isDataFrame();
+    protected void initHighestExecutionMode() {
+        this._highestExecutionMode = previousClause.getHighestExecutionMode();
     }
 
     @Override
     public boolean isRDD() {
-        throw new OurBadException("FLWOR clauses(except return) do not use RDDs. Use either local or DataFrame API");
-    }
-
-    @Override
-    public void setIsRDD(boolean isRDD) {
         throw new OurBadException("FLWOR clauses(except return) do not use RDDs. Use either local or DataFrame API");
     }
 
