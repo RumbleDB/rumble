@@ -52,7 +52,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     protected List<RuntimeIterator> _children;
     protected transient DynamicContext _currentDynamicContextForLocalExecution;
     private IteratorMetadata metadata;
-    
+
     protected ExecutionMode _highestExecutionMode = ExecutionMode.UNSET;
 
     public RuntimeIterator() {

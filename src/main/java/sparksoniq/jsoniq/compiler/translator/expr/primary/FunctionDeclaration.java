@@ -82,10 +82,11 @@ public class FunctionDeclaration extends PrimaryExpression {
         // if named(static) function declaration
         if (!this._name.equals("")) {
             Functions.addUserDefinedFunctionExecutionMode(
-                    identifier,
-                    // _body.getHighestExecutionMode(),     // can't find referenced function w/ recursive functions calling each other
-                    ExecutionMode.LOCAL,
-                    this.getMetadata()
+                identifier,
+                // _body.getHighestExecutionMode(), // can't find referenced function w/ recursive functions calling
+                // each other
+                ExecutionMode.LOCAL,
+                this.getMetadata()
             );
         }
     }

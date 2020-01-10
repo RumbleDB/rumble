@@ -77,12 +77,15 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
 
         // define a static context for the function body, add params to the context and visit the body expression
         StaticContext functionDeclarationContext = new StaticContext(argument);
-        expression.get_params().forEach((paramName, flworVarSequenceType) -> functionDeclarationContext.addVariable(
-                paramName,
-                flworVarSequenceType.getSequence(),
-                expression.getMetadata(),
-                ExecutionMode.LOCAL     // static udf currently supports materialized(local) params, not RDDs or DFs
-        ));
+        expression.get_params()
+            .forEach(
+                (paramName, flworVarSequenceType) -> functionDeclarationContext.addVariable(
+                    paramName,
+                    flworVarSequenceType.getSequence(),
+                    expression.getMetadata(),
+                    ExecutionMode.LOCAL // static udf currently supports materialized(local) params, not RDDs or DFs
+                )
+            );
         this.visit(expression.get_body(), functionDeclarationContext);
         return functionDeclarationContext;
     }

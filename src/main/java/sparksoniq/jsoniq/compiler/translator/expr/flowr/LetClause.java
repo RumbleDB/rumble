@@ -61,8 +61,8 @@ public class LetClause extends FlworClause {
         // call isDF on the last letVariable
         this._highestExecutionMode =
             letVars.get(letVars.size() - 1).getHighestExecutionMode().isDF()
-                    ? ExecutionMode.DF
-                    : ExecutionMode.LOCAL;
+                ? ExecutionMode.DF
+                : ExecutionMode.LOCAL;
     }
 
     @Override
