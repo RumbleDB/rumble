@@ -66,7 +66,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             IteratorMetadata iteratorMetadata
     ) {
         super(child, iteratorMetadata);
-        _variableName = "$" + variableName;
+        _variableName = variableName;
         _assignmentIterator = assignmentExpression;
         _dependencies = _assignmentIterator.getVariableDependencies();
     }

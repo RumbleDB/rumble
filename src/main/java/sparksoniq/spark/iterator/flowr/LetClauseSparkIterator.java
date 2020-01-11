@@ -61,7 +61,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             IteratorMetadata iteratorMetadata
     ) {
         super(child, iteratorMetadata);
-        _variableName = "$" + variableName;
+        _variableName = variableName;
         _assignmentIterator = expression;
         _dependencies = _assignmentIterator.getVariableDependencies();
     }
