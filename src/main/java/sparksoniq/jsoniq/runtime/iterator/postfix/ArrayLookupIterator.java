@@ -43,7 +43,12 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     private Integer _lookup;
     private Item _nextResult;
 
-    public ArrayLookupIterator(RuntimeIterator array, RuntimeIterator iterator, ExecutionMode executionMode, IteratorMetadata iteratorMetadata) {
+    public ArrayLookupIterator(
+            RuntimeIterator array,
+            RuntimeIterator iterator,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
         super(Arrays.asList(array, iterator), executionMode, iteratorMetadata);
         _iterator = array;
     }

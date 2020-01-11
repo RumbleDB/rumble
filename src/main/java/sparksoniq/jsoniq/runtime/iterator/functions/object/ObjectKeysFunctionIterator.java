@@ -45,7 +45,11 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
     private Queue<Item> _nextResults; // queue that holds the results created by the current item in inspection
     private List<Item> _alreadyFoundKeys;
 
-    public ObjectKeysFunctionIterator(List<RuntimeIterator> arguments, ExecutionMode executionMode,IteratorMetadata iteratorMetadata) {
+    public ObjectKeysFunctionIterator(
+            List<RuntimeIterator> arguments,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
         super(arguments, executionMode, iteratorMetadata);
         _iterator = arguments.get(0);
     }

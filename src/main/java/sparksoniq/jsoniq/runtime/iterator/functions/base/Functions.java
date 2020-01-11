@@ -567,11 +567,11 @@ public class Functions {
             // TODO: Or alternatively, extend all constructors to have 3 params (executionMode)
             try {
                 Constructor<? extends RuntimeIterator> constructor = builtinFunction.getFunctionIteratorClass()
-                        .getConstructor(
-                                List.class,
-                                ExecutionMode.class,
-                                IteratorMetadata.class
-                        );
+                    .getConstructor(
+                        List.class,
+                        ExecutionMode.class,
+                        IteratorMetadata.class
+                    );
                 functionCallIterator = constructor.newInstance(arguments, executionMode, metadata);
             } catch (ReflectiveOperationException ex) {
                 throw new UnknownFunctionCallException(
@@ -637,7 +637,12 @@ public class Functions {
             IteratorMetadata metadata,
             List<RuntimeIterator> arguments
     ) {
-        FunctionItemCallIterator functionCallIterator = new FunctionItemCallIterator(functionItem, arguments, executionMode, metadata);
+        FunctionItemCallIterator functionCallIterator = new FunctionItemCallIterator(
+                functionItem,
+                arguments,
+                executionMode,
+                metadata
+        );
         if (!functionItem.getSignature().getReturnType().equals(mostGeneralSequenceType)) {
             return new TypePromotionIterator(
                     functionCallIterator,

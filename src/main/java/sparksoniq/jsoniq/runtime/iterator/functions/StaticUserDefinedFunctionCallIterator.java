@@ -54,7 +54,7 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
             ExecutionMode executionMode,
             IteratorMetadata iteratorMetadata
     ) {
-        super(null, executionMode,  iteratorMetadata);
+        super(null, executionMode, iteratorMetadata);
         _functionIdentifier = functionIdentifier;
         _functionArguments = functionArguments;
 

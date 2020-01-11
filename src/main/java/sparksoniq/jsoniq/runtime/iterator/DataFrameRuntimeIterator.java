@@ -30,7 +30,11 @@ public abstract class DataFrameRuntimeIterator extends RDDRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
-    protected DataFrameRuntimeIterator(List<RuntimeIterator> children, ExecutionMode executionMode, IteratorMetadata iteratorMetadata) {
+    protected DataFrameRuntimeIterator(
+            List<RuntimeIterator> children,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
         super(children, executionMode, iteratorMetadata);
         if (executionMode != ExecutionMode.DF) {
             throw new OurBadException("DF runtime iterators support only dataframe execution mode");

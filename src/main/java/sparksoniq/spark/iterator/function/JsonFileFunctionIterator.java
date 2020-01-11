@@ -37,7 +37,11 @@ public class JsonFileFunctionIterator extends RDDRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
-    public JsonFileFunctionIterator(List<RuntimeIterator> arguments, ExecutionMode executionMode, IteratorMetadata iteratorMetadata) {
+    public JsonFileFunctionIterator(
+            List<RuntimeIterator> arguments,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
         super(arguments, executionMode, iteratorMetadata);
     }
 

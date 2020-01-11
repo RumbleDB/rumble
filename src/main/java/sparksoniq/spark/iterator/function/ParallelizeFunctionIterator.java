@@ -37,7 +37,11 @@ public class ParallelizeFunctionIterator extends RDDRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
-    public ParallelizeFunctionIterator(List<RuntimeIterator> parameters, ExecutionMode executionMode, IteratorMetadata iteratorMetadata) {
+    public ParallelizeFunctionIterator(
+            List<RuntimeIterator> parameters,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
         super(parameters, executionMode, iteratorMetadata);
     }
 

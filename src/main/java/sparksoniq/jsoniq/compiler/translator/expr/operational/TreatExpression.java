@@ -5,7 +5,6 @@ import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworVarSequenceType;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.UnaryExpressionBase;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.types.SequenceType;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
@@ -38,10 +37,15 @@ public class TreatExpression extends UnaryExpressionBase {
         this._highestExecutionMode = calculateIsRDDFromSequenceTypeAndExpression(sequenceType, this._mainExpression);
     }
 
-    public static ExecutionMode calculateIsRDDFromSequenceTypeAndExpression(SequenceType sequenceType, Expression expression) {
-        if (sequenceType.getArity() != SequenceType.Arity.One
-            && sequenceType.getArity() != SequenceType.Arity.OneOrZero
-            && expression.getHighestExecutionMode().isRDD()) {
+    public static ExecutionMode calculateIsRDDFromSequenceTypeAndExpression(
+            SequenceType sequenceType,
+            Expression expression
+    ) {
+        if (
+            sequenceType.getArity() != SequenceType.Arity.One
+                && sequenceType.getArity() != SequenceType.Arity.OneOrZero
+                && expression.getHighestExecutionMode().isRDD()
+        ) {
             return ExecutionMode.RDD;
         }
         return ExecutionMode.LOCAL;

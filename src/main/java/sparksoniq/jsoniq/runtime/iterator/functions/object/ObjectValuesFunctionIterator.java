@@ -40,7 +40,11 @@ public class ObjectValuesFunctionIterator extends HybridRuntimeIterator {
     private RuntimeIterator _iterator;
     private Queue<Item> _nextResults; // queue that holds the results created by the current item in inspection
 
-    public ObjectValuesFunctionIterator(List<RuntimeIterator> arguments, ExecutionMode executionMode, IteratorMetadata iteratorMetadata) {
+    public ObjectValuesFunctionIterator(
+            List<RuntimeIterator> arguments,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
         super(arguments, executionMode, iteratorMetadata);
         _iterator = arguments.get(0);
     }

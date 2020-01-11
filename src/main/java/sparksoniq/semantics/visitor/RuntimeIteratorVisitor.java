@@ -214,8 +214,8 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 RuntimeIterator assignmentIterator = this.visit(var.getExpression(), argument);
                 if (var.getAsSequence() != null && var.getAsSequence().getSequence() != null) {
                     ExecutionMode executionMode = TreatExpression.calculateIsRDDFromSequenceTypeAndExpression(
-                            var.getAsSequence().getSequence(),
-                            var.getExpression()
+                        var.getAsSequence().getSequence(),
+                        var.getExpression()
                     );
                     assignmentIterator = new TreatIterator(
                             assignmentIterator,
@@ -239,8 +239,8 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 RuntimeIterator assignmentIterator = this.visit(var.getExpression(), argument);
                 if (var.getAsSequence() != null && var.getAsSequence().getSequence() != null) {
                     ExecutionMode executionMode = TreatExpression.calculateIsRDDFromSequenceTypeAndExpression(
-                            var.getAsSequence().getSequence(),
-                            var.getExpression()
+                        var.getAsSequence().getSequence(),
+                        var.getExpression()
                     );
                     assignmentIterator = new TreatIterator(
                             assignmentIterator,
@@ -268,8 +268,8 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                     groupByExpressionIterator = this.visit(groupByExpression, argument);
                     if (var.getAsSequence() != null && var.getAsSequence().getSequence() != null) {
                         ExecutionMode executionMode = TreatExpression.calculateIsRDDFromSequenceTypeAndExpression(
-                                var.getAsSequence().getSequence(),
-                                groupByExpression
+                            var.getAsSequence().getSequence(),
+                            groupByExpression
                         );
                         groupByExpressionIterator = new TreatIterator(
                                 groupByExpressionIterator,
@@ -373,13 +373,27 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                     if (extension instanceof ArrayLookupExtension) {
                         RuntimeIterator iterator =
                             this.visit(((ArrayLookupExtension) extension).getExpression(), argument);
-                        previous = new ArrayLookupIterator(previous, iterator, executionMode, createIteratorMetadata(expression));
+                        previous = new ArrayLookupIterator(
+                                previous,
+                                iterator,
+                                executionMode,
+                                createIteratorMetadata(expression)
+                        );
                     } else if (extension instanceof ObjectLookupExtension) {
                         RuntimeIterator iterator =
                             this.visit(((ObjectLookupExtension) extension).getExpression(), argument);
-                        previous = new ObjectLookupIterator(previous, iterator, executionMode, createIteratorMetadata(expression));
+                        previous = new ObjectLookupIterator(
+                                previous,
+                                iterator,
+                                executionMode,
+                                createIteratorMetadata(expression)
+                        );
                     } else if (extension instanceof ArrayUnboxingExtension) {
-                        previous = new ArrayUnboxingIterator(previous, executionMode, createIteratorMetadata(expression));
+                        previous = new ArrayUnboxingIterator(
+                                previous,
+                                executionMode,
+                                createIteratorMetadata(expression)
+                        );
                     } else if (extension instanceof PredicateExtension) {
                         RuntimeIterator filterExpression = // pass the predicate as argument for $$ expresions
                             this.visit(((PredicateExtension) extension).getExpression(), argument);
@@ -505,7 +519,12 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 iteratorMetadata
             );
         }
-        return new StaticUserDefinedFunctionCallIterator(identifier, arguments, expression.getHighestExecutionMode(), iteratorMetadata);
+        return new StaticUserDefinedFunctionCallIterator(
+                identifier,
+                arguments,
+                expression.getHighestExecutionMode(),
+                iteratorMetadata
+        );
     }
 
     @Override

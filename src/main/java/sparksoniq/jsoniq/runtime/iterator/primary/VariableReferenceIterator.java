@@ -45,7 +45,12 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
     private List<Item> _items = null;
     private int _currentIndex = 0;
 
-    public VariableReferenceIterator(String variableName, SequenceType seq, ExecutionMode executionMode, IteratorMetadata iteratorMetadata) {
+    public VariableReferenceIterator(
+            String variableName,
+            SequenceType seq,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
         super(null, executionMode, iteratorMetadata);
         _variableName = variableName;
         _sequence = seq;

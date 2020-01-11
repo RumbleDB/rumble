@@ -41,7 +41,11 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
     private Item _nextResult;
     private List<Item> _prevResults;
 
-    public DistinctValuesFunctionIterator(List<RuntimeIterator> arguments, ExecutionMode executionMode, IteratorMetadata iteratorMetadata) {
+    public DistinctValuesFunctionIterator(
+            List<RuntimeIterator> arguments,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
         super(arguments, executionMode, iteratorMetadata);
         _sequenceIterator = arguments.get(0);
     }

@@ -37,7 +37,11 @@ public class TextFileFunctionIterator extends RDDRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
-    public TextFileFunctionIterator(List<RuntimeIterator> arguments, ExecutionMode executionMode, IteratorMetadata iteratorMetadata) {
+    public TextFileFunctionIterator(
+            List<RuntimeIterator> arguments,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
         super(arguments, executionMode, iteratorMetadata);
     }
 

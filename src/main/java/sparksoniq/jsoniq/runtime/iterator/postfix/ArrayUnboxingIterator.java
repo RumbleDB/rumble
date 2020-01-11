@@ -41,7 +41,11 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
     private RuntimeIterator _iterator;
     private Queue<Item> _nextResults; // queue that holds the results created by the current item in inspection
 
-    public ArrayUnboxingIterator(RuntimeIterator arrayIterator, ExecutionMode executionMode, IteratorMetadata iteratorMetadata) {
+    public ArrayUnboxingIterator(
+            RuntimeIterator arrayIterator,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
         super(Arrays.asList(arrayIterator), executionMode, iteratorMetadata);
         _iterator = arrayIterator;
     }

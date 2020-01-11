@@ -37,7 +37,11 @@ public class ParquetFileFunctionIterator extends DataFrameRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
-    public ParquetFileFunctionIterator(List<RuntimeIterator> arguments, ExecutionMode executionMode, IteratorMetadata iteratorMetadata) {
+    public ParquetFileFunctionIterator(
+            List<RuntimeIterator> arguments,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
         super(arguments, executionMode, iteratorMetadata);
     }
 

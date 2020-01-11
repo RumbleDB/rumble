@@ -41,7 +41,11 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     protected List<Item> result = null;
     private int currentResultIndex = 0;
 
-    protected HybridRuntimeIterator(List<RuntimeIterator> children, ExecutionMode executionMode, IteratorMetadata iteratorMetadata) {
+    protected HybridRuntimeIterator(
+            List<RuntimeIterator> children,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
         super(children, executionMode, iteratorMetadata);
         this.parser = new JiqsItemParser();
     }

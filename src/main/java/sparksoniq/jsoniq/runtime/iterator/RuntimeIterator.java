@@ -31,7 +31,6 @@ import org.rumbledb.api.Item;
 import sparksoniq.exceptions.InvalidArgumentTypeException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.OurBadException;
-import sparksoniq.exceptions.SparkRuntimeException;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
