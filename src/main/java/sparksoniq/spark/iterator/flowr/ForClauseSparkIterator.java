@@ -30,7 +30,6 @@ import org.rumbledb.api.Item;
 import sparksoniq.exceptions.JobWithinAJobException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
@@ -62,12 +61,12 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
     public ForClauseSparkIterator(
             RuntimeTupleIterator child,
-            VariableReferenceIterator variableReference,
+            String variableName,
             RuntimeIterator assignmentExpression,
             IteratorMetadata iteratorMetadata
     ) {
         super(child, iteratorMetadata);
-        _variableName = variableReference.getVariableName();
+        _variableName = "$" + variableName;
         _assignmentIterator = assignmentExpression;
         _dependencies = _assignmentIterator.getVariableDependencies();
     }
