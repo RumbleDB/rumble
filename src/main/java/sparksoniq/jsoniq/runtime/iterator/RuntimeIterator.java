@@ -53,14 +53,12 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     protected transient DynamicContext _currentDynamicContextForLocalExecution;
     private IteratorMetadata metadata;
 
-    protected ExecutionMode _highestExecutionMode = ExecutionMode.UNSET;
+    protected ExecutionMode _highestExecutionMode;
 
-    public RuntimeIterator() {
-    }
-
-    protected RuntimeIterator(List<RuntimeIterator> children, IteratorMetadata metadata) {
+    protected RuntimeIterator(List<RuntimeIterator> children, ExecutionMode executionMode, IteratorMetadata metadata) {
         this.metadata = metadata;
         this._isOpen = false;
+        this._highestExecutionMode = executionMode;
         this._children = new ArrayList<>();
         if (children != null && !children.isEmpty())
             this._children.addAll(children);
@@ -195,34 +193,30 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         return metadata;
     }
 
-    public void setHighestExecutionMode(ExecutionMode executionMode) {
-        this._highestExecutionMode = executionMode;
-    }
-
     public ExecutionMode getHighestExecutionMode() {
         return _highestExecutionMode;
     }
 
     public boolean isRDD() {
         if (_highestExecutionMode == ExecutionMode.UNSET) {
-            throw new RuntimeException("isRDD field in iterator without execution mode being set.");
+            throw new OurBadException("isRDD field in iterator without execution mode being set.");
         }
         return _highestExecutionMode.isRDD();
     }
 
     public JavaRDD<Item> getRDD(DynamicContext context) {
-        throw new SparkRuntimeException("RDDs are not implemented for the iterator", getMetadata());
+        throw new OurBadException("RDDs are not implemented for the iterator", getMetadata());
     }
 
     public boolean isDataFrame() {
         if (_highestExecutionMode == ExecutionMode.UNSET) {
-            throw new RuntimeException("isDataFrame accessed in iterator without execution mode being set.");
+            throw new OurBadException("isDataFrame accessed in iterator without execution mode being set.");
         }
         return _highestExecutionMode.isDF();
     }
 
     public Dataset<Row> getDataFrame(DynamicContext context) {
-        throw new SparkRuntimeException("DataFrames are not implemented for the iterator", getMetadata());
+        throw new OurBadException("DataFrames are not implemented for the iterator", getMetadata());
     }
 
     public abstract Item next();

@@ -24,6 +24,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -40,8 +41,8 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
     private RuntimeIterator _iterator;
     private Queue<Item> _nextResults; // queue that holds the results created by the current item in inspection
 
-    public ArrayUnboxingIterator(RuntimeIterator arrayIterator, IteratorMetadata iteratorMetadata) {
-        super(Arrays.asList(arrayIterator), iteratorMetadata);
+    public ArrayUnboxingIterator(RuntimeIterator arrayIterator, ExecutionMode executionMode, IteratorMetadata iteratorMetadata) {
+        super(Arrays.asList(arrayIterator), executionMode, iteratorMetadata);
         _iterator = arrayIterator;
     }
 

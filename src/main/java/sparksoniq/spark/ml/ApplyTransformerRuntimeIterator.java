@@ -7,6 +7,7 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.InvalidRumbleMLParamException;
 import sparksoniq.exceptions.OurBadException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.DataFrameRuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
@@ -25,9 +26,10 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
     public ApplyTransformerRuntimeIterator(
             String transformerName,
             Class<?> transformerSparkMLClass,
+            ExecutionMode executionMode,
             IteratorMetadata iteratorMetadata
     ) {
-        super(null, iteratorMetadata);
+        super(null, executionMode, iteratorMetadata);
         this._transformerName = transformerName;
         this._transformerSparkMLClass = transformerSparkMLClass;
     }

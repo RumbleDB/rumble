@@ -546,9 +546,9 @@ public class Functions {
                         arguments.get(i),
                         builtinFunction.getSignature().getParameterTypes().get(i),
                         "Invalid argument for function " + identifier.getName() + ". ",
+                        arguments.get(i).getHighestExecutionMode(),
                         arguments.get(i).getMetadata()
                 );
-                typePromotionIterator.setHighestExecutionMode(arguments.get(i).getHighestExecutionMode());
 
                 arguments.set(i, typePromotionIterator);
             }
@@ -562,24 +562,34 @@ public class Functions {
                     IteratorMetadata.class
                 );
             functionCallIterator = constructor.newInstance(arguments, metadata);
-            functionCallIterator.setHighestExecutionMode(executionMode);
         } catch (ReflectiveOperationException e) {
-            throw new UnknownFunctionCallException(
-                    identifier.getName(),
-                    arguments.size(),
-                    metadata.getExpressionMetadata()
-            );
+            // TODO: Some functions have constructors with 2 and some with 3 params. Handle this more elegantly
+            // TODO: Or alternatively, extend all constructors to have 3 params (executionMode)
+            try {
+                Constructor<? extends RuntimeIterator> constructor = builtinFunction.getFunctionIteratorClass()
+                        .getConstructor(
+                                List.class,
+                                ExecutionMode.class,
+                                IteratorMetadata.class
+                        );
+                functionCallIterator = constructor.newInstance(arguments, executionMode, metadata);
+            } catch (ReflectiveOperationException ex) {
+                throw new UnknownFunctionCallException(
+                        identifier.getName(),
+                        arguments.size(),
+                        metadata.getExpressionMetadata()
+                );
+            }
         }
 
         if (!builtinFunction.getSignature().getReturnType().equals(mostGeneralSequenceType)) {
-            TypePromotionIterator typePromotionIterator = new TypePromotionIterator(
+            return new TypePromotionIterator(
                     functionCallIterator,
                     builtinFunction.getSignature().getReturnType(),
                     "Invalid return type for function " + identifier.getName() + ". ",
+                    functionCallIterator.getHighestExecutionMode(),
                     functionCallIterator.getMetadata()
             );
-            typePromotionIterator.setHighestExecutionMode(functionCallIterator.getHighestExecutionMode());
-            return typePromotionIterator;
         }
         return functionCallIterator;
     }
@@ -627,10 +637,9 @@ public class Functions {
             IteratorMetadata metadata,
             List<RuntimeIterator> arguments
     ) {
-        FunctionItemCallIterator functionCallIterator = new FunctionItemCallIterator(functionItem, arguments, metadata);
-        functionCallIterator.setHighestExecutionMode(executionMode);
+        FunctionItemCallIterator functionCallIterator = new FunctionItemCallIterator(functionItem, arguments, executionMode, metadata);
         if (!functionItem.getSignature().getReturnType().equals(mostGeneralSequenceType)) {
-            TypePromotionIterator typePromotionIterator = new TypePromotionIterator(
+            return new TypePromotionIterator(
                     functionCallIterator,
                     functionItem.getSignature().getReturnType(),
                     "Invalid return type for "
@@ -638,10 +647,9 @@ public class Functions {
                             ? ""
                             : (functionItem.getIdentifier().getName()) + " ")
                         + "function. ",
+                    executionMode,
                     metadata
             );
-            typePromotionIterator.setHighestExecutionMode(executionMode);
-            return typePromotionIterator;
         }
         return functionCallIterator;
     }

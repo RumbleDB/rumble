@@ -27,6 +27,7 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.OurBadException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
@@ -55,9 +56,10 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
     public CountClauseSparkIterator(
             RuntimeTupleIterator child,
             RuntimeIterator variableReference,
+            ExecutionMode executionMode,
             IteratorMetadata iteratorMetadata
     ) {
-        super(child, iteratorMetadata);
+        super(child, executionMode, iteratorMetadata);
         _variableName = ((VariableReferenceIterator) variableReference).getVariableName();
         _currentCountIndex = 1; // indices start at 1 in JSONiq
     }

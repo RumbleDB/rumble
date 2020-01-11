@@ -61,9 +61,10 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     public FunctionItemCallIterator(
             FunctionItem functionItem,
             List<RuntimeIterator> functionArguments,
+            ExecutionMode executionMode,
             IteratorMetadata iteratorMetadata
     ) {
-        super(null, iteratorMetadata);
+        super(null, executionMode, iteratorMetadata);
         for (RuntimeIterator arg : functionArguments) {
             if (arg == null) {
                 _isPartialApplication = true;
@@ -117,9 +118,9 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                             _functionArguments.get(i),
                             _functionItem.getSignature().getParameterTypes().get(i),
                             "Invalid argument for " + formattedName + "function. ",
+                            _functionArguments.get(i).getHighestExecutionMode(),
                             getMetadata()
                     );
-                    typePromotionIterator.setHighestExecutionMode(_functionArguments.get(i).getHighestExecutionMode());
                     _functionArguments.set(i, typePromotionIterator);
                 }
             }
@@ -176,10 +177,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 RDDArgumentValues,
                 DFArgumentValues
         );
-        FunctionRuntimeIterator iterator = new FunctionRuntimeIterator(partiallyAppliedFunction, getMetadata());
-        iterator.setHighestExecutionMode(ExecutionMode.LOCAL);
-
-        return iterator;
+        return new FunctionRuntimeIterator(partiallyAppliedFunction, getMetadata());
     }
 
     private DynamicContext createNewDynamicContextWithArguments(DynamicContext context) {

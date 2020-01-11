@@ -20,6 +20,8 @@
 
 package sparksoniq.jsoniq.runtime.iterator;
 
+import sparksoniq.exceptions.OurBadException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.List;
@@ -28,7 +30,10 @@ public abstract class DataFrameRuntimeIterator extends RDDRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
-    protected DataFrameRuntimeIterator(List<RuntimeIterator> children, IteratorMetadata iteratorMetadata) {
-        super(children, iteratorMetadata);
+    protected DataFrameRuntimeIterator(List<RuntimeIterator> children, ExecutionMode executionMode, IteratorMetadata iteratorMetadata) {
+        super(children, executionMode, iteratorMetadata);
+        if (executionMode != ExecutionMode.DF) {
+            throw new OurBadException("DF runtime iterators support only dataframe execution mode");
+        }
     }
 }

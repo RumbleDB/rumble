@@ -27,6 +27,7 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.JobWithinAJobException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -50,9 +51,10 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     public ReturnClauseSparkIterator(
             RuntimeTupleIterator child,
             RuntimeIterator expression,
+            ExecutionMode executionMode,
             IteratorMetadata iteratorMetadata
     ) {
-        super(Collections.singletonList(expression), iteratorMetadata);
+        super(Collections.singletonList(expression), executionMode, iteratorMetadata);
         _child = child;
         _expression = expression;
     }

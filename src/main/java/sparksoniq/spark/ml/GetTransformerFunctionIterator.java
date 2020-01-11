@@ -24,6 +24,7 @@ import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.UnexpectedTypeException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
@@ -94,6 +95,7 @@ public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
             RuntimeIterator bodyIterator = new ApplyTransformerRuntimeIterator(
                     _transformerName,
                     _transformerSparkMLClass,
+                    ExecutionMode.DF,
                     getMetadata()
             );
             List<SequenceType> paramTypes = Collections.unmodifiableList(

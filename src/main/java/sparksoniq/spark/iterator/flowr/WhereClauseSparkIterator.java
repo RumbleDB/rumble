@@ -27,6 +27,7 @@ import org.apache.spark.sql.types.StructType;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.JobWithinAJobException;
 import sparksoniq.exceptions.OurBadException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
@@ -53,9 +54,10 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
     public WhereClauseSparkIterator(
             RuntimeTupleIterator child,
             RuntimeIterator whereExpression,
+            ExecutionMode executionMode,
             IteratorMetadata iteratorMetadata
     ) {
-        super(child, iteratorMetadata);
+        super(child, executionMode, iteratorMetadata);
         _expression = whereExpression;
         _dependencies = _expression.getVariableDependencies();
     }

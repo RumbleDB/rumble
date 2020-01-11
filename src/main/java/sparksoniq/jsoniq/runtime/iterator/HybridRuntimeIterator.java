@@ -27,6 +27,7 @@ import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.io.json.JiqsItemParser;
 import sparksoniq.io.json.RowToItemMapper;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkSessionManager;
@@ -40,8 +41,8 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     protected List<Item> result = null;
     private int currentResultIndex = 0;
 
-    protected HybridRuntimeIterator(List<RuntimeIterator> children, IteratorMetadata iteratorMetadata) {
-        super(children, iteratorMetadata);
+    protected HybridRuntimeIterator(List<RuntimeIterator> children, ExecutionMode executionMode, IteratorMetadata iteratorMetadata) {
+        super(children, executionMode, iteratorMetadata);
         this.parser = new JiqsItemParser();
     }
 

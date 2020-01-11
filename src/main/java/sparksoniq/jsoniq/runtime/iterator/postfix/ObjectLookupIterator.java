@@ -26,6 +26,7 @@ import org.rumbledb.api.Item;
 import sparksoniq.exceptions.InvalidSelectorException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.BooleanItem;
 import sparksoniq.jsoniq.item.DecimalItem;
 import sparksoniq.jsoniq.item.DoubleItem;
@@ -51,9 +52,10 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     public ObjectLookupIterator(
             RuntimeIterator object,
             RuntimeIterator lookupIterator,
+            ExecutionMode executionMode,
             IteratorMetadata iteratorMetadata
     ) {
-        super(Arrays.asList(object, lookupIterator), iteratorMetadata);
+        super(Arrays.asList(object, lookupIterator), executionMode, iteratorMetadata);
         _iterator = object;
     }
 

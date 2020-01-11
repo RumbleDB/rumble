@@ -35,28 +35,16 @@ public class TreatExpression extends UnaryExpressionBase {
     @Override
     protected void initHighestExecutionMode() {
         SequenceType sequenceType = _sequenceType.getSequence();
-        this._highestExecutionMode =
-            calculateIsRDDForTreatExpression(sequenceType, this._mainExpression)
-                ? ExecutionMode.RDD
-                : ExecutionMode.LOCAL;
+        this._highestExecutionMode = calculateIsRDDFromSequenceTypeAndExpression(sequenceType, this._mainExpression);
     }
 
-    private static boolean calculateIsRDDForTreatExpression(SequenceType sequenceType, Expression expression) {
-        return sequenceType.getArity() != SequenceType.Arity.One
+    public static ExecutionMode calculateIsRDDFromSequenceTypeAndExpression(SequenceType sequenceType, Expression expression) {
+        if (sequenceType.getArity() != SequenceType.Arity.One
             && sequenceType.getArity() != SequenceType.Arity.OneOrZero
-            && expression.getHighestExecutionMode().isRDD();
-    }
-
-    public static void setExecutionModeOfTreatIteratorGeneratedWithoutTreatExpression(
-            RuntimeIterator iterator,
-            SequenceType sequenceType,
-            Expression expression
-    ) {
-        if (calculateIsRDDForTreatExpression(sequenceType, expression)) {
-            iterator.setHighestExecutionMode(ExecutionMode.RDD);
-        } else {
-            iterator.setHighestExecutionMode(ExecutionMode.LOCAL);
+            && expression.getHighestExecutionMode().isRDD()) {
+            return ExecutionMode.RDD;
         }
+        return ExecutionMode.LOCAL;
     }
 
     @Override

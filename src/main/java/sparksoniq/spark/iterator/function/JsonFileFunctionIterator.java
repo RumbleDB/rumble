@@ -24,6 +24,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.CannotRetrieveResourceException;
 import sparksoniq.io.json.StringToItemMapper;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.RDDRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -36,8 +37,8 @@ public class JsonFileFunctionIterator extends RDDRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
-    public JsonFileFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
-        super(arguments, iteratorMetadata);
+    public JsonFileFunctionIterator(List<RuntimeIterator> arguments, ExecutionMode executionMode, IteratorMetadata iteratorMetadata) {
+        super(arguments, executionMode, iteratorMetadata);
     }
 
     @Override

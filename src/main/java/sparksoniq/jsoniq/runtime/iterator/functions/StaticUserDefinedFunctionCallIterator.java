@@ -23,6 +23,7 @@ package sparksoniq.jsoniq.runtime.iterator.functions;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
@@ -50,9 +51,10 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
     public StaticUserDefinedFunctionCallIterator(
             FunctionIdentifier functionIdentifier,
             List<RuntimeIterator> functionArguments,
+            ExecutionMode executionMode,
             IteratorMetadata iteratorMetadata
     ) {
-        super(null, iteratorMetadata);
+        super(null, executionMode,  iteratorMetadata);
         _functionIdentifier = functionIdentifier;
         _functionArguments = functionArguments;
 

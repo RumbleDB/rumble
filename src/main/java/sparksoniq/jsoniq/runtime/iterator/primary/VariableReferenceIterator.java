@@ -25,6 +25,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -44,8 +45,8 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
     private List<Item> _items = null;
     private int _currentIndex = 0;
 
-    public VariableReferenceIterator(String variableName, SequenceType seq, IteratorMetadata iteratorMetadata) {
-        super(null, iteratorMetadata);
+    public VariableReferenceIterator(String variableName, SequenceType seq, ExecutionMode executionMode, IteratorMetadata iteratorMetadata) {
+        super(null, executionMode, iteratorMetadata);
         _variableName = variableName;
         _sequence = seq;
     }

@@ -20,6 +20,7 @@
 
 package sparksoniq.jsoniq.runtime.iterator;
 
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.List;
@@ -29,6 +30,6 @@ public abstract class LocalRuntimeIterator extends RuntimeIterator {
     private static final long serialVersionUID = 1L;
 
     protected LocalRuntimeIterator(List<RuntimeIterator> children, IteratorMetadata iteratorMetadata) {
-        super(children, iteratorMetadata);
+        super(children, ExecutionMode.LOCAL, iteratorMetadata);
     }
 }
