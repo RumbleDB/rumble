@@ -9,7 +9,7 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.lang.reflect.InvocationTargetException;
 
-public class SparkMLUtils {
+public class RumbleMLUtils {
     public static ParamMap convertRumbleObjectItemToSparkMLParamMap(
             Class<?> transformerClass,
             String transformerName,
@@ -22,7 +22,7 @@ public class SparkMLUtils {
             String paramName = item.getKeys().get(paramIndex);
             Item paramValue = item.getValues().get(paramIndex);
 
-            SparkMLCatalog.validateParameterForTransformer(transformerName, paramName, metadata);
+            RumbleMLCatalog.validateParameterForTransformer(transformerName, paramName, metadata);
 
             try {
                 Param sparkMLParam = (Param) transformerClass.getMethod(paramName).invoke(transformer);

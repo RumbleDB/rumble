@@ -38,7 +38,6 @@ import sparksoniq.semantics.types.SequenceType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 
 public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
@@ -75,7 +74,7 @@ public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
         }
         nameIterator.close();
 
-        String transformerFullClassName = SparkMLCatalog.getTransformerFullClassName(
+        String transformerFullClassName = RumbleMLCatalog.getTransformerFullClassName(
             _transformerName,
             getMetadata()
         );

@@ -12,7 +12,7 @@ import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
 
-import static sparksoniq.spark.ml.SparkMLUtils.convertRumbleObjectItemToSparkMLParamMap;
+import static sparksoniq.spark.ml.RumbleMLUtils.convertRumbleObjectItemToSparkMLParamMap;
 
 
 public class ApplyTransformerRuntimeIterator extends RDDRuntimeIterator {

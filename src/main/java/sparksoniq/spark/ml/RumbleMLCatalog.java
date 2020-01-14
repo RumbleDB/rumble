@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-public class SparkMLCatalog {
+public class RumbleMLCatalog {
     private static final HashMap<String, String> estimatorFullClassNames;
     private static final HashMap<String, String> transformerFullClassNames;
 
