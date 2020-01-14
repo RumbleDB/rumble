@@ -136,7 +136,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         String argName;
 
         // read both partially applied and normal arguments
-        Map<String, List<Item>> argumentValues = new LinkedHashMap<>(_functionItem.getNonLocalVariableBindings());
+        Map<String, List<Item>> argumentValues = new LinkedHashMap<>(_functionItem.getVariablesInClosure());
         List<String> partialAppParamNames = new ArrayList<>();
         List<SequenceType> partialAppParamTypes = new ArrayList<>();
         for (int i = 0; i < _functionArguments.size(); i++) {
@@ -172,7 +172,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         String argName;
 
         // calculate argument values
-        Map<String, List<Item>> argumentValues = new LinkedHashMap<>(_functionItem.getNonLocalVariableBindings());
+        Map<String, List<Item>> argumentValues = new LinkedHashMap<>(_functionItem.getVariablesInClosure());
         for (int i = 0; i < _functionArguments.size(); i++) {
             argIterator = _functionArguments.get(i);
             argName = _functionItem.getParameterNames().get(i);
