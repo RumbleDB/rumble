@@ -40,4 +40,9 @@ public abstract class DataFrameRuntimeIterator extends RDDRuntimeIterator {
             throw new OurBadException("DF runtime iterators support only dataframe execution mode");
         }
     }
+
+    @Override
+    protected boolean implementsDataFrames() {
+        return true;
+    }
 }

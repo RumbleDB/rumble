@@ -47,7 +47,18 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
             IteratorMetadata iteratorMetadata
     ) {
         super(children, executionMode, iteratorMetadata);
+        fallbackToRDDIfDFNotImplemented(executionMode);
         this.parser = new JiqsItemParser();
+    }
+
+    protected boolean implementsDataFrames() {
+        return false;
+    }
+
+    protected void fallbackToRDDIfDFNotImplemented(ExecutionMode executionMode) {
+        if (executionMode == ExecutionMode.DF && !this.implementsDataFrames()) {
+            this._highestExecutionMode = ExecutionMode.RDD;
+        }
     }
 
     @Override

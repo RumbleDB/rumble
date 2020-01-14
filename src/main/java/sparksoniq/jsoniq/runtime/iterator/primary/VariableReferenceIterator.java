@@ -62,6 +62,11 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
     }
 
     @Override
+    protected boolean implementsDataFrames() {
+        return true;
+    }
+
+    @Override
     public Dataset<Row> getDataFrame(DynamicContext context) {
         return context.getDataFrameVariableValue(_variableName, getMetadata());
     }
