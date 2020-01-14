@@ -50,6 +50,8 @@ public class ErrorCodes {
     public static final String UnimplementedErrorCode = "RBST0002";
     public static final String JobWithinAJobErrorCode = "RBST0003";
     public static final String OurBadErrorCode = "RBST0004";
+    public static final String UnknownRumbleMLClassReferenceErrorCode = "RBST0005";
+    public static final String UnknownRumbleMLParamReferenceErrorCode = "RBST0006";
 
 
     public static final String AbsentPartOfDynamicContextCode = "XPDY0002";

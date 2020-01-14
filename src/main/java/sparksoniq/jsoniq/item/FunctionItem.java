@@ -29,7 +29,6 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.FunctionsNonSerializableException;
 import sparksoniq.exceptions.OurBadException;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionSignature;
@@ -221,7 +220,6 @@ public class FunctionItem extends Item {
         this._localVariablesInClosure = kryo.readObject(input, HashMap.class);
         this._RDDVariablesInClosure = kryo.readObject(input, HashMap.class);
         this._DFVariablesInClosure = kryo.readObject(input, HashMap.class);
-
 
         try {
             int dataLength = input.readInt();

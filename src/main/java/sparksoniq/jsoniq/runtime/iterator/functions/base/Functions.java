@@ -141,6 +141,7 @@ import sparksoniq.spark.iterator.function.ParallelizeFunctionIterator;
 import sparksoniq.spark.iterator.function.ParquetFileFunctionIterator;
 import sparksoniq.spark.iterator.function.StructuredJsonFileFunctionIterator;
 import sparksoniq.spark.iterator.function.TextFileFunctionIterator;
+import sparksoniq.spark.ml.GetTransformerFunctionIterator;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -275,6 +276,7 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.year_from_dateTime;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.years_from_duration;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.zero_or_one;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.get_transformer;
 import static sparksoniq.semantics.types.SequenceType.mostGeneralSequenceType;
 
 public class Functions {
@@ -516,6 +518,8 @@ public class Functions {
         builtInFunctions.put(project.getIdentifier(), project);
         builtInFunctions.put(remove_keys.getIdentifier(), remove_keys);
         builtInFunctions.put(values.getIdentifier(), values);
+
+        builtInFunctions.put(get_transformer.getIdentifier(), get_transformer);
     }
 
     public static boolean checkBuiltInFunctionExists(FunctionIdentifier identifier) {
@@ -1832,6 +1836,16 @@ public class Functions {
             "item*",
             "item*",
             ObjectValuesFunctionIterator.class
+        );
+
+        /**
+         * function fetches the transformer class from SparkML API
+         */
+        static final BuiltinFunction get_transformer = createBuiltinFunction(
+                "get-transformer",
+                "string",
+                "item*", // TODO: update the return type as transformer
+                GetTransformerFunctionIterator.class
         );
 
     }

@@ -1,5 +1,9 @@
 package sparksoniq.spark.ml;
 
+import sparksoniq.exceptions.UnknownRumbleMLClassReferenceException;
+import sparksoniq.exceptions.UnknownRumbleMLParamReferenceException;
+import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -224,5 +228,42 @@ public class SparkMLCatalog {
         transformerParams.put("BucketedRandomProjectionLSHModel", new ArrayList<>(Arrays.asList("InputCol", "OutputCol", "Parent")));
         transformerParams.put("Binarizer", new ArrayList<>(Arrays.asList("InputCol", "OutputCol", "Threshold")));
 
+    }
+
+    public static String getEstimatorFullClassName(String name, IteratorMetadata metadata) {
+        if (!estimatorFullClassNames.containsKey(name)) {
+            throw new UnknownRumbleMLClassReferenceException(name, metadata);
+        }
+        return estimatorFullClassNames.get(name);
+    }
+
+    public static String getTransformerFullClassName(String name, IteratorMetadata metadata) {
+        if (!transformerFullClassNames.containsKey(name)) {
+            throw new UnknownRumbleMLClassReferenceException(name, metadata);
+        }
+        return transformerFullClassNames.get(name);
+    }
+
+    public static List<String> getEstimatorParams(String name, IteratorMetadata metadata) {
+        if (!estimatorParams.containsKey(name)) {
+            throw new UnknownRumbleMLClassReferenceException(name, metadata);
+        }
+        return estimatorParams.get(name);
+    }
+
+    public static List<String> getTransformerParams(String name, IteratorMetadata metadata) {
+        if (!transformerParams.containsKey(name)) {
+            throw new UnknownRumbleMLClassReferenceException(name, metadata);
+        }
+        return transformerParams.get(name);
+    }
+
+    public static void validateParameterForTransformer(String transformerName, String paramName, IteratorMetadata metadata) {
+        if (!transformerParams.containsKey(transformerName)) {
+            throw new UnknownRumbleMLClassReferenceException(transformerName, metadata);
+        }
+        if (!transformerParams.get(transformerName).contains(paramName)) {
+            throw new UnknownRumbleMLParamReferenceException(paramName, transformerName, metadata);
+        }
     }
 }
