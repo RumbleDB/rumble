@@ -91,7 +91,7 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
     @Override
     public void openLocal() {
         _currentIndex = 0;
-        _items = _currentDynamicContext.getLocalVariableValue(_variableName, getMetadata());
+        _items = _currentDynamicContextForLocalExecution.getLocalVariableValue(_variableName, getMetadata());
         _hasNext = _items.size() != 0;
     }
 

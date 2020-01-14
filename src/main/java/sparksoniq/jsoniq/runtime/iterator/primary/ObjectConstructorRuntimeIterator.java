@@ -68,7 +68,7 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
             List<String> keys = new ArrayList<>();
             if (_isMergedObject) {
                 for (RuntimeIterator iterator : this._children) {
-                    iterator.open(_currentDynamicContext);
+                    iterator.open(_currentDynamicContextForLocalExecution);
                     while (iterator.hasNext()) {
                         ObjectItem item = (ObjectItem) iterator.next();
                         keys.addAll(item.getKeys());
@@ -84,7 +84,7 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
 
                 for (RuntimeIterator valueIterator : this._values) {
                     List<Item> currentResults = new ArrayList<>();
-                    valueIterator.open(this._currentDynamicContext);
+                    valueIterator.open(this._currentDynamicContextForLocalExecution);
                     while (valueIterator.hasNext()) {
                         currentResults.add(valueIterator.next());
                     }
@@ -100,7 +100,7 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
                 }
 
                 for (RuntimeIterator keyIterator : this._keys) {
-                    keyIterator.open(this._currentDynamicContext);
+                    keyIterator.open(this._currentDynamicContextForLocalExecution);
                     if (!keyIterator.hasNext()) {
                         throw new IteratorFlowException("A key cannot be the empty sequence", getMetadata());
                     }

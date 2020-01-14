@@ -51,7 +51,7 @@ public class InstanceOfIterator extends UnaryOperationBaseIterator {
         if (this._hasNext) {
             if (!_child.isRDD()) {
                 List<Item> items = new ArrayList<>();
-                _child.open(_currentDynamicContext);
+                _child.open(_currentDynamicContextForLocalExecution);
 
                 while (_child.hasNext())
                     items.add(_child.next());
@@ -69,7 +69,7 @@ public class InstanceOfIterator extends UnaryOperationBaseIterator {
                 }
                 return ItemFactory.getInstance().createBooleanItem(true);
             } else {
-                JavaRDD<Item> childRDD = _child.getRDD(_currentDynamicContext);
+                JavaRDD<Item> childRDD = _child.getRDD(_currentDynamicContextForLocalExecution);
                 this._hasNext = false;
 
                 if (isInvalidArity(childRDD.take(2).size()))

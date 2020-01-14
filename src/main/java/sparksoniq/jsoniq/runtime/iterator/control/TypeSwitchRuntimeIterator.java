@@ -52,7 +52,7 @@ public class TypeSwitchRuntimeIterator extends LocalRuntimeIterator {
     @Override
     public Item next() {
         if (this._hasNext) {
-            matchingIterator.open(_currentDynamicContext);
+            matchingIterator.open(_currentDynamicContextForLocalExecution);
             Item nextItem = matchingIterator.next();
             matchingIterator.close();
             this._hasNext = false;
@@ -82,7 +82,7 @@ public class TypeSwitchRuntimeIterator extends LocalRuntimeIterator {
 
         if (matchingIterator == null) {
             if (defaultCase.getVariable() != null) {
-                _currentDynamicContext.addVariableValue(
+                _currentDynamicContextForLocalExecution.addVariableValue(
                     defaultCase.getVariable().getVariableName(),
                     Collections.singletonList(testValue)
                 );
@@ -90,7 +90,7 @@ public class TypeSwitchRuntimeIterator extends LocalRuntimeIterator {
             matchingIterator = defaultCase.getReturnIterator();
         }
 
-        matchingIterator.open(_currentDynamicContext);
+        matchingIterator.open(_currentDynamicContextForLocalExecution);
         this._hasNext = matchingIterator.hasNext();
         matchingIterator.close();
     }
@@ -99,7 +99,7 @@ public class TypeSwitchRuntimeIterator extends LocalRuntimeIterator {
         for (FlworVarSequenceType sequenceType : typeSwitchCase.getSequenceTypeUnion()) {
             if (testValue != null && testValue.isTypeOf(sequenceType.getSequence().getItemType())) {
                 if (typeSwitchCase.getVariable() != null) {
-                    _currentDynamicContext.addVariableValue(
+                    _currentDynamicContextForLocalExecution.addVariableValue(
                         typeSwitchCase.getVariable().getVariableName(),
                         Collections.singletonList(testValue)
                     );

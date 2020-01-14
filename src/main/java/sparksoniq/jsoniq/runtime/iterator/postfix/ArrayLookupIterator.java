@@ -65,7 +65,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
 
     @Override
     protected void resetLocal(DynamicContext context) {
-        _iterator.reset(_currentDynamicContext);
+        _iterator.reset(_currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
@@ -77,7 +77,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     private void initLookupPosition() {
         RuntimeIterator lookupIterator = this._children.get(1);
 
-        lookupIterator.open(_currentDynamicContext);
+        lookupIterator.open(_currentDynamicContextForLocalExecution);
         Item lookupExpression = null;
         if (lookupIterator.hasNext()) {
             lookupExpression = lookupIterator.next();
@@ -106,7 +106,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     @Override
     public void openLocal() {
         initLookupPosition();
-        _iterator.open(_currentDynamicContext);
+        _iterator.open(_currentDynamicContextForLocalExecution);
         setNextResult();
     }
 

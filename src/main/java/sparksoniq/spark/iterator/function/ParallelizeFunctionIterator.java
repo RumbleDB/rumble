@@ -54,7 +54,7 @@ public class ParallelizeFunctionIterator extends RDDRuntimeIterator {
             rdd = SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents);
         } else {
             RuntimeIterator partitionsIterator = this._children.get(1);
-            partitionsIterator.open(_currentDynamicContext);
+            partitionsIterator.open(_currentDynamicContextForLocalExecution);
             if (!partitionsIterator.hasNext())
                 throw new UnexpectedTypeException(
                         "The second parameter of parallelize must be an integer, but an empty sequence is supplied.",

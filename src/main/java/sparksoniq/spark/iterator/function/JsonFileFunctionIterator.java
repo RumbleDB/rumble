@@ -50,7 +50,7 @@ public class JsonFileFunctionIterator extends RDDRuntimeIterator {
                 .textFile(urlIterator.next().getStringValue());
         } else {
             RuntimeIterator partitionsIterator = this._children.get(1);
-            partitionsIterator.open(_currentDynamicContext);
+            partitionsIterator.open(_currentDynamicContextForLocalExecution);
             strings = SparkSessionManager.getInstance()
                 .getJavaSparkContext()
                 .textFile(

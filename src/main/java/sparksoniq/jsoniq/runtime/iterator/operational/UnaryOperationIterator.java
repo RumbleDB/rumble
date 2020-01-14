@@ -49,7 +49,7 @@ public class UnaryOperationIterator extends UnaryOperationBaseIterator {
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            _child.open(_currentDynamicContext);
+            _child.open(_currentDynamicContextForLocalExecution);
             Item child = _child.next();
             _child.close();
 
@@ -81,7 +81,7 @@ public class UnaryOperationIterator extends UnaryOperationBaseIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        _child.open(_currentDynamicContext);
+        _child.open(_currentDynamicContextForLocalExecution);
         this._hasNext = _child.hasNext();
         _child.close();
     }

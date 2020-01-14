@@ -98,8 +98,8 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        _leftIterator.open(_currentDynamicContext);
-        _rightIterator.open(_currentDynamicContext);
+        _leftIterator.open(_currentDynamicContextForLocalExecution);
+        _rightIterator.open(_currentDynamicContextForLocalExecution);
 
         // value comparison may return an empty sequence
         if (Arrays.asList(valueComparisonOperators).contains(this._operator)) {

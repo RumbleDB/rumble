@@ -85,7 +85,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
     @Override
     protected void resetLocal(DynamicContext context) {
         _iterator.close();
-        _filterDynamicContext = new DynamicContext(_currentDynamicContext);
+        _filterDynamicContext = new DynamicContext(_currentDynamicContextForLocalExecution);
         if (_filter.getVariableDependencies().containsKey("$last")) {
             setLast();
         }
@@ -93,7 +93,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
             _position = 0;
             _mustMaintainPosition = true;
         }
-        _iterator.open(_currentDynamicContext);
+        _iterator.open(_currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
@@ -107,7 +107,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
         if (this._children.size() < 2) {
             throw new OurBadException("Invalid Predicate! Must initialize filter before calling next");
         }
-        _filterDynamicContext = new DynamicContext(_currentDynamicContext);
+        _filterDynamicContext = new DynamicContext(_currentDynamicContextForLocalExecution);
         if (_filter.getVariableDependencies().containsKey("$last")) {
             setLast();
         }
@@ -115,13 +115,13 @@ public class PredicateIterator extends HybridRuntimeIterator {
             _position = 0;
             _mustMaintainPosition = true;
         }
-        _iterator.open(_currentDynamicContext);
+        _iterator.open(_currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
     private void setLast() {
         long last = 0;
-        _iterator.open(_currentDynamicContext);
+        _iterator.open(_currentDynamicContextForLocalExecution);
         while (_iterator.hasNext()) {
             _iterator.next();
             ++last;

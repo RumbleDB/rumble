@@ -47,7 +47,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
 
     @Override
     public void openLocal() {
-        _iterator.open(_currentDynamicContext);
+        _iterator.open(_currentDynamicContextForLocalExecution);
         _nextResults = new LinkedList<>();
         setNextResult();
     }
@@ -72,7 +72,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
 
     @Override
     protected void resetLocal(DynamicContext context) {
-        _iterator.reset(_currentDynamicContext);
+        _iterator.reset(_currentDynamicContextForLocalExecution);
         setNextResult();
     }
 

@@ -68,7 +68,7 @@ public class DynamicFunctionCallIterator extends LocalRuntimeIterator {
     public void open(DynamicContext context) {
         super.open(context);
         setFunctionItemAndIteratorWithCurrentContext();
-        _functionCallIterator.open(_currentDynamicContext);
+        _functionCallIterator.open(_currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
@@ -104,7 +104,7 @@ public class DynamicFunctionCallIterator extends LocalRuntimeIterator {
 
     private void setFunctionItemAndIteratorWithCurrentContext() {
         try {
-            _functionItemIterator.open(_currentDynamicContext);
+            _functionItemIterator.open(_currentDynamicContextForLocalExecution);
             if (_functionItemIterator.hasNext()) {
                 _functionItem = (FunctionItem) _functionItemIterator.next();
             }
@@ -131,7 +131,7 @@ public class DynamicFunctionCallIterator extends LocalRuntimeIterator {
     @Override
     public void reset(DynamicContext context) {
         super.reset(context);
-        _functionCallIterator.reset(_currentDynamicContext);
+        _functionCallIterator.reset(_currentDynamicContextForLocalExecution);
         setNextResult();
     }
 

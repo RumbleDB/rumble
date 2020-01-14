@@ -41,7 +41,7 @@ public class ContextExpressionIterator extends LocalRuntimeIterator {
     public Item next() {
         if (hasNext()) {
             this._hasNext = false;
-            return _currentDynamicContext.getLocalVariableValue("$$", getMetadata()).get(0);
+            return _currentDynamicContextForLocalExecution.getLocalVariableValue("$$", getMetadata()).get(0);
         }
         throw new IteratorFlowException("Invalid next() call in Context Expression!", getMetadata());
     }

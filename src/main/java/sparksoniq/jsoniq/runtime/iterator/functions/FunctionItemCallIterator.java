@@ -79,10 +79,10 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
             _functionBodyIterator = generatePartiallyAppliedFunction();
         } else {
             _functionBodyIterator = _functionItem.getBodyIterator();
-            _currentDynamicContext = this.createNewDynamicContextWithArguments(_currentDynamicContext);
+            _currentDynamicContextForLocalExecution = this.createNewDynamicContextWithArguments(_currentDynamicContextForLocalExecution);
         }
 
-        _functionBodyIterator.open(_currentDynamicContext);
+        _functionBodyIterator.open(_currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
@@ -214,7 +214,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
     @Override
     protected void resetLocal(DynamicContext context) {
-        _functionBodyIterator.reset(_currentDynamicContext);
+        _functionBodyIterator.reset(_currentDynamicContextForLocalExecution);
         setNextResult();
     }
 

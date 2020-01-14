@@ -34,7 +34,6 @@ public class ArrayRuntimeIterator extends LocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private Item _item = null;
 
     public ArrayRuntimeIterator(RuntimeIterator arrayItems, IteratorMetadata iteratorMetadata) {
         super(new ArrayList<>(), iteratorMetadata);
@@ -45,8 +44,8 @@ public class ArrayRuntimeIterator extends LocalRuntimeIterator {
     @Override
     public Item next() {
         if (this._hasNext) {
-            List<Item> result = this.runChildrenIterators(this._currentDynamicContext);
-            this._item = ItemFactory.getInstance().createArrayItem(result);
+            List<Item> result = this.runChildrenIterators(this._currentDynamicContextForLocalExecution);
+            Item _item = ItemFactory.getInstance().createArrayItem(result);
             this._hasNext = false;
             return _item;
         } else

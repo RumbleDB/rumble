@@ -54,7 +54,7 @@ public class CommaExpressionIterator extends LocalRuntimeIterator {
         this._childIndex = 0;
 
         _currentChild = this._children.get(_childIndex);
-        _currentChild.open(_currentDynamicContext);
+        _currentChild.open(_currentDynamicContextForLocalExecution);
 
         setNextResult();
     }
@@ -71,7 +71,7 @@ public class CommaExpressionIterator extends LocalRuntimeIterator {
                     break;
                 }
                 _currentChild = this._children.get(_childIndex);
-                _currentChild.open(_currentDynamicContext);
+                _currentChild.open(_currentDynamicContextForLocalExecution);
             }
         }
 

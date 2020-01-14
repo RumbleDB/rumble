@@ -64,7 +64,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         _contextLookup = lookupIterator instanceof ContextExpressionIterator;
 
         if (!_contextLookup) {
-            lookupIterator.open(_currentDynamicContext);
+            lookupIterator.open(_currentDynamicContextForLocalExecution);
             if (lookupIterator.hasNext()) {
                 this._lookupKey = lookupIterator.next();
             } else {
@@ -117,7 +117,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     @Override
     public void openLocal() {
         initLookupKey();
-        _iterator.open(_currentDynamicContext);
+        _iterator.open(_currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
@@ -128,7 +128,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
 
     @Override
     protected void resetLocal(DynamicContext context) {
-        _iterator.reset(_currentDynamicContext);
+        _iterator.reset(_currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
@@ -160,7 +160,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                         break;
                     }
                 } else {
-                    Item contextItem = _currentDynamicContext.getLocalVariableValue("$$", getMetadata()).get(0);
+                    Item contextItem = _currentDynamicContextForLocalExecution.getLocalVariableValue("$$", getMetadata()).get(0);
                     _nextResult = item.getItemByKey(contextItem.getStringValue());
                 }
             }

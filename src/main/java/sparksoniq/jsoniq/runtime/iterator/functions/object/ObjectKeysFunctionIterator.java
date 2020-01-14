@@ -67,13 +67,13 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
         if (_iterator.isDataFrame()) {
             setResultsFromDF();
         } else {
-            _iterator.open(_currentDynamicContext);
+            _iterator.open(_currentDynamicContextForLocalExecution);
             setResultsFromNextObjectItem();
         }
     }
 
     private void setResultsFromDF() {
-        Dataset<Row> childDF = _iterator.getDataFrame(_currentDynamicContext);
+        Dataset<Row> childDF = _iterator.getDataFrame(_currentDynamicContextForLocalExecution);
         String[] keys = childDF.schema().fieldNames();
         for (String key : keys) {
             _nextResults.add(ItemFactory.getInstance().createStringItem(key));
@@ -138,7 +138,7 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
         if (_iterator.isDataFrame()) {
             setResultsFromDF();
         } else {
-            _iterator.reset(_currentDynamicContext);
+            _iterator.reset(_currentDynamicContextForLocalExecution);
             setResultsFromNextObjectItem();
         }
     }
