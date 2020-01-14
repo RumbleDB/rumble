@@ -121,7 +121,6 @@ public class TreatIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        _currentDynamicContext = dynamicContext;
         JavaRDD<Item> childRDD = _iterator.getRDD(dynamicContext);
 
         if (_sequenceType.getArity() != SequenceType.Arity.ZeroOrMore)

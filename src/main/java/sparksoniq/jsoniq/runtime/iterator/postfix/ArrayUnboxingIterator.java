@@ -104,7 +104,6 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        _currentDynamicContext = dynamicContext;
         JavaRDD<Item> childRDD = this._children.get(0).getRDD(dynamicContext);
         FlatMapFunction<Item, Item> transformation = new ArrayUnboxingClosure();
         JavaRDD<Item> resultRDD = childRDD.flatMap(transformation);

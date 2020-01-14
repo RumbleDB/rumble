@@ -148,7 +148,6 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        _currentDynamicContext = context;
         JavaRDD<Item> childRDD = _iterator.getRDD(context);
 
         int count = childRDD.take(2).size();

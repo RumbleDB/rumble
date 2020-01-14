@@ -136,7 +136,6 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        _currentDynamicContext = dynamicContext;
         JavaRDD<Item> childRDD = this._children.get(0).getRDD(dynamicContext);
         initLookupPosition();
         FlatMapFunction<Item, Item> transformation = new ArrayLookupClosure(_lookup);

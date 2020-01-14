@@ -59,12 +59,12 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        return _currentDynamicContext.getRDDVariableValue(_variableName, getMetadata());
+            return context.getRDDVariableValue(_variableName, getMetadata());
     }
 
     @Override
     public Dataset<Row> getDataFrame(DynamicContext context) {
-        return _currentDynamicContext.getDFVariableValue(_variableName, getMetadata());
+        return context.getDFVariableValue(_variableName, getMetadata());
     }
 
     @Override

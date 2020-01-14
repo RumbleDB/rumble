@@ -176,7 +176,6 @@ public class PredicateIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        _currentDynamicContext = dynamicContext;
         RuntimeIterator iterator = this._children.get(0);
         RuntimeIterator filter = this._children.get(1);
         JavaRDD<Item> childRDD = iterator.getRDD(dynamicContext);

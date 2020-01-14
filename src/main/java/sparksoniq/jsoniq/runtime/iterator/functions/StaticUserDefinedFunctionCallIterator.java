@@ -113,7 +113,7 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        return _userDefinedFunctionCallIterator.getRDD(_currentDynamicContext);
+        return _userDefinedFunctionCallIterator.getRDD(dynamicContext);
     }
 
     @Override

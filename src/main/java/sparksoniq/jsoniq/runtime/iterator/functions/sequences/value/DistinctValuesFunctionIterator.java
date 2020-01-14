@@ -107,7 +107,6 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        _currentDynamicContext = dynamicContext;
         JavaRDD<Item> childRDD = _sequenceIterator.getRDD(dynamicContext);
         Function<Item, Boolean> transformation = new FilterNonAtomicClosure();
         if (childRDD.filter(transformation).isEmpty()) {

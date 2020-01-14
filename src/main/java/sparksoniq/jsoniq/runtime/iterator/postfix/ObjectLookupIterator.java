@@ -176,13 +176,12 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        _currentDynamicContext = dynamicContext;
         JavaRDD<Item> childRDD = this._children.get(0).getRDD(dynamicContext);
         initLookupKey();
         String key;
         if (_contextLookup) {
             // For now this will always be an error. Later on we will pass the dynamic context from the parent iterator.
-            key = _currentDynamicContext.getLocalVariableValue("$$", getMetadata()).get(0).getStringValue();
+            key = dynamicContext.getLocalVariableValue("$$", getMetadata()).get(0).getStringValue();
         } else {
             key = _lookupKey.getStringValue();
         }
