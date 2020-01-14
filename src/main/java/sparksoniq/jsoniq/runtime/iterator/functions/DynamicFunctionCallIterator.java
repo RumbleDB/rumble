@@ -123,7 +123,7 @@ public class DynamicFunctionCallIterator extends LocalRuntimeIterator {
         }
         _functionCallIterator = Functions.buildUserDefinedFunctionCallIterator(
             _functionItem,
-            this.getHighestExecutionMode(),
+            _functionItem.getBodyIterator().getHighestExecutionMode(),
             getMetadata(),
             _functionArguments
         );
