@@ -31,13 +31,21 @@ public class RumbleMLUtils {
                     paramValueInJava = paramValue.getStringValue();
                     break;
                 default:
-                    throw new OurBadException("Java param type \"" + paramJavaTypeName + "\" is not handled correct during conversion", metadata);
+                    throw new OurBadException(
+                            "Java param type \"" + paramJavaTypeName + "\" is not handled correct during conversion",
+                            metadata
+                    );
             }
 
             try {
                 Param<Object> sparkMLParam = (Param<Object>) transformerClass.getMethod(paramName).invoke(transformer);
                 result.put(sparkMLParam.w(paramValueInJava));
-            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassCastException e) {
+            } catch (
+                    NoSuchMethodException
+                    | IllegalAccessException
+                    | InvocationTargetException
+                    | ClassCastException e
+            ) {
                 throw new OurBadException(
                         "Error while extracting " + paramName + " for " + transformerName + ".",
                         metadata

@@ -197,6 +197,7 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.exp10;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.flatten;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.floor;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.get_transformer;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.head;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.hexBinary;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.hours_from_dateTime;
@@ -276,7 +277,6 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.year_from_dateTime;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.years_from_duration;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.zero_or_one;
-import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.get_transformer;
 import static sparksoniq.semantics.types.SequenceType.mostGeneralSequenceType;
 
 public class Functions {
@@ -1842,10 +1842,10 @@ public class Functions {
          * function fetches the transformer class from SparkML API
          */
         static final BuiltinFunction get_transformer = createBuiltinFunction(
-                "get-transformer",
-                "string",
-                "item*", // TODO: update the return type as transformer
-                GetTransformerFunctionIterator.class
+            "get-transformer",
+            "string",
+            "item*", // TODO: update the return type as transformer
+            GetTransformerFunctionIterator.class
         );
 
     }

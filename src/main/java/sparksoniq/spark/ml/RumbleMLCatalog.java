@@ -9,6 +9,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
+/**
+ * Maps within these catalog are auto generated (also the hashmap.put(...) statements) with the SparkML scraper python
+ * tool
+ */
 public class RumbleMLCatalog {
     private static final HashMap<String, String> estimatorFullClassNames;
     private static final HashMap<String, String> transformerFullClassNames;
@@ -29,7 +33,10 @@ public class RumbleMLCatalog {
         estimatorFullClassNames.put("CrossValidator", "org.apache.spark.ml.tuning.CrossValidator");
         estimatorFullClassNames.put("LinearRegression", "org.apache.spark.ml.regression.LinearRegression");
         estimatorFullClassNames.put("IsotonicRegression", "org.apache.spark.ml.regression.IsotonicRegression");
-        estimatorFullClassNames.put("GeneralizedLinearRegression", "org.apache.spark.ml.regression.GeneralizedLinearRegression");
+        estimatorFullClassNames.put(
+            "GeneralizedLinearRegression",
+            "org.apache.spark.ml.regression.GeneralizedLinearRegression"
+        );
         estimatorFullClassNames.put("GBTRegressor", "org.apache.spark.ml.regression.GBTRegressor");
         estimatorFullClassNames.put("DecisionTreeRegressor", "org.apache.spark.ml.regression.DecisionTreeRegressor");
         estimatorFullClassNames.put("AFTSurvivalRegression", "org.apache.spark.ml.regression.AFTSurvivalRegression");
@@ -37,13 +44,22 @@ public class RumbleMLCatalog {
         estimatorFullClassNames.put("LDA", "org.apache.spark.ml.clustering.LDA");
         estimatorFullClassNames.put("GaussianMixture", "org.apache.spark.ml.clustering.GaussianMixture");
         estimatorFullClassNames.put("Pipeline", "org.apache.spark.ml.Pipeline");
-        estimatorFullClassNames.put("RandomForestClassifier", "org.apache.spark.ml.classification.RandomForestClassifier");
+        estimatorFullClassNames.put(
+            "RandomForestClassifier",
+            "org.apache.spark.ml.classification.RandomForestClassifier"
+        );
         estimatorFullClassNames.put("OneVsRest", "org.apache.spark.ml.classification.OneVsRest");
         estimatorFullClassNames.put("NaiveBayes", "org.apache.spark.ml.classification.NaiveBayes");
-        estimatorFullClassNames.put("MultilayerPerceptronClassifier", "org.apache.spark.ml.classification.MultilayerPerceptronClassifier");
+        estimatorFullClassNames.put(
+            "MultilayerPerceptronClassifier",
+            "org.apache.spark.ml.classification.MultilayerPerceptronClassifier"
+        );
         estimatorFullClassNames.put("LinearSVC", "org.apache.spark.ml.classification.LinearSVC");
         estimatorFullClassNames.put("GBTClassifier", "org.apache.spark.ml.classification.GBTClassifier");
-        estimatorFullClassNames.put("DecisionTreeClassifier", "org.apache.spark.ml.classification.DecisionTreeClassifier");
+        estimatorFullClassNames.put(
+            "DecisionTreeClassifier",
+            "org.apache.spark.ml.classification.DecisionTreeClassifier"
+        );
         estimatorFullClassNames.put("LogisticRegression", "org.apache.spark.ml.classification.LogisticRegression");
         estimatorFullClassNames.put("Word2Vec", "org.apache.spark.ml.feature.Word2Vec");
         estimatorFullClassNames.put("VectorIndexer", "org.apache.spark.ml.feature.VectorIndexer");
@@ -61,32 +77,68 @@ public class RumbleMLCatalog {
         estimatorFullClassNames.put("IDF", "org.apache.spark.ml.feature.IDF");
         estimatorFullClassNames.put("CountVectorizer", "org.apache.spark.ml.feature.CountVectorizer");
         estimatorFullClassNames.put("ChiSqSelector", "org.apache.spark.ml.feature.ChiSqSelector");
-        estimatorFullClassNames.put("BucketedRandomProjectionLSH", "org.apache.spark.ml.feature.BucketedRandomProjectionLSH");
+        estimatorFullClassNames.put(
+            "BucketedRandomProjectionLSH",
+            "org.apache.spark.ml.feature.BucketedRandomProjectionLSH"
+        );
 
         transformerFullClassNames.put("ALSModel", "org.apache.spark.ml.recommendation.ALSModel");
-        transformerFullClassNames.put("RandomForestRegressionModel", "org.apache.spark.ml.regression.RandomForestRegressionModel");
+        transformerFullClassNames.put(
+            "RandomForestRegressionModel",
+            "org.apache.spark.ml.regression.RandomForestRegressionModel"
+        );
         transformerFullClassNames.put("FPGrowthModel", "org.apache.spark.ml.fpm.FPGrowthModel");
-        transformerFullClassNames.put("TrainValidationSplitModel", "org.apache.spark.ml.tuning.TrainValidationSplitModel");
+        transformerFullClassNames.put(
+            "TrainValidationSplitModel",
+            "org.apache.spark.ml.tuning.TrainValidationSplitModel"
+        );
         transformerFullClassNames.put("CrossValidatorModel", "org.apache.spark.ml.tuning.CrossValidatorModel");
-        transformerFullClassNames.put("IsotonicRegressionModel", "org.apache.spark.ml.regression.IsotonicRegressionModel");
+        transformerFullClassNames.put(
+            "IsotonicRegressionModel",
+            "org.apache.spark.ml.regression.IsotonicRegressionModel"
+        );
         transformerFullClassNames.put("LinearRegressionModel", "org.apache.spark.ml.regression.LinearRegressionModel");
-        transformerFullClassNames.put("GeneralizedLinearRegressionModel", "org.apache.spark.ml.regression.GeneralizedLinearRegressionModel");
+        transformerFullClassNames.put(
+            "GeneralizedLinearRegressionModel",
+            "org.apache.spark.ml.regression.GeneralizedLinearRegressionModel"
+        );
         transformerFullClassNames.put("GBTRegressionModel", "org.apache.spark.ml.regression.GBTRegressionModel");
-        transformerFullClassNames.put("AFTSurvivalRegressionModel", "org.apache.spark.ml.regression.AFTSurvivalRegressionModel");
-        transformerFullClassNames.put("DecisionTreeRegressionModel", "org.apache.spark.ml.regression.DecisionTreeRegressionModel");
+        transformerFullClassNames.put(
+            "AFTSurvivalRegressionModel",
+            "org.apache.spark.ml.regression.AFTSurvivalRegressionModel"
+        );
+        transformerFullClassNames.put(
+            "DecisionTreeRegressionModel",
+            "org.apache.spark.ml.regression.DecisionTreeRegressionModel"
+        );
         transformerFullClassNames.put("KMeansModel", "org.apache.spark.ml.clustering.KMeansModel");
         transformerFullClassNames.put("LocalLDAModel", "org.apache.spark.ml.clustering.LocalLDAModel");
         transformerFullClassNames.put("GaussianMixtureModel", "org.apache.spark.ml.clustering.GaussianMixtureModel");
         transformerFullClassNames.put("DistributedLDAModel", "org.apache.spark.ml.clustering.DistributedLDAModel");
         transformerFullClassNames.put("PipelineModel", "org.apache.spark.ml.PipelineModel");
-        transformerFullClassNames.put("RandomForestClassificationModel", "org.apache.spark.ml.classification.RandomForestClassificationModel");
+        transformerFullClassNames.put(
+            "RandomForestClassificationModel",
+            "org.apache.spark.ml.classification.RandomForestClassificationModel"
+        );
         transformerFullClassNames.put("OneVsRestModel", "org.apache.spark.ml.classification.OneVsRestModel");
         transformerFullClassNames.put("NaiveBayesModel", "org.apache.spark.ml.classification.NaiveBayesModel");
-        transformerFullClassNames.put("MultilayerPerceptronClassificationModel", "org.apache.spark.ml.classification.MultilayerPerceptronClassificationModel");
-        transformerFullClassNames.put("LogisticRegressionModel", "org.apache.spark.ml.classification.LogisticRegressionModel");
+        transformerFullClassNames.put(
+            "MultilayerPerceptronClassificationModel",
+            "org.apache.spark.ml.classification.MultilayerPerceptronClassificationModel"
+        );
+        transformerFullClassNames.put(
+            "LogisticRegressionModel",
+            "org.apache.spark.ml.classification.LogisticRegressionModel"
+        );
         transformerFullClassNames.put("LinearSVCModel", "org.apache.spark.ml.classification.LinearSVCModel");
-        transformerFullClassNames.put("GBTClassificationModel", "org.apache.spark.ml.classification.GBTClassificationModel");
-        transformerFullClassNames.put("DecisionTreeClassificationModel", "org.apache.spark.ml.classification.DecisionTreeClassificationModel");
+        transformerFullClassNames.put(
+            "GBTClassificationModel",
+            "org.apache.spark.ml.classification.GBTClassificationModel"
+        );
+        transformerFullClassNames.put(
+            "DecisionTreeClassificationModel",
+            "org.apache.spark.ml.classification.DecisionTreeClassificationModel"
+        );
         transformerFullClassNames.put("Word2VecModel", "org.apache.spark.ml.feature.Word2VecModel");
         transformerFullClassNames.put("VectorSlicer", "org.apache.spark.ml.feature.VectorSlicer");
         transformerFullClassNames.put("VectorSizeHint", "org.apache.spark.ml.feature.VectorSizeHint");
@@ -122,7 +174,10 @@ public class RumbleMLCatalog {
         transformerFullClassNames.put("ColumnPruner", "org.apache.spark.ml.feature.ColumnPruner");
         transformerFullClassNames.put("ChiSqSelectorModel", "org.apache.spark.ml.feature.ChiSqSelectorModel");
         transformerFullClassNames.put("Bucketizer", "org.apache.spark.ml.feature.Bucketizer");
-        transformerFullClassNames.put("BucketedRandomProjectionLSHModel", "org.apache.spark.ml.feature.BucketedRandomProjectionLSHModel");
+        transformerFullClassNames.put(
+            "BucketedRandomProjectionLSHModel",
+            "org.apache.spark.ml.feature.BucketedRandomProjectionLSHModel"
+        );
         transformerFullClassNames.put("Binarizer", "org.apache.spark.ml.feature.Binarizer");
     }
 
@@ -288,108 +343,855 @@ public class RumbleMLCatalog {
         estimatorParams = new HashMap<>();
         transformerParams = new HashMap<>();
 
-        estimatorParams.put("FPGrowth", new ArrayList<>(Arrays.asList("itemsCol", "minConfidence", "minSupport", "numPartitions", "predictionCol")));
-        estimatorParams.put("TrainValidationSplit", new ArrayList<>(Arrays.asList("collectSubModels", "estimator", "estimatorParamMaps", "evaluator", "parallelism", "seed", "trainRatio")));
-        estimatorParams.put("CrossValidator", new ArrayList<>(Arrays.asList("collectSubModels", "estimator", "estimatorParamMaps", "evaluator", "numFolds", "parallelism", "seed")));
-        estimatorParams.put("RandomForestClassifier", new ArrayList<>(Arrays.asList("cacheNodeIds", "checkpointInterval", "featuresCol", "featureSubsetStrategy", "impurity", "labelCol", "maxBins", "maxDepth", "maxMemoryInMB", "minInfoGain", "minInstancesPerNode", "numTrees", "predictionCol", "probabilityCol", "rawPredictionCol", "seed", "subsamplingRate", "thresholds")));
-        estimatorParams.put("OneVsRest", new ArrayList<>(Arrays.asList("classifier", "featuresCol", "labelCol", "parallelism", "predictionCol", "rawPredictionCol", "weightCol")));
-        estimatorParams.put("NaiveBayes", new ArrayList<>(Arrays.asList("featuresCol", "labelCol", "modelType", "predictionCol", "probabilityCol", "rawPredictionCol", "smoothing", "thresholds", "weightCol")));
-        estimatorParams.put("MultilayerPerceptronClassifier", new ArrayList<>(Arrays.asList("blockSize", "featuresCol", "initialWeights", "labelCol", "layers", "maxIter", "predictionCol", "probabilityCol", "rawPredictionCol", "seed", "solver", "stepSize", "thresholds", "tol")));
-        estimatorParams.put("DecisionTreeClassifier", new ArrayList<>(Arrays.asList("cacheNodeIds", "checkpointInterval", "featuresCol", "impurity", "labelCol", "maxBins", "maxDepth", "maxMemoryInMB", "minInfoGain", "minInstancesPerNode", "predictionCol", "probabilityCol", "rawPredictionCol", "seed", "thresholds")));
-        estimatorParams.put("LogisticRegression", new ArrayList<>(Arrays.asList("aggregationDepth", "elasticNetParam", "family", "featuresCol", "fitIntercept", "labelCol", "lowerBoundsOnCoefficients", "lowerBoundsOnIntercepts", "maxIter", "predictionCol", "probabilityCol", "rawPredictionCol", "regParam", "standardization", "threshold", "thresholds", "tol", "upperBoundsOnCoefficients", "upperBoundsOnIntercepts", "weightCol")));
-        estimatorParams.put("LinearSVC", new ArrayList<>(Arrays.asList("aggregationDepth", "featuresCol", "fitIntercept", "labelCol", "maxIter", "predictionCol", "rawPredictionCol", "regParam", "standardization", "threshold", "tol", "weightCol")));
-        estimatorParams.put("GBTClassifier", new ArrayList<>(Arrays.asList("cacheNodeIds", "checkpointInterval", "featuresCol", "featureSubsetStrategy", "impurity", "labelCol", "lossType", "maxBins", "maxDepth", "maxIter", "maxMemoryInMB", "minInfoGain", "minInstancesPerNode", "predictionCol", "probabilityCol", "rawPredictionCol", "seed", "stepSize", "subsamplingRate", "thresholds", "validationIndicatorCol")));
-        estimatorParams.put("LDA", new ArrayList<>(Arrays.asList("checkpointInterval", "docConcentration", "docConcentration", "featuresCol", "k", "keepLastCheckpoint", "learningDecay", "learningOffset", "maxIter", "optimizeDocConcentration", "optimizer", "seed", "subsamplingRate", "topicConcentration", "topicDistributionCol")));
-        estimatorParams.put("KMeans", new ArrayList<>(Arrays.asList("distanceMeasure", "featuresCol", "initMode", "initSteps", "k", "maxIter", "predictionCol", "seed", "tol")));
-        estimatorParams.put("GaussianMixture", new ArrayList<>(Arrays.asList("featuresCol", "k", "maxIter", "predictionCol", "probabilityCol", "seed", "tol")));
-        estimatorParams.put("BisectingKMeans", new ArrayList<>(Arrays.asList("distanceMeasure", "featuresCol", "k", "maxIter", "minDivisibleClusterSize", "predictionCol", "seed")));
-        estimatorParams.put("Word2Vec", new ArrayList<>(Arrays.asList("inputCol", "maxIter", "maxSentenceLength", "minCount", "numPartitions", "outputCol", "seed", "stepSize", "vectorSize", "windowSize")));
-        estimatorParams.put("VectorIndexer", new ArrayList<>(Arrays.asList("handleInvalid", "inputCol", "maxCategories", "outputCol")));
-        estimatorParams.put("StringIndexer", new ArrayList<>(Arrays.asList("handleInvalid", "inputCol", "outputCol", "stringOrderType")));
-        estimatorParams.put("StandardScaler", new ArrayList<>(Arrays.asList("inputCol", "outputCol", "withMean", "withStd")));
-        estimatorParams.put("RFormula", new ArrayList<>(Arrays.asList("featuresCol", "forceIndexLabel", "formula", "handleInvalid", "labelCol", "stringIndexerOrderType")));
-        estimatorParams.put("QuantileDiscretizer", new ArrayList<>(Arrays.asList("handleInvalid", "inputCol", "inputCols", "numBuckets", "numBucketsArray", "outputCol", "outputCols", "relativeError")));
+        estimatorParams.put(
+            "FPGrowth",
+            new ArrayList<>(Arrays.asList("itemsCol", "minConfidence", "minSupport", "numPartitions", "predictionCol"))
+        );
+        estimatorParams.put(
+            "TrainValidationSplit",
+            new ArrayList<>(
+                    Arrays.asList(
+                        "collectSubModels",
+                        "estimator",
+                        "estimatorParamMaps",
+                        "evaluator",
+                        "parallelism",
+                        "seed",
+                        "trainRatio"
+                    )
+            )
+        );
+        estimatorParams.put(
+            "CrossValidator",
+            new ArrayList<>(
+                    Arrays.asList(
+                        "collectSubModels",
+                        "estimator",
+                        "estimatorParamMaps",
+                        "evaluator",
+                        "numFolds",
+                        "parallelism",
+                        "seed"
+                    )
+            )
+        );
+        estimatorParams.put(
+            "RandomForestClassifier",
+            new ArrayList<>(
+                    Arrays.asList(
+                        "cacheNodeIds",
+                        "checkpointInterval",
+                        "featuresCol",
+                        "featureSubsetStrategy",
+                        "impurity",
+                        "labelCol",
+                        "maxBins",
+                        "maxDepth",
+                        "maxMemoryInMB",
+                        "minInfoGain",
+                        "minInstancesPerNode",
+                        "numTrees",
+                        "predictionCol",
+                        "probabilityCol",
+                        "rawPredictionCol",
+                        "seed",
+                        "subsamplingRate",
+                        "thresholds"
+                    )
+            )
+        );
+        estimatorParams.put(
+            "OneVsRest",
+            new ArrayList<>(
+                    Arrays.asList(
+                        "classifier",
+                        "featuresCol",
+                        "labelCol",
+                        "parallelism",
+                        "predictionCol",
+                        "rawPredictionCol",
+                        "weightCol"
+                    )
+            )
+        );
+        estimatorParams.put(
+            "NaiveBayes",
+            new ArrayList<>(
+                    Arrays.asList(
+                        "featuresCol",
+                        "labelCol",
+                        "modelType",
+                        "predictionCol",
+                        "probabilityCol",
+                        "rawPredictionCol",
+                        "smoothing",
+                        "thresholds",
+                        "weightCol"
+                    )
+            )
+        );
+        estimatorParams.put(
+            "MultilayerPerceptronClassifier",
+            new ArrayList<>(
+                    Arrays.asList(
+                        "blockSize",
+                        "featuresCol",
+                        "initialWeights",
+                        "labelCol",
+                        "layers",
+                        "maxIter",
+                        "predictionCol",
+                        "probabilityCol",
+                        "rawPredictionCol",
+                        "seed",
+                        "solver",
+                        "stepSize",
+                        "thresholds",
+                        "tol"
+                    )
+            )
+        );
+        estimatorParams.put(
+            "DecisionTreeClassifier",
+            new ArrayList<>(
+                    Arrays.asList(
+                        "cacheNodeIds",
+                        "checkpointInterval",
+                        "featuresCol",
+                        "impurity",
+                        "labelCol",
+                        "maxBins",
+                        "maxDepth",
+                        "maxMemoryInMB",
+                        "minInfoGain",
+                        "minInstancesPerNode",
+                        "predictionCol",
+                        "probabilityCol",
+                        "rawPredictionCol",
+                        "seed",
+                        "thresholds"
+                    )
+            )
+        );
+        estimatorParams.put(
+            "LogisticRegression",
+            new ArrayList<>(
+                    Arrays.asList(
+                        "aggregationDepth",
+                        "elasticNetParam",
+                        "family",
+                        "featuresCol",
+                        "fitIntercept",
+                        "labelCol",
+                        "lowerBoundsOnCoefficients",
+                        "lowerBoundsOnIntercepts",
+                        "maxIter",
+                        "predictionCol",
+                        "probabilityCol",
+                        "rawPredictionCol",
+                        "regParam",
+                        "standardization",
+                        "threshold",
+                        "thresholds",
+                        "tol",
+                        "upperBoundsOnCoefficients",
+                        "upperBoundsOnIntercepts",
+                        "weightCol"
+                    )
+            )
+        );
+        estimatorParams.put(
+            "LinearSVC",
+            new ArrayList<>(
+                    Arrays.asList(
+                        "aggregationDepth",
+                        "featuresCol",
+                        "fitIntercept",
+                        "labelCol",
+                        "maxIter",
+                        "predictionCol",
+                        "rawPredictionCol",
+                        "regParam",
+                        "standardization",
+                        "threshold",
+                        "tol",
+                        "weightCol"
+                    )
+            )
+        );
+        estimatorParams.put(
+            "GBTClassifier",
+            new ArrayList<>(
+                    Arrays.asList(
+                        "cacheNodeIds",
+                        "checkpointInterval",
+                        "featuresCol",
+                        "featureSubsetStrategy",
+                        "impurity",
+                        "labelCol",
+                        "lossType",
+                        "maxBins",
+                        "maxDepth",
+                        "maxIter",
+                        "maxMemoryInMB",
+                        "minInfoGain",
+                        "minInstancesPerNode",
+                        "predictionCol",
+                        "probabilityCol",
+                        "rawPredictionCol",
+                        "seed",
+                        "stepSize",
+                        "subsamplingRate",
+                        "thresholds",
+                        "validationIndicatorCol"
+                    )
+            )
+        );
+        estimatorParams.put(
+            "LDA",
+            new ArrayList<>(
+                    Arrays.asList(
+                        "checkpointInterval",
+                        "docConcentration",
+                        "docConcentration",
+                        "featuresCol",
+                        "k",
+                        "keepLastCheckpoint",
+                        "learningDecay",
+                        "learningOffset",
+                        "maxIter",
+                        "optimizeDocConcentration",
+                        "optimizer",
+                        "seed",
+                        "subsamplingRate",
+                        "topicConcentration",
+                        "topicDistributionCol"
+                    )
+            )
+        );
+        estimatorParams.put(
+            "KMeans",
+            new ArrayList<>(
+                    Arrays.asList(
+                        "distanceMeasure",
+                        "featuresCol",
+                        "initMode",
+                        "initSteps",
+                        "k",
+                        "maxIter",
+                        "predictionCol",
+                        "seed",
+                        "tol"
+                    )
+            )
+        );
+        estimatorParams.put(
+            "GaussianMixture",
+            new ArrayList<>(
+                    Arrays.asList("featuresCol", "k", "maxIter", "predictionCol", "probabilityCol", "seed", "tol")
+            )
+        );
+        estimatorParams.put(
+            "BisectingKMeans",
+            new ArrayList<>(
+                    Arrays.asList(
+                        "distanceMeasure",
+                        "featuresCol",
+                        "k",
+                        "maxIter",
+                        "minDivisibleClusterSize",
+                        "predictionCol",
+                        "seed"
+                    )
+            )
+        );
+        estimatorParams.put(
+            "Word2Vec",
+            new ArrayList<>(
+                    Arrays.asList(
+                        "inputCol",
+                        "maxIter",
+                        "maxSentenceLength",
+                        "minCount",
+                        "numPartitions",
+                        "outputCol",
+                        "seed",
+                        "stepSize",
+                        "vectorSize",
+                        "windowSize"
+                    )
+            )
+        );
+        estimatorParams.put(
+            "VectorIndexer",
+            new ArrayList<>(Arrays.asList("handleInvalid", "inputCol", "maxCategories", "outputCol"))
+        );
+        estimatorParams.put(
+            "StringIndexer",
+            new ArrayList<>(Arrays.asList("handleInvalid", "inputCol", "outputCol", "stringOrderType"))
+        );
+        estimatorParams.put(
+            "StandardScaler",
+            new ArrayList<>(Arrays.asList("inputCol", "outputCol", "withMean", "withStd"))
+        );
+        estimatorParams.put(
+            "RFormula",
+            new ArrayList<>(
+                    Arrays.asList(
+                        "featuresCol",
+                        "forceIndexLabel",
+                        "formula",
+                        "handleInvalid",
+                        "labelCol",
+                        "stringIndexerOrderType"
+                    )
+            )
+        );
+        estimatorParams.put(
+            "QuantileDiscretizer",
+            new ArrayList<>(
+                    Arrays.asList(
+                        "handleInvalid",
+                        "inputCol",
+                        "inputCols",
+                        "numBuckets",
+                        "numBucketsArray",
+                        "outputCol",
+                        "outputCols",
+                        "relativeError"
+                    )
+            )
+        );
         estimatorParams.put("PCA", new ArrayList<>(Arrays.asList("inputCol", "k", "outputCol")));
-        estimatorParams.put("OneHotEncoderEstimator", new ArrayList<>(Arrays.asList("dropLast", "handleInvalid", "inputCols", "outputCols")));
+        estimatorParams.put(
+            "OneHotEncoderEstimator",
+            new ArrayList<>(Arrays.asList("dropLast", "handleInvalid", "inputCols", "outputCols"))
+        );
         estimatorParams.put("MinMaxScaler", new ArrayList<>(Arrays.asList("inputCol", "max", "min", "outputCol")));
-        estimatorParams.put("MinHashLSH", new ArrayList<>(Arrays.asList("inputCol", "numHashTables", "outputCol", "seed")));
+        estimatorParams.put(
+            "MinHashLSH",
+            new ArrayList<>(Arrays.asList("inputCol", "numHashTables", "outputCol", "seed"))
+        );
         estimatorParams.put("MaxAbsScaler", new ArrayList<>(Arrays.asList("inputCol", "outputCol")));
-        estimatorParams.put("Imputer", new ArrayList<>(Arrays.asList("inputCols", "missingValue", "outputCols", "strategy")));
+        estimatorParams.put(
+            "Imputer",
+            new ArrayList<>(Arrays.asList("inputCols", "missingValue", "outputCols", "strategy"))
+        );
         estimatorParams.put("IDF", new ArrayList<>(Arrays.asList("inputCol", "minDocFreq", "outputCol")));
-        estimatorParams.put("BucketedRandomProjectionLSH", new ArrayList<>(Arrays.asList("bucketLength", "inputCol", "numHashTables", "outputCol", "seed")));
-        estimatorParams.put("CountVectorizer", new ArrayList<>(Arrays.asList("binary", "inputCol", "maxDF", "minDF", "minTF", "outputCol", "vocabSize")));
-        estimatorParams.put("ChiSqSelector", new ArrayList<>(Arrays.asList("fdr", "featuresCol", "fpr", "fwe", "labelCol", "numTopFeatures", "outputCol", "percentile", "selectorType")));
-        estimatorParams.put("ALS", new ArrayList<>(Arrays.asList("alpha", "checkpointInterval", "coldStartStrategy", "finalStorageLevel", "implicitPrefs", "intermediateStorageLevel", "itemCol", "maxIter", "nonnegative", "numBlocks", "numItemBlocks", "numUserBlocks", "predictionCol", "rank", "ratingCol", "regParam", "seed", "userCol")));
-        estimatorParams.put("RandomForestRegressor", new ArrayList<>(Arrays.asList("cacheNodeIds", "checkpointInterval", "featuresCol", "featureSubsetStrategy", "impurity", "labelCol", "maxBins", "maxDepth", "maxMemoryInMB", "minInfoGain", "minInstancesPerNode", "numTrees", "predictionCol", "seed", "subsamplingRate")));
-        estimatorParams.put("IsotonicRegression", new ArrayList<>(Arrays.asList("featureIndex", "featuresCol", "isotonic", "labelCol", "predictionCol", "weightCol")));
-        estimatorParams.put("LinearRegression", new ArrayList<>(Arrays.asList("aggregationDepth", "elasticNetParam", "epsilon", "featuresCol", "fitIntercept", "labelCol", "loss", "maxIter", "predictionCol", "regParam", "solver", "standardization", "tol", "weightCol")));
-        estimatorParams.put("GBTRegressor", new ArrayList<>(Arrays.asList("cacheNodeIds", "checkpointInterval", "featuresCol", "featureSubsetStrategy", "impurity", "labelCol", "lossType", "maxBins", "maxDepth", "maxIter", "maxMemoryInMB", "minInfoGain", "minInstancesPerNode", "predictionCol", "seed", "stepSize", "subsamplingRate", "validationIndicatorCol")));
-        estimatorParams.put("GeneralizedLinearRegression", new ArrayList<>(Arrays.asList("family", "featuresCol", "fitIntercept", "labelCol", "link", "linkPower", "linkPredictionCol", "maxIter", "offsetCol", "predictionCol", "regParam", "solver", "tol", "variancePower", "weightCol")));
-        estimatorParams.put("DecisionTreeRegressor", new ArrayList<>(Arrays.asList("cacheNodeIds", "checkpointInterval", "featuresCol", "impurity", "labelCol", "maxBins", "maxDepth", "maxMemoryInMB", "minInfoGain", "minInstancesPerNode", "predictionCol", "seed", "varianceCol")));
-        estimatorParams.put("AFTSurvivalRegression", new ArrayList<>(Arrays.asList("aggregationDepth", "censorCol", "featuresCol", "fitIntercept", "labelCol", "maxIter", "predictionCol", "quantileProbabilities", "quantilesCol", "tol")));
+        estimatorParams.put(
+            "BucketedRandomProjectionLSH",
+            new ArrayList<>(Arrays.asList("bucketLength", "inputCol", "numHashTables", "outputCol", "seed"))
+        );
+        estimatorParams.put(
+            "CountVectorizer",
+            new ArrayList<>(Arrays.asList("binary", "inputCol", "maxDF", "minDF", "minTF", "outputCol", "vocabSize"))
+        );
+        estimatorParams.put(
+            "ChiSqSelector",
+            new ArrayList<>(
+                    Arrays.asList(
+                        "fdr",
+                        "featuresCol",
+                        "fpr",
+                        "fwe",
+                        "labelCol",
+                        "numTopFeatures",
+                        "outputCol",
+                        "percentile",
+                        "selectorType"
+                    )
+            )
+        );
+        estimatorParams.put(
+            "ALS",
+            new ArrayList<>(
+                    Arrays.asList(
+                        "alpha",
+                        "checkpointInterval",
+                        "coldStartStrategy",
+                        "finalStorageLevel",
+                        "implicitPrefs",
+                        "intermediateStorageLevel",
+                        "itemCol",
+                        "maxIter",
+                        "nonnegative",
+                        "numBlocks",
+                        "numItemBlocks",
+                        "numUserBlocks",
+                        "predictionCol",
+                        "rank",
+                        "ratingCol",
+                        "regParam",
+                        "seed",
+                        "userCol"
+                    )
+            )
+        );
+        estimatorParams.put(
+            "RandomForestRegressor",
+            new ArrayList<>(
+                    Arrays.asList(
+                        "cacheNodeIds",
+                        "checkpointInterval",
+                        "featuresCol",
+                        "featureSubsetStrategy",
+                        "impurity",
+                        "labelCol",
+                        "maxBins",
+                        "maxDepth",
+                        "maxMemoryInMB",
+                        "minInfoGain",
+                        "minInstancesPerNode",
+                        "numTrees",
+                        "predictionCol",
+                        "seed",
+                        "subsamplingRate"
+                    )
+            )
+        );
+        estimatorParams.put(
+            "IsotonicRegression",
+            new ArrayList<>(
+                    Arrays.asList("featureIndex", "featuresCol", "isotonic", "labelCol", "predictionCol", "weightCol")
+            )
+        );
+        estimatorParams.put(
+            "LinearRegression",
+            new ArrayList<>(
+                    Arrays.asList(
+                        "aggregationDepth",
+                        "elasticNetParam",
+                        "epsilon",
+                        "featuresCol",
+                        "fitIntercept",
+                        "labelCol",
+                        "loss",
+                        "maxIter",
+                        "predictionCol",
+                        "regParam",
+                        "solver",
+                        "standardization",
+                        "tol",
+                        "weightCol"
+                    )
+            )
+        );
+        estimatorParams.put(
+            "GBTRegressor",
+            new ArrayList<>(
+                    Arrays.asList(
+                        "cacheNodeIds",
+                        "checkpointInterval",
+                        "featuresCol",
+                        "featureSubsetStrategy",
+                        "impurity",
+                        "labelCol",
+                        "lossType",
+                        "maxBins",
+                        "maxDepth",
+                        "maxIter",
+                        "maxMemoryInMB",
+                        "minInfoGain",
+                        "minInstancesPerNode",
+                        "predictionCol",
+                        "seed",
+                        "stepSize",
+                        "subsamplingRate",
+                        "validationIndicatorCol"
+                    )
+            )
+        );
+        estimatorParams.put(
+            "GeneralizedLinearRegression",
+            new ArrayList<>(
+                    Arrays.asList(
+                        "family",
+                        "featuresCol",
+                        "fitIntercept",
+                        "labelCol",
+                        "link",
+                        "linkPower",
+                        "linkPredictionCol",
+                        "maxIter",
+                        "offsetCol",
+                        "predictionCol",
+                        "regParam",
+                        "solver",
+                        "tol",
+                        "variancePower",
+                        "weightCol"
+                    )
+            )
+        );
+        estimatorParams.put(
+            "DecisionTreeRegressor",
+            new ArrayList<>(
+                    Arrays.asList(
+                        "cacheNodeIds",
+                        "checkpointInterval",
+                        "featuresCol",
+                        "impurity",
+                        "labelCol",
+                        "maxBins",
+                        "maxDepth",
+                        "maxMemoryInMB",
+                        "minInfoGain",
+                        "minInstancesPerNode",
+                        "predictionCol",
+                        "seed",
+                        "varianceCol"
+                    )
+            )
+        );
+        estimatorParams.put(
+            "AFTSurvivalRegression",
+            new ArrayList<>(
+                    Arrays.asList(
+                        "aggregationDepth",
+                        "censorCol",
+                        "featuresCol",
+                        "fitIntercept",
+                        "labelCol",
+                        "maxIter",
+                        "predictionCol",
+                        "quantileProbabilities",
+                        "quantilesCol",
+                        "tol"
+                    )
+            )
+        );
         estimatorParams.put("Pipeline", new ArrayList<>(Arrays.asList("stages")));
 
 
-        transformerParams.put("FPGrowthModel", new ArrayList<>(Arrays.asList("itemsCol", "minConfidence", "parent", "predictionCol")));
+        transformerParams.put(
+            "FPGrowthModel",
+            new ArrayList<>(Arrays.asList("itemsCol", "minConfidence", "parent", "predictionCol"))
+        );
         transformerParams.put("VectorIndexerModel", new ArrayList<>(Arrays.asList("inputCol", "outputCol", "parent")));
         transformerParams.put("TrainValidationSplitModel", new ArrayList<>(Arrays.asList("parent")));
         transformerParams.put("CrossValidatorModel", new ArrayList<>(Arrays.asList("parent")));
-        transformerParams.put("RandomForestClassificationModel", new ArrayList<>(Arrays.asList("cacheNodeIds", "checkpointInterval", "featuresCol", "featureSubsetStrategy", "impurity", "maxBins", "maxDepth", "maxMemoryInMB", "minInfoGain", "minInstancesPerNode", "numTrees", "parent", "predictionCol", "probabilityCol", "rawPredictionCol", "seed", "subsamplingRate", "thresholds")));
-        transformerParams.put("NaiveBayesModel", new ArrayList<>(Arrays.asList("featuresCol", "parent", "predictionCol", "probabilityCol", "rawPredictionCol", "thresholds")));
-        transformerParams.put("MultilayerPerceptronClassificationModel", new ArrayList<>(Arrays.asList("featuresCol", "parent", "predictionCol", "probabilityCol", "rawPredictionCol", "thresholds")));
-        transformerParams.put("OneVsRestModel", new ArrayList<>(Arrays.asList("featuresCol", "parent", "predictionCol", "rawPredictionCol")));
-        transformerParams.put("GBTClassificationModel", new ArrayList<>(Arrays.asList("cacheNodeIds", "checkpointInterval", "featuresCol", "featureSubsetStrategy", "impurity", "maxBins", "maxDepth", "maxIter", "maxMemoryInMB", "minInfoGain", "minInstancesPerNode", "parent", "predictionCol", "probabilityCol", "rawPredictionCol", "seed", "stepSize", "subsamplingRate", "thresholds")));
-        transformerParams.put("LinearSVCModel", new ArrayList<>(Arrays.asList("featuresCol", "parent", "predictionCol", "rawPredictionCol", "threshold", "weightCol")));
-        transformerParams.put("DecisionTreeClassificationModel", new ArrayList<>(Arrays.asList("cacheNodeIds", "checkpointInterval", "featuresCol", "impurity", "maxBins", "maxDepth", "maxMemoryInMB", "minInfoGain", "minInstancesPerNode", "parent", "predictionCol", "probabilityCol", "rawPredictionCol", "seed", "thresholds")));
-        transformerParams.put("LogisticRegressionModel", new ArrayList<>(Arrays.asList("featuresCol", "parent", "predictionCol", "probabilityCol", "rawPredictionCol", "threshold", "thresholds")));
-        transformerParams.put("LocalLDAModel", new ArrayList<>(Arrays.asList("featuresCol", "parent", "seed", "topicDistributionCol")));
+        transformerParams.put(
+            "RandomForestClassificationModel",
+            new ArrayList<>(
+                    Arrays.asList(
+                        "cacheNodeIds",
+                        "checkpointInterval",
+                        "featuresCol",
+                        "featureSubsetStrategy",
+                        "impurity",
+                        "maxBins",
+                        "maxDepth",
+                        "maxMemoryInMB",
+                        "minInfoGain",
+                        "minInstancesPerNode",
+                        "numTrees",
+                        "parent",
+                        "predictionCol",
+                        "probabilityCol",
+                        "rawPredictionCol",
+                        "seed",
+                        "subsamplingRate",
+                        "thresholds"
+                    )
+            )
+        );
+        transformerParams.put(
+            "NaiveBayesModel",
+            new ArrayList<>(
+                    Arrays.asList(
+                        "featuresCol",
+                        "parent",
+                        "predictionCol",
+                        "probabilityCol",
+                        "rawPredictionCol",
+                        "thresholds"
+                    )
+            )
+        );
+        transformerParams.put(
+            "MultilayerPerceptronClassificationModel",
+            new ArrayList<>(
+                    Arrays.asList(
+                        "featuresCol",
+                        "parent",
+                        "predictionCol",
+                        "probabilityCol",
+                        "rawPredictionCol",
+                        "thresholds"
+                    )
+            )
+        );
+        transformerParams.put(
+            "OneVsRestModel",
+            new ArrayList<>(Arrays.asList("featuresCol", "parent", "predictionCol", "rawPredictionCol"))
+        );
+        transformerParams.put(
+            "GBTClassificationModel",
+            new ArrayList<>(
+                    Arrays.asList(
+                        "cacheNodeIds",
+                        "checkpointInterval",
+                        "featuresCol",
+                        "featureSubsetStrategy",
+                        "impurity",
+                        "maxBins",
+                        "maxDepth",
+                        "maxIter",
+                        "maxMemoryInMB",
+                        "minInfoGain",
+                        "minInstancesPerNode",
+                        "parent",
+                        "predictionCol",
+                        "probabilityCol",
+                        "rawPredictionCol",
+                        "seed",
+                        "stepSize",
+                        "subsamplingRate",
+                        "thresholds"
+                    )
+            )
+        );
+        transformerParams.put(
+            "LinearSVCModel",
+            new ArrayList<>(
+                    Arrays.asList(
+                        "featuresCol",
+                        "parent",
+                        "predictionCol",
+                        "rawPredictionCol",
+                        "threshold",
+                        "weightCol"
+                    )
+            )
+        );
+        transformerParams.put(
+            "DecisionTreeClassificationModel",
+            new ArrayList<>(
+                    Arrays.asList(
+                        "cacheNodeIds",
+                        "checkpointInterval",
+                        "featuresCol",
+                        "impurity",
+                        "maxBins",
+                        "maxDepth",
+                        "maxMemoryInMB",
+                        "minInfoGain",
+                        "minInstancesPerNode",
+                        "parent",
+                        "predictionCol",
+                        "probabilityCol",
+                        "rawPredictionCol",
+                        "seed",
+                        "thresholds"
+                    )
+            )
+        );
+        transformerParams.put(
+            "LogisticRegressionModel",
+            new ArrayList<>(
+                    Arrays.asList(
+                        "featuresCol",
+                        "parent",
+                        "predictionCol",
+                        "probabilityCol",
+                        "rawPredictionCol",
+                        "threshold",
+                        "thresholds"
+                    )
+            )
+        );
+        transformerParams.put(
+            "LocalLDAModel",
+            new ArrayList<>(Arrays.asList("featuresCol", "parent", "seed", "topicDistributionCol"))
+        );
         transformerParams.put("KMeansModel", new ArrayList<>(Arrays.asList("featuresCol", "parent", "predictionCol")));
-        transformerParams.put("GaussianMixtureModel", new ArrayList<>(Arrays.asList("featuresCol", "parent", "predictionCol", "probabilityCol")));
-        transformerParams.put("DistributedLDAModel", new ArrayList<>(Arrays.asList("featuresCol", "parent", "seed", "topicDistributionCol")));
-        transformerParams.put("BisectingKMeansModel", new ArrayList<>(Arrays.asList("featuresCol", "parent", "predictionCol")));
+        transformerParams.put(
+            "GaussianMixtureModel",
+            new ArrayList<>(Arrays.asList("featuresCol", "parent", "predictionCol", "probabilityCol"))
+        );
+        transformerParams.put(
+            "DistributedLDAModel",
+            new ArrayList<>(Arrays.asList("featuresCol", "parent", "seed", "topicDistributionCol"))
+        );
+        transformerParams.put(
+            "BisectingKMeansModel",
+            new ArrayList<>(Arrays.asList("featuresCol", "parent", "predictionCol"))
+        );
         transformerParams.put("VectorAttributeRewriter", new ArrayList<>(Arrays.asList()));
         transformerParams.put("Word2VecModel", new ArrayList<>(Arrays.asList("inputCol", "outputCol", "parent")));
-        transformerParams.put("VectorSlicer", new ArrayList<>(Arrays.asList("indices", "inputCol", "names", "outputCol")));
+        transformerParams.put(
+            "VectorSlicer",
+            new ArrayList<>(Arrays.asList("indices", "inputCol", "names", "outputCol"))
+        );
         transformerParams.put("VectorSizeHint", new ArrayList<>(Arrays.asList("handleInvalid", "inputCol", "size")));
-        transformerParams.put("VectorAssembler", new ArrayList<>(Arrays.asList("handleInvalid", "inputCols", "outputCol")));
+        transformerParams.put(
+            "VectorAssembler",
+            new ArrayList<>(Arrays.asList("handleInvalid", "inputCols", "outputCol"))
+        );
         transformerParams.put("Tokenizer", new ArrayList<>(Arrays.asList("inputCol", "outputCol")));
         transformerParams.put("StandardScalerModel", new ArrayList<>(Arrays.asList("inputCol", "outputCol", "parent")));
         transformerParams.put("SQLTransformer", new ArrayList<>(Arrays.asList("statement")));
-        transformerParams.put("StringIndexerModel", new ArrayList<>(Arrays.asList("handleInvalid", "inputCol", "outputCol", "parent")));
-        transformerParams.put("StopWordsRemover", new ArrayList<>(Arrays.asList("caseSensitive", "inputCol", "locale", "outputCol", "stopWords")));
+        transformerParams.put(
+            "StringIndexerModel",
+            new ArrayList<>(Arrays.asList("handleInvalid", "inputCol", "outputCol", "parent"))
+        );
+        transformerParams.put(
+            "StopWordsRemover",
+            new ArrayList<>(Arrays.asList("caseSensitive", "inputCol", "locale", "outputCol", "stopWords"))
+        );
         transformerParams.put("RFormulaModel", new ArrayList<>(Arrays.asList("parent")));
-        transformerParams.put("OneHotEncoderModel", new ArrayList<>(Arrays.asList("dropLast", "handleInvalid", "inputCols", "outputCols", "parent")));
-        transformerParams.put("RegexTokenizer", new ArrayList<>(Arrays.asList("gaps", "inputCol", "minTokenLength", "outputCol", "pattern", "toLowercase")));
+        transformerParams.put(
+            "OneHotEncoderModel",
+            new ArrayList<>(Arrays.asList("dropLast", "handleInvalid", "inputCols", "outputCols", "parent"))
+        );
+        transformerParams.put(
+            "RegexTokenizer",
+            new ArrayList<>(Arrays.asList("gaps", "inputCol", "minTokenLength", "outputCol", "pattern", "toLowercase"))
+        );
         transformerParams.put("PolynomialExpansion", new ArrayList<>(Arrays.asList("degree", "inputCol", "outputCol")));
         transformerParams.put("PCAModel", new ArrayList<>(Arrays.asList("inputCol", "outputCol", "parent")));
         transformerParams.put("OneHotEncoder", new ArrayList<>(Arrays.asList("dropLast", "inputCol", "outputCol")));
         transformerParams.put("Normalizer", new ArrayList<>(Arrays.asList("inputCol", "outputCol", "p")));
         transformerParams.put("NGram", new ArrayList<>(Arrays.asList("inputCol", "n", "outputCol")));
-        transformerParams.put("MinMaxScalerModel", new ArrayList<>(Arrays.asList("inputCol", "max", "min", "outputCol", "parent")));
+        transformerParams.put(
+            "MinMaxScalerModel",
+            new ArrayList<>(Arrays.asList("inputCol", "max", "min", "outputCol", "parent"))
+        );
         transformerParams.put("MinHashLSHModel", new ArrayList<>(Arrays.asList("inputCol", "outputCol", "parent")));
         transformerParams.put("MaxAbsScalerModel", new ArrayList<>(Arrays.asList("inputCol", "outputCol", "parent")));
         transformerParams.put("Interaction", new ArrayList<>(Arrays.asList("inputCols", "outputCol")));
         transformerParams.put("IndexToString", new ArrayList<>(Arrays.asList("inputCol", "labels", "outputCol")));
         transformerParams.put("ImputerModel", new ArrayList<>(Arrays.asList("inputCols", "outputCols", "parent")));
-        transformerParams.put("CountVectorizerModel", new ArrayList<>(Arrays.asList("binary", "inputCol", "minTF", "outputCol", "parent")));
+        transformerParams.put(
+            "CountVectorizerModel",
+            new ArrayList<>(Arrays.asList("binary", "inputCol", "minTF", "outputCol", "parent"))
+        );
         transformerParams.put("IDFModel", new ArrayList<>(Arrays.asList("inputCol", "outputCol", "parent")));
-        transformerParams.put("HashingTF", new ArrayList<>(Arrays.asList("binary", "inputCol", "numFeatures", "outputCol")));
-        transformerParams.put("FeatureHasher", new ArrayList<>(Arrays.asList("categoricalCols", "inputCols", "inputCols", "numFeatures", "outputCol")));
-        transformerParams.put("ElementwiseProduct", new ArrayList<>(Arrays.asList("inputCol", "outputCol", "scalingVec")));
+        transformerParams.put(
+            "HashingTF",
+            new ArrayList<>(Arrays.asList("binary", "inputCol", "numFeatures", "outputCol"))
+        );
+        transformerParams.put(
+            "FeatureHasher",
+            new ArrayList<>(Arrays.asList("categoricalCols", "inputCols", "inputCols", "numFeatures", "outputCol"))
+        );
+        transformerParams.put(
+            "ElementwiseProduct",
+            new ArrayList<>(Arrays.asList("inputCol", "outputCol", "scalingVec"))
+        );
         transformerParams.put("DCT", new ArrayList<>(Arrays.asList("inputCol", "inverse", "outputCol")));
         transformerParams.put("ColumnPruner", new ArrayList<>(Arrays.asList()));
-        transformerParams.put("Bucketizer", new ArrayList<>(Arrays.asList("handleInvalid", "inputCol", "inputCols", "outputCol", "outputCols", "parent", "splits", "splitsArray")));
-        transformerParams.put("ChiSqSelectorModel", new ArrayList<>(Arrays.asList("featuresCol", "outputCol", "parent")));
-        transformerParams.put("BucketedRandomProjectionLSHModel", new ArrayList<>(Arrays.asList("inputCol", "outputCol", "parent")));
+        transformerParams.put(
+            "Bucketizer",
+            new ArrayList<>(
+                    Arrays.asList(
+                        "handleInvalid",
+                        "inputCol",
+                        "inputCols",
+                        "outputCol",
+                        "outputCols",
+                        "parent",
+                        "splits",
+                        "splitsArray"
+                    )
+            )
+        );
+        transformerParams.put(
+            "ChiSqSelectorModel",
+            new ArrayList<>(Arrays.asList("featuresCol", "outputCol", "parent"))
+        );
+        transformerParams.put(
+            "BucketedRandomProjectionLSHModel",
+            new ArrayList<>(Arrays.asList("inputCol", "outputCol", "parent"))
+        );
         transformerParams.put("Binarizer", new ArrayList<>(Arrays.asList("inputCol", "outputCol", "threshold")));
-        transformerParams.put("ALSModel", new ArrayList<>(Arrays.asList("coldStartStrategy", "itemCol", "parent", "predictionCol", "userCol")));
-        transformerParams.put("RandomForestRegressionModel", new ArrayList<>(Arrays.asList("cacheNodeIds", "checkpointInterval", "featuresCol", "featureSubsetStrategy", "impurity", "maxBins", "maxDepth", "maxMemoryInMB", "minInfoGain", "minInstancesPerNode", "numTrees", "parent", "predictionCol", "seed", "subsamplingRate")));
-        transformerParams.put("LinearRegressionModel", new ArrayList<>(Arrays.asList("featuresCol", "parent", "predictionCol")));
-        transformerParams.put("IsotonicRegressionModel", new ArrayList<>(Arrays.asList("featureIndex", "featuresCol", "parent", "predictionCol")));
-        transformerParams.put("GeneralizedLinearRegressionModel", new ArrayList<>(Arrays.asList("featuresCol", "linkPredictionCol", "parent", "predictionCol")));
-        transformerParams.put("GBTRegressionModel", new ArrayList<>(Arrays.asList("cacheNodeIds", "checkpointInterval", "featuresCol", "featureSubsetStrategy", "impurity", "maxBins", "maxDepth", "maxIter", "maxMemoryInMB", "minInfoGain", "minInstancesPerNode", "parent", "predictionCol", "seed", "stepSize", "subsamplingRate")));
-        transformerParams.put("DecisionTreeRegressionModel", new ArrayList<>(Arrays.asList("cacheNodeIds", "checkpointInterval", "featuresCol", "impurity", "maxBins", "maxDepth", "maxMemoryInMB", "minInfoGain", "minInstancesPerNode", "parent", "predictionCol", "seed", "varianceCol")));
-        transformerParams.put("AFTSurvivalRegressionModel", new ArrayList<>(Arrays.asList("featuresCol", "parent", "predictionCol", "quantileProbabilities", "quantilesCol")));
+        transformerParams.put(
+            "ALSModel",
+            new ArrayList<>(Arrays.asList("coldStartStrategy", "itemCol", "parent", "predictionCol", "userCol"))
+        );
+        transformerParams.put(
+            "RandomForestRegressionModel",
+            new ArrayList<>(
+                    Arrays.asList(
+                        "cacheNodeIds",
+                        "checkpointInterval",
+                        "featuresCol",
+                        "featureSubsetStrategy",
+                        "impurity",
+                        "maxBins",
+                        "maxDepth",
+                        "maxMemoryInMB",
+                        "minInfoGain",
+                        "minInstancesPerNode",
+                        "numTrees",
+                        "parent",
+                        "predictionCol",
+                        "seed",
+                        "subsamplingRate"
+                    )
+            )
+        );
+        transformerParams.put(
+            "LinearRegressionModel",
+            new ArrayList<>(Arrays.asList("featuresCol", "parent", "predictionCol"))
+        );
+        transformerParams.put(
+            "IsotonicRegressionModel",
+            new ArrayList<>(Arrays.asList("featureIndex", "featuresCol", "parent", "predictionCol"))
+        );
+        transformerParams.put(
+            "GeneralizedLinearRegressionModel",
+            new ArrayList<>(Arrays.asList("featuresCol", "linkPredictionCol", "parent", "predictionCol"))
+        );
+        transformerParams.put(
+            "GBTRegressionModel",
+            new ArrayList<>(
+                    Arrays.asList(
+                        "cacheNodeIds",
+                        "checkpointInterval",
+                        "featuresCol",
+                        "featureSubsetStrategy",
+                        "impurity",
+                        "maxBins",
+                        "maxDepth",
+                        "maxIter",
+                        "maxMemoryInMB",
+                        "minInfoGain",
+                        "minInstancesPerNode",
+                        "parent",
+                        "predictionCol",
+                        "seed",
+                        "stepSize",
+                        "subsamplingRate"
+                    )
+            )
+        );
+        transformerParams.put(
+            "DecisionTreeRegressionModel",
+            new ArrayList<>(
+                    Arrays.asList(
+                        "cacheNodeIds",
+                        "checkpointInterval",
+                        "featuresCol",
+                        "impurity",
+                        "maxBins",
+                        "maxDepth",
+                        "maxMemoryInMB",
+                        "minInfoGain",
+                        "minInstancesPerNode",
+                        "parent",
+                        "predictionCol",
+                        "seed",
+                        "varianceCol"
+                    )
+            )
+        );
+        transformerParams.put(
+            "AFTSurvivalRegressionModel",
+            new ArrayList<>(
+                    Arrays.asList("featuresCol", "parent", "predictionCol", "quantileProbabilities", "quantilesCol")
+            )
+        );
         transformerParams.put("PipelineModel", new ArrayList<>(Arrays.asList("parent")));
 
 
@@ -423,17 +1225,21 @@ public class RumbleMLCatalog {
         return transformerParams.get(name);
     }
 
-    public static void validateParameterForTransformer(String transformerName, String paramName, IteratorMetadata metadata) {
+    public static void validateParameterForTransformer(
+            String transformerName,
+            String paramName,
+            IteratorMetadata metadata
+    ) {
         if (!transformerParams.containsKey(transformerName)) {
             throw new UnknownRumbleMLClassReferenceException(transformerName, metadata);
         }
         if (!transformerParams.get(transformerName).contains(paramName)) {
             throw new UnknownRumbleMLParamReferenceException(
                     "Make sure \""
-                    + paramName
-                    + "\" is a valid parameter of \""
-                    + transformerName
-                    + "\".",
+                        + paramName
+                        + "\" is a valid parameter of \""
+                        + transformerName
+                        + "\".",
                     metadata
             );
         }
@@ -443,9 +1249,8 @@ public class RumbleMLCatalog {
         if (!paramJavaTypeNames.containsKey(name)) {
             throw new UnknownRumbleMLParamReferenceException(
                     "Parameter \""
-                    + name
-                    + "\" does not exist in in RumbleML API.\""
-                    ,
+                        + name
+                        + "\" does not exist in in RumbleML API.\"",
                     metadata
             );
         }
