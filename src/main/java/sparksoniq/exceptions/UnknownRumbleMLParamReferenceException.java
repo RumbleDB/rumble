@@ -27,12 +27,10 @@ public class UnknownRumbleMLParamReferenceException extends SparksoniqRuntimeExc
 
     private static final long serialVersionUID = 1L;
 
-    public UnknownRumbleMLParamReferenceException(String name, String parentName, IteratorMetadata iteratorMetadata) {
+    public UnknownRumbleMLParamReferenceException(String message, IteratorMetadata iteratorMetadata) {
         super(
-            "Unknown RumbleML reference; Make sure : \""
-                + name
-                + "\" is a valid parameter of \""
-                + parentName
+            "Unknown RumbleML parameter reference; "
+                + message
                 + "\".",
             ErrorCodes.UnknownRumbleMLParamReferenceErrorCode,
             iteratorMetadata.getExpressionMetadata()

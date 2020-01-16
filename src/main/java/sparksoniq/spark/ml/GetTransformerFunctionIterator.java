@@ -101,7 +101,7 @@ public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
             List<SequenceType> paramTypes = Collections.unmodifiableList(
                 Arrays.asList(
                     new SequenceType(
-                            new ItemType(ItemTypes.ObjectItem),
+                            new ItemType(ItemTypes.Item), // TODO: revert back to ObjectItem
                             SequenceType.Arity.ZeroOrMore
                     ),
                     new SequenceType(

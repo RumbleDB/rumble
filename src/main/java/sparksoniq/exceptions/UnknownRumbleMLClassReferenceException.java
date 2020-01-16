@@ -29,10 +29,10 @@ public class UnknownRumbleMLClassReferenceException extends SparksoniqRuntimeExc
 
     public UnknownRumbleMLClassReferenceException(String name, IteratorMetadata iteratorMetadata) {
         super(
-            "Unknown RumbleML reference; Make sure : \""
+            "Unknown RumbleML class reference; Make sure \""
                 +
                 name
-                + "\" is a valid SparkML component.",
+                + "\" is a valid RumbleML component.",
             ErrorCodes.UnknownRumbleMLClassReferenceErrorCode,
             iteratorMetadata.getExpressionMetadata()
         );

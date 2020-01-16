@@ -23,15 +23,21 @@ public class RumbleMLUtils {
             Item paramValue = item.getValues().get(paramIndex);
 
             RumbleMLCatalog.validateParameterForTransformer(transformerName, paramName, metadata);
+            String paramJavaTypeName = RumbleMLCatalog.getParamJavaTypeName(paramName, metadata);
+
+            Object paramValueInJava;
+            switch (paramJavaTypeName) {
+                case "String":
+                    paramValueInJava = paramValue.getStringValue();
+                    break;
+                default:
+                    throw new OurBadException("Java param type \"" + paramJavaTypeName + "\" is not handled correct during conversion", metadata);
+            }
 
             try {
-                Param sparkMLParam = (Param) transformerClass.getMethod(paramName).invoke(transformer);
-
-                // TODO: determine the type of the Param and convert paramValueItem to that type
-                // TODO: add to paramMap
-                result.put(sparkMLParam, paramValue);
-
-            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+                Param<Object> sparkMLParam = (Param<Object>) transformerClass.getMethod(paramName).invoke(transformer);
+                result.put(sparkMLParam.w(paramValueInJava));
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassCastException e) {
                 throw new OurBadException(
                         "Error while extracting " + paramName + " for " + transformerName + ".",
                         metadata
