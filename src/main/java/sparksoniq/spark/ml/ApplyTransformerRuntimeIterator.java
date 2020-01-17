@@ -6,6 +6,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.OurBadException;
+import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.runtime.iterator.RDDRuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
@@ -66,6 +67,11 @@ public class ApplyTransformerRuntimeIterator extends RDDRuntimeIterator {
             return transformer.transform(inputDataset, paramMap);
         } catch (InstantiationException | IllegalAccessException e) {
             throw new OurBadException("Error while generating an instance from transformer class.", getMetadata());
+        } catch (IllegalArgumentException e) {
+            // TODO: Do we want a new exception error code for this ?
+            throw new SparksoniqRuntimeException(
+                    "Parameters provided to " + _transformerName + " have the wrong type: " + e.getMessage()
+            );
         }
     }
 }

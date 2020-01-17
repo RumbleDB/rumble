@@ -5,4 +5,4 @@ let $data := (structured-json-file("./src/main/resources/queries/rumbleML/sample
 let $intermediate := $tokenizer($data, {"inputCol": "values", "outputCol": "output"})
 return $hashingTF($intermediate, {"inputCol": "output", "numFeatures": 2})
 
-(: transformer chaining is not supported atm either enable DF in FunctionItemCallIterator or convert RDD to DF prior to transformer operations:)
+(: transformer chaining is not supported atm - RDD needs to be converted into DF prior to transformer.transform() call:)
