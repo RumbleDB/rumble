@@ -21,9 +21,7 @@
 package sparksoniq.jsoniq.item;
 
 import org.rumbledb.api.Item;
-
 import sparksoniq.exceptions.OurBadException;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
