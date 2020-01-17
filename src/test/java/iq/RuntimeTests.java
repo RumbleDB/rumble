@@ -29,7 +29,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.rumbledb.api.Item;
-
 import sparksoniq.exceptions.OurBadException;
 import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -77,6 +76,10 @@ public class RuntimeTests extends AnnotationsTestsBase {
         sparkConfiguration.set("spark.executor.extraClassPath", "lib/");
         sparkConfiguration.set("spark.driver.extraClassPath", "lib/");
         sparkConfiguration.set("spark.sql.crossJoin.enabled", "true"); // enables cartesian product
+
+        // prevents spark from failing to start on MacOS when disconnected from the internet
+        sparkConfiguration.set("spark.driver.host", "127.0.0.1");
+
 
         // sparkConfiguration.set("spark.driver.memory", "2g");
         // sparkConfiguration.set("spark.executor.memory", "2g");
