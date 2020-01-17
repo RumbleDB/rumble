@@ -58,7 +58,7 @@ public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
         if (this._hasNext) {
             this._hasNext = false;
             List<DynamicContext> contexts = new ArrayList<>();
-            contexts.add(new DynamicContext(_currentDynamicContext));
+            contexts.add(new DynamicContext(_currentDynamicContextForLocalExecution));
             for (RuntimeIterator iterator : _children) {
                 if (iterator instanceof QuantifiedExpressionVarIterator) {
                     QuantifiedExpressionVarIterator var = (QuantifiedExpressionVarIterator) iterator;

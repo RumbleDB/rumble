@@ -45,7 +45,7 @@ public class StringJoinFunctionIterator extends LocalFunctionCallIterator {
             List<Item> strings = getItemsFromIteratorWithCurrentContext(this._children.get(0));
             if (this._children.size() > 1) {
                 RuntimeIterator joinStringIterator = this._children.get(1);
-                joinStringIterator.open(_currentDynamicContext);
+                joinStringIterator.open(_currentDynamicContextForLocalExecution);
                 if (joinStringIterator.hasNext()) {
                     joinString = joinStringIterator.next();
                 }

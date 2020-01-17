@@ -43,7 +43,7 @@ public class ATan2FunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             Item y;
             RuntimeIterator yIterator = this._children.get(0);
-            yIterator.open(_currentDynamicContext);
+            yIterator.open(_currentDynamicContextForLocalExecution);
             if (yIterator.hasNext()) {
                 y = yIterator.next();
             } else {
@@ -52,7 +52,7 @@ public class ATan2FunctionIterator extends LocalFunctionCallIterator {
 
             Item x;
             RuntimeIterator xIterator = this._children.get(1);
-            xIterator.open(_currentDynamicContext);
+            xIterator.open(_currentDynamicContextForLocalExecution);
             if (xIterator.hasNext()) {
                 x = xIterator.next();
             } else {

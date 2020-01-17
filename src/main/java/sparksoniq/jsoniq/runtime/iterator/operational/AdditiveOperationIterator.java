@@ -80,8 +80,8 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        _leftIterator.open(_currentDynamicContext);
-        _rightIterator.open(_currentDynamicContext);
+        _leftIterator.open(_currentDynamicContextForLocalExecution);
+        _rightIterator.open(_currentDynamicContextForLocalExecution);
 
         if (!_leftIterator.hasNext() || !_rightIterator.hasNext()) {
             this._hasNext = false;

@@ -50,8 +50,8 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
     public void open(DynamicContext context) {
         super.open(context);
 
-        _leftIterator.open(_currentDynamicContext);
-        _rightIterator.open(_currentDynamicContext);
+        _leftIterator.open(_currentDynamicContextForLocalExecution);
+        _rightIterator.open(_currentDynamicContextForLocalExecution);
 
         // if left or right equals empty sequence, return empty sequence
         if (!_leftIterator.hasNext() || !_rightIterator.hasNext()) {

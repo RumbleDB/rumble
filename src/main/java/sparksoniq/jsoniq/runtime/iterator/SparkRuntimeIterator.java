@@ -74,7 +74,7 @@ public abstract class SparkRuntimeIterator extends RuntimeIterator {
     public boolean hasNext() {
         if (result == null) {
             currentResultIndex = 0;
-            _rdd = this.getRDD(_currentDynamicContext);
+            _rdd = this.getRDD(_currentDynamicContextForLocalExecution);
             result = SparkSessionManager.collectRDDwithLimit(_rdd);
             _hasNext = !result.isEmpty();
         }

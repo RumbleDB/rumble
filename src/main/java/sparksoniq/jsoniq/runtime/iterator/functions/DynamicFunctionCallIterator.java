@@ -68,7 +68,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
     @Override
     public void openLocal() {
         setFunctionItemAndIteratorWithCurrentContext();
-        _functionCallIterator.open(_currentDynamicContext);
+        _functionCallIterator.open(_currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
@@ -95,7 +95,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
 
     @Override
     protected void resetLocal(DynamicContext context) {
-        _functionCallIterator.reset(_currentDynamicContext);
+        _functionCallIterator.reset(_currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
@@ -125,7 +125,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         setFunctionItemAndIteratorWithCurrentContext();
-        return _functionCallIterator.getRDD(_currentDynamicContext);
+        return _functionCallIterator.getRDD(_currentDynamicContextForLocalExecution);
     }
 
     @Override
@@ -135,7 +135,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
 
     private void setFunctionItemAndIteratorWithCurrentContext() {
         try {
-            _functionItemIterator.open(_currentDynamicContext);
+            _functionItemIterator.open(_currentDynamicContextForLocalExecution);
             if (_functionItemIterator.hasNext()) {
                 _functionItem = (FunctionItem) _functionItemIterator.next();
             }

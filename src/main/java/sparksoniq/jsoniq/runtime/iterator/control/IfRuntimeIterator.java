@@ -81,7 +81,7 @@ public class IfRuntimeIterator extends LocalRuntimeIterator {
         }
         if (_selectedIterator == null) {
             RuntimeIterator condition = this._children.get(0);
-            condition.open(_currentDynamicContext);
+            condition.open(_currentDynamicContextForLocalExecution);
             boolean effectiveBooleanValue = getEffectiveBooleanValue(condition);
             condition.close();
             if (effectiveBooleanValue) {
@@ -89,7 +89,7 @@ public class IfRuntimeIterator extends LocalRuntimeIterator {
             } else {
                 _selectedIterator = this._children.get(2);
             }
-            _selectedIterator.open(_currentDynamicContext);
+            _selectedIterator.open(_currentDynamicContextForLocalExecution);
         }
         if (_selectedIterator.hasNext()) {
             _nextResult = _selectedIterator.next();

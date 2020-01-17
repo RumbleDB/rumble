@@ -54,7 +54,7 @@ public class TreatIterator extends HybridRuntimeIterator {
     @Override
     public void resetLocal(DynamicContext context) {
         this._childIndex = 0;
-        _iterator.reset(_currentDynamicContext);
+        _iterator.reset(_currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
@@ -66,7 +66,7 @@ public class TreatIterator extends HybridRuntimeIterator {
     @Override
     public void openLocal() {
         this._childIndex = 0;
-        _iterator.open(_currentDynamicContext);
+        _iterator.open(_currentDynamicContextForLocalExecution);
         this.setNextResult();
     }
 
@@ -85,7 +85,7 @@ public class TreatIterator extends HybridRuntimeIterator {
         if (_iterator.hasNext()) {
             if (_iterator.isRDD()) {
                 if (_currentResult == null) {
-                    JavaRDD<Item> childRDD = _iterator.getRDD(_currentDynamicContext);
+                    JavaRDD<Item> childRDD = _iterator.getRDD(_currentDynamicContextForLocalExecution);
                     int size = childRDD.take(2).size();
                     checkMoreThanOneItemSequence(size);
                     _nextResult = childRDD.first();
@@ -121,7 +121,7 @@ public class TreatIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        _currentDynamicContext = dynamicContext;
+        _currentDynamicContextForLocalExecution = dynamicContext;
         JavaRDD<Item> childRDD = _iterator.getRDD(dynamicContext);
 
         if (_sequenceType.getArity() != SequenceType.Arity.ZeroOrMore)

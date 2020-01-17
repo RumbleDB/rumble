@@ -45,10 +45,10 @@ public class ExistsFunctionIterator extends LocalFunctionCallIterator {
         if (this.hasNext()) {
             this._hasNext = false;
             if (_sequenceIterator.isRDD()) {
-                List<Item> i = _sequenceIterator.getRDD(_currentDynamicContext).take(1);
+                List<Item> i = _sequenceIterator.getRDD(_currentDynamicContextForLocalExecution).take(1);
                 return ItemFactory.getInstance().createBooleanItem(!i.isEmpty());
             }
-            _sequenceIterator.open(_currentDynamicContext);
+            _sequenceIterator.open(_currentDynamicContextForLocalExecution);
             Item result;
             if (_sequenceIterator.hasNext()) {
                 result = ItemFactory.getInstance().createBooleanItem(true);

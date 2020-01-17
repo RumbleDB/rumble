@@ -31,7 +31,7 @@ public class CastIterator extends UnaryOperationIterator {
             String targetType = ItemTypes.getItemTypeName(_singleType.getType().toString());
 
             List<Item> items = new ArrayList<>();
-            _child.open(_currentDynamicContext);
+            _child.open(_currentDynamicContextForLocalExecution);
             while (_child.hasNext()) {
                 items.add(_child.next());
                 if (items.size() > 1) {

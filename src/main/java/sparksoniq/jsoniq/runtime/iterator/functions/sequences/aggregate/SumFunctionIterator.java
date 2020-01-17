@@ -56,7 +56,7 @@ public class SumFunctionIterator extends LocalFunctionCallIterator {
         if (!_iterator.hasNext()) {
             if (this._children.size() > 1) {
                 RuntimeIterator zeroIterator = this._children.get(1);
-                zeroIterator.open(_currentDynamicContext);
+                zeroIterator.open(_currentDynamicContextForLocalExecution);
                 if (!zeroIterator.hasNext()) {
                     this._hasNext = false;
                     return;

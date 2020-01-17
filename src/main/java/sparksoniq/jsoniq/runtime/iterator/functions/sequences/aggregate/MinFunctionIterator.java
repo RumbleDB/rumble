@@ -51,7 +51,7 @@ public class MinFunctionIterator extends LocalFunctionCallIterator {
         super.open(context);
 
         _iterator = this._children.get(0);
-        _iterator.open(_currentDynamicContext);
+        _iterator.open(_currentDynamicContextForLocalExecution);
         this._hasNext = _iterator.hasNext();
         _iterator.close();
     }
@@ -75,7 +75,7 @@ public class MinFunctionIterator extends LocalFunctionCallIterator {
                 }
             } else {
                 try {
-                    return _iterator.getRDD(_currentDynamicContext).min(comparator);
+                    return _iterator.getRDD(_currentDynamicContextForLocalExecution).min(comparator);
                 } catch (SparksoniqRuntimeException e) {
                     throw new InvalidArgumentTypeException(
                             "Min expression input error. Input has to be non-null atomics of matching types: "

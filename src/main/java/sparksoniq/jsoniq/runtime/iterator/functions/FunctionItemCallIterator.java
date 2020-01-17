@@ -75,7 +75,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     @Override
     public void openLocal() {
         processArguments();
-        _functionBodyIterator.open(_currentDynamicContext);
+        _functionBodyIterator.open(_currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
@@ -162,9 +162,9 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
             }
 
             // place argument values into dynamic context
-            _currentDynamicContext = new DynamicContext(_currentDynamicContext);
+            _currentDynamicContextForLocalExecution = new DynamicContext(_currentDynamicContextForLocalExecution);
             for (Map.Entry<String, List<Item>> argumentEntry : argumentValues.entrySet()) {
-                _currentDynamicContext.addVariableValue(
+                _currentDynamicContextForLocalExecution.addVariableValue(
                     "$" + argumentEntry.getKey(),
                     argumentEntry.getValue()
                 );
@@ -196,7 +196,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
     @Override
     protected void resetLocal(DynamicContext context) {
-        _functionBodyIterator.reset(_currentDynamicContext);
+        _functionBodyIterator.reset(_currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
@@ -226,7 +226,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         processArguments();
-        return _functionBodyIterator.getRDD(_currentDynamicContext);
+        return _functionBodyIterator.getRDD(_currentDynamicContextForLocalExecution);
     }
 
     @Override

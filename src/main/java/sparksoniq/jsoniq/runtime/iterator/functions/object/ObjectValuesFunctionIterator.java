@@ -46,7 +46,7 @@ public class ObjectValuesFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public void openLocal() {
-        _iterator.open(_currentDynamicContext);
+        _iterator.open(_currentDynamicContextForLocalExecution);
         _nextResults = new LinkedList<>();
 
         setNextResult();
@@ -75,7 +75,7 @@ public class ObjectValuesFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void resetLocal(DynamicContext context) {
-        _iterator.reset(_currentDynamicContext);
+        _iterator.reset(_currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
@@ -105,7 +105,7 @@ public class ObjectValuesFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        _currentDynamicContext = dynamicContext;
+        _currentDynamicContextForLocalExecution = dynamicContext;
         JavaRDD<Item> childRDD = _iterator.getRDD(dynamicContext);
         FlatMapFunction<Item, Item> transformation = new ObjectValuesClosure();
         return childRDD.flatMap(transformation);

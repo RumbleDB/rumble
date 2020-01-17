@@ -45,7 +45,7 @@ public class ArrayRuntimeIterator extends LocalRuntimeIterator {
     @Override
     public Item next() {
         if (this._hasNext) {
-            List<Item> result = this.runChildrenIterators(this._currentDynamicContext);
+            List<Item> result = this.runChildrenIterators(this._currentDynamicContextForLocalExecution);
             this._item = ItemFactory.getInstance().createArrayItem(result);
             this._hasNext = false;
             return _item;
