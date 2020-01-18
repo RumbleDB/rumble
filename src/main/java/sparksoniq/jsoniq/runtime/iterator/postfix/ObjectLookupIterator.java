@@ -160,7 +160,10 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                         break;
                     }
                 } else {
-                    Item contextItem = _currentDynamicContextForLocalExecution.getLocalVariableValue("$$", getMetadata()).get(0);
+                    Item contextItem = _currentDynamicContextForLocalExecution.getLocalVariableValue(
+                        "$$",
+                        getMetadata()
+                    ).get(0);
                     _nextResult = item.getItemByKey(contextItem.getStringValue());
                 }
             }

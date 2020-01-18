@@ -79,7 +79,9 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
             _functionBodyIterator = generatePartiallyAppliedFunction();
         } else {
             _functionBodyIterator = _functionItem.getBodyIterator();
-            _currentDynamicContextForLocalExecution = this.createNewDynamicContextWithArguments(_currentDynamicContextForLocalExecution);
+            _currentDynamicContextForLocalExecution = this.createNewDynamicContextWithArguments(
+                _currentDynamicContextForLocalExecution
+            );
         }
 
         _functionBodyIterator.open(_currentDynamicContextForLocalExecution);
