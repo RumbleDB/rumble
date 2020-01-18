@@ -77,8 +77,8 @@ public class ForClauseVar extends FlworVarDecl {
     }
 
     @Override
-    protected void initVariableHighestExecutionMode() {
-        this._variableHighestExecutionMode = ExecutionMode.LOCAL;
+    protected void initVariableHighestStorageMode() {
+        this._variableHighestStorageMode = ExecutionMode.LOCAL;
     }
 
     @Override

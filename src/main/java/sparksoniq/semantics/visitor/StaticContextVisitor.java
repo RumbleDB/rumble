@@ -161,7 +161,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
             expression.getVariableReference().getVariableName(),
             type,
             expression.getMetadata(),
-            expression.getVariableHighestExecutionMode()
+            expression.getVariableHighestStorageMode()
         );
         return result;
     }

@@ -39,7 +39,7 @@ public abstract class FlworVarDecl extends FlworClause {
     protected FlworVarSequenceType asSequence;
 
     // Holds whether the variable will be stored in materialized(local) or native/spark(RDD or DF) format in a tuple
-    protected ExecutionMode _variableHighestExecutionMode = ExecutionMode.UNSET;
+    protected ExecutionMode _variableHighestStorageMode = ExecutionMode.UNSET;
 
     private FlworVarDecl(FLWOR_CLAUSES clauseType, ExpressionMetadata metadata) {
         super(clauseType, metadata);
@@ -81,13 +81,13 @@ public abstract class FlworVarDecl extends FlworClause {
     @Override
     protected abstract void initHighestExecutionMode();
 
-    protected abstract void initVariableHighestExecutionMode();
+    protected abstract void initVariableHighestStorageMode();
 
-    public ExecutionMode getVariableHighestExecutionMode() {
-        if (_variableHighestExecutionMode == ExecutionMode.UNSET) {
-            this.initVariableHighestExecutionMode();
+    public ExecutionMode getVariableHighestStorageMode() {
+        if (_variableHighestStorageMode == ExecutionMode.UNSET) {
+            this.initVariableHighestStorageMode();
         }
-        return _variableHighestExecutionMode;
+        return _variableHighestStorageMode;
     }
 
     @Override
