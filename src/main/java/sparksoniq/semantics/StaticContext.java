@@ -23,14 +23,37 @@ package sparksoniq.semantics;
 import sparksoniq.exceptions.SemanticException;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.types.SequenceType;
-import sparksoniq.utils.Tuple;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class StaticContext {
 
-    private Map<String, Tuple<SequenceType, ExpressionMetadata>> _inScopeVariables;
+    private static class InScopeVariable {
+        private String name;
+        private SequenceType sequenceType;
+        private ExpressionMetadata metadata;
+
+        public InScopeVariable(String name, SequenceType sequenceType, ExpressionMetadata metadata) {
+            this.name = name;
+            this.sequenceType = sequenceType;
+            this.metadata = metadata;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public SequenceType getSequenceType() {
+            return sequenceType;
+        }
+
+        public ExpressionMetadata getMetadata() {
+            return metadata;
+        }
+    }
+
+    private Map<String, InScopeVariable> _inScopeVariables;
     private StaticContext _parent;
 
     public StaticContext() {
@@ -61,20 +84,34 @@ public class StaticContext {
         return found;
     }
 
-    public SequenceType getVariableSequenceType(String varName) {
+    private InScopeVariable getInScopeVariable(String varName) {
         if (_inScopeVariables.containsKey(varName))
-            return _inScopeVariables.get(varName).getFirst();
-        else if (_parent != null)
-            return _parent.getVariableSequenceType(varName);
-        else
+            return _inScopeVariables.get(varName);
+        else {
+            StaticContext ancestor = _parent;
+            while (ancestor != null) {
+                if (ancestor._inScopeVariables.containsKey(varName)) {
+                    return ancestor._inScopeVariables.get(varName);
+                }
+                ancestor = ancestor.getParent();
+            }
             throw new SemanticException("Variable " + varName + " not in scope", null);
+        }
+    }
+
+    public SequenceType getVariableSequenceType(String varName) {
+        return getInScopeVariable(varName).getSequenceType();
+    }
+
+    public ExpressionMetadata getVariableMetadata(String varName) {
+        return getInScopeVariable(varName).getMetadata();
     }
 
     public void addVariable(String varName, SequenceType type, ExpressionMetadata metadata) {
-        this._inScopeVariables.put(varName, new Tuple<>(type, metadata));
+        this._inScopeVariables.put(varName, new InScopeVariable(varName, type, metadata));
     }
 
-    protected Map<String, Tuple<SequenceType, ExpressionMetadata>> getInScopeVariables() {
+    protected Map<String, InScopeVariable> getInScopeVariables() {
         return _inScopeVariables;
     }
 }
