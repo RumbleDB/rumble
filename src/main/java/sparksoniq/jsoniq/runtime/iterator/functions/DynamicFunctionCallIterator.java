@@ -20,12 +20,10 @@
 
 package sparksoniq.jsoniq.runtime.iterator.functions;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.FunctionItem;
-import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
@@ -124,9 +122,9 @@ public class DynamicFunctionCallIterator extends LocalRuntimeIterator {
             );
         }
         _functionCallIterator = Functions.buildUserDefinedFunctionCallIterator(
-                _functionItem,
-                getMetadata(),
-                _functionArguments
+            _functionItem,
+            getMetadata(),
+            _functionArguments
         );
     }
 
