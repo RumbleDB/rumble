@@ -4,13 +4,13 @@ public enum ExecutionMode {
     UNSET,
     LOCAL,
     RDD,
-    DF;
+    DATAFRAME;
 
     public boolean isRDD() {
-        return this == ExecutionMode.RDD || this == ExecutionMode.DF;
+        return this == ExecutionMode.RDD || this == ExecutionMode.DATAFRAME;
     }
 
-    public boolean isDF() {
-        return this == ExecutionMode.DF;
+    public boolean isDataFrame() {
+        return this == ExecutionMode.DATAFRAME;
     }
 }

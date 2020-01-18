@@ -36,7 +36,7 @@ public abstract class DataFrameRuntimeIterator extends RDDRuntimeIterator {
             IteratorMetadata iteratorMetadata
     ) {
         super(children, executionMode, iteratorMetadata);
-        if (executionMode != ExecutionMode.DF) {
+        if (executionMode != ExecutionMode.DATAFRAME) {
             throw new OurBadException("DF runtime iterators support only dataframe execution mode");
         }
     }

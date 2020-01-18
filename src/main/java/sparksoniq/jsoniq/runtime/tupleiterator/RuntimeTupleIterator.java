@@ -116,7 +116,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         if (_highestExecutionMode == ExecutionMode.UNSET) {
             throw new OurBadException("isDataFrame accessed in iterator without execution mode being set.");
         }
-        return _highestExecutionMode.isDF();
+        return _highestExecutionMode.isDataFrame();
     }
 
     /**

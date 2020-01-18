@@ -75,14 +75,14 @@ public class FunctionCall extends PrimaryExpression {
             // if subclass of RDDRuntimeIterator
             if (RDDRuntimeIterator.class.isAssignableFrom(functionIteratorClass)) {
                 if (DataFrameRuntimeIterator.class.isAssignableFrom(functionIteratorClass)) {
-                    this._highestExecutionMode = ExecutionMode.DF;
+                    this._highestExecutionMode = ExecutionMode.DATAFRAME;
                 } else {
                     this._highestExecutionMode = ExecutionMode.RDD;
                 }
             } else if (HybridRuntimeIterator.class.isAssignableFrom(functionIteratorClass)) {
                 if (functionIteratorClass.isInstance(ObjectKeysFunctionIterator.class)) {
                     for (ExpressionOrClause child : this.getDescendants()) {
-                        if (child.getHighestExecutionMode().isRDD() && !child.getHighestExecutionMode().isDF()) {
+                        if (child.getHighestExecutionMode().isRDD() && !child.getHighestExecutionMode().isDataFrame()) {
                             this._highestExecutionMode = ExecutionMode.RDD;
                         }
                     }
@@ -94,7 +94,7 @@ public class FunctionCall extends PrimaryExpression {
                     }
                 }
             } else {
-                // Local function call -> isRDD & isDF are false
+                // Local function call -> isRDD & isDataFrame are false
             }
         } else if (Functions.checkUserDefinedFunctionExecutionModeExists(identifier)) {
             this._highestExecutionMode = Functions.getUserDefinedFunctionExecutionMode(identifier, getMetadata());

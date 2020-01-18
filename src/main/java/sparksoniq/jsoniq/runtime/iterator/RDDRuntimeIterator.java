@@ -40,7 +40,7 @@ public abstract class RDDRuntimeIterator extends HybridRuntimeIterator {
             IteratorMetadata iteratorMetadata
     ) {
         super(children, executionMode, iteratorMetadata);
-        if (executionMode != ExecutionMode.RDD && executionMode != ExecutionMode.DF) {
+        if (executionMode != ExecutionMode.RDD && executionMode != ExecutionMode.DATAFRAME) {
             throw new OurBadException("RDD runtime iterators support either RDD or DF execution modes");
         }
         this.parser = new JiqsItemParser();

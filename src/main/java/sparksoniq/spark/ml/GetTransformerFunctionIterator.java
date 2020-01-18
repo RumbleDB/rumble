@@ -95,7 +95,7 @@ public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
             RuntimeIterator bodyIterator = new ApplyTransformerRuntimeIterator(
                     _transformerName,
                     _transformerSparkMLClass,
-                    ExecutionMode.DF,
+                    ExecutionMode.DATAFRAME,
                     getMetadata()
             );
             List<SequenceType> paramTypes = Collections.unmodifiableList(
