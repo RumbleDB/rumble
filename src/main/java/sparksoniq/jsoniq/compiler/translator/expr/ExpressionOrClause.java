@@ -44,6 +44,9 @@ public abstract class ExpressionOrClause {
         this.metadata = metadata;
     }
 
+    /**
+     * initHighestExecutionMode is meant to be overridden by expression subclasses which support higher execution modes
+     */
     protected void initHighestExecutionMode() {
         _highestExecutionMode = ExecutionMode.LOCAL;
     }
