@@ -48,7 +48,7 @@ public class RangeOperationIterator extends BinaryOperationBaseIterator {
 
     @Override
     public Item next() {
-        if (_hasNext == true) {
+        if (_hasNext) {
             if (_index == _right)
                 this._hasNext = false;
             return ItemFactory.getInstance().createIntegerItem(_index++);
