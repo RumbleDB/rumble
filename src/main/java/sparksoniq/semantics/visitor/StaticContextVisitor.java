@@ -35,7 +35,6 @@ import sparksoniq.jsoniq.compiler.translator.expr.flowr.GroupByClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.GroupByClauseVar;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.LetClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.LetClauseVar;
-import sparksoniq.jsoniq.compiler.translator.expr.primary.ContextExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpressionVar;
@@ -164,11 +163,6 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
         return result;
     }
     // endregion
-
-    @Override
-    public StaticContext visitContextExpr(ContextExpression expression, StaticContext argument) {
-        return defaultAction(expression, argument);
-    }
 
     @Override
     public StaticContext visitQuantifiedExpression(QuantifiedExpression expression, StaticContext argument) {
