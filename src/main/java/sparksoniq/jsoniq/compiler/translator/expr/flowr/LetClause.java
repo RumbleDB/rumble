@@ -55,7 +55,7 @@ public class LetClause extends FlworClause {
         // assign the previous clause of the LetClause as the first variable definition's previous
         letVars.get(0).previousClause = this.previousClause;
     }
-    
+
     @Override
     protected void initHighestExecutionMode() {
         // call isDataFrame on the last letVariable
