@@ -23,6 +23,9 @@ package sparksoniq.jsoniq.item;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.FunctionsNonSerializableException;
 import sparksoniq.exceptions.OurBadException;
@@ -52,7 +55,9 @@ public class FunctionItem extends Item {
     // signature contains type information for all parameters and the return value
     private FunctionSignature signature;
     private RuntimeIterator bodyIterator;
-    private Map<String, List<Item>> variablesInClosure;
+    private Map<String, List<Item>> _localVariablesInClosure;
+    private Map<String, JavaRDD<Item>> _RDDVariablesInClosure;
+    private Map<String, Dataset<Row>> _DFVariablesInClosure;
 
     protected FunctionItem() {
         super();
@@ -62,14 +67,33 @@ public class FunctionItem extends Item {
             FunctionIdentifier identifier,
             List<String> parameterNames,
             FunctionSignature signature,
-            RuntimeIterator bodyIterator,
-            Map<String, List<Item>> variablesInClosure
+            RuntimeIterator bodyIterator
     ) {
         this.identifier = identifier;
         this.parameterNames = parameterNames;
         this.signature = signature;
         this.bodyIterator = bodyIterator;
-        this.variablesInClosure = variablesInClosure;
+        this._localVariablesInClosure = new HashMap<>();
+        this._RDDVariablesInClosure = new HashMap<>();
+        this._DFVariablesInClosure = new HashMap<>();
+    }
+
+    public FunctionItem(
+            FunctionIdentifier identifier,
+            List<String> parameterNames,
+            FunctionSignature signature,
+            RuntimeIterator bodyIterator,
+            Map<String, List<Item>> localVariablesInClosure,
+            Map<String, JavaRDD<Item>> RDDVariablesInClosure,
+            Map<String, Dataset<Row>> DFVariablesInClosure
+    ) {
+        this.identifier = identifier;
+        this.parameterNames = parameterNames;
+        this.signature = signature;
+        this.bodyIterator = bodyIterator;
+        this._localVariablesInClosure = localVariablesInClosure;
+        this._RDDVariablesInClosure = RDDVariablesInClosure;
+        this._DFVariablesInClosure = DFVariablesInClosure;
     }
 
     public FunctionItem(
@@ -89,7 +113,9 @@ public class FunctionItem extends Item {
         this.parameterNames = paramNames;
         this.signature = new FunctionSignature(parameters, returnType);
         this.bodyIterator = bodyIterator;
-        this.variablesInClosure = new HashMap<>();
+        this._localVariablesInClosure = new HashMap<>();
+        this._RDDVariablesInClosure = new HashMap<>();
+        this._DFVariablesInClosure = new HashMap<>();
     }
 
     public FunctionIdentifier getIdentifier() {
@@ -108,8 +134,16 @@ public class FunctionItem extends Item {
         return bodyIterator;
     }
 
-    public Map<String, List<Item>> getVariablesInClosure() {
-        return variablesInClosure;
+    public Map<String, List<Item>> getLocalVariablesInClosure() {
+        return _localVariablesInClosure;
+    }
+
+    public Map<String, JavaRDD<Item>> getRDDVariablesInClosure() {
+        return _RDDVariablesInClosure;
+    }
+
+    public Map<String, Dataset<Row>> getDFVariablesInClosure() {
+        return _DFVariablesInClosure;
     }
 
     @Override
@@ -155,7 +189,9 @@ public class FunctionItem extends Item {
         kryo.writeObject(output, this.signature.getParameterTypes());
         kryo.writeObject(output, this.signature.getReturnType());
         // kryo.writeObject(output, this.bodyIterator);
-        kryo.writeObject(output, this.variablesInClosure);
+        kryo.writeObject(output, this._localVariablesInClosure);
+        kryo.writeObject(output, this._RDDVariablesInClosure);
+        kryo.writeObject(output, this._DFVariablesInClosure);
 
         // convert RuntimeIterator to byte[] data
         try {
@@ -182,7 +218,10 @@ public class FunctionItem extends Item {
         SequenceType returnType = kryo.readObject(input, SequenceType.class);
         this.signature = new FunctionSignature(parameters, returnType);
         // this.bodyIterator = kryo.readObject(input, RuntimeIterator.class);
-        this.variablesInClosure = kryo.readObject(input, HashMap.class);
+        this._localVariablesInClosure = kryo.readObject(input, HashMap.class);
+        this._RDDVariablesInClosure = kryo.readObject(input, HashMap.class);
+        this._DFVariablesInClosure = kryo.readObject(input, HashMap.class);
+
 
         try {
             int dataLength = input.readInt();
