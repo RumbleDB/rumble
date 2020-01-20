@@ -1,7 +1,7 @@
 package sparksoniq.spark.ml;
 
-import sparksoniq.exceptions.UnknownRumbleMLClassReferenceException;
-import sparksoniq.exceptions.UnknownRumbleMLParamReferenceException;
+import sparksoniq.exceptions.UnrecognizedRumbleMLClassReferenceException;
+import sparksoniq.exceptions.UnrecognizedRumbleMLParamReferenceException;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.ArrayList;
@@ -1199,28 +1199,28 @@ public class RumbleMLCatalog {
 
     public static String getEstimatorFullClassName(String name, IteratorMetadata metadata) {
         if (!estimatorFullClassNames.containsKey(name)) {
-            throw new UnknownRumbleMLClassReferenceException(name, metadata);
+            throw new UnrecognizedRumbleMLClassReferenceException(name, metadata);
         }
         return estimatorFullClassNames.get(name);
     }
 
     public static String getTransformerFullClassName(String name, IteratorMetadata metadata) {
         if (!transformerFullClassNames.containsKey(name)) {
-            throw new UnknownRumbleMLClassReferenceException(name, metadata);
+            throw new UnrecognizedRumbleMLClassReferenceException(name, metadata);
         }
         return transformerFullClassNames.get(name);
     }
 
     public static List<String> getEstimatorParams(String name, IteratorMetadata metadata) {
         if (!estimatorParams.containsKey(name)) {
-            throw new UnknownRumbleMLClassReferenceException(name, metadata);
+            throw new UnrecognizedRumbleMLClassReferenceException(name, metadata);
         }
         return estimatorParams.get(name);
     }
 
     public static List<String> getTransformerParams(String name, IteratorMetadata metadata) {
         if (!transformerParams.containsKey(name)) {
-            throw new UnknownRumbleMLClassReferenceException(name, metadata);
+            throw new UnrecognizedRumbleMLClassReferenceException(name, metadata);
         }
         return transformerParams.get(name);
     }
@@ -1231,10 +1231,10 @@ public class RumbleMLCatalog {
             IteratorMetadata metadata
     ) {
         if (!transformerParams.containsKey(transformerName)) {
-            throw new UnknownRumbleMLClassReferenceException(transformerName, metadata);
+            throw new UnrecognizedRumbleMLClassReferenceException(transformerName, metadata);
         }
         if (!transformerParams.get(transformerName).contains(paramName)) {
-            throw new UnknownRumbleMLParamReferenceException(
+            throw new UnrecognizedRumbleMLParamReferenceException(
                     "Make sure \""
                         + paramName
                         + "\" is a valid parameter of \""
@@ -1247,7 +1247,7 @@ public class RumbleMLCatalog {
 
     public static String getParamJavaTypeName(String name, IteratorMetadata metadata) {
         if (!paramJavaTypeNames.containsKey(name)) {
-            throw new UnknownRumbleMLParamReferenceException(
+            throw new UnrecognizedRumbleMLParamReferenceException(
                     "Parameter \""
                         + name
                         + "\" does not exist in in RumbleML API.\"",

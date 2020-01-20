@@ -23,17 +23,17 @@ package sparksoniq.exceptions;
 import sparksoniq.exceptions.codes.ErrorCodes;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
-public class UnknownRumbleMLClassReferenceException extends SparksoniqRuntimeException {
+public class UnrecognizedRumbleMLClassReferenceException extends SparksoniqRuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    public UnknownRumbleMLClassReferenceException(String name, IteratorMetadata iteratorMetadata) {
+    public UnrecognizedRumbleMLClassReferenceException(String name, IteratorMetadata iteratorMetadata) {
         super(
-            "Unknown RumbleML class reference; Make sure \""
+            "Unrecognized RumbleML class; Make sure \""
                 +
                 name
-                + "\" is a valid RumbleML component.",
-            ErrorCodes.UnknownRumbleMLClassReferenceErrorCode,
+                + "\" is a valid component of RumbleML API.",
+            ErrorCodes.UnrecognizedRumbleMLClassReferenceErrorCode,
             iteratorMetadata.getExpressionMetadata()
         );
     }

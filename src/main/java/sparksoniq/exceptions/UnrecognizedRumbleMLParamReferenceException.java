@@ -23,16 +23,15 @@ package sparksoniq.exceptions;
 import sparksoniq.exceptions.codes.ErrorCodes;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
-public class UnknownRumbleMLParamReferenceException extends SparksoniqRuntimeException {
+public class UnrecognizedRumbleMLParamReferenceException extends SparksoniqRuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    public UnknownRumbleMLParamReferenceException(String message, IteratorMetadata iteratorMetadata) {
+    public UnrecognizedRumbleMLParamReferenceException(String message, IteratorMetadata iteratorMetadata) {
         super(
-            "Unknown RumbleML parameter reference; "
-                + message
-                + "\".",
-            ErrorCodes.UnknownRumbleMLParamReferenceErrorCode,
+            "Unrecognized Rumble ML parameter; "
+                + message,
+            ErrorCodes.UnrecognizedRumbleMLParamReferenceErrorCode,
             iteratorMetadata.getExpressionMetadata()
         );
     }
