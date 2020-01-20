@@ -222,6 +222,15 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         return result;
     }
 
+    public List<Item> materialize(DynamicContext context) {
+        List<Item> result = new ArrayList<>();
+        this.open(context);
+        while (this.hasNext())
+            result.add(this.next());
+        this.close();
+        return result;
+    }
+
     protected Item getSingleItemFromIterator(
             RuntimeIterator iterator
     ) {
