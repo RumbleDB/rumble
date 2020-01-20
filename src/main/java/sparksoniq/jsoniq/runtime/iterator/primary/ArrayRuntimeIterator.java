@@ -27,18 +27,17 @@ import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class ArrayRuntimeIterator extends LocalRuntimeIterator {
 
-
     private static final long serialVersionUID = 1L;
 
     public ArrayRuntimeIterator(RuntimeIterator arrayItems, IteratorMetadata iteratorMetadata) {
-        super(new ArrayList<>(), iteratorMetadata);
-        if (arrayItems != null)
+        super(null, iteratorMetadata);
+        if (arrayItems != null) {
             this._children.add(arrayItems);
+        }
     }
 
     @Override
@@ -48,7 +47,8 @@ public class ArrayRuntimeIterator extends LocalRuntimeIterator {
             Item _item = ItemFactory.getInstance().createArrayItem(result);
             this._hasNext = false;
             return _item;
-        } else
+        } else {
             throw new IteratorFlowException("Invalid next() call on array iterator", getMetadata());
+        }
     }
 }
