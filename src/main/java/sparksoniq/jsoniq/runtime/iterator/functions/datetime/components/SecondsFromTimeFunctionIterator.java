@@ -44,9 +44,7 @@ public class SecondsFromTimeFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        _timeItem = this.getSingleItemFromIterator(
-            this._children.get(0)
-        );
+        _timeItem = this._children.get(0).materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
         this._hasNext = _timeItem != null;
     }
 }

@@ -54,7 +54,12 @@ public class TanFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             this._hasNext = false;
             return ItemFactory.getInstance()
-                .createDoubleItem(Math.tan(this.getSingleItemFromIterator(_iterator).castToDoubleValue()));
+                .createDoubleItem(
+                    Math.tan(
+                        _iterator.materializeFirstItemOrNull(_currentDynamicContextForLocalExecution)
+                            .castToDoubleValue()
+                    )
+                );
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " tan function", getMetadata());
     }

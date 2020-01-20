@@ -54,7 +54,12 @@ public class CeilingFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             this._hasNext = false;
             return ItemFactory.getInstance()
-                .createDoubleItem(Math.ceil(this.getSingleItemFromIterator(_iterator).castToDoubleValue()));
+                .createDoubleItem(
+                    Math.ceil(
+                        _iterator.materializeFirstItemOrNull(_currentDynamicContextForLocalExecution)
+                            .castToDoubleValue()
+                    )
+                );
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " ceiling function", getMetadata());
     }

@@ -80,13 +80,9 @@ public class AdjustDateTimeToTimezone extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        _timeItem = this.getSingleItemFromIterator(
-            this._children.get(0)
-        );
+        _timeItem = this._children.get(0).materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
         if (this._children.size() == 2) {
-            _timezone = this.getSingleItemFromIterator(
-                this._children.get(1)
-            );
+            _timezone = this._children.get(1).materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
         }
         this._hasNext = _timeItem != null;
     }

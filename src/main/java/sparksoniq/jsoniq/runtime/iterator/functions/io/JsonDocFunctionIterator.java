@@ -58,7 +58,7 @@ public class JsonDocFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            Item path = this.getSingleItemFromIterator(_iterator);
+            Item path = _iterator.materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
             try {
                 File f = new File(path.getStringValue());
                 FileInputStream fis = new FileInputStream(f);

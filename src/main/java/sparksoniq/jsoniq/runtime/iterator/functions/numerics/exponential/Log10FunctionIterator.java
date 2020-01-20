@@ -53,7 +53,7 @@ public class Log10FunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            Item value = this.getSingleItemFromIterator(_iterator);
+            Item value = _iterator.materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
             try {
                 return ItemFactory.getInstance().createDoubleItem(Math.log10(value.castToDoubleValue()));
 

@@ -54,7 +54,12 @@ public class ACosFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             this._hasNext = false;
             return ItemFactory.getInstance()
-                .createDoubleItem(Math.acos(this.getSingleItemFromIterator(_iterator).castToDoubleValue()));
+                .createDoubleItem(
+                    Math.acos(
+                        _iterator.materializeFirstItemOrNull(_currentDynamicContextForLocalExecution)
+                            .castToDoubleValue()
+                    )
+                );
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " acos function", getMetadata());
     }

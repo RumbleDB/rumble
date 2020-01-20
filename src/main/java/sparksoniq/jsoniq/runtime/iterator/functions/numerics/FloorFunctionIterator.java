@@ -54,7 +54,12 @@ public class FloorFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             this._hasNext = false;
             return ItemFactory.getInstance()
-                .createDoubleItem(Math.floor(this.getSingleItemFromIterator(_iterator).castToDoubleValue()));
+                .createDoubleItem(
+                    Math.floor(
+                        _iterator.materializeFirstItemOrNull(_currentDynamicContextForLocalExecution)
+                            .castToDoubleValue()
+                    )
+                );
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " floor function", getMetadata());
     }

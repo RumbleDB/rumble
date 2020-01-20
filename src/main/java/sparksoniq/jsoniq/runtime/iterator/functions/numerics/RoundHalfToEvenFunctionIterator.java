@@ -55,10 +55,10 @@ public class RoundHalfToEvenFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            Item value = this.getSingleItemFromIterator(_iterator);
+            Item value = _iterator.materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
             Item precision;
             if (this._children.size() > 1) {
-                precision = this.getSingleItemFromIterator(this._children.get(1));
+                precision = this._children.get(1).materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
             }
             // if second param is not given precision is set as 0 (rounds to a whole number)
             else {

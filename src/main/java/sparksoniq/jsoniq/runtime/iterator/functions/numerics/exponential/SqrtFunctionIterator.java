@@ -52,7 +52,7 @@ public class SqrtFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public Item next() {
         if (this._hasNext) {
-            Item value = this.getSingleItemFromIterator(_iterator);
+            Item value = _iterator.materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
             try {
                 this._hasNext = false;
                 return ItemFactory.getInstance().createDoubleItem(Math.sqrt(value.castToDoubleValue()));

@@ -47,12 +47,8 @@ public class MatchesFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             this._hasNext = false;
 
-            Item regexpItem = this.getSingleItemFromIterator(
-                this._children.get(1)
-            );
-            Item stringItem = this.getSingleItemFromIterator(
-                this._children.get(0)
-            );
+            Item regexpItem = this._children.get(1).materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
+            Item stringItem = this._children.get(0).materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
             if (stringItem == null) {
                 stringItem = ItemFactory.getInstance().createStringItem("");
             }
