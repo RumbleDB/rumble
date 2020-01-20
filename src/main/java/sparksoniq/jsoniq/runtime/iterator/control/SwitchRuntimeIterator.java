@@ -48,10 +48,8 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
     ) {
         super(null, iteratorMetadata);
         this._children.add(test);
-        for (RuntimeIterator key : cases.keySet())
-            this._children.add(key);
-        for (RuntimeIterator value : cases.values())
-            this._children.add(value);
+        this._children.addAll(cases.keySet());
+        this._children.addAll(cases.values());
         this._children.add(defaultReturn);
         this.testField = test;
         this.cases = cases;
