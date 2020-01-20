@@ -75,6 +75,7 @@ public class AnnotationsTestsBase {
 
         try {
             context = this.parse(path, visitor);
+            Functions.clearUserDefinedFunctions(); // clear UDFs between each test run
 
             // generate static context and runtime iterators
             if (visitor instanceof JsoniqExpressionTreeVisitor) {
@@ -85,7 +86,6 @@ public class AnnotationsTestsBase {
                     completeVisitor.getMainModule().getStaticContext()
                 );
                 // generate iterators
-                Functions.clearUserDefinedFunctions();
                 runtimeIterator = new RuntimeIteratorVisitor().visit(completeVisitor.getMainModule(), null);
             }
             // PARSING
