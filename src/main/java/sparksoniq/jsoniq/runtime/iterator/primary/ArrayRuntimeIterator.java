@@ -27,6 +27,7 @@ import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ArrayRuntimeIterator extends LocalRuntimeIterator {
@@ -43,7 +44,10 @@ public class ArrayRuntimeIterator extends LocalRuntimeIterator {
     @Override
     public Item next() {
         if (this._hasNext) {
-            List<Item> result = this.runChildrenIterators(this._currentDynamicContextForLocalExecution);
+            List<Item> result = new ArrayList<>();
+            if (!this._children.isEmpty()) {
+                result.addAll(this._children.get(0).materialize(_currentDynamicContextForLocalExecution));
+            }
             Item _item = ItemFactory.getInstance().createArrayItem(result);
             this._hasNext = false;
             return _item;
