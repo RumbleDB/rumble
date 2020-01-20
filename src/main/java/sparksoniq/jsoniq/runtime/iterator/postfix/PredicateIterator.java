@@ -150,7 +150,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
             // if filter is an integer, it is used to return the element with the index equal to the given integer
             if (fil instanceof IntegerItem) {
                 _iterator.close();
-                List<Item> sequence = getItemsFromIteratorWithCurrentContext(_iterator);
+                List<Item> sequence = _iterator.materialize(_currentDynamicContextForLocalExecution);
                 int index = ((IntegerItem) fil).getIntegerValue();
                 // less than or equal to size -> b/c of -1
                 if (index >= 1 && index <= sequence.size()) {

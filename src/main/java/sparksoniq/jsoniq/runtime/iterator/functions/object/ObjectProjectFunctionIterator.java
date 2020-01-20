@@ -52,7 +52,7 @@ public class ObjectProjectFunctionIterator extends LocalFunctionCallIterator {
         _iterator = this._children.get(0);
         _iterator.open(context);
 
-        _projKeys = getItemsFromIteratorWithCurrentContext(this._children.get(1));
+        _projKeys = this._children.get(1).materialize(_currentDynamicContextForLocalExecution);
         if (_projKeys.isEmpty()) {
             throw new InvalidSelectorException(
                     "Invalid Projection Key; Object projection can't be performed with zero keys: ",

@@ -42,7 +42,7 @@ public class StringJoinFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this._hasNext) {
             Item joinString = ItemFactory.getInstance().createStringItem("");
-            List<Item> strings = getItemsFromIteratorWithCurrentContext(this._children.get(0));
+            List<Item> strings = this._children.get(0).materialize(_currentDynamicContextForLocalExecution);
             if (this._children.size() > 1) {
                 RuntimeIterator joinStringIterator = this._children.get(1);
                 joinStringIterator.open(_currentDynamicContextForLocalExecution);

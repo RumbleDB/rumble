@@ -76,7 +76,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     @Override
     public void openLocal() {
         if (_isPartialApplication) {
-            _functionBodyIterator = generatePartiallyAppliedFunction();
+            _functionBodyIterator = generatePartiallyAppliedFunction(_currentDynamicContextForLocalExecution);
         } else {
             _functionBodyIterator = _functionItem.getBodyIterator();
             _currentDynamicContextForLocalExecution = this.createNewDynamicContextWithArguments(
@@ -131,7 +131,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
      *
      * @return FunctionRuntimeIterator that contains the newly generated FunctionItem
      */
-    private FunctionRuntimeIterator generatePartiallyAppliedFunction() {
+    private FunctionRuntimeIterator generatePartiallyAppliedFunction(DynamicContext context) {
         this.validateAndReadArguments();
 
         RuntimeIterator argIterator;
@@ -149,7 +149,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 partialAppParamNames.add(argName);
                 partialAppParamTypes.add(_functionItem.getSignature().getParameterTypes().get(i));
             } else {
-                List<Item> argValue = getItemsFromIteratorWithCurrentContext(argIterator);
+                List<Item> argValue = argIterator.materialize(context);
                 argumentValues.put(argName, argValue);
             }
         }
@@ -179,7 +179,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
             argIterator = _functionArguments.get(i);
             argName = _functionItem.getParameterNames().get(i);
 
-            List<Item> argValue = getItemsFromIteratorWithCurrentContext(argIterator);
+            List<Item> argValue = argIterator.materialize(context);
             argumentValues.put(argName, argValue);
         }
 
