@@ -57,12 +57,12 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
     public LetClauseSparkIterator(
             RuntimeTupleIterator child,
             String variableName,
-            RuntimeIterator expression,
+            RuntimeIterator assignmentIterator,
             IteratorMetadata iteratorMetadata
     ) {
         super(child, iteratorMetadata);
         _variableName = variableName;
-        _assignmentIterator = expression;
+        _assignmentIterator = assignmentIterator;
         _dependencies = _assignmentIterator.getVariableDependencies();
     }
 
