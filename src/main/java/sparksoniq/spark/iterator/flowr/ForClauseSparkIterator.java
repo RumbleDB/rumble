@@ -62,12 +62,12 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     public ForClauseSparkIterator(
             RuntimeTupleIterator child,
             String variableName,
-            RuntimeIterator assignmentExpression,
+            RuntimeIterator assignmentIterator,
             IteratorMetadata iteratorMetadata
     ) {
         super(child, iteratorMetadata);
         _variableName = variableName;
-        _assignmentIterator = assignmentExpression;
+        _assignmentIterator = assignmentIterator;
         _dependencies = _assignmentIterator.getVariableDependencies();
     }
 
@@ -87,7 +87,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
             setNextLocalTupleResult();
 
-        } else { // if it's a start clause, get results using only the _expression
+        } else { // if it's a start clause, get results using only the _assignmentIterator
             _assignmentIterator.open(this._currentDynamicContext);
             setResultFromExpression();
         }
@@ -131,7 +131,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     /**
-     * _expression has to be open prior to call.
+     * _assignmentIterator has to be open prior to call.
      *
      * @return true if _nextLocalTupleResult is set and _hasNext is true, false otherwise
      */
@@ -261,7 +261,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         // if child is locally evaluated
-        // _expression is definitely an RDD if execution flows here
+        // _assignmentIterator is definitely an RDD if execution flows here
         Dataset<Row> df = null;
         _child.open(context);
         _tupleContext = new DynamicContext(context); // assign current context as parent
