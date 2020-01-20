@@ -1844,7 +1844,7 @@ public class Functions {
         static final BuiltinFunction get_transformer = createBuiltinFunction(
             "get-transformer",
             "string",
-            "item*", // TODO: update the return type as transformer
+            "item",
             GetTransformerFunctionIterator.class
         );
 
