@@ -127,6 +127,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
     public StaticContext visitForClauseVar(ForClauseVar expression, StaticContext argument) {
         // TODO visit at...
         this.visit(expression.getExpression(), argument);
+        expression.initHighestExecutionAndVariableHighestStorageModes();
 
         StaticContext result = visitFlowrVarDeclaration(expression, argument);
         if (expression.getPositionalVariableReference() != null) {
@@ -137,7 +138,6 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
                 ExecutionMode.LOCAL
             );
         }
-        expression.initHighestExecutionAndVariableHighestStorageModes();
         return result;
     }
 
