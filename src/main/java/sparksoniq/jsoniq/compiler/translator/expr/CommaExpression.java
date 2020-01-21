@@ -52,10 +52,21 @@ public class CommaExpression extends Expression {
         return getDescendantsFromChildren(result, depthSearch);
     }
 
+    private boolean bypassCurrentExpressionForExecutionModeOperations() {
+        return _expressions.size() == 1;
+    }
+
+    @Override
+    public void initHighestExecutionMode() {
+        if (bypassCurrentExpressionForExecutionModeOperations()) {
+            return;
+        }
+        super.initHighestExecutionMode();
+    }
+
     @Override
     public ExecutionMode getHighestExecutionMode() {
-        // if there is only a single expression, bypass the comma expression's execution mode
-        if (_expressions.size() == 1) {
+        if (bypassCurrentExpressionForExecutionModeOperations()) {
             return this._expressions.get(0).getHighestExecutionMode();
         }
         return super.getHighestExecutionMode();

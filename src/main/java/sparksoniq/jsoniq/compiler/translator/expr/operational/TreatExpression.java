@@ -33,6 +33,9 @@ public class TreatExpression extends UnaryExpressionBase {
 
     @Override
     public void initHighestExecutionMode() {
+        if (bypassCurrentExpressionForExecutionModeOperations()) {
+            return;
+        }
         SequenceType sequenceType = _sequenceType.getSequence();
         this._highestExecutionMode = calculateIsRDDFromSequenceTypeAndExpression(sequenceType, this._mainExpression);
     }

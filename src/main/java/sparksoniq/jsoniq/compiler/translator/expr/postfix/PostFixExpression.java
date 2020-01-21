@@ -65,15 +65,21 @@ public class PostFixExpression extends Expression {
         return _extensions;
     }
 
+    private boolean bypassCurrentExpressionForExecutionModeOperations() {
+        return isPrimary();
+    }
+
     @Override
     public void initHighestExecutionMode() {
+        if(bypassCurrentExpressionForExecutionModeOperations()) {
+            return;
+        }
         this._highestExecutionMode = this._primaryExpressionNode.getHighestExecutionMode();
     }
 
     @Override
     public ExecutionMode getHighestExecutionMode() {
-        // if expression is primary (no postfix operations) bypass postfix expression's execution mode
-        if (isPrimary()) {
+        if (bypassCurrentExpressionForExecutionModeOperations()) {
             return this._primaryExpressionNode.getHighestExecutionMode();
         }
         return super.getHighestExecutionMode();

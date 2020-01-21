@@ -54,10 +54,21 @@ public class ParenthesizedExpression extends PrimaryExpression {
         return visitor.visitParenthesizedExpression(this, argument);
     }
 
+    private boolean bypassCurrentExpressionForExecutionModeOperations() {
+        return expression != null;
+    }
+
+    @Override
+    public void initHighestExecutionMode() {
+        if (bypassCurrentExpressionForExecutionModeOperations()) {
+            return;
+        }
+        super.initHighestExecutionMode();
+    }
+
     @Override
     public ExecutionMode getHighestExecutionMode() {
-        // if not an empty sequence(null expression), bypass the parenthesized expression's execution mode
-        if (expression != null) {
+        if (bypassCurrentExpressionForExecutionModeOperations()) {
             return this.expression.getHighestExecutionMode();
         }
         return super.getHighestExecutionMode();

@@ -59,13 +59,23 @@ public abstract class OperationalExpressionBase extends Expression {
         super(metadata);
         this._mainExpression = _mainExpression;
         this._multipleOperators = ops;
+    }
 
+    protected boolean bypassCurrentExpressionForExecutionModeOperations() {
+        return !isActive();
+    }
+
+    @Override
+    public void initHighestExecutionMode() {
+        if (bypassCurrentExpressionForExecutionModeOperations()) {
+            return;
+        }
+        super.initHighestExecutionMode();
     }
 
     @Override
     public ExecutionMode getHighestExecutionMode() {
-        // if not active, bypass this expression's execution mode
-        if (!_isActive) {
+        if (bypassCurrentExpressionForExecutionModeOperations()) {
             return this._mainExpression.getHighestExecutionMode();
         }
         return super.getHighestExecutionMode();
