@@ -106,15 +106,13 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
 
     @Override
     public StaticContext visitGroupByClauseVar(GroupByClauseVar expression, StaticContext argument) {
-        StaticContext result;
         if (expression.getExpression() == null) {
             this.visit(expression.getVariableReference(), argument);
-            result = argument;
-        } else {
-            result = visitFlowrVarDeclaration(expression, argument);
-            this.visit(expression.getExpression(), argument);
+            return argument;
         }
-        return result;
+
+        this.visit(expression.getExpression(), argument);
+        return visitFlowrVarDeclaration(expression, argument);
     }
 
     @Override
