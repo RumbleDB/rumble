@@ -29,11 +29,8 @@ import sparksoniq.jsoniq.compiler.translator.expr.flowr.CountClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworVarDecl;
-import sparksoniq.jsoniq.compiler.translator.expr.flowr.ForClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.ForClauseVar;
-import sparksoniq.jsoniq.compiler.translator.expr.flowr.GroupByClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.GroupByClauseVar;
-import sparksoniq.jsoniq.compiler.translator.expr.flowr.LetClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.LetClauseVar;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpression;
@@ -83,35 +80,6 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
         result = this.visit(expression.get_returnClause(), result);
         return result;
     }
-
-    // region FLOWR clauses
-    @Override
-    public StaticContext visitForClause(ForClause expression, StaticContext argument) {
-        StaticContext result = argument;
-        for (ForClauseVar var : expression.getForVariables()) {
-            result = this.visit(var, result);
-        }
-        return result;
-    }
-
-    @Override
-    public StaticContext visitLetClause(LetClause expression, StaticContext argument) {
-        StaticContext result = argument;
-        for (LetClauseVar var : expression.getLetVariables()) {
-            result = this.visit(var, result);
-        }
-        return result;
-    }
-
-    @Override
-    public StaticContext visitGroupByClause(GroupByClause expression, StaticContext argument) {
-        StaticContext result = argument;
-        for (GroupByClauseVar var : expression.getGroupVariables()) {
-            result = this.visit(var, result);
-        }
-        return result;
-    }
-    // endregion
 
     // region FLOWR vars
     @Override
