@@ -20,6 +20,7 @@
 
 package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
+import sparksoniq.exceptions.OurBadException;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
@@ -79,14 +80,13 @@ public abstract class FlworVarDecl extends FlworClause {
     }
 
     @Override
-    public abstract void initHighestExecutionMode();
+    public final void initHighestExecutionMode() {
+        throw new OurBadException("Flwor variable declarations do not use the highestExecutionMode initializer");
+    }
 
-    protected abstract void initVariableHighestStorageMode();
+    public abstract void initHighestExecutionAndVariableHighestStorageModes();
 
     public ExecutionMode getVariableHighestStorageMode() {
-        if (_variableHighestStorageMode == ExecutionMode.UNSET) {
-            this.initVariableHighestStorageMode();
-        }
         return _variableHighestStorageMode;
     }
 

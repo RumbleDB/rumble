@@ -54,6 +54,7 @@ public abstract class ExpressionOrClause {
 
     /**
      * When extending this method, make sure to perform a super() call to prevent UNSET accesses.
+     * 
      * @return
      */
     public ExecutionMode getHighestExecutionMode() {
