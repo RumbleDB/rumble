@@ -20,6 +20,7 @@
 
 package sparksoniq.jsoniq.compiler.translator.expr;
 
+import sparksoniq.exceptions.OurBadException;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
@@ -51,7 +52,14 @@ public abstract class ExpressionOrClause {
         _highestExecutionMode = ExecutionMode.LOCAL;
     }
 
+    /**
+     * When extending this method, make sure to perform a super() call to prevent UNSET accesses.
+     * @return
+     */
     public ExecutionMode getHighestExecutionMode() {
+        if (_highestExecutionMode == ExecutionMode.UNSET) {
+            throw new OurBadException("An execution mode is access without being set.");
+        }
         return _highestExecutionMode;
     }
 
