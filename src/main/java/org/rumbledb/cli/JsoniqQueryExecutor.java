@@ -42,6 +42,7 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.visitor.RuntimeIteratorVisitor;
 import sparksoniq.semantics.visitor.StaticContextVisitor;
+import sparksoniq.semantics.visitor.VisitorHelpers;
 import sparksoniq.spark.SparkSessionManager;
 import sparksoniq.utils.FileUtils;
 
@@ -88,9 +89,7 @@ public class JsoniqQueryExecutor {
         CharStream charStream = CharStreams.fromFileName(queryFile);
         long startTime = System.currentTimeMillis();
         JsoniqExpressionTreeVisitor visitor = this.parse(new JsoniqLexer(charStream));
-        // generate static context
         generateStaticContext(visitor.getMainModule());
-        // generate iterators
         RuntimeIterator result = generateRuntimeIterators(visitor.getMainModule());
         if (_configuration.isPrintIteratorTree()) {
             StringBuffer sb = new StringBuffer();
@@ -122,9 +121,7 @@ public class JsoniqQueryExecutor {
         JsoniqLexer lexer = getInputSource(queryFile);
         long startTime = System.currentTimeMillis();
         JsoniqExpressionTreeVisitor visitor = this.parse(lexer);
-        // generate static context
         generateStaticContext(visitor.getMainModule());
-        // generate iterators
         RuntimeIterator result = generateRuntimeIterators(visitor.getMainModule());
         // collect output in memory and write to filesystem from java
         if (_useLocalOutputLog) {
@@ -177,9 +174,7 @@ public class JsoniqQueryExecutor {
         // create temp file
         JsoniqLexer lexer = getInputSource(queryFile.toString());
         JsoniqExpressionTreeVisitor visitor = this.parse(lexer);
-        // generate static context
         generateStaticContext(visitor.getMainModule());
-        // generate iterators
         RuntimeIterator runtimeIterator = generateRuntimeIterators(visitor.getMainModule());
         // execute locally for simple expressions
         if (!runtimeIterator.isRDD()) {
@@ -237,17 +232,15 @@ public class JsoniqQueryExecutor {
     }
 
     private void generateStaticContext(Expression expression) {
-        new StaticContextVisitor().visit(expression, expression.getStaticContext());
+        VisitorHelpers.generateStaticContextDoublePass(expression, expression.getStaticContext());
     }
 
     private RuntimeIterator generateRuntimeIterators(Expression expression) {
-        RuntimeIterator result = new RuntimeIteratorVisitor().visit(expression, null);
-        return result;
+        return VisitorHelpers.generateRuntimeIterator(expression, null);
     }
 
     protected String runIterators(RuntimeIterator iterator) {
-        String actualOutput = getIteratorOutput(iterator);
-        return actualOutput;
+        return getIteratorOutput(iterator);
     }
 
     private String getIteratorOutput(RuntimeIterator iterator) {

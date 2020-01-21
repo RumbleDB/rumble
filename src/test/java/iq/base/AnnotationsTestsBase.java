@@ -32,11 +32,13 @@ import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
 import sparksoniq.jsoniq.compiler.parser.JsoniqBaseVisitor;
 import sparksoniq.jsoniq.compiler.parser.JsoniqLexer;
 import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
+import sparksoniq.jsoniq.compiler.translator.expr.module.MainModule;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 import sparksoniq.semantics.visitor.RuntimeIteratorVisitor;
 import sparksoniq.semantics.visitor.StaticContextVisitor;
+import sparksoniq.semantics.visitor.VisitorHelpers;
 import utils.FileManager;
 import utils.annotations.AnnotationParseException;
 import utils.annotations.AnnotationProcessor;
@@ -80,13 +82,12 @@ public class AnnotationsTestsBase {
             // generate static context and runtime iterators
             if (visitor instanceof JsoniqExpressionTreeVisitor) {
                 JsoniqExpressionTreeVisitor completeVisitor = ((JsoniqExpressionTreeVisitor) visitor);
-                // generate static context
-                new StaticContextVisitor().visit(
-                    completeVisitor.getMainModule(),
-                    completeVisitor.getMainModule().getStaticContext()
+                MainModule mainModule = completeVisitor.getMainModule();
+                VisitorHelpers.generateStaticContextDoublePass(
+                    mainModule,
+                    mainModule.getStaticContext()
                 );
-                // generate iterators
-                runtimeIterator = new RuntimeIteratorVisitor().visit(completeVisitor.getMainModule(), null);
+                runtimeIterator = VisitorHelpers.generateRuntimeIterator(mainModule, null);
             }
             // PARSING
         } catch (ParsingException exception) {

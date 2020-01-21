@@ -20,6 +20,7 @@
 
 package sparksoniq.jsoniq.compiler.translator.expr.primary;
 
+import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.UnknownFunctionCallException;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
@@ -66,7 +67,11 @@ public class FunctionCall extends PrimaryExpression {
     }
 
     @Override
-    public void initHighestExecutionMode() {
+    public final void initHighestExecutionMode() {
+        throw new OurBadException("Function call expressions do not use the highestExecutionMode initializer");
+    }
+
+    public void initFunctionCallHighestExecutionMode(boolean ignoreMissingFunction) {
         this._highestExecutionMode = ExecutionMode.LOCAL;
         FunctionIdentifier identifier = new FunctionIdentifier(this._functionName, this._arguments.size());
         if (Functions.checkBuiltInFunctionExists(identifier)) {
@@ -99,6 +104,9 @@ public class FunctionCall extends PrimaryExpression {
         } else if (Functions.checkUserDefinedFunctionExecutionModeExists(identifier)) {
             this._highestExecutionMode = Functions.getUserDefinedFunctionExecutionMode(identifier, getMetadata());
         } else {
+            if (ignoreMissingFunction) {
+                return;
+            }
             throw new UnknownFunctionCallException(
                     identifier.getName(),
                     identifier.getArity(),

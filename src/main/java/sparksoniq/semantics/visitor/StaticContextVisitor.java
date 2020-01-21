@@ -34,6 +34,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.flowr.ForClauseVar;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.GroupByClauseVar;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.LetClauseVar;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.PostFixExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionCall;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionDeclaration;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpression;
@@ -44,6 +45,26 @@ import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
 
 public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<StaticContext> {
+
+    // indicate whether an error should be thrown if an existing function is redeclared
+    private boolean ignoreDuplicateFunction = false;
+
+    // indicate whether an error should be thrown if a function call is made for a non-existing function
+    private boolean ignoreMissingFunction = true;
+
+    public StaticContextVisitor() {
+        this.setConfigForInitialPass();
+    }
+
+    public void setConfigForInitialPass() {
+        ignoreDuplicateFunction = false;
+        ignoreMissingFunction = true;
+    }
+
+    public void setConfigForConsequentPasses() {
+        ignoreDuplicateFunction = true;
+        ignoreMissingFunction = false;
+    }
 
     @Override
     protected StaticContext defaultAction(ExpressionOrClause expression, StaticContext argument) {
@@ -83,7 +104,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
     @Override
     public StaticContext visitFunctionDeclaration(FunctionDeclaration expression, StaticContext argument) {
         expression.initHighestExecutionMode();
-        expression.registerUserDefinedFunctionExecutionMode();
+        expression.registerUserDefinedFunctionExecutionMode(ignoreDuplicateFunction);
 
         // define a static context for the function body, add params to the context and visit the body expression
         StaticContext functionDeclarationContext = new StaticContext(argument);
@@ -98,6 +119,13 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
             );
         this.visit(expression.get_body(), functionDeclarationContext);
         return functionDeclarationContext;
+    }
+
+    @Override
+    public StaticContext visitFunctionCall(FunctionCall expression, StaticContext argument) {
+        StaticContext generatedContext = visitDescendants(expression, argument);
+        expression.initFunctionCallHighestExecutionMode(ignoreMissingFunction);
+        return generatedContext;
     }
 
     @Override

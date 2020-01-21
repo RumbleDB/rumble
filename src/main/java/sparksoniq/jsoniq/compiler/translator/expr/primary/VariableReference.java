@@ -60,7 +60,7 @@ public class VariableReference extends PrimaryExpression implements Serializable
     }
 
     @Override
-    public void initHighestExecutionMode() {
+    public final void initHighestExecutionMode() {
         // Variable reference execution mode can only be resolved in conjunction with a static context
         // variable reference's execution mode gets initialized in staticContextVisitor by a setter
         throw new OurBadException("Variable references do not use the highestExecutionMode initializer");

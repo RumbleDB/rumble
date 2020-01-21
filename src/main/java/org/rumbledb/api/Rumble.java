@@ -14,6 +14,7 @@ import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.visitor.RuntimeIteratorVisitor;
 import sparksoniq.semantics.visitor.StaticContextVisitor;
+import sparksoniq.semantics.visitor.VisitorHelpers;
 import sparksoniq.spark.SparkSessionManager;
 
 /**
@@ -69,9 +70,9 @@ public class Rumble {
             throw e;
         }
         Expression expression = visitor.getMainModule();
-        new StaticContextVisitor().visit(expression, expression.getStaticContext());
+        VisitorHelpers.generateStaticContextDoublePass(expression, expression.getStaticContext());
 
-        RuntimeIterator iterator = new RuntimeIteratorVisitor().visit(expression, null);
+        RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(expression, null);
         return new SequenceOfItems(iterator);
     }
 }
