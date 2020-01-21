@@ -82,6 +82,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
 
     @Override
     public StaticContext visitFunctionDeclaration(FunctionDeclaration expression, StaticContext argument) {
+        expression.initHighestExecutionMode();
         expression.registerUserDefinedFunctionExecutionMode();
 
         // define a static context for the function body, add params to the context and visit the body expression
