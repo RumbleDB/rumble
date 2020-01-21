@@ -64,7 +64,7 @@ public abstract class OperationalExpressionBase extends Expression {
 
     @Override
     public ExecutionMode getHighestExecutionMode() {
-        // if not active, bypass this node while calculating execution mode
+        // if not active, bypass this expression's execution mode
         if (!_isActive) {
             return this._mainExpression.getHighestExecutionMode();
         }

@@ -54,7 +54,7 @@ public class CommaExpression extends Expression {
 
     @Override
     public ExecutionMode getHighestExecutionMode() {
-        // if there is only a single expression, bypass the comma expression while calculating execution mode
+        // if there is only a single expression, bypass the comma expression's execution mode
         if (_expressions.size() == 1) {
             return this._expressions.get(0).getHighestExecutionMode();
         }

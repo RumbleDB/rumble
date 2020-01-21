@@ -56,7 +56,7 @@ public class ParenthesizedExpression extends PrimaryExpression {
 
     @Override
     public ExecutionMode getHighestExecutionMode() {
-        // if not an empty sequence(null expression), bypass this node while calculating execution mode
+        // if not an empty sequence(null expression), bypass the parenthesized expression's execution mode
         if (expression != null) {
             return this.expression.getHighestExecutionMode();
         }

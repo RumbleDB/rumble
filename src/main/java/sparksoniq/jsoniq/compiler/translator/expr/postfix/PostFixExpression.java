@@ -72,7 +72,7 @@ public class PostFixExpression extends Expression {
 
     @Override
     public ExecutionMode getHighestExecutionMode() {
-        // if it's a primary expression(not a postfix) bypass this node while calculating execution mode
+        // if expression is primary (no postfix operations) bypass postfix expression's execution mode
         if (isPrimary()) {
             return this._primaryExpressionNode.getHighestExecutionMode();
         }

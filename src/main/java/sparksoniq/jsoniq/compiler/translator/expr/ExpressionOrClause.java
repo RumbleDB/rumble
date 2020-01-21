@@ -52,9 +52,6 @@ public abstract class ExpressionOrClause {
     }
 
     public ExecutionMode getHighestExecutionMode() {
-        if (_highestExecutionMode == ExecutionMode.UNSET) {
-            initHighestExecutionMode();
-        }
         return _highestExecutionMode;
     }
 
