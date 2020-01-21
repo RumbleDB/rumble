@@ -84,16 +84,17 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
     // region FLOWR vars
     @Override
     public StaticContext visitForClauseVar(ForClauseVar expression, StaticContext argument) {
+        // TODO visit at...
+        this.visit(expression.getExpression(), argument);
+
         StaticContext result = visitFlowrVarDeclaration(expression, argument);
         if (expression.getPositionalVariableReference() != null) {
             result.addVariable(
-                expression.getPositionalVariableReference().getVariableName(),
-                new SequenceType(new ItemType(ItemTypes.IntegerItem)),
-                expression.getMetadata()
+                    expression.getPositionalVariableReference().getVariableName(),
+                    new SequenceType(new ItemType(ItemTypes.IntegerItem)),
+                    expression.getMetadata()
             );
         }
-        // TODO visit at...
-        this.visit(expression.getExpression(), argument);
         return result;
     }
 
