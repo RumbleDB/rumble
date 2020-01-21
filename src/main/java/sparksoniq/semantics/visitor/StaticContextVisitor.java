@@ -44,6 +44,9 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
 
     @Override
     public StaticContext visit(ExpressionOrClause expression, StaticContext argument) {
+        if (argument == null) {
+            argument = new StaticContext();
+        }
         if (expression instanceof Expression) {
             ((Expression) expression).setStaticContext(argument);
         }
@@ -52,7 +55,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
 
     @Override
     public StaticContext visitVariableReference(VariableReference expression, StaticContext argument) {
-        if (argument == null || !argument.isInScope(expression.getVariableName())) {
+        if (!argument.isInScope(expression.getVariableName())) {
             throw new UndeclaredVariableException(
                     "Uninitialized variable reference: " + expression.getVariableName(),
                     expression.getMetadata()
@@ -65,14 +68,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
 
     @Override
     public StaticContext visitFlowrExpression(FlworExpression expression, StaticContext argument) {
-        StaticContext flowrContext;
-        if (argument == null) {
-            flowrContext = new StaticContext();
-        } else {
-            flowrContext = argument;
-        }
-
-        StaticContext result = this.visit(expression.getStartClause(), flowrContext);
+        StaticContext result = this.visit(expression.getStartClause(), argument);
         for (FlworClause clause : expression.get_contentClauses()) {
             result = this.visit(clause, result);
         }
@@ -139,12 +135,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
 
     @Override
     public StaticContext visitQuantifiedExpression(QuantifiedExpression expression, StaticContext argument) {
-        StaticContext context;
-        if (argument == null) {
-            context = new StaticContext();
-        } else {
-            context = argument;
-        }
+        StaticContext context = argument;
         for (QuantifiedExpressionVar clause : expression.getVariables()) {
             context = this.visit(clause, context);
         }
@@ -162,10 +153,9 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
 
     @Override
     public StaticContext visitTypeSwitchExpression(TypeSwitchExpression expression, StaticContext argument) {
-        StaticContext originalContext = argument == null ? new StaticContext() : argument;
-        StaticContext context = originalContext;
+        StaticContext context = argument;
         for (TypeSwitchCaseExpression typeSwitchCase : expression.getCases()) {
-            context = this.visit(typeSwitchCase, originalContext);
+            context = this.visit(typeSwitchCase, argument);
         }
         return context;
     }
