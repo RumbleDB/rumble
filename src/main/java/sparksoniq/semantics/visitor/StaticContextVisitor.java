@@ -90,9 +90,9 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
         StaticContext result = visitFlowrVarDeclaration(expression, argument);
         if (expression.getPositionalVariableReference() != null) {
             result.addVariable(
-                    expression.getPositionalVariableReference().getVariableName(),
-                    new SequenceType(new ItemType(ItemTypes.IntegerItem)),
-                    expression.getMetadata()
+                expression.getPositionalVariableReference().getVariableName(),
+                new SequenceType(new ItemType(ItemTypes.IntegerItem)),
+                expression.getMetadata()
             );
         }
         return result;
@@ -101,7 +101,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
     @Override
     public StaticContext visitLetClauseVar(LetClauseVar expression, StaticContext argument) {
         this.visit(expression.getExpression(), argument);
-        return  visitFlowrVarDeclaration(expression, argument);
+        return visitFlowrVarDeclaration(expression, argument);
     }
 
     @Override
