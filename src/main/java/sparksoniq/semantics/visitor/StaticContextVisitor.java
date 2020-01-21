@@ -33,6 +33,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworVarDecl;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.ForClauseVar;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.GroupByClauseVar;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.LetClauseVar;
+import sparksoniq.jsoniq.compiler.translator.expr.postfix.PostFixExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionDeclaration;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpression;
@@ -98,6 +99,15 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
         return functionDeclarationContext;
     }
 
+    @Override
+    public StaticContext visitPostfixExpression(PostFixExpression expression, StaticContext argument) {
+        // visit and initialize firstly the primary expression, then the postfix extensions
+        this.visit(expression.get_primaryExpressionNode(), argument);
+        expression.initHighestExecutionMode();
+        expression.getExtensions().forEach(extension -> extension.initHighestExecutionMode());
+        return visitDescendants(expression, argument);
+    }
+
     // endregion
 
     // region FLWOR
@@ -142,7 +152,6 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
             this.visit(expression.getVariableReference(), argument);
             return argument;
         }
-
         this.visit(expression.getExpression(), argument);
         return visitFlowrVarDeclaration(expression, argument);
     }
