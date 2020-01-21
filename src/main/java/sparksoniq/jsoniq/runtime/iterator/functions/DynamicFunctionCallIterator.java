@@ -20,12 +20,11 @@
 
 package sparksoniq.jsoniq.runtime.iterator.functions;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.FunctionItem;
-import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
+import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -33,7 +32,7 @@ import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
 
-public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
+public class DynamicFunctionCallIterator extends LocalRuntimeIterator {
     // dynamic: functionIdentifier is not known at compile time
     // it is known only after evaluating postfix expression at runtime
 
@@ -66,14 +65,15 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public void openLocal() {
+    public void open(DynamicContext context) {
+        super.open(context);
         setFunctionItemAndIteratorWithCurrentContext();
         _functionCallIterator.open(_currentDynamicContext);
         setNextResult();
     }
 
     @Override
-    public Item nextLocal() {
+    public Item next() {
         if (this._hasNext) {
             Item result = _nextResult;
             setNextResult();
@@ -88,26 +88,6 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
         );
     }
 
-    @Override
-    protected boolean hasNextLocal() {
-        return _hasNext;
-    }
-
-    @Override
-    protected void resetLocal(DynamicContext context) {
-        _functionCallIterator.reset(_currentDynamicContext);
-        setNextResult();
-    }
-
-    @Override
-    protected void closeLocal() {
-        // ensure that recursive function calls terminate gracefully
-        // the function call in the body of the deepest recursion call is never visited, never opened and never closed
-        if (this.isOpen()) {
-            _functionCallIterator.close();
-        }
-    }
-
     public void setNextResult() {
         _nextResult = null;
         if (_functionCallIterator.hasNext()) {
@@ -120,17 +100,6 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
         } else {
             this._hasNext = true;
         }
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        setFunctionItemAndIteratorWithCurrentContext();
-        return _functionCallIterator.getRDD(_currentDynamicContext);
-    }
-
-    @Override
-    public boolean initIsRDD() {
-        return false;
     }
 
     private void setFunctionItemAndIteratorWithCurrentContext() {
@@ -157,5 +126,22 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
             getMetadata(),
             _functionArguments
         );
+    }
+
+    @Override
+    public void reset(DynamicContext context) {
+        super.reset(context);
+        _functionCallIterator.reset(_currentDynamicContext);
+        setNextResult();
+    }
+
+    @Override
+    public void close() {
+        // ensure that recursive function calls terminate gracefully
+        // the function call in the body of the deepest recursion call is never visited, never opened and never closed
+        if (this._isOpen) {
+            _functionCallIterator.close();
+        }
+        super.close();
     }
 }
