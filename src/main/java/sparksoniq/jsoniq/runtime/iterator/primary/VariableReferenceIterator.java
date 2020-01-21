@@ -46,7 +46,7 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
 
     public VariableReferenceIterator(String variableName, SequenceType seq, IteratorMetadata iteratorMetadata) {
         super(null, iteratorMetadata);
-        _variableName = "$" + variableName;
+        _variableName = variableName;
         _sequence = seq;
     }
 
@@ -76,7 +76,7 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
     public Item nextLocal() {
         if (!_hasNext) {
             throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "$" + _variableName,
+                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + _variableName,
                     getMetadata()
             );
         }

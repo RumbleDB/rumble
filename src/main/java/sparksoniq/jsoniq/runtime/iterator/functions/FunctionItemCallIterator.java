@@ -165,7 +165,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
             _currentDynamicContext = new DynamicContext(_currentDynamicContext);
             for (Map.Entry<String, List<Item>> argumentEntry : argumentValues.entrySet()) {
                 _currentDynamicContext.addVariableValue(
-                    "$" + argumentEntry.getKey(),
+                    argumentEntry.getKey(),
                     argumentEntry.getValue()
                 );
             }

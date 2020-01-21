@@ -97,7 +97,7 @@ public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
                 Item currentItem = var.next();
                 if (currentItem != null) {
                     contents.add(currentItem);
-                    context.addVariableValue("$" + var.getVariableReference(), contents);
+                    context.addVariableValue(var.getVariableReference(), contents);
                     results.add(context);
                 }
             }

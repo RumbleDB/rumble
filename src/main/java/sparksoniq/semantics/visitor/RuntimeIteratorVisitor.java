@@ -221,11 +221,10 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                             false,
                             createIteratorMetadata(clause)
                     );
-                VariableReferenceIterator variableReferenceIterator =
-                    (VariableReferenceIterator) this.visit(var.getVariableReference(), argument);
+
                 previousIterator = new ForClauseSparkIterator(
                         previousIterator,
-                        variableReferenceIterator,
+                        var.getVariableReference().getVariableName(),
                         assignmentExpression,
                         createIteratorMetadata(clause)
                 );
@@ -240,11 +239,10 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                             false,
                             createIteratorMetadata(clause)
                     );
-                VariableReferenceIterator variableReferenceIterator =
-                    (VariableReferenceIterator) this.visit(var.getVariableReference(), argument);
+
                 previousIterator = new LetClauseSparkIterator(
                         previousIterator,
-                        variableReferenceIterator,
+                        var.getVariableReference().getVariableName(),
                         assignmentExpression,
                         createIteratorMetadata(clause)
                 );
@@ -263,6 +261,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                                 createIteratorMetadata(clause)
                         );
                 }
+
                 expressions.add(
                     new GroupByClauseSparkIteratorExpression(
                             groupByExpression,

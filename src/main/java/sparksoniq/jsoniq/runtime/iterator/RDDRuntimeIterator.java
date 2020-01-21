@@ -22,6 +22,7 @@ package sparksoniq.jsoniq.runtime.iterator;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
+import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.SparkRuntimeException;
 import sparksoniq.io.json.JiqsItemParser;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -44,31 +45,31 @@ public abstract class RDDRuntimeIterator extends HybridRuntimeIterator {
     }
 
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
-        throw new SparkRuntimeException("RDDs are not implemented for the iterator", getMetadata());
+        throw new OurBadException("RDDs are not implemented for the iterator", getMetadata());
     }
 
     @Override
     protected void openLocal() {
-        throw new SparkRuntimeException("Local evaluation are not implemented for the iterator", getMetadata());
+        throw new OurBadException("Local evaluation are not implemented for the iterator", getMetadata());
     }
 
     @Override
     protected void closeLocal() {
-        throw new SparkRuntimeException("Local evaluation are not implemented for the iterator", getMetadata());
+        throw new OurBadException("Local evaluation are not implemented for the iterator", getMetadata());
     }
 
     @Override
     protected void resetLocal(DynamicContext context) {
-        throw new SparkRuntimeException("Local evaluation are not implemented for the iterator", getMetadata());
+        throw new OurBadException("Local evaluation are not implemented for the iterator", getMetadata());
     }
 
     @Override
     protected boolean hasNextLocal() {
-        throw new SparkRuntimeException("Local evaluation are not implemented for the iterator", getMetadata());
+        throw new OurBadException("Local evaluation are not implemented for the iterator", getMetadata());
     }
 
     @Override
     protected Item nextLocal() {
-        throw new SparkRuntimeException("Local evaluation are not implemented for the iterator", getMetadata());
+        throw new OurBadException("Local evaluation are not implemented for the iterator", getMetadata());
     }
 }
