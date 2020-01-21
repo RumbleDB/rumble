@@ -48,7 +48,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
     @Override
     protected StaticContext defaultAction(ExpressionOrClause expression, StaticContext argument) {
         StaticContext generatedContext = visitDescendants(expression, argument);
-        // default behavior for execution mode setting is visiting children and expressions first, then initialization
+        // initialize execution mode by visiting children and expressions first, then calling initialize methods
         expression.initHighestExecutionMode();
         return generatedContext;
     }
@@ -137,12 +137,14 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
                 ExecutionMode.LOCAL
             );
         }
+        expression.initHighestExecutionAndVariableHighestStorageModes();
         return result;
     }
 
     @Override
     public StaticContext visitLetClauseVar(LetClauseVar expression, StaticContext argument) {
         this.visit(expression.getExpression(), argument);
+        expression.initHighestExecutionAndVariableHighestStorageModes();
         return visitFlowrVarDeclaration(expression, argument);
     }
 
@@ -153,11 +155,13 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
             return argument;
         }
         this.visit(expression.getExpression(), argument);
+        expression.initHighestExecutionAndVariableHighestStorageModes();
         return visitFlowrVarDeclaration(expression, argument);
     }
 
     @Override
     public StaticContext visitCountClause(CountClause expression, StaticContext argument) {
+        expression.initHighestExecutionMode();
         StaticContext result = new StaticContext(argument);
         result.addVariable(
             expression.getCountVariable().getVariableName(),
