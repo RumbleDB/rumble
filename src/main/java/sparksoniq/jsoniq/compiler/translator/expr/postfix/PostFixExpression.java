@@ -66,7 +66,7 @@ public class PostFixExpression extends Expression {
     }
 
     @Override
-    protected void initHighestExecutionMode() {
+    public void initHighestExecutionMode() {
         this._highestExecutionMode = this._primaryExpressionNode.getHighestExecutionMode();
     }
 

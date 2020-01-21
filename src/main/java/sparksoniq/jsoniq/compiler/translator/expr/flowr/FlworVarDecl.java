@@ -79,7 +79,7 @@ public abstract class FlworVarDecl extends FlworClause {
     }
 
     @Override
-    protected abstract void initHighestExecutionMode();
+    public abstract void initHighestExecutionMode();
 
     protected abstract void initVariableHighestStorageMode();
 

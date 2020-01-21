@@ -66,7 +66,7 @@ public class FunctionCall extends PrimaryExpression {
     }
 
     @Override
-    protected void initHighestExecutionMode() {
+    public void initHighestExecutionMode() {
         this._highestExecutionMode = ExecutionMode.LOCAL;
         FunctionIdentifier identifier = new FunctionIdentifier(this._functionName, this._arguments.size());
         if (Functions.checkBuiltInFunctionExists(identifier)) {

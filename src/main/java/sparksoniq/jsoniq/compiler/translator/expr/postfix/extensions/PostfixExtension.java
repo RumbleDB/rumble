@@ -60,7 +60,7 @@ public abstract class PostfixExtension extends ExpressionOrClause {
     }
 
     @Override
-    protected void initHighestExecutionMode() {
+    public void initHighestExecutionMode() {
         if (previous != null) {
             this._highestExecutionMode = this.previous.getHighestExecutionMode();
         } else {

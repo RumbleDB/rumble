@@ -68,7 +68,7 @@ public class ForClauseVar extends FlworVarDecl {
     }
 
     @Override
-    protected void initHighestExecutionMode() {
+    public void initHighestExecutionMode() {
         this._highestExecutionMode =
             (this.expression.getHighestExecutionMode().isRDD()
                 || (previousClause != null && previousClause.getHighestExecutionMode().isDataFrame()))

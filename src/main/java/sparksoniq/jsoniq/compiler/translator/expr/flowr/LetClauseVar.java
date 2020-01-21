@@ -39,7 +39,7 @@ public class LetClauseVar extends FlworVarDecl {
     }
 
     @Override
-    protected void initHighestExecutionMode() {
+    public void initHighestExecutionMode() {
         this._highestExecutionMode =
             (previousClause == null) ? ExecutionMode.LOCAL : previousClause.getHighestExecutionMode();
     }

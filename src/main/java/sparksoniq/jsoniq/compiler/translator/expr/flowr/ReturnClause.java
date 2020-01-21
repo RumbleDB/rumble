@@ -44,7 +44,7 @@ public class ReturnClause extends FlworClause {
     }
 
     @Override
-    protected void initHighestExecutionMode() {
+    public void initHighestExecutionMode() {
         this._highestExecutionMode =
             previousClause.getHighestExecutionMode().isDataFrame()
                 ? ExecutionMode.RDD

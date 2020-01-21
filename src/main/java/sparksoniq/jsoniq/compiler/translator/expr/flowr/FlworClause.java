@@ -55,7 +55,7 @@ public class FlworClause extends ExpressionOrClause {
     }
 
     @Override
-    protected void initHighestExecutionMode() {
+    public void initHighestExecutionMode() {
         this._highestExecutionMode = previousClause.getHighestExecutionMode();
     }
 

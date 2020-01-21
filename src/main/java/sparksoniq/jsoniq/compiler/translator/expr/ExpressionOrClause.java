@@ -47,7 +47,7 @@ public abstract class ExpressionOrClause {
     /**
      * initHighestExecutionMode is meant to be overridden by expression subclasses which support higher execution modes
      */
-    protected void initHighestExecutionMode() {
+    public void initHighestExecutionMode() {
         _highestExecutionMode = ExecutionMode.LOCAL;
     }
 
