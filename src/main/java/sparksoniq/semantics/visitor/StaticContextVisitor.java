@@ -45,6 +45,14 @@ import sparksoniq.semantics.types.SequenceType;
 public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<StaticContext> {
 
     @Override
+    protected StaticContext defaultAction(ExpressionOrClause expression, StaticContext argument) {
+        StaticContext generatedContext = visitDescendants(expression, argument);
+        // default behavior for execution mode setting is visiting children and expressions first, then initialization
+        expression.initHighestExecutionMode();
+        return generatedContext;
+    }
+
+    @Override
     public StaticContext visit(ExpressionOrClause expression, StaticContext argument) {
         if (argument == null) {
             argument = new StaticContext();
