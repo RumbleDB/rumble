@@ -76,7 +76,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
         } else {
             expression.setType(argument.getVariableSequenceType(variableName));
             expression.setHighestExecutionMode(argument.getVariableExecutionMode(variableName));
-            return defaultAction(expression, argument);
+            return argument;
         }
     }
 
