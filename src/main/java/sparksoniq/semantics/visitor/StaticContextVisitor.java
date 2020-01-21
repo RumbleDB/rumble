@@ -99,9 +99,8 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
 
     @Override
     public StaticContext visitLetClauseVar(LetClauseVar expression, StaticContext argument) {
-        StaticContext result = visitFlowrVarDeclaration(expression, argument);
         this.visit(expression.getExpression(), argument);
-        return result;
+        return  visitFlowrVarDeclaration(expression, argument);
     }
 
     @Override
