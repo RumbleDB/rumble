@@ -23,6 +23,7 @@ package sparksoniq.jsoniq.runtime.iterator.functions;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
@@ -242,15 +243,14 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        DynamicContext contextWithArguments = dynamicContext;
-
         if (_isPartialApplication) {
-            _functionBodyIterator = generatePartiallyAppliedFunction();
-        } else {
-            _functionBodyIterator = _functionItem.getBodyIterator();
-            contextWithArguments = this.createNewDynamicContextWithArguments(contextWithArguments);
+            throw new OurBadException(
+                    "Unexpected program state reached. Partially applied function calls must be evaluated locally."
+            );
         }
-
+        DynamicContext contextWithArguments = dynamicContext;
+        _functionBodyIterator = _functionItem.getBodyIterator();
+        contextWithArguments = this.createNewDynamicContextWithArguments(contextWithArguments);
         return _functionBodyIterator.getRDD(contextWithArguments);
     }
 
