@@ -196,6 +196,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
         for (QuantifiedExpressionVar clause : expression.getVariables()) {
             context = this.visit(clause, context);
         }
+        expression.initHighestExecutionMode();
         return context;
     }
 
@@ -210,6 +211,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
             ExecutionMode.LOCAL
         );
         this.visit(expression.getExpression(), argument);
+        expression.initHighestExecutionMode();
         return result;
     }
     // endregion
@@ -233,7 +235,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
             );
         }
         this.visit(expression.getDefaultExpression(), defaultCaseStaticContext);
-
+        expression.initHighestExecutionMode();
         return argument;
     }
 
@@ -250,6 +252,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
             );
         }
         this.visit(expression.getReturnExpression(), result);
+        expression.initHighestExecutionMode();
         return result;
     }
     // endregion

@@ -59,7 +59,7 @@ public abstract class ExpressionOrClause {
      */
     public ExecutionMode getHighestExecutionMode() {
         if (_highestExecutionMode == ExecutionMode.UNSET) {
-            throw new OurBadException("An execution mode is access without being set.");
+            throw new OurBadException("An execution mode is accessed without being set.");
         }
         return _highestExecutionMode;
     }
