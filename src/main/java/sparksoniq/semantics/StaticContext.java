@@ -78,7 +78,7 @@ public class StaticContext {
             StaticContext ancestor = _parent;
             while (ancestor != null) {
                 found = found || ancestor.getInScopeVariables().containsKey(varName);
-                ancestor = ancestor.getParent();
+                ancestor = ancestor._parent;
             }
         }
         return found;
@@ -93,7 +93,7 @@ public class StaticContext {
                 if (ancestor._inScopeVariables.containsKey(varName)) {
                     return ancestor._inScopeVariables.get(varName);
                 }
-                ancestor = ancestor.getParent();
+                ancestor = ancestor._parent;
             }
             throw new SemanticException("Variable " + varName + " not in scope", null);
         }
