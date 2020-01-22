@@ -55,18 +55,32 @@ public class DynamicContext implements Serializable, KryoSerializable {
 
     public DynamicContext() {
         this._parent = null;
-        this._localVariableValues = new HashMap<>();
         this._localVariableCounts = new HashMap<>();
+        this._localVariableValues = new HashMap<>();
         this._rddVariableValues = new HashMap<>();
         this._dfVariableValues = new HashMap<>();
     }
 
     public DynamicContext(DynamicContext parent) {
         this._parent = parent;
-        this._localVariableValues = new HashMap<>();
         this._localVariableCounts = new HashMap<>();
+        this._localVariableValues = new HashMap<>();
         this._rddVariableValues = new HashMap<>();
         this._dfVariableValues = new HashMap<>();
+    }
+
+    public DynamicContext(
+            DynamicContext parent,
+            Map<String, List<Item>> localVariableValues,
+            Map<String, JavaRDD<Item>> rddVariableValues,
+            Map<String, Dataset<Row>> dfVariableValues
+    ) {
+        this._parent = parent;
+        this._localVariableCounts = new HashMap<>();
+        this._localVariableValues = localVariableValues;
+        this._rddVariableValues = rddVariableValues;
+        this._dfVariableValues = dfVariableValues;
+
     }
 
     public void setBindingsFromTuple(FlworTuple tuple, IteratorMetadata metadata) {

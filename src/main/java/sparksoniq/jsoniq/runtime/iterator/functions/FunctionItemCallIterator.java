@@ -21,6 +21,8 @@
 package sparksoniq.jsoniq.runtime.iterator.functions;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.OurBadException;
@@ -134,35 +136,45 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     private FunctionRuntimeIterator generatePartiallyAppliedFunction(DynamicContext context) {
         this.validateAndReadArguments();
 
-        RuntimeIterator argIterator;
         String argName;
+        RuntimeIterator argIterator;
 
-        // read both partially applied and normal arguments
-        Map<String, List<Item>> argumentValues = new LinkedHashMap<>(_functionItem.getVariablesInClosure());
-        List<String> partialAppParamNames = new ArrayList<>();
-        List<SequenceType> partialAppParamTypes = new ArrayList<>();
+        Map<String, List<Item>> localArgumentValues = new LinkedHashMap<>(_functionItem.getLocalVariablesInClosure());
+        Map<String, JavaRDD<Item>> RDDArgumentValues = new LinkedHashMap<>(_functionItem.getRDDVariablesInClosure());
+        Map<String, Dataset<Row>> DFArgumentValues = new LinkedHashMap<>(_functionItem.getDFVariablesInClosure());
+
+        List<String> partialApplicationParamNames = new ArrayList<>();
+        List<SequenceType> partialApplicationParamTypes = new ArrayList<>();
+
         for (int i = 0; i < _functionArguments.size(); i++) {
-            argIterator = _functionArguments.get(i);
             argName = _functionItem.getParameterNames().get(i);
+            argIterator = _functionArguments.get(i);
 
             if (argIterator == null) { // == ArgumentPlaceholder
-                partialAppParamNames.add(argName);
-                partialAppParamTypes.add(_functionItem.getSignature().getParameterTypes().get(i));
+                partialApplicationParamNames.add(argName);
+                partialApplicationParamTypes.add(_functionItem.getSignature().getParameterTypes().get(i));
             } else {
-                List<Item> argValue = argIterator.materialize(context);
-                argumentValues.put(argName, argValue);
+                if (argIterator.isDataFrame()) {
+                    DFArgumentValues.put(argName, argIterator.getDataFrame(context));
+                } else if (argIterator.isRDD()) {
+                    RDDArgumentValues.put(argName, argIterator.getRDD(context));
+                } else {
+                    localArgumentValues.put(argName, argIterator.materialize(context));
+                }
             }
         }
 
         FunctionItem partiallyAppliedFunction = new FunctionItem(
-                new FunctionIdentifier("", partialAppParamNames.size()),
-                partialAppParamNames,
+                new FunctionIdentifier("", partialApplicationParamNames.size()),
+                partialApplicationParamNames,
                 new FunctionSignature(
-                        partialAppParamTypes,
+                        partialApplicationParamTypes,
                         _functionItem.getSignature().getReturnType()
                 ),
                 _functionItem.getBodyIterator(),
-                argumentValues
+                localArgumentValues,
+                RDDArgumentValues,
+                DFArgumentValues
         );
         return new FunctionRuntimeIterator(partiallyAppliedFunction, getMetadata());
     }
@@ -170,27 +182,26 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     private DynamicContext createNewDynamicContextWithArguments(DynamicContext context) {
         this.validateAndReadArguments();
 
-        RuntimeIterator argIterator;
         String argName;
+        RuntimeIterator argIterator;
 
-        // calculate argument values
-        Map<String, List<Item>> argumentValues = new LinkedHashMap<>(_functionItem.getVariablesInClosure());
+        Map<String, List<Item>> localArgumentValues = new LinkedHashMap<>(_functionItem.getLocalVariablesInClosure());
+        Map<String, JavaRDD<Item>> RDDArgumentValues = new LinkedHashMap<>(_functionItem.getRDDVariablesInClosure());
+        Map<String, Dataset<Row>> DFArgumentValues = new LinkedHashMap<>(_functionItem.getDFVariablesInClosure());
+
         for (int i = 0; i < _functionArguments.size(); i++) {
-            argIterator = _functionArguments.get(i);
             argName = _functionItem.getParameterNames().get(i);
+            argIterator = _functionArguments.get(i);
 
-            List<Item> argValue = argIterator.materialize(context);
-            argumentValues.put(argName, argValue);
+            if (argIterator.isDataFrame()) {
+                DFArgumentValues.put(argName, argIterator.getDataFrame(context));
+            } else if (argIterator.isRDD()) {
+                RDDArgumentValues.put(argName, argIterator.getRDD(context));
+            } else {
+                localArgumentValues.put(argName, argIterator.materialize(context));
+            }
         }
-
-        DynamicContext contextWithArguments = new DynamicContext(context);
-        for (Map.Entry<String, List<Item>> argumentEntry : argumentValues.entrySet()) {
-            contextWithArguments.addVariableValue(
-                argumentEntry.getKey(),
-                argumentEntry.getValue()
-            );
-        }
-        return contextWithArguments;
+        return new DynamicContext(context, localArgumentValues, RDDArgumentValues, DFArgumentValues);
     }
 
     @Override
