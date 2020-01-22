@@ -47,20 +47,23 @@ import sparksoniq.semantics.types.SequenceType;
 public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<StaticContext> {
 
     // indicate whether an error should be thrown if an duplicate function declaration is detected
-    private boolean ignoreDuplicateFunctionError = false;
+    private boolean ignoreDuplicateFunctionError;
 
     // indicate whether an error should be thrown if a function call is made for a non-existing function
-    private boolean ignoreMissingFunctionError = true;
+    private boolean ignoreMissingFunctionError;
 
     public StaticContextVisitor() {
         this.setConfigForInitialPass();
     }
 
+    // Initial pass collects the function declaration information for the second pass, this enables hoisting
+    // some functions may not yet be defined yet and if so their body's execution mode's will be unset
     public void setConfigForInitialPass() {
         ignoreDuplicateFunctionError = false;
         ignoreMissingFunctionError = true;
     }
 
+    // second pass should have all function declaration and execution mode information available
     public void setConfigForConsequentPasses() {
         ignoreDuplicateFunctionError = true;
         ignoreMissingFunctionError = false;
