@@ -82,7 +82,7 @@ public abstract class AbstractExpressionOrClauseVisitor<T> {
     public T visitDescendants(ExpressionOrClause expression, T argument) {
         T result = argument;
         for (ExpressionOrClause child : expression.getDescendants()) {
-            result = visit(child, argument);
+            result = visit(child, result);
         }
         return result;
     }
