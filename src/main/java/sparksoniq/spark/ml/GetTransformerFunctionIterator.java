@@ -41,8 +41,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
-    // TODO: once implemented, add this iterator to the function Catalog
-    // TODO: Implement GetEstimator next
 
     private static final long serialVersionUID = 1L;
     public static final List<String> transformerParameterNames = new ArrayList<>(Arrays.asList("input", "params"));
