@@ -32,6 +32,7 @@ import java.util.List;
 public abstract class PostfixExtension extends ExpressionOrClause {
 
     private PostFixExpression parent;
+    private PostfixExtension previous;
 
     protected PostfixExtension(ExpressionMetadata metadata) {
         super(metadata);
@@ -43,6 +44,14 @@ public abstract class PostfixExtension extends ExpressionOrClause {
 
     public void setParent(PostFixExpression _parent) {
         parent = _parent;
+    }
+
+    public PostfixExtension getPrevious() {
+        return previous;
+    }
+
+    public void setPrevious(PostfixExtension previous) {
+        this.previous = previous;
     }
 
     @Override

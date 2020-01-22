@@ -38,10 +38,21 @@ public class LetClause extends FlworClause {
             throw new SemanticException("Let clause must have at least one variable", metadataFromContext);
         this.letVars = vars;
 
+        // chain letVariables with previousClause relationship
+        for (int varIndex = letVars.size() - 1; varIndex > 0; varIndex--) {
+            letVars.get(varIndex).setPreviousClause(letVars.get(varIndex - 1));
+        }
     }
 
     public List<LetClauseVar> getLetVariables() {
         return letVars;
+    }
+
+    @Override
+    public void setPreviousClause(FlworClause previousClause) {
+        super.setPreviousClause(previousClause);
+        // assign the previous clause of the LetClause as the first variable definition's previous
+        letVars.get(0).previousClause = this.previousClause;
     }
 
     @Override

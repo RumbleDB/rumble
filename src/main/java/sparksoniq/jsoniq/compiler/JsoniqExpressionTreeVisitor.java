@@ -26,6 +26,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import sparksoniq.exceptions.DuplicateParamNameException;
 import sparksoniq.exceptions.JsoniqVersionException;
 import sparksoniq.exceptions.ModuleDeclarationException;
+import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnsupportedFeatureException;
 import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
@@ -270,6 +271,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         }
 
         // exclude return + returnExpr
+        FlworClause previousFLWORClause = startClause;
         for (ParseTree child : ctx.children.subList(1, ctx.children.size() - 2)) {
             if (child instanceof JsoniqParser.ForClauseContext) {
                 this.visitForClause((JsoniqParser.ForClauseContext) child);
@@ -294,7 +296,8 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
                         "FLOWR clause not implemented yet",
                         createMetadataFromContext(ctx)
                 );
-
+            childClause.setPreviousClause(previousFLWORClause);
+            previousFLWORClause = childClause;
             contentClauses.add(childClause);
         }
 
@@ -308,6 +311,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
                         ctx.getStop().getCharPositionInLine()
                 )
         );
+        returnClause.setPreviousClause(previousFLWORClause);
 
         node = new FlworExpression(startClause, contentClauses, returnClause, createMetadataFromContext(ctx));
         this.currentExpression = node;
@@ -777,6 +781,7 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
         List<PostfixExtension> rhs = new ArrayList<>();
         this.visitPrimaryExpr(ctx.main_expr);
         mainExpression = this.currentPrimaryExpression;
+        PostfixExtension previousPostFixExtension = null;
         for (ParseTree child : ctx.children.subList(1, ctx.children.size())) {
             if (child instanceof JsoniqParser.PredicateContext) {
                 this.visitPredicate((JsoniqParser.PredicateContext) child);
@@ -795,7 +800,11 @@ public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.pars
                     (JsoniqParser.ArgumentListContext) child
                 );
                 childExpression = new DynamicFunctionCallExtension(arguments, createMetadataFromContext(ctx));
+            } else {
+                throw new OurBadException("Unrecognized postfix extension found.");
             }
+            childExpression.setPrevious(previousPostFixExtension);
+            previousPostFixExtension = childExpression;
             rhs.add(childExpression);
         }
         node = new PostFixExpression(mainExpression, rhs, createMetadataFromContext(ctx));

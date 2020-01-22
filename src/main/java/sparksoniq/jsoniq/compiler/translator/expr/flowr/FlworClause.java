@@ -33,11 +33,21 @@ import java.util.List;
 
 public class FlworClause extends ExpressionOrClause {
 
+    protected FlworClause previousClause;
     protected FLWOR_CLAUSES clauseType;
+
 
     public FlworClause(FLWOR_CLAUSES clauseType, ExpressionMetadata metadata) {
         super(metadata);
         this.clauseType = clauseType;
+    }
+
+    public FlworClause getPreviousClause() {
+        return previousClause;
+    }
+
+    public void setPreviousClause(FlworClause previousClause) {
+        this.previousClause = previousClause;
     }
 
     public FLWOR_CLAUSES getClauseType() {

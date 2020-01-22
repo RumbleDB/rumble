@@ -38,10 +38,22 @@ public class ForClause extends FlworClause {
         if (vars == null || vars.isEmpty())
             throw new SemanticException("For clause must have at least one variable", metadataFromContext);
         this.forVariables = vars;
+
+        // chain forVariables with previousClause relationship
+        for (int varIndex = forVariables.size() - 1; varIndex > 0; varIndex--) {
+            forVariables.get(varIndex).setPreviousClause(forVariables.get(varIndex - 1));
+        }
     }
 
     public List<ForClauseVar> getForVariables() {
         return forVariables;
+    }
+
+    @Override
+    public void setPreviousClause(FlworClause previousClause) {
+        super.setPreviousClause(previousClause);
+        // assign the previous clause of the ForClause as the first variable definition's previous
+        forVariables.get(0).previousClause = this.previousClause;
     }
 
     @Override
