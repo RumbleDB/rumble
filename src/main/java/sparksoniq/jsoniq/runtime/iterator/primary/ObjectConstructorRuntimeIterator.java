@@ -57,7 +57,7 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
             IteratorMetadata iteratorMetadata
     ) {
         super(null, iteratorMetadata);
-        childExpressions.forEach(c -> this._children.add(c));
+        this._children.addAll(childExpressions);
         this._isMergedObject = true;
     }
 

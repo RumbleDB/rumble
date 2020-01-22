@@ -40,7 +40,7 @@ public class CommaExpressionIterator extends LocalRuntimeIterator {
 
     @Override
     public Item next() {
-        if (_hasNext == true) {
+        if (_hasNext) {
             Item result = _nextResult; // save the result to be returned
             setNextResult(); // calculate and store the next result
             return result;
@@ -75,10 +75,6 @@ public class CommaExpressionIterator extends LocalRuntimeIterator {
             }
         }
 
-        if (_nextResult == null) {
-            this._hasNext = false;
-        } else {
-            this._hasNext = true;
-        }
+        this._hasNext = _nextResult != null;
     }
 }

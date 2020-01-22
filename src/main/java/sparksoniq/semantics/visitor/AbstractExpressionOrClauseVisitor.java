@@ -173,7 +173,9 @@ public abstract class AbstractExpressionOrClauseVisitor<T> {
         return defaultAction(expression, argument);
     }
 
-    public abstract T visitContextExpr(ContextExpression expression, T argument);
+    public T visitContextExpr(ContextExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
 
     public T visitFunctionCall(FunctionCall expression, T argument) {
         return defaultAction(expression, argument);

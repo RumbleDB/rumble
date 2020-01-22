@@ -32,7 +32,6 @@ import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.JobWithinAJobException;
 import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.exceptions.OurBadException;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -59,20 +58,20 @@ import java.util.TreeMap;
 public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
 
     private static final long serialVersionUID = 1L;
-    private final List<GroupByClauseSparkIteratorExpression> _expressions;
+    private final List<GroupByClauseSparkIteratorExpression> _groupingExpressions;
     private List<FlworTuple> _localTupleResults;
     private int _resultIndex;
     private Map<String, DynamicContext.VariableDependency> _dependencies;
 
     public GroupByClauseSparkIterator(
             RuntimeTupleIterator child,
-            List<GroupByClauseSparkIteratorExpression> variables,
+            List<GroupByClauseSparkIteratorExpression> groupingExpressions,
             IteratorMetadata iteratorMetadata
     ) {
         super(child, iteratorMetadata);
-        this._expressions = variables;
+        this._groupingExpressions = groupingExpressions;
         _dependencies = new TreeMap<>();
-        for (GroupByClauseSparkIteratorExpression e : _expressions) {
+        for (GroupByClauseSparkIteratorExpression e : _groupingExpressions) {
             if (e.getExpression() != null) {
                 _dependencies.putAll(e.getExpression().getVariableDependencies());
             } else {
@@ -137,7 +136,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             FlworTuple inputTuple = _child.next();
 
             List<Item> results = new ArrayList<>();
-            for (GroupByClauseSparkIteratorExpression expression : _expressions) {
+            for (GroupByClauseSparkIteratorExpression expression : _groupingExpressions) {
                 tupleContext.removeAllVariables(); // clear the previous variables
                 tupleContext.setBindingsFromTuple(inputTuple, getMetadata()); // assign new variables from new tuple
 
@@ -204,7 +203,10 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         FlworTuple newTuple = new FlworTuple(oldFirstTuple.getLocalKeys().size());
         for (String tupleVariable : oldFirstTuple.getLocalKeys()) {
             iterator = keyTuplePairs.iterator();
-            if (_expressions.stream().anyMatch(v -> v.getVariableReference().getVariableName().equals(tupleVariable))) {
+            if (
+                _groupingExpressions.stream()
+                    .anyMatch(v -> v.getVariableReference().getVariableName().equals(tupleVariable))
+            ) {
                 newTuple.putValue(tupleVariable, oldFirstTuple.getLocalValue(tupleVariable, getMetadata()));
             } else {
                 List<Item> allValues = new ArrayList<>();
@@ -226,7 +228,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             throw new OurBadException("Invalid groupby clause.");
         }
 
-        for (GroupByClauseSparkIteratorExpression expression : _expressions) {
+        for (GroupByClauseSparkIteratorExpression expression : _groupingExpressions) {
             if (expression.getExpression() != null && expression.getExpression().isRDD()) {
                 throw new JobWithinAJobException(
                         "A group by clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
@@ -241,7 +243,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         List<String> columnNames;
 
         List<VariableReferenceIterator> variableAccessExpressions = new ArrayList<>();
-        for (GroupByClauseSparkIteratorExpression expression : _expressions) {
+        for (GroupByClauseSparkIteratorExpression expression : _groupingExpressions) {
             inputSchema = df.schema();
             columnNamesArray = inputSchema.fieldNames();
             columnNames = Arrays.asList(columnNamesArray);
@@ -304,9 +306,9 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         // Determine the return type for grouping UDF
         List<StructField> typedFields = new ArrayList<>();
         String appendedGroupingColumnsName = "grouping_columns";
-        for (int columnIndex = 0; columnIndex < _expressions.size(); columnIndex++) {
+        for (int columnIndex = 0; columnIndex < _groupingExpressions.size(); columnIndex++) {
             groupingVariables.put(
-                _expressions.get(columnIndex).getVariableReference().getVariableName(),
+                _groupingExpressions.get(columnIndex).getVariableReference().getVariableName(),
                 DynamicContext.VariableDependency.FULL
             );
             // every expression contains an int column for null/empty/true/false/string/double check
@@ -385,7 +387,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<String, DynamicContext.VariableDependency> result = new TreeMap<>();
-        for (GroupByClauseSparkIteratorExpression iterator : _expressions) {
+        for (GroupByClauseSparkIteratorExpression iterator : _groupingExpressions) {
             if (iterator.getExpression() != null) {
                 result.putAll(iterator.getExpression().getVariableDependencies());
             } else {
@@ -401,7 +403,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
 
     public Set<String> getVariablesBoundInCurrentFLWORExpression() {
         Set<String> result = new HashSet<>();
-        for (GroupByClauseSparkIteratorExpression iterator : _expressions) {
+        for (GroupByClauseSparkIteratorExpression iterator : _groupingExpressions) {
             result.add(iterator.getVariableReference().getVariableName());
         }
         result.addAll(_child.getVariablesBoundInCurrentFLWORExpression());
@@ -410,7 +412,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
 
     public void print(StringBuffer buffer, int indent) {
         super.print(buffer, indent);
-        for (GroupByClauseSparkIteratorExpression iterator : _expressions) {
+        for (GroupByClauseSparkIteratorExpression iterator : _groupingExpressions) {
             for (int i = 0; i < indent + 1; ++i) {
                 buffer.append("  ");
             }
@@ -428,12 +430,12 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         Map<String, DynamicContext.VariableDependency> projection = new TreeMap<>(parentProjection);
 
         // remove the variables that this clause binds.
-        for (GroupByClauseSparkIteratorExpression iterator : _expressions) {
+        for (GroupByClauseSparkIteratorExpression iterator : _groupingExpressions) {
             projection.remove(iterator.getVariableReference().getVariableName());
         }
 
         // add the variable dependencies needed by this for clause's expression.
-        for (GroupByClauseSparkIteratorExpression iterator : _expressions) {
+        for (GroupByClauseSparkIteratorExpression iterator : _groupingExpressions) {
             if (iterator.getExpression() == null) {
                 String variable = iterator.getVariableReference().getVariableName();
                 projection.put(variable, DynamicContext.VariableDependency.FULL);

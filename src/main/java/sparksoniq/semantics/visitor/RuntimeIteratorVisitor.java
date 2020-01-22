@@ -20,7 +20,6 @@
 
 package sparksoniq.semantics.visitor;
 
-import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnknownFunctionCallException;
 import sparksoniq.exceptions.UnsupportedFeatureException;
 import sparksoniq.jsoniq.compiler.translator.expr.CommaExpression;
@@ -192,7 +191,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
     public RuntimeIterator visitFlowrExpression(FlworExpression expression, RuntimeIterator argument) {
         FlworClause startClause = expression.getStartClause();
         RuntimeTupleIterator previous = null;
-        previous = this.visitFlowrClause(startClause, argument, previous);
+        previous = this.visitFlowrClause(startClause, argument, null);
         for (FlworClause clause : expression.get_contentClauses()) {
             previous = this.visitFlowrClause(clause, argument, previous);
         }
@@ -213,14 +212,15 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
     ) {
         if (clause instanceof ForClause) {
             for (ForClauseVar var : ((ForClause) clause).getForVariables()) {
-                RuntimeIterator assignmentExpression = this.visit(var.getExpression(), argument);;
-                if (var.getAsSequence() != null && var.getAsSequence().getSequence() != null)
+                RuntimeIterator assignmentExpression = this.visit(var.getExpression(), argument);
+                if (var.getAsSequence() != null && var.getAsSequence().getSequence() != null) {
                     assignmentExpression = new TreatIterator(
                             assignmentExpression,
                             var.getAsSequence().getSequence(),
                             false,
                             createIteratorMetadata(clause)
                     );
+                }
 
                 previousIterator = new ForClauseSparkIterator(
                         previousIterator,
@@ -231,14 +231,15 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
             }
         } else if (clause instanceof LetClause) {
             for (LetClauseVar var : ((LetClause) clause).getLetVariables()) {
-                RuntimeIterator assignmentExpression = this.visit(var.getExpression(), argument);;
-                if (var.getAsSequence() != null && var.getAsSequence().getSequence() != null)
+                RuntimeIterator assignmentExpression = this.visit(var.getExpression(), argument);
+                if (var.getAsSequence() != null && var.getAsSequence().getSequence() != null) {
                     assignmentExpression = new TreatIterator(
                             assignmentExpression,
                             var.getAsSequence().getSequence(),
                             false,
                             createIteratorMetadata(clause)
                     );
+                }
 
                 previousIterator = new LetClauseSparkIterator(
                         previousIterator,
@@ -252,14 +253,15 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
             for (GroupByClauseVar groupExpr : ((GroupByClause) clause).getGroupVariables()) {
                 RuntimeIterator groupByExpression = null;
                 if (groupExpr.getExpression() != null) {
-                    groupByExpression = this.visit(groupExpr.getExpression(), argument);;
-                    if (groupExpr.getAsSequence() != null && groupExpr.getAsSequence().getSequence() != null)
+                    groupByExpression = this.visit(groupExpr.getExpression(), argument);
+                    if (groupExpr.getAsSequence() != null && groupExpr.getAsSequence().getSequence() != null) {
                         groupByExpression = new TreatIterator(
                                 groupByExpression,
                                 groupExpr.getAsSequence().getSequence(),
                                 false,
                                 createIteratorMetadata(clause)
                         );
+                    }
                 }
 
                 expressions.add(

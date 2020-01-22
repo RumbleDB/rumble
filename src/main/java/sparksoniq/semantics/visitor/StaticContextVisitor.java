@@ -35,7 +35,6 @@ import sparksoniq.jsoniq.compiler.translator.expr.flowr.GroupByClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.GroupByClauseVar;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.LetClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.LetClauseVar;
-import sparksoniq.jsoniq.compiler.translator.expr.primary.ContextExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpressionVar;
@@ -48,19 +47,20 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
 
     @Override
     public StaticContext visit(ExpressionOrClause expression, StaticContext argument) {
-        if (expression instanceof Expression)
+        if (expression instanceof Expression) {
             ((Expression) expression).setStaticContext(argument);
+        }
         return expression.accept(this, argument);
     }
 
     @Override
     public StaticContext visitVariableReference(VariableReference expression, StaticContext argument) {
-        if (argument == null || !argument.isInScope(expression.getVariableName()))
+        if (argument == null || !argument.isInScope(expression.getVariableName())) {
             throw new UndeclaredVariableException(
                     "Uninitialized variable reference: " + expression.getVariableName(),
                     expression.getMetadata()
             );
-        else {
+        } else {
             expression.setType(argument.getVariableSequenceType(expression.getVariableName()));
             return defaultAction(expression, argument);
         }
@@ -69,14 +69,16 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
     @Override
     public StaticContext visitFlowrExpression(FlworExpression expression, StaticContext argument) {
         StaticContext flowrContext;
-        if (argument == null)
+        if (argument == null) {
             flowrContext = new StaticContext();
-        else
+        } else {
             flowrContext = argument;
+        }
 
         StaticContext result = this.visit(expression.getStartClause(), flowrContext);
-        for (FlworClause clause : expression.get_contentClauses())
+        for (FlworClause clause : expression.get_contentClauses()) {
             result = this.visit(clause, result);
+        }
 
         result = this.visit(expression.get_returnClause(), result);
         return result;
@@ -86,24 +88,27 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
     @Override
     public StaticContext visitForClause(ForClause expression, StaticContext argument) {
         StaticContext result = argument;
-        for (ForClauseVar var : expression.getForVariables())
+        for (ForClauseVar var : expression.getForVariables()) {
             result = this.visit(var, result);
+        }
         return result;
     }
 
     @Override
     public StaticContext visitLetClause(LetClause expression, StaticContext argument) {
         StaticContext result = argument;
-        for (LetClauseVar var : expression.getLetVariables())
+        for (LetClauseVar var : expression.getLetVariables()) {
             result = this.visit(var, result);
+        }
         return result;
     }
 
     @Override
     public StaticContext visitGroupByClause(GroupByClause expression, StaticContext argument) {
         StaticContext result = argument;
-        for (GroupByClauseVar var : expression.getGroupVariables())
+        for (GroupByClauseVar var : expression.getGroupVariables()) {
             result = this.visit(var, result);
+        }
         return result;
     }
     // endregion
@@ -112,12 +117,13 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
     @Override
     public StaticContext visitForClauseVar(ForClauseVar expression, StaticContext argument) {
         StaticContext result = visitFlowrVarDeclaration(expression, argument);
-        if (expression.getPositionalVariableReference() != null)
+        if (expression.getPositionalVariableReference() != null) {
             result.addVariable(
                 expression.getPositionalVariableReference().getVariableName(),
                 new SequenceType(new ItemType(ItemTypes.IntegerItem)),
                 expression.getMetadata()
             );
+        }
         // TODO visit at...
         this.visit(expression.getExpression(), argument);
         return result;
@@ -166,19 +172,16 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
     // endregion
 
     @Override
-    public StaticContext visitContextExpr(ContextExpression expression, StaticContext argument) {
-        return defaultAction(expression, argument);
-    }
-
-    @Override
     public StaticContext visitQuantifiedExpression(QuantifiedExpression expression, StaticContext argument) {
         StaticContext context;
-        if (argument == null)
+        if (argument == null) {
             context = new StaticContext();
-        else
+        } else {
             context = argument;
-        for (QuantifiedExpressionVar clause : expression.getVariables())
+        }
+        for (QuantifiedExpressionVar clause : expression.getVariables()) {
             context = this.visit(clause, context);
+        }
         return context;
     }
 
