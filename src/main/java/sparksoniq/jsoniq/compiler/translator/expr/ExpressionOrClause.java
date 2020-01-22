@@ -53,7 +53,7 @@ public abstract class ExpressionOrClause {
     // serialization
     public abstract String serializationString(boolean prefix);
 
-    public List<ExpressionOrClause> getDescendants() {
+    public final List<ExpressionOrClause> getDescendants() {
         return getDescendants(false);
     }
 
