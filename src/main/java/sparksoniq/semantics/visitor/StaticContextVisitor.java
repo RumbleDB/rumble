@@ -103,9 +103,6 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
 
     @Override
     public StaticContext visitFunctionDeclaration(FunctionDeclaration expression, StaticContext argument) {
-        expression.initHighestExecutionMode();
-        expression.registerUserDefinedFunctionExecutionMode(ignoreDuplicateFunctionError);
-
         // define a static context for the function body, add params to the context and visit the body expression
         StaticContext functionDeclarationContext = new StaticContext(argument);
         expression.get_params()
@@ -117,7 +114,10 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
                     ExecutionMode.LOCAL // static udf currently supports materialized(local) params, not RDDs or DFs
                 )
             );
+        // visit the body first to make its execution mode available while adding the function to the catalog
         this.visit(expression.get_body(), functionDeclarationContext);
+        expression.initHighestExecutionMode();
+        expression.registerUserDefinedFunctionExecutionMode(ignoreDuplicateFunctionError);
         return functionDeclarationContext;
     }
 
