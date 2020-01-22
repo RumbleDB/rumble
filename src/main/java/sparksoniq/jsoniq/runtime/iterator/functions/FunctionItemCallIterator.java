@@ -23,6 +23,7 @@ package sparksoniq.jsoniq.runtime.iterator.functions;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
@@ -74,12 +75,18 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
     @Override
     public void openLocal() {
-        processArguments();
+        if (_isPartialApplication) {
+            _functionBodyIterator = generatePartiallyAppliedFunction();
+        } else {
+            _functionBodyIterator = _functionItem.getBodyIterator();
+            _currentDynamicContext = this.createNewDynamicContextWithArguments(_currentDynamicContext);
+        }
+
         _functionBodyIterator.open(_currentDynamicContext);
         setNextResult();
     }
 
-    private void processArguments() {
+    private void validateAndReadArguments() {
         String formattedName = (!_functionItem.getIdentifier().getName().equals(""))
             ? _functionItem.getIdentifier().getName() + " "
             : "";
@@ -113,64 +120,75 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 }
             }
         }
+    }
+
+    /**
+     * Partial application generates a new function:
+     * - Supplied parameters are set as NonLocalVariables
+     * - Argument placeholders form the parameters
+     *
+     * @return FunctionRuntimeIterator that contains the newly generated FunctionItem
+     */
+    private FunctionRuntimeIterator generatePartiallyAppliedFunction() {
+        this.validateAndReadArguments();
 
         RuntimeIterator argIterator;
         String argName;
+
+        // read both partially applied and normal arguments
         Map<String, List<Item>> argumentValues = new LinkedHashMap<>(_functionItem.getNonLocalVariableBindings());
+        List<String> partialAppParamNames = new ArrayList<>();
+        List<SequenceType> partialAppParamTypes = new ArrayList<>();
+        for (int i = 0; i < _functionArguments.size(); i++) {
+            argIterator = _functionArguments.get(i);
+            argName = _functionItem.getParameterNames().get(i);
 
-        if (_isPartialApplication) {
-            // partial application should return a new FunctionItem with supplied parameters set as NonLocalVariables
-            // Argument placeholders form the parameters of the new FunctionItem
-
-            List<String> partialAppParamNames = new ArrayList<>();
-            List<SequenceType> partialAppParamTypes = new ArrayList<>();
-
-            for (int i = 0; i < _functionArguments.size(); i++) {
-                argIterator = _functionArguments.get(i);
-                argName = _functionItem.getParameterNames().get(i);
-
-                if (argIterator == null) { // == ArgumentPlaceholder
-                    partialAppParamNames.add(argName);
-                    partialAppParamTypes.add(_functionItem.getSignature().getParameterTypes().get(i));
-                } else {
-                    List<Item> argValue = getItemsFromIteratorWithCurrentContext(argIterator);
-                    argumentValues.put(argName, argValue);
-                }
-            }
-
-            // partial application should return a new FunctionItem with given parameters set as NonLocalVariables
-            // and argument placeholders as new parameters to the new FunctionItem
-            FunctionItem partiallyAppliedFunction = new FunctionItem(
-                    new FunctionIdentifier("", partialAppParamNames.size()),
-                    partialAppParamNames,
-                    new FunctionSignature(
-                            partialAppParamTypes,
-                            _functionItem.getSignature().getReturnType()
-                    ),
-                    _functionItem.getBodyIterator(),
-                    argumentValues
-            );
-            _functionBodyIterator = new FunctionRuntimeIterator(partiallyAppliedFunction, getMetadata());
-        } else {
-            // calculate argument values
-            for (int i = 0; i < _functionArguments.size(); i++) {
-                argIterator = _functionArguments.get(i);
-                argName = _functionItem.getParameterNames().get(i);
-
+            if (argIterator == null) { // == ArgumentPlaceholder
+                partialAppParamNames.add(argName);
+                partialAppParamTypes.add(_functionItem.getSignature().getParameterTypes().get(i));
+            } else {
                 List<Item> argValue = getItemsFromIteratorWithCurrentContext(argIterator);
                 argumentValues.put(argName, argValue);
             }
-
-            // place argument values into dynamic context
-            _currentDynamicContext = new DynamicContext(_currentDynamicContext);
-            for (Map.Entry<String, List<Item>> argumentEntry : argumentValues.entrySet()) {
-                _currentDynamicContext.addVariableValue(
-                    argumentEntry.getKey(),
-                    argumentEntry.getValue()
-                );
-            }
-            _functionBodyIterator = _functionItem.getBodyIterator();
         }
+
+        FunctionItem partiallyAppliedFunction = new FunctionItem(
+                new FunctionIdentifier("", partialAppParamNames.size()),
+                partialAppParamNames,
+                new FunctionSignature(
+                        partialAppParamTypes,
+                        _functionItem.getSignature().getReturnType()
+                ),
+                _functionItem.getBodyIterator(),
+                argumentValues
+        );
+        return new FunctionRuntimeIterator(partiallyAppliedFunction, getMetadata());
+    }
+
+    private DynamicContext createNewDynamicContextWithArguments(DynamicContext context) {
+        this.validateAndReadArguments();
+
+        RuntimeIterator argIterator;
+        String argName;
+
+        // calculate argument values
+        Map<String, List<Item>> argumentValues = new LinkedHashMap<>(_functionItem.getNonLocalVariableBindings());
+        for (int i = 0; i < _functionArguments.size(); i++) {
+            argIterator = _functionArguments.get(i);
+            argName = _functionItem.getParameterNames().get(i);
+
+            List<Item> argValue = getItemsFromIteratorWithCurrentContext(argIterator);
+            argumentValues.put(argName, argValue);
+        }
+
+        DynamicContext contextWithArguments = new DynamicContext(context);
+        for (Map.Entry<String, List<Item>> argumentEntry : argumentValues.entrySet()) {
+            contextWithArguments.addVariableValue(
+                argumentEntry.getKey(),
+                argumentEntry.getValue()
+            );
+        }
+        return contextWithArguments;
     }
 
     @Override
@@ -225,8 +243,15 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        processArguments();
-        return _functionBodyIterator.getRDD(_currentDynamicContext);
+        if (_isPartialApplication) {
+            throw new OurBadException(
+                    "Unexpected program state reached. Partially applied function calls must be evaluated locally."
+            );
+        }
+        DynamicContext contextWithArguments = dynamicContext;
+        _functionBodyIterator = _functionItem.getBodyIterator();
+        contextWithArguments = this.createNewDynamicContextWithArguments(contextWithArguments);
+        return _functionBodyIterator.getRDD(contextWithArguments);
     }
 
     @Override
