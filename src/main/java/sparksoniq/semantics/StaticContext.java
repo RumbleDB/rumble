@@ -34,18 +34,18 @@ public class StaticContext {
         private String name;
         private SequenceType sequenceType;
         private ExpressionMetadata metadata;
-        private ExecutionMode executionMode;
+        private ExecutionMode storageMode;
 
         public InScopeVariable(
                 String name,
                 SequenceType sequenceType,
                 ExpressionMetadata metadata,
-                ExecutionMode executionMode
+                ExecutionMode storageMode
         ) {
             this.name = name;
             this.sequenceType = sequenceType;
             this.metadata = metadata;
-            this.executionMode = executionMode;
+            this.storageMode = storageMode;
         }
 
         public String getName() {
@@ -115,17 +115,17 @@ public class StaticContext {
         return getInScopeVariable(varName).getMetadata();
     }
 
-    public ExecutionMode getVariableExecutionMode(String varName) {
-        return getInScopeVariable(varName).executionMode;
+    public ExecutionMode getVariableStorageMode(String varName) {
+        return getInScopeVariable(varName).storageMode;
     }
 
     public void addVariable(
             String varName,
             SequenceType type,
             ExpressionMetadata metadata,
-            ExecutionMode executionMode
+            ExecutionMode storageMode
     ) {
-        this._inScopeVariables.put(varName, new InScopeVariable(varName, type, metadata, executionMode));
+        this._inScopeVariables.put(varName, new InScopeVariable(varName, type, metadata, storageMode));
     }
 
     protected Map<String, InScopeVariable> getInScopeVariables() {
