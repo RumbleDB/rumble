@@ -49,7 +49,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     protected transient boolean _hasNext;
     protected transient boolean _isOpen;
     protected List<RuntimeIterator> _children;
-    protected transient DynamicContext _currentDynamicContext;
+    protected transient DynamicContext _currentDynamicContextForLocalExecution;
     private IteratorMetadata metadata;
 
     public RuntimeIterator() {
@@ -152,7 +152,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
             throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
         this._isOpen = true;
         this._hasNext = true;
-        this._currentDynamicContext = context;
+        this._currentDynamicContextForLocalExecution = context;
     }
 
     public void close() {
@@ -162,7 +162,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
 
     public void reset(DynamicContext context) {
         this._hasNext = true;
-        this._currentDynamicContext = context;
+        this._currentDynamicContextForLocalExecution = context;
         this._children.forEach(c -> c.reset(context));
     }
 
@@ -176,7 +176,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     public void read(Kryo kryo, Input input) {
         this._hasNext = false;
         this._isOpen = false;
-        this._currentDynamicContext = null;
+        this._currentDynamicContextForLocalExecution = null;
         this._children = kryo.readObject(input, ArrayList.class);
     }
 
@@ -215,7 +215,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
 
     protected List<Item> getItemsFromIteratorWithCurrentContext(RuntimeIterator iterator) {
         List<Item> result = new ArrayList<>();
-        iterator.open(_currentDynamicContext);
+        iterator.open(_currentDynamicContextForLocalExecution);
         while (iterator.hasNext())
             result.add(iterator.next());
         iterator.close();
@@ -225,7 +225,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     protected Item getSingleItemFromIterator(
             RuntimeIterator iterator
     ) {
-        iterator.open(_currentDynamicContext);
+        iterator.open(_currentDynamicContextForLocalExecution);
         Item result = iterator.hasNext() ? iterator.next() : null;
         iterator.close();
         return result;

@@ -56,7 +56,7 @@ public class CountFunctionIterator extends LocalFunctionCallIterator {
             if (iterator instanceof VariableReferenceIterator) {
                 VariableReferenceIterator expr = (VariableReferenceIterator) iterator;
                 this._hasNext = false;
-                return _currentDynamicContext.getVariableCount(expr.getVariableName());
+                return _currentDynamicContextForLocalExecution.getVariableCount(expr.getVariableName());
             }
 
             if (!iterator.isRDD()) {
@@ -67,9 +67,9 @@ public class CountFunctionIterator extends LocalFunctionCallIterator {
 
             long count;
             if (iterator.isDataFrame()) {
-                count = iterator.getDataFrame(_currentDynamicContext).count();
+                count = iterator.getDataFrame(_currentDynamicContextForLocalExecution).count();
             } else {
-                count = iterator.getRDD(_currentDynamicContext).count();
+                count = iterator.getRDD(_currentDynamicContextForLocalExecution).count();
             }
             this._hasNext = false;
             if (count > (long) Integer.MAX_VALUE) {

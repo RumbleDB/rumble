@@ -52,7 +52,7 @@ public class FunctionItem extends Item {
     // signature contains type information for all parameters and the return value
     private FunctionSignature signature;
     private RuntimeIterator bodyIterator;
-    private Map<String, List<Item>> nonLocalVariableBindings;
+    private Map<String, List<Item>> variablesInClosure;
 
     protected FunctionItem() {
         super();
@@ -63,13 +63,13 @@ public class FunctionItem extends Item {
             List<String> parameterNames,
             FunctionSignature signature,
             RuntimeIterator bodyIterator,
-            Map<String, List<Item>> nonLocalVariableBindings
+            Map<String, List<Item>> variablesInClosure
     ) {
         this.identifier = identifier;
         this.parameterNames = parameterNames;
         this.signature = signature;
         this.bodyIterator = bodyIterator;
-        this.nonLocalVariableBindings = nonLocalVariableBindings;
+        this.variablesInClosure = variablesInClosure;
     }
 
     public FunctionItem(
@@ -89,7 +89,7 @@ public class FunctionItem extends Item {
         this.parameterNames = paramNames;
         this.signature = new FunctionSignature(parameters, returnType);
         this.bodyIterator = bodyIterator;
-        this.nonLocalVariableBindings = new HashMap<>();
+        this.variablesInClosure = new HashMap<>();
     }
 
     public FunctionIdentifier getIdentifier() {
@@ -108,8 +108,8 @@ public class FunctionItem extends Item {
         return bodyIterator;
     }
 
-    public Map<String, List<Item>> getNonLocalVariableBindings() {
-        return nonLocalVariableBindings;
+    public Map<String, List<Item>> getVariablesInClosure() {
+        return variablesInClosure;
     }
 
     @Override
@@ -155,7 +155,7 @@ public class FunctionItem extends Item {
         kryo.writeObject(output, this.signature.getParameterTypes());
         kryo.writeObject(output, this.signature.getReturnType());
         // kryo.writeObject(output, this.bodyIterator);
-        kryo.writeObject(output, this.nonLocalVariableBindings);
+        kryo.writeObject(output, this.variablesInClosure);
 
         // convert RuntimeIterator to byte[] data
         try {
@@ -182,7 +182,7 @@ public class FunctionItem extends Item {
         SequenceType returnType = kryo.readObject(input, SequenceType.class);
         this.signature = new FunctionSignature(parameters, returnType);
         // this.bodyIterator = kryo.readObject(input, RuntimeIterator.class);
-        this.nonLocalVariableBindings = kryo.readObject(input, HashMap.class);
+        this.variablesInClosure = kryo.readObject(input, HashMap.class);
 
         try {
             int dataLength = input.readInt();

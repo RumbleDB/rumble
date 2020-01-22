@@ -79,10 +79,12 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
             _functionBodyIterator = generatePartiallyAppliedFunction();
         } else {
             _functionBodyIterator = _functionItem.getBodyIterator();
-            _currentDynamicContext = this.createNewDynamicContextWithArguments(_currentDynamicContext);
+            _currentDynamicContextForLocalExecution = this.createNewDynamicContextWithArguments(
+                _currentDynamicContextForLocalExecution
+            );
         }
 
-        _functionBodyIterator.open(_currentDynamicContext);
+        _functionBodyIterator.open(_currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
@@ -136,7 +138,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         String argName;
 
         // read both partially applied and normal arguments
-        Map<String, List<Item>> argumentValues = new LinkedHashMap<>(_functionItem.getNonLocalVariableBindings());
+        Map<String, List<Item>> argumentValues = new LinkedHashMap<>(_functionItem.getVariablesInClosure());
         List<String> partialAppParamNames = new ArrayList<>();
         List<SequenceType> partialAppParamTypes = new ArrayList<>();
         for (int i = 0; i < _functionArguments.size(); i++) {
@@ -172,7 +174,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         String argName;
 
         // calculate argument values
-        Map<String, List<Item>> argumentValues = new LinkedHashMap<>(_functionItem.getNonLocalVariableBindings());
+        Map<String, List<Item>> argumentValues = new LinkedHashMap<>(_functionItem.getVariablesInClosure());
         for (int i = 0; i < _functionArguments.size(); i++) {
             argIterator = _functionArguments.get(i);
             argName = _functionItem.getParameterNames().get(i);
@@ -214,7 +216,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
     @Override
     protected void resetLocal(DynamicContext context) {
-        _functionBodyIterator.reset(_currentDynamicContext);
+        _functionBodyIterator.reset(_currentDynamicContextForLocalExecution);
         setNextResult();
     }
 

@@ -47,7 +47,7 @@ public class ArrayMembersFunctionIterator extends LocalFunctionCallIterator {
         super.open(context);
 
         _iterator = this._children.get(0);
-        _iterator.open(_currentDynamicContext);
+        _iterator.open(_currentDynamicContextForLocalExecution);
         _nextResults = new LinkedList<>();
 
         setNextResult();

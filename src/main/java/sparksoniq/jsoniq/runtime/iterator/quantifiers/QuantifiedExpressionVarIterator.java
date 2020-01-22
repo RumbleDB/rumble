@@ -63,7 +63,7 @@ public class QuantifiedExpressionVarIterator extends LocalRuntimeIterator {
         super.open(context);
 
         _iterator = this._children.get(0);
-        _iterator.open(_currentDynamicContext);
+        _iterator.open(_currentDynamicContextForLocalExecution);
 
         setNextResult();
     }

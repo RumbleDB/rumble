@@ -61,7 +61,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void resetLocal(DynamicContext context) {
-        _sequenceIterator.reset(_currentDynamicContext);
+        _sequenceIterator.reset(_currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
@@ -74,7 +74,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
     @Override
     public void openLocal() {
         _prevResults = new ArrayList<>();
-        _sequenceIterator.open(_currentDynamicContext);
+        _sequenceIterator.open(_currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
@@ -107,7 +107,6 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        _currentDynamicContext = dynamicContext;
         JavaRDD<Item> childRDD = _sequenceIterator.getRDD(dynamicContext);
         Function<Item, Boolean> transformation = new FilterNonAtomicClosure();
         if (childRDD.filter(transformation).isEmpty()) {

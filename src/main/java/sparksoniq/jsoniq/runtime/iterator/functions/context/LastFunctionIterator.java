@@ -50,7 +50,7 @@ public class LastFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            Item result = _currentDynamicContext.getLast();
+            Item result = _currentDynamicContextForLocalExecution.getLast();
             if (result == null) {
                 throw new AbsentPartOfDynamicContextException("Context undefined (last) ", getMetadata());
             }

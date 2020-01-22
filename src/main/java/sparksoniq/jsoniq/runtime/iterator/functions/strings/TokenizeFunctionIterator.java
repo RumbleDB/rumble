@@ -65,7 +65,7 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
         if (_results == null) {
             // Getting first parameter
             RuntimeIterator stringIterator = _children.get(0);
-            stringIterator.open(_currentDynamicContext);
+            stringIterator.open(_currentDynamicContextForLocalExecution);
             if (!stringIterator.hasNext()) {
                 _hasNext = false;
                 stringIterator.close();
@@ -100,7 +100,7 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
                 separator = "\\s+";
             } else {
                 RuntimeIterator separatorIterator = _children.get(1);
-                separatorIterator.open(_currentDynamicContext);
+                separatorIterator.open(_currentDynamicContextForLocalExecution);
                 if (!separatorIterator.hasNext()) {
                     throw new UnexpectedTypeException("Second parameter of tokenize must be a string.", getMetadata());
                 }

@@ -59,12 +59,12 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        return _currentDynamicContext.getRDDVariableValue(_variableName, getMetadata());
+        return context.getRDDVariableValue(_variableName, getMetadata());
     }
 
     @Override
     public Dataset<Row> getDataFrame(DynamicContext context) {
-        return _currentDynamicContext.getDFVariableValue(_variableName, getMetadata());
+        return context.getDFVariableValue(_variableName, getMetadata());
     }
 
     @Override
@@ -91,7 +91,7 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
     @Override
     public void openLocal() {
         _currentIndex = 0;
-        _items = _currentDynamicContext.getLocalVariableValue(_variableName, getMetadata());
+        _items = _currentDynamicContextForLocalExecution.getLocalVariableValue(_variableName, getMetadata());
         _hasNext = _items.size() != 0;
     }
 

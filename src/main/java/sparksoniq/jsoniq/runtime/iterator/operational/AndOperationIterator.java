@@ -39,8 +39,8 @@ public class AndOperationIterator extends BinaryOperationBaseIterator {
     @Override
     public Item next() {
         if (this._hasNext) {
-            _leftIterator.open(_currentDynamicContext);
-            _rightIterator.open(_currentDynamicContext);
+            _leftIterator.open(_currentDynamicContextForLocalExecution);
+            _rightIterator.open(_currentDynamicContextForLocalExecution);
 
             boolean leftEffectiveBooleanValue = getEffectiveBooleanValue(_leftIterator);
             boolean rightEffectiveBooleanValue = getEffectiveBooleanValue(_rightIterator);

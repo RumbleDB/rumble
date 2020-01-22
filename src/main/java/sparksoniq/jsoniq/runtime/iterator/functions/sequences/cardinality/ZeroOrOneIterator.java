@@ -75,7 +75,7 @@ public class ZeroOrOneIterator extends CardinalityFunctionIterator {
             }
             sequenceIterator.close();
         } else {
-            JavaRDD<Item> rdd = sequenceIterator.getRDD(_currentDynamicContext);
+            JavaRDD<Item> rdd = sequenceIterator.getRDD(_currentDynamicContextForLocalExecution);
             List<Item> results = rdd.take(2);
             if (results.size() == 0) {
                 this._hasNext = false;

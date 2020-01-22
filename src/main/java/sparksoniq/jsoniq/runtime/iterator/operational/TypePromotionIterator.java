@@ -50,7 +50,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
 
     @Override
     public void resetLocal(DynamicContext context) {
-        _iterator.reset(_currentDynamicContext);
+        _iterator.reset(_currentDynamicContextForLocalExecution);
         this._childIndex = 0;
         setNextResult();
     }
@@ -63,7 +63,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     @Override
     public void openLocal() {
         this._childIndex = 0;
-        _iterator.open(_currentDynamicContext);
+        _iterator.open(_currentDynamicContextForLocalExecution);
         this.setNextResult();
     }
 
@@ -148,7 +148,6 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        _currentDynamicContext = context;
         JavaRDD<Item> childRDD = _iterator.getRDD(context);
 
         int count = childRDD.take(2).size();

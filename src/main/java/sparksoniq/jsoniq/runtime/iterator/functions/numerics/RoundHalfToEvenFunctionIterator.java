@@ -46,7 +46,7 @@ public class RoundHalfToEvenFunctionIterator extends LocalFunctionCallIterator {
     public void open(DynamicContext context) {
         super.open(context);
         _iterator = this._children.get(0);
-        _iterator.open(_currentDynamicContext);
+        _iterator.open(_currentDynamicContextForLocalExecution);
         this._hasNext = _iterator.hasNext();
         _iterator.close();
     }

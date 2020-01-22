@@ -97,7 +97,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         }
         if (result == null) {
             currentResultIndex = 0;
-            JavaRDD<Item> rdd = this.getRDD(_currentDynamicContext);
+            JavaRDD<Item> rdd = this.getRDD(_currentDynamicContextForLocalExecution);
             result = SparkSessionManager.collectRDDwithLimit(rdd);
             _hasNext = !result.isEmpty();
         }

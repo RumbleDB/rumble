@@ -95,8 +95,8 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
     @Override
     protected void openLocal() {
-        _child.open(_currentDynamicContext);
-        _tupleContext = new DynamicContext(_currentDynamicContext); // assign current context as parent
+        _child.open(_currentDynamicContextForLocalExecution);
+        _tupleContext = new DynamicContext(_currentDynamicContextForLocalExecution); // assign current context as parent
         setNextResult();
     }
 
@@ -149,7 +149,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
     @Override
     protected void resetLocal(DynamicContext context) {
-        _child.reset(_currentDynamicContext);
+        _child.reset(_currentDynamicContextForLocalExecution);
         _expression.close();
         setNextResult();
     }

@@ -40,8 +40,8 @@ public class StringConcatIterator extends BinaryOperationBaseIterator {
     @Override
     public Item next() {
         if (this.hasNext()) {
-            _leftIterator.open(_currentDynamicContext);
-            _rightIterator.open(_currentDynamicContext);
+            _leftIterator.open(_currentDynamicContextForLocalExecution);
+            _rightIterator.open(_currentDynamicContextForLocalExecution);
             Item left;
             Item right;
             // empty sequences are treated as empty strings in concatenation

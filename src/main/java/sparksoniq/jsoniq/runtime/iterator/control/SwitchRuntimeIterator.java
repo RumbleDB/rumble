@@ -67,7 +67,7 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
     @Override
     public Item next() {
         if (this._hasNext) {
-            matchingIterator.open(_currentDynamicContext);
+            matchingIterator.open(_currentDynamicContextForLocalExecution);
             Item nextItem = matchingIterator.next();
             matchingIterator.close();
             this._hasNext = false;
@@ -141,7 +141,7 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
         if (matchingIterator == null)
             matchingIterator = defaultReturn;
 
-        matchingIterator.open(_currentDynamicContext);
+        matchingIterator.open(_currentDynamicContextForLocalExecution);
         this._hasNext = matchingIterator.hasNext();
         matchingIterator.close();
     }
