@@ -60,7 +60,7 @@ public class CountFunctionIterator extends LocalFunctionCallIterator {
             }
 
             if (!iterator.isRDD()) {
-                List<Item> results = getItemsFromIteratorWithCurrentContext(iterator);
+                List<Item> results = iterator.materialize(_currentDynamicContextForLocalExecution);
                 this._hasNext = false;
                 return ItemFactory.getInstance().createIntegerItem(results.size());
             }

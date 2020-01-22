@@ -53,8 +53,8 @@ public class DeepEqualFunctionIterator extends LocalFunctionCallIterator {
             RuntimeIterator sequenceIterator1 = this._children.get(0);
             RuntimeIterator sequenceIterator2 = this._children.get(1);
 
-            List<Item> items1 = getItemsFromIteratorWithCurrentContext(sequenceIterator1);
-            List<Item> items2 = getItemsFromIteratorWithCurrentContext(sequenceIterator2);
+            List<Item> items1 = sequenceIterator1.materialize(_currentDynamicContextForLocalExecution);
+            List<Item> items2 = sequenceIterator2.materialize(_currentDynamicContextForLocalExecution);
 
             boolean res = checkDeepEqual(items1, items2);
             return ItemFactory.getInstance().createBooleanItem(res);

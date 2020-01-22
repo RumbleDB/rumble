@@ -58,7 +58,7 @@ public class AvgFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public Item next() {
         if (this._hasNext) {
-            List<Item> results = getItemsFromIteratorWithCurrentContext(_iterator);
+            List<Item> results = _iterator.materialize(_currentDynamicContextForLocalExecution);
             this._hasNext = false;
             results.forEach(r -> {
                 if (!r.isNumeric())

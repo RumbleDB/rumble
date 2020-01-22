@@ -66,7 +66,7 @@ public class ReverseFunctionIterator extends LocalFunctionCallIterator {
 
         RuntimeIterator sequenceIterator = this._children.get(0);
 
-        List<Item> items = getItemsFromIteratorWithCurrentContext(sequenceIterator);
+        List<Item> items = sequenceIterator.materialize(_currentDynamicContextForLocalExecution);
 
         for (int i = items.size() - 1; i >= 0; i--) {
             results.add(items.get(i));

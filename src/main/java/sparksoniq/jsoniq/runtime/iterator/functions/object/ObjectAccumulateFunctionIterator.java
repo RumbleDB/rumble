@@ -45,7 +45,7 @@ public class ObjectAccumulateFunctionIterator extends LocalFunctionCallIterator 
     public Item next() {
         if (this._hasNext) {
             RuntimeIterator sequenceIterator = this._children.get(0);
-            List<Item> items = getItemsFromIteratorWithCurrentContext(sequenceIterator);
+            List<Item> items = sequenceIterator.materialize(_currentDynamicContextForLocalExecution);
             LinkedHashMap<String, List<Item>> keyValuePairs = new LinkedHashMap<>();
             for (Item item : items) {
                 // ignore non-object items

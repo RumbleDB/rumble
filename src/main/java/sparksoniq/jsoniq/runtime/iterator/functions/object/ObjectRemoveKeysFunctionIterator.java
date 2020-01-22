@@ -53,7 +53,7 @@ public class ObjectRemoveKeysFunctionIterator extends LocalFunctionCallIterator 
         _iterator = this._children.get(0);
         _iterator.open(context);
 
-        List<Item> removalKeys = getItemsFromIteratorWithCurrentContext(this._children.get(1));
+        List<Item> removalKeys = this._children.get(1).materialize(_currentDynamicContextForLocalExecution);
         if (removalKeys.isEmpty()) {
             throw new InvalidSelectorException(
                     "Invalid Key Removal Parameter; Object key removal can't be performed with zero keys: ",

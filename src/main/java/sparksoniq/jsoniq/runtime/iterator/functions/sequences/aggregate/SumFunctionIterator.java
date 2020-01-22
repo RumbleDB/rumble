@@ -79,7 +79,7 @@ public class SumFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            List<Item> results = getItemsFromIteratorWithCurrentContext(_iterator);
+            List<Item> results = _iterator.materialize(_currentDynamicContextForLocalExecution);
 
             // if input is empty sequence and _zeroItem is given
             if (results.size() == 0 && _zeroItem != null) {

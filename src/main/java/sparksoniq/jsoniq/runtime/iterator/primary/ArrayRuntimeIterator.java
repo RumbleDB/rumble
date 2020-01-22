@@ -32,23 +32,27 @@ import java.util.List;
 
 public class ArrayRuntimeIterator extends LocalRuntimeIterator {
 
-
     private static final long serialVersionUID = 1L;
 
     public ArrayRuntimeIterator(RuntimeIterator arrayItems, IteratorMetadata iteratorMetadata) {
-        super(new ArrayList<>(), iteratorMetadata);
-        if (arrayItems != null)
+        super(null, iteratorMetadata);
+        if (arrayItems != null) {
             this._children.add(arrayItems);
+        }
     }
 
     @Override
     public Item next() {
         if (this._hasNext) {
-            List<Item> result = this.runChildrenIterators(this._currentDynamicContextForLocalExecution);
+            List<Item> result = new ArrayList<>();
+            if (!this._children.isEmpty()) {
+                result.addAll(this._children.get(0).materialize(_currentDynamicContextForLocalExecution));
+            }
             Item _item = ItemFactory.getInstance().createArrayItem(result);
             this._hasNext = false;
             return _item;
-        } else
+        } else {
             throw new IteratorFlowException("Invalid next() call on array iterator", getMetadata());
+        }
     }
 }

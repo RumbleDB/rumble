@@ -62,7 +62,7 @@ public class MaxFunctionIterator extends LocalFunctionCallIterator {
             this._hasNext = false;
             ItemComparatorForSequences comparator = new ItemComparatorForSequences();
             if (!_iterator.isRDD()) {
-                List<Item> results = getItemsFromIteratorWithCurrentContext(_iterator);
+                List<Item> results = _iterator.materialize(_currentDynamicContextForLocalExecution);
 
                 try {
                     return Collections.max(results, comparator);
