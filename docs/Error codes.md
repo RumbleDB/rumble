@@ -16,7 +16,14 @@ or arrays are supplied where an atomic element is expected.
 It is a type error if there is not exactly one supplied parameter
 for an object or array selector.
 
-- [SENR0001] - Serialization error. Function items can not be serialized
+- [RBML0001] - Unrecognized Rumble ML Class Reference
+An unrecognized classname is used in query while accessing the Rumble ML API.
+
+- [RBML0002] - Unrecognized Rumble ML Param Reference
+An unrecognized parameter is used in query while operating with a Rumble ML class.
+
+- [RBML0003] - Invalid Rumble ML Param
+Provided parameter does not match the expected type or value for the referenced Rumble ML class.
 
 - [RBST0001] - CLI error. Raised when invalid parameters are supplied at launch.
 
@@ -27,6 +34,12 @@ Raised when a JSONiq feature that is not yet implemented in Rumble is used.
 Raised when an expression produces a different,
 big sequence of items for each binding within a big tuple,
 which would lead to a data flow explosion and to a nesting of jobs on the Spark cluster.
+
+- [RBST0004] - Implementation Error.
+We should investigate this 🙈. Please contact us or file an issue on GitHub with your query.
+Link: https://github.com/RumbleDB/rumble/issues
+
+- [SENR0001] - Serialization error. Function items can not be serialized
 
 - [XPDY0002] - It is a dynamic error if evaluation of an expression relies on some part of the dynamic context that is absent.
 
