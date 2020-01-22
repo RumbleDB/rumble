@@ -153,11 +153,23 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
 
     @Override
     public StaticContext visitTypeSwitchExpression(TypeSwitchExpression expression, StaticContext argument) {
-        StaticContext context = argument;
-        for (TypeSwitchCaseExpression typeSwitchCase : expression.getCases()) {
-            context = this.visit(typeSwitchCase, argument);
+        this.visit(expression.getTestCondition(), argument);
+        expression.getCases().forEach(typeSwitchCaseExpression -> this.visit(typeSwitchCaseExpression, argument));
+
+        // add variable to context using the VariableReference and use that context to visit default return expression
+        StaticContext defaultCaseStaticContext = argument;
+        VariableReference defaultCaseVariableReference = expression.getVarRefDefault();
+        if (defaultCaseVariableReference != null) {
+            defaultCaseStaticContext = new StaticContext(argument);
+            defaultCaseStaticContext.addVariable(
+                defaultCaseVariableReference.getVariableName(),
+                null,
+                expression.getMetadata()
+            );
         }
-        return context;
+        this.visit(expression.getDefaultExpression(), defaultCaseStaticContext);
+
+        return argument;
     }
 
     @Override
@@ -169,4 +181,5 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
         this.visit(expression.getReturnExpression(), result);
         return result;
     }
+
 }
