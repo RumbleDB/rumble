@@ -72,7 +72,6 @@ public class FunctionCall extends PrimaryExpression {
     }
 
     public void initFunctionCallHighestExecutionMode(boolean ignoreMissingFunctionError) {
-        this._highestExecutionMode = ExecutionMode.LOCAL;
         FunctionIdentifier identifier = new FunctionIdentifier(this._functionName, this._arguments.size());
         if (Functions.checkBuiltInFunctionExists(identifier)) {
             BuiltinFunction builtinFunction = Functions.getBuiltInFunction(identifier);
@@ -85,21 +84,25 @@ public class FunctionCall extends PrimaryExpression {
                     this._highestExecutionMode = ExecutionMode.RDD;
                 }
             } else if (HybridRuntimeIterator.class.isAssignableFrom(functionIteratorClass)) {
+                this._highestExecutionMode = ExecutionMode.LOCAL;
+                // Object Keys function is a special case
                 if (functionIteratorClass.isInstance(ObjectKeysFunctionIterator.class)) {
                     for (ExpressionOrClause child : this.getDescendants()) {
                         if (child.getHighestExecutionMode().isRDD() && !child.getHighestExecutionMode().isDataFrame()) {
                             this._highestExecutionMode = ExecutionMode.RDD;
+                            break;
                         }
                     }
                 } else {
                     for (ExpressionOrClause child : this.getDescendants()) {
                         if (child.getHighestExecutionMode().isRDD()) {
                             this._highestExecutionMode = ExecutionMode.RDD;
+                            break;
                         }
                     }
                 }
             } else {
-                // Local function call -> isRDD & isDataFrame are false
+                this._highestExecutionMode = ExecutionMode.LOCAL;
             }
         } else if (Functions.checkUserDefinedFunctionExecutionModeExists(identifier)) {
             this._highestExecutionMode = Functions.getUserDefinedFunctionExecutionMode(identifier, getMetadata());
