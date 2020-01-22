@@ -21,8 +21,12 @@
 package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
+import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class OrderByClauseExpr extends FlworClause {
     private final Expression _expression;
@@ -63,6 +67,13 @@ public class OrderByClauseExpr extends FlworClause {
     @Override
     public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
         return visitor.visitOrderByClauseExpr(this, argument);
+    }
+
+    @Override
+    public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
+        List<ExpressionOrClause> result = new ArrayList<>();
+        result.add(_expression);
+        return getDescendantsFromChildren(result, depthSearch);
     }
 
     @Override
