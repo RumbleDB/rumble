@@ -95,7 +95,10 @@ public class FunctionCall extends PrimaryExpression {
                     }
                 } else {
                     for (ExpressionOrClause child : this.getDescendants()) {
-                        if (child.getHighestExecutionMode().isRDD()) {
+                        if (child.getHighestExecutionMode().isDataFrame()) {
+                            this._highestExecutionMode = ExecutionMode.DATAFRAME;
+                            break;
+                        } else if (child.getHighestExecutionMode().isRDD()) {
                             this._highestExecutionMode = ExecutionMode.RDD;
                             break;
                         }
