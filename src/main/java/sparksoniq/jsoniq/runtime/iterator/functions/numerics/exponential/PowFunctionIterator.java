@@ -52,8 +52,8 @@ public class PowFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public Item next() {
         if (this._hasNext) {
-            Item base = this.getSingleItemFromIterator(_iterator);
-            Item exponent = this.getSingleItemFromIterator(this._children.get(1));
+            Item base = _iterator.materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
+            Item exponent = this._children.get(1).materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
             try {
                 this._hasNext = false;
                 return ItemFactory.getInstance()

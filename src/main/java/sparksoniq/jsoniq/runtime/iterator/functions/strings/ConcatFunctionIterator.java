@@ -42,7 +42,7 @@ public class ConcatFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             StringBuilder builder = new StringBuilder();
             for (RuntimeIterator iterator : this._children) {
-                Item item = this.getSingleItemFromIterator(iterator);
+                Item item = iterator.materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
                 // if not empty sequence
                 if (item != null) {
                     String stringValue = item.serialize();

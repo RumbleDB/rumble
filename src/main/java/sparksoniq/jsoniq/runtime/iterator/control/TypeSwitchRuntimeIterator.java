@@ -73,7 +73,7 @@ public class TypeSwitchRuntimeIterator extends LocalRuntimeIterator {
 
     private void initializeIterator(RuntimeIterator test, List<TypeSwitchCase> cases, TypeSwitchCase defaultCase) {
 
-        testValue = getSingleItemFromIterator(test);
+        testValue = test.materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
 
         for (TypeSwitchCase typeSwitchCase : cases) {
             if (testTypeMatch(typeSwitchCase))

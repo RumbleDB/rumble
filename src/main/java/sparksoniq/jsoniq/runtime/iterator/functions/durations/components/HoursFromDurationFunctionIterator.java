@@ -37,9 +37,7 @@ public class HoursFromDurationFunctionIterator extends LocalFunctionCallIterator
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        _durationItem = this.getSingleItemFromIterator(
-            this._children.get(0)
-        );
+        _durationItem = this._children.get(0).materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
         this._hasNext = _durationItem != null;
     }
 }

@@ -56,7 +56,7 @@ public class ArraySizeFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             this._hasNext = false;
 
-            Item array = getSingleItemFromIterator(arrayIterator);
+            Item array = arrayIterator.materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
             return ItemFactory.getInstance().createIntegerItem(array.getSize());
         }
         throw new IteratorFlowException(

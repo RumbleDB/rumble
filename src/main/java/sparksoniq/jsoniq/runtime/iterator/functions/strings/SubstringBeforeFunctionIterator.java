@@ -21,12 +21,9 @@ public class SubstringBeforeFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            Item stringItem = this.getSingleItemFromIterator(
-                this._children.get(0)
-            );
-            Item substringItem = this.getSingleItemFromIterator(
-                this._children.get(1)
-            );
+            Item stringItem = this._children.get(0).materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
+            Item substringItem = this._children.get(1)
+                .materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
             if (
                 substringItem == null
                     || substringItem.getStringValue().isEmpty()

@@ -53,7 +53,7 @@ public class Exp10FunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            Item exponent = this.getSingleItemFromIterator(_iterator);
+            Item exponent = _iterator.materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
             try {
                 return ItemFactory.getInstance().createDoubleItem(Math.pow(10.0, exponent.castToDoubleValue()));
             } catch (IteratorFlowException e) {

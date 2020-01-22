@@ -89,37 +89,37 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
             Map<RuntimeIterator, RuntimeIterator> cases,
             RuntimeIterator defaultReturn
     ) {
-        Item testValue = getSingleItemFromIterator(
-            test
-        );
+        Item testValue = test.materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
 
-        if (testValue != null && testValue.isArray()) {
-            throw new NonAtomicKeyException(
-                    "Invalid args. Switch condition can't be an array type",
-                    getMetadata().getExpressionMetadata()
-            );
-        } else if (testValue != null && testValue.isObject()) {
-            throw new NonAtomicKeyException(
-                    "Invalid args. Switch condition  can't be an object type",
-                    getMetadata().getExpressionMetadata()
-            );
+        if (testValue != null) {
+            if (testValue.isArray()) {
+                throw new NonAtomicKeyException(
+                        "Invalid args. Switch condition can't be an array type",
+                        getMetadata().getExpressionMetadata()
+                );
+            } else if (testValue.isObject()) {
+                throw new NonAtomicKeyException(
+                        "Invalid args. Switch condition  can't be an object type",
+                        getMetadata().getExpressionMetadata()
+                );
+            }
         }
 
         for (RuntimeIterator caseKey : cases.keySet()) {
-            Item caseValue = getSingleItemFromIterator(
-                caseKey
-            );
+            Item caseValue = caseKey.materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
 
-            if (caseValue != null && caseValue.isArray()) {
-                throw new NonAtomicKeyException(
-                        "Invalid args. Switch case can't be an array type",
-                        getMetadata().getExpressionMetadata()
-                );
-            } else if (caseValue != null && caseValue.isObject()) {
-                throw new NonAtomicKeyException(
-                        "Invalid args. Switch case  can't be an object type",
-                        getMetadata().getExpressionMetadata()
-                );
+            if (caseValue != null) {
+                if (caseValue.isArray()) {
+                    throw new NonAtomicKeyException(
+                            "Invalid args. Switch case can't be an array type",
+                            getMetadata().getExpressionMetadata()
+                    );
+                } else if (caseValue.isObject()) {
+                    throw new NonAtomicKeyException(
+                            "Invalid args. Switch case  can't be an object type",
+                            getMetadata().getExpressionMetadata()
+                    );
+                }
             }
 
             // both are empty sequences

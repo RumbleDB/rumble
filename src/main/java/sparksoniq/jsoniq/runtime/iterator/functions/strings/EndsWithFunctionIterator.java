@@ -44,15 +44,12 @@ public class EndsWithFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            Item substringItem = this.getSingleItemFromIterator(
-                this._children.get(1)
-            );
+            Item substringItem = this._children.get(1)
+                .materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
             if (substringItem == null || substringItem.getStringValue().isEmpty()) {
                 return ItemFactory.getInstance().createBooleanItem(true);
             }
-            Item stringItem = this.getSingleItemFromIterator(
-                this._children.get(0)
-            );
+            Item stringItem = this._children.get(0).materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
             if (stringItem == null || stringItem.getStringValue().isEmpty()) {
                 return ItemFactory.getInstance().createBooleanItem(false);
             }

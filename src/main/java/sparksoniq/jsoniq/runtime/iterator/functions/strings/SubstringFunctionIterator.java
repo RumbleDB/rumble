@@ -43,11 +43,11 @@ public class SubstringFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             this._hasNext = false;
             String result;
-            Item stringItem = this.getSingleItemFromIterator(this._children.get(0));
+            Item stringItem = this._children.get(0).materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
             if (stringItem == null) {
                 return ItemFactory.getInstance().createStringItem("");
             }
-            Item indexItem = this.getSingleItemFromIterator(this._children.get(1));
+            Item indexItem = this._children.get(1).materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
             if (indexItem == null) {
                 throw new UnexpectedTypeException(
                         "Type error; Start index parameter can't be empty sequence ",
@@ -58,9 +58,8 @@ public class SubstringFunctionIterator extends LocalFunctionCallIterator {
             if (index >= stringItem.getStringValue().length())
                 return ItemFactory.getInstance().createStringItem("");
             if (this._children.size() > 2) {
-                Item endIndexItem = this.getSingleItemFromIterator(
-                    this._children.get(2)
-                );
+                Item endIndexItem = this._children.get(2)
+                    .materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
                 if (endIndexItem == null) {
                     throw new UnexpectedTypeException(
                             "Type error; End index parameter can't be empty sequence ",

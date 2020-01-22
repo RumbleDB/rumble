@@ -48,9 +48,7 @@ public class DateTimeFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        _dateTimeStringItem = this.getSingleItemFromIterator(
-            this._children.get(0)
-        );
+        _dateTimeStringItem = this._children.get(0).materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
         this._hasNext = _dateTimeStringItem != null;
     }
 }

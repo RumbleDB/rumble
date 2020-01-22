@@ -211,12 +211,12 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         return result;
     }
 
-    protected Item getSingleItemFromIterator(
-            RuntimeIterator iterator
+    public Item materializeFirstItemOrNull(
+            DynamicContext context
     ) {
-        iterator.open(_currentDynamicContextForLocalExecution);
-        Item result = iterator.hasNext() ? iterator.next() : null;
-        iterator.close();
+        this.open(context);
+        Item result = this.hasNext() ? this.next() : null;
+        this.close();
         return result;
     }
 

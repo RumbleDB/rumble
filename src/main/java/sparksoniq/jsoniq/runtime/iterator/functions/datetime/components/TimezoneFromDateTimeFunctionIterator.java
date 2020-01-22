@@ -41,9 +41,7 @@ public class TimezoneFromDateTimeFunctionIterator extends LocalFunctionCallItera
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        _dateTimeItem = this.getSingleItemFromIterator(
-            this._children.get(0)
-        );
+        _dateTimeItem = this._children.get(0).materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
         this._hasNext = _dateTimeItem != null && _dateTimeItem.hasTimeZone();
     }
 }

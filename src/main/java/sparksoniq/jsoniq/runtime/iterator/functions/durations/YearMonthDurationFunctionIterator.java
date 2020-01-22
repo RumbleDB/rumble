@@ -55,9 +55,7 @@ public class YearMonthDurationFunctionIterator extends LocalFunctionCallIterator
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        _durationStringItem = this.getSingleItemFromIterator(
-            this._children.get(0)
-        );
+        _durationStringItem = this._children.get(0).materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
         this._hasNext = _durationStringItem != null;
     }
 }
