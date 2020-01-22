@@ -71,7 +71,7 @@ public class FunctionCall extends PrimaryExpression {
         throw new OurBadException("Function call expressions do not use the highestExecutionMode initializer");
     }
 
-    public void initFunctionCallHighestExecutionMode(boolean ignoreMissingFunction) {
+    public void initFunctionCallHighestExecutionMode(boolean ignoreMissingFunctionError) {
         this._highestExecutionMode = ExecutionMode.LOCAL;
         FunctionIdentifier identifier = new FunctionIdentifier(this._functionName, this._arguments.size());
         if (Functions.checkBuiltInFunctionExists(identifier)) {
@@ -104,14 +104,13 @@ public class FunctionCall extends PrimaryExpression {
         } else if (Functions.checkUserDefinedFunctionExecutionModeExists(identifier)) {
             this._highestExecutionMode = Functions.getUserDefinedFunctionExecutionMode(identifier, getMetadata());
         } else {
-            if (ignoreMissingFunction) {
-                return;
+            if (!ignoreMissingFunctionError) {
+                throw new UnknownFunctionCallException(
+                        identifier.getName(),
+                        identifier.getArity(),
+                        this.getMetadata()
+                );
             }
-            throw new UnknownFunctionCallException(
-                    identifier.getName(),
-                    identifier.getArity(),
-                    this.getMetadata()
-            );
         }
     }
 

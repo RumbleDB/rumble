@@ -77,7 +77,7 @@ public class FunctionDeclaration extends PrimaryExpression {
         return getDescendantsFromChildren(result, depthSearch);
     }
 
-    public void registerUserDefinedFunctionExecutionMode(boolean ignoreDuplicateFunction) {
+    public void registerUserDefinedFunctionExecutionMode(boolean ignoreDuplicateFunctionError) {
         FunctionIdentifier identifier = new FunctionIdentifier(this._name, this._params.size());
         // if named(static) function declaration
         if (!this._name.equals("")) {
@@ -86,7 +86,7 @@ public class FunctionDeclaration extends PrimaryExpression {
                 // _body.getHighestExecutionMode(), // can't find referenced function w/ recursive functions calling
                 // each other
                 ExecutionMode.LOCAL,
-                ignoreDuplicateFunction,
+                ignoreDuplicateFunctionError,
                 this.getMetadata()
             );
         }

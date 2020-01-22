@@ -46,24 +46,24 @@ import sparksoniq.semantics.types.SequenceType;
 
 public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<StaticContext> {
 
-    // indicate whether an error should be thrown if an existing function is redeclared
-    private boolean ignoreDuplicateFunction = false;
+    // indicate whether an error should be thrown if an duplicate function declaration is detected
+    private boolean ignoreDuplicateFunctionError = false;
 
     // indicate whether an error should be thrown if a function call is made for a non-existing function
-    private boolean ignoreMissingFunction = true;
+    private boolean ignoreMissingFunctionError = true;
 
     public StaticContextVisitor() {
         this.setConfigForInitialPass();
     }
 
     public void setConfigForInitialPass() {
-        ignoreDuplicateFunction = false;
-        ignoreMissingFunction = true;
+        ignoreDuplicateFunctionError = false;
+        ignoreMissingFunctionError = true;
     }
 
     public void setConfigForConsequentPasses() {
-        ignoreDuplicateFunction = true;
-        ignoreMissingFunction = false;
+        ignoreDuplicateFunctionError = true;
+        ignoreMissingFunctionError = false;
     }
 
     @Override
@@ -104,7 +104,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
     @Override
     public StaticContext visitFunctionDeclaration(FunctionDeclaration expression, StaticContext argument) {
         expression.initHighestExecutionMode();
-        expression.registerUserDefinedFunctionExecutionMode(ignoreDuplicateFunction);
+        expression.registerUserDefinedFunctionExecutionMode(ignoreDuplicateFunctionError);
 
         // define a static context for the function body, add params to the context and visit the body expression
         StaticContext functionDeclarationContext = new StaticContext(argument);
@@ -124,7 +124,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
     @Override
     public StaticContext visitFunctionCall(FunctionCall expression, StaticContext argument) {
         StaticContext generatedContext = visitDescendants(expression, argument);
-        expression.initFunctionCallHighestExecutionMode(ignoreMissingFunction);
+        expression.initFunctionCallHighestExecutionMode(ignoreMissingFunctionError);
         return generatedContext;
     }
 
