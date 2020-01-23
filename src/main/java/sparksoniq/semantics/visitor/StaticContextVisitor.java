@@ -208,6 +208,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
             expression.getMetadata(),
             ExecutionMode.LOCAL
         );
+        this.visit(expression.getCountVariable(), result);
         return result;
     }
 
