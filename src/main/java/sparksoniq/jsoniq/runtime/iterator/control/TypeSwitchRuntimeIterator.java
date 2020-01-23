@@ -27,17 +27,13 @@ public class TypeSwitchRuntimeIterator extends LocalRuntimeIterator {
             TypeSwitchCase defaultCase,
             IteratorMetadata iteratorMetadata
     ) {
-
         super(null, iteratorMetadata);
         this._children.add(test);
         for (TypeSwitchCase typeSwitchCase : cases) {
             this._children.add(typeSwitchCase.getReturnIterator());
-            if (typeSwitchCase.getVariable() != null)
-                this._children.add(typeSwitchCase.getVariable());
         }
-        if (defaultCase.getVariable() != null)
-            this._children.add(defaultCase.getVariable());
         this._children.add(defaultCase.getReturnIterator());
+
         this.testField = test;
         this.cases = cases;
         this.defaultCase = defaultCase;
@@ -81,9 +77,9 @@ public class TypeSwitchRuntimeIterator extends LocalRuntimeIterator {
         }
 
         if (matchingIterator == null) {
-            if (defaultCase.getVariable() != null) {
+            if (defaultCase.getVariableName() != null) {
                 _currentDynamicContextForLocalExecution.addVariableValue(
-                    defaultCase.getVariable().getVariableName(),
+                    defaultCase.getVariableName(),
                     Collections.singletonList(testValue)
                 );
             }
@@ -98,9 +94,9 @@ public class TypeSwitchRuntimeIterator extends LocalRuntimeIterator {
     private boolean testTypeMatch(TypeSwitchCase typeSwitchCase) {
         for (FlworVarSequenceType sequenceType : typeSwitchCase.getSequenceTypeUnion()) {
             if (testValue != null && testValue.isTypeOf(sequenceType.getSequence().getItemType())) {
-                if (typeSwitchCase.getVariable() != null) {
+                if (typeSwitchCase.getVariableName() != null) {
                     _currentDynamicContextForLocalExecution.addVariableValue(
-                        typeSwitchCase.getVariable().getVariableName(),
+                        typeSwitchCase.getVariableName(),
                         Collections.singletonList(testValue)
                     );
                 }

@@ -2,33 +2,32 @@ package sparksoniq.jsoniq.runtime.iterator.control;
 
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworVarSequenceType;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 
 import java.util.List;
 
 public class TypeSwitchCase {
-    private final VariableReferenceIterator variable;
+    private final String variableName;
     private final List<FlworVarSequenceType> sequenceTypeUnion;
     private final RuntimeIterator returnIterator;
 
     public TypeSwitchCase(
-            VariableReferenceIterator variable,
+            String variableName,
             List<FlworVarSequenceType> sequenceTypeUnion,
             RuntimeIterator returnIterator
     ) {
-        this.variable = variable;
+        this.variableName = variableName;
         this.sequenceTypeUnion = sequenceTypeUnion;
         this.returnIterator = returnIterator;
     }
 
-    public TypeSwitchCase(VariableReferenceIterator variable, RuntimeIterator returnIterator) {
-        this.variable = variable;
+    public TypeSwitchCase(String variableName, RuntimeIterator returnIterator) {
+        this.variableName = variableName;
         this.sequenceTypeUnion = null;
         this.returnIterator = returnIterator;
     }
 
-    VariableReferenceIterator getVariable() {
-        return variable;
+    String getVariableName() {
+        return variableName;
     }
 
     List<FlworVarSequenceType> getSequenceTypeUnion() {
