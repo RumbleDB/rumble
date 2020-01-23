@@ -260,38 +260,41 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
         this.visit(expression.getTestCondition(), argument);
         expression.getCases().forEach(typeSwitchCaseExpression -> this.visit(typeSwitchCaseExpression, argument));
 
-        // add variable to context using the VariableReference and use that context to visit default return expression
-        StaticContext defaultCaseStaticContext = argument;
         VariableReference defaultCaseVariableReference = expression.getVarRefDefault();
-        if (defaultCaseVariableReference != null) {
-            defaultCaseStaticContext = new StaticContext(argument);
+        if (defaultCaseVariableReference == null) {
+            this.visit(expression.getDefaultExpression(), argument);
+        } else {
+            // add variable to child context to visit default return expression
+            StaticContext defaultCaseStaticContext = new StaticContext(argument);
             defaultCaseStaticContext.addVariable(
                 defaultCaseVariableReference.getVariableName(),
                 null,
                 expression.getMetadata(),
                 ExecutionMode.LOCAL
             );
+            this.visit(expression.getDefaultExpression(), defaultCaseStaticContext);
         }
-        this.visit(expression.getDefaultExpression(), defaultCaseStaticContext);
         expression.initHighestExecutionMode();
+        // return the given context unchanged as defined variables go out of scope
         return argument;
     }
 
     @Override
     public StaticContext visitTypeSwitchCaseExpression(TypeSwitchCaseExpression expression, StaticContext argument) {
-        StaticContext result = new StaticContext(argument);
+        StaticContext caseContext = new StaticContext(argument);
         VariableReference variableReference = expression.getVariableReference();
         if (variableReference != null) {
-            result.addVariable(
+            caseContext.addVariable(
                 variableReference.getVariableName(),
                 null,
                 expression.getMetadata(),
                 ExecutionMode.LOCAL
             );
         }
-        this.visit(expression.getReturnExpression(), result);
+        this.visit(expression.getReturnExpression(), caseContext);
         expression.initHighestExecutionMode();
-        return result;
+        // return the given context unchanged as defined variables go out of scope
+        return argument;
     }
     // endregion
 
