@@ -224,16 +224,24 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
     // region quantifiers
     @Override
     public StaticContext visitQuantifiedExpression(QuantifiedExpression expression, StaticContext argument) {
-        StaticContext context = argument;
+        StaticContext contextWithQuantifiedExpressionVariables = argument;
         for (QuantifiedExpressionVar clause : expression.getVariables()) {
-            context = this.visit(clause, context);
+            contextWithQuantifiedExpressionVariables = this.visit(clause, contextWithQuantifiedExpressionVariables);
         }
+        // validate expression with the defined variables
+        this.visit(expression.getEvaluationExpression(), contextWithQuantifiedExpressionVariables);
         expression.initHighestExecutionMode();
-        return context;
+        // return the given context unchanged as defined variables go out of scope
+        return argument;
     }
 
     @Override
     public StaticContext visitQuantifiedExpressionVar(QuantifiedExpressionVar expression, StaticContext argument) {
+        // validate expression with starting context
+        this.visit(expression.getExpression(), argument);
+        expression.initHighestExecutionMode();
+
+        // create a child context, add the variable and return it
         StaticContext result = new StaticContext(argument);
         SequenceType type = expression.getSequenceType() == null ? new SequenceType() : expression.getSequenceType();
         result.addVariable(
@@ -242,8 +250,6 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
             expression.getMetadata(),
             ExecutionMode.LOCAL
         );
-        this.visit(expression.getExpression(), argument);
-        expression.initHighestExecutionMode();
         return result;
     }
     // endregion

@@ -83,7 +83,7 @@ public class FunctionDeclaration extends PrimaryExpression {
         if (!this._name.equals("")) {
             Functions.addUserDefinedFunctionExecutionMode(
                 identifier,
-                ExecutionMode.LOCAL,        // all udfs are locally executed at the moment
+                ExecutionMode.LOCAL, // all udfs are locally executed at the moment
                 ignoreDuplicateFunctionError,
                 this.getMetadata()
             );
