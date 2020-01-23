@@ -42,7 +42,7 @@ public class ApplyTransformerRuntimeIterator extends RDDRuntimeIterator {
         try {
             Transformer transformer = (Transformer) _transformerSparkMLClass.newInstance();
 
-            Dataset<Row> inputDataset = context.getDFVariableValue(
+            Dataset<Row> inputDataset = context.getDataFrameVariableValue(
                 GetTransformerFunctionIterator.transformerParameterNames.get(0),
                 getMetadata()
             );

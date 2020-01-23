@@ -27,8 +27,8 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
-import sparksoniq.exceptions.JobWithinAJobException;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.JobWithinAJobException;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
@@ -188,7 +188,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 }
 
                 // since no variable dependency to the current FLWOR expression exists for the expression
-                // evaluate the DF with the parent context and calculate the cartesian product
+                // evaluate the DataFrame with the parent context and calculate the cartesian product
                 Dataset<Row> expressionDF;
                 expressionDF = getDataFrameFromRDDExpression(context);
 

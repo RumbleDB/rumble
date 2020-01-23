@@ -50,7 +50,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
     private Map<String, List<Item>> _localVariableValues;
     private Map<String, Item> _localVariableCounts;
     private Map<String, JavaRDD<Item>> _rddVariableValues;
-    private Map<String, Dataset<Row>> _dfVariableValues;
+    private Map<String, Dataset<Row>> _dataFrameVariableValues;
     private DynamicContext _parent;
 
     public DynamicContext() {
@@ -58,7 +58,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this._localVariableCounts = new HashMap<>();
         this._localVariableValues = new HashMap<>();
         this._rddVariableValues = new HashMap<>();
-        this._dfVariableValues = new HashMap<>();
+        this._dataFrameVariableValues = new HashMap<>();
     }
 
     public DynamicContext(DynamicContext parent) {
@@ -66,20 +66,20 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this._localVariableCounts = new HashMap<>();
         this._localVariableValues = new HashMap<>();
         this._rddVariableValues = new HashMap<>();
-        this._dfVariableValues = new HashMap<>();
+        this._dataFrameVariableValues = new HashMap<>();
     }
 
     public DynamicContext(
             DynamicContext parent,
             Map<String, List<Item>> localVariableValues,
             Map<String, JavaRDD<Item>> rddVariableValues,
-            Map<String, Dataset<Row>> dfVariableValues
+            Map<String, Dataset<Row>> dataFrameVariableValues
     ) {
         this._parent = parent;
         this._localVariableCounts = new HashMap<>();
         this._localVariableValues = localVariableValues;
         this._rddVariableValues = rddVariableValues;
-        this._dfVariableValues = dfVariableValues;
+        this._dataFrameVariableValues = dataFrameVariableValues;
 
     }
 
@@ -90,8 +90,8 @@ public class DynamicContext implements Serializable, KryoSerializable {
         for (String key : tuple.getRDDKeys()) {
             this.addVariableValue(key, tuple.getRDDValue(key, metadata));
         }
-        for (String key : tuple.getDFKeys()) {
-            this.addVariableValue(key, tuple.getDFValue(key, metadata));
+        for (String key : tuple.getDataFrameKeys()) {
+            this.addVariableValue(key, tuple.getDataFrameValue(key, metadata));
         }
     }
 
@@ -103,14 +103,14 @@ public class DynamicContext implements Serializable, KryoSerializable {
         return _rddVariableValues.keySet();
     }
 
-    public Set<String> getDFKeys() {
-        return _dfVariableValues.keySet();
+    public Set<String> getDataFrameKeys() {
+        return _dataFrameVariableValues.keySet();
     }
 
     public boolean contains(String varName) {
         return _localVariableValues.containsKey(varName)
             || _rddVariableValues.containsKey(varName)
-            || _dfVariableValues.containsKey(varName);
+            || _dataFrameVariableValues.containsKey(varName);
     }
 
     public boolean isRDD(String varName, IteratorMetadata metadata) {
@@ -121,17 +121,17 @@ public class DynamicContext implements Serializable, KryoSerializable {
             );
         }
         return _rddVariableValues.containsKey(varName)
-            || _dfVariableValues.containsKey(varName);
+            || _dataFrameVariableValues.containsKey(varName);
     }
 
-    public boolean isDF(String varName, IteratorMetadata metadata) {
+    public boolean isDataFrame(String varName, IteratorMetadata metadata) {
         if (!contains(varName)) {
             throw new OurBadException(
                     "Runtime error retrieving variable " + varName + " value.",
                     metadata
             );
         }
-        return _dfVariableValues.containsKey(varName);
+        return _dataFrameVariableValues.containsKey(varName);
     }
 
     public void addVariableValue(String varName, List<Item> value) {
@@ -143,7 +143,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
     }
 
     public void addVariableValue(String varName, Dataset<Row> value) {
-        this._dfVariableValues.put(varName, value);
+        this._dataFrameVariableValues.put(varName, value);
     }
 
     public void addVariableCount(String varName, Item count) {
@@ -182,8 +182,8 @@ public class DynamicContext implements Serializable, KryoSerializable {
             return _rddVariableValues.get(varName);
         }
 
-        if (_dfVariableValues.containsKey(varName)) {
-            Dataset<Row> df = _dfVariableValues.get(varName);
+        if (_dataFrameVariableValues.containsKey(varName)) {
+            Dataset<Row> df = _dataFrameVariableValues.get(varName);
             JavaRDD<Row> rowRDD = df.javaRDD();
             return rowRDD.map(new RowToItemMapper(metadata));
         }
@@ -198,13 +198,13 @@ public class DynamicContext implements Serializable, KryoSerializable {
         );
     }
 
-    public Dataset<Row> getDFVariableValue(String varName, IteratorMetadata metadata) {
-        if (_dfVariableValues.containsKey(varName)) {
-            return _dfVariableValues.get(varName);
+    public Dataset<Row> getDataFrameVariableValue(String varName, IteratorMetadata metadata) {
+        if (_dataFrameVariableValues.containsKey(varName)) {
+            return _dataFrameVariableValues.get(varName);
         }
 
         if (_parent != null) {
-            return _parent.getDFVariableValue(varName, metadata);
+            return _parent.getDataFrameVariableValue(varName, metadata);
         }
 
         throw new OurBadException(
@@ -217,8 +217,8 @@ public class DynamicContext implements Serializable, KryoSerializable {
         if (_localVariableCounts.containsKey(varName)) {
             return _localVariableCounts.get(varName);
         }
-        if (_dfVariableValues.containsKey(varName)) {
-            return ItemFactory.getInstance().createIntegerItem((int) _dfVariableValues.get(varName).count());
+        if (_dataFrameVariableValues.containsKey(varName)) {
+            return ItemFactory.getInstance().createIntegerItem((int) _dataFrameVariableValues.get(varName).count());
         }
         if (_rddVariableValues.containsKey(varName)) {
             return ItemFactory.getInstance().createIntegerItem((int) _rddVariableValues.get(varName).count());
@@ -236,7 +236,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this._localVariableValues.remove(varName);
         this._localVariableCounts.remove(varName);
         this._rddVariableValues.remove(varName);
-        this._dfVariableValues.remove(varName);
+        this._dataFrameVariableValues.remove(varName);
 
     }
 
@@ -244,7 +244,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this._localVariableValues.clear();
         this._localVariableCounts.clear();
         this._rddVariableValues.clear();
-        this._dfVariableValues.clear();
+        this._dataFrameVariableValues.clear();
     }
 
     @Override
@@ -252,7 +252,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         kryo.writeObject(output, _parent);
         kryo.writeObject(output, _localVariableValues);
         kryo.writeObject(output, _rddVariableValues);
-        kryo.writeObject(output, _dfVariableValues);
+        kryo.writeObject(output, _dataFrameVariableValues);
     }
 
     @SuppressWarnings("unchecked")
@@ -261,7 +261,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         _parent = kryo.readObjectOrNull(input, DynamicContext.class);
         _localVariableValues = kryo.readObject(input, HashMap.class);
         _rddVariableValues = kryo.readObject(input, HashMap.class);
-        _dfVariableValues = kryo.readObject(input, HashMap.class);
+        _dataFrameVariableValues = kryo.readObject(input, HashMap.class);
     }
 
     public Item getPosition() {
