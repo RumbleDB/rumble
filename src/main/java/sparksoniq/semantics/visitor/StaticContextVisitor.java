@@ -182,13 +182,20 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
 
     @Override
     public StaticContext visitGroupByClauseVar(GroupByClauseVar expression, StaticContext argument) {
-        if (expression.getExpression() == null) {
-            this.visit(expression.getVariableReference(), argument);
-            return argument;
+        StaticContext groupByClauseContext;
+        if (expression.getExpression() != null) {
+            // if a variable declaration takes place
+            this.visit(expression.getExpression(), argument);
+            // initialize execution and storage modes and then add the variable to the context
+            expression.initHighestExecutionAndVariableHighestStorageModes();
+            groupByClauseContext = visitFlowrVarDeclaration(expression, argument);
+        } else {
+            // if a variable is only referenced, use the context as is
+            groupByClauseContext = argument;
         }
-        this.visit(expression.getExpression(), argument);
-        expression.initHighestExecutionAndVariableHighestStorageModes();
-        return visitFlowrVarDeclaration(expression, argument);
+        // validate if the referenced variable exists in the current context
+        this.visit(expression.getVariableReference(), groupByClauseContext);
+        return groupByClauseContext;
     }
 
     @Override

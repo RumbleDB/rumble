@@ -49,7 +49,7 @@ public class GroupByClauseVar extends FlworVarDecl {
 
     @Override
     public void initHighestExecutionAndVariableHighestStorageModes() {
-        // Execution mode of variable definitions is not used while defining execution mode of
+        // Execution mode of groupByClause's expressions are not used while defining execution mode of
         // GroupByClauseRuntimeIterator
         this._highestExecutionMode = ExecutionMode.UNSET;
 
