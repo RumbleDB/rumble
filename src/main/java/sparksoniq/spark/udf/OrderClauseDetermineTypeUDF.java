@@ -113,7 +113,7 @@ public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, W
                 if (iterator.hasNext()) {
                     throw new UnexpectedTypeException(
                             "Can not order by variables with sequences of multiple items.",
-                            expressionWithIterator.getIteratorMetadata()
+                            expressionWithIterator.getIterator().getMetadata()
                     );
                 }
             }
@@ -148,7 +148,7 @@ public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, W
             } else if (_nextItem.isArray() || _nextItem.isObject()) {
                 throw new UnexpectedTypeException(
                         "Order by variable can not contain arrays or objects.",
-                        expressionWithIterator.getIteratorMetadata()
+                        expressionWithIterator.getIterator().getMetadata()
                 );
             } else if (_nextItem.isBinary()) {
                 String itemType = ItemTypes.getItemTypeName(_nextItem.getClass().getSimpleName());
@@ -158,7 +158,7 @@ public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, W
                             + "\": invalid type: can not compare for equality to type \""
                             + itemType
                             + "\"",
-                        expressionWithIterator.getIteratorMetadata()
+                        expressionWithIterator.getIterator().getMetadata()
                 );
             } else {
                 throw new OurBadException("Unexpected type found.");

@@ -159,7 +159,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                         if (!resultItem.isAtomic()) {
                             throw new NonAtomicKeyException(
                                     "Order by keys must be atomics",
-                                    expressionWithIterator.getIteratorMetadata().getExpressionMetadata()
+                                    expressionWithIterator.getIterator().getMetadata().getExpressionMetadata()
                             );
                         }
                         if (resultItem.isBinary()) {

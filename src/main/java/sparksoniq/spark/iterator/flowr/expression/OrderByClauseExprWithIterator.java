@@ -22,7 +22,6 @@ package sparksoniq.spark.iterator.flowr.expression;
 
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.io.Serializable;
 
@@ -33,21 +32,18 @@ public class OrderByClauseExprWithIterator implements Serializable {
     private final boolean _ascending;
     private final String _uri;
     private final OrderByClauseExpr.EMPTY_ORDER _emptyOrder;
-    private final IteratorMetadata iteratorMetadata;
 
 
     public OrderByClauseExprWithIterator(
             RuntimeIterator iterator,
             boolean ascending,
             String uri,
-            OrderByClauseExpr.EMPTY_ORDER empty_order,
-            IteratorMetadata iteratorMetadata
+            OrderByClauseExpr.EMPTY_ORDER empty_order
     ) {
         this._iterator = iterator;
         this._ascending = ascending;
         this._uri = uri;
         this._emptyOrder = empty_order;
-        this.iteratorMetadata = iteratorMetadata;
     }
 
     public RuntimeIterator getIterator() {
@@ -64,10 +60,6 @@ public class OrderByClauseExprWithIterator implements Serializable {
 
     public OrderByClauseExpr.EMPTY_ORDER getEmptyOrder() {
         return _emptyOrder;
-    }
-
-    public IteratorMetadata getIteratorMetadata() {
-        return iteratorMetadata;
     }
 
 }

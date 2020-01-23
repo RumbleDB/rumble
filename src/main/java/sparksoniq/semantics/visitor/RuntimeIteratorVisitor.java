@@ -285,8 +285,7 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                             this.visit(orderExpr.getExpression(), argument),
                             orderExpr.isAscending(),
                             orderExpr.getUri(),
-                            orderExpr.getEmptyOrder(),
-                            createIteratorMetadata(orderExpr)
+                            orderExpr.getEmptyOrder()
                     )
                 );
             }
