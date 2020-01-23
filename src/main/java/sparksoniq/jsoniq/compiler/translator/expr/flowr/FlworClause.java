@@ -54,6 +54,9 @@ public class FlworClause extends ExpressionOrClause {
         this.previousClause = previousClause;
     }
 
+    /**
+     * This method is overridden in clauses such as for and let for special behavior
+     */
     @Override
     public void initHighestExecutionMode() {
         this._highestExecutionMode = previousClause.getHighestExecutionMode();

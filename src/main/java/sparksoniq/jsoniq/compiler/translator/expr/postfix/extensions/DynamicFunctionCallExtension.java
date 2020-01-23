@@ -49,6 +49,11 @@ public class DynamicFunctionCallExtension extends PostfixExtension {
         return getDescendantsFromChildren(result, depthSearch);
     }
 
+    /**
+     * DynamicFunctionCall is always locally evaluated as execution mode cannot be determined at static analysis phase.
+     * This behavior is different from all other postfix extensions, hence this override is required.
+     */
+
     @Override
     public void initHighestExecutionMode() {
         this._highestExecutionMode = ExecutionMode.LOCAL;
