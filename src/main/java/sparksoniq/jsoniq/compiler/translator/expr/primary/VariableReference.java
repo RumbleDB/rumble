@@ -39,8 +39,6 @@ public class VariableReference extends PrimaryExpression implements Serializable
     public VariableReference(String _name, ExpressionMetadata metadata) {
         super(metadata);
         this.name = _name;
-        // TODO: can we eliminate this assignment by properly visiting VariableReferences in staticContextVisitor
-        // _highestExecutionMode = ExecutionMode.LOCAL;
     }
 
     public void setHighestExecutionMode(ExecutionMode highestExecutionMode) {
