@@ -32,10 +32,11 @@ import sparksoniq.exceptions.OurBadException;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.NullItem;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.spark.DataFrameUtils;
-import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
+import sparksoniq.spark.iterator.flowr.expression.OrderByClauseExprWithIterator;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -46,7 +47,7 @@ import java.util.TreeMap;
 public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, Row> {
 
     private static final long serialVersionUID = 1L;
-    private List<OrderByClauseSparkIteratorExpression> _expressions;
+    private List<OrderByClauseExprWithIterator> _expressionsWithIterator;
     private Map<String, DynamicContext.VariableDependency> _dependencies;
 
     private Map<String, List<String>> _columnNamesByType;
@@ -62,12 +63,12 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
     private transient Input _input;
 
     public OrderClauseCreateColumnsUDF(
-            List<OrderByClauseSparkIteratorExpression> expressions,
+            List<OrderByClauseExprWithIterator> expressionsWithIterator,
             DynamicContext context,
             Map<Integer, String> allColumnTypes,
             Map<String, List<String>> columnNamesByType
     ) {
-        _expressions = expressions;
+        _expressionsWithIterator = expressionsWithIterator;
         _allColumnTypes = allColumnTypes;
 
         _deserializedParams = new ArrayList<>();
@@ -76,9 +77,9 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
         _context = new DynamicContext(_parentContext);
         _results = new ArrayList<>();
 
-        _dependencies = new TreeMap<String, DynamicContext.VariableDependency>();
-        for (OrderByClauseSparkIteratorExpression expression : _expressions) {
-            _dependencies.putAll(expression.getExpression().getVariableDependencies());
+        _dependencies = new TreeMap<>();
+        for (OrderByClauseExprWithIterator expressionWithIterator : _expressionsWithIterator) {
+            _dependencies.putAll(expressionWithIterator.getIterator().getVariableDependencies());
         }
         _columnNamesByType = columnNamesByType;
 
@@ -112,8 +113,8 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
             _longParams
         );
 
-        for (int expressionIndex = 0; expressionIndex < _expressions.size(); expressionIndex++) {
-            OrderByClauseSparkIteratorExpression expression = _expressions.get(expressionIndex);
+        for (int expressionIndex = 0; expressionIndex < _expressionsWithIterator.size(); expressionIndex++) {
+            OrderByClauseExprWithIterator expressionWithIterator = _expressionsWithIterator.get(expressionIndex);
 
             // nulls and empty sequences have special ordering captured in the first sorting column
             // if non-null, non-empty-sequence value is given, the second column is used to sort the input
@@ -121,16 +122,18 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
             int emptySequenceOrderIndex = 1; // by default, empty sequence is taken as first(=least)
             int nullOrderIndex = 2; // null is the smallest value except empty sequence(default)
             int valueOrderIndex = 3; // values are larger than null and empty sequence(default)
-            if (expression.getEmptyOrder() == OrderByClauseExpr.EMPTY_ORDER.LAST) {
+            if (expressionWithIterator.getEmptyOrder() == OrderByClauseExpr.EMPTY_ORDER.LAST) {
                 emptySequenceOrderIndex = 4;
             }
 
+
             // apply expression in the dynamic context
-            expression.getExpression().open(_context);
+            RuntimeIterator iterator = expressionWithIterator.getIterator();
+            iterator.open(_context);
             boolean isEmptySequence = true;
-            while (expression.getExpression().hasNext()) {
+            while (iterator.hasNext()) {
                 isEmptySequence = false;
-                Item nextItem = expression.getExpression().next();
+                Item nextItem = iterator.next();
                 if (nextItem instanceof NullItem) {
                     _results.add(nullOrderIndex);
                     _results.add(null); // placeholder for valueColumn(2nd column)
@@ -187,7 +190,7 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
                 _results.add(emptySequenceOrderIndex);
                 _results.add(null); // placeholder for valueColumn(2nd column)
             }
-            expression.getExpression().close();
+            iterator.close();
 
         }
         return RowFactory.create(_results.toArray());
