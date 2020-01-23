@@ -61,9 +61,7 @@ public class ForClause extends FlworClause {
     public void initHighestExecutionMode() {
         // call isDataFrame on the last forVariable
         this._highestExecutionMode =
-            forVariables.get(forVariables.size() - 1).getHighestExecutionMode().isDataFrame()
-                ? ExecutionMode.DATAFRAME
-                : ExecutionMode.LOCAL;
+            forVariables.get(forVariables.size() - 1).getHighestExecutionMode();
     }
 
     @Override
