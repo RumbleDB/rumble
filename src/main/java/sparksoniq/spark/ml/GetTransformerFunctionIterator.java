@@ -20,6 +20,7 @@
 
 package sparksoniq.spark.ml;
 
+import org.apache.spark.ml.Transformer;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.OurBadException;
@@ -45,7 +46,7 @@ public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
     public static final List<String> transformerParameterNames = new ArrayList<>(Arrays.asList("input", "params"));
-    private String _transformerName;
+    private String _transformerShortName;
     private Class<?> _transformerSparkMLClass;
 
     public GetTransformerFunctionIterator(
@@ -68,7 +69,7 @@ public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
                     getMetadata()
             );
         }
-        _transformerName = nameIterator.next().getStringValue();
+        _transformerShortName = nameIterator.next().getStringValue();
         if (nameIterator.hasNext()) {
             throw new UnexpectedTypeException(
                     "Transformer lookup can't be performed on a sequence.",
@@ -78,7 +79,7 @@ public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
         nameIterator.close();
 
         String transformerFullClassName = RumbleMLCatalog.getTransformerFullClassName(
-            _transformerName,
+            _transformerShortName,
             getMetadata()
         );
         try {
@@ -86,7 +87,7 @@ public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
             this._hasNext = true;
         } catch (ClassNotFoundException e) {
             throw new OurBadException(
-                    "Given full class name of the transformer does not match a SparkML implementation."
+                    "No SparkML transformer implementation found with the given full class name."
             );
         }
     }
@@ -95,39 +96,44 @@ public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-
-            RuntimeIterator bodyIterator = new ApplyTransformerRuntimeIterator(
-                    _transformerName,
-                    _transformerSparkMLClass,
-                    ExecutionMode.DATAFRAME,
-                    getMetadata()
-            );
-            List<SequenceType> paramTypes = Collections.unmodifiableList(
-                Arrays.asList(
-                    new SequenceType(
-                            new ItemType(ItemTypes.Item), // TODO: revert back to ObjectItem
-                            SequenceType.Arity.ZeroOrMore
-                    ),
-                    new SequenceType(
-                            new ItemType(ItemTypes.ObjectItem),
-                            SequenceType.Arity.One
+            try {
+                Transformer transformer = (Transformer) _transformerSparkMLClass.newInstance();
+                RuntimeIterator bodyIterator = new ApplyTransformerRuntimeIterator(
+                        _transformerShortName,
+                        transformer,
+                        ExecutionMode.DATAFRAME,
+                        getMetadata()
+                );
+                List<SequenceType> paramTypes = Collections.unmodifiableList(
+                    Arrays.asList(
+                        new SequenceType(
+                                new ItemType(ItemTypes.Item), // TODO: revert back to ObjectItem
+                                SequenceType.Arity.ZeroOrMore
+                        ),
+                        new SequenceType(
+                                new ItemType(ItemTypes.ObjectItem),
+                                SequenceType.Arity.One
+                        )
                     )
-                )
-            );
-            SequenceType returnType = new SequenceType(
-                    new ItemType(ItemTypes.ObjectItem),
-                    SequenceType.Arity.ZeroOrMore
-            );
+                );
+                SequenceType returnType = new SequenceType(
+                        new ItemType(ItemTypes.ObjectItem),
+                        SequenceType.Arity.ZeroOrMore
+                );
 
-            return new FunctionItem(
-                    new FunctionIdentifier(_transformerSparkMLClass.getName(), 2),
-                    transformerParameterNames,
-                    new FunctionSignature(
-                            paramTypes,
-                            returnType
-                    ),
-                    bodyIterator
-            );
+                return new FunctionItem(
+                        new FunctionIdentifier(_transformerSparkMLClass.getName(), 2),
+                        transformerParameterNames,
+                        new FunctionSignature(
+                                paramTypes,
+                                returnType
+                        ),
+                        bodyIterator
+                );
+
+            } catch (InstantiationException | IllegalAccessException e) {
+                throw new OurBadException("Error while generating an instance from transformer class.", getMetadata());
+            }
         }
         throw new IteratorFlowException(
                 RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "SIZE function",
