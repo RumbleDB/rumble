@@ -20,12 +20,11 @@
 
 package sparksoniq.spark.ml;
 
-import org.apache.spark.ml.Transformer;
+import org.apache.spark.ml.Estimator;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -43,18 +42,14 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
+public class GetEstimatorFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
-    public static final List<String> transformerParameterNames = new ArrayList<>(Arrays.asList("input", "params"));
-    private String _transformerShortName;
-    private Class<?> _transformerSparkMLClass;
+    public static final List<String> estimatorParameterNames = new ArrayList<>(Arrays.asList("input", "params"));
+    private String _estimatorShortName;
+    private Class<?> _estimatorSparkMLClass;
 
-    public GetTransformerFunctionIterator(
-            List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
-    ) {
+    public GetEstimatorFunctionIterator(List<RuntimeIterator> arguments, ExecutionMode executionMode, IteratorMetadata iteratorMetadata) {
         super(arguments, executionMode, iteratorMetadata);
     }
 
@@ -66,29 +61,29 @@ public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
         nameIterator.open(context);
         if (!nameIterator.hasNext()) {
             throw new UnexpectedTypeException(
-                    "Invalid args. Transformer lookup can't be performed with empty sequence as the transformer name",
+                    "Invalid args. Estimator lookup can't be performed with empty sequence as the transformer name",
                     getMetadata()
             );
         }
-        _transformerShortName = nameIterator.next().getStringValue();
+        _estimatorShortName = nameIterator.next().getStringValue();
         if (nameIterator.hasNext()) {
             throw new UnexpectedTypeException(
-                    "Transformer lookup can't be performed on a sequence.",
+                    "Estimator lookup can't be performed on a sequence.",
                     getMetadata()
             );
         }
         nameIterator.close();
 
-        String transformerFullClassName = RumbleMLCatalog.getTransformerFullClassName(
-            _transformerShortName,
+        String estimatorFullClassName = RumbleMLCatalog.getEstimatorFullClassName(
+                _estimatorShortName,
             getMetadata()
         );
         try {
-            _transformerSparkMLClass = Class.forName(transformerFullClassName);
+            _estimatorSparkMLClass = Class.forName(estimatorFullClassName);
             this._hasNext = true;
         } catch (ClassNotFoundException e) {
             throw new OurBadException(
-                    "No SparkML transformer implementation found with the given full class name."
+                    "No SparkML estimator implementation found with the given full class name."
             );
         }
     }
@@ -98,33 +93,33 @@ public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             this._hasNext = false;
             try {
-                Transformer transformer = (Transformer) _transformerSparkMLClass.newInstance();
-                RuntimeIterator bodyIterator = new ApplyTransformerRuntimeIterator(
-                        _transformerShortName,
-                        transformer,
-                        ExecutionMode.DATAFRAME,
+                Estimator<?> estimator = (Estimator<?>) _estimatorSparkMLClass.newInstance();
+                RuntimeIterator bodyIterator = new ApplyEstimatorRuntimeIterator(
+                        _estimatorShortName,
+                        estimator,
+                        ExecutionMode.LOCAL,
                         getMetadata()
                 );
                 List<SequenceType> paramTypes = Collections.unmodifiableList(
-                    Arrays.asList(
-                        new SequenceType(
-                                new ItemType(ItemTypes.Item), // TODO: revert back to ObjectItem
-                                SequenceType.Arity.ZeroOrMore
-                        ),
-                        new SequenceType(
-                                new ItemType(ItemTypes.ObjectItem),
-                                SequenceType.Arity.One
+                        Arrays.asList(
+                                new SequenceType(
+                                        new ItemType(ItemTypes.Item), // TODO: revert back to ObjectItem
+                                        SequenceType.Arity.ZeroOrMore
+                                ),
+                                new SequenceType(
+                                        new ItemType(ItemTypes.ObjectItem),
+                                        SequenceType.Arity.One
+                                )
                         )
-                    )
                 );
                 SequenceType returnType = new SequenceType(
-                        new ItemType(ItemTypes.ObjectItem),
-                        SequenceType.Arity.ZeroOrMore
+                        new ItemType(ItemTypes.FunctionItem),
+                        SequenceType.Arity.One
                 );
 
                 return new FunctionItem(
-                        new FunctionIdentifier(_transformerSparkMLClass.getName(), 2),
-                        transformerParameterNames,
+                        new FunctionIdentifier(_estimatorSparkMLClass.getName(), 2),
+                        estimatorParameterNames,
                         new FunctionSignature(
                                 paramTypes,
                                 returnType

@@ -138,6 +138,7 @@ import sparksoniq.spark.iterator.function.ParallelizeFunctionIterator;
 import sparksoniq.spark.iterator.function.ParquetFileFunctionIterator;
 import sparksoniq.spark.iterator.function.StructuredJsonFileFunctionIterator;
 import sparksoniq.spark.iterator.function.TextFileFunctionIterator;
+import sparksoniq.spark.ml.GetEstimatorFunctionIterator;
 import sparksoniq.spark.ml.GetTransformerFunctionIterator;
 
 import java.io.ByteArrayInputStream;
@@ -199,6 +200,7 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.exp10;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.flatten;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.floor;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.get_estimator;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.get_transformer;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.head;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.hexBinary;
@@ -527,6 +529,7 @@ public class Functions {
         builtInFunctions.put(values.getIdentifier(), values);
 
         builtInFunctions.put(get_transformer.getIdentifier(), get_transformer);
+        builtInFunctions.put(get_estimator.getIdentifier(), get_estimator);
     }
 
     static {
@@ -2077,6 +2080,17 @@ public class Functions {
             "item",
             GetTransformerFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+
+        /**
+         * function fetches the estimator class from SparkML API
+         */
+        static final BuiltinFunction get_estimator = createBuiltinFunction(
+                "get-estimator",
+                "string",
+                "item",
+                GetEstimatorFunctionIterator.class,
+                BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
 
     }
