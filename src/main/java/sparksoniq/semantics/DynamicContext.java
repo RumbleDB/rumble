@@ -95,15 +95,15 @@ public class DynamicContext implements Serializable, KryoSerializable {
         }
     }
 
-    public Set<String> getLocalKeys() {
+    public Set<String> getLocalVariableNames() {
         return _localVariableValues.keySet();
     }
 
-    public Set<String> getRDDKeys() {
+    public Set<String> getRDDVariableNames() {
         return _rddVariableValues.keySet();
     }
 
-    public Set<String> getDataFrameKeys() {
+    public Set<String> getDataFrameVariableNames() {
         return _dataFrameVariableValues.keySet();
     }
 
