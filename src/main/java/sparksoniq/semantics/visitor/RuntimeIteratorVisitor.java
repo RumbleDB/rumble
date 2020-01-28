@@ -863,16 +863,13 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
     public RuntimeIterator visitTypeSwitchExpression(TypeSwitchExpression expression, RuntimeIterator argument) {
         List<TypeSwitchCase> cases = new ArrayList<>();
         for (TypeSwitchCaseExpression caseExpression : expression.getCases()) {
-            VariableReferenceIterator variableReferenceIterator = null;
+            String caseVariableName = null;
             if (caseExpression.getVariableReference() != null) {
-                variableReferenceIterator = (VariableReferenceIterator) this.visit(
-                    caseExpression.getVariableReference(),
-                    argument
-                );
+                caseVariableName = caseExpression.getVariableReference().getVariableName();
             }
             cases.add(
                 new TypeSwitchCase(
-                        variableReferenceIterator,
+                        caseVariableName,
                         caseExpression.getUnion(),
                         this.visit(caseExpression.getReturnExpression(), argument)
                 )
@@ -880,12 +877,12 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         }
 
         TypeSwitchCase defaultCase;
-        VariableReferenceIterator varRefDefaultIterator = null;
+        String defaultCaseVariableName = null;
         if (expression.getVarRefDefault() != null) {
-            varRefDefaultIterator = (VariableReferenceIterator) this.visit(expression.getVarRefDefault(), argument);
+            defaultCaseVariableName = expression.getVarRefDefault().getVariableName();
         }
         defaultCase = new TypeSwitchCase(
-                varRefDefaultIterator,
+                defaultCaseVariableName,
                 this.visit(expression.getDefaultExpression(), argument)
         );
 
