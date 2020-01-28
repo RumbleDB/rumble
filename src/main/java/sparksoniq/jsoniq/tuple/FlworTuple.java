@@ -28,9 +28,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
-
 import sparksoniq.exceptions.OurBadException;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.io.json.RowToItemMapper;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.spark.SparkSessionManager;
@@ -46,18 +44,18 @@ public class FlworTuple implements Serializable, KryoSerializable {
     private static final long serialVersionUID = 1L;
     private LinkedHashMap<String, List<Item>> localVariables;
     private LinkedHashMap<String, JavaRDD<Item>> rddVariables;
-    private LinkedHashMap<String, Dataset<Row>> dfVariables;
+    private LinkedHashMap<String, Dataset<Row>> dataFrameVariables;
 
     public FlworTuple() {
         localVariables = new LinkedHashMap<>(1, 1);
         rddVariables = new LinkedHashMap<>(1, 1);
-        dfVariables = new LinkedHashMap<>(1, 1);
+        dataFrameVariables = new LinkedHashMap<>(1, 1);
     }
 
     public FlworTuple(int nb) {
         localVariables = new LinkedHashMap<>(nb, 1);
         rddVariables = new LinkedHashMap<>(nb, 1);
-        dfVariables = new LinkedHashMap<>(nb, 1);
+        dataFrameVariables = new LinkedHashMap<>(nb, 1);
     }
 
     /**
@@ -66,15 +64,15 @@ public class FlworTuple implements Serializable, KryoSerializable {
     public FlworTuple(FlworTuple toCopy) {
         localVariables = new LinkedHashMap<>(toCopy.localVariables.size(), 1);
         rddVariables = new LinkedHashMap<>(toCopy.rddVariables.size(), 1);
-        dfVariables = new LinkedHashMap<>(toCopy.dfVariables.size(), 1);
+        dataFrameVariables = new LinkedHashMap<>(toCopy.dataFrameVariables.size(), 1);
         for (String key : toCopy.localVariables.keySet()) {
             this.putValue(key, toCopy.localVariables.get(key));
         }
         for (String key : toCopy.rddVariables.keySet()) {
             this.putValue(key, toCopy.rddVariables.get(key));
         }
-        for (String key : toCopy.dfVariables.keySet()) {
-            this.putValue(key, toCopy.dfVariables.get(key));
+        for (String key : toCopy.dataFrameVariables.keySet()) {
+            this.putValue(key, toCopy.dataFrameVariables.get(key));
         }
     }
 
@@ -86,14 +84,14 @@ public class FlworTuple implements Serializable, KryoSerializable {
         return rddVariables.keySet();
     }
 
-    public Set<String> getDFKeys() {
-        return dfVariables.keySet();
+    public Set<String> getDataFrameKeys() {
+        return dataFrameVariables.keySet();
     }
 
     public boolean contains(String key) {
         return localVariables.containsKey(key)
             || rddVariables.containsKey(key)
-            || dfVariables.containsKey(key);
+            || dataFrameVariables.containsKey(key);
     }
 
     public boolean isRDD(String key, IteratorMetadata metadata) {
@@ -101,14 +99,14 @@ public class FlworTuple implements Serializable, KryoSerializable {
             throw new OurBadException("Undeclared FLWOR variable", metadata);
         }
         return rddVariables.containsKey(key)
-            || dfVariables.containsKey(key);
+            || dataFrameVariables.containsKey(key);
     }
 
-    public boolean isDF(String key, IteratorMetadata metadata) {
+    public boolean isDataFrame(String key, IteratorMetadata metadata) {
         if (!contains(key)) {
             throw new OurBadException("Undeclared FLWOR variable", metadata);
         }
-        return dfVariables.containsKey(key);
+        return dataFrameVariables.containsKey(key);
     }
 
     public List<Item> getLocalValue(String key, IteratorMetadata metadata) {
@@ -127,17 +125,17 @@ public class FlworTuple implements Serializable, KryoSerializable {
         if (rddVariables.containsKey(key)) {
             return rddVariables.get(key);
         }
-        if (dfVariables.containsKey(key)) {
-            Dataset<Row> df = dfVariables.get(key);
+        if (dataFrameVariables.containsKey(key)) {
+            Dataset<Row> df = dataFrameVariables.get(key);
             JavaRDD<Row> rowRDD = df.javaRDD();
             return rowRDD.map(new RowToItemMapper(metadata));
         }
         throw new OurBadException("Undeclared FLOWR variable", metadata);
     }
 
-    public Dataset<Row> getDFValue(String key, IteratorMetadata metadata) {
-        if (dfVariables.containsKey(key)) {
-            return dfVariables.get(key);
+    public Dataset<Row> getDataFrameValue(String key, IteratorMetadata metadata) {
+        if (dataFrameVariables.containsKey(key)) {
+            return dataFrameVariables.get(key);
         }
         throw new OurBadException("Undeclared FLOWR variable", metadata);
     }
@@ -150,14 +148,14 @@ public class FlworTuple implements Serializable, KryoSerializable {
 
     public FlworTuple putValue(String key, List<Item> value) {
         rddVariables.remove(key);
-        dfVariables.remove(key);
+        dataFrameVariables.remove(key);
         localVariables.put(key, value);
         return this;
     }
 
     public FlworTuple putValue(String key, JavaRDD<Item> value) {
         localVariables.remove(key);
-        dfVariables.remove(key);
+        dataFrameVariables.remove(key);
         rddVariables.put(key, value);
         return this;
     }
@@ -165,7 +163,7 @@ public class FlworTuple implements Serializable, KryoSerializable {
     public FlworTuple putValue(String key, Dataset<Row> value) {
         localVariables.remove(key);
         rddVariables.remove(key);
-        dfVariables.put(key, value);
+        dataFrameVariables.put(key, value);
         return this;
     }
 
