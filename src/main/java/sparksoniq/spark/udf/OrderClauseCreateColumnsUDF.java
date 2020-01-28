@@ -36,7 +36,7 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.spark.DataFrameUtils;
-import sparksoniq.spark.iterator.flowr.expression.OrderByClauseExprWithIterator;
+import sparksoniq.spark.iterator.flowr.expression.OrderByClauseAnnotatedChildIterator;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -47,7 +47,7 @@ import java.util.TreeMap;
 public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, Row> {
 
     private static final long serialVersionUID = 1L;
-    private List<OrderByClauseExprWithIterator> _expressionsWithIterator;
+    private List<OrderByClauseAnnotatedChildIterator> _expressionsWithIterator;
     private Map<String, DynamicContext.VariableDependency> _dependencies;
 
     private Map<String, List<String>> _columnNamesByType;
@@ -63,7 +63,7 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
     private transient Input _input;
 
     public OrderClauseCreateColumnsUDF(
-            List<OrderByClauseExprWithIterator> expressionsWithIterator,
+            List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
             DynamicContext context,
             Map<Integer, String> allColumnTypes,
             Map<String, List<String>> columnNamesByType
@@ -78,7 +78,7 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
         _results = new ArrayList<>();
 
         _dependencies = new TreeMap<>();
-        for (OrderByClauseExprWithIterator expressionWithIterator : _expressionsWithIterator) {
+        for (OrderByClauseAnnotatedChildIterator expressionWithIterator : _expressionsWithIterator) {
             _dependencies.putAll(expressionWithIterator.getIterator().getVariableDependencies());
         }
         _columnNamesByType = columnNamesByType;
@@ -114,7 +114,7 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
         );
 
         for (int expressionIndex = 0; expressionIndex < _expressionsWithIterator.size(); expressionIndex++) {
-            OrderByClauseExprWithIterator expressionWithIterator = _expressionsWithIterator.get(expressionIndex);
+            OrderByClauseAnnotatedChildIterator expressionWithIterator = _expressionsWithIterator.get(expressionIndex);
 
             // nulls and empty sequences have special ordering captured in the first sorting column
             // if non-null, non-empty-sequence value is given, the second column is used to sort the input

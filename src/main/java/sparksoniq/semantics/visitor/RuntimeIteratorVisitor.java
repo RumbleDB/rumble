@@ -136,7 +136,7 @@ import sparksoniq.spark.iterator.flowr.OrderByClauseSparkIterator;
 import sparksoniq.spark.iterator.flowr.ReturnClauseSparkIterator;
 import sparksoniq.spark.iterator.flowr.WhereClauseSparkIterator;
 import sparksoniq.spark.iterator.flowr.expression.GroupByClauseSparkIteratorExpression;
-import sparksoniq.spark.iterator.flowr.expression.OrderByClauseExprWithIterator;
+import sparksoniq.spark.iterator.flowr.expression.OrderByClauseAnnotatedChildIterator;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -278,10 +278,10 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                     createIteratorMetadata(clause)
             );
         } else if (clause instanceof OrderByClause) {
-            List<OrderByClauseExprWithIterator> expressionsWithIterator = new ArrayList<>();
+            List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator = new ArrayList<>();
             for (OrderByClauseExpr orderExpr : ((OrderByClause) clause).getExpressions()) {
                 expressionsWithIterator.add(
-                    new OrderByClauseExprWithIterator(
+                    new OrderByClauseAnnotatedChildIterator(
                             this.visit(orderExpr.getExpression(), argument),
                             orderExpr.isAscending(),
                             orderExpr.getUri(),

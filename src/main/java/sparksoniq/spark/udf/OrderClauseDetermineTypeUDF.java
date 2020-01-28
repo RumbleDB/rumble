@@ -32,7 +32,7 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.spark.DataFrameUtils;
-import sparksoniq.spark.iterator.flowr.expression.OrderByClauseExprWithIterator;
+import sparksoniq.spark.iterator.flowr.expression.OrderByClauseAnnotatedChildIterator;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -44,7 +44,7 @@ public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, W
     private static final long serialVersionUID = 1L;
     private Map<String, DynamicContext.VariableDependency> _dependencies;
     private Map<String, List<String>> _columnNamesByType;
-    private List<OrderByClauseExprWithIterator> _expressionsWithIterator;
+    private List<OrderByClauseAnnotatedChildIterator> _expressionsWithIterator;
     private List<List<Item>> _deserializedParams;
     private List<Item> _longParams;
     private DynamicContext _parentContext;
@@ -56,7 +56,7 @@ public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, W
     private transient Input _input;
 
     public OrderClauseDetermineTypeUDF(
-            List<OrderByClauseExprWithIterator> expressionsWithIterator,
+            List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
             DynamicContext context,
             Map<String, List<String>> columnNamesByType
     ) {
@@ -69,7 +69,7 @@ public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, W
         result = new ArrayList<>();
 
         _dependencies = new TreeMap<String, DynamicContext.VariableDependency>();
-        for (OrderByClauseExprWithIterator expressionWithIterator : _expressionsWithIterator) {
+        for (OrderByClauseAnnotatedChildIterator expressionWithIterator : _expressionsWithIterator) {
             _dependencies.putAll(expressionWithIterator.getIterator().getVariableDependencies());
         }
         _columnNamesByType = columnNamesByType;
@@ -104,7 +104,7 @@ public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, W
             _longParams
         );
 
-        for (OrderByClauseExprWithIterator expressionWithIterator : _expressionsWithIterator) {
+        for (OrderByClauseAnnotatedChildIterator expressionWithIterator : _expressionsWithIterator) {
             // apply expression in the dynamic context
             RuntimeIterator iterator = expressionWithIterator.getIterator();
             iterator.open(_context);
