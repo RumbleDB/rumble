@@ -36,8 +36,6 @@ import sparksoniq.jsoniq.compiler.translator.expr.module.MainModule;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
-import sparksoniq.semantics.visitor.RuntimeIteratorVisitor;
-import sparksoniq.semantics.visitor.StaticContextVisitor;
 import sparksoniq.semantics.visitor.VisitorHelpers;
 import utils.FileManager;
 import utils.annotations.AnnotationParseException;
@@ -83,11 +81,8 @@ public class AnnotationsTestsBase {
             if (visitor instanceof JsoniqExpressionTreeVisitor) {
                 JsoniqExpressionTreeVisitor completeVisitor = ((JsoniqExpressionTreeVisitor) visitor);
                 MainModule mainModule = completeVisitor.getMainModule();
-                VisitorHelpers.generateStaticContextDoublePass(
-                    mainModule,
-                    mainModule.getStaticContext()
-                );
-                runtimeIterator = VisitorHelpers.generateRuntimeIterator(mainModule, null);
+                VisitorHelpers.populateStaticContext(mainModule);
+                runtimeIterator = VisitorHelpers.generateRuntimeIterator(mainModule);
             }
             // PARSING
         } catch (ParsingException exception) {

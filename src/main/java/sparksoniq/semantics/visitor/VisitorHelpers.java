@@ -6,14 +6,15 @@ import sparksoniq.semantics.StaticContext;
 
 public class VisitorHelpers {
 
-    public static RuntimeIterator generateRuntimeIterator(ExpressionOrClause expression, RuntimeIterator argument) {
-        return new RuntimeIteratorVisitor().visit(expression, argument);
+    public static RuntimeIterator generateRuntimeIterator(ExpressionOrClause expression) {
+        return new RuntimeIteratorVisitor().visit(expression, null);
     }
 
-    public static StaticContext generateStaticContextDoublePass(ExpressionOrClause expression, StaticContext argument) {
+    public static void populateStaticContext(ExpressionOrClause expression) {
+        // perform double pass over static context to support function hoisting
         StaticContextVisitor visitor = new StaticContextVisitor();
-        visitor.visit(expression, argument);
+        visitor.visit(expression, null);
         visitor.setConfigForConsequentPasses();
-        return visitor.visit(expression, argument);
+        visitor.visit(expression, null);
     }
 }

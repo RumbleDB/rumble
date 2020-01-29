@@ -40,8 +40,6 @@ import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.semantics.visitor.RuntimeIteratorVisitor;
-import sparksoniq.semantics.visitor.StaticContextVisitor;
 import sparksoniq.semantics.visitor.VisitorHelpers;
 import sparksoniq.spark.SparkSessionManager;
 import sparksoniq.utils.FileUtils;
@@ -232,11 +230,11 @@ public class JsoniqQueryExecutor {
     }
 
     private void generateStaticContext(Expression expression) {
-        VisitorHelpers.generateStaticContextDoublePass(expression, expression.getStaticContext());
+        VisitorHelpers.populateStaticContext(expression);
     }
 
     private RuntimeIterator generateRuntimeIterators(Expression expression) {
-        return VisitorHelpers.generateRuntimeIterator(expression, null);
+        return VisitorHelpers.generateRuntimeIterator(expression);
     }
 
     protected String runIterators(RuntimeIterator iterator) {
