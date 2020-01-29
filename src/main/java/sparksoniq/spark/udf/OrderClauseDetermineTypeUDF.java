@@ -28,10 +28,11 @@ import scala.collection.mutable.WrappedArray;
 import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.item.ItemFactory;
+import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.spark.DataFrameUtils;
-import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
+import sparksoniq.spark.iterator.flowr.expression.OrderByClauseAnnotatedChildIterator;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -43,7 +44,7 @@ public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, W
     private static final long serialVersionUID = 1L;
     private Map<String, DynamicContext.VariableDependency> _dependencies;
     private Map<String, List<String>> _columnNamesByType;
-    private List<OrderByClauseSparkIteratorExpression> _expressions;
+    private List<OrderByClauseAnnotatedChildIterator> _expressionsWithIterator;
     private List<List<Item>> _deserializedParams;
     private List<Item> _longParams;
     private DynamicContext _parentContext;
@@ -55,11 +56,11 @@ public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, W
     private transient Input _input;
 
     public OrderClauseDetermineTypeUDF(
-            List<OrderByClauseSparkIteratorExpression> expressions,
+            List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
             DynamicContext context,
             Map<String, List<String>> columnNamesByType
     ) {
-        _expressions = expressions;
+        _expressionsWithIterator = expressionsWithIterator;
 
         _deserializedParams = new ArrayList<>();
         _longParams = new ArrayList<>();
@@ -68,8 +69,8 @@ public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, W
         result = new ArrayList<>();
 
         _dependencies = new TreeMap<String, DynamicContext.VariableDependency>();
-        for (OrderByClauseSparkIteratorExpression expression : _expressions) {
-            _dependencies.putAll(expression.getExpression().getVariableDependencies());
+        for (OrderByClauseAnnotatedChildIterator expressionWithIterator : _expressionsWithIterator) {
+            _dependencies.putAll(expressionWithIterator.getIterator().getVariableDependencies());
         }
         _columnNamesByType = columnNamesByType;
 
@@ -103,19 +104,20 @@ public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, W
             _longParams
         );
 
-        for (OrderByClauseSparkIteratorExpression expression : _expressions) {
+        for (OrderByClauseAnnotatedChildIterator expressionWithIterator : _expressionsWithIterator) {
             // apply expression in the dynamic context
-            expression.getExpression().open(_context);
-            if (expression.getExpression().hasNext()) {
-                _nextItem = expression.getExpression().next();
-                if (expression.getExpression().hasNext()) {
+            RuntimeIterator iterator = expressionWithIterator.getIterator();
+            iterator.open(_context);
+            if (iterator.hasNext()) {
+                _nextItem = iterator.next();
+                if (iterator.hasNext()) {
                     throw new UnexpectedTypeException(
                             "Can not order by variables with sequences of multiple items.",
-                            expression.getIteratorMetadata()
+                            expressionWithIterator.getIterator().getMetadata()
                     );
                 }
             }
-            expression.getExpression().close();
+            iterator.close();
 
             if (_nextItem == null) {
                 result.add("empty-sequence");
@@ -146,7 +148,7 @@ public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, W
             } else if (_nextItem.isArray() || _nextItem.isObject()) {
                 throw new UnexpectedTypeException(
                         "Order by variable can not contain arrays or objects.",
-                        expression.getIteratorMetadata()
+                        expressionWithIterator.getIterator().getMetadata()
                 );
             } else if (_nextItem.isBinary()) {
                 String itemType = ItemTypes.getItemTypeName(_nextItem.getClass().getSimpleName());
@@ -156,7 +158,7 @@ public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, W
                             + "\": invalid type: can not compare for equality to type \""
                             + itemType
                             + "\"",
-                        expression.getIteratorMetadata()
+                        expressionWithIterator.getIterator().getMetadata()
                 );
             } else {
                 throw new OurBadException("Unexpected type found.");

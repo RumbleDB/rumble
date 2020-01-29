@@ -126,10 +126,10 @@ public class FrontendTests extends AnnotationsTestsBase {
      * ForClause startClause = (ForClause) node.getStartClause();
      * Assert.assertTrue(startClause.getForVariables().get(0)
      * .getVariableReference().getVariableName().equals("var"));
-     * Assert.assertTrue(startClause.getForVariables().get(0).getExpression()
+     * Assert.assertTrue(startClause.getForVariables().get(0).getIterator()
      * .getDescendantsOfType(d -> d instanceof RangeExpression, true).size() == 1);
      * 
-     * RangeExpression range = (RangeExpression) startClause.getForVariables().get(0).getExpression()
+     * RangeExpression range = (RangeExpression) startClause.getForVariables().get(0).getIterator()
      * .getDescendantsOfType(d -> d instanceof RangeExpression, true).get(0);
      * UnaryExpression unary = (UnaryExpression) range.
      * getDescendantsOfType(d -> d instanceof UnaryExpression, true).get(0);

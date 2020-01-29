@@ -42,7 +42,7 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.spark.DataFrameUtils;
-import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
+import sparksoniq.spark.iterator.flowr.expression.OrderByClauseAnnotatedChildIterator;
 import sparksoniq.spark.udf.OrderClauseCreateColumnsUDF;
 import sparksoniq.spark.udf.OrderClauseDetermineTypeUDF;
 
@@ -58,7 +58,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
     private static final long serialVersionUID = 1L;
     private final boolean _isStable;
-    private final List<OrderByClauseSparkIteratorExpression> _expressions;
+    private final List<OrderByClauseAnnotatedChildIterator> _expressionsWithIterator;
     private Map<String, DynamicContext.VariableDependency> _dependencies;
 
     private List<FlworTuple> _localTupleResults;
@@ -66,16 +66,16 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
     public OrderByClauseSparkIterator(
             RuntimeTupleIterator child,
-            List<OrderByClauseSparkIteratorExpression> expressions,
+            List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
             boolean stable,
             IteratorMetadata iteratorMetadata
     ) {
         super(child, iteratorMetadata);
-        this._expressions = expressions;
+        this._expressionsWithIterator = expressionsWithIterator;
         this._isStable = stable;
         _dependencies = new TreeMap<>();
-        for (OrderByClauseSparkIteratorExpression e : _expressions) {
-            _dependencies.putAll(e.getExpression().getVariableDependencies());
+        for (OrderByClauseAnnotatedChildIterator e : _expressionsWithIterator) {
+            _dependencies.putAll(e.getIterator().getVariableDependencies());
         }
     }
 
@@ -137,7 +137,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         // OrderByClauseSortClosure implements a comparator and provides the exact desired behavior for local execution
         // as well
         TreeMap<FlworKey, List<FlworTuple>> keyValuePairs = new TreeMap<>(
-                new FlworKeyComparator(_expressions, true)
+                new FlworKeyComparator(_expressionsWithIterator, true)
         );
 
         // assign current context as parent. re-use the same context object for efficiency
@@ -146,20 +146,20 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             FlworTuple inputTuple = _child.next();
 
             List<Item> results = new ArrayList<>(); // results from the expressions will become a key
-            for (OrderByClauseSparkIteratorExpression orderByExpression : _expressions) {
+            for (OrderByClauseAnnotatedChildIterator expressionWithIterator : _expressionsWithIterator) {
                 tupleContext.removeAllVariables(); // clear the previous variables
                 tupleContext.setBindingsFromTuple(inputTuple, getMetadata()); // assign new variables from new tuple
 
                 boolean isFieldEmpty = true;
-                RuntimeIterator expression = orderByExpression.getExpression();
-                expression.open(tupleContext);
-                while (expression.hasNext()) {
-                    Item resultItem = expression.next();
+                RuntimeIterator iterator = expressionWithIterator.getIterator();
+                iterator.open(tupleContext);
+                while (iterator.hasNext()) {
+                    Item resultItem = iterator.next();
                     if (resultItem != null) {
                         if (!resultItem.isAtomic()) {
                             throw new NonAtomicKeyException(
                                     "Order by keys must be atomics",
-                                    orderByExpression.getIteratorMetadata().getExpressionMetadata()
+                                    expressionWithIterator.getIterator().getMetadata().getExpressionMetadata()
                             );
                         }
                         if (resultItem.isBinary()) {
@@ -181,7 +181,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                 if (isFieldEmpty) {
                     results.add(null);
                 }
-                expression.close();
+                iterator.close();
             }
             FlworKey key = new FlworKey(results);
             List<FlworTuple> values = keyValuePairs.get(key); // all values for a single matching key are held in a list
@@ -203,8 +203,8 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             throw new OurBadException("Invalid orderby clause.");
         }
 
-        for (OrderByClauseSparkIteratorExpression expression : _expressions) {
-            if (expression.getExpression().isRDD()) {
+        for (OrderByClauseAnnotatedChildIterator expressionWithIterator : _expressionsWithIterator) {
+            if (expressionWithIterator.getIterator().isRDD()) {
                 throw new JobWithinAJobException(
                         "An order by clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
                         getMetadata().getExpressionMetadata()
@@ -229,7 +229,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             .udf()
             .register(
                 "determineOrderingDataType",
-                new OrderClauseDetermineTypeUDF(_expressions, context, UDFcolumnsByType),
+                new OrderClauseDetermineTypeUDF(_expressionsWithIterator, context, UDFcolumnsByType),
                 DataTypes.createArrayType(DataTypes.StringType)
             );
 
@@ -342,7 +342,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             }
             typedFields.add(DataTypes.createStructField(columnName, columnType, true));
 
-            OrderByClauseSparkIteratorExpression expression = _expressions.get(columnIndex);
+            OrderByClauseAnnotatedChildIterator expressionWithIterator = _expressionsWithIterator.get(columnIndex);
             // accessing the created ordering row as "`ordering_columns`.`0-nullEmptyCheckField` (desc)"
             // prepare sql for expression's 1st column
             orderingSQL.append("`");
@@ -350,7 +350,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             orderingSQL.append("`.`");
             orderingSQL.append(columnIndex);
             orderingSQL.append("-nullEmptyCheckField`");
-            if (expression.isAscending()) {
+            if (expressionWithIterator.isAscending()) {
                 orderingSQL.append(", ");
             } else {
                 orderingSQL.append(" desc, ");
@@ -363,13 +363,13 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             orderingSQL.append(columnIndex);
             orderingSQL.append("-valueField`");
             if (columnIndex != typesForAllColumns.size() - 1) {
-                if (expression.isAscending()) {
+                if (expressionWithIterator.isAscending()) {
                     orderingSQL.append(", ");
                 } else {
                     orderingSQL.append(" desc, ");
                 }
             } else {
-                if (!expression.isAscending()) {
+                if (!expressionWithIterator.isAscending()) {
                     orderingSQL.append(" desc");
                 }
             }
@@ -380,7 +380,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             .register(
                 "createOrderingColumns",
                 new OrderClauseCreateColumnsUDF(
-                        _expressions,
+                        _expressionsWithIterator,
                         context,
                         typesForAllColumns,
                         UDFcolumnsByType
@@ -406,8 +406,8 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<String, DynamicContext.VariableDependency> result = new TreeMap<>();
-        for (OrderByClauseSparkIteratorExpression iterator : _expressions) {
-            result.putAll(iterator.getExpression().getVariableDependencies());
+        for (OrderByClauseAnnotatedChildIterator expressionWithIterator : _expressionsWithIterator) {
+            result.putAll(expressionWithIterator.getIterator().getVariableDependencies());
         }
         for (String var : _child.getVariablesBoundInCurrentFLWORExpression()) {
             result.remove(var);
@@ -422,8 +422,8 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
     public void print(StringBuffer buffer, int indent) {
         super.print(buffer, indent);
-        for (OrderByClauseSparkIteratorExpression iterator : _expressions) {
-            iterator.getExpression().print(buffer, indent + 1);
+        for (OrderByClauseAnnotatedChildIterator iterator : _expressionsWithIterator) {
+            iterator.getIterator().print(buffer, indent + 1);
         }
     }
 
@@ -435,8 +435,8 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             new TreeMap<>(parentProjection);
 
         // add the variable dependencies needed by this for clause's expression.
-        for (OrderByClauseSparkIteratorExpression iterator : _expressions) {
-            Map<String, DynamicContext.VariableDependency> exprDependency = iterator.getExpression()
+        for (OrderByClauseAnnotatedChildIterator iterator : _expressionsWithIterator) {
+            Map<String, DynamicContext.VariableDependency> exprDependency = iterator.getIterator()
                 .getVariableDependencies();
             for (String variable : exprDependency.keySet()) {
                 if (projection.containsKey(variable)) {

@@ -21,7 +21,7 @@
 package sparksoniq.jsoniq.tuple;
 
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
-import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
+import sparksoniq.spark.iterator.flowr.expression.OrderByClauseAnnotatedChildIterator;
 
 import java.io.Serializable;
 import java.util.Comparator;
@@ -31,9 +31,9 @@ public class FlworKeyComparator implements Comparator<FlworKey>, Serializable {
 
     private static final long serialVersionUID = 1L;
     // private final boolean _isStable;
-    private final List<OrderByClauseSparkIteratorExpression> _expressions;
+    private final List<OrderByClauseAnnotatedChildIterator> _expressions;
 
-    public FlworKeyComparator(List<OrderByClauseSparkIteratorExpression> expressions, boolean isStable) {
+    public FlworKeyComparator(List<OrderByClauseAnnotatedChildIterator> expressions, boolean isStable) {
         // this._isStable = isStable;
         this._expressions = expressions;
     }
