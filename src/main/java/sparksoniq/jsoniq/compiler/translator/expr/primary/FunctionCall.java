@@ -33,6 +33,7 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.BuiltinFunction;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectKeysFunctionIterator;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
@@ -76,48 +77,56 @@ public class FunctionCall extends PrimaryExpression {
         if (Functions.checkBuiltInFunctionExists(identifier)) {
             BuiltinFunction builtinFunction = Functions.getBuiltInFunction(identifier);
             Class<? extends RuntimeIterator> functionIteratorClass = builtinFunction.getFunctionIteratorClass();
-            // if subclass of RDDRuntimeIterator
-            if (RDDRuntimeIterator.class.isAssignableFrom(functionIteratorClass)) {
-                if (DataFrameRuntimeIterator.class.isAssignableFrom(functionIteratorClass)) {
-                    this._highestExecutionMode = ExecutionMode.DATAFRAME;
-                } else {
-                    this._highestExecutionMode = ExecutionMode.RDD;
-                }
-            } else if (HybridRuntimeIterator.class.isAssignableFrom(functionIteratorClass)) {
-                this._highestExecutionMode = ExecutionMode.LOCAL;
-                // Object Keys function is a special case
-                if (functionIteratorClass.isInstance(ObjectKeysFunctionIterator.class)) {
-                    for (ExpressionOrClause child : this.getDescendants()) {
-                        if (child.getHighestExecutionMode().isRDD() && !child.getHighestExecutionMode().isDataFrame()) {
-                            this._highestExecutionMode = ExecutionMode.RDD;
-                            break;
-                        }
-                    }
-                } else {
-                    for (ExpressionOrClause child : this.getDescendants()) {
-                        if (child.getHighestExecutionMode().isDataFrame()) {
-                            this._highestExecutionMode = ExecutionMode.DATAFRAME;
-                            break;
-                        } else if (child.getHighestExecutionMode().isRDD()) {
-                            this._highestExecutionMode = ExecutionMode.RDD;
-                            break;
-                        }
-                    }
-                }
-            } else {
-                this._highestExecutionMode = ExecutionMode.LOCAL;
-            }
-        } else if (Functions.checkUserDefinedFunctionExecutionModeExists(identifier)) {
-            this._highestExecutionMode = Functions.getUserDefinedFunctionExecutionMode(identifier, getMetadata());
-        } else {
-            if (!ignoreMissingFunctionError) {
-                throw new UnknownFunctionCallException(
-                        identifier.getName(),
-                        identifier.getArity(),
-                        this.getMetadata()
-                );
-            }
+            this._highestExecutionMode = this.getBuiltInFunctionExecutionMode(functionIteratorClass);
+            return;
         }
+
+        if (Functions.checkUserDefinedFunctionExecutionModeExists(identifier)) {
+            this._highestExecutionMode = Functions.getUserDefinedFunctionExecutionMode(identifier, getMetadata());
+            return;
+        }
+
+        if (!ignoreMissingFunctionError) {
+            throw new UnknownFunctionCallException(
+                    identifier.getName(),
+                    identifier.getArity(),
+                    this.getMetadata()
+            );
+        }
+    }
+
+    private ExecutionMode getBuiltInFunctionExecutionMode(Class<? extends RuntimeIterator> functionIteratorClass) {
+        // if subclass of DataFrameRuntimeIterator
+        if (DataFrameRuntimeIterator.class.isAssignableFrom(functionIteratorClass)) {
+            return ExecutionMode.DATAFRAME;
+        }
+        if (RDDRuntimeIterator.class.isAssignableFrom(functionIteratorClass)) {
+            return ExecutionMode.RDD;
+        }
+        if (LocalFunctionCallIterator.class.isAssignableFrom(functionIteratorClass)) {
+            return ExecutionMode.LOCAL;
+        }
+        if (HybridRuntimeIterator.class.isAssignableFrom(functionIteratorClass)) {
+            // Object Keys function is a special case
+            if (functionIteratorClass.isInstance(ObjectKeysFunctionIterator.class)) {
+                for (ExpressionOrClause child : this.getDescendants()) {
+                    if (child.getHighestExecutionMode().isRDD() && !child.getHighestExecutionMode().isDataFrame()) {
+                        return ExecutionMode.RDD;
+                    }
+                }
+                return ExecutionMode.LOCAL;
+            }
+
+            for (ExpressionOrClause child : this.getDescendants()) {
+                if (child.getHighestExecutionMode().isDataFrame()) {
+                    return ExecutionMode.DATAFRAME;
+                } else if (child.getHighestExecutionMode().isRDD()) {
+                    return ExecutionMode.RDD;
+                }
+            }
+            return ExecutionMode.LOCAL;
+        }
+        throw new OurBadException("Built-in function is implemented with an unexpected inheritance.");
     }
 
     @Override
