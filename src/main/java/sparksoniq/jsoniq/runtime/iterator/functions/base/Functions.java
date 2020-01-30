@@ -559,27 +559,16 @@ public class Functions {
             Constructor<? extends RuntimeIterator> constructor = builtinFunction.getFunctionIteratorClass()
                 .getConstructor(
                     List.class,
+                    ExecutionMode.class,
                     IteratorMetadata.class
                 );
-            functionCallIterator = constructor.newInstance(arguments, metadata);
-        } catch (ReflectiveOperationException e) {
-            // TODO: Some functions have constructors with 2 and some with 3 params. Handle this more elegantly
-            // TODO: Or alternatively, extend all constructors to have 3 params (executionMode)
-            try {
-                Constructor<? extends RuntimeIterator> constructor = builtinFunction.getFunctionIteratorClass()
-                    .getConstructor(
-                        List.class,
-                        ExecutionMode.class,
-                        IteratorMetadata.class
-                    );
-                functionCallIterator = constructor.newInstance(arguments, executionMode, metadata);
-            } catch (ReflectiveOperationException ex) {
-                throw new UnknownFunctionCallException(
-                        identifier.getName(),
-                        arguments.size(),
-                        metadata.getExpressionMetadata()
-                );
-            }
+            functionCallIterator = constructor.newInstance(arguments, executionMode, metadata);
+        } catch (ReflectiveOperationException ex) {
+            throw new UnknownFunctionCallException(
+                    identifier.getName(),
+                    arguments.size(),
+                    metadata.getExpressionMetadata()
+            );
         }
 
         if (!builtinFunction.getSignature().getReturnType().equals(mostGeneralSequenceType)) {
