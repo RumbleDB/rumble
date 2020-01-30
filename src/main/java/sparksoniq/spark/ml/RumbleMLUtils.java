@@ -126,8 +126,9 @@ public class RumbleMLUtils {
             case "int":
                 return atomicItem.castAs(AtomicTypes.IntegerItem).getIntegerValue();
             case "double":
-            case "long":
                 return atomicItem.castAs(AtomicTypes.DoubleItem).getDoubleValue();
+            case "long":
+                return (long) atomicItem.castAs(AtomicTypes.DoubleItem).getDoubleValue();
             default:
                 throw new OurBadException(
                         "Unrecognized Java type name found \""
