@@ -134,6 +134,7 @@ import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
 import sparksoniq.spark.iterator.function.JsonFileFunctionIterator;
+import sparksoniq.spark.iterator.function.LibSVMFileFunctionIterator;
 import sparksoniq.spark.iterator.function.ParallelizeFunctionIterator;
 import sparksoniq.spark.iterator.function.ParquetFileFunctionIterator;
 import sparksoniq.spark.iterator.function.StructuredJsonFileFunctionIterator;
@@ -257,6 +258,7 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.string_join2;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.string_length;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.structured_json_file;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.libsvm_file;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.subsequence2;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.subsequence3;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.substring2;
@@ -395,6 +397,7 @@ public class Functions {
         builtInFunctions.put(json_file1.getIdentifier(), json_file1);
         builtInFunctions.put(json_file2.getIdentifier(), json_file2);
         builtInFunctions.put(structured_json_file.getIdentifier(), structured_json_file);
+        builtInFunctions.put(libsvm_file.getIdentifier(), libsvm_file);
         builtInFunctions.put(json_doc.getIdentifier(), json_doc);
         builtInFunctions.put(text_file1.getIdentifier(), text_file1);
         builtInFunctions.put(text_file2.getIdentifier(), text_file2);
@@ -874,6 +877,16 @@ public class Functions {
             "item*",
             StructuredJsonFileFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
+        );
+        /**
+         * function that parses a libSVM formatted file into a DataFrame
+         */
+        static final BuiltinFunction libsvm_file = createBuiltinFunction(
+                "libsvm-file",
+                "string?",
+                "item*",
+                LibSVMFileFunctionIterator.class,
+                BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
         );
         /**
          * function that parses a JSON doc file
