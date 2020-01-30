@@ -7,6 +7,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.InvalidRumbleMLParamException;
+import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.FunctionItem;
@@ -45,6 +46,11 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
 
     @Override
     public Item next() {
+        if (!this.hasNext()) {
+            throw new IteratorFlowException("Invalid next() call in ApplyEstimatorRuntimeIterator", getMetadata());
+        }
+        this._hasNext = false;
+
             Dataset<Row> inputDataset = _currentDynamicContextForLocalExecution.getDataFrameVariableValue(
                 GetEstimatorFunctionIterator.estimatorParameterNames.get(0),
                 getMetadata()
