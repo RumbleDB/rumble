@@ -23,6 +23,7 @@ package sparksoniq.jsoniq.runtime.iterator.operational;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -40,9 +41,10 @@ public class UnaryOperationIterator extends UnaryOperationBaseIterator {
     public UnaryOperationIterator(
             RuntimeIterator child,
             OperationalExpressionBase.Operator operator,
+            ExecutionMode executionMode,
             IteratorMetadata iteratorMetadata
     ) {
-        super(child, operator, iteratorMetadata);
+        super(child, operator, executionMode, iteratorMetadata);
     }
 
     @Override

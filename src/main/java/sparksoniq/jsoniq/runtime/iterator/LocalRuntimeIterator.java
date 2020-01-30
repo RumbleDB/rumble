@@ -20,6 +20,7 @@
 
 package sparksoniq.jsoniq.runtime.iterator;
 
+import sparksoniq.exceptions.OurBadException;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
@@ -29,7 +30,14 @@ public abstract class LocalRuntimeIterator extends RuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
-    protected LocalRuntimeIterator(List<RuntimeIterator> children, IteratorMetadata iteratorMetadata) {
-        super(children, ExecutionMode.LOCAL, iteratorMetadata);
+    protected LocalRuntimeIterator(
+            List<RuntimeIterator> children,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
+        super(children, executionMode, iteratorMetadata);
+        if (executionMode != ExecutionMode.LOCAL) {
+            throw new OurBadException("Local runtime iterators support only the local execution mode");
+        }
     }
 }

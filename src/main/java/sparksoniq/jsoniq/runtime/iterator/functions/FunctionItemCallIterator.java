@@ -177,7 +177,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 RDDArgumentValues,
                 DFArgumentValues
         );
-        return new FunctionRuntimeIterator(partiallyAppliedFunction, getMetadata());
+        return new FunctionRuntimeIterator(partiallyAppliedFunction, ExecutionMode.LOCAL, getMetadata());
     }
 
     private DynamicContext createNewDynamicContextWithArguments(DynamicContext context) {

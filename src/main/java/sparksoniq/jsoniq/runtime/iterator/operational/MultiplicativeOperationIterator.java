@@ -23,6 +23,7 @@ package sparksoniq.jsoniq.runtime.iterator.operational;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
@@ -41,9 +42,10 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
             RuntimeIterator left,
             RuntimeIterator right,
             OperationalExpressionBase.Operator operator,
+            ExecutionMode executionMode,
             IteratorMetadata iteratorMetadata
     ) {
-        super(left, right, operator, iteratorMetadata);
+        super(left, right, operator, executionMode, iteratorMetadata);
     }
 
     @Override

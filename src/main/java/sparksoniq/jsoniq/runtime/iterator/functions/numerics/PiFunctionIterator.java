@@ -22,6 +22,7 @@ package sparksoniq.jsoniq.runtime.iterator.functions.numerics;
 
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
@@ -33,8 +34,12 @@ public class PiFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
 
-    public PiFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
-        super(arguments, iteratorMetadata);
+    public PiFunctionIterator(
+            List<RuntimeIterator> arguments,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
+        super(arguments, executionMode, iteratorMetadata);
     }
 
     @Override

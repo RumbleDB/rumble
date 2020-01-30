@@ -24,6 +24,7 @@ import org.rumbledb.api.Item;
 import sparksoniq.exceptions.InvalidArgumentTypeException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemComparatorForSequences;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
@@ -42,8 +43,12 @@ public class MaxFunctionIterator extends LocalFunctionCallIterator {
     private static final long serialVersionUID = 1L;
     private RuntimeIterator _iterator;
 
-    public MaxFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
-        super(arguments, iteratorMetadata);
+    public MaxFunctionIterator(
+            List<RuntimeIterator> arguments,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
+        super(arguments, executionMode, iteratorMetadata);
     }
 
     @Override

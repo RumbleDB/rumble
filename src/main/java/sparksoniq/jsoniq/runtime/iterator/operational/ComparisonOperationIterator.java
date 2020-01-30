@@ -24,6 +24,7 @@ import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.exceptions.UnexpectedTypeException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase.Operator;
 import sparksoniq.jsoniq.item.ItemFactory;
@@ -63,9 +64,10 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
             RuntimeIterator left,
             RuntimeIterator right,
             OperationalExpressionBase.Operator operator,
+            ExecutionMode executionMode,
             IteratorMetadata iteratorMetadata
     ) {
-        super(left, right, operator, iteratorMetadata);
+        super(left, right, operator, executionMode, iteratorMetadata);
     }
 
     @Override

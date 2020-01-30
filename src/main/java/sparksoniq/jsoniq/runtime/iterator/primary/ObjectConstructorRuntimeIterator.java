@@ -23,6 +23,7 @@ package sparksoniq.jsoniq.runtime.iterator.primary;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
@@ -44,9 +45,10 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
     public ObjectConstructorRuntimeIterator(
             List<RuntimeIterator> keys,
             List<RuntimeIterator> values,
+            ExecutionMode executionMode,
             IteratorMetadata iteratorMetadata
     ) {
-        super(keys, iteratorMetadata);
+        super(keys, executionMode, iteratorMetadata);
         this._children.addAll(values);
         this._keys = keys;
         this._values = values;
@@ -54,9 +56,10 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
 
     public ObjectConstructorRuntimeIterator(
             List<RuntimeIterator> childExpressions,
+            ExecutionMode executionMode,
             IteratorMetadata iteratorMetadata
     ) {
-        super(null, iteratorMetadata);
+        super(null, executionMode, iteratorMetadata);
         this._children.addAll(childExpressions);
         this._isMergedObject = true;
     }

@@ -24,6 +24,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SequenceExceptionExactlyOne;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
@@ -36,8 +37,12 @@ public class ExactlyOneIterator extends CardinalityFunctionIterator {
     private static final long serialVersionUID = 1L;
     private Item _nextResult;
 
-    public ExactlyOneIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
-        super(arguments, iteratorMetadata);
+    public ExactlyOneIterator(
+            List<RuntimeIterator> arguments,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
+        super(arguments, executionMode, iteratorMetadata);
     }
 
     @Override

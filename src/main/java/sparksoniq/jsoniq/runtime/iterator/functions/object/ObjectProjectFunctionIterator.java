@@ -23,6 +23,7 @@ package sparksoniq.jsoniq.runtime.iterator.functions.object;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.InvalidSelectorException;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -41,8 +42,12 @@ public class ObjectProjectFunctionIterator extends LocalFunctionCallIterator {
     private Item _nextResult;
     private List<Item> _projKeys;
 
-    public ObjectProjectFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
-        super(arguments, iteratorMetadata);
+    public ObjectProjectFunctionIterator(
+            List<RuntimeIterator> arguments,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
+        super(arguments, executionMode, iteratorMetadata);
     }
 
     @Override

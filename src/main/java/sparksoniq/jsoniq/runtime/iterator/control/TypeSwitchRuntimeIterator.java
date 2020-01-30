@@ -2,6 +2,7 @@ package sparksoniq.jsoniq.runtime.iterator.control;
 
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworVarSequenceType;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -25,9 +26,10 @@ public class TypeSwitchRuntimeIterator extends LocalRuntimeIterator {
             RuntimeIterator test,
             List<TypeSwitchCase> cases,
             TypeSwitchCase defaultCase,
+            ExecutionMode executionMode,
             IteratorMetadata iteratorMetadata
     ) {
-        super(null, iteratorMetadata);
+        super(null, executionMode, iteratorMetadata);
         this._children.add(test);
         for (TypeSwitchCase typeSwitchCase : cases) {
             this._children.add(typeSwitchCase.getReturnIterator());

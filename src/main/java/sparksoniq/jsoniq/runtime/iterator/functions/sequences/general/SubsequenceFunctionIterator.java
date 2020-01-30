@@ -25,6 +25,7 @@ import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.UnexpectedTypeException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
@@ -43,8 +44,12 @@ public class SubsequenceFunctionIterator extends LocalFunctionCallIterator {
     private int _startPosition;
     private int _length;
 
-    public SubsequenceFunctionIterator(List<RuntimeIterator> parameters, IteratorMetadata iteratorMetadata) {
-        super(parameters, iteratorMetadata);
+    public SubsequenceFunctionIterator(
+            List<RuntimeIterator> parameters,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
+        super(parameters, executionMode, iteratorMetadata);
     }
 
     @Override

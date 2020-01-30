@@ -23,6 +23,7 @@ package sparksoniq.jsoniq.runtime.iterator.functions.sequences.cardinality;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.SequenceExceptionOneOrMore;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
@@ -36,8 +37,12 @@ public class OneOrMoreIterator extends CardinalityFunctionIterator {
     private RuntimeIterator _iterator;
     private Item _nextResult;
 
-    public OneOrMoreIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
-        super(arguments, iteratorMetadata);
+    public OneOrMoreIterator(
+            List<RuntimeIterator> arguments,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
+        super(arguments, executionMode, iteratorMetadata);
     }
 
     @Override

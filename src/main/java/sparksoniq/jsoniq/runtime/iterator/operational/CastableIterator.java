@@ -4,6 +4,7 @@ import org.rumbledb.api.Item;
 import sparksoniq.exceptions.CastableException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.jsoniq.item.ItemFactory;
@@ -22,8 +23,13 @@ public class CastableIterator extends UnaryOperationBaseIterator {
     private static final long serialVersionUID = 1L;
     private final SingleType _singleType;
 
-    public CastableIterator(RuntimeIterator child, SingleType singleType, IteratorMetadata iteratorMetadata) {
-        super(child, OperationalExpressionBase.Operator.CASTABLE, iteratorMetadata);
+    public CastableIterator(
+            RuntimeIterator child,
+            SingleType singleType,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
+        super(child, OperationalExpressionBase.Operator.CASTABLE, executionMode, iteratorMetadata);
         this._singleType = singleType;
     }
 

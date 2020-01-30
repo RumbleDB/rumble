@@ -22,6 +22,7 @@ package sparksoniq.jsoniq.runtime.iterator.operational;
 
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -32,8 +33,13 @@ public class AndOperationIterator extends BinaryOperationBaseIterator {
 
     private static final long serialVersionUID = 1L;
 
-    public AndOperationIterator(RuntimeIterator left, RuntimeIterator right, IteratorMetadata iteratorMetadata) {
-        super(left, right, OperationalExpressionBase.Operator.AND, iteratorMetadata);
+    public AndOperationIterator(
+            RuntimeIterator left,
+            RuntimeIterator right,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
+        super(left, right, OperationalExpressionBase.Operator.AND, executionMode, iteratorMetadata);
     }
 
     @Override

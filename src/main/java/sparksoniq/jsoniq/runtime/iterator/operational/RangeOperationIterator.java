@@ -23,6 +23,7 @@ package sparksoniq.jsoniq.runtime.iterator.operational;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -38,8 +39,13 @@ public class RangeOperationIterator extends BinaryOperationBaseIterator {
     private int _right;
     private int _index;
 
-    public RangeOperationIterator(RuntimeIterator left, RuntimeIterator right, IteratorMetadata iteratorMetadata) {
-        super(left, right, OperationalExpressionBase.Operator.TO, iteratorMetadata);
+    public RangeOperationIterator(
+            RuntimeIterator left,
+            RuntimeIterator right,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
+        super(left, right, OperationalExpressionBase.Operator.TO, executionMode, iteratorMetadata);
     }
 
     public boolean hasNext() {

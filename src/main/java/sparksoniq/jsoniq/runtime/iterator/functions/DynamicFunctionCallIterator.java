@@ -23,6 +23,7 @@ package sparksoniq.jsoniq.runtime.iterator.functions;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -49,9 +50,10 @@ public class DynamicFunctionCallIterator extends LocalRuntimeIterator {
     public DynamicFunctionCallIterator(
             RuntimeIterator functionItemIterator,
             List<RuntimeIterator> functionArguments,
+            ExecutionMode executionMode,
             IteratorMetadata iteratorMetadata
     ) {
-        super(null, iteratorMetadata);
+        super(null, executionMode, iteratorMetadata);
         for (RuntimeIterator arg : functionArguments) {
             if (arg != null) {
                 _children.add(arg);

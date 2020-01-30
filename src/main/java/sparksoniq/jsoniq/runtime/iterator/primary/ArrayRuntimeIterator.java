@@ -22,6 +22,7 @@ package sparksoniq.jsoniq.runtime.iterator.primary;
 
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -34,8 +35,12 @@ public class ArrayRuntimeIterator extends LocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
-    public ArrayRuntimeIterator(RuntimeIterator arrayItems, IteratorMetadata iteratorMetadata) {
-        super(null, iteratorMetadata);
+    public ArrayRuntimeIterator(
+            RuntimeIterator arrayItems,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
+        super(null, executionMode, iteratorMetadata);
         if (arrayItems != null) {
             this._children.add(arrayItems);
         }

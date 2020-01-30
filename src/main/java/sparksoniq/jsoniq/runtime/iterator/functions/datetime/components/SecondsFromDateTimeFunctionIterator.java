@@ -2,6 +2,7 @@ package sparksoniq.jsoniq.runtime.iterator.functions.datetime.components;
 
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
@@ -18,9 +19,10 @@ public class SecondsFromDateTimeFunctionIterator extends LocalFunctionCallIterat
 
     public SecondsFromDateTimeFunctionIterator(
             List<RuntimeIterator> arguments,
+            ExecutionMode executionMode,
             IteratorMetadata iteratorMetadata
     ) {
-        super(arguments, iteratorMetadata);
+        super(arguments, executionMode, iteratorMetadata);
     }
 
     @Override

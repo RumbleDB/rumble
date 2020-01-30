@@ -48,8 +48,12 @@ public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
     private String _transformerName;
     private Class<?> _transformerSparkMLClass;
 
-    public GetTransformerFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
-        super(arguments, iteratorMetadata);
+    public GetTransformerFunctionIterator(
+            List<RuntimeIterator> arguments,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
+        super(arguments, executionMode, iteratorMetadata);
     }
 
     @Override

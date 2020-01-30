@@ -22,6 +22,7 @@ package sparksoniq.jsoniq.runtime.iterator.functions.object;
 
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -42,8 +43,12 @@ public class ObjectDescendantPairsFunctionIterator extends LocalFunctionCallIter
     private RuntimeIterator _iterator;
     private Queue<Item> _nextResults; // queue that holds the results created by the current item in inspection
 
-    public ObjectDescendantPairsFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
-        super(arguments, iteratorMetadata);
+    public ObjectDescendantPairsFunctionIterator(
+            List<RuntimeIterator> arguments,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
+        super(arguments, executionMode, iteratorMetadata);
     }
 
     @Override
