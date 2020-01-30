@@ -78,11 +78,11 @@ public class PostFixExpression extends Expression {
     }
 
     @Override
-    public ExecutionMode getHighestExecutionMode() {
+    public ExecutionMode getHighestExecutionMode(boolean ignoreUnsetError) {
         if (bypassCurrentExpressionForExecutionModeOperations()) {
-            return this._primaryExpressionNode.getHighestExecutionMode();
+            return this._primaryExpressionNode.getHighestExecutionMode(ignoreUnsetError);
         }
-        return super.getHighestExecutionMode();
+        return super.getHighestExecutionMode(ignoreUnsetError);
     }
 
     @Override

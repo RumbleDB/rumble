@@ -67,11 +67,11 @@ public class ParenthesizedExpression extends PrimaryExpression {
     }
 
     @Override
-    public ExecutionMode getHighestExecutionMode() {
+    public ExecutionMode getHighestExecutionMode(boolean ignoreUnsetError) {
         if (bypassCurrentExpressionForExecutionModeOperations()) {
-            return this.expression.getHighestExecutionMode();
+            return this.expression.getHighestExecutionMode(ignoreUnsetError);
         }
-        return super.getHighestExecutionMode();
+        return super.getHighestExecutionMode(ignoreUnsetError);
     }
 
     @Override

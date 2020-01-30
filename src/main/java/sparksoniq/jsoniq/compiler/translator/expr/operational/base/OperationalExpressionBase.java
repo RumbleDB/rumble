@@ -74,11 +74,11 @@ public abstract class OperationalExpressionBase extends Expression {
     }
 
     @Override
-    public ExecutionMode getHighestExecutionMode() {
+    public ExecutionMode getHighestExecutionMode(boolean ignoreUnsetError) {
         if (bypassCurrentExpressionForExecutionModeOperations()) {
-            return this._mainExpression.getHighestExecutionMode();
+            return this._mainExpression.getHighestExecutionMode(ignoreUnsetError);
         }
-        return super.getHighestExecutionMode();
+        return super.getHighestExecutionMode(ignoreUnsetError);
     }
 
     public static List<Operator> getOperatorFromOpList(List<Token> ops) {
