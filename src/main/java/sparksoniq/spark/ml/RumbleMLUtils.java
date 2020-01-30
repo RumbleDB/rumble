@@ -71,13 +71,15 @@ public class RumbleMLUtils {
             Object paramValueInJava = convertParamItemToJava(paramValue, paramJavaTypeName);
 
             try {
-                Param<Object> sparkMLParam = (Param<Object>) estimator.getClass().getMethod(paramName).invoke(estimator);
+                Param<Object> sparkMLParam = (Param<Object>) estimator.getClass()
+                    .getMethod(paramName)
+                    .invoke(estimator);
                 result.put(sparkMLParam.w(paramValueInJava));
             } catch (
                     NoSuchMethodException
-                            | IllegalAccessException
-                            | InvocationTargetException
-                            | ClassCastException e
+                    | IllegalAccessException
+                    | InvocationTargetException
+                    | ClassCastException e
             ) {
                 throw new OurBadException(
                         "Error while extracting " + paramName + " for " + estimatorShortName + ".",

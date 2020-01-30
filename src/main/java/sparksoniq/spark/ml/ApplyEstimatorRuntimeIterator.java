@@ -51,27 +51,27 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
         }
         this._hasNext = false;
 
-            Dataset<Row> inputDataset = _currentDynamicContextForLocalExecution.getDataFrameVariableValue(
-                GetEstimatorFunctionIterator.estimatorParameterNames.get(0),
-                getMetadata()
+        Dataset<Row> inputDataset = _currentDynamicContextForLocalExecution.getDataFrameVariableValue(
+            GetEstimatorFunctionIterator.estimatorParameterNames.get(0),
+            getMetadata()
+        );
+        List<Item> paramMapItemList = _currentDynamicContextForLocalExecution.getLocalVariableValue(
+            GetEstimatorFunctionIterator.estimatorParameterNames.get(1),
+            getMetadata()
+        );
+        if (paramMapItemList.size() != 1) {
+            throw new OurBadException(
+                    "Applying an estimator takes a single object as the second parameter.",
+                    getMetadata()
             );
-            List<Item> paramMapItemList = _currentDynamicContextForLocalExecution.getLocalVariableValue(
-                    GetEstimatorFunctionIterator.estimatorParameterNames.get(1),
-                getMetadata()
-            );
-            if (paramMapItemList.size() != 1) {
-                throw new OurBadException(
-                        "Applying an estimator takes a single object as the second parameter.",
-                        getMetadata()
-                );
-            }
-            Item paramMapItem = paramMapItemList.get(0);
-            ParamMap paramMap = convertRumbleObjectItemToSparkMLParamMap(
-                _estimatorShortName,
-                _estimator,
-                paramMapItem,
-                getMetadata()
-            );
+        }
+        Item paramMapItem = paramMapItemList.get(0);
+        ParamMap paramMap = convertRumbleObjectItemToSparkMLParamMap(
+            _estimatorShortName,
+            _estimator,
+            paramMapItem,
+            getMetadata()
+        );
 
         Transformer fittedModel;
         try {
@@ -90,16 +90,16 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
                 getMetadata()
         );
         List<SequenceType> paramTypes = Collections.unmodifiableList(
-                Arrays.asList(
-                        new SequenceType(
-                                new ItemType(ItemTypes.Item), // TODO: revert back to ObjectItem
-                                SequenceType.Arity.ZeroOrMore
-                        ),
-                        new SequenceType(
-                                new ItemType(ItemTypes.ObjectItem),
-                                SequenceType.Arity.One
-                        )
+            Arrays.asList(
+                new SequenceType(
+                        new ItemType(ItemTypes.Item), // TODO: revert back to ObjectItem
+                        SequenceType.Arity.ZeroOrMore
+                ),
+                new SequenceType(
+                        new ItemType(ItemTypes.ObjectItem),
+                        SequenceType.Arity.One
                 )
+            )
         );
         SequenceType returnType = new SequenceType(
                 new ItemType(ItemTypes.ObjectItem),

@@ -882,11 +882,11 @@ public class Functions {
          * function that parses a libSVM formatted file into a DataFrame
          */
         static final BuiltinFunction libsvm_file = createBuiltinFunction(
-                "libsvm-file",
-                "string?",
-                "item*",
-                LibSVMFileFunctionIterator.class,
-                BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
+            "libsvm-file",
+            "string?",
+            "item*",
+            LibSVMFileFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
         );
         /**
          * function that parses a JSON doc file
@@ -2099,13 +2099,11 @@ public class Functions {
          * function fetches the estimator class from SparkML API
          */
         static final BuiltinFunction get_estimator = createBuiltinFunction(
-                "get-estimator",
-                "string",
-                "item",
-                GetEstimatorFunctionIterator.class,
-                BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            "get-estimator",
+            "string",
+            "item",
+            GetEstimatorFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
-
     }
-
 }

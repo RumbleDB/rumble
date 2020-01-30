@@ -55,8 +55,8 @@ public class LibSVMFileFunctionIterator extends DataFrameRuntimeIterator {
             return SparkSessionManager.getInstance()
                 .getOrCreateSession()
                 .read()
-                    .format("libsvm")
-                    .load(url);
+                .format("libsvm")
+                .load(url);
         } catch (Exception e) {
             if (e instanceof AnalysisException) {
                 throw new CannotRetrieveResourceException("File " + url + " not found.", getMetadata());

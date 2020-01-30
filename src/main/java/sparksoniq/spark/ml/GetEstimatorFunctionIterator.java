@@ -49,7 +49,11 @@ public class GetEstimatorFunctionIterator extends LocalFunctionCallIterator {
     private String _estimatorShortName;
     private Class<?> _estimatorSparkMLClass;
 
-    public GetEstimatorFunctionIterator(List<RuntimeIterator> arguments, ExecutionMode executionMode, IteratorMetadata iteratorMetadata) {
+    public GetEstimatorFunctionIterator(
+            List<RuntimeIterator> arguments,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
         super(arguments, executionMode, iteratorMetadata);
     }
 
@@ -75,7 +79,7 @@ public class GetEstimatorFunctionIterator extends LocalFunctionCallIterator {
         nameIterator.close();
 
         String estimatorFullClassName = RumbleMLCatalog.getEstimatorFullClassName(
-                _estimatorShortName,
+            _estimatorShortName,
             getMetadata()
         );
         try {
@@ -101,16 +105,16 @@ public class GetEstimatorFunctionIterator extends LocalFunctionCallIterator {
                         getMetadata()
                 );
                 List<SequenceType> paramTypes = Collections.unmodifiableList(
-                        Arrays.asList(
-                                new SequenceType(
-                                        new ItemType(ItemTypes.Item), // TODO: revert back to ObjectItem
-                                        SequenceType.Arity.ZeroOrMore
-                                ),
-                                new SequenceType(
-                                        new ItemType(ItemTypes.ObjectItem),
-                                        SequenceType.Arity.One
-                                )
+                    Arrays.asList(
+                        new SequenceType(
+                                new ItemType(ItemTypes.Item), // TODO: revert back to ObjectItem
+                                SequenceType.Arity.ZeroOrMore
+                        ),
+                        new SequenceType(
+                                new ItemType(ItemTypes.ObjectItem),
+                                SequenceType.Arity.One
                         )
+                    )
                 );
                 SequenceType returnType = new SequenceType(
                         new ItemType(ItemTypes.FunctionItem),

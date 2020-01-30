@@ -1257,10 +1257,10 @@ public class RumbleMLCatalog {
         if (!estimatorParams.get(estimatorName).contains(paramName)) {
             throw new UnrecognizedRumbleMLParamReferenceException(
                     "Make sure \""
-                            + paramName
-                            + "\" is a valid parameter of \""
-                            + estimatorName
-                            + "\".",
+                        + paramName
+                        + "\" is a valid parameter of \""
+                        + estimatorName
+                        + "\".",
                     metadata
             );
         }
