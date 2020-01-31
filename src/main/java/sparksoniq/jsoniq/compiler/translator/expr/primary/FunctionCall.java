@@ -22,6 +22,7 @@ package sparksoniq.jsoniq.compiler.translator.expr.primary;
 
 import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.UnknownFunctionCallException;
+import sparksoniq.exceptions.UnsupportedFeatureException;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
@@ -46,11 +47,13 @@ public class FunctionCall extends PrimaryExpression {
 
     private final String _functionName;
     private final List<Expression> _arguments;
+    private final boolean _isPartialApplication;
 
     public FunctionCall(String functionName, List<Expression> arguments, ExpressionMetadata metadata) {
         super(metadata);
         this._functionName = functionName;
         this._arguments = arguments;
+        this._isPartialApplication = arguments.stream().anyMatch(arg -> arg instanceof ArgumentPlaceholder);
     }
 
     public List<Expression> getArguments() {
@@ -75,6 +78,12 @@ public class FunctionCall extends PrimaryExpression {
     public void initFunctionCallHighestExecutionMode(boolean ignoreMissingFunctionError) {
         FunctionIdentifier identifier = new FunctionIdentifier(this._functionName, this._arguments.size());
         if (Functions.checkBuiltInFunctionExists(identifier)) {
+            if (_isPartialApplication) {
+                throw new UnsupportedFeatureException(
+                        "Partial application on built-in functions are not supported.",
+                        this.getMetadata()
+                );
+            }
             BuiltinFunction builtinFunction = Functions.getBuiltInFunction(identifier);
             Class<? extends RuntimeIterator> functionIteratorClass = builtinFunction.getFunctionIteratorClass();
             this._highestExecutionMode = this.getBuiltInFunctionExecutionMode(functionIteratorClass);
@@ -82,6 +91,10 @@ public class FunctionCall extends PrimaryExpression {
         }
 
         if (Functions.checkUserDefinedFunctionExecutionModeExists(identifier)) {
+            if (_isPartialApplication) {
+                this._highestExecutionMode = ExecutionMode.LOCAL;
+                return;
+            }
             this._highestExecutionMode = Functions.getUserDefinedFunctionExecutionMode(identifier, getMetadata());
             return;
         }

@@ -517,11 +517,9 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
     public RuntimeIterator visitFunctionCall(FunctionCall expression, RuntimeIterator argument) {
         List<RuntimeIterator> arguments = new ArrayList<>();
         IteratorMetadata iteratorMetadata = createIteratorMetadata(expression);
-        boolean isPartialApplication = false;
         for (Expression arg : expression.getArguments()) {
             if (arg instanceof ArgumentPlaceholder) {
                 arguments.add(null);
-                isPartialApplication = true;
             } else {
                 RuntimeIterator argumentIterator = this.visit(arg, argument);
                 arguments.add(argumentIterator);
@@ -532,12 +530,6 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
         FunctionIdentifier identifier = new FunctionIdentifier(fnName, arity);
 
         if (Functions.checkBuiltInFunctionExists(identifier)) {
-            if (isPartialApplication) {
-                throw new UnsupportedFeatureException(
-                        "Partial application on built-in functions are not supported.",
-                        expression.getMetadata()
-                );
-            }
             return Functions.getBuiltInFunctionIterator(
                 identifier,
                 arguments,
