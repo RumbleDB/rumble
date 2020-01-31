@@ -77,14 +77,17 @@ public class FunctionDeclaration extends PrimaryExpression {
         return getDescendantsFromChildren(result, depthSearch);
     }
 
-    public void registerUserDefinedFunctionExecutionMode(boolean ignoreDuplicateFunctionError) {
+    public void registerUserDefinedFunctionExecutionMode(
+            boolean ignoreDuplicateUserDefinedFunctionError,
+            boolean ignoreUnsetExecutionModeAccessDuringFunctionDeclaration
+    ) {
         FunctionIdentifier identifier = new FunctionIdentifier(this._name, this._params.size());
         // if named(static) function declaration
         if (!this._name.equals("")) {
             Functions.addUserDefinedFunctionExecutionMode(
                 identifier,
-                ExecutionMode.LOCAL, // all udfs are locally executed at the moment
-                ignoreDuplicateFunctionError,
+                _body.getHighestExecutionMode(ignoreUnsetExecutionModeAccessDuringFunctionDeclaration),
+                ignoreDuplicateUserDefinedFunctionError,
                 this.getMetadata()
             );
         }
