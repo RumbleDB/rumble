@@ -656,14 +656,14 @@ public class Functions {
     public static void addUserDefinedFunctionExecutionMode(
             FunctionIdentifier functionIdentifier,
             ExecutionMode executionMode,
-            boolean ignoreDuplicateFunctionError,
+            boolean ignoreDuplicateUserDefinedFunctionError,
             ExpressionMetadata meta
     ) {
         if (
-            !ignoreDuplicateFunctionError
-                &&
-                (builtInFunctions.containsKey(functionIdentifier)
-                    || userDefinedFunctionsExecutionMode.containsKey(functionIdentifier))
+            builtInFunctions.containsKey(functionIdentifier)
+                ||
+                (!ignoreDuplicateUserDefinedFunctionError
+                    && userDefinedFunctionsExecutionMode.containsKey(functionIdentifier))
         ) {
             throw new DuplicateFunctionIdentifierException(functionIdentifier, meta);
         }

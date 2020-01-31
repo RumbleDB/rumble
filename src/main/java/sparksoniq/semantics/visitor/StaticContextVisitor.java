@@ -46,8 +46,8 @@ import sparksoniq.semantics.types.SequenceType;
 
 public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<StaticContext> {
 
-    // indicate whether an error should be thrown if an duplicate function declaration is detected
-    private boolean ignoreDuplicateFunctionError;
+    // indicate whether an error should be thrown if an duplicate user defined function declaration is detected
+    private boolean ignoreDuplicateUserDefinedFunctionError;
 
     // indicate whether an error should be thrown if a function call is made for a non-existing function
     private boolean ignoreMissingFunctionError;
@@ -59,13 +59,13 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
     // Initial pass collects the function declaration information for the second pass, this enables hoisting
     // some functions may not yet be defined yet and if so their body's execution mode's will be unset
     public void setConfigForInitialPass() {
-        ignoreDuplicateFunctionError = false;
+        ignoreDuplicateUserDefinedFunctionError = false;
         ignoreMissingFunctionError = true;
     }
 
     // second pass should have all function declaration and execution mode information available
     public void setConfigForConsequentPasses() {
-        ignoreDuplicateFunctionError = true;
+        ignoreDuplicateUserDefinedFunctionError = true;
         ignoreMissingFunctionError = false;
     }
 
@@ -120,7 +120,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
         // visit the body first to make its execution mode available while adding the function to the catalog
         this.visit(expression.get_body(), functionDeclarationContext);
         expression.initHighestExecutionMode();
-        expression.registerUserDefinedFunctionExecutionMode(ignoreDuplicateFunctionError);
+        expression.registerUserDefinedFunctionExecutionMode(ignoreDuplicateUserDefinedFunctionError);
         return functionDeclarationContext;
     }
 
