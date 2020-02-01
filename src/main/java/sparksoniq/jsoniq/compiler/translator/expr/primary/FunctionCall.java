@@ -27,15 +27,10 @@ import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-import sparksoniq.jsoniq.runtime.iterator.DataFrameRuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.RDDRuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.BuiltinFunction;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.BuiltinFunction.BuiltinFunctionExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
-import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.object.ObjectKeysFunctionIterator;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
@@ -85,8 +80,7 @@ public class FunctionCall extends PrimaryExpression {
                 );
             }
             BuiltinFunction builtinFunction = Functions.getBuiltInFunction(identifier);
-            Class<? extends RuntimeIterator> functionIteratorClass = builtinFunction.getFunctionIteratorClass();
-            this._highestExecutionMode = this.getBuiltInFunctionExecutionMode(functionIteratorClass);
+            this._highestExecutionMode = this.getBuiltInFunctionExecutionMode(builtinFunction);
             return;
         }
 
@@ -108,38 +102,42 @@ public class FunctionCall extends PrimaryExpression {
         }
     }
 
-    private ExecutionMode getBuiltInFunctionExecutionMode(Class<? extends RuntimeIterator> functionIteratorClass) {
-        // if subclass of DataFrameRuntimeIterator
-        if (DataFrameRuntimeIterator.class.isAssignableFrom(functionIteratorClass)) {
-            return ExecutionMode.DATAFRAME;
+    private ExecutionMode getBuiltInFunctionExecutionMode(BuiltinFunction builtinFunction) {
+        BuiltinFunctionExecutionMode functionExecutionMode = builtinFunction.getBuiltinFunctionExecutionMode();
+        if (functionExecutionMode == BuiltinFunctionExecutionMode.LOCAL) {
+            return ExecutionMode.LOCAL;
         }
-        if (RDDRuntimeIterator.class.isAssignableFrom(functionIteratorClass)) {
+        if (functionExecutionMode == BuiltinFunctionExecutionMode.RDD) {
             return ExecutionMode.RDD;
         }
-        if (LocalFunctionCallIterator.class.isAssignableFrom(functionIteratorClass)) {
-            return ExecutionMode.LOCAL;
+        if (functionExecutionMode == BuiltinFunctionExecutionMode.DATAFRAME) {
+            return ExecutionMode.DATAFRAME;
         }
-        if (HybridRuntimeIterator.class.isAssignableFrom(functionIteratorClass)) {
-            // Object Keys function is a special case
-            if (functionIteratorClass.isInstance(ObjectKeysFunctionIterator.class)) {
-                for (ExpressionOrClause child : this.getDescendants()) {
-                    if (child.getHighestExecutionMode().isRDD() && !child.getHighestExecutionMode().isDataFrame()) {
-                        return ExecutionMode.RDD;
-                    }
-                }
-                return ExecutionMode.LOCAL;
+        if (functionExecutionMode == BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT) {
+            ExecutionMode firstArgumentExecutionMode = this._arguments.get(0).getHighestExecutionMode();
+            if (firstArgumentExecutionMode.isDataFrame()) {
+                return ExecutionMode.DATAFRAME;
             }
-
-            for (ExpressionOrClause child : this.getDescendants()) {
-                if (child.getHighestExecutionMode().isDataFrame()) {
-                    return ExecutionMode.DATAFRAME;
-                } else if (child.getHighestExecutionMode().isRDD()) {
-                    return ExecutionMode.RDD;
-                }
+            if (firstArgumentExecutionMode.isRDD()) {
+                return ExecutionMode.RDD;
             }
             return ExecutionMode.LOCAL;
         }
-        throw new OurBadException("Built-in function is implemented with an unexpected inheritance.");
+        if (
+            functionExecutionMode == BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT_BUT_DATAFRAME_FALLSBACK_TO_LOCAL
+        ) {
+            ExecutionMode firstArgumentExecutionMode = this._arguments.get(0).getHighestExecutionMode();
+            if (
+                firstArgumentExecutionMode.isRDD()
+                    && !firstArgumentExecutionMode.isDataFrame()
+            ) {
+                return ExecutionMode.RDD;
+            }
+            return ExecutionMode.LOCAL;
+        }
+        throw new OurBadException(
+                "Unhandled functionExecutionMode detected while extracting execution mode for built-in function."
+        );
     }
 
     @Override
