@@ -23,7 +23,7 @@ package sparksoniq.jsoniq.runtime.iterator.functions.io;
 
 import com.jsoniter.JsonIterator;
 import org.rumbledb.api.Item;
-import sparksoniq.exceptions.ErrorRetrievingResourceException;
+import sparksoniq.exceptions.CannotRetrieveResourceException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.io.json.JiqsItemParser;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -67,7 +67,7 @@ public class JsonDocFunctionIterator extends LocalFunctionCallIterator {
             } catch (IteratorFlowException e) {
                 throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
             } catch (FileNotFoundException e) {
-                throw new ErrorRetrievingResourceException(
+                throw new CannotRetrieveResourceException(
                         "File " + path.getStringValue() + " not found.",
                         getMetadata()
                 );

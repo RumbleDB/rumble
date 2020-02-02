@@ -23,11 +23,11 @@ package sparksoniq.exceptions;
 import sparksoniq.exceptions.codes.ErrorCodes;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
-public class ErrorRetrievingResourceException extends SparksoniqRuntimeException {
+public class CannotRetrieveResourceException extends SparksoniqRuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    public ErrorRetrievingResourceException(String message, IteratorMetadata metadata) {
-        super(message, ErrorCodes.ErrorRetrievingResourceCode, metadata.getExpressionMetadata());
+    public CannotRetrieveResourceException(String message, IteratorMetadata metadata) {
+        super(message, ErrorCodes.CannotRetrieveResourceErrorCode, metadata.getExpressionMetadata());
     }
 }

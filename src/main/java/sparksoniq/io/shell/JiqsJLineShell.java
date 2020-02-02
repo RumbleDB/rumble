@@ -21,6 +21,7 @@
 package sparksoniq.io.shell;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.hadoop.mapred.InvalidInputException;
 import org.apache.spark.SparkException;
 import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
@@ -33,7 +34,9 @@ import org.jline.terminal.TerminalBuilder;
 import org.rumbledb.cli.JsoniqQueryExecutor;
 import org.rumbledb.cli.Main;
 import org.rumbledb.config.SparksoniqRuntimeConfiguration;
+import sparksoniq.exceptions.CannotRetrieveResourceException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
+import sparksoniq.exceptions.codes.ErrorCodes;
 import sparksoniq.utils.FileUtils;
 
 import java.io.IOException;
@@ -138,7 +141,7 @@ public class JiqsJLineShell {
                     ex.printStackTrace();
                 }
             } else if (!(ex instanceof UserInterruptException)) {
-                System.out.println("An error has occured: " + ex.getMessage());
+                System.out.println("An error has occurred: " + ex.getMessage());
                 System.out.println(
                     "We should investigate this 🙈. Please contact us or file an issue on GitHub with your query."
                 );
