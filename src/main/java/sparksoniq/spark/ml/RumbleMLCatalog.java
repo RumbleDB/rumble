@@ -1226,19 +1226,19 @@ public class RumbleMLCatalog {
     }
 
     public static void validateParameterForTransformer(
-            String transformerName,
+            String transformerShortName,
             String paramName,
             IteratorMetadata metadata
     ) {
-        if (!transformerParams.containsKey(transformerName)) {
-            throw new UnrecognizedRumbleMLClassReferenceException(transformerName, metadata);
+        if (!transformerParams.containsKey(transformerShortName)) {
+            throw new UnrecognizedRumbleMLClassReferenceException(transformerShortName, metadata);
         }
-        if (!transformerParams.get(transformerName).contains(paramName)) {
+        if (!transformerParams.get(transformerShortName).contains(paramName)) {
             throw new UnrecognizedRumbleMLParamReferenceException(
                     "Make sure \""
                         + paramName
                         + "\" is a valid parameter of \""
-                        + transformerName
+                        + transformerShortName
                         + "\".",
                     metadata
             );

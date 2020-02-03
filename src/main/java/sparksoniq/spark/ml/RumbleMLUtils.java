@@ -15,8 +15,7 @@ import java.util.List;
 
 public class RumbleMLUtils {
     public static ParamMap convertRumbleObjectItemToSparkMLParamMap(
-            Class<?> transformerClass,
-            String transformerName,
+            String transformerShortName,
             Transformer transformer,
             Item paramMapItem,
             IteratorMetadata metadata
@@ -27,13 +26,15 @@ public class RumbleMLUtils {
             String paramName = paramMapItem.getKeys().get(paramIndex);
             Item paramValue = paramMapItem.getValues().get(paramIndex);
 
-            RumbleMLCatalog.validateParameterForTransformer(transformerName, paramName, metadata);
+            RumbleMLCatalog.validateParameterForTransformer(transformerShortName, paramName, metadata);
             String paramJavaTypeName = RumbleMLCatalog.getParamJavaTypeName(paramName, metadata);
 
             Object paramValueInJava = convertParamItemToJava(paramValue, paramJavaTypeName);
 
             try {
-                Param<Object> sparkMLParam = (Param<Object>) transformerClass.getMethod(paramName).invoke(transformer);
+                Param<Object> sparkMLParam = (Param<Object>) transformer.getClass()
+                    .getMethod(paramName)
+                    .invoke(transformer);
                 result.put(sparkMLParam.w(paramValueInJava));
             } catch (
                     NoSuchMethodException
@@ -42,7 +43,7 @@ public class RumbleMLUtils {
                     | ClassCastException e
             ) {
                 throw new OurBadException(
-                        "Error while extracting " + paramName + " for " + transformerName + ".",
+                        "Error while extracting " + paramName + " for " + transformerShortName + ".",
                         metadata
                 );
             }
