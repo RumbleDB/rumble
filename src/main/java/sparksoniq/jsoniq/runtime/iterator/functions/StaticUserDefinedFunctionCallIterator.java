@@ -23,6 +23,7 @@ package sparksoniq.jsoniq.runtime.iterator.functions;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
@@ -50,9 +51,10 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
     public StaticUserDefinedFunctionCallIterator(
             FunctionIdentifier functionIdentifier,
             List<RuntimeIterator> functionArguments,
+            ExecutionMode executionMode,
             IteratorMetadata iteratorMetadata
     ) {
-        super(null, iteratorMetadata);
+        super(null, executionMode, iteratorMetadata);
         _functionIdentifier = functionIdentifier;
         _functionArguments = functionArguments;
 
@@ -60,6 +62,12 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
 
     @Override
     public void openLocal() {
+        _userDefinedFunctionCallIterator = Functions.getUserDefinedFunctionCallIterator(
+            _functionIdentifier,
+            this.getHighestExecutionMode(),
+            getMetadata(),
+            _functionArguments
+        );
         _userDefinedFunctionCallIterator.open(_currentDynamicContextForLocalExecution);
         setNextResult();
     }
@@ -113,17 +121,13 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        return _userDefinedFunctionCallIterator.getRDD(dynamicContext);
-    }
-
-    @Override
-    public boolean initIsRDD() {
         _userDefinedFunctionCallIterator = Functions.getUserDefinedFunctionCallIterator(
             _functionIdentifier,
+            this.getHighestExecutionMode(),
             getMetadata(),
             _functionArguments
         );
-        return _userDefinedFunctionCallIterator.isRDD();
+        return _userDefinedFunctionCallIterator.getRDD(dynamicContext);
     }
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
@@ -137,5 +141,4 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
         }
         return result;
     }
-
 }

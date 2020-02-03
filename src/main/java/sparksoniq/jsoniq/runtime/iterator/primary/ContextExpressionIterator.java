@@ -22,6 +22,7 @@ package sparksoniq.jsoniq.runtime.iterator.primary;
 
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
@@ -33,8 +34,8 @@ public class ContextExpressionIterator extends LocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
-    public ContextExpressionIterator(IteratorMetadata iteratorMetadata) {
-        super(null, iteratorMetadata);
+    public ContextExpressionIterator(ExecutionMode executionMode, IteratorMetadata iteratorMetadata) {
+        super(null, executionMode, iteratorMetadata);
     }
 
     @Override

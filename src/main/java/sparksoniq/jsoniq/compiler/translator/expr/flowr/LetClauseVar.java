@@ -21,6 +21,7 @@
 package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
 
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
@@ -35,6 +36,19 @@ public class LetClauseVar extends FlworVarDecl {
             ExpressionMetadata metadataFromContext
     ) {
         super(FLWOR_CLAUSES.LET_VAR, varRef, sequence, expr, metadataFromContext);
+    }
+
+    @Override
+    public void initHighestExecutionAndVariableHighestStorageModes() {
+        this._highestExecutionMode =
+            (previousClause == null) ? ExecutionMode.LOCAL : previousClause.getHighestExecutionMode();
+
+        // if let clause is local, defined variables are stored according to the execution mode of the expression
+        if (this._highestExecutionMode == ExecutionMode.LOCAL) {
+            this._variableHighestStorageMode = expression.getHighestExecutionMode();
+        } else {
+            this._variableHighestStorageMode = ExecutionMode.LOCAL;
+        }
     }
 
     @Override

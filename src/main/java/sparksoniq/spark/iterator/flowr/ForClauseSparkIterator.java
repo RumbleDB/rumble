@@ -29,6 +29,7 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.JobWithinAJobException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
@@ -63,19 +64,14 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             RuntimeTupleIterator child,
             String variableName,
             RuntimeIterator assignmentIterator,
+            ExecutionMode executionMode,
             IteratorMetadata iteratorMetadata
     ) {
-        super(child, iteratorMetadata);
+        super(child, executionMode, iteratorMetadata);
         _variableName = variableName;
         _assignmentIterator = assignmentIterator;
         _dependencies = _assignmentIterator.getVariableDependencies();
     }
-
-    @Override
-    public boolean isDataFrame() {
-        return (_assignmentIterator.isRDD() || (_child != null && _child.isDataFrame()));
-    }
-
 
     @Override
     public void open(DynamicContext context) {
@@ -86,7 +82,6 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             _tupleContext = new DynamicContext(_currentDynamicContext); // assign current context as parent
 
             setNextLocalTupleResult();
-
         } else { // if it's a start clause, get results using only the _assignmentIterator
             _assignmentIterator.open(this._currentDynamicContext);
             setResultFromExpression();

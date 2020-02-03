@@ -6,6 +6,7 @@ import sparksoniq.exceptions.InvalidLexicalValueException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.exceptions.UnexpectedTypeException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
@@ -23,9 +24,10 @@ public class IntegerFunctionIterator extends LocalFunctionCallIterator {
 
     public IntegerFunctionIterator(
             List<RuntimeIterator> parameters,
+            ExecutionMode executionMode,
             IteratorMetadata iteratorMetadata
     ) {
-        super(parameters, iteratorMetadata);
+        super(parameters, executionMode, iteratorMetadata);
     }
 
     @Override

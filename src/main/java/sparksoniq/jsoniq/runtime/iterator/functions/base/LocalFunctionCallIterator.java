@@ -20,6 +20,7 @@
 
 package sparksoniq.jsoniq.runtime.iterator.functions.base;
 
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -30,7 +31,11 @@ public abstract class LocalFunctionCallIterator extends LocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
-    protected LocalFunctionCallIterator(List<RuntimeIterator> parameters, IteratorMetadata iteratorMetadata) {
-        super(parameters, iteratorMetadata);
+    protected LocalFunctionCallIterator(
+            List<RuntimeIterator> parameters,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
+        super(parameters, executionMode, iteratorMetadata);
     }
 }

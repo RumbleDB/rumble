@@ -20,6 +20,7 @@
 
 package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
@@ -40,6 +41,14 @@ public class ReturnClause extends FlworClause {
 
     public Expression getReturnExpr() {
         return returnExpr;
+    }
+
+    @Override
+    public void initHighestExecutionMode() {
+        this._highestExecutionMode =
+            previousClause.getHighestExecutionMode().isDataFrame()
+                ? ExecutionMode.RDD
+                : ExecutionMode.LOCAL;
     }
 
     @Override

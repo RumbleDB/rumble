@@ -20,6 +20,7 @@
 
 package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
@@ -44,6 +45,15 @@ public class GroupByClauseVar extends FlworVarDecl {
 
     public String getUri() {
         return uri;
+    }
+
+    @Override
+    public void initHighestExecutionAndVariableHighestStorageModes() {
+        // Execution mode of groupByClause's expressions are not used while defining execution mode of
+        // GroupByClauseRuntimeIterator
+        this._highestExecutionMode = ExecutionMode.UNSET;
+
+        this._variableHighestStorageMode = ExecutionMode.LOCAL;
     }
 
     @Override

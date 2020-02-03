@@ -23,6 +23,7 @@ package sparksoniq.jsoniq.runtime.iterator.control;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.NonAtomicKeyException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -44,9 +45,10 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
             RuntimeIterator test,
             Map<RuntimeIterator, RuntimeIterator> cases,
             RuntimeIterator defaultReturn,
+            ExecutionMode executionMode,
             IteratorMetadata iteratorMetadata
     ) {
-        super(null, iteratorMetadata);
+        super(null, executionMode, iteratorMetadata);
         this._children.add(test);
         this._children.addAll(cases.keySet());
         this._children.addAll(cases.values());

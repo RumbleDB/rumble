@@ -21,10 +21,13 @@
 package sparksoniq.jsoniq.compiler.translator.expr.primary;
 
 
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworVarSequenceType;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
@@ -72,6 +75,19 @@ public class FunctionDeclaration extends PrimaryExpression {
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
         List<ExpressionOrClause> result = new ArrayList<>();
         return getDescendantsFromChildren(result, depthSearch);
+    }
+
+    public void registerUserDefinedFunctionExecutionMode(boolean ignoreDuplicateFunctionError) {
+        FunctionIdentifier identifier = new FunctionIdentifier(this._name, this._params.size());
+        // if named(static) function declaration
+        if (!this._name.equals("")) {
+            Functions.addUserDefinedFunctionExecutionMode(
+                identifier,
+                ExecutionMode.LOCAL, // all udfs are locally executed at the moment
+                ignoreDuplicateFunctionError,
+                this.getMetadata()
+            );
+        }
     }
 
     @Override

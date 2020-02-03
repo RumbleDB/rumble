@@ -20,6 +20,8 @@
 
 package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
+import sparksoniq.exceptions.OurBadException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
@@ -33,14 +35,16 @@ public abstract class FlworVarDecl extends FlworClause {
 
     protected VariableReference variableReferenceNode;
     protected Expression expression;
+
     // asSequence is null by default if the type of the variable in the for/let/groupBy clause is not specified.
     protected FlworVarSequenceType asSequence;
 
+    // Holds whether the variable will be stored in materialized(local) or native/spark(RDD or DF) format in a tuple
+    protected ExecutionMode _variableHighestStorageMode = ExecutionMode.UNSET;
 
     private FlworVarDecl(FLWOR_CLAUSES clauseType, ExpressionMetadata metadata) {
         super(clauseType, metadata);
     }
-
 
     public FlworVarDecl(
             FLWOR_CLAUSES forVar,
@@ -73,6 +77,17 @@ public abstract class FlworVarDecl extends FlworClause {
 
     public FlworVarSequenceType getAsSequence() {
         return asSequence;
+    }
+
+    @Override
+    public final void initHighestExecutionMode() {
+        throw new OurBadException("Flwor variable declarations do not use the highestExecutionMode initializer");
+    }
+
+    public abstract void initHighestExecutionAndVariableHighestStorageModes();
+
+    public ExecutionMode getVariableHighestStorageMode() {
+        return _variableHighestStorageMode;
     }
 
     @Override

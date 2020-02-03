@@ -28,6 +28,7 @@ import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 import java.util.Collections;
 import java.util.List;
 
+
 public class CountClause extends FlworClause {
     private VariableReference countClauseVar;
 

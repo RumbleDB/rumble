@@ -32,6 +32,7 @@ import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.JobWithinAJobException;
 import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.exceptions.OurBadException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -66,9 +67,10 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
     public GroupByClauseSparkIterator(
             RuntimeTupleIterator child,
             List<GroupByClauseSparkIteratorExpression> groupingExpressions,
+            ExecutionMode executionMode,
             IteratorMetadata iteratorMetadata
     ) {
-        super(child, iteratorMetadata);
+        super(child, executionMode, iteratorMetadata);
         this._groupingExpressions = groupingExpressions;
         _dependencies = new TreeMap<>();
         for (GroupByClauseSparkIteratorExpression e : _groupingExpressions) {
@@ -78,11 +80,6 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 _dependencies.put(e.getVariableReference().getVariableName(), DynamicContext.VariableDependency.FULL);
             }
         }
-    }
-
-    @Override
-    public boolean isDataFrame() {
-        return _child.isDataFrame();
     }
 
     @Override

@@ -20,6 +20,7 @@
 
 package sparksoniq.jsoniq.runtime.iterator.operational.base;
 
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -37,9 +38,10 @@ public abstract class UnaryOperationBaseIterator extends LocalRuntimeIterator {
     protected UnaryOperationBaseIterator(
             RuntimeIterator child,
             OperationalExpressionBase.Operator operator,
+            ExecutionMode executionMode,
             IteratorMetadata iteratorMetadata
     ) {
-        super(new ArrayList<>(), iteratorMetadata);
+        super(new ArrayList<>(), executionMode, iteratorMetadata);
         this._children.add(child);
         this._child = child;
         this._operator = operator;

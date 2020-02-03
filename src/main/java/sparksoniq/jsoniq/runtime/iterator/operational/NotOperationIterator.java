@@ -21,6 +21,7 @@
 package sparksoniq.jsoniq.runtime.iterator.operational;
 
 import org.rumbledb.api.Item;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -32,8 +33,8 @@ public class NotOperationIterator extends UnaryOperationBaseIterator {
 
     private static final long serialVersionUID = 1L;
 
-    public NotOperationIterator(RuntimeIterator child, IteratorMetadata iteratorMetadata) {
-        super(child, OperationalExpressionBase.Operator.NOT, iteratorMetadata);
+    public NotOperationIterator(RuntimeIterator child, ExecutionMode executionMode, IteratorMetadata iteratorMetadata) {
+        super(child, OperationalExpressionBase.Operator.NOT, executionMode, iteratorMetadata);
     }
 
     @Override

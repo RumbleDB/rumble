@@ -22,6 +22,7 @@ package sparksoniq.jsoniq.runtime.iterator.functions.sequences.general;
 
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -36,8 +37,12 @@ public class HeadFunctionIterator extends LocalFunctionCallIterator {
     private RuntimeIterator _iterator;
     private Item _result;
 
-    public HeadFunctionIterator(List<RuntimeIterator> parameters, IteratorMetadata iteratorMetadata) {
-        super(parameters, iteratorMetadata);
+    public HeadFunctionIterator(
+            List<RuntimeIterator> parameters,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
+        super(parameters, executionMode, iteratorMetadata);
         _iterator = this._children.get(0);
     }
 

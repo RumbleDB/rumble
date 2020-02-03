@@ -20,6 +20,7 @@
 
 package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
@@ -46,6 +47,12 @@ public class OrderByClauseExpr extends FlworClause {
         this._ascending = ascending;
         this._uri = uri;
         this._emptyOrder = empty_order;
+    }
+
+    @Override
+    public void initHighestExecutionMode() {
+        // OrderByClauseExpr's execution mode is not used. Leave it unset
+        this._highestExecutionMode = ExecutionMode.UNSET;
     }
 
     public Expression getExpression() {

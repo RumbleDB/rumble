@@ -27,6 +27,8 @@ import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.OurBadException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
@@ -45,10 +47,12 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     protected boolean _isOpen;
     protected RuntimeTupleIterator _child;
     protected DynamicContext _currentDynamicContext;
+    protected ExecutionMode _highestExecutionMode;
 
-    protected RuntimeTupleIterator(RuntimeTupleIterator child, IteratorMetadata metadata) {
+    protected RuntimeTupleIterator(RuntimeTupleIterator child, ExecutionMode executionMode, IteratorMetadata metadata) {
         this.metadata = metadata;
         this._isOpen = false;
+        this._highestExecutionMode = executionMode;
         this._child = child;
     }
 
@@ -104,7 +108,16 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         return metadata;
     }
 
-    public abstract boolean isDataFrame();
+    public ExecutionMode getHighestExecutionMode() {
+        return _highestExecutionMode;
+    }
+
+    public boolean isDataFrame() {
+        if (_highestExecutionMode == ExecutionMode.UNSET) {
+            throw new OurBadException("isDataFrame accessed in iterator without execution mode being set.");
+        }
+        return _highestExecutionMode.isDataFrame();
+    }
 
     /**
      * Obtains the dataframe from the child clause.

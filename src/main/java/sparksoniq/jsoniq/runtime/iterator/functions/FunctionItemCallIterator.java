@@ -27,6 +27,7 @@ import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.UnexpectedTypeException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -60,9 +61,10 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     public FunctionItemCallIterator(
             FunctionItem functionItem,
             List<RuntimeIterator> functionArguments,
+            ExecutionMode executionMode,
             IteratorMetadata iteratorMetadata
     ) {
-        super(null, iteratorMetadata);
+        super(null, executionMode, iteratorMetadata);
         for (RuntimeIterator arg : functionArguments) {
             if (arg == null) {
                 _isPartialApplication = true;
@@ -112,15 +114,14 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                     _functionArguments.get(i) != null
                         && !_functionItem.getSignature().getParameterTypes().get(i).equals(mostGeneralSequenceType)
                 ) {
-                    _functionArguments.set(
-                        i,
-                        new TypePromotionIterator(
-                                _functionArguments.get(i),
-                                _functionItem.getSignature().getParameterTypes().get(i),
-                                "Invalid argument for " + formattedName + "function. ",
-                                getMetadata()
-                        )
+                    TypePromotionIterator typePromotionIterator = new TypePromotionIterator(
+                            _functionArguments.get(i),
+                            _functionItem.getSignature().getParameterTypes().get(i),
+                            "Invalid argument for " + formattedName + "function. ",
+                            _functionArguments.get(i).getHighestExecutionMode(),
+                            getMetadata()
                     );
+                    _functionArguments.set(i, typePromotionIterator);
                 }
             }
         }
@@ -176,7 +177,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 RDDArgumentValues,
                 DFArgumentValues
         );
-        return new FunctionRuntimeIterator(partiallyAppliedFunction, getMetadata());
+        return new FunctionRuntimeIterator(partiallyAppliedFunction, ExecutionMode.LOCAL, getMetadata());
     }
 
     private DynamicContext createNewDynamicContextWithArguments(DynamicContext context) {
@@ -265,14 +266,5 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         _functionBodyIterator = _functionItem.getBodyIterator();
         contextWithArguments = this.createNewDynamicContextWithArguments(contextWithArguments);
         return _functionBodyIterator.getRDD(contextWithArguments);
-    }
-
-    @Override
-    public boolean initIsRDD() {
-        if (_isPartialApplication) {
-            return false;
-        }
-        _functionBodyIterator = _functionItem.getBodyIterator();
-        return _functionBodyIterator.isRDD();
     }
 }

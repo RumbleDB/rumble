@@ -60,6 +60,15 @@ public abstract class PostfixExtension extends ExpressionOrClause {
     }
 
     @Override
+    public void initHighestExecutionMode() {
+        if (previous != null) {
+            this._highestExecutionMode = this.previous.getHighestExecutionMode();
+        } else {
+            this._highestExecutionMode = this.parent.getHighestExecutionMode();
+        }
+    }
+
+    @Override
     public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
         return visitor.visitDescendants(this, argument);
     }

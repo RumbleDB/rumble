@@ -20,6 +20,7 @@
 
 package sparksoniq.jsoniq.compiler.translator.expr.primary;
 
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.CommaExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
@@ -51,6 +52,26 @@ public class ParenthesizedExpression extends PrimaryExpression {
     @Override
     public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
         return visitor.visitParenthesizedExpression(this, argument);
+    }
+
+    private boolean bypassCurrentExpressionForExecutionModeOperations() {
+        return expression != null;
+    }
+
+    @Override
+    public void initHighestExecutionMode() {
+        if (bypassCurrentExpressionForExecutionModeOperations()) {
+            return;
+        }
+        super.initHighestExecutionMode();
+    }
+
+    @Override
+    public ExecutionMode getHighestExecutionMode() {
+        if (bypassCurrentExpressionForExecutionModeOperations()) {
+            return this.expression.getHighestExecutionMode();
+        }
+        return super.getHighestExecutionMode();
     }
 
     @Override

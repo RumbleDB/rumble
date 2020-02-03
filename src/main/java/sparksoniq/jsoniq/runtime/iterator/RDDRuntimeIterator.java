@@ -23,8 +23,8 @@ package sparksoniq.jsoniq.runtime.iterator;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.OurBadException;
-import sparksoniq.exceptions.SparkRuntimeException;
 import sparksoniq.io.json.JiqsItemParser;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
@@ -34,14 +34,16 @@ public abstract class RDDRuntimeIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
-    protected RDDRuntimeIterator(List<RuntimeIterator> children, IteratorMetadata iteratorMetadata) {
-        super(children, iteratorMetadata);
+    protected RDDRuntimeIterator(
+            List<RuntimeIterator> children,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
+        super(children, executionMode, iteratorMetadata);
+        if (executionMode != ExecutionMode.RDD && executionMode != ExecutionMode.DATAFRAME) {
+            throw new OurBadException("RDD runtime iterators support either RDD or DF execution modes");
+        }
         this.parser = new JiqsItemParser();
-    }
-
-    @Override
-    protected boolean initIsRDD() {
-        return true;
     }
 
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {

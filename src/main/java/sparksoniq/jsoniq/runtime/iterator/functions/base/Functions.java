@@ -22,8 +22,8 @@ package sparksoniq.jsoniq.runtime.iterator.functions.base;
 
 import sparksoniq.exceptions.DuplicateFunctionIdentifierException;
 import sparksoniq.exceptions.OurBadException;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnknownFunctionCallException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -281,6 +281,10 @@ import static sparksoniq.semantics.types.SequenceType.mostGeneralSequenceType;
 
 public class Functions {
     private static final HashMap<FunctionIdentifier, BuiltinFunction> builtInFunctions;
+
+    // two maps for User defined function are needed as execution mode is known at static analysis phase
+    // but functions items are fully known at runtimeIterator generation
+    private static HashMap<FunctionIdentifier, ExecutionMode> userDefinedFunctionsExecutionMode;
     private static HashMap<FunctionIdentifier, FunctionItem> userDefinedFunctions;
 
     private static final Map<String, ItemType> itemTypes;
@@ -377,7 +381,6 @@ public class Functions {
 
 
     static {
-        userDefinedFunctions = new HashMap<>();
         builtInFunctions = new HashMap<>();
 
         builtInFunctions.put(position.getIdentifier(), position);
@@ -522,28 +525,38 @@ public class Functions {
         builtInFunctions.put(get_transformer.getIdentifier(), get_transformer);
     }
 
+    static {
+        userDefinedFunctionsExecutionMode = new HashMap<>();
+        userDefinedFunctions = new HashMap<>();
+    }
+
     public static boolean checkBuiltInFunctionExists(FunctionIdentifier identifier) {
         return builtInFunctions.containsKey(identifier);
+    }
+
+    public static BuiltinFunction getBuiltInFunction(FunctionIdentifier identifier) {
+        return builtInFunctions.get(identifier);
     }
 
     public static RuntimeIterator getBuiltInFunctionIterator(
             FunctionIdentifier identifier,
             List<RuntimeIterator> arguments,
+            ExecutionMode executionMode,
             IteratorMetadata metadata
     ) {
         BuiltinFunction builtinFunction = builtInFunctions.get(identifier);
 
         for (int i = 0; i < arguments.size(); i++) {
             if (!builtinFunction.getSignature().getParameterTypes().get(i).equals(mostGeneralSequenceType)) {
-                arguments.set(
-                    i,
-                    new TypePromotionIterator(
-                            arguments.get(i),
-                            builtinFunction.getSignature().getParameterTypes().get(i),
-                            "Invalid argument for function " + identifier.getName() + ". ",
-                            arguments.get(i).getMetadata()
-                    )
+                TypePromotionIterator typePromotionIterator = new TypePromotionIterator(
+                        arguments.get(i),
+                        builtinFunction.getSignature().getParameterTypes().get(i),
+                        "Invalid argument for function " + identifier.getName() + ". ",
+                        arguments.get(i).getHighestExecutionMode(),
+                        arguments.get(i).getMetadata()
                 );
+
+                arguments.set(i, typePromotionIterator);
             }
         }
 
@@ -552,11 +565,16 @@ public class Functions {
             Constructor<? extends RuntimeIterator> constructor = builtinFunction.getFunctionIteratorClass()
                 .getConstructor(
                     List.class,
+                    ExecutionMode.class,
                     IteratorMetadata.class
                 );
-            functionCallIterator = constructor.newInstance(arguments, metadata);
-        } catch (ReflectiveOperationException e) {
-            throw new UnknownFunctionCallException(identifier.getName(), arguments.size(), metadata);
+            functionCallIterator = constructor.newInstance(arguments, executionMode, metadata);
+        } catch (ReflectiveOperationException ex) {
+            throw new UnknownFunctionCallException(
+                    identifier.getName(),
+                    arguments.size(),
+                    metadata.getExpressionMetadata()
+            );
         }
 
         if (!builtinFunction.getSignature().getReturnType().equals(mostGeneralSequenceType)) {
@@ -564,6 +582,7 @@ public class Functions {
                     functionCallIterator,
                     builtinFunction.getSignature().getReturnType(),
                     "Invalid return type for function " + identifier.getName() + ". ",
+                    functionCallIterator.getHighestExecutionMode(),
                     functionCallIterator.getMetadata()
             );
         }
@@ -572,11 +591,32 @@ public class Functions {
 
     public static RuntimeIterator getUserDefinedFunctionCallIterator(
             FunctionIdentifier identifier,
+            ExecutionMode executionMode,
             IteratorMetadata metadata,
             List<RuntimeIterator> arguments
     ) {
         if (Functions.checkUserDefinedFunctionExists(identifier)) {
-            return buildUserDefinedFunctionCallIterator(getUserDefinedFunction(identifier), metadata, arguments);
+            return buildUserDefinedFunctionCallIterator(
+                getUserDefinedFunction(identifier),
+                executionMode,
+                metadata,
+                arguments
+            );
+        }
+        throw new UnknownFunctionCallException(
+                identifier.getName(),
+                identifier.getArity(),
+                metadata.getExpressionMetadata()
+        );
+
+    }
+
+    public static ExecutionMode getUserDefinedFunctionExecutionMode(
+            FunctionIdentifier identifier,
+            ExpressionMetadata metadata
+    ) {
+        if (userDefinedFunctionsExecutionMode.containsKey(identifier)) {
+            return userDefinedFunctionsExecutionMode.get(identifier);
         }
         throw new UnknownFunctionCallException(
                 identifier.getName(),
@@ -588,10 +628,16 @@ public class Functions {
 
     public static RuntimeIterator buildUserDefinedFunctionCallIterator(
             FunctionItem functionItem,
+            ExecutionMode executionMode,
             IteratorMetadata metadata,
             List<RuntimeIterator> arguments
     ) {
-        FunctionItemCallIterator functionCallIterator = new FunctionItemCallIterator(functionItem, arguments, metadata);
+        FunctionItemCallIterator functionCallIterator = new FunctionItemCallIterator(
+                functionItem,
+                arguments,
+                executionMode,
+                metadata
+        );
         if (!functionItem.getSignature().getReturnType().equals(mostGeneralSequenceType)) {
             return new TypePromotionIterator(
                     functionCallIterator,
@@ -601,6 +647,7 @@ public class Functions {
                             ? ""
                             : (functionItem.getIdentifier().getName()) + " ")
                         + "function. ",
+                    executionMode,
                     metadata
             );
         }
@@ -608,7 +655,25 @@ public class Functions {
     }
 
     public static void clearUserDefinedFunctions() {
+        userDefinedFunctionsExecutionMode.clear();
         userDefinedFunctions.clear();
+    }
+
+    public static void addUserDefinedFunctionExecutionMode(
+            FunctionIdentifier functionIdentifier,
+            ExecutionMode executionMode,
+            boolean ignoreDuplicateUserDefinedFunctionError,
+            ExpressionMetadata meta
+    ) {
+        if (
+            builtInFunctions.containsKey(functionIdentifier)
+                ||
+                (!ignoreDuplicateUserDefinedFunctionError
+                    && userDefinedFunctionsExecutionMode.containsKey(functionIdentifier))
+        ) {
+            throw new DuplicateFunctionIdentifierException(functionIdentifier, meta);
+        }
+        userDefinedFunctionsExecutionMode.put(functionIdentifier, executionMode);
     }
 
     public static void addUserDefinedFunction(FunctionItem function, ExpressionMetadata meta) {
@@ -622,6 +687,10 @@ public class Functions {
         userDefinedFunctions.put(functionIdentifier, function);
     }
 
+    public static boolean checkUserDefinedFunctionExecutionModeExists(FunctionIdentifier identifier) {
+        return userDefinedFunctionsExecutionMode.containsKey(identifier);
+    }
+
     public static boolean checkUserDefinedFunctionExists(FunctionIdentifier identifier) {
         return userDefinedFunctions.containsKey(identifier);
     }
@@ -629,7 +698,8 @@ public class Functions {
     private static BuiltinFunction createBuiltinFunction(
             String functionName,
             String returnType,
-            Class<? extends RuntimeIterator> functionIteratorClass
+            Class<? extends RuntimeIterator> functionIteratorClass,
+            BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode
     ) {
         return new BuiltinFunction(
                 new FunctionIdentifier(functionName, 0),
@@ -637,7 +707,8 @@ public class Functions {
                         Collections.emptyList(),
                         sequenceTypes.get(returnType)
                 ),
-                functionIteratorClass
+                functionIteratorClass,
+                builtInFunctionExecutionMode
         );
     }
 
@@ -645,7 +716,8 @@ public class Functions {
             String functionName,
             String param1Type,
             String returnType,
-            Class<? extends RuntimeIterator> functionIteratorClass
+            Class<? extends RuntimeIterator> functionIteratorClass,
+            BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode
     ) {
         return new BuiltinFunction(
                 new FunctionIdentifier(functionName, 1),
@@ -653,7 +725,8 @@ public class Functions {
                         Collections.singletonList(sequenceTypes.get(param1Type)),
                         sequenceTypes.get(returnType)
                 ),
-                functionIteratorClass
+                functionIteratorClass,
+                builtInFunctionExecutionMode
         );
     }
 
@@ -662,7 +735,8 @@ public class Functions {
             String param1Type,
             String param2Type,
             String returnType,
-            Class<? extends RuntimeIterator> functionIteratorClass
+            Class<? extends RuntimeIterator> functionIteratorClass,
+            BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode
     ) {
         return new BuiltinFunction(
                 new FunctionIdentifier(functionName, 2),
@@ -672,7 +746,8 @@ public class Functions {
                         ),
                         sequenceTypes.get(returnType)
                 ),
-                functionIteratorClass
+                functionIteratorClass,
+                builtInFunctionExecutionMode
         );
     }
 
@@ -682,7 +757,8 @@ public class Functions {
             String param2Type,
             String param3Type,
             String returnType,
-            Class<? extends RuntimeIterator> functionIteratorClass
+            Class<? extends RuntimeIterator> functionIteratorClass,
+            BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode
     ) {
         return new BuiltinFunction(
                 new FunctionIdentifier(functionName, 3),
@@ -696,7 +772,8 @@ public class Functions {
                         ),
                         sequenceTypes.get(returnType)
                 ),
-                functionIteratorClass
+                functionIteratorClass,
+                builtInFunctionExecutionMode
         );
     }
 
@@ -723,7 +800,8 @@ public class Functions {
         static final BuiltinFunction position = createBuiltinFunction(
             "position",
             "integer?",
-            PositionFunctionIterator.class
+            PositionFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the context size
@@ -731,7 +809,8 @@ public class Functions {
         static final BuiltinFunction last = createBuiltinFunction(
             "last",
             "integer?",
-            LastFunctionIterator.class
+            LastFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that parses a JSON lines file
@@ -740,14 +819,16 @@ public class Functions {
             "json-file",
             "string?",
             "item*",
-            JsonFileFunctionIterator.class
+            JsonFileFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.RDD
         );
         static final BuiltinFunction json_file2 = createBuiltinFunction(
             "json-file",
             "string?",
             "integer?",
             "item*",
-            JsonFileFunctionIterator.class
+            JsonFileFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.RDD
         );
         /**
          * function that parses a structured JSON lines file into a DataFrame
@@ -756,7 +837,8 @@ public class Functions {
             "structured-json-file",
             "string?",
             "item*",
-            StructuredJsonFileFunctionIterator.class
+            StructuredJsonFileFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
         );
         /**
          * function that parses a JSON doc file
@@ -765,7 +847,8 @@ public class Functions {
             "json-doc",
             "string?",
             "item*",
-            JsonDocFunctionIterator.class
+            JsonDocFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that parses a text file
@@ -774,14 +857,16 @@ public class Functions {
             "text-file",
             "string?",
             "item*",
-            TextFileFunctionIterator.class
+            TextFileFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.RDD
         );
         static final BuiltinFunction text_file2 = createBuiltinFunction(
             "text-file",
             "string?",
             "integer?",
             "item*",
-            TextFileFunctionIterator.class
+            TextFileFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.RDD
         );
         /**
          * function that parallelizes item collections into a Spark RDD
@@ -790,14 +875,16 @@ public class Functions {
             "parallelize",
             "item*",
             "item*",
-            ParallelizeFunctionIterator.class
+            ParallelizeFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.RDD
         );
         static final BuiltinFunction parallelizeFunction2 = createBuiltinFunction(
             "parallelize",
             "item*",
             "integer",
             "item*",
-            ParallelizeFunctionIterator.class
+            ParallelizeFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.RDD
         );
         /**
          * function that parses a parquet file
@@ -806,7 +893,8 @@ public class Functions {
             "parquet-file",
             "string?",
             "item*",
-            ParquetFileFunctionIterator.class
+            ParquetFileFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
         );
         /**
          * function that returns the length of a sequence
@@ -815,7 +903,8 @@ public class Functions {
             "count",
             "item*",
             "integer",
-            CountFunctionIterator.class
+            CountFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
 
         /**
@@ -825,7 +914,8 @@ public class Functions {
             "boolean",
             "item*",
             "boolean",
-            BooleanFunctionIterator.class
+            BooleanFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
 
         /**
@@ -835,7 +925,8 @@ public class Functions {
             "min",
             "item*",
             "atomic?",
-            MinFunctionIterator.class
+            MinFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the maximum of a sequence
@@ -844,7 +935,8 @@ public class Functions {
             "max",
             "item*",
             "atomic?",
-            MaxFunctionIterator.class
+            MaxFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the average of a sequence
@@ -853,7 +945,8 @@ public class Functions {
             "avg",
             "item*",
             "atomic?",
-            AvgFunctionIterator.class
+            AvgFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the sum of a sequence
@@ -862,14 +955,16 @@ public class Functions {
             "sum",
             "item*",
             "atomic?",
-            SumFunctionIterator.class
+            SumFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         static final BuiltinFunction sum2 = createBuiltinFunction(
             "sum",
             "item*",
             "item?",
             "atomic?",
-            SumFunctionIterator.class
+            SumFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
 
 
@@ -880,7 +975,8 @@ public class Functions {
             "empty",
             "item*",
             "boolean",
-            EmptyFunctionIterator.class
+            EmptyFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns true if the argument is a non-empty sequence
@@ -889,7 +985,8 @@ public class Functions {
             "exists",
             "item*",
             "boolean",
-            ExistsFunctionIterator.class
+            ExistsFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the first item in a sequence
@@ -898,7 +995,8 @@ public class Functions {
             "head",
             "item*",
             "item?",
-            HeadFunctionIterator.class
+            HeadFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns all but the first item in a sequence
@@ -907,7 +1005,8 @@ public class Functions {
             "tail",
             "item*",
             "item*",
-            TailFunctionIterator.class
+            TailFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns a sequence constructed by inserting an item or a sequence of items at a given position
@@ -919,7 +1018,8 @@ public class Functions {
             "item*",
             "item*",
             "item*",
-            InsertBeforeFunctionIterator.class
+            InsertBeforeFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns a new sequence containing all the items of $target except the item at position
@@ -930,7 +1030,8 @@ public class Functions {
             "item*",
             "item*",
             "item*",
-            RemoveFunctionIterator.class
+            RemoveFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that reverses the order of items in a sequence.
@@ -939,7 +1040,8 @@ public class Functions {
             "reverse",
             "item*",
             "item*",
-            ReverseFunctionIterator.class
+            ReverseFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that applies a subsequence operation to the given sequence with the given start index and length
@@ -950,7 +1052,8 @@ public class Functions {
             "item*",
             "item*",
             "item*",
-            SubsequenceFunctionIterator.class
+            SubsequenceFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         static final BuiltinFunction subsequence3 = createBuiltinFunction(
             "subsequence",
@@ -958,7 +1061,8 @@ public class Functions {
             "item*",
             "item*",
             "item*",
-            SubsequenceFunctionIterator.class
+            SubsequenceFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
 
         /**
@@ -968,7 +1072,8 @@ public class Functions {
             "zero-or-one",
             "item*",
             "item?",
-            ZeroOrOneIterator.class
+            ZeroOrOneIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns $arg if it contains one or more items. Otherwise, raises an error.
@@ -977,7 +1082,8 @@ public class Functions {
             "one-or-more",
             "item*",
             "item+",
-            OneOrMoreIterator.class
+            OneOrMoreIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns $arg if it contains exactly one item. Otherwise, raises an error.
@@ -986,7 +1092,8 @@ public class Functions {
             "exactly-one",
             "item*",
             "item",
-            ExactlyOneIterator.class
+            ExactlyOneIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
 
         /**
@@ -996,7 +1103,8 @@ public class Functions {
             "distinct-values",
             "item*",
             "atomic*",
-            DistinctValuesFunctionIterator.class
+            DistinctValuesFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
         );
         /**
          * function that returns indices of items that are equal to the search parameter
@@ -1006,7 +1114,8 @@ public class Functions {
             "item*",
             "item",
             "integer*",
-            IndexOfFunctionIterator.class
+            IndexOfFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns whether two sequences are deep-equal to each other
@@ -1016,7 +1125,8 @@ public class Functions {
             "item*",
             "item*",
             "boolean",
-            DeepEqualFunctionIterator.class
+            DeepEqualFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
 
 
@@ -1027,7 +1137,8 @@ public class Functions {
             "integer",
             "item?",
             "integer?",
-            IntegerFunctionIterator.class
+            IntegerFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the integer from the supplied argument
@@ -1036,7 +1147,8 @@ public class Functions {
             "double",
             "item?",
             "double?",
-            DoubleFunctionIterator.class
+            DoubleFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the integer from the supplied argument
@@ -1045,7 +1157,8 @@ public class Functions {
             "decimal",
             "item?",
             "decimal?",
-            DecimalFunctionIterator.class
+            DecimalFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the absolute value of the arg
@@ -1054,7 +1167,8 @@ public class Functions {
             "abs",
             "double?",
             "double?",
-            AbsFunctionIterator.class
+            AbsFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that rounds $arg upwards to a whole number
@@ -1063,7 +1177,8 @@ public class Functions {
             "ceiling",
             "double?",
             "double?",
-            CeilingFunctionIterator.class
+            CeilingFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that rounds $arg downwards to a whole number
@@ -1072,7 +1187,8 @@ public class Functions {
             "floor",
             "double?",
             "double?",
-            FloorFunctionIterator.class
+            FloorFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that rounds a value to a specified number of decimal places, rounding upwards if two such values are
@@ -1082,14 +1198,16 @@ public class Functions {
             "round",
             "double?",
             "double?",
-            RoundFunctionIterator.class
+            RoundFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         static final BuiltinFunction round2 = createBuiltinFunction(
             "round",
             "double?",
             "integer",
             "double?",
-            RoundFunctionIterator.class
+            RoundFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that rounds a value to a specified number of decimal places, rounding to make the last digit even if
@@ -1099,14 +1217,16 @@ public class Functions {
             "round-half-to-even",
             "double?",
             "double?",
-            RoundHalfToEvenFunctionIterator.class
+            RoundHalfToEvenFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         static final BuiltinFunction round_half_to_even2 = createBuiltinFunction(
             "round-half-to-even",
             "double?",
             "integer",
             "double?",
-            RoundHalfToEvenFunctionIterator.class
+            RoundHalfToEvenFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
 
         /**
@@ -1115,7 +1235,8 @@ public class Functions {
         static final BuiltinFunction pi = createBuiltinFunction(
             "pi",
             "double?",
-            PiFunctionIterator.class
+            PiFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the value of e^x
@@ -1124,7 +1245,8 @@ public class Functions {
             "exp",
             "double?",
             "double?",
-            ExpFunctionIterator.class
+            ExpFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the value of 10^x
@@ -1133,7 +1255,8 @@ public class Functions {
             "exp10",
             "double?",
             "double?",
-            Exp10FunctionIterator.class
+            Exp10FunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the natural logarithm of the argument
@@ -1142,7 +1265,8 @@ public class Functions {
             "log",
             "double?",
             "double?",
-            LogFunctionIterator.class
+            LogFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the base-ten logarithm of the argument
@@ -1151,7 +1275,8 @@ public class Functions {
             "log10",
             "double?",
             "double?",
-            Log10FunctionIterator.class
+            Log10FunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the result of raising the first argument to the power of the second
@@ -1161,7 +1286,8 @@ public class Functions {
             "double?",
             "double",
             "double?",
-            PowFunctionIterator.class
+            PowFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the non-negative square root of the argument
@@ -1170,7 +1296,8 @@ public class Functions {
             "sqrt",
             "double?",
             "double?",
-            SqrtFunctionIterator.class
+            SqrtFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the sine of the angle given in radians
@@ -1179,7 +1306,8 @@ public class Functions {
             "sin",
             "double?",
             "double?",
-            SinFunctionIterator.class
+            SinFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the cosine of the angle given in radians
@@ -1188,7 +1316,8 @@ public class Functions {
             "cos",
             "double?",
             "double?",
-            CosFunctionIterator.class
+            CosFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the tangent of the angle given in radians
@@ -1197,7 +1326,8 @@ public class Functions {
             "tan",
             "double?",
             "double?",
-            TanFunctionIterator.class
+            TanFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the arc sine of the angle given in radians
@@ -1206,7 +1336,8 @@ public class Functions {
             "asin",
             "double?",
             "double?",
-            ASinFunctionIterator.class
+            ASinFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the arc cosine of the angle given in radians
@@ -1215,7 +1346,8 @@ public class Functions {
             "acos",
             "double?",
             "double?",
-            ACosFunctionIterator.class
+            ACosFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the arc tangent of the angle given in radians
@@ -1224,7 +1356,8 @@ public class Functions {
             "atan",
             "double?",
             "double?",
-            ATanFunctionIterator.class
+            ATanFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the the angle in radians subtended at the origin by the point on a plane with
@@ -1235,7 +1368,8 @@ public class Functions {
             "double",
             "double",
             "double",
-            ATan2FunctionIterator.class
+            ATan2FunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
 
 
@@ -1246,7 +1380,8 @@ public class Functions {
             "string",
             "item?",
             "string?",
-            StringFunctionIterator.class
+            StringFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns substrings
@@ -1256,7 +1391,8 @@ public class Functions {
             "string?",
             "double",
             "string",
-            SubstringFunctionIterator.class
+            SubstringFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         static final BuiltinFunction substring3 = createBuiltinFunction(
             "substring",
@@ -1264,7 +1400,8 @@ public class Functions {
             "double",
             "double",
             "string",
-            SubstringFunctionIterator.class
+            SubstringFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the part of the first variable that precedes the first occurrence of the second
@@ -1275,7 +1412,8 @@ public class Functions {
             "string?",
             "string?",
             "string",
-            SubstringBeforeFunctionIterator.class
+            SubstringBeforeFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the part of the first variable that follows the first occurrence of the second
@@ -1286,7 +1424,8 @@ public class Functions {
             "string?",
             "string?",
             "string",
-            SubstringAfterFunctionIterator.class
+            SubstringAfterFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns substrings
@@ -1301,7 +1440,8 @@ public class Functions {
                             ),
                             sequenceTypes.get("string")
                     ),
-                    ConcatFunctionIterator.class
+                    ConcatFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
             );
         /**
          * function that returns substrings
@@ -1310,14 +1450,16 @@ public class Functions {
             "string-join",
             "string*",
             "string",
-            StringJoinFunctionIterator.class
+            StringJoinFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         static final BuiltinFunction string_join2 = createBuiltinFunction(
             "string-join",
             "string*",
             "string",
             "string",
-            StringJoinFunctionIterator.class
+            StringJoinFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the string length
@@ -1326,7 +1468,8 @@ public class Functions {
             "string-length",
             "string?",
             "integer",
-            StringLengthFunctionIterator.class
+            StringLengthFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns tokens
@@ -1335,14 +1478,16 @@ public class Functions {
             "tokenize",
             "string?",
             "string*",
-            TokenizeFunctionIterator.class
+            TokenizeFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         static final BuiltinFunction tokenize2 = createBuiltinFunction(
             "tokenize",
             "string?",
             "string",
             "string*",
-            TokenizeFunctionIterator.class
+            TokenizeFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that checks whether a string ends with a substring
@@ -1352,7 +1497,8 @@ public class Functions {
             "string?",
             "string?",
             "boolean",
-            EndsWithFunctionIterator.class
+            EndsWithFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that checks whether a string starts with a substring
@@ -1362,7 +1508,8 @@ public class Functions {
             "string?",
             "string?",
             "boolean",
-            StartsWithFunctionIterator.class
+            StartsWithFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that checks whether a string contains a substring
@@ -1372,7 +1519,8 @@ public class Functions {
             "string?",
             "string?",
             "boolean",
-            ContainsFunctionIterator.class
+            ContainsFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that checks whether a string matches a regular expression
@@ -1382,7 +1530,8 @@ public class Functions {
             "string?",
             "string",
             "boolean",
-            MatchesFunctionIterator.class
+            MatchesFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that normalizes spaces in a string
@@ -1391,7 +1540,8 @@ public class Functions {
             "normalize-space",
             "string?",
             "string",
-            NormalizeSpaceFunctionIterator.class
+            NormalizeSpaceFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
 
         /**
@@ -1401,7 +1551,8 @@ public class Functions {
             "duration",
             "string?",
             "duration?",
-            DurationFunctionIterator.class
+            DurationFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the yearMonthDuration item from the supplied string
@@ -1410,7 +1561,8 @@ public class Functions {
             "yearMonthDuration",
             "string?",
             "yearMonthDuration?",
-            YearMonthDurationFunctionIterator.class
+            YearMonthDurationFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the dayTimeDuration item from the supplied string
@@ -1419,7 +1571,8 @@ public class Functions {
             "dayTimeDuration",
             "string?",
             "dayTimeDuration?",
-            DayTimeDurationFunctionIterator.class
+            DayTimeDurationFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
 
 
@@ -1430,7 +1583,8 @@ public class Functions {
             "years-from-duration",
             "duration?",
             "integer?",
-            YearsFromDurationFunctionIterator.class
+            YearsFromDurationFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the months from a duration
@@ -1439,7 +1593,8 @@ public class Functions {
             "months-from-duration",
             "duration?",
             "integer?",
-            MonthsFromDurationFunctionIterator.class
+            MonthsFromDurationFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the days from a duration
@@ -1448,7 +1603,8 @@ public class Functions {
             "days-from-duration",
             "duration?",
             "integer?",
-            DaysFromDurationFunctionIterator.class
+            DaysFromDurationFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the hours from a duration
@@ -1457,7 +1613,8 @@ public class Functions {
             "hours-from-duration",
             "duration?",
             "integer?",
-            HoursFromDurationFunctionIterator.class
+            HoursFromDurationFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the minutes from a duration
@@ -1466,7 +1623,8 @@ public class Functions {
             "minutes-from-duration",
             "duration?",
             "integer?",
-            MinutesFromDurationFunctionIterator.class
+            MinutesFromDurationFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the seconds from a duration
@@ -1475,7 +1633,8 @@ public class Functions {
             "seconds-from-duration",
             "duration?",
             "decimal?",
-            SecondsFromDurationFunctionIterator.class
+            SecondsFromDurationFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
 
 
@@ -1486,7 +1645,8 @@ public class Functions {
             "dateTime",
             "string?",
             "dateTime?",
-            DateTimeFunctionIterator.class
+            DateTimeFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
 
         /**
@@ -1496,7 +1656,8 @@ public class Functions {
             "year-from-dateTime",
             "dateTime?",
             "integer?",
-            YearFromDateTimeFunctionIterator.class
+            YearFromDateTimeFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the month from a dateTime
@@ -1505,7 +1666,8 @@ public class Functions {
             "month-from-dateTime",
             "dateTime?",
             "integer?",
-            MonthFromDateTimeFunctionIterator.class
+            MonthFromDateTimeFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the day from a dateTime
@@ -1514,7 +1676,8 @@ public class Functions {
             "day-from-dateTime",
             "dateTime?",
             "integer?",
-            DayFromDateTimeFunctionIterator.class
+            DayFromDateTimeFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the hours from a dateTime
@@ -1523,7 +1686,8 @@ public class Functions {
             "hours-from-dateTime",
             "dateTime?",
             "integer?",
-            HoursFromDateTimeFunctionIterator.class
+            HoursFromDateTimeFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the minutes from a dateTime
@@ -1532,7 +1696,8 @@ public class Functions {
             "minutes-from-dateTime",
             "dateTime?",
             "integer?",
-            MinutesFromDateTimeFunctionIterator.class
+            MinutesFromDateTimeFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the seconds from a dateTime
@@ -1541,7 +1706,8 @@ public class Functions {
             "seconds-from-dateTime",
             "dateTime?",
             "decimal?",
-            SecondsFromDateTimeFunctionIterator.class
+            SecondsFromDateTimeFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the seconds from a dateTime
@@ -1550,7 +1716,8 @@ public class Functions {
             "timezone-from-dateTime",
             "dateTime?",
             "dayTimeDuration?",
-            TimezoneFromDateTimeFunctionIterator.class
+            TimezoneFromDateTimeFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
 
 
@@ -1561,14 +1728,16 @@ public class Functions {
             "adjust-dateTime-to-timezone",
             "dateTime?",
             "dateTime?",
-            AdjustDateTimeToTimezone.class
+            AdjustDateTimeToTimezone.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         static final BuiltinFunction adjust_dateTime_to_timezone2 = createBuiltinFunction(
             "adjust-dateTime-to-timezone",
             "dateTime?",
             "dayTimeDuration?",
             "dateTime?",
-            AdjustDateTimeToTimezone.class
+            AdjustDateTimeToTimezone.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
 
 
@@ -1580,7 +1749,8 @@ public class Functions {
             "date",
             "string?",
             "date?",
-            DateFunctionIterator.class
+            DateFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the year from a date
@@ -1589,7 +1759,8 @@ public class Functions {
             "year-from-date",
             "date?",
             "integer?",
-            YearFromDateFunctionIterator.class
+            YearFromDateFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the month from a date
@@ -1598,7 +1769,8 @@ public class Functions {
             "month-from-date",
             "date?",
             "integer?",
-            MonthFromDateFunctionIterator.class
+            MonthFromDateFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the day from a date
@@ -1607,7 +1779,8 @@ public class Functions {
             "day-from-date",
             "date?",
             "integer?",
-            DayFromDateFunctionIterator.class
+            DayFromDateFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the seconds from a date
@@ -1616,7 +1789,8 @@ public class Functions {
             "timezone-from-date",
             "date?",
             "dayTimeDuration?",
-            TimezoneFromDateFunctionIterator.class
+            TimezoneFromDateFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
 
 
@@ -1627,14 +1801,16 @@ public class Functions {
             "adjust-date-to-timezone",
             "date?",
             "date?",
-            AdjustDateToTimezone.class
+            AdjustDateToTimezone.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         static final BuiltinFunction adjust_date_to_timezone2 = createBuiltinFunction(
             "adjust-date-to-timezone",
             "date?",
             "dayTimeDuration?",
             "date?",
-            AdjustDateToTimezone.class
+            AdjustDateToTimezone.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
 
         /**
@@ -1644,7 +1820,8 @@ public class Functions {
             "time",
             "string?",
             "time?",
-            TimeFunctionIterator.class
+            TimeFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the hours from a time
@@ -1653,7 +1830,8 @@ public class Functions {
             "hours-from-time",
             "time?",
             "integer?",
-            HoursFromTimeFunctionIterator.class
+            HoursFromTimeFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the minutes from a time
@@ -1662,7 +1840,8 @@ public class Functions {
             "minutes-from-time",
             "time?",
             "integer?",
-            MinutesFromTimeFunctionIterator.class
+            MinutesFromTimeFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the seconds from a time
@@ -1671,7 +1850,8 @@ public class Functions {
             "seconds-from-time",
             "time?",
             "decimal?",
-            SecondsFromTimeFunctionIterator.class
+            SecondsFromTimeFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the seconds from a time
@@ -1680,7 +1860,8 @@ public class Functions {
             "timezone-from-time",
             "time?",
             "dayTimeDuration?",
-            TimezoneFromTimeFunctionIterator.class
+            TimezoneFromTimeFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that adjusts a time value to a specific timezone, or to no timezone at all.
@@ -1689,14 +1870,16 @@ public class Functions {
             "adjust-time-to-timezone",
             "time?",
             "time?",
-            AdjustTimeToTimezone.class
+            AdjustTimeToTimezone.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         static final BuiltinFunction adjust_time_to_timezone2 = createBuiltinFunction(
             "adjust-time-to-timezone",
             "time?",
             "dayTimeDuration?",
             "time?",
-            AdjustTimeToTimezone.class
+            AdjustTimeToTimezone.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
 
         /**
@@ -1706,7 +1889,8 @@ public class Functions {
             "hexBinary",
             "string?",
             "hexBinary?",
-            HexBinaryFunctionIterator.class
+            HexBinaryFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the base64Binary item from the supplied string
@@ -1715,7 +1899,8 @@ public class Functions {
             "base64Binary",
             "string?",
             "base64Binary?",
-            Base64BinaryFunctionIterator.class
+            Base64BinaryFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
 
         /**
@@ -1725,7 +1910,8 @@ public class Functions {
             "keys",
             "item*",
             "item*",
-            ObjectKeysFunctionIterator.class
+            ObjectKeysFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT_BUT_DATAFRAME_FALLSBACK_TO_LOCAL
         );
         /**
          * function that returns returns all members of all arrays of the supplied sequence
@@ -1734,7 +1920,8 @@ public class Functions {
             "members",
             "item*",
             "item*",
-            ArrayMembersFunctionIterator.class
+            ArrayMembersFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the JSON null
@@ -1742,7 +1929,8 @@ public class Functions {
         static final BuiltinFunction null_function = createBuiltinFunction(
             "null",
             "null?",
-            NullFunctionIterator.class
+            NullFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the length of an array
@@ -1751,7 +1939,8 @@ public class Functions {
             "size",
             "array?",
             "integer?",
-            ArraySizeFunctionIterator.class
+            ArraySizeFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that dynamically creates an object that merges the values of key collisions into arrays
@@ -1760,7 +1949,8 @@ public class Functions {
             "accumulate",
             "item*",
             "object",
-            ObjectAccumulateFunctionIterator.class
+            ObjectAccumulateFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns all arrays contained within the supplied items, regardless of depth.
@@ -1769,7 +1959,8 @@ public class Functions {
             "descendant-arrays",
             "item*",
             "item*",
-            ArrayDescendantFunctionIterator.class
+            ArrayDescendantFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns all objects contained within the supplied items, regardless of depth
@@ -1778,7 +1969,8 @@ public class Functions {
             "descendant-objects",
             "item*",
             "item*",
-            ObjectDescendantFunctionIterator.class
+            ObjectDescendantFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns all objects contained within the supplied items, regardless of depth
@@ -1787,7 +1979,8 @@ public class Functions {
             "descendant-pairs",
             "item*",
             "item*",
-            ObjectDescendantPairsFunctionIterator.class
+            ObjectDescendantPairsFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that recursively flattens arrays in the input sequence, leaving non-arrays intact
@@ -1796,7 +1989,8 @@ public class Functions {
             "flatten",
             "item*",
             "item*",
-            ArrayFlattenFunctionIterator.class
+            ArrayFlattenFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the intersection of the supplied objects, and aggregates values corresponding to the
@@ -1806,7 +2000,8 @@ public class Functions {
             "intersect",
             "item*",
             "object+",
-            ObjectIntersectFunctionIterator.class
+            ObjectIntersectFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that projects objects by filtering their pairs and leaves non-objects intact
@@ -1816,7 +2011,8 @@ public class Functions {
             "item*",
             "string*",
             "item*",
-            ObjectProjectFunctionIterator.class
+            ObjectProjectFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that removes the pairs with the given keys from all objects and leaves non-objects intact
@@ -1826,7 +2022,8 @@ public class Functions {
             "item*",
             "string*",
             "item*",
-            ObjectRemoveKeysFunctionIterator.class
+            ObjectRemoveKeysFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the values of a Json Object
@@ -1835,7 +2032,8 @@ public class Functions {
             "values",
             "item*",
             "item*",
-            ObjectValuesFunctionIterator.class
+            ObjectValuesFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
         );
 
         /**
@@ -1845,7 +2043,8 @@ public class Functions {
             "get-transformer",
             "string",
             "item",
-            GetTransformerFunctionIterator.class
+            GetTransformerFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
 
     }

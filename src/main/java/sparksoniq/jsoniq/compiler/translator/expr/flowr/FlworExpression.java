@@ -21,6 +21,7 @@
 package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
 import sparksoniq.exceptions.SemanticException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
@@ -34,7 +35,6 @@ public class FlworExpression extends Expression {
     private FlworClause _startClause;
     private List<FlworClause> _contentClauses;
     private ReturnClause _returnClause;
-
 
     public FlworExpression(
             FlworClause startClause,
@@ -77,6 +77,17 @@ public class FlworExpression extends Expression {
     }
 
     @Override
+    public void initHighestExecutionMode() {
+        // overall flwor expression's execution mode is never used and remains unset
+        this._highestExecutionMode = ExecutionMode.UNSET;
+    }
+
+    @Override
+    public ExecutionMode getHighestExecutionMode() {
+        // overall flwor expression's execution mode is stored in the return clause
+        return this._returnClause.getHighestExecutionMode();
+    }
+
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
         List<ExpressionOrClause> result = new ArrayList<>();
         result.add(_startClause);

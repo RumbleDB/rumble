@@ -22,6 +22,7 @@ package sparksoniq.jsoniq.runtime.iterator.functions.context;
 
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.AbsentPartOfDynamicContextException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -36,8 +37,12 @@ public class LastFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
 
-    public LastFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
-        super(arguments, iteratorMetadata);
+    public LastFunctionIterator(
+            List<RuntimeIterator> arguments,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
+        super(arguments, executionMode, iteratorMetadata);
     }
 
     @Override

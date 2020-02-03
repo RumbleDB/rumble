@@ -21,6 +21,7 @@
 package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
 import sparksoniq.exceptions.SemanticException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
@@ -54,6 +55,13 @@ public class ForClause extends FlworClause {
         super.setPreviousClause(previousClause);
         // assign the previous clause of the ForClause as the first variable definition's previous
         forVariables.get(0).previousClause = this.previousClause;
+    }
+
+    @Override
+    public void initHighestExecutionMode() {
+        // call isDataFrame on the last forVariable
+        this._highestExecutionMode =
+            forVariables.get(forVariables.size() - 1).getHighestExecutionMode();
     }
 
     @Override

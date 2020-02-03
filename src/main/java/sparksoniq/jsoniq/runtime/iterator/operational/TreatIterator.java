@@ -6,6 +6,7 @@ import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.TreatException;
 import sparksoniq.exceptions.UnexpectedTypeException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.TreatAsClosure;
@@ -36,9 +37,10 @@ public class TreatIterator extends HybridRuntimeIterator {
             RuntimeIterator iterator,
             SequenceType sequenceType,
             boolean shouldThrowTreatException,
+            ExecutionMode executionMode,
             IteratorMetadata iteratorMetadata
     ) {
-        super(Collections.singletonList(iterator), iteratorMetadata);
+        super(Collections.singletonList(iterator), executionMode, iteratorMetadata);
         this._iterator = iterator;
         this._sequenceType = sequenceType;
         this._shouldThrowTreatException = shouldThrowTreatException;
@@ -170,13 +172,6 @@ public class TreatIterator extends HybridRuntimeIterator {
                 ? new TreatException(message, getMetadata())
                 : new UnexpectedTypeException(message, getMetadata());
         }
-    }
-
-    @Override
-    public boolean initIsRDD() {
-        return _sequenceType.getArity() != SequenceType.Arity.One
-            && _sequenceType.getArity() != SequenceType.Arity.OneOrZero
-            && _iterator.isRDD();
     }
 }
 

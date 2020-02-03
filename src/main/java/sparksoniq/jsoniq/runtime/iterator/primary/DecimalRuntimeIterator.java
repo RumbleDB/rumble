@@ -22,6 +22,7 @@ package sparksoniq.jsoniq.runtime.iterator.primary;
 
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -34,8 +35,8 @@ public class DecimalRuntimeIterator extends AtomicRuntimeIterator {
     private static final long serialVersionUID = 1L;
     private BigDecimal _item;
 
-    public DecimalRuntimeIterator(BigDecimal value, IteratorMetadata iteratorMetadata) {
-        super(null, iteratorMetadata);
+    public DecimalRuntimeIterator(BigDecimal value, ExecutionMode executionMode, IteratorMetadata iteratorMetadata) {
+        super(null, executionMode, iteratorMetadata);
         this._item = value;
 
     }

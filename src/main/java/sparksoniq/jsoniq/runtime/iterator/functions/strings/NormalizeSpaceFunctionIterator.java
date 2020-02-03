@@ -23,6 +23,7 @@ package sparksoniq.jsoniq.runtime.iterator.functions.strings;
 import org.apache.commons.lang.StringUtils;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
@@ -36,9 +37,10 @@ public class NormalizeSpaceFunctionIterator extends LocalFunctionCallIterator {
 
     public NormalizeSpaceFunctionIterator(
             List<RuntimeIterator> arguments,
+            ExecutionMode executionMode,
             IteratorMetadata iteratorMetadata
     ) {
-        super(arguments, iteratorMetadata);
+        super(arguments, executionMode, iteratorMetadata);
     }
 
     @Override

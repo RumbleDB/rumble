@@ -26,6 +26,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -44,19 +45,13 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
     private Queue<Item> _nextResults; // queue that holds the results created by the current item in inspection
     private List<Item> _alreadyFoundKeys;
 
-    public ObjectKeysFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
-        super(arguments, iteratorMetadata);
+    public ObjectKeysFunctionIterator(
+            List<RuntimeIterator> arguments,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
+        super(arguments, executionMode, iteratorMetadata);
         _iterator = arguments.get(0);
-    }
-
-    @Override
-    public boolean initIsRDD() {
-        return _iterator.isRDD() && !_iterator.isDataFrame();
-    }
-
-    @Override
-    public boolean isDataFrame() {
-        return false;
     }
 
     @Override

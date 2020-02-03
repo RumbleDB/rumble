@@ -22,6 +22,7 @@ package sparksoniq.jsoniq.compiler.translator.expr.operational.base;
 
 import org.antlr.v4.runtime.Token;
 import org.rumbledb.api.Item;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
@@ -58,7 +59,26 @@ public abstract class OperationalExpressionBase extends Expression {
         super(metadata);
         this._mainExpression = _mainExpression;
         this._multipleOperators = ops;
+    }
 
+    protected boolean bypassCurrentExpressionForExecutionModeOperations() {
+        return !isActive();
+    }
+
+    @Override
+    public void initHighestExecutionMode() {
+        if (bypassCurrentExpressionForExecutionModeOperations()) {
+            return;
+        }
+        super.initHighestExecutionMode();
+    }
+
+    @Override
+    public ExecutionMode getHighestExecutionMode() {
+        if (bypassCurrentExpressionForExecutionModeOperations()) {
+            return this._mainExpression.getHighestExecutionMode();
+        }
+        return super.getHighestExecutionMode();
     }
 
     public static List<Operator> getOperatorFromOpList(List<Token> ops) {

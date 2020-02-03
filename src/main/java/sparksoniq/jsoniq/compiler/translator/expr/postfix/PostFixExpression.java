@@ -20,6 +20,7 @@
 
 package sparksoniq.jsoniq.compiler.translator.expr.postfix;
 
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions.PostfixExtension;
@@ -62,6 +63,26 @@ public class PostFixExpression extends Expression {
 
     public List<PostfixExtension> getExtensions() {
         return _extensions;
+    }
+
+    private boolean bypassCurrentExpressionForExecutionModeOperations() {
+        return isPrimary();
+    }
+
+    @Override
+    public void initHighestExecutionMode() {
+        if (bypassCurrentExpressionForExecutionModeOperations()) {
+            return;
+        }
+        this._highestExecutionMode = this._primaryExpressionNode.getHighestExecutionMode();
+    }
+
+    @Override
+    public ExecutionMode getHighestExecutionMode() {
+        if (bypassCurrentExpressionForExecutionModeOperations()) {
+            return this._primaryExpressionNode.getHighestExecutionMode();
+        }
+        return super.getHighestExecutionMode();
     }
 
     @Override

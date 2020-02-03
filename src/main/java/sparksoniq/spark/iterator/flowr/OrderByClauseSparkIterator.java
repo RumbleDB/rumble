@@ -33,6 +33,7 @@ import sparksoniq.exceptions.NonAtomicKeyException;
 import sparksoniq.exceptions.OurBadException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.exceptions.UnexpectedTypeException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
@@ -68,20 +69,16 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             RuntimeTupleIterator child,
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
             boolean stable,
+            ExecutionMode executionMode,
             IteratorMetadata iteratorMetadata
     ) {
-        super(child, iteratorMetadata);
+        super(child, executionMode, iteratorMetadata);
         this._expressionsWithIterator = expressionsWithIterator;
         this._isStable = stable;
         _dependencies = new TreeMap<>();
         for (OrderByClauseAnnotatedChildIterator e : _expressionsWithIterator) {
             _dependencies.putAll(e.getIterator().getVariableDependencies());
         }
-    }
-
-    @Override
-    public boolean isDataFrame() {
-        return _child.isDataFrame();
     }
 
     @Override

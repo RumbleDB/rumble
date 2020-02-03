@@ -21,6 +21,8 @@
 package sparksoniq.jsoniq.compiler.translator.expr.primary;
 
 
+import sparksoniq.exceptions.OurBadException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.types.SequenceType;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
@@ -28,7 +30,6 @@ import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 import java.io.Serializable;
 
 public class VariableReference extends PrimaryExpression implements Serializable {
-
 
     private static final long serialVersionUID = 1L;
     private String name;
@@ -38,6 +39,10 @@ public class VariableReference extends PrimaryExpression implements Serializable
     public VariableReference(String _name, ExpressionMetadata metadata) {
         super(metadata);
         this.name = _name;
+    }
+
+    public void setHighestExecutionMode(ExecutionMode highestExecutionMode) {
+        this._highestExecutionMode = highestExecutionMode;
     }
 
     public String getVariableName() {
@@ -50,6 +55,13 @@ public class VariableReference extends PrimaryExpression implements Serializable
 
     public void setType(SequenceType type) {
         this._type = type;
+    }
+
+    @Override
+    public final void initHighestExecutionMode() {
+        // Variable reference execution mode can only be resolved in conjunction with a static context
+        // variable reference's execution mode gets initialized in staticContextVisitor by a setter
+        throw new OurBadException("Variable references do not use the highestExecutionMode initializer");
     }
 
     @Override

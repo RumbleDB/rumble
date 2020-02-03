@@ -22,6 +22,7 @@ package sparksoniq.jsoniq.runtime.iterator.control;
 
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -38,9 +39,10 @@ public class IfRuntimeIterator extends LocalRuntimeIterator {
             RuntimeIterator condition,
             RuntimeIterator branch,
             RuntimeIterator elseBranch,
+            ExecutionMode executionMode,
             IteratorMetadata iteratorMetadata
     ) {
-        super(null, iteratorMetadata);
+        super(null, executionMode, iteratorMetadata);
         this._children.add(condition);
         this._children.add(branch);
         this._children.add(elseBranch);

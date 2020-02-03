@@ -25,9 +25,9 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.exceptions.SparkRuntimeException;
 import sparksoniq.io.json.JiqsItemParser;
 import sparksoniq.io.json.RowToItemMapper;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkSessionManager;
@@ -40,26 +40,25 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     protected JiqsItemParser parser;
     protected List<Item> result = null;
     private int currentResultIndex = 0;
-    private boolean _isRDDInitialized = false;
-    private boolean _isRDD;
 
-    protected HybridRuntimeIterator(List<RuntimeIterator> children, IteratorMetadata iteratorMetadata) {
-        super(children, iteratorMetadata);
+    protected HybridRuntimeIterator(
+            List<RuntimeIterator> children,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
+        super(children, executionMode, iteratorMetadata);
+        fallbackToRDDIfDFNotImplemented(executionMode);
         this.parser = new JiqsItemParser();
     }
 
-    @Override
-    public boolean isRDD() {
-        if (!_isRDDInitialized) {
-            _isRDD = initIsRDD();
-            _isRDDInitialized = true;
-        }
-        return _isRDD;
+    protected boolean implementsDataFrames() {
+        return false;
     }
 
-    @Override
-    public boolean isDataFrame() {
-        return false;
+    protected void fallbackToRDDIfDFNotImplemented(ExecutionMode executionMode) {
+        if (executionMode == ExecutionMode.DATAFRAME && !this.implementsDataFrames()) {
+            this._highestExecutionMode = ExecutionMode.RDD;
+        }
     }
 
     @Override
@@ -137,14 +136,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         }
     }
 
-    @Override
-    public Dataset<Row> getDataFrame(DynamicContext context) {
-        throw new SparkRuntimeException("DataFrames are not implemented for the iterator", getMetadata());
-    }
-
     protected abstract JavaRDD<Item> getRDDAux(DynamicContext context);
-
-    protected abstract boolean initIsRDD();
 
     protected abstract void openLocal();
 

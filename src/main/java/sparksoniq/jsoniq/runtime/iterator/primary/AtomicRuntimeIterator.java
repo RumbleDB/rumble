@@ -21,6 +21,7 @@
 package sparksoniq.jsoniq.runtime.iterator.primary;
 
 import org.rumbledb.api.Item;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -32,8 +33,12 @@ public abstract class AtomicRuntimeIterator extends LocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
-    protected AtomicRuntimeIterator(List<RuntimeIterator> children, IteratorMetadata iteratorMetadata) {
-        super(children, iteratorMetadata);
+    protected AtomicRuntimeIterator(
+            List<RuntimeIterator> children,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
+        super(children, executionMode, iteratorMetadata);
     }
 
     @Override

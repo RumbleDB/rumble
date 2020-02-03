@@ -20,6 +20,8 @@
 
 package sparksoniq.jsoniq.compiler.translator.expr;
 
+import sparksoniq.exceptions.OurBadException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
@@ -34,7 +36,7 @@ public abstract class ExpressionOrClause {
 
     private ExpressionMetadata metadata;
 
-    // Visitor pattern implementation
+    protected ExecutionMode _highestExecutionMode = ExecutionMode.UNSET;
 
     protected ExpressionOrClause() {
     }
@@ -43,6 +45,26 @@ public abstract class ExpressionOrClause {
         this.metadata = metadata;
     }
 
+    /**
+     * initHighestExecutionMode is meant to be overridden by expression subclasses which support higher execution modes
+     */
+    public void initHighestExecutionMode() {
+        _highestExecutionMode = ExecutionMode.LOCAL;
+    }
+
+    /**
+     * When extending this method, make sure to perform a super() call to prevent UNSET accesses.
+     * 
+     * @return
+     */
+    public ExecutionMode getHighestExecutionMode() {
+        if (_highestExecutionMode == ExecutionMode.UNSET) {
+            throw new OurBadException("An execution mode is accessed without being set.");
+        }
+        return _highestExecutionMode;
+    }
+
+    // Visitor pattern implementation
     public abstract List<ExpressionOrClause> getDescendants(boolean depthSearch);
 
     /**
@@ -50,7 +72,6 @@ public abstract class ExpressionOrClause {
      */
     public abstract <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument);
 
-    // serialization
     public abstract String serializationString(boolean prefix);
 
     public final List<ExpressionOrClause> getDescendants() {

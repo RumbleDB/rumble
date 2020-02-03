@@ -20,6 +20,7 @@
 
 package sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions;
 
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
@@ -46,6 +47,16 @@ public class DynamicFunctionCallExtension extends PostfixExtension {
         if (this._arguments != null)
             result.addAll(this._arguments);
         return getDescendantsFromChildren(result, depthSearch);
+    }
+
+    /**
+     * DynamicFunctionCall is always locally evaluated as execution mode cannot be determined at static analysis phase.
+     * This behavior is different from all other postfix extensions, hence this override is required.
+     */
+
+    @Override
+    public void initHighestExecutionMode() {
+        this._highestExecutionMode = ExecutionMode.LOCAL;
     }
 
     @Override

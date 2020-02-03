@@ -4,6 +4,7 @@ import org.rumbledb.api.Item;
 import sparksoniq.exceptions.CastException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -20,8 +21,13 @@ public class CastIterator extends UnaryOperationIterator {
     private static final long serialVersionUID = 1L;
     private final SingleType _singleType;
 
-    public CastIterator(RuntimeIterator child, SingleType singleType, IteratorMetadata iteratorMetadata) {
-        super(child, OperationalExpressionBase.Operator.CAST, iteratorMetadata);
+    public CastIterator(
+            RuntimeIterator child,
+            SingleType singleType,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
+        super(child, OperationalExpressionBase.Operator.CAST, executionMode, iteratorMetadata);
         this._singleType = singleType;
     }
 

@@ -23,6 +23,7 @@ package sparksoniq.jsoniq.runtime.iterator.operational;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.UnexpectedTypeException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -33,8 +34,13 @@ public class StringConcatIterator extends BinaryOperationBaseIterator {
 
     private static final long serialVersionUID = 1L;
 
-    public StringConcatIterator(RuntimeIterator left, RuntimeIterator right, IteratorMetadata iteratorMetadata) {
-        super(left, right, OperationalExpressionBase.Operator.CONCAT, iteratorMetadata);
+    public StringConcatIterator(
+            RuntimeIterator left,
+            RuntimeIterator right,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
+        super(left, right, OperationalExpressionBase.Operator.CONCAT, executionMode, iteratorMetadata);
     }
 
     @Override

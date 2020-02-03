@@ -21,6 +21,7 @@
 package sparksoniq.jsoniq.compiler.translator.expr;
 
 
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
@@ -49,6 +50,26 @@ public class CommaExpression extends Expression {
                     result.add(e);
             });
         return getDescendantsFromChildren(result, depthSearch);
+    }
+
+    private boolean bypassCurrentExpressionForExecutionModeOperations() {
+        return _expressions.size() == 1;
+    }
+
+    @Override
+    public void initHighestExecutionMode() {
+        if (bypassCurrentExpressionForExecutionModeOperations()) {
+            return;
+        }
+        super.initHighestExecutionMode();
+    }
+
+    @Override
+    public ExecutionMode getHighestExecutionMode() {
+        if (bypassCurrentExpressionForExecutionModeOperations()) {
+            return this._expressions.get(0).getHighestExecutionMode();
+        }
+        return super.getHighestExecutionMode();
     }
 
     @Override

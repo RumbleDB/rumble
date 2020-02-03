@@ -21,6 +21,7 @@
 package sparksoniq.semantics;
 
 import sparksoniq.exceptions.SemanticException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.types.SequenceType;
 
@@ -33,11 +34,18 @@ public class StaticContext {
         private String name;
         private SequenceType sequenceType;
         private ExpressionMetadata metadata;
+        private ExecutionMode storageMode;
 
-        public InScopeVariable(String name, SequenceType sequenceType, ExpressionMetadata metadata) {
+        public InScopeVariable(
+                String name,
+                SequenceType sequenceType,
+                ExpressionMetadata metadata,
+                ExecutionMode storageMode
+        ) {
             this.name = name;
             this.sequenceType = sequenceType;
             this.metadata = metadata;
+            this.storageMode = storageMode;
         }
 
         public String getName() {
@@ -107,8 +115,17 @@ public class StaticContext {
         return getInScopeVariable(varName).getMetadata();
     }
 
-    public void addVariable(String varName, SequenceType type, ExpressionMetadata metadata) {
-        this._inScopeVariables.put(varName, new InScopeVariable(varName, type, metadata));
+    public ExecutionMode getVariableStorageMode(String varName) {
+        return getInScopeVariable(varName).storageMode;
+    }
+
+    public void addVariable(
+            String varName,
+            SequenceType type,
+            ExpressionMetadata metadata,
+            ExecutionMode storageMode
+    ) {
+        this._inScopeVariables.put(varName, new InScopeVariable(varName, type, metadata, storageMode));
     }
 
     protected Map<String, InScopeVariable> getInScopeVariables() {

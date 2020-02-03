@@ -7,7 +7,8 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.InvalidRumbleMLParamException;
 import sparksoniq.exceptions.OurBadException;
-import sparksoniq.jsoniq.runtime.iterator.RDDRuntimeIterator;
+import sparksoniq.jsoniq.ExecutionMode;
+import sparksoniq.jsoniq.runtime.iterator.DataFrameRuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 
@@ -16,7 +17,7 @@ import java.util.List;
 import static sparksoniq.spark.ml.RumbleMLUtils.convertRumbleObjectItemToSparkMLParamMap;
 
 
-public class ApplyTransformerRuntimeIterator extends RDDRuntimeIterator {
+public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private String _transformerName;
@@ -25,16 +26,12 @@ public class ApplyTransformerRuntimeIterator extends RDDRuntimeIterator {
     public ApplyTransformerRuntimeIterator(
             String transformerName,
             Class<?> transformerSparkMLClass,
+            ExecutionMode executionMode,
             IteratorMetadata iteratorMetadata
     ) {
-        super(null, iteratorMetadata);
+        super(null, executionMode, iteratorMetadata);
         this._transformerName = transformerName;
         this._transformerSparkMLClass = transformerSparkMLClass;
-    }
-
-    @Override
-    public boolean isDataFrame() {
-        return true;
     }
 
     @Override

@@ -18,46 +18,31 @@
  *
  */
 
-package sparksoniq.jsoniq.runtime.iterator.primary;
+package sparksoniq.jsoniq.runtime.iterator;
 
-import org.rumbledb.api.Item;
-import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.exceptions.OurBadException;
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.jsoniq.item.ItemFactory;
-import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public class ArrayRuntimeIterator extends LocalRuntimeIterator {
+public abstract class DataFrameRuntimeIterator extends RDDRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
-    public ArrayRuntimeIterator(
-            RuntimeIterator arrayItems,
+    protected DataFrameRuntimeIterator(
+            List<RuntimeIterator> children,
             ExecutionMode executionMode,
             IteratorMetadata iteratorMetadata
     ) {
-        super(null, executionMode, iteratorMetadata);
-        if (arrayItems != null) {
-            this._children.add(arrayItems);
+        super(children, executionMode, iteratorMetadata);
+        if (executionMode != ExecutionMode.DATAFRAME) {
+            throw new OurBadException("DF runtime iterators support only dataframe execution mode");
         }
     }
 
     @Override
-    public Item next() {
-        if (this._hasNext) {
-            List<Item> result = new ArrayList<>();
-            if (!this._children.isEmpty()) {
-                result.addAll(this._children.get(0).materialize(_currentDynamicContextForLocalExecution));
-            }
-            Item _item = ItemFactory.getInstance().createArrayItem(result);
-            this._hasNext = false;
-            return _item;
-        } else {
-            throw new IteratorFlowException("Invalid next() call on array iterator", getMetadata());
-        }
+    protected boolean implementsDataFrames() {
+        return true;
     }
 }

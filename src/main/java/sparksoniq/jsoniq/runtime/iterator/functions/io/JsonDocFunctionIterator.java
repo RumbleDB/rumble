@@ -26,6 +26,7 @@ import org.rumbledb.api.Item;
 import sparksoniq.exceptions.CannotRetrieveResourceException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.io.json.JiqsItemParser;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
@@ -41,8 +42,12 @@ public class JsonDocFunctionIterator extends LocalFunctionCallIterator {
     private static final long serialVersionUID = 1L;
     private RuntimeIterator _iterator;
 
-    public JsonDocFunctionIterator(List<RuntimeIterator> arguments, IteratorMetadata iteratorMetadata) {
-        super(arguments, iteratorMetadata);
+    public JsonDocFunctionIterator(
+            List<RuntimeIterator> arguments,
+            ExecutionMode executionMode,
+            IteratorMetadata iteratorMetadata
+    ) {
+        super(arguments, executionMode, iteratorMetadata);
     }
 
     @Override

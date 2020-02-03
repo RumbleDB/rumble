@@ -21,6 +21,7 @@
 package sparksoniq.semantics.visitor;
 
 import sparksoniq.exceptions.UndeclaredVariableException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.expr.control.TypeSwitchCaseExpression;
@@ -32,6 +33,9 @@ import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworVarDecl;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.ForClauseVar;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.GroupByClauseVar;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.LetClauseVar;
+import sparksoniq.jsoniq.compiler.translator.expr.postfix.PostFixExpression;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionCall;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionDeclaration;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpressionVar;
@@ -41,6 +45,37 @@ import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
 
 public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<StaticContext> {
+
+    // indicate whether an error should be thrown if an duplicate user defined function declaration is detected
+    private boolean ignoreDuplicateUserDefinedFunctionError;
+
+    // indicate whether an error should be thrown if a function call is made for a non-existing function
+    private boolean ignoreMissingFunctionError;
+
+    public StaticContextVisitor() {
+        this.setConfigForInitialPass();
+    }
+
+    // Initial pass collects the function declaration information for the second pass, this enables hoisting
+    // some functions may not yet be defined yet and if so their body's execution mode's will be unset
+    public void setConfigForInitialPass() {
+        ignoreDuplicateUserDefinedFunctionError = false;
+        ignoreMissingFunctionError = true;
+    }
+
+    // second pass should have all function declaration and execution mode information available
+    public void setConfigForConsequentPasses() {
+        ignoreDuplicateUserDefinedFunctionError = true;
+        ignoreMissingFunctionError = false;
+    }
+
+    @Override
+    protected StaticContext defaultAction(ExpressionOrClause expression, StaticContext argument) {
+        StaticContext generatedContext = visitDescendants(expression, argument);
+        // initialize execution mode by visiting children and expressions first, then calling initialize methods
+        expression.initHighestExecutionMode();
+        return generatedContext;
+    }
 
     @Override
     public StaticContext visit(ExpressionOrClause expression, StaticContext argument) {
@@ -53,19 +88,61 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
         return expression.accept(this, argument);
     }
 
+    // region primary
     @Override
     public StaticContext visitVariableReference(VariableReference expression, StaticContext argument) {
-        if (!argument.isInScope(expression.getVariableName())) {
+        String variableName = expression.getVariableName();
+        if (!argument.isInScope(variableName)) {
             throw new UndeclaredVariableException(
-                    "Uninitialized variable reference: " + expression.getVariableName(),
+                    "Uninitialized variable reference: " + variableName,
                     expression.getMetadata()
             );
         } else {
-            expression.setType(argument.getVariableSequenceType(expression.getVariableName()));
-            return defaultAction(expression, argument);
+            expression.setType(argument.getVariableSequenceType(variableName));
+            expression.setHighestExecutionMode(argument.getVariableStorageMode(variableName));
+            return argument;
         }
     }
 
+    @Override
+    public StaticContext visitFunctionDeclaration(FunctionDeclaration expression, StaticContext argument) {
+        // define a static context for the function body, add params to the context and visit the body expression
+        StaticContext functionDeclarationContext = new StaticContext(argument);
+        expression.get_params()
+            .forEach(
+                (paramName, flworVarSequenceType) -> functionDeclarationContext.addVariable(
+                    paramName,
+                    flworVarSequenceType.getSequence(),
+                    expression.getMetadata(),
+                    ExecutionMode.LOCAL // static udf currently supports materialized(local) params, not RDDs or DFs
+                )
+            );
+        // visit the body first to make its execution mode available while adding the function to the catalog
+        this.visit(expression.get_body(), functionDeclarationContext);
+        expression.initHighestExecutionMode();
+        expression.registerUserDefinedFunctionExecutionMode(ignoreDuplicateUserDefinedFunctionError);
+        return functionDeclarationContext;
+    }
+
+    @Override
+    public StaticContext visitFunctionCall(FunctionCall expression, StaticContext argument) {
+        StaticContext generatedContext = visitDescendants(expression, argument);
+        expression.initFunctionCallHighestExecutionMode(ignoreMissingFunctionError);
+        return generatedContext;
+    }
+
+    @Override
+    public StaticContext visitPostfixExpression(PostFixExpression expression, StaticContext argument) {
+        // visit and initialize firstly the primary expression, then the postfix extensions
+        this.visit(expression.get_primaryExpressionNode(), argument);
+        expression.initHighestExecutionMode();
+        expression.getExtensions().forEach(extension -> extension.initHighestExecutionMode());
+        return visitDescendants(expression, argument);
+    }
+
+    // endregion
+
+    // region FLWOR
     @Override
     public StaticContext visitFlowrExpression(FlworExpression expression, StaticContext argument) {
         StaticContext result = this.visit(expression.getStartClause(), argument);
@@ -77,18 +154,20 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
         return result;
     }
 
-    // region FLOWR vars
+    // region FLWOR vars
     @Override
     public StaticContext visitForClauseVar(ForClauseVar expression, StaticContext argument) {
         // TODO visit at...
         this.visit(expression.getExpression(), argument);
+        expression.initHighestExecutionAndVariableHighestStorageModes();
 
         StaticContext result = visitFlowrVarDeclaration(expression, argument);
         if (expression.getPositionalVariableReference() != null) {
             result.addVariable(
                 expression.getPositionalVariableReference().getVariableName(),
                 new SequenceType(new ItemType(ItemTypes.IntegerItem)),
-                expression.getMetadata()
+                expression.getMetadata(),
+                ExecutionMode.LOCAL
             );
         }
         return result;
@@ -97,28 +176,39 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
     @Override
     public StaticContext visitLetClauseVar(LetClauseVar expression, StaticContext argument) {
         this.visit(expression.getExpression(), argument);
+        expression.initHighestExecutionAndVariableHighestStorageModes();
         return visitFlowrVarDeclaration(expression, argument);
     }
 
     @Override
     public StaticContext visitGroupByClauseVar(GroupByClauseVar expression, StaticContext argument) {
-        if (expression.getExpression() == null) {
-            this.visit(expression.getVariableReference(), argument);
-            return argument;
+        StaticContext groupByClauseContext;
+        if (expression.getExpression() != null) {
+            // if a variable declaration takes place
+            this.visit(expression.getExpression(), argument);
+            // initialize execution and storage modes and then add the variable to the context
+            expression.initHighestExecutionAndVariableHighestStorageModes();
+            groupByClauseContext = visitFlowrVarDeclaration(expression, argument);
+        } else {
+            // if a variable is only referenced, use the context as is
+            groupByClauseContext = argument;
         }
-
-        this.visit(expression.getExpression(), argument);
-        return visitFlowrVarDeclaration(expression, argument);
+        // validate if the referenced variable exists in the current context
+        this.visit(expression.getVariableReference(), groupByClauseContext);
+        return groupByClauseContext;
     }
 
     @Override
     public StaticContext visitCountClause(CountClause expression, StaticContext argument) {
+        expression.initHighestExecutionMode();
         StaticContext result = new StaticContext(argument);
         result.addVariable(
             expression.getCountVariable().getVariableName(),
             new SequenceType(new ItemType(ItemTypes.IntegerItem), SequenceType.Arity.One),
-            expression.getMetadata()
+            expression.getMetadata(),
+            ExecutionMode.LOCAL
         );
+        this.visit(expression.getCountVariable(), result);
         return result;
     }
 
@@ -128,58 +218,92 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
         SequenceType type = expression.getAsSequence() == null
             ? new SequenceType()
             : expression.getAsSequence().getSequence();
-        result.addVariable(expression.getVariableReference().getVariableName(), type, expression.getMetadata());
+        result.addVariable(
+            expression.getVariableReference().getVariableName(),
+            type,
+            expression.getMetadata(),
+            expression.getVariableHighestStorageMode()
+        );
         return result;
     }
     // endregion
+    // endregion
 
+    // region quantifiers
     @Override
     public StaticContext visitQuantifiedExpression(QuantifiedExpression expression, StaticContext argument) {
-        StaticContext context = argument;
+        StaticContext contextWithQuantifiedExpressionVariables = argument;
         for (QuantifiedExpressionVar clause : expression.getVariables()) {
-            context = this.visit(clause, context);
+            contextWithQuantifiedExpressionVariables = this.visit(clause, contextWithQuantifiedExpressionVariables);
         }
-        return context;
+        // validate expression with the defined variables
+        this.visit(expression.getEvaluationExpression(), contextWithQuantifiedExpressionVariables);
+        expression.initHighestExecutionMode();
+        // return the given context unchanged as defined variables go out of scope
+        return argument;
     }
 
     @Override
     public StaticContext visitQuantifiedExpressionVar(QuantifiedExpressionVar expression, StaticContext argument) {
+        // validate expression with starting context
+        this.visit(expression.getExpression(), argument);
+        expression.initHighestExecutionMode();
+
+        // create a child context, add the variable and return it
         StaticContext result = new StaticContext(argument);
         SequenceType type = expression.getSequenceType() == null ? new SequenceType() : expression.getSequenceType();
-        result.addVariable(expression.getVariableReference().getVariableName(), type, expression.getMetadata());
-        this.visit(expression.getExpression(), argument);
+        result.addVariable(
+            expression.getVariableReference().getVariableName(),
+            type,
+            expression.getMetadata(),
+            ExecutionMode.LOCAL
+        );
         return result;
     }
+    // endregion
 
+    // region control
     @Override
     public StaticContext visitTypeSwitchExpression(TypeSwitchExpression expression, StaticContext argument) {
         this.visit(expression.getTestCondition(), argument);
         expression.getCases().forEach(typeSwitchCaseExpression -> this.visit(typeSwitchCaseExpression, argument));
 
-        // add variable to context using the VariableReference and use that context to visit default return expression
-        StaticContext defaultCaseStaticContext = argument;
         VariableReference defaultCaseVariableReference = expression.getVarRefDefault();
-        if (defaultCaseVariableReference != null) {
-            defaultCaseStaticContext = new StaticContext(argument);
+        if (defaultCaseVariableReference == null) {
+            this.visit(expression.getDefaultExpression(), argument);
+        } else {
+            // add variable to child context to visit default return expression
+            StaticContext defaultCaseStaticContext = new StaticContext(argument);
             defaultCaseStaticContext.addVariable(
                 defaultCaseVariableReference.getVariableName(),
                 null,
-                expression.getMetadata()
+                expression.getMetadata(),
+                ExecutionMode.LOCAL
             );
+            this.visit(expression.getDefaultExpression(), defaultCaseStaticContext);
         }
-        this.visit(expression.getDefaultExpression(), defaultCaseStaticContext);
-
+        expression.initHighestExecutionMode();
+        // return the given context unchanged as defined variables go out of scope
         return argument;
     }
 
     @Override
     public StaticContext visitTypeSwitchCaseExpression(TypeSwitchCaseExpression expression, StaticContext argument) {
-        StaticContext result = new StaticContext(argument);
-        if (expression.getVariableReference() != null) {
-            result.addVariable(expression.getVariableReference().getVariableName(), null, expression.getMetadata());
+        StaticContext caseContext = new StaticContext(argument);
+        VariableReference variableReference = expression.getVariableReference();
+        if (variableReference != null) {
+            caseContext.addVariable(
+                variableReference.getVariableName(),
+                null,
+                expression.getMetadata(),
+                ExecutionMode.LOCAL
+            );
         }
-        this.visit(expression.getReturnExpression(), result);
-        return result;
+        this.visit(expression.getReturnExpression(), caseContext);
+        expression.initHighestExecutionMode();
+        // return the given context unchanged as defined variables go out of scope
+        return argument;
     }
+    // endregion
 
 }

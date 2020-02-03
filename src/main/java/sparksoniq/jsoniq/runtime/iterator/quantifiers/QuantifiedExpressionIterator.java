@@ -22,6 +22,7 @@ package sparksoniq.jsoniq.runtime.iterator.quantifiers;
 
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.quantifiers.QuantifiedExpression;
 import sparksoniq.jsoniq.item.BooleanItem;
 import sparksoniq.jsoniq.item.ItemFactory;
@@ -44,11 +45,12 @@ public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
             QuantifiedExpression.QuantifiedOperators operator,
             List<QuantifiedExpressionVarIterator> children,
             RuntimeIterator evaluationExpression,
+            ExecutionMode executionMode,
             IteratorMetadata iteratorMetadata
     ) {
-        super(null, iteratorMetadata);
+        super(null, executionMode, iteratorMetadata);
         this._operator = operator;
-        children.forEach(c -> this._children.add(c));
+        this._children.addAll(children);
         this._evaluationExpression = evaluationExpression;
         _children.add(_evaluationExpression);
     }

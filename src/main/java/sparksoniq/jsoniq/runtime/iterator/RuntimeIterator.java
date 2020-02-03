@@ -31,7 +31,7 @@ import org.rumbledb.api.Item;
 import sparksoniq.exceptions.InvalidArgumentTypeException;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.OurBadException;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.ItemTypes;
@@ -52,12 +52,12 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     protected transient DynamicContext _currentDynamicContextForLocalExecution;
     private IteratorMetadata metadata;
 
-    public RuntimeIterator() {
-    }
+    protected ExecutionMode _highestExecutionMode;
 
-    protected RuntimeIterator(List<RuntimeIterator> children, IteratorMetadata metadata) {
+    protected RuntimeIterator(List<RuntimeIterator> children, ExecutionMode executionMode, IteratorMetadata metadata) {
         this.metadata = metadata;
         this._isOpen = false;
+        this._highestExecutionMode = executionMode;
         this._children = new ArrayList<>();
         if (children != null && !children.isEmpty())
             this._children.addAll(children);
@@ -192,13 +192,31 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         return metadata;
     }
 
-    public abstract boolean isRDD();
+    public ExecutionMode getHighestExecutionMode() {
+        return _highestExecutionMode;
+    }
 
-    public abstract JavaRDD<Item> getRDD(DynamicContext context);
+    public boolean isRDD() {
+        if (_highestExecutionMode == ExecutionMode.UNSET) {
+            throw new OurBadException("isRDD field in iterator without execution mode being set.");
+        }
+        return _highestExecutionMode.isRDD();
+    }
 
-    public abstract boolean isDataFrame();
+    public JavaRDD<Item> getRDD(DynamicContext context) {
+        throw new OurBadException("RDDs are not implemented for the iterator", getMetadata());
+    }
 
-    public abstract Dataset<Row> getDataFrame(DynamicContext context);
+    public boolean isDataFrame() {
+        if (_highestExecutionMode == ExecutionMode.UNSET) {
+            throw new OurBadException("isDataFrame accessed in iterator without execution mode being set.");
+        }
+        return _highestExecutionMode.isDataFrame();
+    }
+
+    public Dataset<Row> getDataFrame(DynamicContext context) {
+        throw new OurBadException("DataFrames are not implemented for the iterator", getMetadata());
+    }
 
     public abstract Item next();
 

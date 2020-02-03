@@ -42,6 +42,10 @@ public class FlworClause extends ExpressionOrClause {
         this.clauseType = clauseType;
     }
 
+    public FLWOR_CLAUSES getClauseType() {
+        return clauseType;
+    }
+
     public FlworClause getPreviousClause() {
         return previousClause;
     }
@@ -50,8 +54,12 @@ public class FlworClause extends ExpressionOrClause {
         this.previousClause = previousClause;
     }
 
-    public FLWOR_CLAUSES getClauseType() {
-        return clauseType;
+    /**
+     * This method is overridden in clauses such as for and let for special behavior
+     */
+    @Override
+    public void initHighestExecutionMode() {
+        this._highestExecutionMode = previousClause.getHighestExecutionMode();
     }
 
     @Override

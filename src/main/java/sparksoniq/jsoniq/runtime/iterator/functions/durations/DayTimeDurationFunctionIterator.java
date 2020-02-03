@@ -4,6 +4,7 @@ import org.joda.time.Period;
 import org.rumbledb.api.Item;
 import sparksoniq.exceptions.CastException;
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.DurationItem;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -21,9 +22,10 @@ public class DayTimeDurationFunctionIterator extends LocalFunctionCallIterator {
 
     public DayTimeDurationFunctionIterator(
             List<RuntimeIterator> parameters,
+            ExecutionMode executionMode,
             IteratorMetadata iteratorMetadata
     ) {
-        super(parameters, iteratorMetadata);
+        super(parameters, executionMode, iteratorMetadata);
     }
 
     @Override

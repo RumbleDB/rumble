@@ -20,9 +20,17 @@
 
 package sparksoniq.jsoniq.compiler.translator.expr.primary;
 
+import sparksoniq.exceptions.OurBadException;
+import sparksoniq.exceptions.UnknownFunctionCallException;
+import sparksoniq.exceptions.UnsupportedFeatureException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.BuiltinFunction;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.BuiltinFunction.BuiltinFunctionExecutionMode;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
@@ -34,12 +42,13 @@ public class FunctionCall extends PrimaryExpression {
 
     private final String _functionName;
     private final List<Expression> _arguments;
-
+    private final boolean _isPartialApplication;
 
     public FunctionCall(String functionName, List<Expression> arguments, ExpressionMetadata metadata) {
         super(metadata);
         this._functionName = functionName;
         this._arguments = arguments;
+        this._isPartialApplication = arguments.stream().anyMatch(arg -> arg instanceof ArgumentPlaceholder);
     }
 
     public List<Expression> getArguments() {
@@ -52,9 +61,83 @@ public class FunctionCall extends PrimaryExpression {
 
     @Override
     public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result = new ArrayList<>();
-        result.addAll(this._arguments);
+        List<ExpressionOrClause> result = new ArrayList<>(this._arguments);
         return getDescendantsFromChildren(result, depthSearch);
+    }
+
+    @Override
+    public final void initHighestExecutionMode() {
+        throw new OurBadException("Function call expressions do not use the highestExecutionMode initializer");
+    }
+
+    public void initFunctionCallHighestExecutionMode(boolean ignoreMissingFunctionError) {
+        FunctionIdentifier identifier = new FunctionIdentifier(this._functionName, this._arguments.size());
+        if (Functions.checkBuiltInFunctionExists(identifier)) {
+            if (_isPartialApplication) {
+                throw new UnsupportedFeatureException(
+                        "Partial application on built-in functions are not supported.",
+                        this.getMetadata()
+                );
+            }
+            BuiltinFunction builtinFunction = Functions.getBuiltInFunction(identifier);
+            this._highestExecutionMode = this.getBuiltInFunctionExecutionMode(builtinFunction);
+            return;
+        }
+
+        if (Functions.checkUserDefinedFunctionExecutionModeExists(identifier)) {
+            if (_isPartialApplication) {
+                this._highestExecutionMode = ExecutionMode.LOCAL;
+                return;
+            }
+            this._highestExecutionMode = Functions.getUserDefinedFunctionExecutionMode(identifier, getMetadata());
+            return;
+        }
+
+        if (!ignoreMissingFunctionError) {
+            throw new UnknownFunctionCallException(
+                    identifier.getName(),
+                    identifier.getArity(),
+                    this.getMetadata()
+            );
+        }
+    }
+
+    private ExecutionMode getBuiltInFunctionExecutionMode(BuiltinFunction builtinFunction) {
+        BuiltinFunctionExecutionMode functionExecutionMode = builtinFunction.getBuiltinFunctionExecutionMode();
+        if (functionExecutionMode == BuiltinFunctionExecutionMode.LOCAL) {
+            return ExecutionMode.LOCAL;
+        }
+        if (functionExecutionMode == BuiltinFunctionExecutionMode.RDD) {
+            return ExecutionMode.RDD;
+        }
+        if (functionExecutionMode == BuiltinFunctionExecutionMode.DATAFRAME) {
+            return ExecutionMode.DATAFRAME;
+        }
+        if (functionExecutionMode == BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT) {
+            ExecutionMode firstArgumentExecutionMode = this._arguments.get(0).getHighestExecutionMode();
+            if (firstArgumentExecutionMode.isDataFrame()) {
+                return ExecutionMode.DATAFRAME;
+            }
+            if (firstArgumentExecutionMode.isRDD()) {
+                return ExecutionMode.RDD;
+            }
+            return ExecutionMode.LOCAL;
+        }
+        if (
+            functionExecutionMode == BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT_BUT_DATAFRAME_FALLSBACK_TO_LOCAL
+        ) {
+            ExecutionMode firstArgumentExecutionMode = this._arguments.get(0).getHighestExecutionMode();
+            if (
+                firstArgumentExecutionMode.isRDD()
+                    && !firstArgumentExecutionMode.isDataFrame()
+            ) {
+                return ExecutionMode.RDD;
+            }
+            return ExecutionMode.LOCAL;
+        }
+        throw new OurBadException(
+                "Unhandled functionExecutionMode detected while extracting execution mode for built-in function."
+        );
     }
 
     @Override

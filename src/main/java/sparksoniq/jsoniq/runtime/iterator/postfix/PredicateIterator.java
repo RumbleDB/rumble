@@ -27,7 +27,7 @@ import org.rumbledb.api.Item;
 import scala.Tuple2;
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.exceptions.OurBadException;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -59,9 +59,10 @@ public class PredicateIterator extends HybridRuntimeIterator {
     public PredicateIterator(
             RuntimeIterator sequence,
             RuntimeIterator filterExpression,
+            ExecutionMode executionMode,
             IteratorMetadata iteratorMetadata
     ) {
-        super(Arrays.asList(sequence, filterExpression), iteratorMetadata);
+        super(Arrays.asList(sequence, filterExpression), executionMode, iteratorMetadata);
         _iterator = sequence;
         _filter = filterExpression;
         _filterDynamicContext = null;
@@ -205,11 +206,6 @@ public class PredicateIterator extends HybridRuntimeIterator {
             JavaPairRDD<Item, Long> resultRDD = zippedChildRDD.filter(transformation);
             return resultRDD.keys();
         }
-    }
-
-    @Override
-    protected boolean initIsRDD() {
-        return this._iterator.isRDD();
     }
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
