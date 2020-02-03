@@ -52,21 +52,39 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
     // indicate whether an error should be thrown if a function call is made for a non-existing function
     private boolean ignoreMissingFunctionError;
 
+    private boolean ignoreUnsetExecutionModeAccessDuringFunctionDeclaration;
+
     public StaticContextVisitor() {
         this.setConfigForInitialPass();
     }
 
-    // Initial pass collects the function declaration information for the second pass, this enables hoisting
-    // some functions may not yet be defined yet and if so their body's execution mode's will be unset
+    // static context visitor's multipass algorithm enables function hoisting
+
+    // initial pass collects function declaration information
     public void setConfigForInitialPass() {
+        // initial pass ensures that built-in functions are not redeclared or a single function definition is duplicated
         ignoreDuplicateUserDefinedFunctionError = false;
+        // functions calls that refer to undeclared functions will have their execution mode unset
         ignoreMissingFunctionError = true;
+        // function declarations make undefined/unset function calls in their body will also have their execution mode
+        // unset
+        ignoreUnsetExecutionModeAccessDuringFunctionDeclaration = true;
     }
 
-    // second pass should have all function declaration and execution mode information available
-    public void setConfigForConsequentPasses() {
+    // intermediate passes set execution mode for functions that refer to other functions
+    public void setConfigForIntermediatePasses() {
+        // user defined functions will be redeclared in consequent passes to update their execution modes
+        ignoreDuplicateUserDefinedFunctionError = true;
+        // since all function declaration information is available, functions cannot be missing anymore
+        ignoreMissingFunctionError = false;
+        ignoreUnsetExecutionModeAccessDuringFunctionDeclaration = true;
+    }
+
+    // final pass ensures that all function calls have their execution modes set
+    public void setConfigForFinalPass() {
         ignoreDuplicateUserDefinedFunctionError = true;
         ignoreMissingFunctionError = false;
+        ignoreUnsetExecutionModeAccessDuringFunctionDeclaration = false;
     }
 
     @Override
@@ -120,7 +138,10 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
         // visit the body first to make its execution mode available while adding the function to the catalog
         this.visit(expression.get_body(), functionDeclarationContext);
         expression.initHighestExecutionMode();
-        expression.registerUserDefinedFunctionExecutionMode(ignoreDuplicateUserDefinedFunctionError);
+        expression.registerUserDefinedFunctionExecutionMode(
+            ignoreDuplicateUserDefinedFunctionError,
+            ignoreUnsetExecutionModeAccessDuringFunctionDeclaration
+        );
         return functionDeclarationContext;
     }
 

@@ -149,6 +149,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.lang.reflect.Constructor;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -286,6 +287,8 @@ public class Functions {
     // but functions items are fully known at runtimeIterator generation
     private static HashMap<FunctionIdentifier, ExecutionMode> userDefinedFunctionsExecutionMode;
     private static HashMap<FunctionIdentifier, FunctionItem> userDefinedFunctions;
+
+    private static List<FunctionIdentifier> currentUnsetUserDefinedFunctionIdentifiers;
 
     private static final Map<String, ItemType> itemTypes;
 
@@ -528,6 +531,7 @@ public class Functions {
     static {
         userDefinedFunctionsExecutionMode = new HashMap<>();
         userDefinedFunctions = new HashMap<>();
+        currentUnsetUserDefinedFunctionIdentifiers = new ArrayList<>();
     }
 
     public static boolean checkBuiltInFunctionExists(FunctionIdentifier identifier) {
@@ -659,6 +663,10 @@ public class Functions {
         userDefinedFunctions.clear();
     }
 
+    public static List<FunctionIdentifier> getCurrentUnsetUserDefinedFunctionIdentifiers() {
+        return currentUnsetUserDefinedFunctionIdentifiers;
+    }
+
     public static void addUserDefinedFunctionExecutionMode(
             FunctionIdentifier functionIdentifier,
             ExecutionMode executionMode,
@@ -673,7 +681,30 @@ public class Functions {
         ) {
             throw new DuplicateFunctionIdentifierException(functionIdentifier, meta);
         }
+
+        if (isAddingNewUnsetUserDefinedFunction(functionIdentifier, executionMode)) {
+            currentUnsetUserDefinedFunctionIdentifiers.add(functionIdentifier);
+        } else if (isUpdatingUnsetUserDefinedFunctionToNonUnset(functionIdentifier, executionMode)) {
+            currentUnsetUserDefinedFunctionIdentifiers.remove(functionIdentifier);
+        }
         userDefinedFunctionsExecutionMode.put(functionIdentifier, executionMode);
+    }
+
+    private static boolean isAddingNewUnsetUserDefinedFunction(
+            FunctionIdentifier functionIdentifier,
+            ExecutionMode executionMode
+    ) {
+        return !userDefinedFunctionsExecutionMode.containsKey(functionIdentifier)
+            && executionMode == ExecutionMode.UNSET;
+    }
+
+    private static boolean isUpdatingUnsetUserDefinedFunctionToNonUnset(
+            FunctionIdentifier functionIdentifier,
+            ExecutionMode executionMode
+    ) {
+        return userDefinedFunctionsExecutionMode.containsKey(functionIdentifier)
+            && userDefinedFunctionsExecutionMode.get(functionIdentifier) == ExecutionMode.UNSET
+            && executionMode != ExecutionMode.UNSET;
     }
 
     public static void addUserDefinedFunction(FunctionItem function, ExpressionMetadata meta) {

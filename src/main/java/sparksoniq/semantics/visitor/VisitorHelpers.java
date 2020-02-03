@@ -1,8 +1,13 @@
 package sparksoniq.semantics.visitor;
 
+import sparksoniq.exceptions.DuplicateFunctionIdentifierException;
+import sparksoniq.exceptions.OurBadException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
+import sparksoniq.jsoniq.compiler.translator.expr.primary.IntegerLiteral;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.semantics.StaticContext;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 
 public class VisitorHelpers {
 
@@ -11,10 +16,48 @@ public class VisitorHelpers {
     }
 
     public static void populateStaticContext(ExpressionOrClause expression) {
-        // perform double pass over static context to support function hoisting
         StaticContextVisitor visitor = new StaticContextVisitor();
         visitor.visit(expression, null);
-        visitor.setConfigForConsequentPasses();
+
+        visitor.setConfigForIntermediatePasses();
+        int prevUnsetCount = Functions.getCurrentUnsetUserDefinedFunctionIdentifiers().size();
+        while (true) {
+            visitor.visit(expression, null);
+            int currentUnsetCount = Functions.getCurrentUnsetUserDefinedFunctionIdentifiers().size();
+
+            if (currentUnsetCount > prevUnsetCount) {
+                throw new OurBadException(
+                        "Unexpected program state reached while performing multi-pass over StaticContext."
+                );
+            }
+            if (currentUnsetCount == prevUnsetCount) {
+                setLocalExecutionForUnsetUserDefinedFunctions();
+                break;
+            }
+            prevUnsetCount = currentUnsetCount;
+        }
+
+        visitor.setConfigForFinalPass();
         visitor.visit(expression, null);
+    }
+
+    private static void setLocalExecutionForUnsetUserDefinedFunctions() {
+        try {
+            for (
+                FunctionIdentifier functionIdentifier : Functions
+                    .getCurrentUnsetUserDefinedFunctionIdentifiers()
+            ) {
+                Functions.addUserDefinedFunctionExecutionMode(
+                    functionIdentifier,
+                    ExecutionMode.LOCAL,
+                    true,
+                    null
+                );
+            }
+        } catch (DuplicateFunctionIdentifierException e) {
+            throw new OurBadException(
+                    "Unexpected program state reached while setting local execution for unset user defined functions."
+            );
+        }
     }
 }
