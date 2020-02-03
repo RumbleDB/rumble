@@ -20,8 +20,12 @@
 
 package sparksoniq.spark.iterator.function;
 
+import org.apache.hadoop.mapred.InvalidInputException;
+import org.apache.spark.SparkException;
+import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import sparksoniq.exceptions.CannotRetrieveResourceException;
 import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.runtime.iterator.RDDRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -48,21 +52,27 @@ public class StructuredJsonFileFunctionIterator extends RDDRuntimeIterator {
     public Dataset<Row> getDataFrame(DynamicContext context) {
         RuntimeIterator urlIterator = this._children.get(0);
         urlIterator.open(context);
-        String fileName = urlIterator.next().getStringValue();
+        String url = urlIterator.next().getStringValue();
         urlIterator.close();
         try {
             return SparkSessionManager.getInstance()
                 .getOrCreateSession()
                 .read()
                 .option("mode", "FAILFAST")
-                .json(fileName);
+                .json(url);
         } catch (Exception e) {
-            throw new SparksoniqRuntimeException(
-                    "File "
-                        + fileName
-                        + " contains a malformed JSON document that does not fit into the JSON lines format.",
-                    getMetadata().getExpressionMetadata()
-            );
+            if (e instanceof AnalysisException) {
+                throw new CannotRetrieveResourceException("File " + url + " not found.", getMetadata());
+            }
+            if (e instanceof SparkException) {
+                throw new SparksoniqRuntimeException(
+                        "File "
+                            + url
+                            + " contains a malformed JSON document that does not fit into the JSON lines format.",
+                        getMetadata().getExpressionMetadata()
+                );
+            }
+            throw e;
         }
     }
 }

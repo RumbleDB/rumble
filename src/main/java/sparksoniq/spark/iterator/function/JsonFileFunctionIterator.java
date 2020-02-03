@@ -22,6 +22,7 @@ package sparksoniq.spark.iterator.function;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
+import sparksoniq.exceptions.CannotRetrieveResourceException;
 import sparksoniq.io.json.StringToItemMapper;
 import sparksoniq.jsoniq.runtime.iterator.RDDRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -44,22 +45,27 @@ public class JsonFileFunctionIterator extends RDDRuntimeIterator {
         JavaRDD<String> strings;
         RuntimeIterator urlIterator = this._children.get(0);
         urlIterator.open(context);
+        String url = urlIterator.next().getStringValue();
+        urlIterator.close();
+        if (!UrlValidator.isValid(url)) {
+            throw new CannotRetrieveResourceException("File " + url + " not found.", getMetadata());
+        }
+
         if (this._children.size() == 1) {
             strings = SparkSessionManager.getInstance()
                 .getJavaSparkContext()
-                .textFile(urlIterator.next().getStringValue());
+                .textFile(url);
         } else {
             RuntimeIterator partitionsIterator = this._children.get(1);
             partitionsIterator.open(_currentDynamicContextForLocalExecution);
             strings = SparkSessionManager.getInstance()
                 .getJavaSparkContext()
                 .textFile(
-                    urlIterator.next().getStringValue(),
+                    url,
                     partitionsIterator.next().getIntegerValue()
                 );
             partitionsIterator.close();
         }
-        urlIterator.close();
         return strings.mapPartitions(new StringToItemMapper(getMetadata()));
     }
 }
