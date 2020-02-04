@@ -50,7 +50,7 @@ For convenience, we have included the ANTLRv4 files for 4.5.3 and 4.7 in the lib
 
 From the root directory of the rumble local checkout, you first need to build the parser:
 
-    $ ant -buildfile build_antlr_parser.xml generate-parser -Dantlr.jar=lib/antlr-4.7-complete.jar
+    $ ant -buildfile build_antlr_parser.xml generate-parser -Dantlr.jar=/lib/antlr-4.7-complete.jar
     
 ### Rumble
 
