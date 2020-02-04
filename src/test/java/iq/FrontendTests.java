@@ -24,9 +24,8 @@ package iq;
 import iq.base.AnnotationsTestsBase;
 import org.junit.Assert;
 import org.junit.Test;
-import org.rumbledb.parser.JsoniqBaseVisitor;
-
 import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
+import sparksoniq.jsoniq.compiler.parser.JsoniqBaseVisitor;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
 import sparksoniq.semantics.types.ItemTypes;
