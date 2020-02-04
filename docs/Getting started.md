@@ -59,7 +59,7 @@ The Rumble shell appears:
     Log Path: -
     Query Path : -
 
-    jiqs$
+    rumble$
     
 You can now start typing simple queries like the following few examples. Press *three times* the return key to execute a query.
 A warning about the ANTLR version may appear if you didn't pick the right jar file, but often you can just ignore it.
