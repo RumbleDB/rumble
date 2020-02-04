@@ -18,7 +18,7 @@
  *
  */
 
-package org.rumbledb.item.parsing;
+package org.rumbledb.items.parsing;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;

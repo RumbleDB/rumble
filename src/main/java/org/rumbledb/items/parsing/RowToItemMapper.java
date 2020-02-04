@@ -18,7 +18,7 @@
  *
  */
 
-package org.rumbledb.item.parsing;
+package org.rumbledb.items.parsing;
 
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.Row;

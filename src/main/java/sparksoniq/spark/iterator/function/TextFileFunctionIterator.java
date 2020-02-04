@@ -22,7 +22,7 @@ package sparksoniq.spark.iterator.function;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
-import org.rumbledb.item.parsing.StringToStringItemMapper;
+import org.rumbledb.items.parsing.StringToStringItemMapper;
 
 import sparksoniq.exceptions.CannotRetrieveResourceException;
 import sparksoniq.jsoniq.ExecutionMode;
