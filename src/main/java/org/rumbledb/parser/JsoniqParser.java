@@ -1,7 +1,7 @@
 // Generated from ./src/main/java/sparksoniq/jsoniq/compiler/parser/Jsoniq.g4 by ANTLR 4.7
 
 // Java header
-package sparksoniq.jsoniq.compiler.parser;
+package org.rumbledb.parser;
 
 import org.antlr.v4.runtime.NoViableAltException;
 import org.antlr.v4.runtime.Parser;
