@@ -18,7 +18,7 @@
  *
  */
 
-package sparksoniq.io.json;
+package org.rumbledb.itemparsing;
 
 import com.jsoniter.JsonIterator;
 import com.jsoniter.ValueType;
@@ -46,7 +46,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JiqsItemParser implements Serializable {
+public class ItemParser implements Serializable {
 
 
     private static final long serialVersionUID = 1L;
