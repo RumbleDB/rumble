@@ -18,7 +18,7 @@
  *
  */
 
-package sparksoniq.io.shell;
+package org.rumbledb.shell;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.mapred.InvalidInputException;
@@ -43,9 +43,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public class JiqsJLineShell {
+public class RumbleJLineShell {
     private static final String EXIT_COMMAND = "exit";
-    private static final String PROMPT = "jiqs$ ";
+    private static final String PROMPT = "rumble$ ";
     private static final String MID_QUERY_PROMPT = ">>> ";
     private final boolean _printTime;
     private final SparksoniqRuntimeConfiguration _configuration;
@@ -57,7 +57,7 @@ public class JiqsJLineShell {
     private String currentQueryContent = "";
     private String welcomeMessage;
 
-    public JiqsJLineShell(SparksoniqRuntimeConfiguration configuration) throws IOException {
+    public RumbleJLineShell(SparksoniqRuntimeConfiguration configuration) throws IOException {
         this._configuration = configuration;
         initialize();
         this._printTime = true;
@@ -131,7 +131,7 @@ public class JiqsJLineShell {
     private void handleException(Throwable ex, boolean showErrorInfo) {
         if (ex != null) {
             if (ex instanceof EndOfFileException) {
-                this.currentLine = JiqsJLineShell.EXIT_COMMAND;
+                this.currentLine = RumbleJLineShell.EXIT_COMMAND;
             } else if (ex instanceof SparkException) {
                 Throwable sparkExceptionCause = ex.getCause();
                 handleException(sparkExceptionCause, showErrorInfo);;
@@ -181,7 +181,7 @@ public class JiqsJLineShell {
     }
 
     private boolean exitCalled() {
-        return currentLine != null && this.currentLine.trim().toLowerCase().equals(JiqsJLineShell.EXIT_COMMAND);
+        return currentLine != null && this.currentLine.trim().toLowerCase().equals(RumbleJLineShell.EXIT_COMMAND);
     }
 
     private String getInitializationMessage() {
