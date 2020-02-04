@@ -1,7 +1,8 @@
 package sparksoniq.semantics.visitor;
 
-import sparksoniq.exceptions.DuplicateFunctionIdentifierException;
-import sparksoniq.exceptions.OurBadException;
+import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
+import org.rumbledb.exceptions.OurBadException;
+
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.IntegerLiteral;

@@ -21,9 +21,10 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate;
 
 import org.rumbledb.api.Item;
-import sparksoniq.exceptions.InvalidArgumentTypeException;
-import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
+import org.rumbledb.exceptions.InvalidArgumentTypeException;
+import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.SparksoniqRuntimeException;
+
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemComparatorForSequences;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;

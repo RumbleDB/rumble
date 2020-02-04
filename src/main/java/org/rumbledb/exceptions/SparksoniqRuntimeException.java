@@ -18,12 +18,13 @@
  *
  */
 
-package sparksoniq.exceptions;
+package org.rumbledb.exceptions;
 
-import sparksoniq.exceptions.codes.ErrorCodes;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 
 import java.util.Arrays;
+
+import org.rumbledb.errorcodes.ErrorCodes;
 
 public class SparksoniqRuntimeException extends RuntimeException {
 

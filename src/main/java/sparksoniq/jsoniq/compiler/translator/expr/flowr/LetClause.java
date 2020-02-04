@@ -20,7 +20,6 @@
 
 package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
-import sparksoniq.exceptions.SemanticException;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
@@ -28,6 +27,8 @@ import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.rumbledb.exceptions.SemanticException;
 
 public class LetClause extends FlworClause {
 

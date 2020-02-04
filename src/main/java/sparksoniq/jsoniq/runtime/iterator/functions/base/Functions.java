@@ -20,9 +20,6 @@
 
 package sparksoniq.jsoniq.runtime.iterator.functions.base;
 
-import sparksoniq.exceptions.DuplicateFunctionIdentifierException;
-import sparksoniq.exceptions.OurBadException;
-import sparksoniq.exceptions.UnknownFunctionCallException;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.jsoniq.item.FunctionItem;
@@ -155,6 +152,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.UnknownFunctionCallException;
 
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.abs;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.accumulate;

@@ -3,8 +3,9 @@ package sparksoniq.spark.iterator.function;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.spark.api.java.JavaSparkContext;
-import sparksoniq.exceptions.OurBadException;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.SparksoniqRuntimeException;
+
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.File;

@@ -27,8 +27,9 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
-import sparksoniq.exceptions.FunctionsNonSerializableException;
-import sparksoniq.exceptions.OurBadException;
+import org.rumbledb.exceptions.FunctionsNonSerializableException;
+import org.rumbledb.exceptions.OurBadException;
+
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionSignature;

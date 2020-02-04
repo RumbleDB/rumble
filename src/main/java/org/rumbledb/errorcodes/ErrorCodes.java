@@ -18,7 +18,7 @@
  *
  */
 
-package sparksoniq.exceptions.codes;
+package org.rumbledb.errorcodes;
 
 public class ErrorCodes {
 

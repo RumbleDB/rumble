@@ -18,7 +18,7 @@
  *
  */
 
-package sparksoniq.exceptions;
+package org.rumbledb.exceptions;
 
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 

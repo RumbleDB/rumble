@@ -1,6 +1,7 @@
-package sparksoniq.exceptions;
+package org.rumbledb.exceptions;
 
-import sparksoniq.exceptions.codes.ErrorCodes;
+import org.rumbledb.errorcodes.ErrorCodes;
+
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 public class CastException extends SparksoniqRuntimeException {

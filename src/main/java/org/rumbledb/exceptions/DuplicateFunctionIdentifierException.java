@@ -18,9 +18,10 @@
  *
  */
 
-package sparksoniq.exceptions;
+package org.rumbledb.exceptions;
 
-import sparksoniq.exceptions.codes.ErrorCodes;
+import org.rumbledb.errorcodes.ErrorCodes;
+
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 
