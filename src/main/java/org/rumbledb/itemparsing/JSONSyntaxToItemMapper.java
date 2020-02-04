@@ -18,7 +18,7 @@
  *
  */
 
-package sparksoniq.io.json;
+package org.rumbledb.itemparsing;
 
 import com.jsoniter.JsonIterator;
 import org.apache.spark.api.java.function.FlatMapFunction;
@@ -27,12 +27,12 @@ import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.Iterator;
 
-public class StringToItemMapper implements FlatMapFunction<Iterator<String>, Item> {
+public class JSONSyntaxToItemMapper implements FlatMapFunction<Iterator<String>, Item> {
 
     private static final long serialVersionUID = 1L;
     private final IteratorMetadata metadata;
 
-    public StringToItemMapper(IteratorMetadata metadata) {
+    public JSONSyntaxToItemMapper(IteratorMetadata metadata) {
         this.metadata = metadata;
     }
 
@@ -47,7 +47,7 @@ public class StringToItemMapper implements FlatMapFunction<Iterator<String>, Ite
             @Override
             public Item next() {
                 JsonIterator object = JsonIterator.parse(stringIterator.next());
-                return JiqsItemParser.getItemFromObject(object, metadata);
+                return ItemParser.getItemFromObject(object, metadata);
             }
 
             @Override
