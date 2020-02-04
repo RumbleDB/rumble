@@ -24,8 +24,8 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
-import org.rumbledb.itemparsing.ItemParser;
-import org.rumbledb.itemparsing.RowToItemMapper;
+import org.rumbledb.item.parsing.ItemParser;
+import org.rumbledb.item.parsing.RowToItemMapper;
 
 import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.ExecutionMode;

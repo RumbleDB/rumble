@@ -23,7 +23,7 @@ package sparksoniq.jsoniq.runtime.iterator.functions.io;
 
 import com.jsoniter.JsonIterator;
 import org.rumbledb.api.Item;
-import org.rumbledb.itemparsing.ItemParser;
+import org.rumbledb.item.parsing.ItemParser;
 
 import sparksoniq.exceptions.CannotRetrieveResourceException;
 import sparksoniq.exceptions.IteratorFlowException;

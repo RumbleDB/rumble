@@ -18,7 +18,7 @@
  *
  */
 
-package org.rumbledb.itemparsing;
+package org.rumbledb.item.parsing;
 
 import com.jsoniter.JsonIterator;
 import com.jsoniter.ValueType;
