@@ -22,9 +22,8 @@ package sparksoniq.spark.iterator.function;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
-import org.rumbledb.itemparsing.JSONSyntaxToItemMapper;
-
 import sparksoniq.exceptions.CannotRetrieveResourceException;
+import sparksoniq.io.json.StringToItemMapper;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.RDDRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -72,6 +71,6 @@ public class JsonFileFunctionIterator extends RDDRuntimeIterator {
                 );
             partitionsIterator.close();
         }
-        return strings.mapPartitions(new JSONSyntaxToItemMapper(getMetadata()));
+        return strings.mapPartitions(new StringToItemMapper(getMetadata()));
     }
 }

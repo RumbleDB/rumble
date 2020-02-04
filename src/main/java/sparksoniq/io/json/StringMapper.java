@@ -18,24 +18,40 @@
  *
  */
 
-package org.rumbledb.itemparsing;
+package sparksoniq.io.json;
 
-import org.apache.spark.api.java.function.Function;
-import org.apache.spark.sql.Row;
+import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import sparksoniq.jsoniq.item.ItemFactory;
 
-public class RowToItemMapper implements Function<Row, Item> {
+import java.util.Iterator;
+
+public class StringMapper implements FlatMapFunction<Iterator<String>, Item> {
+
 
     private static final long serialVersionUID = 1L;
-    private final IteratorMetadata metadata;
 
-    public RowToItemMapper(IteratorMetadata metadata) {
-        this.metadata = metadata;
+    public StringMapper() {
     }
 
     @Override
-    public Item call(Row row) throws Exception {
-        return ItemParser.getItemFromRow(row, metadata);
+    public Iterator<Item> call(Iterator<String> stringIterator) throws Exception {
+        return new Iterator<Item>() {
+            @Override
+            public boolean hasNext() {
+                return stringIterator.hasNext();
+            }
+
+            @Override
+            public Item next() {
+                Item stringItem = ItemFactory.getInstance().createStringItem(stringIterator.next());
+                return stringItem;
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
     }
 }

@@ -24,10 +24,9 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
-import org.rumbledb.itemparsing.ItemParser;
-import org.rumbledb.itemparsing.RowToItemMapper;
-
 import sparksoniq.exceptions.IteratorFlowException;
+import sparksoniq.io.json.JiqsItemParser;
+import sparksoniq.io.json.RowToItemMapper;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
@@ -38,7 +37,7 @@ import java.util.List;
 public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    protected ItemParser parser;
+    protected JiqsItemParser parser;
     protected List<Item> result = null;
     private int currentResultIndex = 0;
 
@@ -49,7 +48,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     ) {
         super(children, executionMode, iteratorMetadata);
         fallbackToRDDIfDFNotImplemented(executionMode);
-        this.parser = new ItemParser();
+        this.parser = new JiqsItemParser();
     }
 
     protected boolean implementsDataFrames() {
