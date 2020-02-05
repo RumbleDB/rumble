@@ -18,13 +18,13 @@
  *
  */
 
-package sparksoniq.io.shell;
+package org.rumbledb.shell;
 
 import org.jline.reader.Highlighter;
 import org.jline.reader.LineReader;
 import org.jline.utils.AttributedString;
 
-public class JiqsJLineHighlighter implements Highlighter {
+public class RumbleJLineHighlighter implements Highlighter {
     @Override
     public AttributedString highlight(LineReader lineReader, String s) {
         return null;

@@ -22,16 +22,16 @@ package org.rumbledb.cli;
 
 import org.apache.spark.SparkException;
 import org.rumbledb.config.SparksoniqRuntimeConfiguration;
+import org.rumbledb.shell.RumbleJLineShell;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SparksoniqRuntimeException;
 
-import sparksoniq.io.shell.JiqsJLineShell;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.IOException;
 
 public class Main {
-    public static JiqsJLineShell terminal = null;
+    public static RumbleJLineShell terminal = null;
 
     public static void main(String[] args) throws IOException {
         SparksoniqRuntimeConfiguration sparksoniqConf = null;
@@ -121,7 +121,7 @@ public class Main {
     }
 
     private static void launchShell(SparksoniqRuntimeConfiguration sparksoniqConf) throws IOException {
-        terminal = new JiqsJLineShell(sparksoniqConf);
+        terminal = new RumbleJLineShell(sparksoniqConf);
         terminal.launch();
     }
 

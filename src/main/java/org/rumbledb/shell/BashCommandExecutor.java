@@ -18,7 +18,7 @@
  *
  */
 
-package sparksoniq.io.shell;
+package org.rumbledb.shell;
 
 import java.io.BufferedReader;
 import java.io.IOException;
