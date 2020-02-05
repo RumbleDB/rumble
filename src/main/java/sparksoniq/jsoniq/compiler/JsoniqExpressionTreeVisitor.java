@@ -23,6 +23,7 @@ package sparksoniq.jsoniq.compiler;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.exceptions.DuplicateParamNameException;
 import org.rumbledb.exceptions.JsoniqVersionException;
 import org.rumbledb.exceptions.ModuleDeclarationException;
@@ -30,7 +31,6 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SparksoniqRuntimeException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 
-import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
 import sparksoniq.jsoniq.compiler.translator.expr.CommaExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.control.IfExpression;
@@ -105,7 +105,7 @@ import static sparksoniq.semantics.types.SequenceType.mostGeneralSequenceType;
 
 
 // used to build AST, will override methods
-public class JsoniqExpressionTreeVisitor extends sparksoniq.jsoniq.compiler.parser.JsoniqBaseVisitor<Void> {
+public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Void> {
 
     private MainModule mainModule;
 
