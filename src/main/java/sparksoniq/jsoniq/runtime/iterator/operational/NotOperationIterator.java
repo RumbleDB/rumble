@@ -33,7 +33,11 @@ public class NotOperationIterator extends UnaryOperationBaseIterator {
 
     private static final long serialVersionUID = 1L;
 
-    public NotOperationIterator(RuntimeIterator child, ExecutionMode executionMode, ExceptionMetadata iteratorMetadata) {
+    public NotOperationIterator(
+            RuntimeIterator child,
+            ExecutionMode executionMode,
+            ExceptionMetadata iteratorMetadata
+    ) {
         super(child, OperationalExpressionBase.Operator.NOT, executionMode, iteratorMetadata);
     }
 

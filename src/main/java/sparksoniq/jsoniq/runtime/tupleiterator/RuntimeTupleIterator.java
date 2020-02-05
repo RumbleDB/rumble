@@ -50,7 +50,11 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     protected DynamicContext _currentDynamicContext;
     protected ExecutionMode _highestExecutionMode;
 
-    protected RuntimeTupleIterator(RuntimeTupleIterator child, ExecutionMode executionMode, ExceptionMetadata metadata) {
+    protected RuntimeTupleIterator(
+            RuntimeTupleIterator child,
+            ExecutionMode executionMode,
+            ExceptionMetadata metadata
+    ) {
         this.metadata = metadata;
         this._isOpen = false;
         this._highestExecutionMode = executionMode;

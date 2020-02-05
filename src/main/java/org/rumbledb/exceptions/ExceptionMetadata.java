@@ -31,7 +31,7 @@ import java.io.Serializable;
  */
 public class ExceptionMetadata implements Serializable {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
     private final int _tokenLineNumber;
     private final int _tokenColumnNumber;
 
