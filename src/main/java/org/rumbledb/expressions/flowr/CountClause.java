@@ -26,7 +26,7 @@ import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 import java.util.Collections;
 import java.util.List;
 
-import org.rumbledb.expressions.ExpressionOrClause;
+import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.primary.VariableReference;
 
 
@@ -39,7 +39,7 @@ public class CountClause extends FlworClause {
     }
 
     @Override
-    public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
+    public List<Node> getDescendants(boolean depthSearch) {
         return getDescendantsFromChildren(Collections.singletonList(countClauseVar), depthSearch);
     }
 

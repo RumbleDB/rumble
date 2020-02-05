@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.ExpressionOrClause;
+import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.flowr.FlworVarSequenceType;
 import org.rumbledb.expressions.primary.VariableReference;
 
@@ -42,8 +42,8 @@ public class TypeSwitchCaseExpression extends Expression {
     }
 
     @Override
-    public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result = new ArrayList<>();
+    public List<Node> getDescendants(boolean depthSearch) {
+        List<Node> result = new ArrayList<>();
         if (variableReferenceNode != null)
             result.add(variableReferenceNode);
         if (union != null && !union.isEmpty())

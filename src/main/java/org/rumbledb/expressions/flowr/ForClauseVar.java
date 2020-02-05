@@ -28,7 +28,7 @@ import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 import java.util.List;
 
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.ExpressionOrClause;
+import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.primary.VariableReference;
 
 
@@ -80,8 +80,8 @@ public class ForClauseVar extends FlworVarDecl {
     }
 
     @Override
-    public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result = super.getDescendants(depthSearch);
+    public List<Node> getDescendants(boolean depthSearch) {
+        List<Node> result = super.getDescendants(depthSearch);
 
         if (positionalVariableReference != null)
             result.add(positionalVariableReference);

@@ -42,8 +42,8 @@ public class CommaExpression extends Expression {
     }
 
     @Override
-    public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result = new ArrayList<>();
+    public List<Node> getDescendants(boolean depthSearch) {
+        List<Node> result = new ArrayList<>();
         if (this._expressions != null)
             _expressions.forEach(e -> {
                 if (e != null)

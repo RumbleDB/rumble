@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.ExpressionOrClause;
+import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.primary.VariableReference;
 
 public class TypeSwitchExpression extends Expression {
@@ -49,8 +49,8 @@ public class TypeSwitchExpression extends Expression {
     }
 
     @Override
-    public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result = new ArrayList<>();
+    public List<Node> getDescendants(boolean depthSearch) {
+        List<Node> result = new ArrayList<>();
         result.add(testCondition);
         result.addAll(cases);
         result.add(defaultExpression);

@@ -2,7 +2,7 @@ package sparksoniq.semantics.visitor;
 
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.expressions.ExpressionOrClause;
+import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.primary.IntegerLiteral;
 
 import sparksoniq.jsoniq.ExecutionMode;
@@ -12,11 +12,11 @@ import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 
 public class VisitorHelpers {
 
-    public static RuntimeIterator generateRuntimeIterator(ExpressionOrClause expression) {
+    public static RuntimeIterator generateRuntimeIterator(Node expression) {
         return new RuntimeIteratorVisitor().visit(expression, null);
     }
 
-    public static void populateStaticContext(ExpressionOrClause expression) {
+    public static void populateStaticContext(Node expression) {
         StaticContextVisitor visitor = new StaticContextVisitor();
         visitor.visit(expression, null);
 

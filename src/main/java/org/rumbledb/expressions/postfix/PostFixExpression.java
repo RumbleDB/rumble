@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.ExpressionOrClause;
+import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.postfix.extensions.PostfixExtension;
 import org.rumbledb.expressions.primary.PrimaryExpression;
 
@@ -92,8 +92,8 @@ public class PostFixExpression extends Expression {
     }
 
     @Override
-    public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result = new ArrayList<>();
+    public List<Node> getDescendants(boolean depthSearch) {
+        List<Node> result = new ArrayList<>();
         result.add(this._primaryExpressionNode);
         if (this._extensions != null)
             _extensions.forEach(e -> {

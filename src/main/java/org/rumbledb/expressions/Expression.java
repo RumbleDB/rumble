@@ -34,7 +34,7 @@ import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
  * An expression is associated with a static context containing information such as
  * the in-scope variables.
  */
-public abstract class Expression extends ExpressionOrClause {
+public abstract class Expression extends Node {
 
     protected StaticContext _staticContext;
 

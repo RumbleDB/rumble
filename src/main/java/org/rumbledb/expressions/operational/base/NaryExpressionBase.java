@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.ExpressionOrClause;
+import org.rumbledb.expressions.Node;
 
 public class NaryExpressionBase extends OperationalExpressionBase {
 
@@ -80,8 +80,8 @@ public class NaryExpressionBase extends OperationalExpressionBase {
     }
 
     @Override
-    public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result = new ArrayList<>();
+    public List<Node> getDescendants(boolean depthSearch) {
+        List<Node> result = new ArrayList<>();
         result.add(this._mainExpression);
         if (this._rightExpressions != null)
             _rightExpressions.forEach(e -> {

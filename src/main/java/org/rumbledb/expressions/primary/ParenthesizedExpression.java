@@ -29,7 +29,7 @@ import java.util.List;
 
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.ExpressionOrClause;
+import org.rumbledb.expressions.Node;
 
 
 public class ParenthesizedExpression extends PrimaryExpression {
@@ -76,8 +76,8 @@ public class ParenthesizedExpression extends PrimaryExpression {
     }
 
     @Override
-    public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result = new ArrayList<>();
+    public List<Node> getDescendants(boolean depthSearch) {
+        List<Node> result = new ArrayList<>();
         if (this.expression != null)
             result.add(this.expression);
         return getDescendantsFromChildren(result, depthSearch);

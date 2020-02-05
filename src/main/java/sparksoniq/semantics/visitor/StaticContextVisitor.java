@@ -22,7 +22,7 @@ package sparksoniq.semantics.visitor;
 
 import org.rumbledb.exceptions.UndeclaredVariableException;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.ExpressionOrClause;
+import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.control.TypeSwitchCaseExpression;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
 import org.rumbledb.expressions.flowr.CountClause;
@@ -89,7 +89,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
     }
 
     @Override
-    protected StaticContext defaultAction(ExpressionOrClause expression, StaticContext argument) {
+    protected StaticContext defaultAction(Node expression, StaticContext argument) {
         StaticContext generatedContext = visitDescendants(expression, argument);
         // initialize execution mode by visiting children and expressions first, then calling initialize methods
         expression.initHighestExecutionMode();
@@ -97,7 +97,7 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
     }
 
     @Override
-    public StaticContext visit(ExpressionOrClause expression, StaticContext argument) {
+    public StaticContext visit(Node expression, StaticContext argument) {
         if (argument == null) {
             argument = new StaticContext();
         }

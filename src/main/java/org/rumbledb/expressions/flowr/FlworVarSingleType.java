@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.ExpressionOrClause;
+import org.rumbledb.expressions.Node;
 
 public class FlworVarSingleType extends Expression {
 
@@ -79,7 +79,7 @@ public class FlworVarSingleType extends Expression {
     }
 
     @Override
-    public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
+    public List<Node> getDescendants(boolean depthSearch) {
         return new ArrayList<>();
     }
 

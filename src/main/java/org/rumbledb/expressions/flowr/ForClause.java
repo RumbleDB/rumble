@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rumbledb.exceptions.SemanticException;
-import org.rumbledb.expressions.ExpressionOrClause;
+import org.rumbledb.expressions.Node;
 
 public class ForClause extends FlworClause {
 
@@ -66,8 +66,8 @@ public class ForClause extends FlworClause {
     }
 
     @Override
-    public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result = new ArrayList<>();
+    public List<Node> getDescendants(boolean depthSearch) {
+        List<Node> result = new ArrayList<>();
         forVariables.forEach(e -> {
             if (e != null)
                 result.add(e);

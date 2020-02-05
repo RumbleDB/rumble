@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.ExpressionOrClause;
+import org.rumbledb.expressions.Node;
 
 public class ReturnClause extends FlworClause {
 
@@ -53,8 +53,8 @@ public class ReturnClause extends FlworClause {
     }
 
     @Override
-    public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result = new ArrayList<>();
+    public List<Node> getDescendants(boolean depthSearch) {
+        List<Node> result = new ArrayList<>();
         if (returnExpr != null)
             result.add(returnExpr);
         return getDescendantsFromChildren(result, depthSearch);

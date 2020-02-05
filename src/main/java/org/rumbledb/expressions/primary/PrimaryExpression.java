@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.ExpressionOrClause;
+import org.rumbledb.expressions.Node;
 
 
 // TODO(NOT IMPLEMENTED): orderedExpr, unorderedExpr
@@ -43,7 +43,7 @@ public abstract class PrimaryExpression extends Expression {
     }
 
     @Override
-    public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
+    public List<Node> getDescendants(boolean depthSearch) {
         return new ArrayList<>();
     }
 

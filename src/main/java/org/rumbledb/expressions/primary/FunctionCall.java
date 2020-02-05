@@ -37,7 +37,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.ExpressionOrClause;
+import org.rumbledb.expressions.Node;
 
 public class FunctionCall extends PrimaryExpression {
 
@@ -61,8 +61,8 @@ public class FunctionCall extends PrimaryExpression {
     }
 
     @Override
-    public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result = new ArrayList<>(this._arguments);
+    public List<Node> getDescendants(boolean depthSearch) {
+        List<Node> result = new ArrayList<>(this._arguments);
         return getDescendantsFromChildren(result, depthSearch);
     }
 

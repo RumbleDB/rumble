@@ -26,11 +26,11 @@ import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.rumbledb.expressions.ExpressionOrClause;
+import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.postfix.PostFixExpression;
 
 
-public abstract class PostfixExtension extends ExpressionOrClause {
+public abstract class PostfixExtension extends Node {
 
     private PostFixExpression parent;
     private PostfixExtension previous;
@@ -56,7 +56,7 @@ public abstract class PostfixExtension extends ExpressionOrClause {
     }
 
     @Override
-    public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
+    public List<Node> getDescendants(boolean depthSearch) {
         return new ArrayList<>();
     }
 

@@ -26,13 +26,13 @@ import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.rumbledb.expressions.ExpressionOrClause;
+import org.rumbledb.expressions.Node;
 
 /**
  * GRAMMAR:flowrExpression
  */
 
-public class FlworClause extends ExpressionOrClause {
+public class FlworClause extends Node {
 
     protected FlworClause previousClause;
     protected FLWOR_CLAUSES clauseType;
@@ -64,7 +64,7 @@ public class FlworClause extends ExpressionOrClause {
     }
 
     @Override
-    public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
+    public List<Node> getDescendants(boolean depthSearch) {
         return new ArrayList<>();
     }
 

@@ -29,7 +29,7 @@ import java.util.List;
 
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.ExpressionOrClause;
+import org.rumbledb.expressions.Node;
 
 public class FlworExpression extends Expression {
 
@@ -89,8 +89,8 @@ public class FlworExpression extends Expression {
         return this._returnClause.getHighestExecutionMode(ignoreUnsetError);
     }
 
-    public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result = new ArrayList<>();
+    public List<Node> getDescendants(boolean depthSearch) {
+        List<Node> result = new ArrayList<>();
         result.add(_startClause);
         if (_contentClauses != null)
             _contentClauses.forEach(e -> {

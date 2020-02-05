@@ -26,7 +26,7 @@ import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 import java.util.List;
 
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.ExpressionOrClause;
+import org.rumbledb.expressions.Node;
 
 public class WhereClause extends FlworClause {
 
@@ -47,8 +47,8 @@ public class WhereClause extends FlworClause {
     }
 
     @Override
-    public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result = super.getDescendants(depthSearch);
+    public List<Node> getDescendants(boolean depthSearch) {
+        List<Node> result = super.getDescendants(depthSearch);
         if (whereExpression != null)
             result.add(whereExpression);
         return getDescendantsFromChildren(result, depthSearch);

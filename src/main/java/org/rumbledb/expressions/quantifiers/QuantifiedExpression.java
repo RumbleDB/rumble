@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.ExpressionOrClause;
+import org.rumbledb.expressions.Node;
 
 public class QuantifiedExpression extends Expression {
     private final Expression _expression;
@@ -47,7 +47,7 @@ public class QuantifiedExpression extends Expression {
         this._expression = expression;
     }
 
-    public ExpressionOrClause getEvaluationExpression() {
+    public Node getEvaluationExpression() {
         return _expression;
     }
 
@@ -60,8 +60,8 @@ public class QuantifiedExpression extends Expression {
     }
 
     @Override
-    public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result = new ArrayList<>();
+    public List<Node> getDescendants(boolean depthSearch) {
+        List<Node> result = new ArrayList<>();
         if (_variables != null)
             _variables.forEach(e -> {
                 if (e != null)

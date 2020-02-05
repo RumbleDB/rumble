@@ -21,7 +21,7 @@
 package sparksoniq.semantics.visitor;
 
 import org.rumbledb.expressions.CommaExpression;
-import org.rumbledb.expressions.ExpressionOrClause;
+import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.control.IfExpression;
 import org.rumbledb.expressions.control.SwitchCaseExpression;
 import org.rumbledb.expressions.control.SwitchExpression;
@@ -75,19 +75,19 @@ import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
 
 public abstract class AbstractExpressionOrClauseVisitor<T> {
 
-    public T visit(ExpressionOrClause expression, T argument) {
+    public T visit(Node expression, T argument) {
         return expression.accept(this, argument);
     }
 
-    public T visitDescendants(ExpressionOrClause expression, T argument) {
+    public T visitDescendants(Node expression, T argument) {
         T result = argument;
-        for (ExpressionOrClause child : expression.getDescendants()) {
+        for (Node child : expression.getChildren()) {
             result = visit(child, result);
         }
         return result;
     }
 
-    protected T defaultAction(ExpressionOrClause expression, T argument) {
+    protected T defaultAction(Node expression, T argument) {
         return visitDescendants(expression, argument);
     }
 

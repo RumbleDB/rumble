@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.ExpressionOrClause;
+import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.flowr.FlworVarSequenceType;
 
 public class FunctionDeclaration extends PrimaryExpression {
@@ -73,8 +73,8 @@ public class FunctionDeclaration extends PrimaryExpression {
     }
 
     @Override
-    public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result = new ArrayList<>();
+    public List<Node> getDescendants(boolean depthSearch) {
+        List<Node> result = new ArrayList<>();
         return getDescendantsFromChildren(result, depthSearch);
     }
 
