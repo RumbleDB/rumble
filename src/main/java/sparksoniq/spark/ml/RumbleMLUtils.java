@@ -4,7 +4,8 @@ import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.param.Param;
 import org.apache.spark.ml.param.ParamMap;
 import org.rumbledb.api.Item;
-import sparksoniq.exceptions.OurBadException;
+import org.rumbledb.exceptions.OurBadException;
+
 import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.types.AtomicTypes;

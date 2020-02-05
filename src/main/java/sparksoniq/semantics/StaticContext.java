@@ -20,13 +20,14 @@
 
 package sparksoniq.semantics;
 
-import sparksoniq.exceptions.SemanticException;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.types.SequenceType;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import org.rumbledb.exceptions.SemanticException;
 
 public class StaticContext {
 

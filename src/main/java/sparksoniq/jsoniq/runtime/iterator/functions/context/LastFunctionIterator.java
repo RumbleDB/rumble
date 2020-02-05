@@ -21,7 +21,8 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.context;
 
 import org.rumbledb.api.Item;
-import sparksoniq.exceptions.AbsentPartOfDynamicContextException;
+import org.rumbledb.exceptions.AbsentPartOfDynamicContextException;
+
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;

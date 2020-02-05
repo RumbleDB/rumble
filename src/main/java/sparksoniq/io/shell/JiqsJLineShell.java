@@ -34,9 +34,10 @@ import org.jline.terminal.TerminalBuilder;
 import org.rumbledb.cli.JsoniqQueryExecutor;
 import org.rumbledb.cli.Main;
 import org.rumbledb.config.SparksoniqRuntimeConfiguration;
-import sparksoniq.exceptions.CannotRetrieveResourceException;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
-import sparksoniq.exceptions.codes.ErrorCodes;
+import org.rumbledb.errorcodes.ErrorCodes;
+import org.rumbledb.exceptions.CannotRetrieveResourceException;
+import org.rumbledb.exceptions.SparksoniqRuntimeException;
+
 import sparksoniq.utils.FileUtils;
 
 import java.io.IOException;

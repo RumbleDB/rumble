@@ -24,9 +24,10 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
-import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.exceptions.JobWithinAJobException;
-import sparksoniq.exceptions.OurBadException;
+import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.JobWithinAJobException;
+import org.rumbledb.exceptions.OurBadException;
+
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;

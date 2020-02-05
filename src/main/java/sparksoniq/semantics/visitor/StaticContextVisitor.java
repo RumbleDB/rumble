@@ -20,7 +20,8 @@
 
 package sparksoniq.semantics.visitor;
 
-import sparksoniq.exceptions.UndeclaredVariableException;
+import org.rumbledb.exceptions.UndeclaredVariableException;
+
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
