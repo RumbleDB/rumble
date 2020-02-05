@@ -21,8 +21,9 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.sequences.cardinality;
 
 import org.rumbledb.api.Item;
-import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.exceptions.SequenceExceptionOneOrMore;
+import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.SequenceExceptionOneOrMore;
+
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;

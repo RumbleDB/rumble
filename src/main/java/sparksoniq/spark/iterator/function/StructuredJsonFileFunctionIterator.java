@@ -25,8 +25,9 @@ import org.apache.spark.SparkException;
 import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import sparksoniq.exceptions.CannotRetrieveResourceException;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
+import org.rumbledb.exceptions.CannotRetrieveResourceException;
+import org.rumbledb.exceptions.SparksoniqRuntimeException;
+
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.DataFrameRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;

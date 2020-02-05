@@ -20,10 +20,11 @@
 
 package org.rumbledb.config;
 
-import sparksoniq.exceptions.CliException;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.HashMap;
+
+import org.rumbledb.exceptions.CliException;
 
 public class SparksoniqRuntimeConfiguration {
 

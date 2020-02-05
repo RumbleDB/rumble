@@ -20,8 +20,6 @@
 
 package sparksoniq.semantics.visitor;
 
-import sparksoniq.exceptions.UnknownFunctionCallException;
-import sparksoniq.exceptions.UnsupportedFeatureException;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.CommaExpression;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
@@ -143,6 +141,9 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.rumbledb.exceptions.UnknownFunctionCallException;
+import org.rumbledb.exceptions.UnsupportedFeatureException;
 
 public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<RuntimeIterator> {
 

@@ -25,9 +25,10 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.Assert;
-import sparksoniq.exceptions.ParsingException;
-import sparksoniq.exceptions.SemanticException;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
+import org.rumbledb.exceptions.ParsingException;
+import org.rumbledb.exceptions.SemanticException;
+import org.rumbledb.exceptions.SparksoniqRuntimeException;
+
 import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
 import sparksoniq.jsoniq.compiler.parser.JsoniqBaseVisitor;
 import sparksoniq.jsoniq.compiler.parser.JsoniqLexer;

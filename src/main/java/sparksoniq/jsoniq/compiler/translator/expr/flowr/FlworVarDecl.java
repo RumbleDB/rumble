@@ -20,7 +20,6 @@
 
 package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
-import sparksoniq.exceptions.OurBadException;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
@@ -30,6 +29,8 @@ import sparksoniq.semantics.types.SequenceType;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.rumbledb.exceptions.OurBadException;
 
 public abstract class FlworVarDecl extends FlworClause {
 
