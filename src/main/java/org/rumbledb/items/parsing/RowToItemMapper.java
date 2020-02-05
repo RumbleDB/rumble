@@ -18,7 +18,7 @@
  *
  */
 
-package sparksoniq.io.json;
+package org.rumbledb.items.parsing;
 
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.Row;
@@ -36,6 +36,6 @@ public class RowToItemMapper implements Function<Row, Item> {
 
     @Override
     public Item call(Row row) throws Exception {
-        return JiqsItemParser.getItemFromRow(row, metadata);
+        return ItemParser.getItemFromRow(row, metadata);
     }
 }
