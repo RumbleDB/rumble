@@ -24,10 +24,11 @@ package iq;
 import iq.base.AnnotationsTestsBase;
 import org.junit.Assert;
 import org.junit.Test;
+import org.rumbledb.expressions.ExpressionOrClause;
+import org.rumbledb.expressions.primary.VariableReference;
+
 import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
 import sparksoniq.jsoniq.compiler.parser.JsoniqBaseVisitor;
-import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
-import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
 import sparksoniq.semantics.types.ItemTypes;
 
 import java.io.File;

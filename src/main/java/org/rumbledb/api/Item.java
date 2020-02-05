@@ -23,8 +23,8 @@ package org.rumbledb.api;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 
-import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;

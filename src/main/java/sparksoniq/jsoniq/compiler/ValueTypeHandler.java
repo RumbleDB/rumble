@@ -21,15 +21,16 @@
 package sparksoniq.jsoniq.compiler;
 
 import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
-import sparksoniq.jsoniq.compiler.translator.expr.primary.BooleanLiteral;
-import sparksoniq.jsoniq.compiler.translator.expr.primary.DecimalLiteral;
-import sparksoniq.jsoniq.compiler.translator.expr.primary.DoubleLiteral;
-import sparksoniq.jsoniq.compiler.translator.expr.primary.IntegerLiteral;
-import sparksoniq.jsoniq.compiler.translator.expr.primary.NullLiteral;
-import sparksoniq.jsoniq.compiler.translator.expr.primary.PrimaryExpression;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 
 import java.math.BigDecimal;
+
+import org.rumbledb.expressions.primary.BooleanLiteral;
+import org.rumbledb.expressions.primary.DecimalLiteral;
+import org.rumbledb.expressions.primary.DoubleLiteral;
+import org.rumbledb.expressions.primary.IntegerLiteral;
+import org.rumbledb.expressions.primary.NullLiteral;
+import org.rumbledb.expressions.primary.PrimaryExpression;
 
 
 public class ValueTypeHandler {
