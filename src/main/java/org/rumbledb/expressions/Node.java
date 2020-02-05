@@ -88,7 +88,7 @@ public abstract class Node {
      * When extending this method, make sure to perform a super() call to prevent UNSET accesses.
      * 
      * @param ignoreUsetError if true, then an error is thrown if an UNSET mode is found.
-     * If false, it might silently return UNSET.
+     *        If false, it might silently return UNSET.
      * 
      * @return the highest execution mode.
      */
