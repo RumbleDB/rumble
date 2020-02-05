@@ -18,13 +18,13 @@
  *
  */
 
-package sparksoniq.io.shell;
+package org.rumbledb.shell;
 
 import org.jline.reader.ParsedLine;
 import org.jline.reader.Parser;
 import org.jline.reader.SyntaxError;
 
-public class JiqsJlineParser implements Parser {
+public class RumbleJlineParser implements Parser {
     @Override
     public ParsedLine parse(String s, int i, ParseContext parseContext) throws SyntaxError {
         return null;
