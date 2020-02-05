@@ -22,13 +22,13 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCodes;
 
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 public class InvalidGroupVariableException extends SparksoniqRuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    public InvalidGroupVariableException(String message, IteratorMetadata iteratorMetadata) {
-        super(message, ErrorCodes.InvalidGroupVariableErrorCode, iteratorMetadata.getExpressionMetadata());
+    public InvalidGroupVariableException(String message, ExceptionMetadata iteratorMetadata) {
+        super(message, ErrorCodes.InvalidGroupVariableErrorCode, iteratorMetadata.getExceptionMetadata());
     }
 }

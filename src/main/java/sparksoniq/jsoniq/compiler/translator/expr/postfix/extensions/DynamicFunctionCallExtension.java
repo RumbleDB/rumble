@@ -23,7 +23,7 @@ package sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +32,7 @@ public class DynamicFunctionCallExtension extends PostfixExtension {
 
     private List<Expression> _arguments;
 
-    public DynamicFunctionCallExtension(List<Expression> arguments, ExpressionMetadata metadata) {
+    public DynamicFunctionCallExtension(List<Expression> arguments, ExceptionMetadata metadata) {
         super(metadata);
         this._arguments = arguments;
     }

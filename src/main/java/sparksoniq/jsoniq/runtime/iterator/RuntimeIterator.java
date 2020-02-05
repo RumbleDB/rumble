@@ -33,7 +33,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.ItemTypes;
 
@@ -51,11 +51,11 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     protected transient boolean _isOpen;
     protected List<RuntimeIterator> _children;
     protected transient DynamicContext _currentDynamicContextForLocalExecution;
-    private IteratorMetadata metadata;
+    private ExceptionMetadata metadata;
 
     protected ExecutionMode _highestExecutionMode;
 
-    protected RuntimeIterator(List<RuntimeIterator> children, ExecutionMode executionMode, IteratorMetadata metadata) {
+    protected RuntimeIterator(List<RuntimeIterator> children, ExecutionMode executionMode, ExceptionMetadata metadata) {
         this.metadata = metadata;
         this._isOpen = false;
         this._highestExecutionMode = executionMode;
@@ -189,7 +189,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         return _isOpen;
     }
 
-    public IteratorMetadata getMetadata() {
+    public ExceptionMetadata getMetadata() {
         return metadata;
     }
 

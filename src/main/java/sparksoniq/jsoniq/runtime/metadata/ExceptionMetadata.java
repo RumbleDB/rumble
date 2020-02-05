@@ -20,23 +20,23 @@
 
 package sparksoniq.jsoniq.runtime.metadata;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 
 import java.io.Serializable;
 
-public class IteratorMetadata implements Serializable {
+public class ExceptionMetadata implements Serializable {
 
 
 
     private static final long serialVersionUID = 1L;
-    private final ExpressionMetadata _expressionMetadata;
+    private final ExceptionMetadata _expressionMetadata;
 
-    public IteratorMetadata(ExpressionMetadata expressionMetadata) {
+    public ExceptionMetadata(ExceptionMetadata expressionMetadata) {
         this._expressionMetadata = expressionMetadata;
 
     }
 
-    public ExpressionMetadata getExpressionMetadata() {
+    public ExceptionMetadata getExpressionMetadata() {
         return _expressionMetadata;
     }
 }

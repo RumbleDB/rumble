@@ -22,13 +22,13 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCodes;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 
 public class UnknownFunctionCallException extends SparksoniqRuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    public UnknownFunctionCallException(String fnName, int arity, ExpressionMetadata metadata) {
+    public UnknownFunctionCallException(String fnName, int arity, ExceptionMetadata metadata) {
         super(
             "Undefined function call; Entered function name and arity doesn't match a defined function signature: \""
                 +

@@ -23,7 +23,7 @@ package sparksoniq.jsoniq.compiler.translator.expr.operational;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworVarSequenceType;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.UnaryExpressionBase;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 
@@ -31,7 +31,7 @@ public class InstanceOfExpression extends UnaryExpressionBase {
 
     private FlworVarSequenceType _sequenceType;
 
-    public InstanceOfExpression(Expression _mainExpression, ExpressionMetadata metadata) {
+    public InstanceOfExpression(Expression _mainExpression, ExceptionMetadata metadata) {
         super(_mainExpression, metadata);
         this._isActive = false;
     }
@@ -39,7 +39,7 @@ public class InstanceOfExpression extends UnaryExpressionBase {
     public InstanceOfExpression(
             Expression _mainExpression,
             FlworVarSequenceType sequenceType,
-            ExpressionMetadata metadata
+            ExceptionMetadata metadata
     ) {
         super(_mainExpression, Operator.INSTANCE_OF, true, metadata);
         this._sequenceType = sequenceType;

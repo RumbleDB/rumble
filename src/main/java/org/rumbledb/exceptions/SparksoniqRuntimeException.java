@@ -20,7 +20,7 @@
 
 package org.rumbledb.exceptions;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 
 import java.util.Arrays;
 
@@ -32,7 +32,7 @@ public class SparksoniqRuntimeException extends RuntimeException {
     private static final long serialVersionUID = 1L;
     private final String errorCode;
     private final String errorMessage;
-    private ExpressionMetadata metadata;
+    private ExceptionMetadata metadata;
 
     public SparksoniqRuntimeException(String message) {
         super("Error [err: " + ErrorCodes.RuntimeExceptionErrorCode + " ] " + message);
@@ -56,7 +56,7 @@ public class SparksoniqRuntimeException extends RuntimeException {
     }
 
 
-    public SparksoniqRuntimeException(String message, String errorCode, ExpressionMetadata metadata) {
+    public SparksoniqRuntimeException(String message, String errorCode, ExceptionMetadata metadata) {
         super(
             "Error [err: "
                 + errorCode
@@ -85,7 +85,7 @@ public class SparksoniqRuntimeException extends RuntimeException {
         this.errorMessage = message;
     }
 
-    public SparksoniqRuntimeException(String message, ExpressionMetadata metadata) {
+    public SparksoniqRuntimeException(String message, ExceptionMetadata metadata) {
         super(
             "Error [err: "
                 + ErrorCodes.RuntimeExceptionErrorCode
@@ -109,7 +109,7 @@ public class SparksoniqRuntimeException extends RuntimeException {
         return errorCode;
     }
 
-    public ExpressionMetadata getMetadata() {
+    public ExceptionMetadata getMetadata() {
         return metadata;
     }
 

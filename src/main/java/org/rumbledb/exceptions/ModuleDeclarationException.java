@@ -22,13 +22,13 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCodes;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 
 public class ModuleDeclarationException extends ParsingException {
 
     private static final long serialVersionUID = 1L;
 
-    public ModuleDeclarationException(String message, ExpressionMetadata metadata) {
+    public ModuleDeclarationException(String message, ExceptionMetadata metadata) {
         super(message, ErrorCodes.ModuleDeclarationErrorCode, metadata);
     }
 }

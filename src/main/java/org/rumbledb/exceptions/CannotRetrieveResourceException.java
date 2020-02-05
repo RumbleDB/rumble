@@ -22,13 +22,13 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCodes;
 
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 public class CannotRetrieveResourceException extends SparksoniqRuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    public CannotRetrieveResourceException(String message, IteratorMetadata metadata) {
-        super(message, ErrorCodes.CannotRetrieveResourceErrorCode, metadata.getExpressionMetadata());
+    public CannotRetrieveResourceException(String message, ExceptionMetadata metadata) {
+        super(message, ErrorCodes.CannotRetrieveResourceErrorCode, metadata.getExceptionMetadata());
     }
 }

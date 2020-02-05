@@ -25,7 +25,7 @@ import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworVarSequenceType;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
@@ -46,7 +46,7 @@ public class FunctionDeclaration extends PrimaryExpression {
             Map<String, FlworVarSequenceType> params,
             FlworVarSequenceType returnType,
             Expression body,
-            ExpressionMetadata metadata
+            ExceptionMetadata metadata
     ) {
         super(metadata);
         this._name = name;

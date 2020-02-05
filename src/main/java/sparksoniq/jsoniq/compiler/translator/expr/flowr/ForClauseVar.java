@@ -24,7 +24,7 @@ import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 import sparksoniq.semantics.types.SequenceType;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
@@ -42,7 +42,7 @@ public class ForClauseVar extends FlworVarDecl {
             boolean emptyFlag,
             VariableReference atVarRef,
             Expression expression,
-            ExpressionMetadata metadataFromContext
+            ExceptionMetadata metadataFromContext
     ) {
         super(FLWOR_CLAUSES.FOR_VAR, varRef, seq, expression, metadataFromContext);
         this.allowEmpty = emptyFlag;

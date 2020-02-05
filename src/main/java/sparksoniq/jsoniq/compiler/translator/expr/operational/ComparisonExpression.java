@@ -22,7 +22,7 @@ package sparksoniq.jsoniq.compiler.translator.expr.operational;
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.BinaryExpressionBase;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.Arrays;
@@ -44,7 +44,7 @@ public class ComparisonExpression extends BinaryExpressionBase {
         Operator.GC_LT };
 
 
-    public ComparisonExpression(Expression _mainExpression, ExpressionMetadata metadata) {
+    public ComparisonExpression(Expression _mainExpression, ExceptionMetadata metadata) {
         super(_mainExpression, metadata);
     }
 
@@ -52,7 +52,7 @@ public class ComparisonExpression extends BinaryExpressionBase {
             Expression _mainExpression,
             Expression rhs,
             Operator op,
-            ExpressionMetadata metadata
+            ExceptionMetadata metadata
     ) {
         super(_mainExpression, rhs, op, metadata);
         validateOperator(Arrays.asList(operators), op);

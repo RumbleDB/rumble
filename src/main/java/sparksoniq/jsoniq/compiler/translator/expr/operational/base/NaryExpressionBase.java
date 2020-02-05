@@ -23,7 +23,7 @@ package sparksoniq.jsoniq.compiler.translator.expr.operational.base;
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +32,7 @@ public class NaryExpressionBase extends OperationalExpressionBase {
 
     private List<Expression> _rightExpressions;
 
-    public NaryExpressionBase(Expression mainExpression, ExpressionMetadata metadata) {
+    public NaryExpressionBase(Expression mainExpression, ExceptionMetadata metadata) {
         super(mainExpression, Operator.NONE, metadata);
         this._isActive = false;
 
@@ -42,7 +42,7 @@ public class NaryExpressionBase extends OperationalExpressionBase {
             Expression mainExpression,
             List<Expression> rhs,
             Operator op,
-            ExpressionMetadata metadata
+            ExceptionMetadata metadata
     ) {
         super(mainExpression, op, metadata);
         this._rightExpressions = rhs;
@@ -54,7 +54,7 @@ public class NaryExpressionBase extends OperationalExpressionBase {
             Expression mainExpression,
             List<Expression> rhs,
             List<Operator> ops,
-            ExpressionMetadata metadata
+            ExceptionMetadata metadata
     ) {
         super(mainExpression, ops, metadata);
         this._rightExpressions = rhs;

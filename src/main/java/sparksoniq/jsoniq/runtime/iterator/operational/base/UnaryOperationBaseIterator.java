@@ -24,7 +24,7 @@ import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.util.ArrayList;
 
@@ -39,7 +39,7 @@ public abstract class UnaryOperationBaseIterator extends LocalRuntimeIterator {
             RuntimeIterator child,
             OperationalExpressionBase.Operator operator,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(new ArrayList<>(), executionMode, iteratorMetadata);
         this._children.add(child);

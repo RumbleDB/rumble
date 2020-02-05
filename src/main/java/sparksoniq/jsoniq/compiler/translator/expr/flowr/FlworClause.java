@@ -21,7 +21,7 @@
 package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
@@ -37,7 +37,7 @@ public class FlworClause extends ExpressionOrClause {
     protected FLWOR_CLAUSES clauseType;
 
 
-    public FlworClause(FLWOR_CLAUSES clauseType, ExpressionMetadata metadata) {
+    public FlworClause(FLWOR_CLAUSES clauseType, ExceptionMetadata metadata) {
         super(metadata);
         this.clauseType = clauseType;
     }

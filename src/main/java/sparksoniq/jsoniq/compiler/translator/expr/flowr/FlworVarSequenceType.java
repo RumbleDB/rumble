@@ -23,7 +23,7 @@ package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
@@ -36,23 +36,23 @@ public class FlworVarSequenceType extends Expression {
     private SequenceType _sequence;
     private boolean isEmpty = false;
 
-    public FlworVarSequenceType(ExpressionMetadata metadata) {
+    public FlworVarSequenceType(ExceptionMetadata metadata) {
         super(metadata);
         this._sequence = new SequenceType();
         this.isEmpty = true;
     }
 
-    public FlworVarSequenceType(ItemTypes item, SequenceType.Arity arity, ExpressionMetadata metadata) {
+    public FlworVarSequenceType(ItemTypes item, SequenceType.Arity arity, ExceptionMetadata metadata) {
         super(metadata);
         this._sequence = new SequenceType(new ItemType(item), arity);
     }
 
-    public FlworVarSequenceType(ItemTypes item, ExpressionMetadata metadata) {
+    public FlworVarSequenceType(ItemTypes item, ExceptionMetadata metadata) {
         super(metadata);
         this._sequence = new SequenceType(new ItemType(item), SequenceType.Arity.One);
     }
 
-    public FlworVarSequenceType(SequenceType sequenceType, ExpressionMetadata metadata) {
+    public FlworVarSequenceType(SequenceType sequenceType, ExceptionMetadata metadata) {
         super(metadata);
         this._sequence = sequenceType;
     }

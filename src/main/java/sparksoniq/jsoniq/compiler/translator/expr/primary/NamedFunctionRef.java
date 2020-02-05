@@ -21,7 +21,7 @@
 package sparksoniq.jsoniq.compiler.translator.expr.primary;
 
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
@@ -32,7 +32,7 @@ public class NamedFunctionRef extends PrimaryExpression {
 
     private final FunctionIdentifier identifier;
 
-    public NamedFunctionRef(FunctionIdentifier identifier, ExpressionMetadata metadata) {
+    public NamedFunctionRef(FunctionIdentifier identifier, ExceptionMetadata metadata) {
         super(metadata);
         this.identifier = identifier;
     }

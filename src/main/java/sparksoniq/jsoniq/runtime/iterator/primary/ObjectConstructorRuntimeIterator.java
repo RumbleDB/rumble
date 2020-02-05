@@ -27,10 +27,10 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.ObjectItem;
-import sparksoniq.jsoniq.item.metadata.ItemMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +47,7 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
             List<RuntimeIterator> keys,
             List<RuntimeIterator> values,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(keys, executionMode, iteratorMetadata);
         this._children.addAll(values);
@@ -58,7 +58,7 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
     public ObjectConstructorRuntimeIterator(
             List<RuntimeIterator> childExpressions,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(null, executionMode, iteratorMetadata);
         this._children.addAll(childExpressions);
@@ -82,7 +82,7 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
                 }
                 this._hasNext = false;
                 return ItemFactory.getInstance()
-                    .createObjectItem(keys, values, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                    .createObjectItem(keys, values, getMetadata());
 
             } else {
 
@@ -125,7 +125,7 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
                 }
                 this._hasNext = false;
                 return ItemFactory.getInstance()
-                    .createObjectItem(keys, values, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                    .createObjectItem(keys, values, getMetadata());
             }
         }
         throw new IteratorFlowException("Invalid next() call on object!", getMetadata());

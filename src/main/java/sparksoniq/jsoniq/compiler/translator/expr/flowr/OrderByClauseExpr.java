@@ -23,7 +23,7 @@ package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
@@ -40,7 +40,7 @@ public class OrderByClauseExpr extends FlworClause {
             boolean ascending,
             String uri,
             EMPTY_ORDER empty_order,
-            ExpressionMetadata metadata
+            ExceptionMetadata metadata
     ) {
         super(FLWOR_CLAUSES.ORDER_BY_EXPR, metadata);
         this._expression = expression;

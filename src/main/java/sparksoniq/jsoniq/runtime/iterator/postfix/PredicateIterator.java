@@ -37,7 +37,7 @@ import sparksoniq.jsoniq.runtime.iterator.operational.ComparisonOperationIterato
 import sparksoniq.jsoniq.runtime.iterator.operational.NotOperationIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.OrOperationIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.BooleanRuntimeIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
@@ -61,7 +61,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
             RuntimeIterator sequence,
             RuntimeIterator filterExpression,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(Arrays.asList(sequence, filterExpression), executionMode, iteratorMetadata);
         _iterator = sequence;

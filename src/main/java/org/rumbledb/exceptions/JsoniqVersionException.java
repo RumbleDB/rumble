@@ -22,13 +22,13 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCodes;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 
 public class JsoniqVersionException extends ParsingException {
 
     private static final long serialVersionUID = 1L;
 
-    public JsoniqVersionException(ExpressionMetadata expressionMetadata) {
+    public JsoniqVersionException(ExceptionMetadata expressionMetadata) {
         super(
             "Static error; The version number specified in a version declaration is not supported by the implementation.",
             ErrorCodes.InvalidJsoniqVersionErrorCode,

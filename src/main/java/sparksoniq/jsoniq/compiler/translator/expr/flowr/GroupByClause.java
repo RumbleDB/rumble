@@ -21,7 +21,7 @@
 package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
@@ -33,7 +33,7 @@ public class GroupByClause extends FlworClause {
 
     private final List<GroupByClauseVar> groupVars;
 
-    public GroupByClause(List<GroupByClauseVar> vars, ExpressionMetadata metadata) {
+    public GroupByClause(List<GroupByClauseVar> vars, ExceptionMetadata metadata) {
         super(FLWOR_CLAUSES.GROUP_BY, metadata);
         if (vars == null || vars.isEmpty())
             throw new SemanticException("Group clause must have at least one variable", metadata);

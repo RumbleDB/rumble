@@ -31,7 +31,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.OurBadException;
 
 import sparksoniq.io.json.RowToItemMapper;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.Serializable;
@@ -95,7 +95,7 @@ public class FlworTuple implements Serializable, KryoSerializable {
             || dataFrameVariables.containsKey(key);
     }
 
-    public boolean isRDD(String key, IteratorMetadata metadata) {
+    public boolean isRDD(String key, ExceptionMetadata metadata) {
         if (!contains(key)) {
             throw new OurBadException("Undeclared FLWOR variable", metadata);
         }
@@ -103,14 +103,14 @@ public class FlworTuple implements Serializable, KryoSerializable {
             || dataFrameVariables.containsKey(key);
     }
 
-    public boolean isDataFrame(String key, IteratorMetadata metadata) {
+    public boolean isDataFrame(String key, ExceptionMetadata metadata) {
         if (!contains(key)) {
             throw new OurBadException("Undeclared FLWOR variable", metadata);
         }
         return dataFrameVariables.containsKey(key);
     }
 
-    public List<Item> getLocalValue(String key, IteratorMetadata metadata) {
+    public List<Item> getLocalValue(String key, ExceptionMetadata metadata) {
         if (localVariables.containsKey(key)) {
             return localVariables.get(key);
         }
@@ -122,7 +122,7 @@ public class FlworTuple implements Serializable, KryoSerializable {
         throw new OurBadException("Undeclared FLOWR variable", metadata);
     }
 
-    public JavaRDD<Item> getRDDValue(String key, IteratorMetadata metadata) {
+    public JavaRDD<Item> getRDDValue(String key, ExceptionMetadata metadata) {
         if (rddVariables.containsKey(key)) {
             return rddVariables.get(key);
         }
@@ -134,7 +134,7 @@ public class FlworTuple implements Serializable, KryoSerializable {
         throw new OurBadException("Undeclared FLOWR variable", metadata);
     }
 
-    public Dataset<Row> getDataFrameValue(String key, IteratorMetadata metadata) {
+    public Dataset<Row> getDataFrameValue(String key, ExceptionMetadata metadata) {
         if (dataFrameVariables.containsKey(key)) {
             return dataFrameVariables.get(key);
         }

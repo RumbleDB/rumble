@@ -20,13 +20,13 @@
 
 package org.rumbledb.exceptions;
 
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 public class IteratorFlowException extends OurBadException {
 
     private static final long serialVersionUID = 1L;
 
-    public IteratorFlowException(String message, IteratorMetadata metadata) {
+    public IteratorFlowException(String message, ExceptionMetadata metadata) {
         super(message, metadata);
     }
 

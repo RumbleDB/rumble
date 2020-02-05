@@ -38,7 +38,7 @@ import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
 import sparksoniq.jsoniq.compiler.parser.JsoniqLexer;
 import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.visitor.VisitorHelpers;
@@ -219,7 +219,7 @@ public class JsoniqQueryExecutor {
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
                     lexer.getText(),
-                    new ExpressionMetadata(
+                    new ExceptionMetadata(
                             lexer.getLine(),
                             lexer.getCharPositionInLine()
                     )

@@ -31,7 +31,7 @@ import org.rumbledb.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.DataFrameRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -44,7 +44,7 @@ public class StructuredJsonFileFunctionIterator extends DataFrameRuntimeIterator
     public StructuredJsonFileFunctionIterator(
             List<RuntimeIterator> arguments,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(arguments, executionMode, iteratorMetadata);
     }
@@ -70,7 +70,7 @@ public class StructuredJsonFileFunctionIterator extends DataFrameRuntimeIterator
                         "File "
                             + url
                             + " contains a malformed JSON document that does not fit into the JSON lines format.",
-                        getMetadata().getExpressionMetadata()
+                        getMetadata().getExceptionMetadata()
                 );
             }
             throw e;

@@ -20,7 +20,7 @@
 
 package sparksoniq.jsoniq.compiler.translator.expr.primary;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.math.BigDecimal;
@@ -30,7 +30,7 @@ public class DecimalLiteral extends PrimaryExpression {
 
     private BigDecimal value;
 
-    public DecimalLiteral(BigDecimal _value, ExpressionMetadata metadata) {
+    public DecimalLiteral(BigDecimal _value, ExceptionMetadata metadata) {
         super(metadata);
         this.value = _value;
     }

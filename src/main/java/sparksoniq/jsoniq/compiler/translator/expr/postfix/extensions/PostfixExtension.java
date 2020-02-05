@@ -22,7 +22,7 @@ package sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions;
 
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.expr.postfix.PostFixExpression;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
@@ -34,7 +34,7 @@ public abstract class PostfixExtension extends ExpressionOrClause {
     private PostFixExpression parent;
     private PostfixExtension previous;
 
-    protected PostfixExtension(ExpressionMetadata metadata) {
+    protected PostfixExtension(ExceptionMetadata metadata) {
         super(metadata);
     }
 

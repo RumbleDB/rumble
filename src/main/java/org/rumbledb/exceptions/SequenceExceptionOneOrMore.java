@@ -22,13 +22,13 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCodes;
 
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 public class SequenceExceptionOneOrMore extends SparksoniqRuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    public SequenceExceptionOneOrMore(String message, IteratorMetadata metadata) {
-        super(message, ErrorCodes.OneOrMoreErrorCode, metadata.getExpressionMetadata());
+    public SequenceExceptionOneOrMore(String message, ExceptionMetadata metadata) {
+        super(message, ErrorCodes.OneOrMoreErrorCode, metadata.getExceptionMetadata());
     }
 }

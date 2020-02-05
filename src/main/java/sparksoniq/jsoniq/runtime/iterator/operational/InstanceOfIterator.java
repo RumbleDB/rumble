@@ -30,7 +30,7 @@ import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.InstanceOfClosure;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.UnaryOperationBaseIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.SequenceType;
 
@@ -47,7 +47,7 @@ public class InstanceOfIterator extends UnaryOperationBaseIterator {
             RuntimeIterator iterator,
             SequenceType sequenceType,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(iterator, OperationalExpressionBase.Operator.INSTANCE_OF, executionMode, iteratorMetadata);
         this._sequenceType = sequenceType;

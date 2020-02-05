@@ -25,7 +25,7 @@ import org.rumbledb.api.Item;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 import sparksoniq.jsoniq.item.ItemFactory;
 
 import java.util.ArrayList;
@@ -43,7 +43,7 @@ public abstract class OperationalExpressionBase extends Expression {
     protected OperationalExpressionBase(
             Expression _mainExpression,
             Operator op,
-            ExpressionMetadata metadata
+            ExceptionMetadata metadata
     ) {
         super(metadata);
         this._mainExpression = _mainExpression;
@@ -54,7 +54,7 @@ public abstract class OperationalExpressionBase extends Expression {
     protected OperationalExpressionBase(
             Expression _mainExpression,
             List<Operator> ops,
-            ExpressionMetadata metadata
+            ExceptionMetadata metadata
     ) {
         super(metadata);
         this._mainExpression = _mainExpression;

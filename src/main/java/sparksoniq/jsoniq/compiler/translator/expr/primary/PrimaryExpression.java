@@ -22,7 +22,7 @@ package sparksoniq.jsoniq.compiler.translator.expr.primary;
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
@@ -32,7 +32,7 @@ import java.util.List;
 // TODO(NOT IMPLEMENTED): orderedExpr, unorderedExpr
 public abstract class PrimaryExpression extends Expression {
 
-    protected PrimaryExpression(ExpressionMetadata metadata) {
+    protected PrimaryExpression(ExceptionMetadata metadata) {
         super(metadata);
     }
 

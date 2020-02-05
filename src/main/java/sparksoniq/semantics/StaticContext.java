@@ -21,7 +21,7 @@
 package sparksoniq.semantics;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 import sparksoniq.semantics.types.SequenceType;
 
 import java.util.HashMap;
@@ -34,13 +34,13 @@ public class StaticContext {
     private static class InScopeVariable {
         private String name;
         private SequenceType sequenceType;
-        private ExpressionMetadata metadata;
+        private ExceptionMetadata metadata;
         private ExecutionMode storageMode;
 
         public InScopeVariable(
                 String name,
                 SequenceType sequenceType,
-                ExpressionMetadata metadata,
+                ExceptionMetadata metadata,
                 ExecutionMode storageMode
         ) {
             this.name = name;
@@ -57,7 +57,7 @@ public class StaticContext {
             return sequenceType;
         }
 
-        public ExpressionMetadata getMetadata() {
+        public ExceptionMetadata getMetadata() {
             return metadata;
         }
     }
@@ -112,7 +112,7 @@ public class StaticContext {
         return getInScopeVariable(varName).getSequenceType();
     }
 
-    public ExpressionMetadata getVariableMetadata(String varName) {
+    public ExceptionMetadata getVariableMetadata(String varName) {
         return getInScopeVariable(varName).getMetadata();
     }
 
@@ -123,7 +123,7 @@ public class StaticContext {
     public void addVariable(
             String varName,
             SequenceType type,
-            ExpressionMetadata metadata,
+            ExceptionMetadata metadata,
             ExecutionMode storageMode
     ) {
         this._inScopeVariables.put(varName, new InScopeVariable(varName, type, metadata, storageMode));

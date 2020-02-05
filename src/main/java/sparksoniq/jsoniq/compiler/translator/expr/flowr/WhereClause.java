@@ -22,7 +22,7 @@ package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.List;
@@ -31,7 +31,7 @@ public class WhereClause extends FlworClause {
 
     private final Expression whereExpression;
 
-    public WhereClause(Expression expr, ExpressionMetadata metadata) {
+    public WhereClause(Expression expr, ExceptionMetadata metadata) {
         super(FLWOR_CLAUSES.WHERE, metadata);
         this.whereExpression = expr;
     }

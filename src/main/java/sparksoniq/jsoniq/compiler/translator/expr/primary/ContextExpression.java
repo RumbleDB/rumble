@@ -20,12 +20,12 @@
 
 package sparksoniq.jsoniq.compiler.translator.expr.primary;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 public class ContextExpression extends PrimaryExpression {
 
-    public ContextExpression(ExpressionMetadata metadataFromContext) {
+    public ContextExpression(ExceptionMetadata metadataFromContext) {
         super(metadataFromContext);
     }
 

@@ -27,7 +27,7 @@ import org.rumbledb.exceptions.NonAtomicKeyException;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.Map;
@@ -47,7 +47,7 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
             Map<RuntimeIterator, RuntimeIterator> cases,
             RuntimeIterator defaultReturn,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(null, executionMode, iteratorMetadata);
         this._children.add(test);
@@ -98,12 +98,12 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
             if (testValue.isArray()) {
                 throw new NonAtomicKeyException(
                         "Invalid args. Switch condition can't be an array type",
-                        getMetadata().getExpressionMetadata()
+                        getMetadata().getExceptionMetadata()
                 );
             } else if (testValue.isObject()) {
                 throw new NonAtomicKeyException(
                         "Invalid args. Switch condition  can't be an object type",
-                        getMetadata().getExpressionMetadata()
+                        getMetadata().getExceptionMetadata()
                 );
             }
         }
@@ -115,12 +115,12 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
                 if (caseValue.isArray()) {
                     throw new NonAtomicKeyException(
                             "Invalid args. Switch case can't be an array type",
-                            getMetadata().getExpressionMetadata()
+                            getMetadata().getExceptionMetadata()
                     );
                 } else if (caseValue.isObject()) {
                     throw new NonAtomicKeyException(
                             "Invalid args. Switch case  can't be an object type",
-                            getMetadata().getExpressionMetadata()
+                            getMetadata().getExceptionMetadata()
                     );
                 }
             }

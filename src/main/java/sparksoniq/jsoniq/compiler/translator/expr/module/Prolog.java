@@ -24,7 +24,7 @@ package sparksoniq.jsoniq.compiler.translator.expr.module;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.FunctionDeclaration;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
@@ -34,7 +34,7 @@ public class Prolog extends Expression {
 
     private final List<FunctionDeclaration> _functionDeclaration;
 
-    public Prolog(List<FunctionDeclaration> functionDeclarations, ExpressionMetadata metadata) {
+    public Prolog(List<FunctionDeclaration> functionDeclarations, ExceptionMetadata metadata) {
         super(metadata);
         this._functionDeclaration = functionDeclarations;
     }

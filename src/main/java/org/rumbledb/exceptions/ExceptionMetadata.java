@@ -18,29 +18,50 @@
  *
  */
 
-package sparksoniq.jsoniq.item.metadata;
-
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+package org.rumbledb.exceptions;
 
 import java.io.Serializable;
 
-public class ItemMetadata implements Serializable {
+/**
+ * 
+ * Metadata for error reporting (line and column number)
+ * 
+ * @author Stefan Irimescu, Ghislain Fourny
+ *
+ */
+public class ExceptionMetadata implements Serializable {
 
-    private static final long serialVersionUID = 1L;
-    private final ExpressionMetadata _expressionMetadata;
+	private static final long serialVersionUID = 1L;
+    private final int _tokenLineNumber;
+    private final int _tokenColumnNumber;
 
-
-    public ItemMetadata(ExpressionMetadata expressionMetadata) {
-        this._expressionMetadata = expressionMetadata;
+    /**
+     * Builds a new metadata object
+     * 
+     * @param line the line number at which the error occurred.
+     * @param column the column number at which the error occurred.
+     */
+    public ExceptionMetadata(int line, int column) {
+        this._tokenLineNumber = line;
+        this._tokenColumnNumber = column;
 
     }
 
-    public static ItemMetadata fromIteratorMetadata(IteratorMetadata iteratorMetadata) {
-        return new ItemMetadata(iteratorMetadata.getExpressionMetadata());
+    /**
+     * Returns the line number.
+     * 
+     * @return the line number.
+     */
+    public int getTokenLineNumber() {
+        return this._tokenLineNumber;
     }
 
-    public ExpressionMetadata getExpressionMetadata() {
-        return _expressionMetadata;
+    /**
+     * Returns the column number.
+     * 
+     * @return the column number.
+     */
+    public int getTokenColumnNumber() {
+        return this._tokenColumnNumber;
     }
 }

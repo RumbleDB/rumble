@@ -34,7 +34,7 @@ import sparksoniq.jsoniq.compiler.parser.JsoniqBaseVisitor;
 import sparksoniq.jsoniq.compiler.parser.JsoniqLexer;
 import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
 import sparksoniq.jsoniq.compiler.translator.expr.module.MainModule;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 import sparksoniq.semantics.visitor.VisitorHelpers;
@@ -199,7 +199,7 @@ public class AnnotationsTestsBase {
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
                     lexer.getText(),
-                    new ExpressionMetadata(
+                    new ExceptionMetadata(
                             lexer.getLine(),
                             lexer.getCharPositionInLine()
                     )

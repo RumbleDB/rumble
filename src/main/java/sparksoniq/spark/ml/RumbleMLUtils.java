@@ -7,7 +7,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.OurBadException;
 
 import sparksoniq.jsoniq.item.AtomicItem;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.types.AtomicTypes;
 
 import java.lang.reflect.InvocationTargetException;
@@ -19,7 +19,7 @@ public class RumbleMLUtils {
             String transformerShortName,
             Transformer transformer,
             Item paramMapItem,
-            IteratorMetadata metadata
+            ExceptionMetadata metadata
     ) {
         ParamMap result = new ParamMap();
         // paramMapItem is expected to be an ObjectItem

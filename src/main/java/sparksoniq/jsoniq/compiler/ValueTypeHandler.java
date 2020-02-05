@@ -27,7 +27,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.primary.DoubleLiteral;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.IntegerLiteral;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.NullLiteral;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.PrimaryExpression;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 
 import java.math.BigDecimal;
 
@@ -38,7 +38,7 @@ public class ValueTypeHandler {
         return ctx.getText().substring(1, ctx.getText().length() - 1);
     }
 
-    public static PrimaryExpression getValueType(String token, ExpressionMetadata metadataFromContext) {
+    public static PrimaryExpression getValueType(String token, ExceptionMetadata metadataFromContext) {
         switch (token) {
             case "null":
                 return new NullLiteral(metadataFromContext);
@@ -52,7 +52,7 @@ public class ValueTypeHandler {
     }
 
     // TODO think of beter way to distinguish numeric literals
-    private static PrimaryExpression getNumericLiteral(String token, ExpressionMetadata metadataFromContext) {
+    private static PrimaryExpression getNumericLiteral(String token, ExceptionMetadata metadataFromContext) {
         if (!token.contains(".") && !token.contains("e") && !token.contains("E"))
             return new IntegerLiteral(Integer.parseInt(token), metadataFromContext);
         if (!token.contains("e") && !token.contains("E"))

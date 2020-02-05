@@ -36,7 +36,7 @@ import org.rumbledb.exceptions.OurBadException;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
@@ -69,7 +69,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             RuntimeTupleIterator child,
             List<GroupByClauseSparkIteratorExpression> groupingExpressions,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(child, executionMode, iteratorMetadata);
         this._groupingExpressions = groupingExpressions;
@@ -144,7 +144,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                     if (inputTuple.contains(expression.getVariableReference().getVariableName())) {
                         throw new InvalidGroupVariableException(
                                 "Group by variable redeclaration is illegal",
-                                expression.getIteratorMetadata()
+                                expression.getExceptionMetadata()
                         );
                     }
 
@@ -155,7 +155,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                         if (!resultItem.isAtomic()) {
                             throw new NonAtomicKeyException(
                                     "Group by keys must be atomics",
-                                    expression.getIteratorMetadata().getExpressionMetadata()
+                                    expression.getExceptionMetadata().getExceptionMetadata()
                             );
                         }
                         newVariableResults.add(resultItem);
@@ -173,7 +173,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                                 "Variable "
                                     + groupVariableReference.getVariableName()
                                     + " cannot be used in group clause",
-                                expression.getIteratorMetadata()
+                                expression.getExceptionMetadata()
                         );
                     }
 
@@ -230,7 +230,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             if (expression.getExpression() != null && expression.getExpression().isRDD()) {
                 throw new JobWithinAJobException(
                         "A group by clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
-                        getMetadata().getExpressionMetadata()
+                        getMetadata().getExceptionMetadata()
                 );
             }
         }
@@ -289,7 +289,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                             "Variable "
                                 + expression.getVariableReference().getVariableName()
                                 + " cannot be used in group clause",
-                            expression.getIteratorMetadata()
+                            expression.getExceptionMetadata()
                     );
                 }
                 variableAccessExpressions.add(expression.getVariableReference());

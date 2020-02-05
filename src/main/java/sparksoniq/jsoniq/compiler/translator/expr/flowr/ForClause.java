@@ -22,7 +22,7 @@ package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
@@ -35,7 +35,7 @@ public class ForClause extends FlworClause {
 
     private final List<ForClauseVar> forVariables;
 
-    public ForClause(List<ForClauseVar> vars, ExpressionMetadata metadataFromContext) {
+    public ForClause(List<ForClauseVar> vars, ExceptionMetadata metadataFromContext) {
         super(FLWOR_CLAUSES.FOR, metadataFromContext);
         if (vars == null || vars.isEmpty())
             throw new SemanticException("For clause must have at least one variable", metadataFromContext);

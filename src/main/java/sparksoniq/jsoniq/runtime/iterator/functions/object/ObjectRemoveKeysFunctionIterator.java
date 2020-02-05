@@ -27,10 +27,10 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
-import sparksoniq.jsoniq.item.metadata.ItemMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
@@ -47,7 +47,7 @@ public class ObjectRemoveKeysFunctionIterator extends LocalFunctionCallIterator 
     public ObjectRemoveKeysFunctionIterator(
             List<RuntimeIterator> arguments,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(arguments, executionMode, iteratorMetadata);
     }
@@ -122,6 +122,6 @@ public class ObjectRemoveKeysFunctionIterator extends LocalFunctionCallIterator 
             }
         }
         return ItemFactory.getInstance()
-            .createObjectItem(finalKeylist, finalValueList, ItemMetadata.fromIteratorMetadata(getMetadata()));
+            .createObjectItem(finalKeylist, finalValueList, getMetadata());
     }
 }

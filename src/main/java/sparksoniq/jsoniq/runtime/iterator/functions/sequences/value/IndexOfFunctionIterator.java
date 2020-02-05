@@ -29,7 +29,7 @@ import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
@@ -46,7 +46,7 @@ public class IndexOfFunctionIterator extends LocalFunctionCallIterator {
     public IndexOfFunctionIterator(
             List<RuntimeIterator> arguments,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(arguments, executionMode, iteratorMetadata);
     }
@@ -88,7 +88,7 @@ public class IndexOfFunctionIterator extends LocalFunctionCallIterator {
         if (!_search.isAtomic()) {
             throw new NonAtomicKeyException(
                     "Invalid args. index-of can't be performed with a non-atomic parameter",
-                    getMetadata().getExpressionMetadata()
+                    getMetadata().getExceptionMetadata()
             );
         }
         searchIterator.close();
@@ -105,7 +105,7 @@ public class IndexOfFunctionIterator extends LocalFunctionCallIterator {
             if (!item.isAtomic()) {
                 throw new NonAtomicKeyException(
                         "Invalid args. index-of can't be performed with a non-atomic in the input sequence",
-                        getMetadata().getExpressionMetadata()
+                        getMetadata().getExceptionMetadata()
                 );
             } else {
                 if (item.compareTo(_search) == 0) {

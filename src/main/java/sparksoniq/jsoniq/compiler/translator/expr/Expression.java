@@ -20,7 +20,7 @@
 
 package sparksoniq.jsoniq.compiler.translator.expr;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 import sparksoniq.semantics.StaticContext;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
@@ -32,7 +32,7 @@ public abstract class Expression extends ExpressionOrClause {
         super();
     }
 
-    public Expression(ExpressionMetadata metadata) {
+    public Expression(ExceptionMetadata metadata) {
         super(metadata);
     }
 

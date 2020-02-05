@@ -24,7 +24,7 @@ package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 public class LetClauseVar extends FlworVarDecl {
@@ -33,7 +33,7 @@ public class LetClauseVar extends FlworVarDecl {
             VariableReference varRef,
             FlworVarSequenceType sequence,
             Expression expr,
-            ExpressionMetadata metadataFromContext
+            ExceptionMetadata metadataFromContext
     ) {
         super(FLWOR_CLAUSES.LET_VAR, varRef, sequence, expr, metadataFromContext);
     }

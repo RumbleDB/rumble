@@ -22,17 +22,17 @@ package sparksoniq.jsoniq.compiler.translator.expr.operational;
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.BinaryExpressionBase;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 public class RangeExpression extends BinaryExpressionBase {
 
-    public RangeExpression(Expression _mainExpression, ExpressionMetadata metadata) {
+    public RangeExpression(Expression _mainExpression, ExceptionMetadata metadata) {
         super(_mainExpression, metadata);
 
     }
 
-    public RangeExpression(Expression _mainExpression, Expression rhs, ExpressionMetadata metadata) {
+    public RangeExpression(Expression _mainExpression, Expression rhs, ExceptionMetadata metadata) {
         super(_mainExpression, rhs, Operator.TO, metadata);
     }
 

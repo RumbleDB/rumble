@@ -22,7 +22,7 @@ package sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions;
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +31,7 @@ public class ObjectLookupExtension extends PostfixExtension {
 
     Expression _expression;
 
-    public ObjectLookupExtension(Expression expr, ExpressionMetadata metadata) {
+    public ObjectLookupExtension(Expression expr, ExceptionMetadata metadata) {
         super(metadata);
         this._expression = expr;
     }

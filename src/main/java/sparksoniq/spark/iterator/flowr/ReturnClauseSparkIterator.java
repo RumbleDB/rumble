@@ -31,7 +31,7 @@ import org.rumbledb.exceptions.JobWithinAJobException;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
@@ -53,7 +53,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             RuntimeTupleIterator child,
             RuntimeIterator expression,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(Collections.singletonList(expression), executionMode, iteratorMetadata);
         _child = child;
@@ -66,7 +66,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         if (expression.isRDD()) {
             throw new JobWithinAJobException(
                     "A return clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
-                    getMetadata().getExpressionMetadata()
+                    getMetadata().getExceptionMetadata()
             );
         }
 

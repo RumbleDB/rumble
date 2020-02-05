@@ -21,14 +21,14 @@
 package sparksoniq.jsoniq.compiler.translator.expr.primary;
 
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 public class StringLiteral extends PrimaryExpression {
 
     private String value;
 
-    public StringLiteral(String _value, ExpressionMetadata metadata) {
+    public StringLiteral(String _value, ExceptionMetadata metadata) {
         super(metadata);
         this.value = _value;
     }

@@ -3,7 +3,8 @@ package sparksoniq.jsoniq.item;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.rumbledb.api.Item;
-import sparksoniq.jsoniq.item.metadata.ItemMetadata;
+
+import org.rumbledb.exceptions.ExceptionMetadata;;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -106,7 +107,7 @@ public class ItemFactory {
         return new ArrayItem(items);
     }
 
-    public Item createObjectItem(List<String> keys, List<Item> values, ItemMetadata itemMetadata) {
+    public Item createObjectItem(List<String> keys, List<Item> values, ExceptionMetadata itemMetadata) {
         return new ObjectItem(keys, values, itemMetadata);
     }
 

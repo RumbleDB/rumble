@@ -22,17 +22,17 @@ package sparksoniq.jsoniq.compiler.translator.expr.operational;
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.NaryExpressionBase;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.List;
 
 public class StringConcatExpression extends NaryExpressionBase {
-    public StringConcatExpression(Expression mainExpression, List<Expression> rhs, ExpressionMetadata metadata) {
+    public StringConcatExpression(Expression mainExpression, List<Expression> rhs, ExceptionMetadata metadata) {
         super(mainExpression, rhs, Operator.CONCAT, metadata);
     }
 
-    public StringConcatExpression(RangeExpression mainExpression, ExpressionMetadata metadata) {
+    public StringConcatExpression(RangeExpression mainExpression, ExceptionMetadata metadata) {
         super(mainExpression, metadata);
     }
 

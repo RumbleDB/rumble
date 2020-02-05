@@ -3,19 +3,19 @@ package sparksoniq.jsoniq.compiler.translator.expr.operational;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.flowr.FlworVarSingleType;
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.UnaryExpressionBase;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 public class CastableExpression extends UnaryExpressionBase {
 
     private FlworVarSingleType _atomicType;
 
-    public CastableExpression(Expression _mainExpression, ExpressionMetadata metadata) {
+    public CastableExpression(Expression _mainExpression, ExceptionMetadata metadata) {
         super(_mainExpression, metadata);
         this._isActive = false;
     }
 
-    public CastableExpression(Expression _mainExpression, FlworVarSingleType atomicType, ExpressionMetadata metadata) {
+    public CastableExpression(Expression _mainExpression, FlworVarSingleType atomicType, ExceptionMetadata metadata) {
         super(_mainExpression, Operator.CASTABLE, true, metadata);
         this._atomicType = atomicType;
     }

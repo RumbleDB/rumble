@@ -22,7 +22,7 @@ package sparksoniq.jsoniq.compiler.translator.expr.control;
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
@@ -38,7 +38,7 @@ public class IfExpression extends Expression {
             Expression condition,
             Expression branch,
             Expression elseBranch,
-            ExpressionMetadata metadataFromContext
+            ExceptionMetadata metadataFromContext
     ) {
         this._condition = condition;
         this._branch = branch;

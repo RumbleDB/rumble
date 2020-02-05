@@ -4,16 +4,16 @@ import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
 
 public class TypePromotionClosure implements Function<Item, Item> {
     private String _exceptionMessage;
     private SequenceType sequenceType;
-    private IteratorMetadata metadata;
+    private ExceptionMetadata metadata;
 
-    public TypePromotionClosure(String exceptionMessage, SequenceType sequenceType, IteratorMetadata metadata) {
+    public TypePromotionClosure(String exceptionMessage, SequenceType sequenceType, ExceptionMetadata metadata) {
         this._exceptionMessage = exceptionMessage;
         this.sequenceType = sequenceType;
         this.metadata = metadata;

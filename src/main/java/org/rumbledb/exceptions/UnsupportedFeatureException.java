@@ -22,13 +22,13 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCodes;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 
 public class UnsupportedFeatureException extends SparksoniqRuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    public UnsupportedFeatureException(String message, ExpressionMetadata metadata) {
+    public UnsupportedFeatureException(String message, ExceptionMetadata metadata) {
         super(message, ErrorCodes.UnimplementedErrorCode, metadata);
     }
 }

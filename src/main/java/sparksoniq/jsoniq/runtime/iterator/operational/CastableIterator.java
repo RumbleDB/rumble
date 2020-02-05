@@ -11,7 +11,7 @@ import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.UnaryOperationBaseIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SingleType;
@@ -28,7 +28,7 @@ public class CastableIterator extends UnaryOperationBaseIterator {
             RuntimeIterator child,
             SingleType singleType,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(child, OperationalExpressionBase.Operator.CASTABLE, executionMode, iteratorMetadata);
         this._singleType = singleType;
@@ -63,7 +63,7 @@ public class CastableIterator extends UnaryOperationBaseIterator {
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
     }
 
-    static AtomicItem checkInvalidCastable(Item item, IteratorMetadata metadata, SingleType singleType) {
+    static AtomicItem checkInvalidCastable(Item item, ExceptionMetadata metadata, SingleType singleType) {
         if (singleType.getType() == AtomicTypes.AtomicItem) {
             throw new CastableException("\"atomic\": invalid type for \"cast\" or \"castable\" expression", metadata);
         }
@@ -78,7 +78,7 @@ public class CastableIterator extends UnaryOperationBaseIterator {
                     "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
                 ItemTypes.getItemTypeName(item.getClass().getSimpleName())
             );
-            throw new NonAtomicKeyException(message, metadata.getExpressionMetadata());
+            throw new NonAtomicKeyException(message, metadata.getExceptionMetadata());
         }
         return atomicItem;
     }

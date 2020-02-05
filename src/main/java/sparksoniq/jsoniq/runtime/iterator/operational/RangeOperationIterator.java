@@ -29,7 +29,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalEx
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 public class RangeOperationIterator extends BinaryOperationBaseIterator {
@@ -44,7 +44,7 @@ public class RangeOperationIterator extends BinaryOperationBaseIterator {
             RuntimeIterator left,
             RuntimeIterator right,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(left, right, OperationalExpressionBase.Operator.TO, executionMode, iteratorMetadata);
     }

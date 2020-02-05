@@ -23,7 +23,7 @@ package sparksoniq.jsoniq.compiler.translator.expr.flowr;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.VariableReference;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 
@@ -37,7 +37,7 @@ public class GroupByClauseVar extends FlworVarDecl {
             FlworVarSequenceType sequence,
             Expression expr,
             String uri,
-            ExpressionMetadata metadata
+            ExceptionMetadata metadata
     ) {
         super(FLWOR_CLAUSES.GROUP_VAR, varRef, sequence, expr, metadata);
         this.uri = uri;

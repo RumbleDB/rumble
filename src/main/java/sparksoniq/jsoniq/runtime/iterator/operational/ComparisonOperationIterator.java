@@ -31,7 +31,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalEx
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
@@ -66,7 +66,7 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
             RuntimeIterator right,
             OperationalExpressionBase.Operator operator,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(left, right, operator, executionMode, iteratorMetadata);
     }
@@ -157,17 +157,17 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
         if (left.isArray() || right.isArray()) {
             throw new NonAtomicKeyException(
                     "Invalid args. Comparison can't be performed on array type",
-                    getMetadata().getExpressionMetadata()
+                    getMetadata().getExceptionMetadata()
             );
         } else if (left.isObject() || right.isObject()) {
             throw new NonAtomicKeyException(
                     "Invalid args. Comparison can't be performed on object type",
-                    getMetadata().getExpressionMetadata()
+                    getMetadata().getExceptionMetadata()
             );
         } else if (left.isFunction() || right.isFunction()) {
             throw new NonAtomicKeyException(
                     "Invalid args. Comparison can't be performed on function type",
-                    getMetadata().getExpressionMetadata()
+                    getMetadata().getExceptionMetadata()
             );
         }
 

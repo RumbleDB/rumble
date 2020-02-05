@@ -23,14 +23,14 @@ package sparksoniq.io.json;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 public class RowToItemMapper implements Function<Row, Item> {
 
     private static final long serialVersionUID = 1L;
-    private final IteratorMetadata metadata;
+    private final ExceptionMetadata metadata;
 
-    public RowToItemMapper(IteratorMetadata metadata) {
+    public RowToItemMapper(ExceptionMetadata metadata) {
         this.metadata = metadata;
     }
 
