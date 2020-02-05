@@ -31,8 +31,9 @@ import org.apache.hadoop.fs.Path;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.SparksoniqRuntimeConfiguration;
-import sparksoniq.exceptions.OurBadException;
-import sparksoniq.exceptions.ParsingException;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.ParsingException;
+
 import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
 import sparksoniq.jsoniq.compiler.parser.JsoniqLexer;
 import sparksoniq.jsoniq.compiler.parser.JsoniqParser;

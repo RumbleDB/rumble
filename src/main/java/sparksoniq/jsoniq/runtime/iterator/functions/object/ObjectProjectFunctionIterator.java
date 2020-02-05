@@ -21,8 +21,9 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.object;
 
 import org.rumbledb.api.Item;
-import sparksoniq.exceptions.InvalidSelectorException;
-import sparksoniq.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.InvalidSelectorException;
+import org.rumbledb.exceptions.IteratorFlowException;
+
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;

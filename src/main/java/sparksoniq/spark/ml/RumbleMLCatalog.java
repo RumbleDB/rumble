@@ -1,13 +1,14 @@
 package sparksoniq.spark.ml;
 
-import sparksoniq.exceptions.UnrecognizedRumbleMLClassReferenceException;
-import sparksoniq.exceptions.UnrecognizedRumbleMLParamReferenceException;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+
+import org.rumbledb.exceptions.UnrecognizedRumbleMLClassReferenceException;
+import org.rumbledb.exceptions.UnrecognizedRumbleMLParamReferenceException;
 
 /**
  * Maps within these catalog are auto generated (also the hashmap.put(...) statements) with the SparkML scraper python

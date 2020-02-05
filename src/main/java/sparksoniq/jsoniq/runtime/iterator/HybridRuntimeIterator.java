@@ -26,8 +26,8 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.parsing.RowToItemMapper;
+import org.rumbledb.exceptions.IteratorFlowException;
 
-import sparksoniq.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.DynamicContext;
