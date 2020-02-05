@@ -82,27 +82,27 @@ The Rumble shell should start:
     Log Path: -
     Query Path : -
 
-    jiqs$
+    rumble$
     
 You can now start typing interactive queries. Queries can span over multiple lines. You need to press return 3 times to confirm.
     
-    jiqs$ "Hello, world!"
+    rumble$ "Hello, world!"
 
 This produces the following results (`>>>` show the extra, empty lines that appear on the first two presses of the return key).
 
-    jiqs$ "Hello, world!"
+    rumble$ "Hello, world!"
     >>> 
     >>> 
     Hello, world
     
 You can try a few more queries.
     
-    jiqs$ 2 + 2
+    rumble$ 2 + 2
     >>> 
     >>> 
     4
     
-    jiqs$ 1 to 10
+    rumble$ 1 to 10
     >>> 
     >>> 
     ( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
