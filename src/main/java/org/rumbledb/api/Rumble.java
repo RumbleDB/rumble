@@ -5,12 +5,12 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
+import org.rumbledb.parser.JsoniqLexer;
+import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.expressions.Expression;
 
 import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
-import sparksoniq.jsoniq.compiler.parser.JsoniqLexer;
-import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.visitor.VisitorHelpers;

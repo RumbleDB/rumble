@@ -18,7 +18,7 @@
  *
  */
 
-package sparksoniq.io.json;
+package org.rumbledb.items.parsing;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
@@ -26,12 +26,12 @@ import sparksoniq.jsoniq.item.ItemFactory;
 
 import java.util.Iterator;
 
-public class StringMapper implements FlatMapFunction<Iterator<String>, Item> {
+public class StringToStringItemMapper implements FlatMapFunction<Iterator<String>, Item> {
 
 
     private static final long serialVersionUID = 1L;
 
-    public StringMapper() {
+    public StringToStringItemMapper() {
     }
 
     @Override

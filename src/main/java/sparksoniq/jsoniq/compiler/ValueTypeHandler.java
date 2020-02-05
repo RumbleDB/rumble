@@ -20,7 +20,6 @@
 
 package sparksoniq.jsoniq.compiler;
 
-import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 
 import java.math.BigDecimal;
@@ -31,6 +30,7 @@ import org.rumbledb.expressions.primary.DoubleLiteral;
 import org.rumbledb.expressions.primary.IntegerLiteral;
 import org.rumbledb.expressions.primary.NullLiteral;
 import org.rumbledb.expressions.primary.PrimaryExpression;
+import org.rumbledb.parser.JsoniqParser;
 
 
 public class ValueTypeHandler {

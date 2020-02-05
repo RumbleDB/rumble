@@ -2,7 +2,7 @@ grammar Jsoniq;
 
 @header {
 // Java header
-package sparksoniq.jsoniq.compiler.parser;
+package org.rumbledb.parser;
 }
 
 module                  : (Kjsoniq Kversion vers=stringLiteral ';')?
