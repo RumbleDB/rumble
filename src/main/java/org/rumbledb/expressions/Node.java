@@ -87,7 +87,7 @@ public abstract class Node {
      * 
      * When extending this method, make sure to perform a super() call to prevent UNSET accesses.
      * 
-     * @param ignoreUsetError if true, then an error is thrown if an UNSET mode is found.
+     * @param ignoreUnsetError if true, then an error is thrown if an UNSET mode is found.
      *        If false, it might silently return UNSET.
      * 
      * @return the highest execution mode.
@@ -110,6 +110,12 @@ public abstract class Node {
 
     /**
      * Accept method for the visitor pattern.
+     * 
+     * @param <T> the type of the objects returned by the visitor.
+     * @param visitor the visitor.
+     * @param argument the input from the visitor.
+     * 
+     * @return the object returned by this visitor
      */
     public abstract <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument);
 
@@ -160,6 +166,9 @@ public abstract class Node {
      * Utility method that can be used in overrides of getDescendants().
      * It iterates over the list of nodes and, if depth-first search is activated,
      * returns a list with recursively added descendants.
+     * 
+     * @param result the children.
+     * @param depthSearch whether or not to recursively return descendants.
      * 
      * @return the metadata.
      */
