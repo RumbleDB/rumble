@@ -23,7 +23,8 @@ package sparksoniq.jsoniq.runtime.iterator.postfix;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
-import sparksoniq.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.IteratorFlowException;
+
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;

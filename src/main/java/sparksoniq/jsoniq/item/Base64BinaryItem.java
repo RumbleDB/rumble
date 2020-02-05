@@ -7,8 +7,9 @@ import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.net.util.Base64;
 import org.rumbledb.api.Item;
-import sparksoniq.exceptions.IteratorFlowException;
-import sparksoniq.exceptions.UnexpectedTypeException;
+import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
+
 import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.types.AtomicTypes;

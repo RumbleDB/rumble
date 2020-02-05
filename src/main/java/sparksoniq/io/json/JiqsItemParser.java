@@ -31,7 +31,8 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.joda.time.DateTime;
 import org.rumbledb.api.Item;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
+import org.rumbledb.exceptions.SparksoniqRuntimeException;
+
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.metadata.ItemMetadata;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;

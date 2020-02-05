@@ -23,9 +23,9 @@ package org.rumbledb.cli;
 import org.apache.spark.SparkException;
 import org.rumbledb.config.SparksoniqRuntimeConfiguration;
 import org.rumbledb.shell.RumbleJLineShell;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.SparksoniqRuntimeException;
 
-import sparksoniq.exceptions.OurBadException;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.IOException;

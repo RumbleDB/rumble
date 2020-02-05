@@ -21,7 +21,8 @@
 package sparksoniq.jsoniq.runtime.iterator.functions;
 
 import org.rumbledb.api.Item;
-import sparksoniq.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.IteratorFlowException;
+
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;

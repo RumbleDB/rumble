@@ -22,7 +22,8 @@ package sparksoniq.jsoniq.runtime.iterator;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
-import sparksoniq.exceptions.OurBadException;
+import org.rumbledb.exceptions.OurBadException;
+
 import sparksoniq.io.json.JiqsItemParser;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;

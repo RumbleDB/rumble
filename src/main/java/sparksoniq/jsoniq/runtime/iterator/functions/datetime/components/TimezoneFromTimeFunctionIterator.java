@@ -2,7 +2,8 @@ package sparksoniq.jsoniq.runtime.iterator.functions.datetime.components;
 
 import org.joda.time.Period;
 import org.rumbledb.api.Item;
-import sparksoniq.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.IteratorFlowException;
+
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;

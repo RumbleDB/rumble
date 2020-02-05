@@ -21,13 +21,14 @@
 package sparksoniq.jsoniq.compiler.translator.expr.primary;
 
 
-import sparksoniq.exceptions.OurBadException;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.types.SequenceType;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.io.Serializable;
+
+import org.rumbledb.exceptions.OurBadException;
 
 public class VariableReference extends PrimaryExpression implements Serializable {
 
