@@ -12,7 +12,7 @@ public class InvalidLexicalValueException extends SparksoniqRuntimeException {
         super(
             message,
             ErrorCodes.InvalidLexicalValueErrorCode,
-            metadata.getExceptionMetadata()
+            metadata
         );
     }
 }

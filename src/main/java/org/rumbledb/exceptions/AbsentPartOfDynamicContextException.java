@@ -29,7 +29,7 @@ public class AbsentPartOfDynamicContextException extends SparksoniqRuntimeExcept
 
     private static final long serialVersionUID = 1L;
 
-    public AbsentPartOfDynamicContextException(String message, ExceptionMetadata iteratorMetadata) {
-        super(message, ErrorCodes.AbsentPartOfDynamicContextCode, iteratorMetadata.getExceptionMetadata());
+    public AbsentPartOfDynamicContextException(String message, ExceptionMetadata metadata) {
+        super(message, ErrorCodes.AbsentPartOfDynamicContextCode, metadata);
     }
 }

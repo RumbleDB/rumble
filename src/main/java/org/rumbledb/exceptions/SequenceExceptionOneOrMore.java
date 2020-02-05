@@ -29,6 +29,6 @@ public class SequenceExceptionOneOrMore extends SparksoniqRuntimeException {
     private static final long serialVersionUID = 1L;
 
     public SequenceExceptionOneOrMore(String message, ExceptionMetadata metadata) {
-        super(message, ErrorCodes.OneOrMoreErrorCode, metadata.getExceptionMetadata());
+        super(message, ErrorCodes.OneOrMoreErrorCode, metadata);
     }
 }

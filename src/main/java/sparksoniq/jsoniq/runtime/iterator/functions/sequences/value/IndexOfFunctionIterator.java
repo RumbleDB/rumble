@@ -88,7 +88,7 @@ public class IndexOfFunctionIterator extends LocalFunctionCallIterator {
         if (!_search.isAtomic()) {
             throw new NonAtomicKeyException(
                     "Invalid args. index-of can't be performed with a non-atomic parameter",
-                    getMetadata().getExceptionMetadata()
+                    getMetadata()
             );
         }
         searchIterator.close();
@@ -105,7 +105,7 @@ public class IndexOfFunctionIterator extends LocalFunctionCallIterator {
             if (!item.isAtomic()) {
                 throw new NonAtomicKeyException(
                         "Invalid args. index-of can't be performed with a non-atomic in the input sequence",
-                        getMetadata().getExceptionMetadata()
+                        getMetadata()
                 );
             } else {
                 if (item.compareTo(_search) == 0) {

@@ -179,7 +179,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 if (expressionUsesVariablesOfCurrentFlwor) {
                     throw new JobWithinAJobException(
                             "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
-                            getMetadata().getExceptionMetadata()
+                            getMetadata()
                     );
                 }
 

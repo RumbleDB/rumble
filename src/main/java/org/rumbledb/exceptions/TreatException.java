@@ -9,6 +9,6 @@ public class TreatException extends SparksoniqRuntimeException {
     private static final long serialVersionUID = 1L;
 
     public TreatException(String message, ExceptionMetadata metadata) {
-        super(message, ErrorCodes.DynamicTypeTreatErrorCode, metadata.getExceptionMetadata());
+        super(message, ErrorCodes.DynamicTypeTreatErrorCode, metadata);
     }
 }

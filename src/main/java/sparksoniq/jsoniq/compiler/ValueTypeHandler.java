@@ -27,7 +27,7 @@ import sparksoniq.jsoniq.compiler.translator.expr.primary.DoubleLiteral;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.IntegerLiteral;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.NullLiteral;
 import sparksoniq.jsoniq.compiler.translator.expr.primary.PrimaryExpression;
-import org.rumbledb.exceptions.ExceptionMetadata;;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.math.BigDecimal;
 

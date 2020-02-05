@@ -21,7 +21,7 @@
 package sparksoniq.semantics;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import org.rumbledb.exceptions.ExceptionMetadata;;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.types.SequenceType;
 
 import java.util.HashMap;

@@ -22,7 +22,7 @@ package sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions;
 
 import sparksoniq.jsoniq.compiler.translator.expr.Expression;
 import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
-import org.rumbledb.exceptions.ExceptionMetadata;;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.util.ArrayList;
 import java.util.List;

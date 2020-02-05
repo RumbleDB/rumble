@@ -29,7 +29,7 @@ public class OurBadException extends SparksoniqRuntimeException {
     private static final long serialVersionUID = 1L;
 
     public OurBadException(String message, ExceptionMetadata metadata) {
-        super(message, ErrorCodes.OurBadErrorCode, metadata.getExceptionMetadata());
+        super(message, ErrorCodes.OurBadErrorCode, metadata);
     }
 
     public OurBadException(String message) {

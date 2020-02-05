@@ -157,7 +157,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                         if (!resultItem.isAtomic()) {
                             throw new NonAtomicKeyException(
                                     "Order by keys must be atomics",
-                                    expressionWithIterator.getIterator().getMetadata().getExceptionMetadata()
+                                    expressionWithIterator.getIterator().getMetadata()
                             );
                         }
                         if (resultItem.isBinary()) {
@@ -205,7 +205,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             if (expressionWithIterator.getIterator().isRDD()) {
                 throw new JobWithinAJobException(
                         "An order by clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
-                        getMetadata().getExceptionMetadata()
+                        getMetadata()
                 );
             }
         }

@@ -41,7 +41,7 @@ public class DoubleFunctionIterator extends LocalFunctionCallIterator {
                         "Can not atomize an %1$s item: an %1$s has probably been passed where an atomic value is expected.",
                         ItemTypes.getItemTypeName(item.getClass().getSimpleName())
                     );
-                    throw new NonAtomicKeyException(message, getMetadata().getExceptionMetadata());
+                    throw new NonAtomicKeyException(message, getMetadata());
                 }
                 AtomicItem atomicItem = (AtomicItem) item;
                 String message = atomicItem.serialize()

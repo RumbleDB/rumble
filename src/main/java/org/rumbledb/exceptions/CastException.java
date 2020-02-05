@@ -10,6 +10,6 @@ public class CastException extends SparksoniqRuntimeException {
     private static final long serialVersionUID = 1L;
 
     public CastException(String message, ExceptionMetadata metadata) {
-        super(message, ErrorCodes.CastErrorCode, metadata.getExceptionMetadata());
+        super(message, ErrorCodes.CastErrorCode, metadata);
     }
 }

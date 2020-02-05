@@ -78,7 +78,7 @@ public class CastableIterator extends UnaryOperationBaseIterator {
                     "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
                 ItemTypes.getItemTypeName(item.getClass().getSimpleName())
             );
-            throw new NonAtomicKeyException(message, metadata.getExceptionMetadata());
+            throw new NonAtomicKeyException(message, metadata);
         }
         return atomicItem;
     }

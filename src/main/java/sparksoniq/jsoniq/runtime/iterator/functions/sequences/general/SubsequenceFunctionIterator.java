@@ -77,12 +77,12 @@ public class SubsequenceFunctionIterator extends LocalFunctionCallIterator {
             if (lengthItem.isArray()) {
                 throw new NonAtomicKeyException(
                         "Invalid args. subsequence can't be performed with an array parameter as the length",
-                        getMetadata().getExceptionMetadata()
+                        getMetadata()
                 );
             } else if (lengthItem.isObject()) {
                 throw new NonAtomicKeyException(
                         "Invalid args. subsequence can't be performed with an object parameter as the length",
-                        getMetadata().getExceptionMetadata()
+                        getMetadata()
                 );
             } else if (!(lengthItem.isNumeric())) {
                 throw new UnexpectedTypeException(
@@ -113,12 +113,12 @@ public class SubsequenceFunctionIterator extends LocalFunctionCallIterator {
         if (positionItem.isArray()) {
             throw new NonAtomicKeyException(
                     "Invalid args. subsequence can't be performed with an array parameter as the position",
-                    getMetadata().getExceptionMetadata()
+                    getMetadata()
             );
         } else if (positionItem instanceof ObjectItem) {
             throw new NonAtomicKeyException(
                     "Invalid args. subsequence can't be performed with an object parameter as the position",
-                    getMetadata().getExceptionMetadata()
+                    getMetadata()
             );
         } else if (!(positionItem.isNumeric())) {
             throw new UnexpectedTypeException(

@@ -21,7 +21,7 @@
 package sparksoniq.jsoniq.compiler.translator.expr;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import org.rumbledb.exceptions.ExceptionMetadata;;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;

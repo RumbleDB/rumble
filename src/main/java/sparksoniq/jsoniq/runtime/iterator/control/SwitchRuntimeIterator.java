@@ -98,12 +98,12 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
             if (testValue.isArray()) {
                 throw new NonAtomicKeyException(
                         "Invalid args. Switch condition can't be an array type",
-                        getMetadata().getExceptionMetadata()
+                        getMetadata()
                 );
             } else if (testValue.isObject()) {
                 throw new NonAtomicKeyException(
                         "Invalid args. Switch condition  can't be an object type",
-                        getMetadata().getExceptionMetadata()
+                        getMetadata()
                 );
             }
         }
@@ -115,12 +115,12 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
                 if (caseValue.isArray()) {
                     throw new NonAtomicKeyException(
                             "Invalid args. Switch case can't be an array type",
-                            getMetadata().getExceptionMetadata()
+                            getMetadata()
                     );
                 } else if (caseValue.isObject()) {
                     throw new NonAtomicKeyException(
                             "Invalid args. Switch case  can't be an object type",
-                            getMetadata().getExceptionMetadata()
+                            getMetadata()
                     );
                 }
             }

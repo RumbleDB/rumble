@@ -29,6 +29,6 @@ public class InvalidSelectorException extends SparksoniqRuntimeException {
     private static final long serialVersionUID = 1L;
 
     public InvalidSelectorException(String message, ExceptionMetadata metadata) {
-        super(message, ErrorCodes.InvalidSelectorErrorCode, metadata.getExceptionMetadata());
+        super(message, ErrorCodes.InvalidSelectorErrorCode, metadata);
     }
 }

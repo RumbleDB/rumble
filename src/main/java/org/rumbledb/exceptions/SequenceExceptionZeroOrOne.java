@@ -29,6 +29,6 @@ public class SequenceExceptionZeroOrOne extends SparksoniqRuntimeException {
     private static final long serialVersionUID = 1L;
 
     public SequenceExceptionZeroOrOne(String message, ExceptionMetadata metadata) {
-        super(message, ErrorCodes.ZeroOrOneErrorCode, metadata.getExceptionMetadata());
+        super(message, ErrorCodes.ZeroOrOneErrorCode, metadata);
     }
 }

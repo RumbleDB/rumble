@@ -21,7 +21,7 @@
 package org.rumbledb.exceptions;
 
 
-import org.rumbledb.exceptions.ExceptionMetadata;;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 public class SemanticException extends SparksoniqRuntimeException {
 

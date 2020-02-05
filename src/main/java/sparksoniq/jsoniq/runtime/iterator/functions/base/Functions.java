@@ -21,7 +21,7 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.base;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import org.rumbledb.exceptions.ExceptionMetadata;;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.FunctionItemCallIterator;
@@ -578,7 +578,7 @@ public class Functions {
             throw new UnknownFunctionCallException(
                     identifier.getName(),
                     arguments.size(),
-                    metadata.getExceptionMetadata()
+                    metadata
             );
         }
 
@@ -611,7 +611,7 @@ public class Functions {
         throw new UnknownFunctionCallException(
                 identifier.getName(),
                 identifier.getArity(),
-                metadata.getExceptionMetadata()
+                metadata
         );
 
     }

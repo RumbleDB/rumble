@@ -28,12 +28,12 @@ public class UnrecognizedRumbleMLParamReferenceException extends SparksoniqRunti
 
     private static final long serialVersionUID = 1L;
 
-    public UnrecognizedRumbleMLParamReferenceException(String message, ExceptionMetadata iteratorMetadata) {
+    public UnrecognizedRumbleMLParamReferenceException(String message, ExceptionMetadata metadata) {
         super(
             "Unrecognized Rumble ML parameter; "
                 + message,
             ErrorCodes.UnrecognizedRumbleMLParamReferenceErrorCode,
-            iteratorMetadata.getExceptionMetadata()
+            metadata
         );
     }
 }

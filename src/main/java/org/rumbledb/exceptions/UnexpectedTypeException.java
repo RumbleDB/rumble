@@ -29,6 +29,6 @@ public class UnexpectedTypeException extends SparksoniqRuntimeException {
     private static final long serialVersionUID = 1L;
 
     public UnexpectedTypeException(String message, ExceptionMetadata metadata) {
-        super(message, ErrorCodes.UnexpectedTypeErrorCode, metadata.getExceptionMetadata());
+        super(message, ErrorCodes.UnexpectedTypeErrorCode, metadata);
     }
 }

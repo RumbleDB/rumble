@@ -70,7 +70,7 @@ public class StructuredJsonFileFunctionIterator extends DataFrameRuntimeIterator
                         "File "
                             + url
                             + " contains a malformed JSON document that does not fit into the JSON lines format.",
-                        getMetadata().getExceptionMetadata()
+                        getMetadata()
                 );
             }
             throw e;

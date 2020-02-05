@@ -9,6 +9,6 @@ public class InvalidTimezoneException extends SparksoniqRuntimeException {
     private static final long serialVersionUID = 1L;
 
     public InvalidTimezoneException(String message, ExceptionMetadata metadata) {
-        super(message, ErrorCodes.InvalidTimezoneValue, metadata.getExceptionMetadata());
+        super(message, ErrorCodes.InvalidTimezoneValue, metadata);
     }
 }

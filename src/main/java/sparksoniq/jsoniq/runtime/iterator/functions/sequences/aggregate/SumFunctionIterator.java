@@ -71,7 +71,7 @@ public class SumFunctionIterator extends LocalFunctionCallIterator {
                     if (!_zeroItem.isAtomic()) {
                         throw new NonAtomicKeyException(
                                 "Invalid args. Zero item has to be of an atomic type",
-                                getMetadata().getExceptionMetadata()
+                                getMetadata()
                         );
                     }
                 }

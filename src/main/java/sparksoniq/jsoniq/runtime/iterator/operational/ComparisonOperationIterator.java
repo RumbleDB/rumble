@@ -157,17 +157,17 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
         if (left.isArray() || right.isArray()) {
             throw new NonAtomicKeyException(
                     "Invalid args. Comparison can't be performed on array type",
-                    getMetadata().getExceptionMetadata()
+                    getMetadata()
             );
         } else if (left.isObject() || right.isObject()) {
             throw new NonAtomicKeyException(
                     "Invalid args. Comparison can't be performed on object type",
-                    getMetadata().getExceptionMetadata()
+                    getMetadata()
             );
         } else if (left.isFunction() || right.isFunction()) {
             throw new NonAtomicKeyException(
                     "Invalid args. Comparison can't be performed on function type",
-                    getMetadata().getExceptionMetadata()
+                    getMetadata()
             );
         }
 

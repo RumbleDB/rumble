@@ -20,7 +20,7 @@
 
 package sparksoniq.jsoniq.compiler.translator.expr;
 
-import org.rumbledb.exceptions.ExceptionMetadata;;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.StaticContext;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 

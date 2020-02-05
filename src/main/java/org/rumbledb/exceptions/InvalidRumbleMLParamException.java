@@ -28,11 +28,11 @@ public class InvalidRumbleMLParamException extends SparksoniqRuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    public InvalidRumbleMLParamException(String message, ExceptionMetadata iteratorMetadata) {
+    public InvalidRumbleMLParamException(String message, ExceptionMetadata metadata) {
         super(
             "Invalid Param; " + message,
             ErrorCodes.InvalidRumbleMLParamErrorCode,
-            iteratorMetadata.getExceptionMetadata()
+            metadata
         );
     }
 }

@@ -34,7 +34,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.SparksoniqRuntimeException;
 
 import sparksoniq.jsoniq.item.ItemFactory;
-import org.rumbledb.exceptions.ExceptionMetadata;;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.spark.SparkSessionManager;
 

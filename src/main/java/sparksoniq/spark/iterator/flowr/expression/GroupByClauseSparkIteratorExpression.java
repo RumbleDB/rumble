@@ -49,7 +49,7 @@ public class GroupByClauseSparkIteratorExpression implements Serializable {
         return _variableReference;
     }
 
-    public ExceptionMetadata getIteratorMetadata() {
+    public ExceptionMetadata getMetadata() {
         return iteratorMetadata;
     }
 

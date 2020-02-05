@@ -29,6 +29,6 @@ public class CannotRetrieveResourceException extends SparksoniqRuntimeException 
     private static final long serialVersionUID = 1L;
 
     public CannotRetrieveResourceException(String message, ExceptionMetadata metadata) {
-        super(message, ErrorCodes.CannotRetrieveResourceErrorCode, metadata.getExceptionMetadata());
+        super(message, ErrorCodes.CannotRetrieveResourceErrorCode, metadata);
     }
 }

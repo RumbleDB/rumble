@@ -29,6 +29,6 @@ public class SequenceExceptionExactlyOne extends SparksoniqRuntimeException {
     private static final long serialVersionUID = 1L;
 
     public SequenceExceptionExactlyOne(String message, ExceptionMetadata metadata) {
-        super(message, ErrorCodes.ExactlyOneErrorCode, metadata.getExceptionMetadata());
+        super(message, ErrorCodes.ExactlyOneErrorCode, metadata);
     }
 }

@@ -29,6 +29,6 @@ public class InvalidArgumentTypeException extends SparksoniqRuntimeException {
     private static final long serialVersionUID = 1L;
 
     public InvalidArgumentTypeException(String message, ExceptionMetadata metadata) {
-        super(message, ErrorCodes.InvalidArgumentType, metadata.getExceptionMetadata());
+        super(message, ErrorCodes.InvalidArgumentType, metadata);
     }
 }

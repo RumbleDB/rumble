@@ -29,6 +29,6 @@ public class SparkRuntimeException extends SparksoniqRuntimeException {
     private static final long serialVersionUID = 1L;
 
     public SparkRuntimeException(String message, ExceptionMetadata metadata) {
-        super(message, ErrorCodes.RuntimeExceptionErrorCode, metadata.getExceptionMetadata());
+        super(message, ErrorCodes.RuntimeExceptionErrorCode, metadata);
     }
 }

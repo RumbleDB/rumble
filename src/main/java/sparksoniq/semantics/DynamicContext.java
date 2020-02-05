@@ -174,7 +174,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
 
         throw new SparksoniqRuntimeException(
                 "Runtime error retrieving variable " + varName + " value",
-                metadata.getExceptionMetadata()
+                metadata
         );
     }
 

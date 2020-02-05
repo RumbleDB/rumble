@@ -21,7 +21,7 @@
 package sparksoniq.jsoniq.compiler.translator.expr.postfix.extensions;
 
 
-import org.rumbledb.exceptions.ExceptionMetadata;;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 public class ArrayUnboxingExtension extends PostfixExtension {
 

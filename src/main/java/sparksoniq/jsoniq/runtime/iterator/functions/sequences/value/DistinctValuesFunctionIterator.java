@@ -92,7 +92,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
             if (!item.isAtomic()) {
                 throw new NonAtomicKeyException(
                         "Invalid args. distinct-values can't be performed on non-atomics",
-                        getMetadata().getExceptionMetadata()
+                        getMetadata()
                 );
             } else {
                 if (!_prevResults.contains(item)) {
@@ -120,7 +120,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
         }
         throw new NonAtomicKeyException(
                 "Invalid args. distinct-values can't be performed on non-atomics",
-                getMetadata().getExceptionMetadata()
+                getMetadata()
         );
     }
 }

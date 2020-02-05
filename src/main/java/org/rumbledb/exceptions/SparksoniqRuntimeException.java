@@ -20,7 +20,7 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.exceptions.ExceptionMetadata;;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.util.Arrays;
 

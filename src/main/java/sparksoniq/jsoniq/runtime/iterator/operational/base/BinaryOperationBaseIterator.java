@@ -64,7 +64,7 @@ public abstract class BinaryOperationBaseIterator extends LocalRuntimeIterator {
                     "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
                 ItemTypes.getItemTypeName(left.getClass().getSimpleName())
             );
-            throw new NonAtomicKeyException(message, getMetadata().getExceptionMetadata());
+            throw new NonAtomicKeyException(message, getMetadata());
         }
         if (!right.isAtomic()) {
             String message = String.format(
@@ -73,7 +73,7 @@ public abstract class BinaryOperationBaseIterator extends LocalRuntimeIterator {
                     "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
                 ItemTypes.getItemTypeName(right.getClass().getSimpleName())
             );
-            throw new NonAtomicKeyException(message, getMetadata().getExceptionMetadata());
+            throw new NonAtomicKeyException(message, getMetadata());
         }
         if (
             (!left.isNumeric() && !left.isYearMonthDuration() && !left.isDayTimeDuration() && !left.hasDateTime())

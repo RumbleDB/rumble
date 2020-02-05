@@ -12,7 +12,7 @@ public class StringOfJSONiqItemException extends SparksoniqRuntimeException {
         super(
             message,
             ErrorCodes.StringOfJSONiqItemsErrorCode,
-            metadata.getExceptionMetadata()
+            metadata
         );
     }
 }

@@ -28,7 +28,7 @@ public class InvalidGroupVariableException extends SparksoniqRuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    public InvalidGroupVariableException(String message, ExceptionMetadata iteratorMetadata) {
-        super(message, ErrorCodes.InvalidGroupVariableErrorCode, iteratorMetadata.getExceptionMetadata());
+    public InvalidGroupVariableException(String message, ExceptionMetadata metadata) {
+        super(message, ErrorCodes.InvalidGroupVariableErrorCode, metadata);
     }
 }
