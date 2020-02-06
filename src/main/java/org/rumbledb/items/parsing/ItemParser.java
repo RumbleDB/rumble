@@ -23,6 +23,9 @@ package org.rumbledb.items.parsing;
 import com.jsoniter.JsonIterator;
 import com.jsoniter.ValueType;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.lang.ArrayUtils;
+import org.apache.spark.ml.linalg.SparseVector;
+import org.apache.spark.ml.linalg.VectorUDT;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataType;
@@ -224,6 +227,19 @@ public class ItemParser implements Serializable {
                 objects = (List<Object>) o;
             for (Object object : objects) {
                 addValue(null, 0, object, dataType, members, metadata);
+            }
+            values.add(ItemFactory.getInstance().createArrayItem(members));
+        } else if (fieldType instanceof VectorUDT) {
+            // a vector type is essentially an array of doubles in rumble terms
+            SparseVector vector = (SparseVector) row.get(i);
+            List<Item> members = new ArrayList<>(vector.size());
+
+            for (int j = 0; j < vector.size(); j++) {
+                double value = 0.0;
+                if (ArrayUtils.contains(vector.indices(), j)) {
+                    value = vector.values()[j];
+                }
+                members.add(ItemFactory.getInstance().createDoubleItem(value));
             }
             values.add(ItemFactory.getInstance().createArrayItem(members));
         } else {
