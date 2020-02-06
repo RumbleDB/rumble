@@ -1246,6 +1246,26 @@ public class RumbleMLCatalog {
         }
     }
 
+    public static void validateParameterForEstimator(
+            String estimatorName,
+            String paramName,
+            ExceptionMetadata metadata
+    ) {
+        if (!estimatorParams.containsKey(estimatorName)) {
+            throw new UnrecognizedRumbleMLClassReferenceException(estimatorName, metadata);
+        }
+        if (!estimatorParams.get(estimatorName).contains(paramName)) {
+            throw new UnrecognizedRumbleMLParamReferenceException(
+                    "Make sure \""
+                        + paramName
+                        + "\" is a valid parameter of \""
+                        + estimatorName
+                        + "\".",
+                    metadata
+            );
+        }
+    }
+
     public static String getParamJavaTypeName(String name, ExceptionMetadata metadata) {
         if (!paramJavaTypeNames.containsKey(name)) {
             throw new UnrecognizedRumbleMLParamReferenceException(
@@ -1256,5 +1276,10 @@ public class RumbleMLCatalog {
             );
         }
         return paramJavaTypeNames.get(name);
+    }
+
+    public static String getRumbleMLShortName(String javaFullClassName) {
+        int indexOfLastDot = javaFullClassName.lastIndexOf(".");
+        return javaFullClassName.substring(indexOfLastDot + 1);
     }
 }
