@@ -7,8 +7,8 @@ import org.joda.time.Period;
 import org.joda.time.PeriodType;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 
-import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemType;

@@ -31,9 +31,9 @@ import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.exceptions.SparksoniqRuntimeException;
+import org.rumbledb.expressions.module.MainModule;
 
 import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
-import sparksoniq.jsoniq.compiler.translator.expr.module.MainModule;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;

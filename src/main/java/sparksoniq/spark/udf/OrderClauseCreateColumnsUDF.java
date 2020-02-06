@@ -28,9 +28,9 @@ import org.apache.spark.sql.api.java.UDF2;
 import org.joda.time.Instant;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.expressions.flowr.OrderByClauseExpr;
 
 import scala.collection.mutable.WrappedArray;
-import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.NullItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;

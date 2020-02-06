@@ -20,10 +20,11 @@
 
 package sparksoniq.spark.iterator.flowr.expression;
 
-import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 
 import java.io.Serializable;
+
+import org.rumbledb.expressions.flowr.OrderByClauseExpr;
 
 public class OrderByClauseAnnotatedChildIterator implements Serializable {
 

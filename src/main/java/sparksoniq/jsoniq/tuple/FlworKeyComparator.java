@@ -20,12 +20,13 @@
 
 package sparksoniq.jsoniq.tuple;
 
-import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
 import sparksoniq.spark.iterator.flowr.expression.OrderByClauseAnnotatedChildIterator;
 
 import java.io.Serializable;
 import java.util.Comparator;
 import java.util.List;
+
+import org.rumbledb.expressions.flowr.OrderByClauseExpr;
 
 public class FlworKeyComparator implements Comparator<FlworKey>, Serializable {
 
