@@ -20,17 +20,12 @@
 
 package org.rumbledb.expressions.flowr;
 
-<<<<<<< HEAD:src/main/java/sparksoniq/jsoniq/compiler/translator/expr/flowr/FlworClause.java
-import sparksoniq.jsoniq.compiler.translator.expr.ExpressionOrClause;
-import org.rumbledb.exceptions.ExceptionMetadata;
-=======
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
->>>>>>> 2d5db4eadf7e3753ca9b17818e52548c02a7d8fe:src/main/java/org/rumbledb/expressions/flowr/FlworClause.java
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.ExpressionOrClause;
 
 /**
