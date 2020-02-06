@@ -42,7 +42,7 @@ public abstract class Expression extends ExpressionOrClause {
         super();
     }
 
-protected Expression(ExceptionMetadata metadata) {
+    protected Expression(ExceptionMetadata metadata) {
         super(metadata);
     }
 
