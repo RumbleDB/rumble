@@ -28,7 +28,7 @@ import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.types.ItemTypes;
 
 import java.util.ArrayList;
@@ -46,7 +46,7 @@ public abstract class BinaryOperationBaseIterator extends LocalRuntimeIterator {
             RuntimeIterator right,
             OperationalExpressionBase.Operator operator,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(null, executionMode, iteratorMetadata);
         this._children.add(left);
@@ -64,7 +64,7 @@ public abstract class BinaryOperationBaseIterator extends LocalRuntimeIterator {
                     "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
                 ItemTypes.getItemTypeName(left.getClass().getSimpleName())
             );
-            throw new NonAtomicKeyException(message, getMetadata().getExpressionMetadata());
+            throw new NonAtomicKeyException(message, getMetadata());
         }
         if (!right.isAtomic()) {
             String message = String.format(
@@ -73,7 +73,7 @@ public abstract class BinaryOperationBaseIterator extends LocalRuntimeIterator {
                     "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
                 ItemTypes.getItemTypeName(right.getClass().getSimpleName())
             );
-            throw new NonAtomicKeyException(message, getMetadata().getExpressionMetadata());
+            throw new NonAtomicKeyException(message, getMetadata());
         }
         if (
             (!left.isNumeric() && !left.isYearMonthDuration() && !left.isDayTimeDuration() && !left.hasDateTime())

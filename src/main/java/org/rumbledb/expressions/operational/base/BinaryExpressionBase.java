@@ -21,11 +21,10 @@
 package org.rumbledb.expressions.operational.base;
 
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.ExpressionOrClause;
 
@@ -33,7 +32,7 @@ public abstract class BinaryExpressionBase extends OperationalExpressionBase {
 
     private Expression rightExpression;
 
-    public BinaryExpressionBase(Expression mainExpression, ExpressionMetadata metadata) {
+    public BinaryExpressionBase(Expression mainExpression, ExceptionMetadata metadata) {
         super(mainExpression, Operator.NONE, metadata);
         this._isActive = false;
 
@@ -43,7 +42,7 @@ public abstract class BinaryExpressionBase extends OperationalExpressionBase {
             Expression mainExpression,
             Expression rhs,
             Operator op,
-            ExpressionMetadata metadata
+            ExceptionMetadata metadata
     ) {
         super(mainExpression, op, metadata);
         this.rightExpression = rhs;

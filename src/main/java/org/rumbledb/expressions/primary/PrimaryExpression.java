@@ -20,12 +20,12 @@
 
 package org.rumbledb.expressions.primary;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.ExpressionOrClause;
 
@@ -33,7 +33,7 @@ import org.rumbledb.expressions.ExpressionOrClause;
 // TODO(NOT IMPLEMENTED): orderedExpr, unorderedExpr
 public abstract class PrimaryExpression extends Expression {
 
-    protected PrimaryExpression(ExpressionMetadata metadata) {
+    protected PrimaryExpression(ExceptionMetadata metadata) {
         super(metadata);
     }
 

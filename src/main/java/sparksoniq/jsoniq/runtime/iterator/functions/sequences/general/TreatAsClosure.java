@@ -4,15 +4,15 @@ import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.TreatException;
 
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
 
 public class TreatAsClosure implements Function<Item, Boolean> {
     private SequenceType sequenceType;
-    private IteratorMetadata metadata;
+    private ExceptionMetadata metadata;
 
-    public TreatAsClosure(SequenceType sequenceType, IteratorMetadata metadata) {
+    public TreatAsClosure(SequenceType sequenceType, ExceptionMetadata metadata) {
         this.sequenceType = sequenceType;
         this.metadata = metadata;
     }

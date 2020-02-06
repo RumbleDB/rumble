@@ -21,7 +21,7 @@
 package org.rumbledb.expressions;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
@@ -36,14 +36,14 @@ import org.rumbledb.exceptions.OurBadException;
  */
 public abstract class ExpressionOrClause {
 
-    private ExpressionMetadata metadata;
+    private ExceptionMetadata metadata;
 
     protected ExecutionMode _highestExecutionMode = ExecutionMode.UNSET;
 
     protected ExpressionOrClause() {
     }
 
-    protected ExpressionOrClause(ExpressionMetadata metadata) {
+    protected ExpressionOrClause(ExceptionMetadata metadata) {
         this.metadata = metadata;
     }
 
@@ -91,7 +91,7 @@ public abstract class ExpressionOrClause {
         return filter;
     }
 
-    public ExpressionMetadata getMetadata() {
+    public ExceptionMetadata getMetadata() {
         return metadata;
     }
 

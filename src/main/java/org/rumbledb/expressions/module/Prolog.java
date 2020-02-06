@@ -21,12 +21,12 @@
 package org.rumbledb.expressions.module;
 
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.ExpressionOrClause;
 import org.rumbledb.expressions.primary.FunctionDeclaration;
@@ -35,7 +35,7 @@ public class Prolog extends Expression {
 
     private final List<FunctionDeclaration> _functionDeclaration;
 
-    public Prolog(List<FunctionDeclaration> functionDeclarations, ExpressionMetadata metadata) {
+    public Prolog(List<FunctionDeclaration> functionDeclarations, ExceptionMetadata metadata) {
         super(metadata);
         this._functionDeclaration = functionDeclarations;
     }

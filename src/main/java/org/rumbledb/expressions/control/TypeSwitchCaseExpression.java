@@ -1,11 +1,11 @@
 package org.rumbledb.expressions.control;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.ExpressionOrClause;
 import org.rumbledb.expressions.flowr.FlworVarSequenceType;
@@ -21,7 +21,7 @@ public class TypeSwitchCaseExpression extends Expression {
             VariableReference var,
             List<FlworVarSequenceType> union,
             Expression returnExpression,
-            ExpressionMetadata metadataFromContext
+            ExceptionMetadata metadataFromContext
     ) {
         super(metadataFromContext);
         this.variableReferenceNode = var;

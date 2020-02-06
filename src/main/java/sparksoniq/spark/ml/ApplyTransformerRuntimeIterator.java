@@ -10,7 +10,7 @@ import org.rumbledb.exceptions.OurBadException;
 
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.DataFrameRuntimeIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
@@ -28,7 +28,7 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
             String transformerShortName,
             Transformer transformer,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(null, executionMode, iteratorMetadata);
         this._transformerShortName = transformerShortName;

@@ -29,7 +29,7 @@ import org.rumbledb.exceptions.NonAtomicKeyException;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
@@ -45,7 +45,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
     public DistinctValuesFunctionIterator(
             List<RuntimeIterator> arguments,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(arguments, executionMode, iteratorMetadata);
         _sequenceIterator = arguments.get(0);
@@ -92,7 +92,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
             if (!item.isAtomic()) {
                 throw new NonAtomicKeyException(
                         "Invalid args. distinct-values can't be performed on non-atomics",
-                        getMetadata().getExpressionMetadata()
+                        getMetadata()
                 );
             } else {
                 if (!_prevResults.contains(item)) {
@@ -120,7 +120,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
         }
         throw new NonAtomicKeyException(
                 "Invalid args. distinct-values can't be performed on non-atomics",
-                getMetadata().getExpressionMetadata()
+                getMetadata()
         );
     }
 }

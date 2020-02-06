@@ -25,10 +25,10 @@ import org.rumbledb.exceptions.IteratorFlowException;
 
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
-import sparksoniq.jsoniq.item.metadata.ItemMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
@@ -47,7 +47,7 @@ public class ObjectDescendantPairsFunctionIterator extends LocalFunctionCallIter
     public ObjectDescendantPairsFunctionIterator(
             List<RuntimeIterator> arguments,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(arguments, executionMode, iteratorMetadata);
     }
@@ -112,7 +112,7 @@ public class ObjectDescendantPairsFunctionIterator extends LocalFunctionCallIter
                     List<Item> valueList = Collections.singletonList(value);
 
                     Item result = ItemFactory.getInstance()
-                        .createObjectItem(keyList, valueList, ItemMetadata.fromIteratorMetadata(getMetadata()));
+                        .createObjectItem(keyList, valueList, getMetadata());
                     _nextResults.add(result);
                     getDescendantPairs(valueList);
                 }

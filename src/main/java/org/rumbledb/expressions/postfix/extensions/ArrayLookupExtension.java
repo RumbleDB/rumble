@@ -20,11 +20,10 @@
 
 package org.rumbledb.expressions.postfix.extensions;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.ExpressionOrClause;
 
@@ -33,7 +32,7 @@ public class ArrayLookupExtension extends PostfixExtension {
 
     Expression _expression;
 
-    public ArrayLookupExtension(Expression commaExpr, ExpressionMetadata metadata) {
+    public ArrayLookupExtension(Expression commaExpr, ExceptionMetadata metadata) {
         super(metadata);
         this._expression = commaExpr;
     }

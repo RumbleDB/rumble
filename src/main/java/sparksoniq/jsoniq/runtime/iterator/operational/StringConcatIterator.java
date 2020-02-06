@@ -29,7 +29,7 @@ import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 public class StringConcatIterator extends BinaryOperationBaseIterator {
 
@@ -39,7 +39,7 @@ public class StringConcatIterator extends BinaryOperationBaseIterator {
             RuntimeIterator left,
             RuntimeIterator right,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(left, right, OperationalExpressionBase.Operator.CONCAT, executionMode, iteratorMetadata);
     }

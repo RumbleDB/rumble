@@ -10,7 +10,7 @@ import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.sequences.general.TypePromotionClosure;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
@@ -36,7 +36,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
             SequenceType sequenceType,
             String exceptionMessage,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(Collections.singletonList(iterator), executionMode, iteratorMetadata);
         this._exceptionMessage = exceptionMessage;

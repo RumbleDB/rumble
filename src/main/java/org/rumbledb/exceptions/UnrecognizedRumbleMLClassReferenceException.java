@@ -22,20 +22,20 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCodes;
 
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 public class UnrecognizedRumbleMLClassReferenceException extends SparksoniqRuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    public UnrecognizedRumbleMLClassReferenceException(String name, IteratorMetadata iteratorMetadata) {
+    public UnrecognizedRumbleMLClassReferenceException(String name, ExceptionMetadata metadata) {
         super(
             "Unrecognized RumbleML class; Make sure \""
                 +
                 name
                 + "\" is a valid component of RumbleML API.",
             ErrorCodes.UnrecognizedRumbleMLClassReferenceErrorCode,
-            iteratorMetadata.getExpressionMetadata()
+            metadata
         );
     }
 }

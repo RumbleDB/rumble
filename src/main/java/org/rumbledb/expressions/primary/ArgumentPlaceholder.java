@@ -21,12 +21,12 @@
 package org.rumbledb.expressions.primary;
 
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 public class ArgumentPlaceholder extends PrimaryExpression {
 
-    public ArgumentPlaceholder(ExpressionMetadata metadata) {
+    public ArgumentPlaceholder(ExceptionMetadata metadata) {
         super(metadata);
     }
 

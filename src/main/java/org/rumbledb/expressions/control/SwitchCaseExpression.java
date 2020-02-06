@@ -20,12 +20,12 @@
 
 package org.rumbledb.expressions.control;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.ExpressionOrClause;
 
@@ -37,7 +37,7 @@ public class SwitchCaseExpression extends Expression {
     public SwitchCaseExpression(
             Expression condition,
             Expression returnExpression,
-            ExpressionMetadata metadataFromContext
+            ExceptionMetadata metadataFromContext
     ) {
         super(metadataFromContext);
         this.condition = condition;

@@ -21,18 +21,18 @@
 package org.rumbledb.exceptions;
 
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 public class SemanticException extends SparksoniqRuntimeException {
 
 
     private static final long serialVersionUID = 1L;
 
-    public SemanticException(String message, ExpressionMetadata metadata) {
+    public SemanticException(String message, ExceptionMetadata metadata) {
         super(message, metadata);
     }
 
-    public SemanticException(String message, String errorCode, ExpressionMetadata metadata) {
+    public SemanticException(String message, String errorCode, ExceptionMetadata metadata) {
         super(message, errorCode, metadata);
     }
 }

@@ -23,16 +23,16 @@ package org.rumbledb.items.parsing;
 import com.jsoniter.JsonIterator;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.util.Iterator;
 
 public class JSONSyntaxToItemMapper implements FlatMapFunction<Iterator<String>, Item> {
 
     private static final long serialVersionUID = 1L;
-    private final IteratorMetadata metadata;
+    private final ExceptionMetadata metadata;
 
-    public JSONSyntaxToItemMapper(IteratorMetadata metadata) {
+    public JSONSyntaxToItemMapper(ExceptionMetadata metadata) {
         this.metadata = metadata;
     }
 

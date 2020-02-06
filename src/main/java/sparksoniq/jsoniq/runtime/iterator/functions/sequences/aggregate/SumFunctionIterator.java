@@ -30,7 +30,7 @@ import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.math.BigDecimal;
@@ -48,7 +48,7 @@ public class SumFunctionIterator extends LocalFunctionCallIterator {
     public SumFunctionIterator(
             List<RuntimeIterator> arguments,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(arguments, executionMode, iteratorMetadata);
     }
@@ -71,7 +71,7 @@ public class SumFunctionIterator extends LocalFunctionCallIterator {
                     if (!_zeroItem.isAtomic()) {
                         throw new NonAtomicKeyException(
                                 "Invalid args. Zero item has to be of an atomic type",
-                                getMetadata().getExpressionMetadata()
+                                getMetadata()
                         );
                     }
                 }

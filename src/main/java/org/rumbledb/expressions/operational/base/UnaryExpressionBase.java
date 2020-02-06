@@ -21,15 +21,14 @@
 package org.rumbledb.expressions.operational.base;
 
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-
 import java.util.List;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 
 public abstract class UnaryExpressionBase extends OperationalExpressionBase {
 
-    protected UnaryExpressionBase(Expression _mainExpression, ExpressionMetadata metadata) {
+    protected UnaryExpressionBase(Expression _mainExpression, ExceptionMetadata metadata) {
         super(_mainExpression, Operator.NONE, metadata);
     }
 
@@ -37,7 +36,7 @@ public abstract class UnaryExpressionBase extends OperationalExpressionBase {
             Expression _mainExpression,
             List<Operator> ops,
             boolean isActive,
-            ExpressionMetadata metadata
+            ExceptionMetadata metadata
     ) {
         super(_mainExpression, ops, metadata);
         this._isActive = isActive;
@@ -48,7 +47,7 @@ public abstract class UnaryExpressionBase extends OperationalExpressionBase {
             Expression _mainExpression,
             Operator singleOperator,
             boolean isActive,
-            ExpressionMetadata metadata
+            ExceptionMetadata metadata
     ) {
         super(_mainExpression, singleOperator, metadata);
         this._isActive = isActive;

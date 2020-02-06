@@ -20,17 +20,18 @@
 
 package org.rumbledb.expressions.operational;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.List;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.operational.base.NaryExpressionBase;
 
 public class AndExpression extends NaryExpressionBase {
 
-    public AndExpression(Expression _mainExpression, ExpressionMetadata metadata) {
+    public AndExpression(Expression _mainExpression, ExceptionMetadata metadata) {
         super(_mainExpression, metadata);
 
     }
@@ -38,7 +39,7 @@ public class AndExpression extends NaryExpressionBase {
     public AndExpression(
             Expression _mainExpression,
             List<Expression> rhs,
-            ExpressionMetadata metadata
+            ExceptionMetadata metadata
     ) {
         super(_mainExpression, rhs, Operator.AND, metadata);
     }

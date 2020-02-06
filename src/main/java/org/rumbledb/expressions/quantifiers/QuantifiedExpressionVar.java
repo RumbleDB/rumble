@@ -20,13 +20,13 @@
 
 package org.rumbledb.expressions.quantifiers;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.types.SequenceType;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.ExpressionOrClause;
 import org.rumbledb.expressions.primary.VariableReference;
@@ -40,7 +40,7 @@ public class QuantifiedExpressionVar extends ExpressionOrClause {
             VariableReference varRef,
             Expression varExpression,
             SequenceType sequenceType,
-            ExpressionMetadata metadata
+            ExceptionMetadata metadata
     ) {
         super(metadata);
         this._variableReference = varRef;

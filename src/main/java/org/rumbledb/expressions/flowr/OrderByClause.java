@@ -20,12 +20,12 @@
 
 package org.rumbledb.expressions.flowr;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.ExpressionOrClause;
 
@@ -35,7 +35,7 @@ public class OrderByClause extends FlworClause {
     private final List<OrderByClauseExpr> expressions;
     private final boolean isStable;
 
-    public OrderByClause(List<OrderByClauseExpr> exprs, boolean stable, ExpressionMetadata metadata) {
+    public OrderByClause(List<OrderByClauseExpr> exprs, boolean stable, ExceptionMetadata metadata) {
         super(FLWOR_CLAUSES.ORDER_BY, metadata);
         if (exprs == null || exprs.isEmpty())
             throw new SemanticException("Group clause must have at least one variable", metadata);

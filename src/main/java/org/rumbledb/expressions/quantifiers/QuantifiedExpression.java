@@ -20,12 +20,12 @@
 
 package org.rumbledb.expressions.quantifiers;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.ExpressionOrClause;
 
@@ -39,7 +39,7 @@ public class QuantifiedExpression extends Expression {
             QuantifiedOperators operator,
             Expression expression,
             List<QuantifiedExpressionVar> vars,
-            ExpressionMetadata metadataFromContext
+            ExceptionMetadata metadataFromContext
     ) {
         super(metadataFromContext);
         this._operator = operator;

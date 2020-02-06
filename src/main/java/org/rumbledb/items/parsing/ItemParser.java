@@ -37,8 +37,8 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.SparksoniqRuntimeException;
 
 import sparksoniq.jsoniq.item.ItemFactory;
-import sparksoniq.jsoniq.item.metadata.ItemMetadata;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.IOException;
@@ -55,7 +55,7 @@ public class ItemParser implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    public static Item getItemFromObject(JsonIterator object, IteratorMetadata metadata) {
+    public static Item getItemFromObject(JsonIterator object, ExceptionMetadata metadata) {
         try {
             if (object.whatIsNext().equals(ValueType.STRING))
                 return ItemFactory.getInstance().createStringItem(object.readString());
@@ -91,7 +91,7 @@ public class ItemParser implements Serializable {
                     values.add(getItemFromObject(object, metadata));
                 }
                 return ItemFactory.getInstance()
-                    .createObjectItem(keys, values, ItemMetadata.fromIteratorMetadata(metadata));
+                    .createObjectItem(keys, values, metadata);
             }
             if (object.whatIsNext().equals(ValueType.NULL)) {
                 object.readNull();
@@ -103,7 +103,7 @@ public class ItemParser implements Serializable {
         }
     }
 
-    public static Item getItemFromRow(Row row, IteratorMetadata metadata) {
+    public static Item getItemFromRow(Row row, ExceptionMetadata metadata) {
         List<String> keys = new ArrayList<>();
         List<Item> values = new ArrayList<>();
         StructType schema = row.schema();
@@ -120,7 +120,7 @@ public class ItemParser implements Serializable {
         if (fields.length == 1 && fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
             return values.get(0);
         }
-        return ItemFactory.getInstance().createObjectItem(keys, values, ItemMetadata.fromIteratorMetadata(metadata));
+        return ItemFactory.getInstance().createObjectItem(keys, values, metadata);
     }
 
     private static void addValue(
@@ -129,7 +129,7 @@ public class ItemParser implements Serializable {
             Object o,
             DataType fieldType,
             List<Item> values,
-            IteratorMetadata metadata
+            ExceptionMetadata metadata
     ) {
         if (row != null && row.isNullAt(i)) {
             values.add(ItemFactory.getInstance().createNullItem());

@@ -22,10 +22,10 @@ package org.rumbledb.api;
 
 import org.joda.time.DateTime;
 import org.joda.time.Period;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
@@ -128,7 +128,7 @@ public abstract class Item implements SerializableItem {
      * @param metadata Metadata useful for throwing exceptions
      * @return BooleanItem result of the comparison
      */
-    public Item compareItem(Item other, OperationalExpressionBase.Operator operator, IteratorMetadata metadata) {
+    public Item compareItem(Item other, OperationalExpressionBase.Operator operator, ExceptionMetadata metadata) {
         return operator.apply(this, other);
     }
 

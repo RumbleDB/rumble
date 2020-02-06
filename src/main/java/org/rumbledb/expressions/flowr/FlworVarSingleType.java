@@ -1,12 +1,12 @@
 package org.rumbledb.expressions.flowr;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.SingleType;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.ExpressionOrClause;
 
@@ -15,18 +15,18 @@ public class FlworVarSingleType extends Expression {
     private SingleType _singleType;
     private boolean isEmpty;
 
-    public FlworVarSingleType(ExpressionMetadata metadata) {
+    public FlworVarSingleType(ExceptionMetadata metadata) {
         super(metadata);
         this._singleType = new SingleType(AtomicTypes.AtomicItem);
         this.isEmpty = true;
     }
 
-    public FlworVarSingleType(AtomicTypes atomicType, ExpressionMetadata metadata) {
+    public FlworVarSingleType(AtomicTypes atomicType, ExceptionMetadata metadata) {
         super(metadata);
         this._singleType = new SingleType(atomicType);
     }
 
-    public FlworVarSingleType(AtomicTypes atomicType, boolean zeroOrOne, ExpressionMetadata metadata) {
+    public FlworVarSingleType(AtomicTypes atomicType, boolean zeroOrOne, ExceptionMetadata metadata) {
         super(metadata);
         this._singleType = new SingleType(atomicType, zeroOrOne);
         this.isEmpty = false;

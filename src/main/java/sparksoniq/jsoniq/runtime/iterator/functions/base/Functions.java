@@ -21,7 +21,7 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.base;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.FunctionItemCallIterator;
@@ -129,7 +129,7 @@ import sparksoniq.jsoniq.runtime.iterator.functions.strings.SubstringBeforeFunct
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.SubstringFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.TokenizeFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.TypePromotionIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
@@ -553,7 +553,7 @@ public class Functions {
             FunctionIdentifier identifier,
             List<RuntimeIterator> arguments,
             ExecutionMode executionMode,
-            IteratorMetadata metadata
+            ExceptionMetadata metadata
     ) {
         BuiltinFunction builtinFunction = builtInFunctions.get(identifier);
 
@@ -577,14 +577,14 @@ public class Functions {
                 .getConstructor(
                     List.class,
                     ExecutionMode.class,
-                    IteratorMetadata.class
+                    ExceptionMetadata.class
                 );
             functionCallIterator = constructor.newInstance(arguments, executionMode, metadata);
         } catch (ReflectiveOperationException ex) {
             throw new UnknownFunctionCallException(
                     identifier.getName(),
                     arguments.size(),
-                    metadata.getExpressionMetadata()
+                    metadata
             );
         }
 
@@ -603,7 +603,7 @@ public class Functions {
     public static RuntimeIterator getUserDefinedFunctionCallIterator(
             FunctionIdentifier identifier,
             ExecutionMode executionMode,
-            IteratorMetadata metadata,
+            ExceptionMetadata metadata,
             List<RuntimeIterator> arguments
     ) {
         if (Functions.checkUserDefinedFunctionExists(identifier)) {
@@ -617,14 +617,14 @@ public class Functions {
         throw new UnknownFunctionCallException(
                 identifier.getName(),
                 identifier.getArity(),
-                metadata.getExpressionMetadata()
+                metadata
         );
 
     }
 
     public static ExecutionMode getUserDefinedFunctionExecutionMode(
             FunctionIdentifier identifier,
-            ExpressionMetadata metadata
+            ExceptionMetadata metadata
     ) {
         if (userDefinedFunctionsExecutionMode.containsKey(identifier)) {
             return userDefinedFunctionsExecutionMode.get(identifier);
@@ -640,7 +640,7 @@ public class Functions {
     public static RuntimeIterator buildUserDefinedFunctionCallIterator(
             FunctionItem functionItem,
             ExecutionMode executionMode,
-            IteratorMetadata metadata,
+            ExceptionMetadata metadata,
             List<RuntimeIterator> arguments
     ) {
         FunctionItemCallIterator functionCallIterator = new FunctionItemCallIterator(
@@ -678,7 +678,7 @@ public class Functions {
             FunctionIdentifier functionIdentifier,
             ExecutionMode executionMode,
             boolean ignoreDuplicateUserDefinedFunctionError,
-            ExpressionMetadata meta
+            ExceptionMetadata meta
     ) {
         if (
             builtInFunctions.containsKey(functionIdentifier)
@@ -714,7 +714,7 @@ public class Functions {
             && executionMode != ExecutionMode.UNSET;
     }
 
-    public static void addUserDefinedFunction(FunctionItem function, ExpressionMetadata meta) {
+    public static void addUserDefinedFunction(FunctionItem function, ExceptionMetadata meta) {
         FunctionIdentifier functionIdentifier = function.getIdentifier();
         if (
             builtInFunctions.containsKey(functionIdentifier)

@@ -20,20 +20,20 @@
 
 package org.rumbledb.expressions.operational;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.List;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.operational.base.NaryExpressionBase;
 
 public class StringConcatExpression extends NaryExpressionBase {
-    public StringConcatExpression(Expression mainExpression, List<Expression> rhs, ExpressionMetadata metadata) {
+    public StringConcatExpression(Expression mainExpression, List<Expression> rhs, ExceptionMetadata metadata) {
         super(mainExpression, rhs, Operator.CONCAT, metadata);
     }
 
-    public StringConcatExpression(RangeExpression mainExpression, ExpressionMetadata metadata) {
+    public StringConcatExpression(RangeExpression mainExpression, ExceptionMetadata metadata) {
         super(mainExpression, metadata);
     }
 

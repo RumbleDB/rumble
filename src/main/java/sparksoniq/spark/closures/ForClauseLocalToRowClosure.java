@@ -26,7 +26,7 @@ import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.rumbledb.api.Item;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.DataFrameUtils;
 
@@ -39,12 +39,12 @@ public class ForClauseLocalToRowClosure implements Function<Item, Row> {
     private static final long serialVersionUID = 1L;
 
     private final FlworTuple _inputTuple;
-    private final IteratorMetadata _metadata;
+    private final ExceptionMetadata _metadata;
 
     private transient Kryo _kryo;
     private transient Output _output;
 
-    public ForClauseLocalToRowClosure(FlworTuple inputTuple, IteratorMetadata metadata) {
+    public ForClauseLocalToRowClosure(FlworTuple inputTuple, ExceptionMetadata metadata) {
         this._inputTuple = inputTuple;
         this._metadata = metadata;
         _kryo = new Kryo();

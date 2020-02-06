@@ -24,7 +24,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.IteratorFlowException;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
@@ -39,7 +39,7 @@ public class CommaExpressionIterator extends LocalRuntimeIterator {
     public CommaExpressionIterator(
             List<RuntimeIterator> childIterators,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(childIterators, executionMode, iteratorMetadata);
     }

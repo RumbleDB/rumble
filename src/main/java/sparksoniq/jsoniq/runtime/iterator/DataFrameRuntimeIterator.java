@@ -21,7 +21,7 @@
 package sparksoniq.jsoniq.runtime.iterator;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.util.List;
 
@@ -34,7 +34,7 @@ public abstract class DataFrameRuntimeIterator extends RDDRuntimeIterator {
     protected DataFrameRuntimeIterator(
             List<RuntimeIterator> children,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(children, executionMode, iteratorMetadata);
         if (executionMode != ExecutionMode.DATAFRAME) {

@@ -20,18 +20,18 @@
 
 package org.rumbledb.expressions.operational;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.List;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.operational.base.NaryExpressionBase;
 
 
 public class OrExpression extends NaryExpressionBase {
 
-    public OrExpression(Expression _mainExpression, ExpressionMetadata metadata) {
+    public OrExpression(Expression _mainExpression, ExceptionMetadata metadata) {
         super(_mainExpression, metadata);
 
     }
@@ -39,7 +39,7 @@ public class OrExpression extends NaryExpressionBase {
     public OrExpression(
             Expression _mainExpression,
             List<Expression> rhs,
-            ExpressionMetadata metadata
+            ExceptionMetadata metadata
     ) {
         super(_mainExpression, rhs, Operator.OR, metadata);
     }

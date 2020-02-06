@@ -24,14 +24,14 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.IteratorFlowException;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 public class EmptySequenceIterator extends LocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
 
-    public EmptySequenceIterator(ExecutionMode executionMode, IteratorMetadata iteratorMetadata) {
+    public EmptySequenceIterator(ExecutionMode executionMode, ExceptionMetadata iteratorMetadata) {
         super(null, executionMode, iteratorMetadata);
     }
 

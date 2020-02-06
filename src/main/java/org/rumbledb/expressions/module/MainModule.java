@@ -21,12 +21,12 @@
 package org.rumbledb.expressions.module;
 
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.ExpressionOrClause;
@@ -36,7 +36,7 @@ public class MainModule extends Expression {
     private final Prolog _prolog;
     private final CommaExpression _commaExpression;
 
-    public MainModule(Prolog _prolog, CommaExpression _commaExpression, ExpressionMetadata metadata) {
+    public MainModule(Prolog _prolog, CommaExpression _commaExpression, ExceptionMetadata metadata) {
         super(metadata);
         this._prolog = _prolog;
         this._commaExpression = _commaExpression;

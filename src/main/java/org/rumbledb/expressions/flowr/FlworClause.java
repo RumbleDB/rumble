@@ -20,12 +20,12 @@
 
 package org.rumbledb.expressions.flowr;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.ExpressionOrClause;
 
 /**
@@ -38,7 +38,7 @@ public class FlworClause extends ExpressionOrClause {
     protected FLWOR_CLAUSES clauseType;
 
 
-    public FlworClause(FLWOR_CLAUSES clauseType, ExpressionMetadata metadata) {
+    public FlworClause(FLWOR_CLAUSES clauseType, ExceptionMetadata metadata) {
         super(metadata);
         this.clauseType = clauseType;
     }

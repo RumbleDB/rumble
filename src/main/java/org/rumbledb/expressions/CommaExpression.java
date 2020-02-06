@@ -22,7 +22,7 @@ package org.rumbledb.expressions;
 
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
@@ -32,7 +32,7 @@ public class CommaExpression extends Expression {
 
     private final List<Expression> _expressions;
 
-    public CommaExpression(List<Expression> expressions, ExpressionMetadata metadata) {
+    public CommaExpression(List<Expression> expressions, ExceptionMetadata metadata) {
         super(metadata);
         this._expressions = expressions;
     }

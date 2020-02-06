@@ -31,7 +31,7 @@ import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.Arrays;
@@ -48,7 +48,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
             RuntimeIterator array,
             RuntimeIterator iterator,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(Arrays.asList(array, iterator), executionMode, iteratorMetadata);
         _iterator = array;

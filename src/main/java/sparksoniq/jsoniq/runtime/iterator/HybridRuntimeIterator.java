@@ -29,7 +29,7 @@ import org.rumbledb.items.parsing.RowToItemMapper;
 import org.rumbledb.exceptions.IteratorFlowException;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -45,7 +45,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     protected HybridRuntimeIterator(
             List<RuntimeIterator> children,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(children, executionMode, iteratorMetadata);
         fallbackToRDDIfDFNotImplemented(executionMode);
