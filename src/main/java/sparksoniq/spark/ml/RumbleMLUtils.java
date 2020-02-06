@@ -1,5 +1,6 @@
 package sparksoniq.spark.ml;
 
+import org.apache.spark.ml.Estimator;
 import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.param.Param;
 import org.apache.spark.ml.param.ParamMap;
@@ -52,6 +53,43 @@ public class RumbleMLUtils {
         return result;
     }
 
+    public static ParamMap convertRumbleObjectItemToSparkMLParamMap(
+            String estimatorShortName,
+            Estimator<?> estimator,
+            Item paramMapItem,
+            IteratorMetadata metadata
+    ) {
+        ParamMap result = new ParamMap();
+        // paramMapItem is expected to be an ObjectItem
+        for (int paramIndex = 0; paramIndex < paramMapItem.getKeys().size(); paramIndex++) {
+            String paramName = paramMapItem.getKeys().get(paramIndex);
+            Item paramValue = paramMapItem.getValues().get(paramIndex);
+
+            RumbleMLCatalog.validateParameterForEstimator(estimatorShortName, paramName, metadata);
+            String paramJavaTypeName = RumbleMLCatalog.getParamJavaTypeName(paramName, metadata);
+
+            Object paramValueInJava = convertParamItemToJava(paramValue, paramJavaTypeName);
+
+            try {
+                Param<Object> sparkMLParam = (Param<Object>) estimator.getClass()
+                    .getMethod(paramName)
+                    .invoke(estimator);
+                result.put(sparkMLParam.w(paramValueInJava));
+            } catch (
+                    NoSuchMethodException
+                    | IllegalAccessException
+                    | InvocationTargetException
+                    | ClassCastException e
+            ) {
+                throw new OurBadException(
+                        "Error while extracting " + paramName + " for " + estimatorShortName + ".",
+                        metadata
+                );
+            }
+        }
+        return result;
+    }
+
     private static Object convertParamItemToJava(Item param, String paramJavaTypeName) {
         if (paramJavaTypeName.endsWith("[]")) {
             List<Object> paramAsListInJava = new ArrayList<>();
@@ -90,8 +128,9 @@ public class RumbleMLUtils {
             case "int":
                 return atomicItem.castAs(AtomicTypes.IntegerItem).getIntegerValue();
             case "double":
-            case "long":
                 return atomicItem.castAs(AtomicTypes.DoubleItem).getDoubleValue();
+            case "long":
+                return (long) atomicItem.castAs(AtomicTypes.DoubleItem).getDoubleValue();
             default:
                 throw new OurBadException(
                         "Unrecognized Java type name found \""
