@@ -30,7 +30,6 @@ import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 
 
-
 public class NotExpression extends UnaryExpressionBase {
 
     public NotExpression(Expression _mainExpression, boolean _isActive, ExceptionMetadata metadata) {

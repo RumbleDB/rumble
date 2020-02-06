@@ -27,7 +27,6 @@ import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 
 
-
 import java.util.ArrayList;
 import java.util.List;
 

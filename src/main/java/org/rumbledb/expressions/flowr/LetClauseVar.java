@@ -32,7 +32,6 @@ import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 
 
-
 public class LetClauseVar extends FlworVarDecl {
 
     public LetClauseVar(

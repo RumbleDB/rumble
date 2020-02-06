@@ -26,7 +26,6 @@ import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 
 
-
 import java.util.List;
 
 import org.rumbledb.exceptions.ExceptionMetadata;

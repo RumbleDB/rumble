@@ -22,9 +22,7 @@ package org.rumbledb.expressions.operational;
 
 
 
-
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
-
 
 
 

@@ -30,7 +30,6 @@ import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 
 
-
 public class RangeExpression extends BinaryExpressionBase {
 
     public RangeExpression(Expression _mainExpression, ExceptionMetadata metadata) {
