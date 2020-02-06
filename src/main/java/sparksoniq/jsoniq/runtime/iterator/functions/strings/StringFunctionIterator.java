@@ -10,7 +10,7 @@ import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemTypes;
@@ -25,7 +25,7 @@ public class StringFunctionIterator extends LocalFunctionCallIterator {
     public StringFunctionIterator(
             List<RuntimeIterator> parameters,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(parameters, executionMode, iteratorMetadata);
     }

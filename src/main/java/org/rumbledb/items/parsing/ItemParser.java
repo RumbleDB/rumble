@@ -23,6 +23,9 @@ package org.rumbledb.items.parsing;
 import com.jsoniter.JsonIterator;
 import com.jsoniter.ValueType;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.lang.ArrayUtils;
+import org.apache.spark.ml.linalg.SparseVector;
+import org.apache.spark.ml.linalg.VectorUDT;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataType;
@@ -34,8 +37,8 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.SparksoniqRuntimeException;
 
 import sparksoniq.jsoniq.item.ItemFactory;
-import sparksoniq.jsoniq.item.metadata.ItemMetadata;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.IOException;
@@ -52,7 +55,7 @@ public class ItemParser implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    public static Item getItemFromObject(JsonIterator object, IteratorMetadata metadata) {
+    public static Item getItemFromObject(JsonIterator object, ExceptionMetadata metadata) {
         try {
             if (object.whatIsNext().equals(ValueType.STRING))
                 return ItemFactory.getInstance().createStringItem(object.readString());
@@ -88,7 +91,7 @@ public class ItemParser implements Serializable {
                     values.add(getItemFromObject(object, metadata));
                 }
                 return ItemFactory.getInstance()
-                    .createObjectItem(keys, values, ItemMetadata.fromIteratorMetadata(metadata));
+                    .createObjectItem(keys, values, metadata);
             }
             if (object.whatIsNext().equals(ValueType.NULL)) {
                 object.readNull();
@@ -100,7 +103,7 @@ public class ItemParser implements Serializable {
         }
     }
 
-    public static Item getItemFromRow(Row row, IteratorMetadata metadata) {
+    public static Item getItemFromRow(Row row, ExceptionMetadata metadata) {
         List<String> keys = new ArrayList<>();
         List<Item> values = new ArrayList<>();
         StructType schema = row.schema();
@@ -117,7 +120,7 @@ public class ItemParser implements Serializable {
         if (fields.length == 1 && fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
             return values.get(0);
         }
-        return ItemFactory.getInstance().createObjectItem(keys, values, ItemMetadata.fromIteratorMetadata(metadata));
+        return ItemFactory.getInstance().createObjectItem(keys, values, metadata);
     }
 
     private static void addValue(
@@ -126,7 +129,7 @@ public class ItemParser implements Serializable {
             Object o,
             DataType fieldType,
             List<Item> values,
-            IteratorMetadata metadata
+            ExceptionMetadata metadata
     ) {
         if (row != null && row.isNullAt(i)) {
             values.add(ItemFactory.getInstance().createNullItem());
@@ -224,6 +227,19 @@ public class ItemParser implements Serializable {
                 objects = (List<Object>) o;
             for (Object object : objects) {
                 addValue(null, 0, object, dataType, members, metadata);
+            }
+            values.add(ItemFactory.getInstance().createArrayItem(members));
+        } else if (fieldType instanceof VectorUDT) {
+            // a vector type is essentially an array of doubles in rumble terms
+            SparseVector vector = (SparseVector) row.get(i);
+            List<Item> members = new ArrayList<>(vector.size());
+
+            for (int j = 0; j < vector.size(); j++) {
+                double value = 0.0;
+                if (ArrayUtils.contains(vector.indices(), j)) {
+                    value = vector.values()[j];
+                }
+                members.add(ItemFactory.getInstance().createDoubleItem(value));
             }
             values.add(ItemFactory.getInstance().createArrayItem(members));
         } else {

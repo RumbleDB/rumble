@@ -22,13 +22,13 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCodes;
 
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 public class UnexpectedTypeException extends SparksoniqRuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    public UnexpectedTypeException(String message, IteratorMetadata metadata) {
-        super(message, ErrorCodes.UnexpectedTypeErrorCode, metadata.getExpressionMetadata());
+    public UnexpectedTypeException(String message, ExceptionMetadata metadata) {
+        super(message, ErrorCodes.UnexpectedTypeErrorCode, metadata);
     }
 }

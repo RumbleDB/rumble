@@ -23,13 +23,13 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCodes;
 
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 public class AbsentPartOfDynamicContextException extends SparksoniqRuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    public AbsentPartOfDynamicContextException(String message, IteratorMetadata iteratorMetadata) {
-        super(message, ErrorCodes.AbsentPartOfDynamicContextCode, iteratorMetadata.getExpressionMetadata());
+    public AbsentPartOfDynamicContextException(String message, ExceptionMetadata metadata) {
+        super(message, ErrorCodes.AbsentPartOfDynamicContextCode, metadata);
     }
 }

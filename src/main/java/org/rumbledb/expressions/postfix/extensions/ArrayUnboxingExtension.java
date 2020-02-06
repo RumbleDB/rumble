@@ -21,11 +21,11 @@
 package org.rumbledb.expressions.postfix.extensions;
 
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 public class ArrayUnboxingExtension extends PostfixExtension {
 
-    public ArrayUnboxingExtension(ExpressionMetadata metadata) {
+    public ArrayUnboxingExtension(ExceptionMetadata metadata) {
         super(metadata);
     }
 

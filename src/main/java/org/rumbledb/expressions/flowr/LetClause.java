@@ -21,12 +21,17 @@
 package org.rumbledb.expressions.flowr;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+
+
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
+
+
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.Node;
 
@@ -34,7 +39,7 @@ public class LetClause extends FlworClause {
 
     private final List<LetClauseVar> letVars;
 
-    public LetClause(List<LetClauseVar> vars, ExpressionMetadata metadataFromContext) {
+    public LetClause(List<LetClauseVar> vars, ExceptionMetadata metadataFromContext) {
         super(FLWOR_CLAUSES.LET, metadataFromContext);
         if (vars == null || vars.isEmpty())
             throw new SemanticException("Let clause must have at least one variable", metadataFromContext);

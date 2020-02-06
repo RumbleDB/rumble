@@ -21,14 +21,14 @@
 package org.rumbledb.expressions.primary;
 
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 public class BooleanLiteral extends PrimaryExpression {
 
     private boolean value;
 
-    public BooleanLiteral(boolean _value, ExpressionMetadata metadata) {
+    public BooleanLiteral(boolean _value, ExceptionMetadata metadata) {
         super(metadata);
         this.value = _value;
     }

@@ -21,12 +21,17 @@
 package org.rumbledb.expressions.postfix;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+
+
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
+
+
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.postfix.extensions.PostfixExtension;
@@ -38,7 +43,7 @@ public class PostFixExpression extends Expression {
     private PrimaryExpression _primaryExpressionNode;
     private List<PostfixExtension> _extensions = null;
 
-    public PostFixExpression(PrimaryExpression primaryExpressionNode, ExpressionMetadata metadata) {
+    public PostFixExpression(PrimaryExpression primaryExpressionNode, ExceptionMetadata metadata) {
         super(metadata);
         this._primaryExpressionNode = primaryExpressionNode;
     }
@@ -46,7 +51,7 @@ public class PostFixExpression extends Expression {
     public PostFixExpression(
             PrimaryExpression primaryExpressionNode,
             List<PostfixExtension> extensions,
-            ExpressionMetadata metadata
+            ExceptionMetadata metadata
     ) {
         super(metadata);
         this._primaryExpressionNode = primaryExpressionNode;

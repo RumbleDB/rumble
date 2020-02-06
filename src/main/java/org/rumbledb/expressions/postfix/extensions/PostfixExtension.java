@@ -20,13 +20,22 @@
 
 package org.rumbledb.expressions.postfix.extensions;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+
+
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
+
+
 
 import java.util.ArrayList;
 import java.util.List;
 
+
 import org.rumbledb.expressions.Node;
+
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.ExpressionOrClause;
+
 import org.rumbledb.expressions.postfix.PostFixExpression;
 
 
@@ -35,7 +44,7 @@ public abstract class PostfixExtension extends Node {
     private PostFixExpression parent;
     private PostfixExtension previous;
 
-    protected PostfixExtension(ExpressionMetadata metadata) {
+    protected PostfixExtension(ExceptionMetadata metadata) {
         super(metadata);
     }
 

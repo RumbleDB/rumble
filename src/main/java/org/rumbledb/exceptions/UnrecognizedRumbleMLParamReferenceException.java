@@ -22,18 +22,18 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCodes;
 
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 public class UnrecognizedRumbleMLParamReferenceException extends SparksoniqRuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    public UnrecognizedRumbleMLParamReferenceException(String message, IteratorMetadata iteratorMetadata) {
+    public UnrecognizedRumbleMLParamReferenceException(String message, ExceptionMetadata metadata) {
         super(
             "Unrecognized Rumble ML parameter; "
                 + message,
             ErrorCodes.UnrecognizedRumbleMLParamReferenceErrorCode,
-            iteratorMetadata.getExpressionMetadata()
+            metadata
         );
     }
 }

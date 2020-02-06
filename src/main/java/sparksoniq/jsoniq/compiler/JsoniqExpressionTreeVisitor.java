@@ -23,6 +23,7 @@ package sparksoniq.jsoniq.compiler;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.exceptions.DuplicateParamNameException;
 import org.rumbledb.exceptions.JsoniqVersionException;
@@ -90,7 +91,6 @@ import org.rumbledb.expressions.primary.VariableReference;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemTypes;
@@ -307,7 +307,7 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
         Expression returnExpr = this.currentExpression;
         returnClause = new ReturnClause(
                 returnExpr,
-                new ExpressionMetadata(
+                new ExceptionMetadata(
                         ctx.getStop().getLine(),
                         ctx.getStop().getCharPositionInLine()
                 )
@@ -1317,10 +1317,10 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
     }
     // endregion
 
-    private ExpressionMetadata createMetadataFromContext(ParserRuleContext ctx) {
+    private ExceptionMetadata createMetadataFromContext(ParserRuleContext ctx) {
         int tokenLineNumber = ctx.getStart().getLine();
         int tokenColumnNumber = ctx.getStart().getCharPositionInLine();
-        return new ExpressionMetadata(tokenLineNumber, tokenColumnNumber);
+        return new ExceptionMetadata(tokenLineNumber, tokenColumnNumber);
     }
 
 }

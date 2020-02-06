@@ -1,5 +1,6 @@
 package sparksoniq.spark.ml;
 
+import org.apache.spark.ml.Estimator;
 import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.param.Param;
 import org.apache.spark.ml.param.ParamMap;
@@ -7,7 +8,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.OurBadException;
 
 import sparksoniq.jsoniq.item.AtomicItem;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.types.AtomicTypes;
 
 import java.lang.reflect.InvocationTargetException;
@@ -19,7 +20,7 @@ public class RumbleMLUtils {
             String transformerShortName,
             Transformer transformer,
             Item paramMapItem,
-            IteratorMetadata metadata
+            ExceptionMetadata metadata
     ) {
         ParamMap result = new ParamMap();
         // paramMapItem is expected to be an ObjectItem
@@ -45,6 +46,43 @@ public class RumbleMLUtils {
             ) {
                 throw new OurBadException(
                         "Error while extracting " + paramName + " for " + transformerShortName + ".",
+                        metadata
+                );
+            }
+        }
+        return result;
+    }
+
+    public static ParamMap convertRumbleObjectItemToSparkMLParamMap(
+            String estimatorShortName,
+            Estimator<?> estimator,
+            Item paramMapItem,
+            ExceptionMetadata metadata
+    ) {
+        ParamMap result = new ParamMap();
+        // paramMapItem is expected to be an ObjectItem
+        for (int paramIndex = 0; paramIndex < paramMapItem.getKeys().size(); paramIndex++) {
+            String paramName = paramMapItem.getKeys().get(paramIndex);
+            Item paramValue = paramMapItem.getValues().get(paramIndex);
+
+            RumbleMLCatalog.validateParameterForEstimator(estimatorShortName, paramName, metadata);
+            String paramJavaTypeName = RumbleMLCatalog.getParamJavaTypeName(paramName, metadata);
+
+            Object paramValueInJava = convertParamItemToJava(paramValue, paramJavaTypeName);
+
+            try {
+                Param<Object> sparkMLParam = (Param<Object>) estimator.getClass()
+                    .getMethod(paramName)
+                    .invoke(estimator);
+                result.put(sparkMLParam.w(paramValueInJava));
+            } catch (
+                    NoSuchMethodException
+                    | IllegalAccessException
+                    | InvocationTargetException
+                    | ClassCastException e
+            ) {
+                throw new OurBadException(
+                        "Error while extracting " + paramName + " for " + estimatorShortName + ".",
                         metadata
                 );
             }
@@ -90,8 +128,9 @@ public class RumbleMLUtils {
             case "int":
                 return atomicItem.castAs(AtomicTypes.IntegerItem).getIntegerValue();
             case "double":
-            case "long":
                 return atomicItem.castAs(AtomicTypes.DoubleItem).getDoubleValue();
+            case "long":
+                return (long) atomicItem.castAs(AtomicTypes.DoubleItem).getDoubleValue();
             default:
                 throw new OurBadException(
                         "Unrecognized Java type name found \""

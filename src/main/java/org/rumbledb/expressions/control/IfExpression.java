@@ -20,12 +20,17 @@
 
 package org.rumbledb.expressions.control;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+
+
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
+
+
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
@@ -39,7 +44,7 @@ public class IfExpression extends Expression {
             Expression condition,
             Expression branch,
             Expression elseBranch,
-            ExpressionMetadata metadataFromContext
+            ExceptionMetadata metadataFromContext
     ) {
         this._condition = condition;
         this._branch = branch;

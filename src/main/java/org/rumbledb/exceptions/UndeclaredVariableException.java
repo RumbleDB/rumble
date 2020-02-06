@@ -22,13 +22,13 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCodes;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 public class UndeclaredVariableException extends SemanticException {
 
     private static final long serialVersionUID = 1L;
 
-    public UndeclaredVariableException(String message, ExpressionMetadata metadata) {
+    public UndeclaredVariableException(String message, ExceptionMetadata metadata) {
         super(message, ErrorCodes.UndeclaredVariableErrorCode, metadata);
     }
 

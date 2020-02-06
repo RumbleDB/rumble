@@ -21,8 +21,8 @@
 package org.rumbledb.expressions.operational;
 
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.util.Arrays;
 import java.util.List;
@@ -34,7 +34,7 @@ public class AdditiveExpression extends NaryExpressionBase {
 
     public static final Operator[] operators = new Operator[] { Operator.PLUS, Operator.MINUS };
 
-    public AdditiveExpression(Expression _mainExpression, ExpressionMetadata metadata) {
+    public AdditiveExpression(Expression _mainExpression, ExceptionMetadata metadata) {
         super(_mainExpression, metadata);
 
     }
@@ -43,7 +43,7 @@ public class AdditiveExpression extends NaryExpressionBase {
             Expression _mainExpression,
             List<Expression> rhs,
             List<Operator> ops,
-            ExpressionMetadata metadata
+            ExceptionMetadata metadata
     ) {
         super(_mainExpression, rhs, ops, metadata);
         validateOperators(Arrays.asList(operators), ops);

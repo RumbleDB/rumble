@@ -28,7 +28,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.LinkedList;
@@ -44,7 +44,7 @@ public class ObjectValuesFunctionIterator extends HybridRuntimeIterator {
     public ObjectValuesFunctionIterator(
             List<RuntimeIterator> arguments,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(arguments, executionMode, iteratorMetadata);
         _iterator = arguments.get(0);

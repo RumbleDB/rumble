@@ -20,12 +20,17 @@
 
 package org.rumbledb.expressions.primary;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+
+
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
+
+
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -40,14 +45,14 @@ public class ObjectConstructor extends PrimaryExpression {
     public ObjectConstructor(
             List<Expression> keys,
             List<Expression> values,
-            ExpressionMetadata metadata
+            ExceptionMetadata metadata
     ) {
         super(metadata);
         this._keys = keys;
         this._values = values;
     }
 
-    public ObjectConstructor(CommaExpression expression, ExpressionMetadata metadata) {
+    public ObjectConstructor(CommaExpression expression, ExceptionMetadata metadata) {
         super(metadata);
         this.childExpression = expression;
         this.isMergedConstructor = true;
@@ -106,7 +111,7 @@ public class ObjectConstructor extends PrimaryExpression {
         private Expression _key;
         private Expression _value;
 
-        public PairConstructor(Expression key, Expression value, ExpressionMetadata metadata) {
+        public PairConstructor(Expression key, Expression value, ExceptionMetadata metadata) {
             super(metadata);
             this._key = key;
             this._value = value;

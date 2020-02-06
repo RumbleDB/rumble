@@ -36,7 +36,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworKeyComparator;
@@ -71,7 +71,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
             boolean stable,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(child, executionMode, iteratorMetadata);
         this._expressionsWithIterator = expressionsWithIterator;
@@ -157,7 +157,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                         if (!resultItem.isAtomic()) {
                             throw new NonAtomicKeyException(
                                     "Order by keys must be atomics",
-                                    expressionWithIterator.getIterator().getMetadata().getExpressionMetadata()
+                                    expressionWithIterator.getIterator().getMetadata()
                             );
                         }
                         if (resultItem.isBinary()) {
@@ -205,7 +205,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             if (expressionWithIterator.getIterator().isRDD()) {
                 throw new JobWithinAJobException(
                         "An order by clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
-                        getMetadata().getExpressionMetadata()
+                        getMetadata()
                 );
             }
         }

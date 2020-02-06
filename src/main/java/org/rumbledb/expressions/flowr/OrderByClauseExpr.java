@@ -21,12 +21,17 @@
 package org.rumbledb.expressions.flowr;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+
+
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
+
+
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
@@ -41,7 +46,7 @@ public class OrderByClauseExpr extends FlworClause {
             boolean ascending,
             String uri,
             EMPTY_ORDER empty_order,
-            ExpressionMetadata metadata
+            ExceptionMetadata metadata
     ) {
         super(FLWOR_CLAUSES.ORDER_BY_EXPR, metadata);
         this._expression = expression;

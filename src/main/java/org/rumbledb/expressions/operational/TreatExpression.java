@@ -1,11 +1,11 @@
 package org.rumbledb.expressions.operational;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.flowr.FlworVarSequenceType;
 import org.rumbledb.expressions.operational.base.UnaryExpressionBase;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.types.SequenceType;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
@@ -14,7 +14,7 @@ public class TreatExpression extends UnaryExpressionBase {
 
     private FlworVarSequenceType _sequenceType;
 
-    public TreatExpression(Expression _mainExpression, ExpressionMetadata metadata) {
+    public TreatExpression(Expression _mainExpression, ExceptionMetadata metadata) {
         super(_mainExpression, metadata);
         this._isActive = false;
     }
@@ -22,7 +22,7 @@ public class TreatExpression extends UnaryExpressionBase {
     public TreatExpression(
             Expression _mainExpression,
             FlworVarSequenceType sequenceType,
-            ExpressionMetadata metadata
+            ExceptionMetadata metadata
     ) {
         super(_mainExpression, Operator.TREAT, true, metadata);
         this._sequenceType = sequenceType;

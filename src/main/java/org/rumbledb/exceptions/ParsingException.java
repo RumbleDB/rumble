@@ -22,18 +22,18 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCodes;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 public class ParsingException extends SparksoniqRuntimeException {
 
 
     private static final long serialVersionUID = 1L;
 
-    public ParsingException(String message, ExpressionMetadata metadata) {
+    public ParsingException(String message, ExceptionMetadata metadata) {
         super(String.format("Parser failed. %s", message), ErrorCodes.ParsingErrorCode, metadata);
     }
 
-    public ParsingException(String message, String code, ExpressionMetadata metadata) {
+    public ParsingException(String message, String code, ExceptionMetadata metadata) {
         super(String.format("Parser failed. %s", message), code, metadata);
     }
 

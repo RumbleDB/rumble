@@ -20,7 +20,7 @@
 
 package org.rumbledb.expressions;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.StaticContext;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
@@ -42,7 +42,7 @@ public abstract class Expression extends Node {
         super();
     }
 
-    protected Expression(ExpressionMetadata metadata) {
+    protected Expression(ExceptionMetadata metadata) {
         super(metadata);
     }
 

@@ -20,11 +20,16 @@
 
 package org.rumbledb.expressions.flowr;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+
+
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
+
+
 
 import java.util.List;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
@@ -32,7 +37,7 @@ public class WhereClause extends FlworClause {
 
     private final Expression whereExpression;
 
-    public WhereClause(Expression expr, ExpressionMetadata metadata) {
+    public WhereClause(Expression expr, ExceptionMetadata metadata) {
         super(FLWOR_CLAUSES.WHERE, metadata);
         this.whereExpression = expr;
     }

@@ -32,7 +32,7 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionSignature;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
@@ -53,7 +53,7 @@ public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
     public GetTransformerFunctionIterator(
             List<RuntimeIterator> arguments,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(arguments, executionMode, iteratorMetadata);
     }
@@ -137,7 +137,7 @@ public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
             }
         }
         throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "SIZE function",
+                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "get-transformer function",
                 getMetadata()
         );
     }

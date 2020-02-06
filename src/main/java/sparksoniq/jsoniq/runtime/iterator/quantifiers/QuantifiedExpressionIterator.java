@@ -29,7 +29,7 @@ import sparksoniq.jsoniq.item.BooleanItem;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
@@ -47,7 +47,7 @@ public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
             List<QuantifiedExpressionVarIterator> children,
             RuntimeIterator evaluationExpression,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(null, executionMode, iteratorMetadata);
         this._operator = operator;

@@ -21,12 +21,17 @@
 package org.rumbledb.expressions.primary;
 
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+
+
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
+import org.rumbledb.exceptions.ExceptionMetadata;
+
+
 
 public class NullLiteral extends PrimaryExpression {
 
-    public NullLiteral(ExpressionMetadata metadata) {
+    public NullLiteral(ExceptionMetadata metadata) {
         super(metadata);
     }
 

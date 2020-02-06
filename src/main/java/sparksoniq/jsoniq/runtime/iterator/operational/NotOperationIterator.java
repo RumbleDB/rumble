@@ -27,14 +27,18 @@ import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.UnaryOperationBaseIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 public class NotOperationIterator extends UnaryOperationBaseIterator {
 
 
     private static final long serialVersionUID = 1L;
 
-    public NotOperationIterator(RuntimeIterator child, ExecutionMode executionMode, IteratorMetadata iteratorMetadata) {
+    public NotOperationIterator(
+            RuntimeIterator child,
+            ExecutionMode executionMode,
+            ExceptionMetadata iteratorMetadata
+    ) {
         super(child, OperationalExpressionBase.Operator.NOT, executionMode, iteratorMetadata);
     }
 

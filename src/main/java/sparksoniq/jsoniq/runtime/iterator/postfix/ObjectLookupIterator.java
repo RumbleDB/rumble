@@ -36,7 +36,7 @@ import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.ContextExpressionIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.math.BigDecimal;
@@ -54,7 +54,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             RuntimeIterator object,
             RuntimeIterator lookupIterator,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(Arrays.asList(object, lookupIterator), executionMode, iteratorMetadata);
         _iterator = object;

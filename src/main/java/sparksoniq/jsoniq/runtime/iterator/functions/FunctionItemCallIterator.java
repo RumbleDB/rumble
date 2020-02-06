@@ -35,7 +35,7 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionSignature;
 import sparksoniq.jsoniq.runtime.iterator.operational.TypePromotionIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.SequenceType;
 
@@ -63,7 +63,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
             FunctionItem functionItem,
             List<RuntimeIterator> functionArguments,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(null, executionMode, iteratorMetadata);
         for (RuntimeIterator arg : functionArguments) {

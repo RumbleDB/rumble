@@ -21,12 +21,17 @@
 package org.rumbledb.expressions.operational;
 
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+
+
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
+
+
 
 import java.util.Arrays;
 import java.util.List;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.operational.base.NaryExpressionBase;
 
@@ -40,7 +45,7 @@ public class MultiplicativeExpression extends NaryExpressionBase {
         Operator.IDIV };
 
 
-    public MultiplicativeExpression(Expression _mainExpression, ExpressionMetadata metadata) {
+    public MultiplicativeExpression(Expression _mainExpression, ExceptionMetadata metadata) {
         super(_mainExpression, metadata);
     }
 
@@ -48,7 +53,7 @@ public class MultiplicativeExpression extends NaryExpressionBase {
             Expression _mainExpression,
             List<Expression> rhs,
             List<Operator> ops,
-            ExpressionMetadata metadata
+            ExceptionMetadata metadata
     ) {
         super(_mainExpression, rhs, ops, metadata);
         validateOperators(Arrays.asList(operators), ops);

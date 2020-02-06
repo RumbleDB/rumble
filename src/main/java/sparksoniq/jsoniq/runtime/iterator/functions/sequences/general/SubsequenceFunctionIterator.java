@@ -30,7 +30,7 @@ import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
@@ -48,7 +48,7 @@ public class SubsequenceFunctionIterator extends LocalFunctionCallIterator {
     public SubsequenceFunctionIterator(
             List<RuntimeIterator> parameters,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(parameters, executionMode, iteratorMetadata);
     }
@@ -77,12 +77,12 @@ public class SubsequenceFunctionIterator extends LocalFunctionCallIterator {
             if (lengthItem.isArray()) {
                 throw new NonAtomicKeyException(
                         "Invalid args. subsequence can't be performed with an array parameter as the length",
-                        getMetadata().getExpressionMetadata()
+                        getMetadata()
                 );
             } else if (lengthItem.isObject()) {
                 throw new NonAtomicKeyException(
                         "Invalid args. subsequence can't be performed with an object parameter as the length",
-                        getMetadata().getExpressionMetadata()
+                        getMetadata()
                 );
             } else if (!(lengthItem.isNumeric())) {
                 throw new UnexpectedTypeException(
@@ -113,12 +113,12 @@ public class SubsequenceFunctionIterator extends LocalFunctionCallIterator {
         if (positionItem.isArray()) {
             throw new NonAtomicKeyException(
                     "Invalid args. subsequence can't be performed with an array parameter as the position",
-                    getMetadata().getExpressionMetadata()
+                    getMetadata()
             );
         } else if (positionItem instanceof ObjectItem) {
             throw new NonAtomicKeyException(
                     "Invalid args. subsequence can't be performed with an object parameter as the position",
-                    getMetadata().getExpressionMetadata()
+                    getMetadata()
             );
         } else if (!(positionItem.isNumeric())) {
             throw new UnexpectedTypeException(

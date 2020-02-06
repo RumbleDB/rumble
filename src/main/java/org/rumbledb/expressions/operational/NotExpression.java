@@ -20,15 +20,20 @@
 
 package org.rumbledb.expressions.operational;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.operational.base.UnaryExpressionBase;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+
+
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
+
+
 
 public class NotExpression extends UnaryExpressionBase {
 
-    public NotExpression(Expression _mainExpression, boolean _isActive, ExpressionMetadata metadata) {
+    public NotExpression(Expression _mainExpression, boolean _isActive, ExceptionMetadata metadata) {
         super(_mainExpression, Operator.NOT, _isActive, metadata);
     }
 

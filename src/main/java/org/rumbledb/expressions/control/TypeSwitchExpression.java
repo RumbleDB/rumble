@@ -1,11 +1,16 @@
 package org.rumbledb.expressions.control;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+
+
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
+
+
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.primary.VariableReference;
@@ -22,7 +27,7 @@ public class TypeSwitchExpression extends Expression {
             List<TypeSwitchCaseExpression> cases,
             Expression defaultExpression,
             VariableReference varRefDefault,
-            ExpressionMetadata metadataFromContext
+            ExceptionMetadata metadataFromContext
     ) {
 
         super(metadataFromContext);

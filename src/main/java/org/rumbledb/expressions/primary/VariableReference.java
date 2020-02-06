@@ -22,7 +22,7 @@ package org.rumbledb.expressions.primary;
 
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.types.SequenceType;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
@@ -37,7 +37,7 @@ public class VariableReference extends PrimaryExpression implements Serializable
     private SequenceType _type;
 
 
-    public VariableReference(String _name, ExpressionMetadata metadata) {
+    public VariableReference(String _name, ExceptionMetadata metadata) {
         super(metadata);
         this.name = _name;
     }

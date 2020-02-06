@@ -20,20 +20,25 @@
 
 package org.rumbledb.expressions.operational;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.operational.base.BinaryExpressionBase;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+
+
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
+
+
 
 public class RangeExpression extends BinaryExpressionBase {
 
-    public RangeExpression(Expression _mainExpression, ExpressionMetadata metadata) {
+    public RangeExpression(Expression _mainExpression, ExceptionMetadata metadata) {
         super(_mainExpression, metadata);
 
     }
 
-    public RangeExpression(Expression _mainExpression, Expression rhs, ExpressionMetadata metadata) {
+    public RangeExpression(Expression _mainExpression, Expression rhs, ExceptionMetadata metadata) {
         super(_mainExpression, rhs, Operator.TO, metadata);
     }
 

@@ -30,7 +30,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 
@@ -43,14 +43,18 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
 
     private static final long serialVersionUID = 1L;
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
-    private final IteratorMetadata metadata;
+    private final ExceptionMetadata metadata;
     protected boolean _hasNext;
     protected boolean _isOpen;
     protected RuntimeTupleIterator _child;
     protected DynamicContext _currentDynamicContext;
     protected ExecutionMode _highestExecutionMode;
 
-    protected RuntimeTupleIterator(RuntimeTupleIterator child, ExecutionMode executionMode, IteratorMetadata metadata) {
+    protected RuntimeTupleIterator(
+            RuntimeTupleIterator child,
+            ExecutionMode executionMode,
+            ExceptionMetadata metadata
+    ) {
         this.metadata = metadata;
         this._isOpen = false;
         this._highestExecutionMode = executionMode;
@@ -105,7 +109,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
 
     public abstract FlworTuple next();
 
-    public IteratorMetadata getMetadata() {
+    public ExceptionMetadata getMetadata() {
         return metadata;
     }
 

@@ -21,12 +21,17 @@
 package org.rumbledb.expressions.primary;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+
+
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
+
+
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -36,12 +41,12 @@ public class ParenthesizedExpression extends PrimaryExpression {
 
     private Expression expression;
 
-    public ParenthesizedExpression(Expression expression, ExpressionMetadata metadata) {
+    public ParenthesizedExpression(Expression expression, ExceptionMetadata metadata) {
         super(metadata);
         this.expression = expression;
     }
 
-    public ParenthesizedExpression(ExpressionMetadata metadata) {
+    public ParenthesizedExpression(ExceptionMetadata metadata) {
         super(metadata);
         this.expression = null;
     }

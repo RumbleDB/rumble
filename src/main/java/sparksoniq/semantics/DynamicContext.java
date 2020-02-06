@@ -33,7 +33,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SparksoniqRuntimeException;
 
 import sparksoniq.jsoniq.item.ItemFactory;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -84,7 +84,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
 
     }
 
-    public void setBindingsFromTuple(FlworTuple tuple, IteratorMetadata metadata) {
+    public void setBindingsFromTuple(FlworTuple tuple, ExceptionMetadata metadata) {
         for (String key : tuple.getLocalKeys()) {
             this.addVariableValue(key, tuple.getLocalValue(key, metadata));
         }
@@ -114,7 +114,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
             || _dataFrameVariableValues.containsKey(varName);
     }
 
-    public boolean isRDD(String varName, IteratorMetadata metadata) {
+    public boolean isRDD(String varName, ExceptionMetadata metadata) {
         if (!contains(varName)) {
             throw new OurBadException(
                     "Runtime error retrieving variable " + varName + " value.",
@@ -125,7 +125,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
             || _dataFrameVariableValues.containsKey(varName);
     }
 
-    public boolean isDataFrame(String varName, IteratorMetadata metadata) {
+    public boolean isDataFrame(String varName, ExceptionMetadata metadata) {
         if (!contains(varName)) {
             throw new OurBadException(
                     "Runtime error retrieving variable " + varName + " value.",
@@ -151,7 +151,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this._localVariableCounts.put(varName, count);
     }
 
-    public List<Item> getLocalVariableValue(String varName, IteratorMetadata metadata) {
+    public List<Item> getLocalVariableValue(String varName, ExceptionMetadata metadata) {
         if (_localVariableValues.containsKey(varName)) {
             return _localVariableValues.get(varName);
         }
@@ -174,11 +174,11 @@ public class DynamicContext implements Serializable, KryoSerializable {
 
         throw new SparksoniqRuntimeException(
                 "Runtime error retrieving variable " + varName + " value",
-                metadata.getExpressionMetadata()
+                metadata
         );
     }
 
-    public JavaRDD<Item> getRDDVariableValue(String varName, IteratorMetadata metadata) {
+    public JavaRDD<Item> getRDDVariableValue(String varName, ExceptionMetadata metadata) {
         if (_rddVariableValues.containsKey(varName)) {
             return _rddVariableValues.get(varName);
         }
@@ -199,7 +199,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         );
     }
 
-    public Dataset<Row> getDataFrameVariableValue(String varName, IteratorMetadata metadata) {
+    public Dataset<Row> getDataFrameVariableValue(String varName, ExceptionMetadata metadata) {
         if (_dataFrameVariableValues.containsKey(varName)) {
             return _dataFrameVariableValues.get(varName);
         }

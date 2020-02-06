@@ -20,11 +20,11 @@
 
 package org.rumbledb.expressions.postfix.extensions;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
@@ -33,7 +33,7 @@ public class PredicateExtension extends PostfixExtension {
 
     Expression _expression;
 
-    public PredicateExtension(Expression _collection, ExpressionMetadata metadata) {
+    public PredicateExtension(Expression _collection, ExceptionMetadata metadata) {
         super(metadata);
         this._expression = _collection;
     }

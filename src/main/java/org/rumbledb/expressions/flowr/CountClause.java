@@ -20,20 +20,20 @@
 
 package org.rumbledb.expressions.flowr;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.Collections;
 import java.util.List;
 
 import org.rumbledb.expressions.Node;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.primary.VariableReference;
 
 
 public class CountClause extends FlworClause {
     private VariableReference countClauseVar;
 
-    public CountClause(VariableReference countClauseVar, ExpressionMetadata metadata) {
+    public CountClause(VariableReference countClauseVar, ExceptionMetadata metadata) {
         super(FLWOR_CLAUSES.COUNT, metadata);
         this.countClauseVar = countClauseVar;
     }

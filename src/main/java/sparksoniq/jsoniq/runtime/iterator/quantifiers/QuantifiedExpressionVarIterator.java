@@ -26,7 +26,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.SequenceType;
 
@@ -49,7 +49,7 @@ public class QuantifiedExpressionVarIterator extends LocalRuntimeIterator {
             SequenceType sequenceType,
             RuntimeIterator expression,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(null, executionMode, iteratorMetadata);
         this._children.add(expression);

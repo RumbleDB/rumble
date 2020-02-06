@@ -21,12 +21,12 @@
 package org.rumbledb.expressions.flowr;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.types.SequenceType;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -43,7 +43,7 @@ public abstract class FlworVarDecl extends FlworClause {
     // Holds whether the variable will be stored in materialized(local) or native/spark(RDD or DF) format in a tuple
     protected ExecutionMode _variableHighestStorageMode = ExecutionMode.UNSET;
 
-    private FlworVarDecl(FLWOR_CLAUSES clauseType, ExpressionMetadata metadata) {
+    private FlworVarDecl(FLWOR_CLAUSES clauseType, ExceptionMetadata metadata) {
         super(clauseType, metadata);
     }
 
@@ -52,7 +52,7 @@ public abstract class FlworVarDecl extends FlworClause {
             VariableReference varRef,
             FlworVarSequenceType seq,
             Expression expression,
-            ExpressionMetadata metadata
+            ExceptionMetadata metadata
     ) {
         this(forVar, metadata);
         if (varRef == null)

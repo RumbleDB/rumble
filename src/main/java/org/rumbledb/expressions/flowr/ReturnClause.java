@@ -21,12 +21,17 @@
 package org.rumbledb.expressions.flowr;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+
+
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
+
+
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
@@ -35,7 +40,7 @@ public class ReturnClause extends FlworClause {
 
     private final Expression returnExpr;
 
-    public ReturnClause(Expression expr, ExpressionMetadata metadata) {
+    public ReturnClause(Expression expr, ExceptionMetadata metadata) {
         super(FLWOR_CLAUSES.RETURN, metadata);
         this.returnExpr = expr;
     }

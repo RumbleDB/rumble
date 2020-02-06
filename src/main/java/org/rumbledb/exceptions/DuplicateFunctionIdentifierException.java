@@ -22,14 +22,14 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCodes;
 
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 
 public class DuplicateFunctionIdentifierException extends SparksoniqRuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    public DuplicateFunctionIdentifierException(FunctionIdentifier identifier, ExpressionMetadata metadata) {
+    public DuplicateFunctionIdentifierException(FunctionIdentifier identifier, ExceptionMetadata metadata) {
         super(
             "Function already exists; \"" + identifier.getName() + "\" with arity: " + identifier.getArity(),
             ErrorCodes.DuplicateFunctionIdentifier,

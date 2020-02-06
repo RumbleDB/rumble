@@ -21,13 +21,14 @@
 package org.rumbledb.expressions;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 
 /**
@@ -36,14 +37,14 @@ import org.rumbledb.exceptions.OurBadException;
  */
 public abstract class Node {
 
-    private ExpressionMetadata metadata;
+    private ExceptionMetadata metadata;
 
     protected ExecutionMode _highestExecutionMode = ExecutionMode.UNSET;
 
     protected Node() {
     }
 
-    protected Node(ExpressionMetadata metadata) {
+    protected Node(ExceptionMetadata metadata) {
         this.metadata = metadata;
     }
 
@@ -158,7 +159,7 @@ public abstract class Node {
      * 
      * @return the metadata.
      */
-    public ExpressionMetadata getMetadata() {
+    public ExceptionMetadata getMetadata() {
         return metadata;
     }
 

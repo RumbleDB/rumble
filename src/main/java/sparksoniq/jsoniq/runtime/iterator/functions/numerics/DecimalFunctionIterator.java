@@ -11,7 +11,7 @@ import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemTypes;
@@ -26,7 +26,7 @@ public class DecimalFunctionIterator extends LocalFunctionCallIterator {
     public DecimalFunctionIterator(
             List<RuntimeIterator> parameters,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(parameters, executionMode, iteratorMetadata);
     }
@@ -41,7 +41,7 @@ public class DecimalFunctionIterator extends LocalFunctionCallIterator {
                         "Can not atomize an %1$s item: an %1$s has probably been passed where an atomic value is expected.",
                         ItemTypes.getItemTypeName(item.getClass().getSimpleName())
                     );
-                    throw new NonAtomicKeyException(message, getMetadata().getExpressionMetadata());
+                    throw new NonAtomicKeyException(message, getMetadata());
                 }
                 AtomicItem atomicItem = (AtomicItem) item;
                 String message = atomicItem.serialize()

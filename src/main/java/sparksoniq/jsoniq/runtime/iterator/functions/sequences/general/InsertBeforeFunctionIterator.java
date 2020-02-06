@@ -29,7 +29,7 @@ import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
@@ -49,7 +49,7 @@ public class InsertBeforeFunctionIterator extends LocalFunctionCallIterator {
     public InsertBeforeFunctionIterator(
             List<RuntimeIterator> parameters,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(parameters, executionMode, iteratorMetadata);
     }
@@ -84,12 +84,12 @@ public class InsertBeforeFunctionIterator extends LocalFunctionCallIterator {
         if (positionItem.isArray()) {
             throw new NonAtomicKeyException(
                     "Invalid args. insert-before can't be performed with an array parameter as the position",
-                    getMetadata().getExpressionMetadata()
+                    getMetadata()
             );
         } else if (positionItem.isObject()) {
             throw new NonAtomicKeyException(
                     "Invalid args. insert-before can't be performed with an object parameter as the position",
-                    getMetadata().getExpressionMetadata()
+                    getMetadata()
             );
         } else if (!(positionItem.isInteger())) {
             throw new UnexpectedTypeException(

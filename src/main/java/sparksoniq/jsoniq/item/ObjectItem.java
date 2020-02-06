@@ -27,7 +27,7 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DuplicateObjectKeyException;
 
-import sparksoniq.jsoniq.item.metadata.ItemMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
@@ -47,7 +47,7 @@ public class ObjectItem extends JsonItem {
         super();
     }
 
-    public ObjectItem(List<String> keys, List<Item> values, ItemMetadata itemMetadata) {
+    public ObjectItem(List<String> keys, List<Item> values, ExceptionMetadata itemMetadata) {
         super();
         checkForDuplicateKeys(keys, itemMetadata);
         this._keys = keys;
@@ -97,11 +97,11 @@ public class ObjectItem extends JsonItem {
         return _values;
     }
 
-    private void checkForDuplicateKeys(List<String> keys, ItemMetadata metadata) {
+    private void checkForDuplicateKeys(List<String> keys, ExceptionMetadata metadata) {
         HashMap<String, Integer> frequencies = new HashMap<>();
         for (String key : keys) {
             if (frequencies.containsKey(key))
-                throw new DuplicateObjectKeyException(key, metadata.getExpressionMetadata());
+                throw new DuplicateObjectKeyException(key, metadata);
 
             else
                 frequencies.put(key, 1);

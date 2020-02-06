@@ -5,13 +5,13 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.parser.JsoniqLexer;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.expressions.Expression;
 
 import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.visitor.VisitorHelpers;
 import sparksoniq.spark.SparkSessionManager;
@@ -60,7 +60,7 @@ public class Rumble {
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
                     lexer.getText(),
-                    new ExpressionMetadata(
+                    new ExceptionMetadata(
                             lexer.getLine(),
                             lexer.getCharPositionInLine()
                     )

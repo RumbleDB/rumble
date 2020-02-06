@@ -9,7 +9,7 @@ import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SingleType;
@@ -26,7 +26,7 @@ public class CastIterator extends UnaryOperationIterator {
             RuntimeIterator child,
             SingleType singleType,
             ExecutionMode executionMode,
-            IteratorMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata
     ) {
         super(child, OperationalExpressionBase.Operator.CAST, executionMode, iteratorMetadata);
         this._singleType = singleType;

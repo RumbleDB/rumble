@@ -21,7 +21,6 @@
 package org.rumbledb.expressions.primary;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.BuiltinFunction;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.BuiltinFunction.BuiltinFunctionExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
@@ -33,6 +32,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
@@ -45,7 +45,7 @@ public class FunctionCall extends PrimaryExpression {
     private final List<Expression> _arguments;
     private final boolean _isPartialApplication;
 
-    public FunctionCall(String functionName, List<Expression> arguments, ExpressionMetadata metadata) {
+    public FunctionCall(String functionName, List<Expression> arguments, ExceptionMetadata metadata) {
         super(metadata);
         this._functionName = functionName;
         this._arguments = arguments;

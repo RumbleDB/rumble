@@ -26,14 +26,14 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 public class NullRuntimeIterator extends AtomicRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
 
-    public NullRuntimeIterator(ExecutionMode executionMode, IteratorMetadata iteratorMetadata) {
+    public NullRuntimeIterator(ExecutionMode executionMode, ExceptionMetadata iteratorMetadata) {
         super(null, executionMode, iteratorMetadata);
     }
 
