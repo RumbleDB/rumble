@@ -145,7 +145,7 @@ import org.rumbledb.expressions.primary.VariableReference;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
 
-public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<RuntimeIterator> {
+public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator> {
 
     @Override
     public RuntimeIterator visit(Node expression, RuntimeIterator argument) {

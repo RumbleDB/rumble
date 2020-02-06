@@ -26,7 +26,7 @@ import org.rumbledb.expressions.primary.VariableReference;
 
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 public class LetClauseVar extends FlworVarDecl {
 
@@ -53,7 +53,7 @@ public class LetClauseVar extends FlworVarDecl {
     }
 
     @Override
-    public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
+    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitLetClauseVar(this, argument);
     }
 

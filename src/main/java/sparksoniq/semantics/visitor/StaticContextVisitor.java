@@ -45,7 +45,7 @@ import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
 
-public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<StaticContext> {
+public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     // indicate whether an error should be thrown if an duplicate user defined function declaration is detected
     private boolean ignoreDuplicateUserDefinedFunctionError;

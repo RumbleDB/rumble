@@ -22,7 +22,7 @@ package org.rumbledb.expressions;
 
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
 import sparksoniq.semantics.StaticContext;
-import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 /**
  * An expression is the first-class citizen in JSONiq syntax. Any expression
@@ -47,7 +47,7 @@ public abstract class Expression extends Node {
     }
 
     @Override
-    public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
+    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitDescendants(this, argument);
     }
 

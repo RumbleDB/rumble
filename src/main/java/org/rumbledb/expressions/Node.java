@@ -22,7 +22,7 @@ package org.rumbledb.expressions;
 
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -117,7 +117,7 @@ public abstract class Node {
      * 
      * @return the object returned by this visitor
      */
-    public abstract <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument);
+    public abstract <T> T accept(AbstractNodeVisitor<T> visitor, T argument);
 
     /**
      * Serializes the node.

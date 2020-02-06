@@ -73,22 +73,22 @@ import org.rumbledb.expressions.primary.VariableReference;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
 
-public abstract class AbstractExpressionOrClauseVisitor<T> {
+public abstract class AbstractNodeVisitor<T> {
 
-    public T visit(Node expression, T argument) {
-        return expression.accept(this, argument);
+    public T visit(Node node, T argument) {
+        return node.accept(this, argument);
     }
 
-    public T visitDescendants(Node expression, T argument) {
+    public T visitDescendants(Node node, T argument) {
         T result = argument;
-        for (Node child : expression.getChildren()) {
+        for (Node child : node.getChildren()) {
             result = visit(child, result);
         }
         return result;
     }
 
-    protected T defaultAction(Node expression, T argument) {
-        return visitDescendants(expression, argument);
+    protected T defaultAction(Node node, T argument) {
+        return visitDescendants(node, argument);
     }
 
     public T visitCommaExpression(CommaExpression expression, T argument) {

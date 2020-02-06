@@ -5,7 +5,7 @@ import org.rumbledb.expressions.flowr.FlworVarSingleType;
 import org.rumbledb.expressions.operational.base.UnaryExpressionBase;
 
 import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 public class CastableExpression extends UnaryExpressionBase {
 
@@ -28,7 +28,7 @@ public class CastableExpression extends UnaryExpressionBase {
     }
 
     @Override
-    public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
+    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitCastableExpression(this, argument);
     }
 
