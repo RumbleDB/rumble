@@ -57,7 +57,7 @@ public class RumbleMLUtils {
             String estimatorShortName,
             Estimator<?> estimator,
             Item paramMapItem,
-            IteratorMetadata metadata
+            ExceptionMetadata metadata
     ) {
         ParamMap result = new ParamMap();
         // paramMapItem is expected to be an ObjectItem

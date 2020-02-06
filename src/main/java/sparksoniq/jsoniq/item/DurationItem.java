@@ -11,11 +11,11 @@ import org.joda.time.format.ISOPeriodFormat;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 
-import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;

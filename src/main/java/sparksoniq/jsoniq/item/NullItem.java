@@ -24,8 +24,9 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
-import sparksoniq.jsoniq.compiler.translator.expr.operational.base.OperationalExpressionBase;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
+
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
