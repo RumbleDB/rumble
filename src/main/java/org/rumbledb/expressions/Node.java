@@ -150,10 +150,10 @@ public abstract class Node {
      * @return the descendant nodes as a list.
      */
     public final List<Node> getDescendantsMatching(Predicate<Node> predicate) {
-        List<Node> result = this.getDescendants();
-        List<Node> filter = new ArrayList<>();
-        result.stream().filter(predicate).forEach(r -> filter.add(r));
-        return filter;
+        List<Node> descendants = this.getDescendants();
+        List<Node> results = new ArrayList<>();
+        descendants.stream().filter(predicate).forEach(r -> results.add(r));
+        return results;
     }
 
     /**
