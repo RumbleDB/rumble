@@ -41,12 +41,13 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
+                <!-- Holy grail of eclipse configuration:  https://stackoverflow.com/a/49599478/10707488   -->
                 <configuration>
                     <compilerId>eclipse</compilerId>
                     <source>1.8</source>
                     <target>1.8</target>
                     <compilerArguments>
-                        <properties>${basedir}/maven-compiler-eclipse-jdt-configuration.xml</properties>
+                        <properties>${basedir}/org.eclipse.jdt.core.prefs</properties>
                     </compilerArguments>
                 </configuration>
                 <dependencies>
