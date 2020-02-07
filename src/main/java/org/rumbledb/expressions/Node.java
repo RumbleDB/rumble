@@ -128,15 +128,16 @@ public abstract class Node {
     public abstract List<Node> getChildren();
 
     /**
-     * For gathering descendant nodes, as a depth-first search. The list is new and can be modified at will by the caller.
+     * For gathering descendant nodes, as a depth-first search. The list is new and can be modified at will by the
+     * caller.
      * 
      * @return the descendant nodes as a list.
      */
     public final List<Node> getDescendants() {
         List<Node> result = new ArrayList<>();
         for (Node child : this.getChildren()) {
-        	result.forEach(r -> result.addAll(child.getDescendants()));
-        	result.add(child);
+            result.forEach(r -> result.addAll(child.getDescendants()));
+            result.add(child);
         }
         return result;
     }
