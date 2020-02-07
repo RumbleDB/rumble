@@ -76,7 +76,7 @@ public abstract class PostfixExtension extends Node {
 
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        return argument; // no children anyway
+        return visitor.visitDescendants(this, argument);
     }
 
     @Override
