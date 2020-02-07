@@ -43,7 +43,9 @@ public abstract class PrimaryExpression extends Expression {
 
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        return visitor.visitDescendants(this, argument);
+    	//TO this class should not be an expression.
+        //nothing to do as no children 
+    	return argument;
     }
 
     @Override
