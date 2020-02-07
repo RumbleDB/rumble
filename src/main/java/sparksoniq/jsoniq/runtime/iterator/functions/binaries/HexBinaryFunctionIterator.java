@@ -2,13 +2,12 @@ package sparksoniq.jsoniq.runtime.iterator.functions.binaries;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CastException;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
@@ -31,11 +30,11 @@ public class HexBinaryFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             this._hasNext = false;
             try {
-                return ItemFactory.getInstance().createHexBinaryItem(_hexBinaryStringItem.getStringValue());
+                return ItemFactory.getInstance().createHexBinaryItem(this._hexBinaryStringItem.getStringValue());
             } catch (IllegalArgumentException e) {
                 String message = String.format(
                     "\"%s\": value of type %s is not castable to type %s",
-                    _hexBinaryStringItem.serialize(),
+                    this._hexBinaryStringItem.serialize(),
                     "string",
                     "hexBinary"
                 );
@@ -52,8 +51,8 @@ public class HexBinaryFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        _hexBinaryStringItem = this._children.get(0)
-            .materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
-        this._hasNext = _hexBinaryStringItem != null;
+        this._hexBinaryStringItem = this._children.get(0)
+            .materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
+        this._hasNext = this._hexBinaryStringItem != null;
     }
 }

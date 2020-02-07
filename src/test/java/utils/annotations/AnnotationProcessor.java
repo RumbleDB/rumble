@@ -143,15 +143,15 @@ public class AnnotationProcessor {
         }
 
         public String getOutput() {
-            return expectedOutput;
+            return this.expectedOutput;
         }
 
         public String getErrorCode() {
-            return errorCode;
+            return this.errorCode;
         }
 
         public String getErrorMetadata() {
-            return errorMetadata;
+            return this.errorMetadata;
         }
 
         public abstract boolean shouldParse();
@@ -170,7 +170,7 @@ public class AnnotationProcessor {
         }
 
         public String getOutput() {
-            return expectedOutput;
+            return this.expectedOutput;
         }
 
         @Override

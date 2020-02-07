@@ -33,7 +33,7 @@ public class ObjectLookupClosure implements FlatMapFunction<Item, Item> {
     private final String _key;
 
     public ObjectLookupClosure(String key) {
-        _key = key;
+        this._key = key;
     }
 
     public Iterator<Item> call(Item arg0) throws Exception {
@@ -42,7 +42,7 @@ public class ObjectLookupClosure implements FlatMapFunction<Item, Item> {
         if (!(arg0.isObject()))
             return results.iterator();
 
-        Item item = arg0.getItemByKey(_key);
+        Item item = arg0.getItemByKey(this._key);
         if (item != null) {
             results.add(item);
         }

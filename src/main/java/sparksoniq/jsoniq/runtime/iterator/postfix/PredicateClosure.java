@@ -35,20 +35,20 @@ public class PredicateClosure implements Function<Item, Boolean> {
     private final DynamicContext _dynamicContext;
 
     public PredicateClosure(RuntimeIterator expression, DynamicContext dynamicContext) {
-        _expression = expression;
-        _dynamicContext = dynamicContext;
+        this._expression = expression;
+        this._dynamicContext = dynamicContext;
     }
 
     @Override
     public Boolean call(Item v1) throws Exception {
         List<Item> currentItems = new ArrayList<>();
         currentItems.add(v1);
-        DynamicContext dynamicContext = new DynamicContext(_dynamicContext);
+        DynamicContext dynamicContext = new DynamicContext(this._dynamicContext);
         dynamicContext.addVariableValue("$$", currentItems);
 
-        _expression.open(dynamicContext);
-        boolean result = RuntimeIterator.getEffectiveBooleanValue(_expression);
-        _expression.close();
+        this._expression.open(dynamicContext);
+        boolean result = RuntimeIterator.getEffectiveBooleanValue(this._expression);
+        this._expression.close();
         return result;
 
     }

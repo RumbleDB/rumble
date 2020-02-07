@@ -20,14 +20,13 @@
 
 package org.rumbledb.expressions.flowr;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.SemanticException;
+import org.rumbledb.expressions.Node;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.SemanticException;
-import org.rumbledb.expressions.Node;
 
 public class ForClause extends FlworClause {
 
@@ -41,33 +40,33 @@ public class ForClause extends FlworClause {
         this.forVariables = vars;
 
         // chain forVariables with previousClause relationship
-        for (int varIndex = forVariables.size() - 1; varIndex > 0; varIndex--) {
-            forVariables.get(varIndex).setPreviousClause(forVariables.get(varIndex - 1));
+        for (int varIndex = this.forVariables.size() - 1; varIndex > 0; varIndex--) {
+            this.forVariables.get(varIndex).setPreviousClause(this.forVariables.get(varIndex - 1));
         }
     }
 
     public List<ForClauseVar> getForVariables() {
-        return forVariables;
+        return this.forVariables;
     }
 
     @Override
     public void setPreviousClause(FlworClause previousClause) {
         super.setPreviousClause(previousClause);
         // assign the previous clause of the ForClause as the first variable definition's previous
-        forVariables.get(0).previousClause = this.previousClause;
+        this.forVariables.get(0).previousClause = this.previousClause;
     }
 
     @Override
     public void initHighestExecutionMode() {
         // call isDataFrame on the last forVariable
         this._highestExecutionMode =
-            forVariables.get(forVariables.size() - 1).getHighestExecutionMode();
+            this.forVariables.get(this.forVariables.size() - 1).getHighestExecutionMode();
     }
 
     @Override
     public List<Node> getDescendants(boolean depthSearch) {
         List<Node> result = new ArrayList<>();
-        forVariables.forEach(e -> {
+        this.forVariables.forEach(e -> {
             if (e != null)
                 result.add(e);
         });
@@ -82,9 +81,9 @@ public class ForClause extends FlworClause {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(forClause for ";
-        for (ForClauseVar var : forVariables)
+        for (ForClauseVar var : this.forVariables)
             result += var.serializationString(true)
-                + (forVariables.indexOf(var) < forVariables.size() - 1 ? " , " : "");
+                + (this.forVariables.indexOf(var) < this.forVariables.size() - 1 ? " , " : "");
         result += ")";
         return result;
     }

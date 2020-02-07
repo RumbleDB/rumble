@@ -11,7 +11,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
@@ -60,7 +59,7 @@ public class Base64BinaryItem extends AtomicItem {
 
     @Override
     public String getStringValue() {
-        return _stringValue;
+        return this._stringValue;
     }
 
     private static boolean checkInvalidBase64BinaryFormat(String base64BinaryString) {

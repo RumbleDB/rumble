@@ -47,7 +47,7 @@ public class JSONSyntaxToItemMapper implements FlatMapFunction<Iterator<String>,
             @Override
             public Item next() {
                 JsonIterator object = JsonIterator.parse(stringIterator.next());
-                return ItemParser.getItemFromObject(object, metadata);
+                return ItemParser.getItemFromObject(object, JSONSyntaxToItemMapper.this.metadata);
             }
 
             @Override

@@ -21,13 +21,12 @@
 package sparksoniq.jsoniq.runtime.iterator.operational;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.UnaryOperationBaseIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 
 public class NotOperationIterator extends UnaryOperationBaseIterator {
 
@@ -44,9 +43,9 @@ public class NotOperationIterator extends UnaryOperationBaseIterator {
 
     @Override
     public Item next() {
-        _child.open(_currentDynamicContextForLocalExecution);
-        boolean effectiveBooleanValue = getEffectiveBooleanValue(_child);
-        _child.close();
+        this._child.open(this._currentDynamicContextForLocalExecution);
+        boolean effectiveBooleanValue = getEffectiveBooleanValue(this._child);
+        this._child.close();
         this._hasNext = false;
         return ItemFactory.getInstance().createBooleanItem(!(effectiveBooleanValue));
     }

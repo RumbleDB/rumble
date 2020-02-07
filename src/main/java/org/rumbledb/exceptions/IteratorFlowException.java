@@ -20,8 +20,6 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.exceptions.ExceptionMetadata;
-
 public class IteratorFlowException extends OurBadException {
 
     private static final long serialVersionUID = 1L;

@@ -23,7 +23,6 @@ package org.rumbledb.expressions.flowr;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.primary.VariableReference;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
@@ -44,7 +43,7 @@ public class GroupByClauseVar extends FlworVarDecl {
     }
 
     public String getUri() {
-        return uri;
+        return this.uri;
     }
 
     @Override
@@ -63,9 +62,9 @@ public class GroupByClauseVar extends FlworVarDecl {
 
     @Override
     public String serializationString(boolean prefix) {
-        String result = "(groupByVar " + variableReferenceNode.serializationString(false);
+        String result = "(groupByVar " + this.variableReferenceNode.serializationString(false);
         if (this.asSequence != null)
-            result += " as " + asSequence.serializationString(true);
+            result += " as " + this.asSequence.serializationString(true);
         if (this.expression != null)
             result += " in " + this.expression.serializationString(true);
         result += ")";

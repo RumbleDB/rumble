@@ -20,19 +20,14 @@
 
 package org.rumbledb.expressions.flowr;
 
-import sparksoniq.jsoniq.ExecutionMode;
-
-
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
-
-
-
-import java.util.ArrayList;
-import java.util.List;
-
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import sparksoniq.jsoniq.ExecutionMode;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ReturnClause extends FlworClause {
 
@@ -45,13 +40,13 @@ public class ReturnClause extends FlworClause {
     }
 
     public Expression getReturnExpr() {
-        return returnExpr;
+        return this.returnExpr;
     }
 
     @Override
     public void initHighestExecutionMode() {
         this._highestExecutionMode =
-            previousClause.getHighestExecutionMode().isDataFrame()
+            this.previousClause.getHighestExecutionMode().isDataFrame()
                 ? ExecutionMode.RDD
                 : ExecutionMode.LOCAL;
     }
@@ -59,8 +54,8 @@ public class ReturnClause extends FlworClause {
     @Override
     public List<Node> getDescendants(boolean depthSearch) {
         List<Node> result = new ArrayList<>();
-        if (returnExpr != null)
-            result.add(returnExpr);
+        if (this.returnExpr != null)
+            result.add(this.returnExpr);
         return getDescendantsFromChildren(result, depthSearch);
     }
 
@@ -71,7 +66,7 @@ public class ReturnClause extends FlworClause {
 
     @Override
     public String serializationString(boolean prefix) {
-        String result = "return " + returnExpr.serializationString(true);
+        String result = "return " + this.returnExpr.serializationString(true);
         // result += ")";
         return result;
     }

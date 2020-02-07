@@ -13,7 +13,7 @@ public class RumbleConf {
     private int _resultsSizeCap;
 
     public RumbleConf() {
-        _resultsSizeCap = 100;
+        this._resultsSizeCap = 100;
     }
 
     /**
@@ -23,7 +23,7 @@ public class RumbleConf {
      * @param cap the maximum number of Items to collect.
      */
     void setResultsSizeCap(int cap) {
-        _resultsSizeCap = cap;
+        this._resultsSizeCap = cap;
     }
 
     /**
@@ -33,7 +33,7 @@ public class RumbleConf {
      * @return the current number of Items to collect.
      */
     int getResultsSizeCap() {
-        return _resultsSizeCap;
+        return this._resultsSizeCap;
     }
 
 }

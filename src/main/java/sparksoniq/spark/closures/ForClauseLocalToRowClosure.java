@@ -47,16 +47,17 @@ public class ForClauseLocalToRowClosure implements Function<Item, Row> {
     public ForClauseLocalToRowClosure(FlworTuple inputTuple, ExceptionMetadata metadata) {
         this._inputTuple = inputTuple;
         this._metadata = metadata;
-        _kryo = new Kryo();
-        _kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(_kryo);
-        _output = new Output(128, -1);
+        this._kryo = new Kryo();
+        this._kryo.setReferences(false);
+        DataFrameUtils.registerKryoClassesKryo(this._kryo);
+        this._output = new Output(128, -1);
     }
 
     @Override
     public Row call(Item item) {
         List<List<Item>> rowColumns = new ArrayList<>();
-        _inputTuple.getLocalKeys().forEach(key -> rowColumns.add(_inputTuple.getLocalValue(key, _metadata)));
+        this._inputTuple.getLocalKeys()
+            .forEach(key -> rowColumns.add(this._inputTuple.getLocalValue(key, this._metadata)));
 
         List<Item> itemList = new ArrayList<>();
         itemList.add(item);
@@ -64,7 +65,7 @@ public class ForClauseLocalToRowClosure implements Function<Item, Row> {
 
         List<byte[]> serializedRowColumns = new ArrayList<>();
         for (List<Item> column : rowColumns) {
-            serializedRowColumns.add(DataFrameUtils.serializeItemList(column, _kryo, _output));
+            serializedRowColumns.add(DataFrameUtils.serializeItemList(column, this._kryo, this._output));
         }
 
         return RowFactory.create(serializedRowColumns.toArray());
@@ -75,9 +76,9 @@ public class ForClauseLocalToRowClosure implements Function<Item, Row> {
                 ClassNotFoundException {
         in.defaultReadObject();
 
-        _kryo = new Kryo();
-        _kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(_kryo);
-        _output = new Output(128, -1);
+        this._kryo = new Kryo();
+        this._kryo.setReferences(false);
+        DataFrameUtils.registerKryoClassesKryo(this._kryo);
+        this._output = new Output(128, -1);
     }
 }

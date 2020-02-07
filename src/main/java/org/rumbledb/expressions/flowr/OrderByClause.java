@@ -21,17 +21,13 @@
 package org.rumbledb.expressions.flowr;
 
 
-
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
-
-
-
-import java.util.ArrayList;
-import java.util.List;
-
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.Node;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class OrderByClause extends FlworClause {
 
@@ -50,7 +46,7 @@ public class OrderByClause extends FlworClause {
     @Override
     public List<Node> getDescendants(boolean depthSearch) {
         List<Node> result = new ArrayList<>();
-        expressions.forEach(e -> {
+        this.expressions.forEach(e -> {
             if (e != null)
                 result.add(e);
         });
@@ -65,18 +61,18 @@ public class OrderByClause extends FlworClause {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(orderByClause order by ";
-        for (OrderByClauseExpr var : expressions)
+        for (OrderByClauseExpr var : this.expressions)
             result += var.serializationString(true)
-                + (expressions.indexOf(var) < expressions.size() - 1 ? " , " : "");
+                + (this.expressions.indexOf(var) < this.expressions.size() - 1 ? " , " : "");
         result += ")";
         return result;
     }
 
     public boolean isStable() {
-        return isStable;
+        return this.isStable;
     }
 
     public List<OrderByClauseExpr> getExpressions() {
-        return expressions;
+        return this.expressions;
     }
 }

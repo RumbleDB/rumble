@@ -26,7 +26,6 @@ import org.apache.spark.sql.api.java.UDF2;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -61,56 +60,61 @@ public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, W
             DynamicContext context,
             Map<String, List<String>> columnNamesByType
     ) {
-        _expressionsWithIterator = expressionsWithIterator;
+        this._expressionsWithIterator = expressionsWithIterator;
 
-        _deserializedParams = new ArrayList<>();
-        _longParams = new ArrayList<>();
-        _parentContext = context;
-        _context = new DynamicContext(_parentContext);
-        result = new ArrayList<>();
+        this._deserializedParams = new ArrayList<>();
+        this._longParams = new ArrayList<>();
+        this._parentContext = context;
+        this._context = new DynamicContext(this._parentContext);
+        this.result = new ArrayList<>();
 
-        _dependencies = new TreeMap<String, DynamicContext.VariableDependency>();
-        for (OrderByClauseAnnotatedChildIterator expressionWithIterator : _expressionsWithIterator) {
-            _dependencies.putAll(expressionWithIterator.getIterator().getVariableDependencies());
+        this._dependencies = new TreeMap<String, DynamicContext.VariableDependency>();
+        for (OrderByClauseAnnotatedChildIterator expressionWithIterator : this._expressionsWithIterator) {
+            this._dependencies.putAll(expressionWithIterator.getIterator().getVariableDependencies());
         }
-        _columnNamesByType = columnNamesByType;
+        this._columnNamesByType = columnNamesByType;
 
-        _kryo = new Kryo();
-        _kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(_kryo);
-        _input = new Input();
+        this._kryo = new Kryo();
+        this._kryo.setReferences(false);
+        DataFrameUtils.registerKryoClassesKryo(this._kryo);
+        this._input = new Input();
     }
 
     @Override
     public List<String> call(WrappedArray<byte[]> wrappedParameters, WrappedArray<Long> wrappedParametersLong) {
-        _deserializedParams.clear();
-        _context.removeAllVariables();
-        result.clear();
+        this._deserializedParams.clear();
+        this._context.removeAllVariables();
+        this.result.clear();
 
-        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
+        DataFrameUtils.deserializeWrappedParameters(
+            wrappedParameters,
+            this._deserializedParams,
+            this._kryo,
+            this._input
+        );
 
         // Long parameters correspond to pre-computed counts, when a materialization of the
         // actual sequence was avoided upfront.
         Object[] longParams = (Object[]) wrappedParametersLong.array();
         for (Object longParam : longParams) {
             Item count = ItemFactory.getInstance().createIntegerItem(((Long) longParam).intValue());
-            _longParams.add(count);
+            this._longParams.add(count);
         }
 
         DataFrameUtils.prepareDynamicContext(
-            _context,
-            _columnNamesByType.get("byte[]"),
-            _columnNamesByType.get("Long"),
-            _deserializedParams,
-            _longParams
+            this._context,
+            this._columnNamesByType.get("byte[]"),
+            this._columnNamesByType.get("Long"),
+            this._deserializedParams,
+            this._longParams
         );
 
-        for (OrderByClauseAnnotatedChildIterator expressionWithIterator : _expressionsWithIterator) {
+        for (OrderByClauseAnnotatedChildIterator expressionWithIterator : this._expressionsWithIterator) {
             // apply expression in the dynamic context
             RuntimeIterator iterator = expressionWithIterator.getIterator();
-            iterator.open(_context);
+            iterator.open(this._context);
             if (iterator.hasNext()) {
-                _nextItem = iterator.next();
+                this._nextItem = iterator.next();
                 if (iterator.hasNext()) {
                     throw new UnexpectedTypeException(
                             "Can not order by variables with sequences of multiple items.",
@@ -120,39 +124,39 @@ public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, W
             }
             iterator.close();
 
-            if (_nextItem == null) {
-                result.add("empty-sequence");
-            } else if (_nextItem.isNull()) {
-                result.add("null");
-            } else if (_nextItem.isBoolean()) {
-                result.add("boolean");
-            } else if (_nextItem.isString()) {
-                result.add("string");
-            } else if (_nextItem.isInteger()) {
-                result.add("integer");
-            } else if (_nextItem.isDouble()) {
-                result.add("double");
-            } else if (_nextItem.isDecimal()) {
-                result.add("decimal");
-            } else if (_nextItem.isYearMonthDuration()) {
-                result.add("yearMonthDuration");
-            } else if (_nextItem.isDayTimeDuration()) {
-                result.add("dayTimeDuration");
-            } else if (_nextItem.isDuration()) {
-                result.add("duration");
-            } else if (_nextItem.isDateTime()) {
-                result.add("dateTime");
-            } else if (_nextItem.isDate()) {
-                result.add("date");
-            } else if (_nextItem.isTime()) {
-                result.add("time");
-            } else if (_nextItem.isArray() || _nextItem.isObject()) {
+            if (this._nextItem == null) {
+                this.result.add("empty-sequence");
+            } else if (this._nextItem.isNull()) {
+                this.result.add("null");
+            } else if (this._nextItem.isBoolean()) {
+                this.result.add("boolean");
+            } else if (this._nextItem.isString()) {
+                this.result.add("string");
+            } else if (this._nextItem.isInteger()) {
+                this.result.add("integer");
+            } else if (this._nextItem.isDouble()) {
+                this.result.add("double");
+            } else if (this._nextItem.isDecimal()) {
+                this.result.add("decimal");
+            } else if (this._nextItem.isYearMonthDuration()) {
+                this.result.add("yearMonthDuration");
+            } else if (this._nextItem.isDayTimeDuration()) {
+                this.result.add("dayTimeDuration");
+            } else if (this._nextItem.isDuration()) {
+                this.result.add("duration");
+            } else if (this._nextItem.isDateTime()) {
+                this.result.add("dateTime");
+            } else if (this._nextItem.isDate()) {
+                this.result.add("date");
+            } else if (this._nextItem.isTime()) {
+                this.result.add("time");
+            } else if (this._nextItem.isArray() || this._nextItem.isObject()) {
                 throw new UnexpectedTypeException(
                         "Order by variable can not contain arrays or objects.",
                         expressionWithIterator.getIterator().getMetadata()
                 );
-            } else if (_nextItem.isBinary()) {
-                String itemType = ItemTypes.getItemTypeName(_nextItem.getClass().getSimpleName());
+            } else if (this._nextItem.isBinary()) {
+                String itemType = ItemTypes.getItemTypeName(this._nextItem.getClass().getSimpleName());
                 throw new UnexpectedTypeException(
                         "\""
                             + itemType
@@ -165,7 +169,7 @@ public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, W
                 throw new OurBadException("Unexpected type found.");
             }
         }
-        return result;
+        return this.result;
     }
 
     private void readObject(java.io.ObjectInputStream in)
@@ -173,9 +177,9 @@ public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, W
                 ClassNotFoundException {
         in.defaultReadObject();
 
-        _kryo = new Kryo();
-        _kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(_kryo);
-        _input = new Input();
+        this._kryo = new Kryo();
+        this._kryo.setReferences(false);
+        DataFrameUtils.registerKryoClassesKryo(this._kryo);
+        this._input = new Input();
     }
 }

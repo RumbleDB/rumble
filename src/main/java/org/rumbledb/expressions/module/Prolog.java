@@ -21,18 +21,14 @@
 package org.rumbledb.expressions.module;
 
 
-
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
-
-
-
-import java.util.ArrayList;
-import java.util.List;
-
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.primary.FunctionDeclaration;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class Prolog extends Expression {
 
@@ -44,14 +40,14 @@ public class Prolog extends Expression {
     }
 
     public List<FunctionDeclaration> getFunctionDeclaration() {
-        return _functionDeclaration;
+        return this._functionDeclaration;
     }
 
     @Override
     public List<Node> getDescendants(boolean depthSearch) {
         List<Node> result = new ArrayList<>();
         if (this._functionDeclaration != null)
-            _functionDeclaration.forEach(e -> {
+            this._functionDeclaration.forEach(e -> {
                 if (e != null)
                     result.add(e);
             });
@@ -67,7 +63,7 @@ public class Prolog extends Expression {
     public String serializationString(boolean prefix) {
         String result = "(prolog ";
         result += " (functionDecl ";
-        for (FunctionDeclaration func : _functionDeclaration) {
+        for (FunctionDeclaration func : this._functionDeclaration) {
             result += "(" + func.serializationString(false) + ") , ";
         }
         result = result.substring(0, result.length() - 1); // remove last comma

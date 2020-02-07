@@ -22,8 +22,6 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCodes;
 
-import org.rumbledb.exceptions.ExceptionMetadata;
-
 public class UndeclaredVariableException extends SemanticException {
 
     private static final long serialVersionUID = 1L;

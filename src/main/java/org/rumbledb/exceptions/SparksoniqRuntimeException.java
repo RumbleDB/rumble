@@ -20,11 +20,9 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.errorcodes.ErrorCodes;
 
 import java.util.Arrays;
-
-import org.rumbledb.errorcodes.ErrorCodes;
 
 public class SparksoniqRuntimeException extends RuntimeException {
 
@@ -106,14 +104,14 @@ public class SparksoniqRuntimeException extends RuntimeException {
     }
 
     public String getErrorCode() {
-        return errorCode;
+        return this.errorCode;
     }
 
     public ExceptionMetadata getMetadata() {
-        return metadata;
+        return this.metadata;
     }
 
     public String getJSONiqErrorMessage() {
-        return errorMessage;
+        return this.errorMessage;
     }
 }

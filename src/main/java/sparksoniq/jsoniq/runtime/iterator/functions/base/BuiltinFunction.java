@@ -35,19 +35,19 @@ public class BuiltinFunction {
     }
 
     public FunctionIdentifier getIdentifier() {
-        return identifier;
+        return this.identifier;
     }
 
     FunctionSignature getSignature() {
-        return signature;
+        return this.signature;
     }
 
     public Class<? extends RuntimeIterator> getFunctionIteratorClass() {
-        return functionIteratorClass;
+        return this.functionIteratorClass;
     }
 
     public BuiltinFunctionExecutionMode getBuiltinFunctionExecutionMode() {
-        return builtinFunctionExecutionMode;
+        return this.builtinFunctionExecutionMode;
     }
 
     @Override

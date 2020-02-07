@@ -21,12 +21,12 @@
 package org.rumbledb.expressions.postfix.extensions;
 
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class PredicateExtension extends PostfixExtension {
@@ -39,7 +39,7 @@ public class PredicateExtension extends PostfixExtension {
     }
 
     public Expression getExpression() {
-        return _expression;
+        return this._expression;
     }
 
     @Override
@@ -52,7 +52,7 @@ public class PredicateExtension extends PostfixExtension {
 
     @Override
     public String serializationString(boolean prefix) {
-        String result = "(predicate [" + _expression.serializationString(true) + "])";
+        String result = "(predicate [" + this._expression.serializationString(true) + "])";
         return result;
     }
 

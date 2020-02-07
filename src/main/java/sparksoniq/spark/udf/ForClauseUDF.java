@@ -58,59 +58,64 @@ public class ForClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
             DynamicContext context,
             Map<String, List<String>> columnNamesByType
     ) {
-        _expression = expression;
-        _columnNamesByType = columnNamesByType;
+        this._expression = expression;
+        this._columnNamesByType = columnNamesByType;
 
-        _deserializedParams = new ArrayList<>();
-        _longParams = new ArrayList<>();
+        this._deserializedParams = new ArrayList<>();
+        this._longParams = new ArrayList<>();
 
-        _context = new DynamicContext(context);
-        _nextResult = new ArrayList<>();
-        _results = new ArrayList<>();
+        this._context = new DynamicContext(context);
+        this._nextResult = new ArrayList<>();
+        this._results = new ArrayList<>();
 
-        _kryo = new Kryo();
-        _kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(_kryo);
-        _output = new Output(128, -1);
-        _input = new Input();
+        this._kryo = new Kryo();
+        this._kryo.setReferences(false);
+        DataFrameUtils.registerKryoClassesKryo(this._kryo);
+        this._output = new Output(128, -1);
+        this._input = new Input();
     }
 
 
     @Override
     public List<byte[]> call(WrappedArray<byte[]> wrappedParameters, WrappedArray<Long> wrappedParametersLong) {
-        _deserializedParams.clear();
-        _context.removeAllVariables();
-        _results.clear();
+        this._deserializedParams.clear();
+        this._context.removeAllVariables();
+        this._results.clear();
 
-        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
+        DataFrameUtils.deserializeWrappedParameters(
+            wrappedParameters,
+            this._deserializedParams,
+            this._kryo,
+            this._input
+        );
 
         // Long parameters correspond to pre-computed counts, when a materialization of the
         // actual sequence was avoided upfront.
         Object[] longParams = (Object[]) wrappedParametersLong.array();
         for (Object longParam : longParams) {
             Item count = ItemFactory.getInstance().createIntegerItem(((Long) longParam).intValue());
-            _longParams.add(count);
+            this._longParams.add(count);
         }
 
         DataFrameUtils.prepareDynamicContext(
-            _context,
-            _columnNamesByType.get("byte[]"),
-            _columnNamesByType.get("Long"),
-            _deserializedParams,
-            _longParams
+            this._context,
+            this._columnNamesByType.get("byte[]"),
+            this._columnNamesByType.get("Long"),
+            this._deserializedParams,
+            this._longParams
         );
 
         // apply expression in the dynamic context
-        _expression.open(_context);
-        while (_expression.hasNext()) {
-            _nextResult.clear();
-            Item nextItem = _expression.next();
-            _nextResult.add(nextItem);
-            _results.add(DataFrameUtils.serializeItemList(_nextResult, _kryo, _output));
+        this._expression.open(this._context);
+        while (this._expression.hasNext()) {
+            this._nextResult.clear();
+            Item nextItem = this._expression.next();
+            this._nextResult.add(nextItem);
+            this._results.add(DataFrameUtils.serializeItemList(this._nextResult, this._kryo, this._output));
         }
-        _expression.close();
+        this._expression.close();
 
-        return _results;
+        return this._results;
     }
 
     private void readObject(java.io.ObjectInputStream in)
@@ -118,10 +123,10 @@ public class ForClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
                 ClassNotFoundException {
         in.defaultReadObject();
 
-        _kryo = new Kryo();
-        _kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(_kryo);
-        _output = new Output(128, -1);
-        _input = new Input();
+        this._kryo = new Kryo();
+        this._kryo.setReferences(false);
+        DataFrameUtils.registerKryoClassesKryo(this._kryo);
+        this._output = new Output(128, -1);
+        this._input = new Input();
     }
 }

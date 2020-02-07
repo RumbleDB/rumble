@@ -28,12 +28,11 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
-
 import sparksoniq.jsoniq.ExecutionMode;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.ItemTypes;
 
@@ -186,22 +185,22 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     }
 
     public boolean isOpen() {
-        return _isOpen;
+        return this._isOpen;
     }
 
     public ExceptionMetadata getMetadata() {
-        return metadata;
+        return this.metadata;
     }
 
     public ExecutionMode getHighestExecutionMode() {
-        return _highestExecutionMode;
+        return this._highestExecutionMode;
     }
 
     public boolean isRDD() {
-        if (_highestExecutionMode == ExecutionMode.UNSET) {
+        if (this._highestExecutionMode == ExecutionMode.UNSET) {
             throw new OurBadException("isRDD field in iterator without execution mode being set.");
         }
-        return _highestExecutionMode.isRDD();
+        return this._highestExecutionMode.isRDD();
     }
 
     public JavaRDD<Item> getRDD(DynamicContext context) {
@@ -209,10 +208,10 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     }
 
     public boolean isDataFrame() {
-        if (_highestExecutionMode == ExecutionMode.UNSET) {
+        if (this._highestExecutionMode == ExecutionMode.UNSET) {
             throw new OurBadException("isDataFrame accessed in iterator without execution mode being set.");
         }
-        return _highestExecutionMode.isDataFrame();
+        return this._highestExecutionMode.isDataFrame();
     }
 
     public Dataset<Row> getDataFrame(DynamicContext context) {
@@ -242,7 +241,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<String, DynamicContext.VariableDependency> result =
             new TreeMap<>();
-        for (RuntimeIterator iterator : _children) {
+        for (RuntimeIterator iterator : this._children) {
             DynamicContext.mergeVariableDependencies(result, iterator.getVariableDependencies());
         }
         return result;

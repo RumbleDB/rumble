@@ -20,11 +20,10 @@
 
 package sparksoniq.spark.iterator.flowr.expression;
 
+import org.rumbledb.expressions.flowr.OrderByClauseExpr;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 
 import java.io.Serializable;
-
-import org.rumbledb.expressions.flowr.OrderByClauseExpr;
 
 public class OrderByClauseAnnotatedChildIterator implements Serializable {
 
@@ -48,19 +47,19 @@ public class OrderByClauseAnnotatedChildIterator implements Serializable {
     }
 
     public RuntimeIterator getIterator() {
-        return _iterator;
+        return this._iterator;
     }
 
     public boolean isAscending() {
-        return _ascending;
+        return this._ascending;
     }
 
     public String getUri() {
-        return _uri;
+        return this._uri;
     }
 
     public OrderByClauseExpr.EMPTY_ORDER getEmptyOrder() {
-        return _emptyOrder;
+        return this._emptyOrder;
     }
 
 }

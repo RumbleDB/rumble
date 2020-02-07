@@ -20,14 +20,13 @@
 
 package sparksoniq.jsoniq.runtime.iterator.operational.base;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.util.ArrayList;
-
-import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 
 public abstract class UnaryOperationBaseIterator extends LocalRuntimeIterator {
 

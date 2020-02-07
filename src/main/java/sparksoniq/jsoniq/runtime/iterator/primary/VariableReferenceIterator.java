@@ -24,12 +24,11 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.SequenceType;
 
@@ -53,13 +52,13 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(null, executionMode, iteratorMetadata);
-        _variableName = variableName;
-        _sequence = seq;
+        this._variableName = variableName;
+        this._sequence = seq;
     }
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        return context.getRDDVariableValue(_variableName, getMetadata());
+        return context.getRDDVariableValue(this._variableName, getMetadata());
     }
 
     @Override
@@ -69,35 +68,38 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
 
     @Override
     public Dataset<Row> getDataFrame(DynamicContext context) {
-        return context.getDataFrameVariableValue(_variableName, getMetadata());
+        return context.getDataFrameVariableValue(this._variableName, getMetadata());
     }
 
     @Override
     protected boolean hasNextLocal() {
-        return _hasNext;
+        return this._hasNext;
     }
 
     @Override
     public Item nextLocal() {
-        if (!_hasNext) {
+        if (!this._hasNext) {
             throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + _variableName,
+                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._variableName,
                     getMetadata()
             );
         }
-        Item item = _items.get(_currentIndex);
-        _currentIndex++;
-        if (_currentIndex == _items.size()) {
-            _hasNext = false;
+        Item item = this._items.get(this._currentIndex);
+        this._currentIndex++;
+        if (this._currentIndex == this._items.size()) {
+            this._hasNext = false;
         }
         return item;
     }
 
     @Override
     public void openLocal() {
-        _currentIndex = 0;
-        _items = _currentDynamicContextForLocalExecution.getLocalVariableValue(_variableName, getMetadata());
-        _hasNext = _items.size() != 0;
+        this._currentIndex = 0;
+        this._items = this._currentDynamicContextForLocalExecution.getLocalVariableValue(
+            this._variableName,
+            getMetadata()
+        );
+        this._hasNext = this._items.size() != 0;
     }
 
     @Override
@@ -107,21 +109,21 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
 
     @Override
     public void resetLocal(DynamicContext context) {
-        _currentIndex = 0;
-        _items = null;
+        this._currentIndex = 0;
+        this._items = null;
     }
 
     public SequenceType getSequence() {
-        return _sequence;
+        return this._sequence;
     }
 
     public String getVariableName() {
-        return _variableName;
+        return this._variableName;
     }
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<String, DynamicContext.VariableDependency> result = new TreeMap<>();
-        result.put(_variableName, DynamicContext.VariableDependency.FULL);
+        result.put(this._variableName, DynamicContext.VariableDependency.FULL);
         return result;
     }
 }

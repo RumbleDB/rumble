@@ -20,11 +20,10 @@
 
 package org.rumbledb.config;
 
+import org.rumbledb.exceptions.CliException;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.HashMap;
-
-import org.rumbledb.exceptions.CliException;
 
 public class SparksoniqRuntimeConfiguration {
 
@@ -34,10 +33,10 @@ public class SparksoniqRuntimeConfiguration {
     private HashMap<String, String> _arguments;
 
     public SparksoniqRuntimeConfiguration(String[] args) {
-        _arguments = new HashMap<>();
+        this._arguments = new HashMap<>();
         for (int i = 0; i < args.length; i += 2)
             if (args[i].startsWith(ARGUMENT_PREFIX))
-                _arguments.put(args[i].trim().replace(ARGUMENT_PREFIX, ""), args[i + 1]);
+                this._arguments.put(args[i].trim().replace(ARGUMENT_PREFIX, ""), args[i + 1]);
             else
                 throw new CliException(ARGUMENT_FORMAT_ERROR_MESSAGE);
     }
@@ -93,14 +92,14 @@ public class SparksoniqRuntimeConfiguration {
 
     public boolean isShell() {
         if (this._arguments.containsKey("shell"))
-            return _arguments.get("shell").equals("yes");
+            return this._arguments.get("shell").equals("yes");
         else
             return false;
     }
 
     public boolean isPrintIteratorTree() {
         if (this._arguments.containsKey("print-iterator-tree"))
-            return _arguments.get("print-iterator-tree").equals("yes");
+            return this._arguments.get("print-iterator-tree").equals("yes");
         else
             return false;
     }
@@ -118,19 +117,19 @@ public class SparksoniqRuntimeConfiguration {
             + "\n"
             +
             "Item Display Limit: "
-            + (_arguments.getOrDefault("result-size", "-"))
+            + (this._arguments.getOrDefault("result-size", "-"))
             + "\n"
             +
             "Output Path: "
-            + (_arguments.getOrDefault("output-path", "-"))
+            + (this._arguments.getOrDefault("output-path", "-"))
             + "\n"
             +
             "Log Path: "
-            + (_arguments.getOrDefault("log-path", "-"))
+            + (this._arguments.getOrDefault("log-path", "-"))
             + "\n"
             +
             "Query Path : "
-            + (_arguments.getOrDefault("query-path", "-"))
+            + (this._arguments.getOrDefault("query-path", "-"))
             + "\n";
         return result;
     }

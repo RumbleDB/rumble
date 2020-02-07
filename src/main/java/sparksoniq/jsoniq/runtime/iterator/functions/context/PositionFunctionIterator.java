@@ -22,11 +22,10 @@ package sparksoniq.jsoniq.runtime.iterator.functions.context;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.AbsentPartOfDynamicContextException;
-
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
@@ -56,7 +55,7 @@ public class PositionFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            Item result = _currentDynamicContextForLocalExecution.getPosition();
+            Item result = this._currentDynamicContextForLocalExecution.getPosition();
             if (result == null) {
                 throw new AbsentPartOfDynamicContextException("Context undefined (position) ", getMetadata());
             }

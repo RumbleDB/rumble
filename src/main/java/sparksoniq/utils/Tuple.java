@@ -31,10 +31,10 @@ public class Tuple<T, V> {
     }
 
     public T getFirst() {
-        return first;
+        return this.first;
     }
 
     public V getSecond() {
-        return second;
+        return this.second;
     }
 }

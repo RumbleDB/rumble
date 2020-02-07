@@ -23,9 +23,8 @@ package sparksoniq.jsoniq.compiler;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.exceptions.DuplicateParamNameException;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.JsoniqVersionException;
 import org.rumbledb.exceptions.ModuleDeclarationException;
 import org.rumbledb.exceptions.OurBadException;
@@ -90,7 +89,7 @@ import org.rumbledb.expressions.primary.StringLiteral;
 import org.rumbledb.expressions.primary.VariableReference;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
-
+import org.rumbledb.parser.JsoniqParser;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemTypes;
@@ -120,7 +119,7 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
 
     // region module
     public MainModule getMainModule() {
-        return mainModule;
+        return this.mainModule;
     }
 
     @Override

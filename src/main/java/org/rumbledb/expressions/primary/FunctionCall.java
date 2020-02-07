@@ -20,6 +20,12 @@
 
 package org.rumbledb.expressions.primary;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.UnknownFunctionCallException;
+import org.rumbledb.exceptions.UnsupportedFeatureException;
+import org.rumbledb.expressions.Expression;
+import org.rumbledb.expressions.Node;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.BuiltinFunction;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.BuiltinFunction.BuiltinFunctionExecutionMode;
@@ -31,13 +37,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.UnknownFunctionCallException;
-import org.rumbledb.exceptions.UnsupportedFeatureException;
-import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.Node;
 
 public class FunctionCall extends PrimaryExpression {
 
@@ -53,11 +52,11 @@ public class FunctionCall extends PrimaryExpression {
     }
 
     public List<Expression> getArguments() {
-        return _arguments;
+        return this._arguments;
     }
 
     public String getFunctionName() {
-        return _functionName;
+        return this._functionName;
     }
 
     @Override
@@ -74,7 +73,7 @@ public class FunctionCall extends PrimaryExpression {
     public void initFunctionCallHighestExecutionMode(boolean ignoreMissingFunctionError) {
         FunctionIdentifier identifier = new FunctionIdentifier(this._functionName, this._arguments.size());
         if (Functions.checkBuiltInFunctionExists(identifier)) {
-            if (_isPartialApplication) {
+            if (this._isPartialApplication) {
                 throw new UnsupportedFeatureException(
                         "Partial application on built-in functions are not supported.",
                         this.getMetadata()
@@ -86,7 +85,7 @@ public class FunctionCall extends PrimaryExpression {
         }
 
         if (Functions.checkUserDefinedFunctionExecutionModeExists(identifier)) {
-            if (_isPartialApplication) {
+            if (this._isPartialApplication) {
                 this._highestExecutionMode = ExecutionMode.LOCAL;
                 return;
             }
@@ -153,7 +152,7 @@ public class FunctionCall extends PrimaryExpression {
             result += "(argument (exprSingle "
                 + arg.serializationString(false)
                 +
-                (_arguments.indexOf(arg) < _arguments.size() - 1 ? ")) , " : ")) ");
+                (this._arguments.indexOf(arg) < this._arguments.size() - 1 ? ")) , " : ")) ");
         result += "))";
         result += "))";
         return result;

@@ -1,13 +1,12 @@
 package sparksoniq.jsoniq.runtime.iterator.control;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.flowr.FlworVarSequenceType;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.Collections;
@@ -45,15 +44,15 @@ public class TypeSwitchRuntimeIterator extends LocalRuntimeIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        initializeIterator(testField, cases, defaultCase);
+        initializeIterator(this.testField, this.cases, this.defaultCase);
     }
 
     @Override
     public Item next() {
         if (this._hasNext) {
-            matchingIterator.open(_currentDynamicContextForLocalExecution);
-            Item nextItem = matchingIterator.next();
-            matchingIterator.close();
+            this.matchingIterator.open(this._currentDynamicContextForLocalExecution);
+            Item nextItem = this.matchingIterator.next();
+            this.matchingIterator.close();
             this._hasNext = false;
             return nextItem;
         }
@@ -67,43 +66,43 @@ public class TypeSwitchRuntimeIterator extends LocalRuntimeIterator {
     public void reset(DynamicContext context) {
         super.reset(context);
         this.matchingIterator = null;
-        initializeIterator(testField, cases, defaultCase);
+        initializeIterator(this.testField, this.cases, this.defaultCase);
     }
 
     private void initializeIterator(RuntimeIterator test, List<TypeSwitchCase> cases, TypeSwitchCase defaultCase) {
 
-        testValue = test.materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
+        this.testValue = test.materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
 
         for (TypeSwitchCase typeSwitchCase : cases) {
             if (testTypeMatch(typeSwitchCase))
                 break;
         }
 
-        if (matchingIterator == null) {
+        if (this.matchingIterator == null) {
             if (defaultCase.getVariableName() != null) {
-                _currentDynamicContextForLocalExecution.addVariableValue(
+                this._currentDynamicContextForLocalExecution.addVariableValue(
                     defaultCase.getVariableName(),
-                    Collections.singletonList(testValue)
+                    Collections.singletonList(this.testValue)
                 );
             }
-            matchingIterator = defaultCase.getReturnIterator();
+            this.matchingIterator = defaultCase.getReturnIterator();
         }
 
-        matchingIterator.open(_currentDynamicContextForLocalExecution);
-        this._hasNext = matchingIterator.hasNext();
-        matchingIterator.close();
+        this.matchingIterator.open(this._currentDynamicContextForLocalExecution);
+        this._hasNext = this.matchingIterator.hasNext();
+        this.matchingIterator.close();
     }
 
     private boolean testTypeMatch(TypeSwitchCase typeSwitchCase) {
         for (FlworVarSequenceType sequenceType : typeSwitchCase.getSequenceTypeUnion()) {
-            if (testValue != null && testValue.isTypeOf(sequenceType.getSequence().getItemType())) {
+            if (this.testValue != null && this.testValue.isTypeOf(sequenceType.getSequence().getItemType())) {
                 if (typeSwitchCase.getVariableName() != null) {
-                    _currentDynamicContextForLocalExecution.addVariableValue(
+                    this._currentDynamicContextForLocalExecution.addVariableValue(
                         typeSwitchCase.getVariableName(),
-                        Collections.singletonList(testValue)
+                        Collections.singletonList(this.testValue)
                     );
                 }
-                matchingIterator = typeSwitchCase.getReturnIterator();
+                this.matchingIterator = typeSwitchCase.getReturnIterator();
                 return true;
             }
         }

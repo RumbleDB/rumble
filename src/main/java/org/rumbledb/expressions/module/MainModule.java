@@ -21,18 +21,14 @@
 package org.rumbledb.expressions.module;
 
 
-
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
-
-
-
-import java.util.ArrayList;
-import java.util.List;
-
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainModule extends Expression {
 
@@ -46,21 +42,21 @@ public class MainModule extends Expression {
     }
 
     public Prolog get_prolog() {
-        return _prolog;
+        return this._prolog;
     }
 
     public CommaExpression get_commaExpression() {
-        return _commaExpression;
+        return this._commaExpression;
     }
 
     @Override
     public List<Node> getDescendants(boolean depthSearch) {
         List<Node> result = new ArrayList<>();
-        if (_prolog != null) {
-            result.add(_prolog);
+        if (this._prolog != null) {
+            result.add(this._prolog);
         }
-        if (_commaExpression != null) {
-            result.add(_commaExpression);
+        if (this._commaExpression != null) {
+            result.add(this._commaExpression);
         }
         return getDescendantsFromChildren(result, depthSearch);
     }
@@ -73,8 +69,8 @@ public class MainModule extends Expression {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(mainModule ";
-        result += " (prolog " + _prolog.serializationString(false) + "), ";
-        result += " (expr " + _commaExpression.serializationString(false) + ") ";
+        result += " (prolog " + this._prolog.serializationString(false) + "), ";
+        result += " (expr " + this._commaExpression.serializationString(false) + ") ";
         result += ")";
         return result;
     }

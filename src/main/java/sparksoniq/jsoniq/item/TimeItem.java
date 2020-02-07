@@ -12,7 +12,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
@@ -36,14 +35,14 @@ public class TimeItem extends AtomicItem {
 
     TimeItem(String dateTimeString) {
         this._value = DateTimeItem.parseDateTime(dateTimeString, AtomicTypes.TimeItem);
-        if (!dateTimeString.endsWith("Z") && _value.getZone() == DateTimeZone.getDefault()) {
+        if (!dateTimeString.endsWith("Z") && this._value.getZone() == DateTimeZone.getDefault()) {
             this._hasTimeZone = false;
-            this._value = _value.withZoneRetainFields(DateTimeZone.UTC);
+            this._value = this._value.withZoneRetainFields(DateTimeZone.UTC);
         }
     }
 
     public DateTime getValue() {
-        return _value;
+        return this._value;
     }
 
     @Override
@@ -68,7 +67,7 @@ public class TimeItem extends AtomicItem {
 
     @Override
     public boolean hasTimeZone() {
-        return _hasTimeZone;
+        return this._hasTimeZone;
     }
 
     @Override
@@ -169,7 +168,7 @@ public class TimeItem extends AtomicItem {
         value = value.substring(0, value.length() - zoneString.length());
         value = this.getValue().getMillisOfSecond() == 0 ? value.substring(0, value.length() - 4) : value;
         int dateTimeSeparatorIndex = value.indexOf("T");
-        return value.substring(dateTimeSeparatorIndex + 1) + (_hasTimeZone ? zoneString : "");
+        return value.substring(dateTimeSeparatorIndex + 1) + (this._hasTimeZone ? zoneString : "");
     }
 
     @Override

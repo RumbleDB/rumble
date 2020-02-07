@@ -21,12 +21,11 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.arrays;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.Collections;
@@ -51,9 +50,9 @@ public class ArrayFlattenFunctionIterator extends LocalFunctionCallIterator {
 
     @Override
     public Item next() {
-        if (_hasNext) {
-            Item result = _nextResults.remove(); // save the result to be returned
-            if (_nextResults.isEmpty()) {
+        if (this._hasNext) {
+            Item result = this._nextResults.remove(); // save the result to be returned
+            if (this._nextResults.isEmpty()) {
                 // if there are no more results left in the queue, trigger calculation for the next result
                 setNextResult();
             }
@@ -69,24 +68,24 @@ public class ArrayFlattenFunctionIterator extends LocalFunctionCallIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        _iterator = this._children.get(0);
-        _iterator.open(context);
-        _nextResults = new LinkedList<>();
+        this._iterator = this._children.get(0);
+        this._iterator.open(context);
+        this._nextResults = new LinkedList<>();
 
         setNextResult();
     }
 
     public void setNextResult() {
-        while (_iterator.hasNext()) {
-            Item item = _iterator.next();
+        while (this._iterator.hasNext()) {
+            Item item = this._iterator.next();
             flatten(Collections.singletonList(item));
-            if (!(_nextResults.isEmpty())) {
+            if (!(this._nextResults.isEmpty())) {
                 break;
             }
         }
-        if (_nextResults.isEmpty()) {
+        if (this._nextResults.isEmpty()) {
             this._hasNext = false;
-            _iterator.close();
+            this._iterator.close();
         } else {
             this._hasNext = true;
         }
@@ -97,7 +96,7 @@ public class ArrayFlattenFunctionIterator extends LocalFunctionCallIterator {
             if (item.isArray()) {
                 flatten(item.getItems());
             } else {
-                _nextResults.add(item);
+                this._nextResults.add(item);
             }
         }
     }

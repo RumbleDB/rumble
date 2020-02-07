@@ -20,17 +20,14 @@
 
 package org.rumbledb.expressions;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
-
-import org.rumbledb.exceptions.ExceptionMetadata;
-
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
-
-import org.rumbledb.exceptions.OurBadException;
 
 /**
  * This is the top-level class for nodes in the intermediate representation of a
@@ -53,7 +50,7 @@ public abstract class ExpressionOrClause {
      * initHighestExecutionMode is meant to be overridden by expression subclasses which support higher execution modes
      */
     public void initHighestExecutionMode() {
-        _highestExecutionMode = ExecutionMode.LOCAL;
+        this._highestExecutionMode = ExecutionMode.LOCAL;
     }
 
     /**
@@ -66,10 +63,10 @@ public abstract class ExpressionOrClause {
     }
 
     public ExecutionMode getHighestExecutionMode(boolean ignoreUnsetError) {
-        if (!ignoreUnsetError && _highestExecutionMode == ExecutionMode.UNSET) {
+        if (!ignoreUnsetError && this._highestExecutionMode == ExecutionMode.UNSET) {
             throw new OurBadException("An execution mode is accessed without being set.");
         }
-        return _highestExecutionMode;
+        return this._highestExecutionMode;
     }
 
     // Visitor pattern implementation
@@ -94,7 +91,7 @@ public abstract class ExpressionOrClause {
     }
 
     public ExceptionMetadata getMetadata() {
-        return metadata;
+        return this.metadata;
     }
 
     protected List<ExpressionOrClause> getDescendantsFromChildren(

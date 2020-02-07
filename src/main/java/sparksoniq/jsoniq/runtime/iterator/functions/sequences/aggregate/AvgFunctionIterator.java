@@ -21,15 +21,14 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.math.BigDecimal;
@@ -55,16 +54,16 @@ public class AvgFunctionIterator extends LocalFunctionCallIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        _iterator = this._children.get(0);
-        _iterator.open(_currentDynamicContextForLocalExecution);
-        this._hasNext = _iterator.hasNext();
-        _iterator.close();
+        this._iterator = this._children.get(0);
+        this._iterator.open(this._currentDynamicContextForLocalExecution);
+        this._hasNext = this._iterator.hasNext();
+        this._iterator.close();
     }
 
     @Override
     public Item next() {
         if (this._hasNext) {
-            List<Item> results = _iterator.materialize(_currentDynamicContextForLocalExecution);
+            List<Item> results = this._iterator.materialize(this._currentDynamicContextForLocalExecution);
             this._hasNext = false;
             results.forEach(r -> {
                 if (!r.isNumeric())
@@ -94,8 +93,8 @@ public class AvgFunctionIterator extends LocalFunctionCallIterator {
     }
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        if (_children.get(0) instanceof VariableReferenceIterator) {
-            VariableReferenceIterator expr = (VariableReferenceIterator) _children.get(0);
+        if (this._children.get(0) instanceof VariableReferenceIterator) {
+            VariableReferenceIterator expr = (VariableReferenceIterator) this._children.get(0);
             Map<String, DynamicContext.VariableDependency> result =
                 new TreeMap<String, DynamicContext.VariableDependency>();
             result.put(expr.getVariableName(), DynamicContext.VariableDependency.AVG);

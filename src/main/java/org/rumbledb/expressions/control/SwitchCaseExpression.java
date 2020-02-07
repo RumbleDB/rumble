@@ -21,17 +21,13 @@
 package org.rumbledb.expressions.control;
 
 
-
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
-
-
-
-import java.util.ArrayList;
-import java.util.List;
-
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class SwitchCaseExpression extends Expression {
 
@@ -51,17 +47,17 @@ public class SwitchCaseExpression extends Expression {
     @Override
     public List<Node> getDescendants(boolean depthSearch) {
         List<Node> result = new ArrayList<>();
-        result.add(condition);
-        result.add(returnExpression);
+        result.add(this.condition);
+        result.add(this.returnExpression);
         return getDescendantsFromChildren(result, depthSearch);
     }
 
     public Expression getReturnExpression() {
-        return returnExpression;
+        return this.returnExpression;
     }
 
     public Expression getCondition() {
-        return condition;
+        return this.condition;
     }
 
     @Override

@@ -22,12 +22,11 @@ package sparksoniq.jsoniq.runtime.iterator.primary;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 
 public class StringRuntimeIterator extends AtomicRuntimeIterator {
 
@@ -38,14 +37,14 @@ public class StringRuntimeIterator extends AtomicRuntimeIterator {
     public StringRuntimeIterator(String value, ExecutionMode executionMode, ExceptionMetadata iteratorMetadata) {
         super(null, executionMode, iteratorMetadata);
         this._item = value;
-        _item = StringEscapeUtils.unescapeJson(_item);
+        this._item = StringEscapeUtils.unescapeJson(this._item);
     }
 
     @Override
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            return ItemFactory.getInstance().createStringItem(_item);
+            return ItemFactory.getInstance().createStringItem(this._item);
         }
 
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item, getMetadata());

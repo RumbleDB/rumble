@@ -28,7 +28,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
@@ -52,12 +51,12 @@ public class DecimalItem extends AtomicItem {
     }
 
     public BigDecimal getValue() {
-        return _value;
+        return this._value;
     }
 
     @Override
     public BigDecimal getDecimalValue() {
-        return _value;
+        return this._value;
     }
 
     @Override
@@ -119,7 +118,7 @@ public class DecimalItem extends AtomicItem {
 
     @Override
     public String serialize() {
-        return String.valueOf(_value.stripTrailingZeros().toPlainString());
+        return String.valueOf(this._value.stripTrailingZeros().toPlainString());
     }
 
     @Override

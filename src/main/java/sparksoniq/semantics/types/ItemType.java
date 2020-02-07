@@ -38,7 +38,7 @@ public class ItemType implements Serializable {
     }
 
     public ItemTypes getType() {
-        return _type;
+        return this._type;
     }
 
     public boolean isSubtypeOf(ItemType superType) {
@@ -46,10 +46,10 @@ public class ItemType implements Serializable {
             return true;
         if (superType.getType() == ItemTypes.JSONItem) {
             if (
-                _type == ItemTypes.ObjectItem
-                    || _type == ItemTypes.ArrayItem
-                    || _type == ItemTypes.JSONItem
-                    || _type == ItemTypes.NullItem
+                this._type == ItemTypes.ObjectItem
+                    || this._type == ItemTypes.ArrayItem
+                    || this._type == ItemTypes.JSONItem
+                    || this._type == ItemTypes.NullItem
             )
                 return true;
             return false;
@@ -57,11 +57,11 @@ public class ItemType implements Serializable {
 
         if (superType.getType() == ItemTypes.AtomicItem) {
             if (
-                _type == ItemTypes.StringItem
-                    || _type == ItemTypes.IntegerItem
-                    || _type == ItemTypes.DecimalItem
-                    || _type == ItemTypes.DoubleItem
-                    || _type == ItemTypes.BooleanItem
+                this._type == ItemTypes.StringItem
+                    || this._type == ItemTypes.IntegerItem
+                    || this._type == ItemTypes.DecimalItem
+                    || this._type == ItemTypes.DoubleItem
+                    || this._type == ItemTypes.BooleanItem
             )
                 return true;
             return false;

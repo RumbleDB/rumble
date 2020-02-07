@@ -20,14 +20,13 @@
 
 package org.rumbledb.expressions.flowr;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.primary.VariableReference;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.Collections;
 import java.util.List;
-
-import org.rumbledb.expressions.Node;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.primary.VariableReference;
 
 
 public class CountClause extends FlworClause {
@@ -40,7 +39,7 @@ public class CountClause extends FlworClause {
 
     @Override
     public List<Node> getDescendants(boolean depthSearch) {
-        return getDescendantsFromChildren(Collections.singletonList(countClauseVar), depthSearch);
+        return getDescendantsFromChildren(Collections.singletonList(this.countClauseVar), depthSearch);
     }
 
     @Override
@@ -50,11 +49,11 @@ public class CountClause extends FlworClause {
 
     @Override
     public String serializationString(boolean prefix) {
-        return "(countClause count " + countClauseVar.serializationString(true) + ")";
+        return "(countClause count " + this.countClauseVar.serializationString(true) + ")";
     }
 
     public VariableReference getCountVariable() {
-        return countClauseVar;
+        return this.countClauseVar;
     }
 
 }

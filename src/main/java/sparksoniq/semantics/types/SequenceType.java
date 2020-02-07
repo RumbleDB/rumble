@@ -52,15 +52,15 @@ public class SequenceType implements Serializable {
     }
 
     public boolean isEmptySequence() {
-        return _isEmptySequence;
+        return this._isEmptySequence;
     }
 
     public ItemType getItemType() {
-        return _itemType;
+        return this._itemType;
     }
 
     public Arity getArity() {
-        return _arity;
+        return this._arity;
     }
 
     public boolean isSubtypeOf(SequenceType superType) {

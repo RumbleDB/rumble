@@ -20,13 +20,12 @@
 
 package org.rumbledb.expressions.flowr;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.Node;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.rumbledb.expressions.Node;
-import org.rumbledb.exceptions.ExceptionMetadata;
 
 /**
  * GRAMMAR:flowrExpression
@@ -44,11 +43,11 @@ public class FlworClause extends Node {
     }
 
     public FLWOR_CLAUSES getClauseType() {
-        return clauseType;
+        return this.clauseType;
     }
 
     public FlworClause getPreviousClause() {
-        return previousClause;
+        return this.previousClause;
     }
 
     public void setPreviousClause(FlworClause previousClause) {
@@ -60,7 +59,7 @@ public class FlworClause extends Node {
      */
     @Override
     public void initHighestExecutionMode() {
-        this._highestExecutionMode = previousClause.getHighestExecutionMode();
+        this._highestExecutionMode = this.previousClause.getHighestExecutionMode();
     }
 
     @Override

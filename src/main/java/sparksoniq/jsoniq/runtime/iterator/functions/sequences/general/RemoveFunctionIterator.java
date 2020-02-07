@@ -21,15 +21,14 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.sequences.general;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.IntegerItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
@@ -55,7 +54,7 @@ public class RemoveFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public Item next() {
         if (this.hasNext()) {
-            Item result = _nextResult; // save the result to be returned
+            Item result = this._nextResult; // save the result to be returned
             setNextResult(); // calculate and store the next result
             return result;
         }
@@ -66,7 +65,7 @@ public class RemoveFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        _currentPosition = 1;
+        this._currentPosition = 1;
 
         RuntimeIterator positionIterator = this._children.get(1);
         positionIterator.open(context);
@@ -93,34 +92,34 @@ public class RemoveFunctionIterator extends LocalFunctionCallIterator {
                     getMetadata()
             );
         }
-        _removePosition = ((IntegerItem) positionItem).getIntegerValue();
+        this._removePosition = ((IntegerItem) positionItem).getIntegerValue();
         positionIterator.close();
 
-        _sequenceIterator = this._children.get(0);
-        _sequenceIterator.open(context);
+        this._sequenceIterator = this._children.get(0);
+        this._sequenceIterator.open(context);
         setNextResult();
     }
 
     public void setNextResult() {
-        _nextResult = null;
+        this._nextResult = null;
 
-        if (_sequenceIterator.hasNext()) {
-            if (_currentPosition == _removePosition) {
-                _sequenceIterator.next(); // skip item to be removed
-                _currentPosition++;
-                if (_sequenceIterator.hasNext()) {
-                    _nextResult = _sequenceIterator.next();
-                    _currentPosition++;
+        if (this._sequenceIterator.hasNext()) {
+            if (this._currentPosition == this._removePosition) {
+                this._sequenceIterator.next(); // skip item to be removed
+                this._currentPosition++;
+                if (this._sequenceIterator.hasNext()) {
+                    this._nextResult = this._sequenceIterator.next();
+                    this._currentPosition++;
                 }
             } else {
-                _nextResult = _sequenceIterator.next();
-                _currentPosition++;
+                this._nextResult = this._sequenceIterator.next();
+                this._currentPosition++;
             }
         }
 
-        if (_nextResult == null) {
+        if (this._nextResult == null) {
             this._hasNext = false;
-            _sequenceIterator.close();
+            this._sequenceIterator.close();
         } else {
             this._hasNext = true;
         }

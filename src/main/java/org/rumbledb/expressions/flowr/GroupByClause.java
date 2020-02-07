@@ -20,14 +20,13 @@
 
 package org.rumbledb.expressions.flowr;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.SemanticException;
+import org.rumbledb.expressions.Node;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.SemanticException;
-import org.rumbledb.expressions.Node;
 
 public class GroupByClause extends FlworClause {
 
@@ -41,13 +40,13 @@ public class GroupByClause extends FlworClause {
     }
 
     public List<GroupByClauseVar> getGroupVariables() {
-        return groupVars;
+        return this.groupVars;
     }
 
     @Override
     public List<Node> getDescendants(boolean depthSearch) {
         List<Node> result = new ArrayList<>();
-        groupVars.forEach(e -> {
+        this.groupVars.forEach(e -> {
             if (e != null)
                 result.add(e);
         });
@@ -62,9 +61,9 @@ public class GroupByClause extends FlworClause {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(groupByClause group by ";
-        for (GroupByClauseVar var : groupVars)
+        for (GroupByClauseVar var : this.groupVars)
             result += var.serializationString(true)
-                + (groupVars.indexOf(var) < groupVars.size() - 1 ? " , " : "");
+                + (this.groupVars.indexOf(var) < this.groupVars.size() - 1 ? " , " : "");
         result += ")";
         return result;
     }

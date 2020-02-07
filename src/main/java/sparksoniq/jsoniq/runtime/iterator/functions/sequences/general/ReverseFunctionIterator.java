@@ -21,12 +21,11 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.sequences.general;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
@@ -56,12 +55,12 @@ public class ReverseFunctionIterator extends LocalFunctionCallIterator {
     }
 
     public Item getResult() {
-        if (results == null || results.size() == 0) {
+        if (this.results == null || this.results.size() == 0) {
             throw new IteratorFlowException("getResult called on an empty list of results", getMetadata());
         }
-        if (_currentIndex == results.size() - 1)
-            _hasNext = false;
-        return results.get(_currentIndex++);
+        if (this._currentIndex == this.results.size() - 1)
+            this._hasNext = false;
+        return this.results.get(this._currentIndex++);
     }
 
     @Override
@@ -72,12 +71,12 @@ public class ReverseFunctionIterator extends LocalFunctionCallIterator {
 
         RuntimeIterator sequenceIterator = this._children.get(0);
 
-        List<Item> items = sequenceIterator.materialize(_currentDynamicContextForLocalExecution);
+        List<Item> items = sequenceIterator.materialize(this._currentDynamicContextForLocalExecution);
 
         for (int i = items.size() - 1; i >= 0; i--) {
-            results.add(items.get(i));
+            this.results.add(items.get(i));
         }
 
-        this._hasNext = results.size() != 0;
+        this._hasNext = this.results.size() != 0;
     }
 }

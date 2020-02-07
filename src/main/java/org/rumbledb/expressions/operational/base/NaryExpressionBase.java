@@ -21,12 +21,12 @@
 package org.rumbledb.expressions.operational.base;
 
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class NaryExpressionBase extends OperationalExpressionBase {
 
@@ -62,20 +62,20 @@ public class NaryExpressionBase extends OperationalExpressionBase {
     }
 
     public List<Expression> getRightExpressions() {
-        return _rightExpressions;
+        return this._rightExpressions;
     }
 
     public List<Operator> getOperators() {
-        return _multipleOperators;
+        return this._multipleOperators;
     }
 
     public Operator getSingleOperator() {
-        return _singleOperator;
+        return this._singleOperator;
     }
 
     @Override
     public boolean isActive() {
-        return _isActive;
+        return this._isActive;
     }
 
     @Override
@@ -83,7 +83,7 @@ public class NaryExpressionBase extends OperationalExpressionBase {
         List<Node> result = new ArrayList<>();
         result.add(this._mainExpression);
         if (this._rightExpressions != null)
-            _rightExpressions.forEach(e -> {
+            this._rightExpressions.forEach(e -> {
                 if (e != null)
                     result.add(e);
             });

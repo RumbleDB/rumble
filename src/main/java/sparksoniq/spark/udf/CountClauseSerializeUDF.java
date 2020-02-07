@@ -42,20 +42,20 @@ public class CountClauseSerializeUDF implements UDF1<Long, byte[]> {
     private transient Output _output;
 
     public CountClauseSerializeUDF() {
-        _nextResult = new ArrayList<>();
+        this._nextResult = new ArrayList<>();
 
-        _kryo = new Kryo();
-        _kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(_kryo);
-        _output = new Output(128, -1);
+        this._kryo = new Kryo();
+        this._kryo.setReferences(false);
+        DataFrameUtils.registerKryoClassesKryo(this._kryo);
+        this._output = new Output(128, -1);
     }
 
     @Override
     public byte[] call(Long countIndex) {
-        _nextResult.clear();
-        _nextResult.add(new IntegerItem(countIndex.intValue()));
+        this._nextResult.clear();
+        this._nextResult.add(new IntegerItem(countIndex.intValue()));
 
-        return DataFrameUtils.serializeItemList(_nextResult, _kryo, _output);
+        return DataFrameUtils.serializeItemList(this._nextResult, this._kryo, this._output);
     }
 
     private void readObject(java.io.ObjectInputStream in)
@@ -63,9 +63,9 @@ public class CountClauseSerializeUDF implements UDF1<Long, byte[]> {
                 ClassNotFoundException {
         in.defaultReadObject();
 
-        _kryo = new Kryo();
-        _kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(_kryo);
-        _output = new Output(128, -1);
+        this._kryo = new Kryo();
+        this._kryo.setReferences(false);
+        DataFrameUtils.registerKryoClassesKryo(this._kryo);
+        this._output = new Output(128, -1);
     }
 }

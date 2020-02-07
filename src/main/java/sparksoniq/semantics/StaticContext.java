@@ -20,14 +20,13 @@
 
 package sparksoniq.semantics;
 
-import sparksoniq.jsoniq.ExecutionMode;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.SemanticException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.types.SequenceType;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import org.rumbledb.exceptions.SemanticException;
 
 public class StaticContext {
 
@@ -50,15 +49,15 @@ public class StaticContext {
         }
 
         public String getName() {
-            return name;
+            return this.name;
         }
 
         public SequenceType getSequenceType() {
-            return sequenceType;
+            return this.sequenceType;
         }
 
         public ExceptionMetadata getMetadata() {
-            return metadata;
+            return this.metadata;
         }
     }
 
@@ -76,15 +75,15 @@ public class StaticContext {
     }
 
     public StaticContext getParent() {
-        return _parent;
+        return this._parent;
     }
 
     public boolean isInScope(String varName) {
         boolean found = false;
-        if (_inScopeVariables.containsKey(varName))
+        if (this._inScopeVariables.containsKey(varName))
             return true;
         else {
-            StaticContext ancestor = _parent;
+            StaticContext ancestor = this._parent;
             while (ancestor != null) {
                 found = found || ancestor.getInScopeVariables().containsKey(varName);
                 ancestor = ancestor._parent;
@@ -94,10 +93,10 @@ public class StaticContext {
     }
 
     private InScopeVariable getInScopeVariable(String varName) {
-        if (_inScopeVariables.containsKey(varName))
-            return _inScopeVariables.get(varName);
+        if (this._inScopeVariables.containsKey(varName))
+            return this._inScopeVariables.get(varName);
         else {
-            StaticContext ancestor = _parent;
+            StaticContext ancestor = this._parent;
             while (ancestor != null) {
                 if (ancestor._inScopeVariables.containsKey(varName)) {
                     return ancestor._inScopeVariables.get(varName);
@@ -130,6 +129,6 @@ public class StaticContext {
     }
 
     protected Map<String, InScopeVariable> getInScopeVariables() {
-        return _inScopeVariables;
+        return this._inScopeVariables;
     }
 }

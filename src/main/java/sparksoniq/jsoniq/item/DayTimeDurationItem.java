@@ -9,7 +9,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
@@ -27,7 +26,7 @@ public class DayTimeDurationItem extends DurationItem {
     public DayTimeDurationItem(Period value) {
         super();
         this._value = value.normalizedStandard(PeriodType.dayTime());
-        isNegative = this._value.toString().contains("-");
+        this.isNegative = this._value.toString().contains("-");
     }
 
     @Override

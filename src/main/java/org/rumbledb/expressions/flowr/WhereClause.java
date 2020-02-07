@@ -21,16 +21,12 @@
 package org.rumbledb.expressions.flowr;
 
 
-
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
-
-
-
-import java.util.List;
-
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
+import java.util.List;
 
 public class WhereClause extends FlworClause {
 
@@ -42,7 +38,7 @@ public class WhereClause extends FlworClause {
     }
 
     public Expression getWhereExpression() {
-        return whereExpression;
+        return this.whereExpression;
     }
 
     @Override
@@ -53,15 +49,15 @@ public class WhereClause extends FlworClause {
     @Override
     public List<Node> getDescendants(boolean depthSearch) {
         List<Node> result = super.getDescendants(depthSearch);
-        if (whereExpression != null)
-            result.add(whereExpression);
+        if (this.whereExpression != null)
+            result.add(this.whereExpression);
         return getDescendantsFromChildren(result, depthSearch);
     }
 
     @Override
     public String serializationString(boolean prefix) {
         String result = "(whereClause where ";
-        result += whereExpression.serializationString(true);
+        result += this.whereExpression.serializationString(true);
         result += "))";
         return result;
     }

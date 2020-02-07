@@ -20,10 +20,10 @@ public class SingleType implements Serializable {
     }
 
     public AtomicTypes getType() {
-        return _type;
+        return this._type;
     }
 
     public boolean getZeroOrOne() {
-        return _zeroOrOne;
+        return this._zeroOrOne;
     }
 }

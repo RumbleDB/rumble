@@ -3,8 +3,6 @@ package sparksoniq.semantics.visitor;
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.primary.IntegerLiteral;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;

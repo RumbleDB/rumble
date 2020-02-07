@@ -28,12 +28,11 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
-import org.rumbledb.items.parsing.RowToItemMapper;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SparksoniqRuntimeException;
-
+import org.rumbledb.items.parsing.RowToItemMapper;
 import sparksoniq.jsoniq.item.ItemFactory;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -97,21 +96,21 @@ public class DynamicContext implements Serializable, KryoSerializable {
     }
 
     public Set<String> getLocalVariableNames() {
-        return _localVariableValues.keySet();
+        return this._localVariableValues.keySet();
     }
 
     public Set<String> getRDDVariableNames() {
-        return _rddVariableValues.keySet();
+        return this._rddVariableValues.keySet();
     }
 
     public Set<String> getDataFrameVariableNames() {
-        return _dataFrameVariableValues.keySet();
+        return this._dataFrameVariableValues.keySet();
     }
 
     public boolean contains(String varName) {
-        return _localVariableValues.containsKey(varName)
-            || _rddVariableValues.containsKey(varName)
-            || _dataFrameVariableValues.containsKey(varName);
+        return this._localVariableValues.containsKey(varName)
+            || this._rddVariableValues.containsKey(varName)
+            || this._dataFrameVariableValues.containsKey(varName);
     }
 
     public boolean isRDD(String varName, ExceptionMetadata metadata) {
@@ -121,8 +120,8 @@ public class DynamicContext implements Serializable, KryoSerializable {
                     metadata
             );
         }
-        return _rddVariableValues.containsKey(varName)
-            || _dataFrameVariableValues.containsKey(varName);
+        return this._rddVariableValues.containsKey(varName)
+            || this._dataFrameVariableValues.containsKey(varName);
     }
 
     public boolean isDataFrame(String varName, ExceptionMetadata metadata) {
@@ -132,7 +131,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
                     metadata
             );
         }
-        return _dataFrameVariableValues.containsKey(varName);
+        return this._dataFrameVariableValues.containsKey(varName);
     }
 
     public void addVariableValue(String varName, List<Item> value) {
@@ -152,20 +151,20 @@ public class DynamicContext implements Serializable, KryoSerializable {
     }
 
     public List<Item> getLocalVariableValue(String varName, ExceptionMetadata metadata) {
-        if (_localVariableValues.containsKey(varName)) {
-            return _localVariableValues.get(varName);
+        if (this._localVariableValues.containsKey(varName)) {
+            return this._localVariableValues.get(varName);
         }
 
-        if (_rddVariableValues.containsKey(varName)) {
+        if (this._rddVariableValues.containsKey(varName)) {
             JavaRDD<Item> rdd = this.getRDDVariableValue(varName, metadata);
             return SparkSessionManager.collectRDDwithLimit(rdd);
         }
 
-        if (_parent != null) {
-            return _parent.getLocalVariableValue(varName, metadata);
+        if (this._parent != null) {
+            return this._parent.getLocalVariableValue(varName, metadata);
         }
 
-        if (_localVariableCounts.containsKey(varName)) {
+        if (this._localVariableCounts.containsKey(varName)) {
             throw new OurBadException(
                     "Runtime error retrieving variable " + varName + " value: only count available.",
                     metadata
@@ -179,18 +178,18 @@ public class DynamicContext implements Serializable, KryoSerializable {
     }
 
     public JavaRDD<Item> getRDDVariableValue(String varName, ExceptionMetadata metadata) {
-        if (_rddVariableValues.containsKey(varName)) {
-            return _rddVariableValues.get(varName);
+        if (this._rddVariableValues.containsKey(varName)) {
+            return this._rddVariableValues.get(varName);
         }
 
-        if (_dataFrameVariableValues.containsKey(varName)) {
-            Dataset<Row> df = _dataFrameVariableValues.get(varName);
+        if (this._dataFrameVariableValues.containsKey(varName)) {
+            Dataset<Row> df = this._dataFrameVariableValues.get(varName);
             JavaRDD<Row> rowRDD = df.javaRDD();
             return rowRDD.map(new RowToItemMapper(metadata));
         }
 
-        if (_parent != null) {
-            return _parent.getRDDVariableValue(varName, metadata);
+        if (this._parent != null) {
+            return this._parent.getRDDVariableValue(varName, metadata);
         }
 
         throw new OurBadException(
@@ -200,12 +199,12 @@ public class DynamicContext implements Serializable, KryoSerializable {
     }
 
     public Dataset<Row> getDataFrameVariableValue(String varName, ExceptionMetadata metadata) {
-        if (_dataFrameVariableValues.containsKey(varName)) {
-            return _dataFrameVariableValues.get(varName);
+        if (this._dataFrameVariableValues.containsKey(varName)) {
+            return this._dataFrameVariableValues.get(varName);
         }
 
-        if (_parent != null) {
-            return _parent.getDataFrameVariableValue(varName, metadata);
+        if (this._parent != null) {
+            return this._parent.getDataFrameVariableValue(varName, metadata);
         }
 
         throw new OurBadException(
@@ -215,20 +214,21 @@ public class DynamicContext implements Serializable, KryoSerializable {
     }
 
     public Item getVariableCount(String varName) {
-        if (_localVariableCounts.containsKey(varName)) {
-            return _localVariableCounts.get(varName);
+        if (this._localVariableCounts.containsKey(varName)) {
+            return this._localVariableCounts.get(varName);
         }
-        if (_dataFrameVariableValues.containsKey(varName)) {
-            return ItemFactory.getInstance().createIntegerItem((int) _dataFrameVariableValues.get(varName).count());
+        if (this._dataFrameVariableValues.containsKey(varName)) {
+            return ItemFactory.getInstance()
+                .createIntegerItem((int) this._dataFrameVariableValues.get(varName).count());
         }
-        if (_rddVariableValues.containsKey(varName)) {
-            return ItemFactory.getInstance().createIntegerItem((int) _rddVariableValues.get(varName).count());
+        if (this._rddVariableValues.containsKey(varName)) {
+            return ItemFactory.getInstance().createIntegerItem((int) this._rddVariableValues.get(varName).count());
         }
-        if (_localVariableValues.containsKey(varName)) {
-            return ItemFactory.getInstance().createIntegerItem(_localVariableValues.get(varName).size());
+        if (this._localVariableValues.containsKey(varName)) {
+            return ItemFactory.getInstance().createIntegerItem(this._localVariableValues.get(varName).size());
         }
-        if (_parent != null) {
-            return _parent.getVariableCount(varName);
+        if (this._parent != null) {
+            return this._parent.getVariableCount(varName);
         }
         throw new OurBadException("Runtime error retrieving variable " + varName + " value");
     }
@@ -250,27 +250,27 @@ public class DynamicContext implements Serializable, KryoSerializable {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, _parent);
-        kryo.writeObject(output, _localVariableValues);
-        kryo.writeObject(output, _rddVariableValues);
-        kryo.writeObject(output, _dataFrameVariableValues);
+        kryo.writeObject(output, this._parent);
+        kryo.writeObject(output, this._localVariableValues);
+        kryo.writeObject(output, this._rddVariableValues);
+        kryo.writeObject(output, this._dataFrameVariableValues);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public void read(Kryo kryo, Input input) {
-        _parent = kryo.readObjectOrNull(input, DynamicContext.class);
-        _localVariableValues = kryo.readObject(input, HashMap.class);
-        _rddVariableValues = kryo.readObject(input, HashMap.class);
-        _dataFrameVariableValues = kryo.readObject(input, HashMap.class);
+        this._parent = kryo.readObjectOrNull(input, DynamicContext.class);
+        this._localVariableValues = kryo.readObject(input, HashMap.class);
+        this._rddVariableValues = kryo.readObject(input, HashMap.class);
+        this._dataFrameVariableValues = kryo.readObject(input, HashMap.class);
     }
 
     public Item getPosition() {
-        if (_localVariableValues.containsKey("$position")) {
-            return _localVariableValues.get("$position").get(0);
+        if (this._localVariableValues.containsKey("$position")) {
+            return this._localVariableValues.get("$position").get(0);
         }
-        if (_parent != null) {
-            return _parent.getPosition();
+        if (this._parent != null) {
+            return this._parent.getPosition();
         }
         return null;
     }
@@ -285,15 +285,15 @@ public class DynamicContext implements Serializable, KryoSerializable {
             item = ItemFactory.getInstance().createDecimalItem(new BigDecimal(position));
         }
         list.add(item);
-        _localVariableValues.put("$position", list);
+        this._localVariableValues.put("$position", list);
     }
 
     public Item getLast() {
-        if (_localVariableValues.containsKey("$last")) {
-            return _localVariableValues.get("$last").get(0);
+        if (this._localVariableValues.containsKey("$last")) {
+            return this._localVariableValues.get("$last").get(0);
         }
-        if (_parent != null) {
-            return _parent.getLast();
+        if (this._parent != null) {
+            return this._parent.getLast();
         }
         return null;
     }
@@ -307,7 +307,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
             item = ItemFactory.getInstance().createDecimalItem(new BigDecimal(last));
         }
         list.add(item);
-        _localVariableValues.put("$last", list);
+        this._localVariableValues.put("$last", list);
     }
 
     public enum VariableDependency {

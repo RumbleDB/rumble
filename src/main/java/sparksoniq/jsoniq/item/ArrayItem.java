@@ -47,12 +47,12 @@ public class ArrayItem extends JsonItem {
     }
 
     public List<Item> getItems() {
-        return _arrayItems;
+        return this._arrayItems;
     }
 
     @Override
     public Item getItemAt(int i) {
-        return _arrayItems.get(i);
+        return this._arrayItems.get(i);
     }
 
     @Override

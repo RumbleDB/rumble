@@ -21,16 +21,14 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.object;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSelectorException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
@@ -56,23 +54,23 @@ public class ObjectRemoveKeysFunctionIterator extends LocalFunctionCallIterator 
     public void open(DynamicContext context) {
         super.open(context);
 
-        _iterator = this._children.get(0);
-        _iterator.open(context);
+        this._iterator = this._children.get(0);
+        this._iterator.open(context);
 
-        List<Item> removalKeys = this._children.get(1).materialize(_currentDynamicContextForLocalExecution);
+        List<Item> removalKeys = this._children.get(1).materialize(this._currentDynamicContextForLocalExecution);
         if (removalKeys.isEmpty()) {
             throw new InvalidSelectorException(
                     "Invalid Key Removal Parameter; Object key removal can't be performed with zero keys: ",
                     getMetadata()
             );
         }
-        _removalKeys = new ArrayList<>();
+        this._removalKeys = new ArrayList<>();
         for (Item removalKeyItem : removalKeys) {
             if (!removalKeyItem.isString()) {
                 throw new UnexpectedTypeException("Remove-keys function has non-string key args.", getMetadata());
             }
             String removalKey = removalKeyItem.getStringValue();
-            _removalKeys.add(removalKey);
+            this._removalKeys.add(removalKey);
         }
 
         setNextResult();
@@ -81,7 +79,7 @@ public class ObjectRemoveKeysFunctionIterator extends LocalFunctionCallIterator 
     @Override
     public Item next() {
         if (this._hasNext) {
-            Item result = _nextResult; // save the result to be returned
+            Item result = this._nextResult; // save the result to be returned
             setNextResult(); // calculate and store the next result
             return result;
         }
@@ -92,20 +90,20 @@ public class ObjectRemoveKeysFunctionIterator extends LocalFunctionCallIterator 
     }
 
     public void setNextResult() {
-        _nextResult = null;
+        this._nextResult = null;
 
-        if (_iterator.hasNext()) {
-            Item item = _iterator.next();
+        if (this._iterator.hasNext()) {
+            Item item = this._iterator.next();
             if (item.isObject()) {
-                _nextResult = removeKeys(item, _removalKeys);
+                this._nextResult = removeKeys(item, this._removalKeys);
             } else {
-                _nextResult = item;
+                this._nextResult = item;
             }
         }
 
-        if (_nextResult == null) {
+        if (this._nextResult == null) {
             this._hasNext = false;
-            _iterator.close();
+            this._iterator.close();
         } else {
             this._hasNext = true;
         }

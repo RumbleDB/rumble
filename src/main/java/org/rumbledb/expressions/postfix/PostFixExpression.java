@@ -20,21 +20,16 @@
 
 package org.rumbledb.expressions.postfix;
 
-import sparksoniq.jsoniq.ExecutionMode;
-
-
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
-
-
-
-import java.util.ArrayList;
-import java.util.List;
-
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.postfix.extensions.PostfixExtension;
 import org.rumbledb.expressions.primary.PrimaryExpression;
+import sparksoniq.jsoniq.ExecutionMode;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class PostFixExpression extends Expression {
@@ -59,15 +54,15 @@ public class PostFixExpression extends Expression {
     }
 
     public boolean isPrimary() {
-        return _extensions == null || _extensions.isEmpty();
+        return this._extensions == null || this._extensions.isEmpty();
     }
 
     public PrimaryExpression get_primaryExpressionNode() {
-        return _primaryExpressionNode;
+        return this._primaryExpressionNode;
     }
 
     public List<PostfixExtension> getExtensions() {
-        return _extensions;
+        return this._extensions;
     }
 
     private boolean bypassCurrentExpressionForExecutionModeOperations() {
@@ -100,7 +95,7 @@ public class PostFixExpression extends Expression {
         List<Node> result = new ArrayList<>();
         result.add(this._primaryExpressionNode);
         if (this._extensions != null)
-            _extensions.forEach(e -> {
+            this._extensions.forEach(e -> {
                 if (e != null)
                     result.add(e);
             });
@@ -115,7 +110,7 @@ public class PostFixExpression extends Expression {
             for (PostfixExtension ext : this._extensions)
                 result += " "
                     + ext.serializationString(true)
-                    + (_extensions.indexOf(ext) < _extensions.size() - 1 ? " " : "");
+                    + (this._extensions.indexOf(ext) < this._extensions.size() - 1 ? " " : "");
         }
         result += ")";
         return result;

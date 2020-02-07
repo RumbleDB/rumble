@@ -1,19 +1,15 @@
 package org.rumbledb.expressions.control;
 
 
-
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
-
-
-
-import java.util.ArrayList;
-import java.util.List;
-
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.flowr.FlworVarSequenceType;
 import org.rumbledb.expressions.primary.VariableReference;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class TypeSwitchCaseExpression extends Expression {
 
@@ -34,7 +30,7 @@ public class TypeSwitchCaseExpression extends Expression {
     }
 
     public VariableReference getVariableReference() {
-        return variableReferenceNode;
+        return this.variableReferenceNode;
     }
 
     public List<FlworVarSequenceType> getUnion() {
@@ -42,18 +38,18 @@ public class TypeSwitchCaseExpression extends Expression {
     }
 
     public Expression getReturnExpression() {
-        return returnExpression;
+        return this.returnExpression;
     }
 
     @Override
     public List<Node> getDescendants(boolean depthSearch) {
         List<Node> result = new ArrayList<>();
-        if (variableReferenceNode != null)
-            result.add(variableReferenceNode);
-        if (union != null && !union.isEmpty())
-            result.addAll(union);
+        if (this.variableReferenceNode != null)
+            result.add(this.variableReferenceNode);
+        if (this.union != null && !this.union.isEmpty())
+            result.addAll(this.union);
         if (this.returnExpression != null)
-            result.add(returnExpression);
+            result.add(this.returnExpression);
         return getDescendantsFromChildren(result, depthSearch);
     }
 

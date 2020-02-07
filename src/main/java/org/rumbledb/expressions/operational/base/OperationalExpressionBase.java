@@ -25,7 +25,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 
@@ -186,7 +185,7 @@ public abstract class OperationalExpressionBase extends Expression {
     }
 
     public Expression getMainExpression() {
-        return _mainExpression;
+        return this._mainExpression;
     }
 
     @Override
@@ -194,8 +193,8 @@ public abstract class OperationalExpressionBase extends Expression {
         List<Node> result = new ArrayList<>();
         if (this._mainExpression != null)
             result.add(this._mainExpression);
-        if (depthSearch && _mainExpression != null)
-            result.addAll(_mainExpression.getDescendants(depthSearch));
+        if (depthSearch && this._mainExpression != null)
+            result.addAll(this._mainExpression.getDescendants(depthSearch));
         return result;
     }
 

@@ -26,7 +26,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
@@ -70,7 +69,7 @@ public class GetEstimatorFunctionIterator extends LocalFunctionCallIterator {
                     getMetadata()
             );
         }
-        _estimatorShortName = nameIterator.next().getStringValue();
+        this._estimatorShortName = nameIterator.next().getStringValue();
         if (nameIterator.hasNext()) {
             throw new UnexpectedTypeException(
                     "Estimator lookup can't be performed on a sequence.",
@@ -80,11 +79,11 @@ public class GetEstimatorFunctionIterator extends LocalFunctionCallIterator {
         nameIterator.close();
 
         String estimatorFullClassName = RumbleMLCatalog.getEstimatorFullClassName(
-            _estimatorShortName,
+            this._estimatorShortName,
             getMetadata()
         );
         try {
-            _estimatorSparkMLClass = Class.forName(estimatorFullClassName);
+            this._estimatorSparkMLClass = Class.forName(estimatorFullClassName);
             this._hasNext = true;
         } catch (ClassNotFoundException e) {
             throw new OurBadException(
@@ -98,9 +97,9 @@ public class GetEstimatorFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             this._hasNext = false;
             try {
-                Estimator<?> estimator = (Estimator<?>) _estimatorSparkMLClass.newInstance();
+                Estimator<?> estimator = (Estimator<?>) this._estimatorSparkMLClass.newInstance();
                 RuntimeIterator bodyIterator = new ApplyEstimatorRuntimeIterator(
-                        _estimatorShortName,
+                        this._estimatorShortName,
                         estimator,
                         ExecutionMode.LOCAL,
                         getMetadata()
@@ -123,7 +122,7 @@ public class GetEstimatorFunctionIterator extends LocalFunctionCallIterator {
                 );
 
                 return new FunctionItem(
-                        new FunctionIdentifier(_estimatorSparkMLClass.getName(), 2),
+                        new FunctionIdentifier(this._estimatorSparkMLClass.getName(), 2),
                         estimatorParameterNames,
                         new FunctionSignature(
                                 paramTypes,

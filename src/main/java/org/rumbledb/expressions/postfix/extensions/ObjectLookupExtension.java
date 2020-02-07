@@ -21,12 +21,12 @@
 package org.rumbledb.expressions.postfix.extensions;
 
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ObjectLookupExtension extends PostfixExtension {
 
@@ -38,7 +38,7 @@ public class ObjectLookupExtension extends PostfixExtension {
     }
 
     public Expression getExpression() {
-        return _expression;
+        return this._expression;
     }
 
     @Override
@@ -51,7 +51,7 @@ public class ObjectLookupExtension extends PostfixExtension {
 
     @Override
     public String serializationString(boolean prefix) {
-        String result = "(objectLookup . " + _expression.serializationString(false) + ")";
+        String result = "(objectLookup . " + this._expression.serializationString(false) + ")";
         return result;
     }
 }

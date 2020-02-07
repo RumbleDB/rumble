@@ -1,14 +1,13 @@
 package org.rumbledb.expressions.flowr;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.Expression;
+import org.rumbledb.expressions.Node;
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.SingleType;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.Node;
 
 public class FlworVarSingleType extends Expression {
 
@@ -71,11 +70,11 @@ public class FlworVarSingleType extends Expression {
     }
 
     public boolean isEmpty() {
-        return isEmpty;
+        return this.isEmpty;
     }
 
     public SingleType getSingleType() {
-        return _singleType;
+        return this._singleType;
     }
 
     @Override

@@ -21,16 +21,15 @@
 package org.rumbledb.expressions.flowr;
 
 
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.Expression;
+import org.rumbledb.expressions.Node;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.Node;
 
 public class FlworVarSequenceType extends Expression {
 
@@ -104,11 +103,11 @@ public class FlworVarSequenceType extends Expression {
     }
 
     public boolean isEmpty() {
-        return isEmpty;
+        return this.isEmpty;
     }
 
     public SequenceType getSequence() {
-        return _sequence;
+        return this._sequence;
     }
 
     @Override
@@ -119,7 +118,7 @@ public class FlworVarSequenceType extends Expression {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(sequenceType ";
-        if (isEmpty)
+        if (this.isEmpty)
             return result + "( )";
         result += "(itemType ";
         result += getSerializationOfItemType(this._sequence.getItemType().getType());

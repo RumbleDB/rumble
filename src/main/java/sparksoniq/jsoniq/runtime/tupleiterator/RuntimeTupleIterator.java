@@ -26,11 +26,10 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
-
 import sparksoniq.jsoniq.ExecutionMode;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 
@@ -85,8 +84,8 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
 
     @Override
     public void write(Kryo kryo, Output output) {
-        output.writeBoolean(_hasNext);
-        output.writeBoolean(_isOpen);
+        output.writeBoolean(this._hasNext);
+        output.writeBoolean(this._isOpen);
         kryo.writeObject(output, this._currentDynamicContext);
         kryo.writeObject(output, this._child);
     }
@@ -100,7 +99,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     }
 
     public boolean isOpen() {
-        return _isOpen;
+        return this._isOpen;
     }
 
     public boolean hasNext() {
@@ -110,18 +109,18 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     public abstract FlworTuple next();
 
     public ExceptionMetadata getMetadata() {
-        return metadata;
+        return this.metadata;
     }
 
     public ExecutionMode getHighestExecutionMode() {
-        return _highestExecutionMode;
+        return this._highestExecutionMode;
     }
 
     public boolean isDataFrame() {
-        if (_highestExecutionMode == ExecutionMode.UNSET) {
+        if (this._highestExecutionMode == ExecutionMode.UNSET) {
             throw new OurBadException("isDataFrame accessed in iterator without execution mode being set.");
         }
-        return _highestExecutionMode.isDataFrame();
+        return this._highestExecutionMode.isDataFrame();
     }
 
     /**
@@ -168,7 +167,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<String, DynamicContext.VariableDependency> result =
             new TreeMap<String, DynamicContext.VariableDependency>();
-        result.putAll(_child.getVariableDependencies());
+        result.putAll(this._child.getVariableDependencies());
         return result;
     }
 
@@ -203,8 +202,8 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         }
         buffer.append("\n");
 
-        if (_child != null) {
-            _child.print(buffer, indent + 1);
+        if (this._child != null) {
+            this._child.print(buffer, indent + 1);
         }
     }
 }

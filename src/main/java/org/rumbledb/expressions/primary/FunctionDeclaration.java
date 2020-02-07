@@ -21,7 +21,10 @@
 package org.rumbledb.expressions.primary;
 
 
-import sparksoniq.jsoniq.ExecutionMode;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.Expression;
+import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.flowr.FlworVarSequenceType;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
@@ -29,11 +32,6 @@ import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.flowr.FlworVarSequenceType;
 
 public class FunctionDeclaration extends PrimaryExpression {
 
@@ -57,19 +55,19 @@ public class FunctionDeclaration extends PrimaryExpression {
     }
 
     public String get_name() {
-        return _name;
+        return this._name;
     }
 
     public Map<String, FlworVarSequenceType> get_params() {
-        return _params;
+        return this._params;
     }
 
     public FlworVarSequenceType get_returnType() {
-        return _returnType;
+        return this._returnType;
     }
 
     public Expression get_body() {
-        return _body;
+        return this._body;
     }
 
     @Override
@@ -87,7 +85,7 @@ public class FunctionDeclaration extends PrimaryExpression {
         if (!this._name.equals("")) {
             Functions.addUserDefinedFunctionExecutionMode(
                 identifier,
-                _body.getHighestExecutionMode(ignoreUnsetExecutionModeAccessDuringFunctionDeclaration),
+                this._body.getHighestExecutionMode(ignoreUnsetExecutionModeAccessDuringFunctionDeclaration),
                 ignoreDuplicateUserDefinedFunctionError,
                 this.getMetadata()
             );
@@ -102,9 +100,9 @@ public class FunctionDeclaration extends PrimaryExpression {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(functionDeclaration ";
-        result += _name;
+        result += this._name;
         result += " (paramList (";
-        for (Map.Entry<String, FlworVarSequenceType> entry : _params.entrySet()) {
+        for (Map.Entry<String, FlworVarSequenceType> entry : this._params.entrySet()) {
             result += "param (";
             result += "NCName "
                 + entry.getKey()
@@ -115,9 +113,9 @@ public class FunctionDeclaration extends PrimaryExpression {
         result = result.substring(0, result.length() - 1); // remove last comma
         result += "))";
 
-        result += " (sequenceType ( " + _returnType.serializationString(false) + "))";
+        result += " (sequenceType ( " + this._returnType.serializationString(false) + "))";
 
-        result += " (expr (" + _body.serializationString(false) + "))";
+        result += " (expr (" + this._body.serializationString(false) + "))";
 
         result += ")";
         return result;

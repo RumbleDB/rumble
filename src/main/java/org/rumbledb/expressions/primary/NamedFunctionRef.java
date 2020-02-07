@@ -20,17 +20,14 @@
 
 package org.rumbledb.expressions.primary;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.Node;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
 
-
-import org.rumbledb.expressions.Node;
-
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.ExpressionOrClause;
 
 
 public class NamedFunctionRef extends PrimaryExpression {
@@ -43,7 +40,7 @@ public class NamedFunctionRef extends PrimaryExpression {
     }
 
     public FunctionIdentifier getIdentifier() {
-        return identifier;
+        return this.identifier;
     }
 
     @Override
@@ -59,6 +56,10 @@ public class NamedFunctionRef extends PrimaryExpression {
 
     @Override
     public String serializationString(boolean prefix) {
-        return "(namedFunctionRef(NCName " + identifier.getName() + ") (IntegerLiteral " + identifier.getArity() + "))";
+        return "(namedFunctionRef(NCName "
+            + this.identifier.getName()
+            + ") (IntegerLiteral "
+            + this.identifier.getArity()
+            + "))";
     }
 }

@@ -20,16 +20,15 @@
 
 package org.rumbledb.expressions.flowr;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.Expression;
+import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.primary.VariableReference;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.types.SequenceType;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.List;
-
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.primary.VariableReference;
 
 
 public class ForClauseVar extends FlworVarDecl {
@@ -61,18 +60,18 @@ public class ForClauseVar extends FlworVarDecl {
     }
 
     public boolean allowsEmpty() {
-        return allowEmpty;
+        return this.allowEmpty;
     }
 
     public VariableReference getPositionalVariableReference() {
-        return positionalVariableReference;
+        return this.positionalVariableReference;
     }
 
     @Override
     public void initHighestExecutionAndVariableHighestStorageModes() {
         this._highestExecutionMode =
             (this.expression.getHighestExecutionMode().isRDD()
-                || (previousClause != null && previousClause.getHighestExecutionMode().isDataFrame()))
+                || (this.previousClause != null && this.previousClause.getHighestExecutionMode().isDataFrame()))
                     ? ExecutionMode.DATAFRAME
                     : ExecutionMode.LOCAL;
 
@@ -83,8 +82,8 @@ public class ForClauseVar extends FlworVarDecl {
     public List<Node> getDescendants(boolean depthSearch) {
         List<Node> result = super.getDescendants(depthSearch);
 
-        if (positionalVariableReference != null)
-            result.add(positionalVariableReference);
+        if (this.positionalVariableReference != null)
+            result.add(this.positionalVariableReference);
         return getDescendantsFromChildren(result, depthSearch);
     }
 
@@ -95,13 +94,13 @@ public class ForClauseVar extends FlworVarDecl {
 
     @Override
     public String serializationString(boolean prefix) {
-        String result = "(forVar " + variableReferenceNode.serializationString(false) + " ";
+        String result = "(forVar " + this.variableReferenceNode.serializationString(false) + " ";
         if (this.asSequence != null)
-            result += "as " + asSequence.serializationString(true) + " ";
-        if (allowEmpty)
+            result += "as " + this.asSequence.serializationString(true) + " ";
+        if (this.allowEmpty)
             result += "allowing empty ";
-        if (positionalVariableReference != null)
-            result += "at " + positionalVariableReference.serializationString(false) + " ";
+        if (this.positionalVariableReference != null)
+            result += "at " + this.positionalVariableReference.serializationString(false) + " ";
         result += "in " + this.expression.serializationString(true);
         result += "))";
         return result;
