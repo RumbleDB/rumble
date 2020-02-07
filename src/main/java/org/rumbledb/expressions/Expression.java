@@ -38,10 +38,6 @@ public abstract class Expression extends Node {
 
     protected StaticContext _staticContext;
 
-    protected Expression() {
-        super();
-    }
-
     protected Expression(ExceptionMetadata metadata) {
         super(metadata);
     }
@@ -53,11 +49,4 @@ public abstract class Expression extends Node {
     public void setStaticContext(StaticContext _staticContext) {
         this._staticContext = _staticContext;
     }
-
-    @Override
-    public String serializationString(boolean prefix) {
-        return "";
-    }
-
-
 }

@@ -45,6 +45,7 @@ public class IfExpression extends Expression {
             Expression elseBranch,
             ExceptionMetadata metadataFromContext
     ) {
+        super(metadataFromContext);
         this._condition = condition;
         this._branch = branch;
         this._elseBranch = elseBranch;
