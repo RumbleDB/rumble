@@ -22,7 +22,7 @@ package sparksoniq.semantics.visitor;
 
 import org.rumbledb.exceptions.UndeclaredVariableException;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.ExpressionOrClause;
+import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.control.TypeSwitchCaseExpression;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
 import org.rumbledb.expressions.flowr.CountClause;
@@ -45,7 +45,7 @@ import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
 
-public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<StaticContext> {
+public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     // indicate whether an error should be thrown if an duplicate user defined function declaration is detected
     private boolean ignoreDuplicateUserDefinedFunctionError;
@@ -89,22 +89,22 @@ public class StaticContextVisitor extends AbstractExpressionOrClauseVisitor<Stat
     }
 
     @Override
-    protected StaticContext defaultAction(ExpressionOrClause expression, StaticContext argument) {
-        StaticContext generatedContext = visitDescendants(expression, argument);
+    protected StaticContext defaultAction(Node node, StaticContext argument) {
+        StaticContext generatedContext = visitDescendants(node, argument);
         // initialize execution mode by visiting children and expressions first, then calling initialize methods
-        expression.initHighestExecutionMode();
+        node.initHighestExecutionMode();
         return generatedContext;
     }
 
     @Override
-    public StaticContext visit(ExpressionOrClause expression, StaticContext argument) {
+    public StaticContext visit(Node node, StaticContext argument) {
         if (argument == null) {
             argument = new StaticContext();
         }
-        if (expression instanceof Expression) {
-            ((Expression) expression).setStaticContext(argument);
+        if (node instanceof Expression) {
+            ((Expression) node).setStaticContext(argument);
         }
-        return expression.accept(this, argument);
+        return node.accept(this, argument);
     }
 
     // region primary

@@ -7,7 +7,7 @@ import org.rumbledb.expressions.operational.base.UnaryExpressionBase;
 
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.types.SequenceType;
-import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 
 public class TreatExpression extends UnaryExpressionBase {
@@ -56,7 +56,7 @@ public class TreatExpression extends UnaryExpressionBase {
     }
 
     @Override
-    public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
+    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitTreatExpression(this, argument);
     }
 

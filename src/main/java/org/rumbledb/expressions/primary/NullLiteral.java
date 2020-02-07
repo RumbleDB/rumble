@@ -21,8 +21,12 @@
 package org.rumbledb.expressions.primary;
 
 
+
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
-import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
+
+
 
 public class NullLiteral extends PrimaryExpression {
 
@@ -39,7 +43,7 @@ public class NullLiteral extends PrimaryExpression {
     }
 
     @Override
-    public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
+    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitNull(this, argument);
     }
 }

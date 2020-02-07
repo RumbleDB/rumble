@@ -21,14 +21,18 @@
 package org.rumbledb.expressions.flowr;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
+
+
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
+
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.ExpressionOrClause;
+import org.rumbledb.expressions.Node;
 
 public class ReturnClause extends FlworClause {
 
@@ -53,15 +57,15 @@ public class ReturnClause extends FlworClause {
     }
 
     @Override
-    public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result = new ArrayList<>();
+    public List<Node> getDescendants(boolean depthSearch) {
+        List<Node> result = new ArrayList<>();
         if (returnExpr != null)
             result.add(returnExpr);
         return getDescendantsFromChildren(result, depthSearch);
     }
 
     @Override
-    public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
+    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitReturnClause(this, argument);
     }
 

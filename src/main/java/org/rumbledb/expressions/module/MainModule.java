@@ -21,7 +21,10 @@
 package org.rumbledb.expressions.module;
 
 
-import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
+
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
+
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +32,7 @@ import java.util.List;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.ExpressionOrClause;
+import org.rumbledb.expressions.Node;
 
 public class MainModule extends Expression {
 
@@ -51,8 +54,8 @@ public class MainModule extends Expression {
     }
 
     @Override
-    public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result = new ArrayList<>();
+    public List<Node> getDescendants(boolean depthSearch) {
+        List<Node> result = new ArrayList<>();
         if (_prolog != null) {
             result.add(_prolog);
         }
@@ -63,7 +66,7 @@ public class MainModule extends Expression {
     }
 
     @Override
-    public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
+    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitMainModule(this, argument);
     }
 

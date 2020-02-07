@@ -24,7 +24,7 @@ package iq;
 import iq.base.AnnotationsTestsBase;
 import org.junit.Assert;
 import org.junit.Test;
-import org.rumbledb.expressions.ExpressionOrClause;
+import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.primary.VariableReference;
 import org.rumbledb.parser.JsoniqBaseVisitor;
 
@@ -186,7 +186,7 @@ public class FrontendTests extends AnnotationsTestsBase {
 
     private void testVariableTypes(File testFile, JsoniqExpressionTreeVisitor visitor) {
 
-        List<ExpressionOrClause> vars = visitor.getMainModule()
+        List<Node> vars = visitor.getMainModule()
             .getDescendantsOfType(
                 d -> d instanceof VariableReference
                     && ((VariableReference) d).getVariableName().equals("var"),
@@ -198,7 +198,7 @@ public class FrontendTests extends AnnotationsTestsBase {
             )
         );
 
-        List<ExpressionOrClause> js = visitor.getMainModule()
+        List<Node> js = visitor.getMainModule()
             .getDescendantsOfType(
                 d -> d instanceof VariableReference
                     && ((VariableReference) d).getVariableName().equals("j"),
@@ -212,7 +212,7 @@ public class FrontendTests extends AnnotationsTestsBase {
             )
         );
 
-        List<ExpressionOrClause> internals = visitor.getMainModule()
+        List<Node> internals = visitor.getMainModule()
             .getDescendantsOfType(
                 d -> d instanceof VariableReference
                     && ((VariableReference) d).getVariableName().equals("internal"),
@@ -224,7 +224,7 @@ public class FrontendTests extends AnnotationsTestsBase {
             )
         );
 
-        List<ExpressionOrClause> arry = visitor.getMainModule()
+        List<Node> arry = visitor.getMainModule()
             .getDescendantsOfType(
                 d -> d instanceof VariableReference
                     && ((VariableReference) d).getVariableName().equals("arry"),

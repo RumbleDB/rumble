@@ -29,7 +29,7 @@ import java.util.List;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.ExpressionOrClause;
+import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.primary.VariableReference;
 
 public abstract class FlworVarDecl extends FlworClause {
@@ -92,8 +92,8 @@ public abstract class FlworVarDecl extends FlworClause {
     }
 
     @Override
-    public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result = new ArrayList<>();
+    public List<Node> getDescendants(boolean depthSearch) {
+        List<Node> result = new ArrayList<>();
         result.add(variableReferenceNode);
         if (asSequence != null)
             result.add(asSequence);

@@ -21,17 +21,17 @@
 package org.rumbledb.expressions.quantifiers;
 
 import sparksoniq.semantics.types.SequenceType;
-import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.ExpressionOrClause;
+import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.primary.VariableReference;
 
-public class QuantifiedExpressionVar extends ExpressionOrClause {
+public class QuantifiedExpressionVar extends Node {
     private final VariableReference _variableReference;
     private final Expression _expression;
     private final SequenceType _sequenceType;
@@ -62,15 +62,15 @@ public class QuantifiedExpressionVar extends ExpressionOrClause {
     }
 
     @Override
-    public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result = new ArrayList<>();
+    public List<Node> getDescendants(boolean depthSearch) {
+        List<Node> result = new ArrayList<>();
         result.add(_variableReference);
         result.add(_expression);
         return getDescendantsFromChildren(result, depthSearch);
     }
 
     @Override
-    public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
+    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitQuantifiedExpressionVar(this, argument);
     }
 

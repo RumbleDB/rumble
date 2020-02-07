@@ -20,19 +20,19 @@
 
 package org.rumbledb.expressions.flowr;
 
-import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rumbledb.expressions.Node;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.ExpressionOrClause;
 
 /**
  * GRAMMAR:flowrExpression
  */
 
-public class FlworClause extends ExpressionOrClause {
+public class FlworClause extends Node {
 
     protected FlworClause previousClause;
     protected FLWOR_CLAUSES clauseType;
@@ -64,12 +64,12 @@ public class FlworClause extends ExpressionOrClause {
     }
 
     @Override
-    public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
+    public List<Node> getDescendants(boolean depthSearch) {
         return new ArrayList<>();
     }
 
     @Override
-    public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
+    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitDescendants(this, argument);
     }
 

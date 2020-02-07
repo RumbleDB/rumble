@@ -21,7 +21,7 @@
 package org.rumbledb.expressions.flowr;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +29,7 @@ import java.util.List;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.ExpressionOrClause;
+import org.rumbledb.expressions.Node;
 
 public class FlworExpression extends Expression {
 
@@ -89,8 +89,8 @@ public class FlworExpression extends Expression {
         return this._returnClause.getHighestExecutionMode(ignoreUnsetError);
     }
 
-    public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result = new ArrayList<>();
+    public List<Node> getDescendants(boolean depthSearch) {
+        List<Node> result = new ArrayList<>();
         result.add(_startClause);
         if (_contentClauses != null)
             _contentClauses.forEach(e -> {
@@ -102,7 +102,7 @@ public class FlworExpression extends Expression {
     }
 
     @Override
-    public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
+    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitFlowrExpression(this, argument);
     }
 

@@ -2,7 +2,7 @@ package sparksoniq.semantics.visitor;
 
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.expressions.ExpressionOrClause;
+import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.primary.IntegerLiteral;
 
 import sparksoniq.jsoniq.ExecutionMode;
@@ -12,18 +12,18 @@ import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 
 public class VisitorHelpers {
 
-    public static RuntimeIterator generateRuntimeIterator(ExpressionOrClause expression) {
-        return new RuntimeIteratorVisitor().visit(expression, null);
+    public static RuntimeIterator generateRuntimeIterator(Node node) {
+        return new RuntimeIteratorVisitor().visit(node, null);
     }
 
-    public static void populateStaticContext(ExpressionOrClause expression) {
+    public static void populateStaticContext(Node node) {
         StaticContextVisitor visitor = new StaticContextVisitor();
-        visitor.visit(expression, null);
+        visitor.visit(node, null);
 
         visitor.setConfigForIntermediatePasses();
         int prevUnsetCount = Functions.getCurrentUnsetUserDefinedFunctionIdentifiers().size();
         while (true) {
-            visitor.visit(expression, null);
+            visitor.visit(node, null);
             int currentUnsetCount = Functions.getCurrentUnsetUserDefinedFunctionIdentifiers().size();
 
             if (currentUnsetCount > prevUnsetCount) {
@@ -39,7 +39,7 @@ public class VisitorHelpers {
         }
 
         visitor.setConfigForFinalPass();
-        visitor.visit(expression, null);
+        visitor.visit(node, null);
     }
 
     private static void setLocalExecutionForUnsetUserDefinedFunctions() {

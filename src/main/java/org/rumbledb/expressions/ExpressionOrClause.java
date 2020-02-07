@@ -21,8 +21,10 @@
 package org.rumbledb.expressions;
 
 import sparksoniq.jsoniq.ExecutionMode;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
-import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
+
 
 import java.util.ArrayList;
 import java.util.List;
@@ -76,7 +78,7 @@ public abstract class ExpressionOrClause {
     /**
      * Accept method for the pattern Visitor.
      */
-    public abstract <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument);
+    public abstract <T> T accept(AbstractNodeVisitor<T> visitor, T argument);
 
     public abstract String serializationString(boolean prefix);
 

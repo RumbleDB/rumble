@@ -20,14 +20,18 @@
 
 package org.rumbledb.expressions.primary;
 
-import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
+
+
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
+
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.ExpressionOrClause;
+import org.rumbledb.expressions.Node;
 
 
 // TODO(NOT IMPLEMENTED): orderedExpr, unorderedExpr
@@ -38,12 +42,12 @@ public abstract class PrimaryExpression extends Expression {
     }
 
     @Override
-    public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
+    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitDescendants(this, argument);
     }
 
     @Override
-    public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
+    public List<Node> getDescendants(boolean depthSearch) {
         return new ArrayList<>();
     }
 

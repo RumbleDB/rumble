@@ -22,13 +22,13 @@ package org.rumbledb.expressions.flowr;
 
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.types.SequenceType;
-import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.List;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.ExpressionOrClause;
+import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.primary.VariableReference;
 
 
@@ -80,8 +80,8 @@ public class ForClauseVar extends FlworVarDecl {
     }
 
     @Override
-    public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result = super.getDescendants(depthSearch);
+    public List<Node> getDescendants(boolean depthSearch) {
+        List<Node> result = super.getDescendants(depthSearch);
 
         if (positionalVariableReference != null)
             result.add(positionalVariableReference);
@@ -89,7 +89,7 @@ public class ForClauseVar extends FlworVarDecl {
     }
 
     @Override
-    public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
+    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitForClauseVar(this, argument);
     }
 

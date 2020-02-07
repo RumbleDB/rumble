@@ -20,14 +20,14 @@
 
 package org.rumbledb.expressions.flowr;
 
-import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.SemanticException;
-import org.rumbledb.expressions.ExpressionOrClause;
+import org.rumbledb.expressions.Node;
 
 public class GroupByClause extends FlworClause {
 
@@ -45,8 +45,8 @@ public class GroupByClause extends FlworClause {
     }
 
     @Override
-    public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result = new ArrayList<>();
+    public List<Node> getDescendants(boolean depthSearch) {
+        List<Node> result = new ArrayList<>();
         groupVars.forEach(e -> {
             if (e != null)
                 result.add(e);
@@ -55,7 +55,7 @@ public class GroupByClause extends FlworClause {
     }
 
     @Override
-    public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
+    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitGroupByClause(this, argument);
     }
 

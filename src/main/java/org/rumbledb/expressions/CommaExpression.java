@@ -22,8 +22,8 @@ package org.rumbledb.expressions;
 
 
 import sparksoniq.jsoniq.ExecutionMode;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import sparksoniq.semantics.visitor.AbstractExpressionOrClauseVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,8 +42,8 @@ public class CommaExpression extends Expression {
     }
 
     @Override
-    public List<ExpressionOrClause> getDescendants(boolean depthSearch) {
-        List<ExpressionOrClause> result = new ArrayList<>();
+    public List<Node> getDescendants(boolean depthSearch) {
+        List<Node> result = new ArrayList<>();
         if (this._expressions != null)
             _expressions.forEach(e -> {
                 if (e != null)
@@ -73,7 +73,7 @@ public class CommaExpression extends Expression {
     }
 
     @Override
-    public <T> T accept(AbstractExpressionOrClauseVisitor<T> visitor, T argument) {
+    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitCommaExpression(this, argument);
     }
 

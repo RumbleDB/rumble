@@ -85,7 +85,7 @@ import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.ExpressionOrClause;
+import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.control.IfExpression;
 import org.rumbledb.expressions.control.SwitchCaseExpression;
 import org.rumbledb.expressions.control.SwitchExpression;
@@ -145,17 +145,17 @@ import org.rumbledb.expressions.primary.VariableReference;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
 
-public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<RuntimeIterator> {
+public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator> {
 
     @Override
-    public RuntimeIterator visit(ExpressionOrClause expression, RuntimeIterator argument) {
-        return expression.accept(this, argument);
+    public RuntimeIterator visit(Node node, RuntimeIterator argument) {
+        return node.accept(this, argument);
     }
 
     @Override
-    public RuntimeIterator visitDescendants(ExpressionOrClause expression, RuntimeIterator argument) {
+    public RuntimeIterator visitDescendants(Node node, RuntimeIterator argument) {
         RuntimeIterator result = argument;
-        for (ExpressionOrClause child : expression.getDescendants()) {
+        for (Node child : node.getChildren()) {
             result = visit(child, argument);
         }
         return result;
@@ -1026,4 +1026,5 @@ public class RuntimeIteratorVisitor extends AbstractExpressionOrClauseVisitor<Ru
                 expression.getMetadata()
         );
     }
+
 }
