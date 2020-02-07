@@ -45,7 +45,7 @@ public class StringConcatExpression extends NaryExpressionBase {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(stringConcatExpr ";
-        result += this._mainExpression.serializationString(true);
+        result += this.mainExpression.serializationString(true);
         if (this.getRightExpressions() != null && this.getRightExpressions().size() > 0)
             for (Expression expr : this.getRightExpressions())
                 result += " || " + expr.serializationString(true);

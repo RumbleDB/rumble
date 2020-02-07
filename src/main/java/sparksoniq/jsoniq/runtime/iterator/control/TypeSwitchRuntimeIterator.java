@@ -30,11 +30,11 @@ public class TypeSwitchRuntimeIterator extends LocalRuntimeIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(null, executionMode, iteratorMetadata);
-        this._children.add(test);
+        this.children.add(test);
         for (TypeSwitchCase typeSwitchCase : cases) {
-            this._children.add(typeSwitchCase.getReturnIterator());
+            this.children.add(typeSwitchCase.getReturnIterator());
         }
-        this._children.add(defaultCase.getReturnIterator());
+        this.children.add(defaultCase.getReturnIterator());
 
         this.testField = test;
         this.cases = cases;
@@ -49,11 +49,11 @@ public class TypeSwitchRuntimeIterator extends LocalRuntimeIterator {
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            this.matchingIterator.open(this._currentDynamicContextForLocalExecution);
+        if (this.hasNext) {
+            this.matchingIterator.open(this.currentDynamicContextForLocalExecution);
             Item nextItem = this.matchingIterator.next();
             this.matchingIterator.close();
-            this._hasNext = false;
+            this.hasNext = false;
             return nextItem;
         }
         throw new IteratorFlowException(
@@ -71,7 +71,7 @@ public class TypeSwitchRuntimeIterator extends LocalRuntimeIterator {
 
     private void initializeIterator(RuntimeIterator test, List<TypeSwitchCase> cases, TypeSwitchCase defaultCase) {
 
-        this.testValue = test.materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
+        this.testValue = test.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
 
         for (TypeSwitchCase typeSwitchCase : cases) {
             if (testTypeMatch(typeSwitchCase))
@@ -80,7 +80,7 @@ public class TypeSwitchRuntimeIterator extends LocalRuntimeIterator {
 
         if (this.matchingIterator == null) {
             if (defaultCase.getVariableName() != null) {
-                this._currentDynamicContextForLocalExecution.addVariableValue(
+                this.currentDynamicContextForLocalExecution.addVariableValue(
                     defaultCase.getVariableName(),
                     Collections.singletonList(this.testValue)
                 );
@@ -88,8 +88,8 @@ public class TypeSwitchRuntimeIterator extends LocalRuntimeIterator {
             this.matchingIterator = defaultCase.getReturnIterator();
         }
 
-        this.matchingIterator.open(this._currentDynamicContextForLocalExecution);
-        this._hasNext = this.matchingIterator.hasNext();
+        this.matchingIterator.open(this.currentDynamicContextForLocalExecution);
+        this.hasNext = this.matchingIterator.hasNext();
         this.matchingIterator.close();
     }
 
@@ -97,7 +97,7 @@ public class TypeSwitchRuntimeIterator extends LocalRuntimeIterator {
         for (FlworVarSequenceType sequenceType : typeSwitchCase.getSequenceTypeUnion()) {
             if (this.testValue != null && this.testValue.isTypeOf(sequenceType.getSequence().getItemType())) {
                 if (typeSwitchCase.getVariableName() != null) {
-                    this._currentDynamicContextForLocalExecution.addVariableValue(
+                    this.currentDynamicContextForLocalExecution.addVariableValue(
                         typeSwitchCase.getVariableName(),
                         Collections.singletonList(this.testValue)
                     );

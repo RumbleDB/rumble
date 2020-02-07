@@ -29,17 +29,17 @@ import java.util.List;
 
 public class AndExpression extends NaryExpressionBase {
 
-    public AndExpression(Expression _mainExpression, ExceptionMetadata metadata) {
-        super(_mainExpression, metadata);
+    public AndExpression(Expression mainExpression, ExceptionMetadata metadata) {
+        super(mainExpression, metadata);
 
     }
 
     public AndExpression(
-            Expression _mainExpression,
+            Expression mainExpression,
             List<Expression> rhs,
             ExceptionMetadata metadata
     ) {
-        super(_mainExpression, rhs, Operator.AND, metadata);
+        super(mainExpression, rhs, Operator.AND, metadata);
     }
 
     @Override
@@ -50,7 +50,7 @@ public class AndExpression extends NaryExpressionBase {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(andExpr ";
-        result += this._mainExpression.serializationString(true);
+        result += this.mainExpression.serializationString(true);
         if (this.getRightExpressions() != null && this.getRightExpressions().size() > 0)
             for (Expression expr : this.getRightExpressions())
                 result += " and " + expr.serializationString(true);

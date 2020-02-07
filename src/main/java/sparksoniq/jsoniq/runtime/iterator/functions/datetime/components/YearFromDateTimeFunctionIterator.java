@@ -14,7 +14,7 @@ import java.util.List;
 public class YearFromDateTimeFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
-    private Item _dateTimeItem = null;
+    private Item dateTimeItem = null;
 
     public YearFromDateTimeFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -26,9 +26,9 @@ public class YearFromDateTimeFunctionIterator extends LocalFunctionCallIterator 
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            this._hasNext = false;
-            return ItemFactory.getInstance().createIntegerItem(this._dateTimeItem.getDateTimeValue().getYear());
+        if (this.hasNext) {
+            this.hasNext = false;
+            return ItemFactory.getInstance().createIntegerItem(this.dateTimeItem.getDateTimeValue().getYear());
         } else
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " year-from-dateTime function",
@@ -39,8 +39,8 @@ public class YearFromDateTimeFunctionIterator extends LocalFunctionCallIterator 
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        this._dateTimeItem = this._children.get(0)
-            .materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
-        this._hasNext = this._dateTimeItem != null;
+        this.dateTimeItem = this.children.get(0)
+            .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        this.hasNext = this.dateTimeItem != null;
     }
 }

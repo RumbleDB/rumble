@@ -65,7 +65,7 @@ public class DurationItem extends AtomicItem {
 
 
     private static final long serialVersionUID = 1L;
-    protected Period _value;
+    protected Period value;
     boolean isNegative;
 
     public DurationItem() {
@@ -74,12 +74,12 @@ public class DurationItem extends AtomicItem {
 
     public DurationItem(Period value) {
         super();
-        this._value = value.normalizedStandard(PeriodType.yearMonthDayTime());
-        this.isNegative = this._value.toString().contains("-");
+        this.value = value.normalizedStandard(PeriodType.yearMonthDayTime());
+        this.isNegative = this.value.toString().contains("-");
     }
 
     public Period getValue() {
-        return this._value;
+        return this.value;
     }
 
     public Period getDurationValue() {
@@ -168,10 +168,10 @@ public class DurationItem extends AtomicItem {
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this._value = getDurationFromString(input.readString(), AtomicTypes.DurationItem).normalizedStandard(
+        this.value = getDurationFromString(input.readString(), AtomicTypes.DurationItem).normalizedStandard(
             PeriodType.yearMonthDayTime()
         );
-        this.isNegative = this._value.toString().contains("-");
+        this.isNegative = this.value.toString().contains("-");
     }
 
     private static PeriodFormatter getPeriodFormatter(AtomicTypes durationType) {

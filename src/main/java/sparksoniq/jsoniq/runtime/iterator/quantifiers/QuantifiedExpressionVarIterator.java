@@ -33,10 +33,10 @@ public class QuantifiedExpressionVarIterator extends LocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private final String _variableReference;
-    // private final SequenceType _sequenceType;
-    private RuntimeIterator _iterator;
-    private Item _nextResult;
+    private final String variableReference;
+    // private final SequenceType sequenceType;
+    private RuntimeIterator iterator;
+    private Item nextResult;
 
     /*
      * private List<Item> result = null;
@@ -51,29 +51,29 @@ public class QuantifiedExpressionVarIterator extends LocalRuntimeIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(null, executionMode, iteratorMetadata);
-        this._children.add(expression);
-        this._variableReference = variableReference;
-        // this._sequenceType = sequenceType;
+        this.children.add(expression);
+        this.variableReference = variableReference;
+        // this.sequenceType = sequenceType;
     }
 
     public String getVariableReference() {
-        return this._variableReference;
+        return this.variableReference;
     }
 
     @Override
     public void open(DynamicContext context) {
         super.open(context);
 
-        this._iterator = this._children.get(0);
-        this._iterator.open(this._currentDynamicContextForLocalExecution);
+        this.iterator = this.children.get(0);
+        this.iterator.open(this.currentDynamicContextForLocalExecution);
 
         setNextResult();
     }
 
     @Override
     public Item next() {
-        if (this._hasNext == true) {
-            Item result = this._nextResult; // save the result to be returned
+        if (this.hasNext == true) {
+            Item result = this.nextResult; // save the result to be returned
             setNextResult(); // calculate and store the next result
             return result;
         }
@@ -81,19 +81,19 @@ public class QuantifiedExpressionVarIterator extends LocalRuntimeIterator {
     }
 
     public void setNextResult() {
-        this._nextResult = null;
+        this.nextResult = null;
 
-        while (this._iterator.hasNext()) {
-            this._nextResult = this._iterator.next();
+        while (this.iterator.hasNext()) {
+            this.nextResult = this.iterator.next();
             break;
         }
 
 
-        if (this._nextResult == null) {
-            this._hasNext = false;
-            this._iterator.close();
+        if (this.nextResult == null) {
+            this.hasNext = false;
+            this.iterator.close();
         } else {
-            this._hasNext = true;
+            this.hasNext = true;
         }
     }
 }

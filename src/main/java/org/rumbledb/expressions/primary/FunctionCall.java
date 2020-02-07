@@ -40,28 +40,28 @@ import java.util.List;
 
 public class FunctionCall extends PrimaryExpression {
 
-    private final String _functionName;
-    private final List<Expression> _arguments;
-    private final boolean _isPartialApplication;
+    private final String functionName;
+    private final List<Expression> arguments;
+    private final boolean isPartialApplication;
 
     public FunctionCall(String functionName, List<Expression> arguments, ExceptionMetadata metadata) {
         super(metadata);
-        this._functionName = functionName;
-        this._arguments = arguments;
-        this._isPartialApplication = arguments.stream().anyMatch(arg -> arg instanceof ArgumentPlaceholder);
+        this.functionName = functionName;
+        this.arguments = arguments;
+        this.isPartialApplication = arguments.stream().anyMatch(arg -> arg instanceof ArgumentPlaceholder);
     }
 
     public List<Expression> getArguments() {
-        return this._arguments;
+        return this.arguments;
     }
 
     public String getFunctionName() {
-        return this._functionName;
+        return this.functionName;
     }
 
     @Override
     public List<Node> getChildren() {
-        List<Node> result = new ArrayList<>(this._arguments);
+        List<Node> result = new ArrayList<>(this.arguments);
         return result;
     }
 
@@ -71,25 +71,25 @@ public class FunctionCall extends PrimaryExpression {
     }
 
     public void initFunctionCallHighestExecutionMode(boolean ignoreMissingFunctionError) {
-        FunctionIdentifier identifier = new FunctionIdentifier(this._functionName, this._arguments.size());
+        FunctionIdentifier identifier = new FunctionIdentifier(this.functionName, this.arguments.size());
         if (Functions.checkBuiltInFunctionExists(identifier)) {
-            if (this._isPartialApplication) {
+            if (this.isPartialApplication) {
                 throw new UnsupportedFeatureException(
                         "Partial application on built-in functions are not supported.",
                         this.getMetadata()
                 );
             }
             BuiltinFunction builtinFunction = Functions.getBuiltInFunction(identifier);
-            this._highestExecutionMode = this.getBuiltInFunctionExecutionMode(builtinFunction);
+            this.highestExecutionMode = this.getBuiltInFunctionExecutionMode(builtinFunction);
             return;
         }
 
         if (Functions.checkUserDefinedFunctionExecutionModeExists(identifier)) {
-            if (this._isPartialApplication) {
-                this._highestExecutionMode = ExecutionMode.LOCAL;
+            if (this.isPartialApplication) {
+                this.highestExecutionMode = ExecutionMode.LOCAL;
                 return;
             }
-            this._highestExecutionMode = Functions.getUserDefinedFunctionExecutionMode(identifier, getMetadata());
+            this.highestExecutionMode = Functions.getUserDefinedFunctionExecutionMode(identifier, getMetadata());
             return;
         }
 
@@ -114,7 +114,7 @@ public class FunctionCall extends PrimaryExpression {
             return ExecutionMode.DATAFRAME;
         }
         if (functionExecutionMode == BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT) {
-            ExecutionMode firstArgumentExecutionMode = this._arguments.get(0).getHighestExecutionMode();
+            ExecutionMode firstArgumentExecutionMode = this.arguments.get(0).getHighestExecutionMode();
             if (firstArgumentExecutionMode.isDataFrame()) {
                 return ExecutionMode.DATAFRAME;
             }
@@ -126,7 +126,7 @@ public class FunctionCall extends PrimaryExpression {
         if (
             functionExecutionMode == BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT_BUT_DATAFRAME_FALLSBACK_TO_LOCAL
         ) {
-            ExecutionMode firstArgumentExecutionMode = this._arguments.get(0).getHighestExecutionMode();
+            ExecutionMode firstArgumentExecutionMode = this.arguments.get(0).getHighestExecutionMode();
             if (
                 firstArgumentExecutionMode.isRDD()
                     && !firstArgumentExecutionMode.isDataFrame()
@@ -143,16 +143,16 @@ public class FunctionCall extends PrimaryExpression {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(primaryExpr (functionCall ";
-        List<String> names = Arrays.asList(this._functionName.split(":"));
+        List<String> names = Arrays.asList(this.functionName.split(":"));
         Collections.reverse(names);
         for (String name : names)
             result += name + (names.indexOf(name) < names.size() - 1 ? " : " : " ");
         result += "(argumentList ( ";
-        for (Expression arg : this._arguments)
+        for (Expression arg : this.arguments)
             result += "(argument (exprSingle "
                 + arg.serializationString(false)
                 +
-                (this._arguments.indexOf(arg) < this._arguments.size() - 1 ? ")) , " : ")) ");
+                (this.arguments.indexOf(arg) < this.arguments.size() - 1 ? ")) , " : ")) ");
         result += "))";
         result += "))";
         return result;

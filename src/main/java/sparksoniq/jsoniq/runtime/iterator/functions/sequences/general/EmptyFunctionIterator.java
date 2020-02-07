@@ -34,7 +34,7 @@ public class EmptyFunctionIterator extends LocalFunctionCallIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator _sequenceIterator;
+    private RuntimeIterator sequenceIterator;
 
     public EmptyFunctionIterator(
             List<RuntimeIterator> parameters,
@@ -42,20 +42,20 @@ public class EmptyFunctionIterator extends LocalFunctionCallIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(parameters, executionMode, iteratorMetadata);
-        this._sequenceIterator = this._children.get(0);
+        this.sequenceIterator = this.children.get(0);
     }
 
     @Override
     public Item next() {
         if (this.hasNext()) {
-            this._hasNext = false;
-            if (this._sequenceIterator.isRDD()) {
-                List<Item> i = this._sequenceIterator.getRDD(this._currentDynamicContextForLocalExecution).take(1);
+            this.hasNext = false;
+            if (this.sequenceIterator.isRDD()) {
+                List<Item> i = this.sequenceIterator.getRDD(this.currentDynamicContextForLocalExecution).take(1);
                 return ItemFactory.getInstance().createBooleanItem(i.isEmpty());
             }
-            this._sequenceIterator.open(this._currentDynamicContextForLocalExecution);
-            if (this._sequenceIterator.hasNext()) {
-                this._sequenceIterator.close();
+            this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
+            if (this.sequenceIterator.hasNext()) {
+                this.sequenceIterator.close();
                 return ItemFactory.getInstance().createBooleanItem(false);
             } else {
                 return ItemFactory.getInstance().createBooleanItem(true);

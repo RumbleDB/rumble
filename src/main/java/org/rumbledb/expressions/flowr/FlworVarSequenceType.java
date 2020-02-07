@@ -34,28 +34,28 @@ import java.util.List;
 
 public class FlworVarSequenceType extends Expression {
 
-    private SequenceType _sequence;
+    private SequenceType sequence;
     private boolean isEmpty = false;
 
     public FlworVarSequenceType(ExceptionMetadata metadata) {
         super(metadata);
-        this._sequence = new SequenceType();
+        this.sequence = new SequenceType();
         this.isEmpty = true;
     }
 
     public FlworVarSequenceType(ItemTypes item, SequenceType.Arity arity, ExceptionMetadata metadata) {
         super(metadata);
-        this._sequence = new SequenceType(new ItemType(item), arity);
+        this.sequence = new SequenceType(new ItemType(item), arity);
     }
 
     public FlworVarSequenceType(ItemTypes item, ExceptionMetadata metadata) {
         super(metadata);
-        this._sequence = new SequenceType(new ItemType(item), SequenceType.Arity.One);
+        this.sequence = new SequenceType(new ItemType(item), SequenceType.Arity.One);
     }
 
     public FlworVarSequenceType(SequenceType sequenceType, ExceptionMetadata metadata) {
         super(metadata);
-        this._sequence = sequenceType;
+        this.sequence = sequenceType;
     }
 
     public static ItemTypes getItemType(String text) {
@@ -108,7 +108,7 @@ public class FlworVarSequenceType extends Expression {
     }
 
     public SequenceType getSequence() {
-        return this._sequence;
+        return this.sequence;
     }
 
     @Override
@@ -129,7 +129,7 @@ public class FlworVarSequenceType extends Expression {
         if (this.isEmpty)
             return result + "( )";
         result += "(itemType ";
-        result += getSerializationOfItemType(this._sequence.getItemType().getType());
+        result += getSerializationOfItemType(this.sequence.getItemType().getType());
         result += "))";
         return result;
     }

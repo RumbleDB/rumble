@@ -933,8 +933,8 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
             for (JsoniqParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
                 this.visitPairConstructor(currentPair);
                 pair = (ObjectConstructor.PairConstructor) this.currentPrimaryExpression;
-                keys.add(pair.get_key());
-                values.add(pair.get_value());
+                keys.add(pair.getKey());
+                values.add(pair.getValue());
             }
             node = new ObjectConstructor(keys, values, createMetadataFromContext(ctx));
         } else {

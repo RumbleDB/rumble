@@ -31,24 +31,24 @@ import java.util.List;
 public class PredicateClosure implements Function<Item, Boolean> {
 
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator _expression;
-    private final DynamicContext _dynamicContext;
+    private final RuntimeIterator expression;
+    private final DynamicContext dynamicContext;
 
     public PredicateClosure(RuntimeIterator expression, DynamicContext dynamicContext) {
-        this._expression = expression;
-        this._dynamicContext = dynamicContext;
+        this.expression = expression;
+        this.dynamicContext = dynamicContext;
     }
 
     @Override
     public Boolean call(Item v1) throws Exception {
         List<Item> currentItems = new ArrayList<>();
         currentItems.add(v1);
-        DynamicContext dynamicContext = new DynamicContext(this._dynamicContext);
+        DynamicContext dynamicContext = new DynamicContext(this.dynamicContext);
         dynamicContext.addVariableValue("$$", currentItems);
 
-        this._expression.open(dynamicContext);
-        boolean result = RuntimeIterator.getEffectiveBooleanValue(this._expression);
-        this._expression.close();
+        this.expression.open(dynamicContext);
+        boolean result = RuntimeIterator.getEffectiveBooleanValue(this.expression);
+        this.expression.close();
         return result;
 
     }

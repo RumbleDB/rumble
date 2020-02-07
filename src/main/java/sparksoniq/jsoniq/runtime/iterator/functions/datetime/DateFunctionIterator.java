@@ -16,7 +16,7 @@ public class DateFunctionIterator extends LocalFunctionCallIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private Item _dateStringItem = null;
+    private Item dateStringItem = null;
 
     public DateFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -28,14 +28,14 @@ public class DateFunctionIterator extends LocalFunctionCallIterator {
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            this._hasNext = false;
+        if (this.hasNext) {
+            this.hasNext = false;
             try {
-                return ItemFactory.getInstance().createDateItem(this._dateStringItem.getStringValue());
+                return ItemFactory.getInstance().createDateItem(this.dateStringItem.getStringValue());
             } catch (UnsupportedOperationException | IllegalArgumentException e) {
                 String message = String.format(
                     "\"%s\": value of type %s is not castable to type %s",
-                    this._dateStringItem.serialize(),
+                    this.dateStringItem.serialize(),
                     "string",
                     "date"
                 );
@@ -51,8 +51,8 @@ public class DateFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        this._dateStringItem = this._children.get(0)
-            .materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
-        this._hasNext = this._dateStringItem != null;
+        this.dateStringItem = this.children.get(0)
+            .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        this.hasNext = this.dateStringItem != null;
     }
 }

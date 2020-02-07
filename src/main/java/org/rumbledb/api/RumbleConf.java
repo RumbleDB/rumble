@@ -10,10 +10,10 @@ package org.rumbledb.api;
  *
  */
 public class RumbleConf {
-    private int _resultsSizeCap;
+    private int resultsSizeCap;
 
     public RumbleConf() {
-        this._resultsSizeCap = 100;
+        this.resultsSizeCap = 100;
     }
 
     /**
@@ -23,7 +23,7 @@ public class RumbleConf {
      * @param cap the maximum number of Items to collect.
      */
     void setResultsSizeCap(int cap) {
-        this._resultsSizeCap = cap;
+        this.resultsSizeCap = cap;
     }
 
     /**
@@ -33,7 +33,7 @@ public class RumbleConf {
      * @return the current number of Items to collect.
      */
     int getResultsSizeCap() {
-        return this._resultsSizeCap;
+        return this.resultsSizeCap;
     }
 
 }

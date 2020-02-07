@@ -21,7 +21,7 @@ import java.util.List;
 
 public class CastableIterator extends UnaryOperationBaseIterator {
     private static final long serialVersionUID = 1L;
-    private final SingleType _singleType;
+    private final SingleType singleType;
 
     public CastableIterator(
             RuntimeIterator child,
@@ -30,34 +30,34 @@ public class CastableIterator extends UnaryOperationBaseIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(child, OperationalExpressionBase.Operator.CASTABLE, executionMode, iteratorMetadata);
-        this._singleType = singleType;
+        this.singleType = singleType;
     }
 
     @Override
     public Item next() {
-        if (this._hasNext) {
+        if (this.hasNext) {
             List<Item> items = new ArrayList<>();
-            this._child.open(this._currentDynamicContextForLocalExecution);
-            while (this._child.hasNext()) {
-                items.add(this._child.next());
+            this.child.open(this.currentDynamicContextForLocalExecution);
+            while (this.child.hasNext()) {
+                items.add(this.child.next());
                 if (items.size() > 1) {
-                    this._child.close();
-                    this._hasNext = false;
+                    this.child.close();
+                    this.hasNext = false;
                     return ItemFactory.getInstance().createBooleanItem(false);
                 }
             }
-            this._child.close();
-            this._hasNext = false;
+            this.child.close();
+            this.hasNext = false;
 
             if (items.isEmpty())
-                return ItemFactory.getInstance().createBooleanItem(this._singleType.getZeroOrOne());
+                return ItemFactory.getInstance().createBooleanItem(this.singleType.getZeroOrOne());
 
             if (items.size() != 1 || items.get(0) == null)
                 return ItemFactory.getInstance().createBooleanItem(false);
 
-            AtomicItem atomicItem = checkInvalidCastable(items.get(0), getMetadata(), this._singleType);
+            AtomicItem atomicItem = checkInvalidCastable(items.get(0), getMetadata(), this.singleType);
 
-            return ItemFactory.getInstance().createBooleanItem(atomicItem.isCastableAs(this._singleType.getType()));
+            return ItemFactory.getInstance().createBooleanItem(atomicItem.isCastableAs(this.singleType.getType()));
         } else
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
     }

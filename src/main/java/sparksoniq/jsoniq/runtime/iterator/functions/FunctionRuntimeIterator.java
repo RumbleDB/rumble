@@ -31,7 +31,7 @@ import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 public class FunctionRuntimeIterator extends LocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private Item _item;
+    private Item item;
 
     public FunctionRuntimeIterator(
             FunctionItem function,
@@ -39,16 +39,16 @@ public class FunctionRuntimeIterator extends LocalRuntimeIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(null, executionMode, iteratorMetadata);
-        this._item = function;
+        this.item = function;
     }
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            this._hasNext = false;
-            return this._item;
+        if (this.hasNext) {
+            this.hasNext = false;
+            return this.item;
         }
 
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item, getMetadata());
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.item, getMetadata());
     }
 }

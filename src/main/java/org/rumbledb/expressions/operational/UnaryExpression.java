@@ -33,27 +33,27 @@ import java.util.List;
 public class UnaryExpression extends UnaryExpressionBase {
 
     public static final Operator[] operators = new Operator[] { Operator.PLUS, Operator.MINUS };
-    private PostFixExpression _postfixExpression;
+    private PostFixExpression postfixExpression;
 
-    public UnaryExpression(PostFixExpression _mainExpression, ExceptionMetadata metadata) {
-        super(_mainExpression, metadata);
-        this._postfixExpression = _mainExpression;
-        this._isActive = false;
+    public UnaryExpression(PostFixExpression mainExpression, ExceptionMetadata metadata) {
+        super(mainExpression, metadata);
+        this.postfixExpression = mainExpression;
+        this.isActive = false;
     }
 
-    public UnaryExpression(PostFixExpression _mainExpression, List<Operator> ops, ExceptionMetadata metadata) {
-        super(_mainExpression, ops, ops != null && !ops.isEmpty(), metadata);
+    public UnaryExpression(PostFixExpression mainExpression, List<Operator> ops, ExceptionMetadata metadata) {
+        super(mainExpression, ops, ops != null && !ops.isEmpty(), metadata);
         this.validateOperators(Arrays.asList(operators), ops);
-        this._postfixExpression = _mainExpression;
+        this.postfixExpression = mainExpression;
     }
 
-    public PostFixExpression get_postfixExpression() {
-        return this._postfixExpression;
+    public PostFixExpression getPostfixExpression() {
+        return this.postfixExpression;
     }
 
     @Override
     public boolean isActive() {
-        return this._isActive;
+        return this.isActive;
     }
 
     @Override
@@ -64,11 +64,11 @@ public class UnaryExpression extends UnaryExpressionBase {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(unaryExpr ";
-        if (this._multipleOperators != null && this._multipleOperators.size() > 0) {
-            for (Operator op : this._multipleOperators)
+        if (this.multipleOperators != null && this.multipleOperators.size() > 0) {
+            for (Operator op : this.multipleOperators)
                 result += getStringFromOperator(op) + " ";
         }
-        result += this._mainExpression.serializationString(true);
+        result += this.mainExpression.serializationString(true);
         result += ")";
         return result;
     }

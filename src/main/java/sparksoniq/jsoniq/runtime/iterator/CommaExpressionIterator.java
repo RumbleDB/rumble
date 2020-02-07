@@ -31,9 +31,9 @@ import java.util.List;
 public class CommaExpressionIterator extends LocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator _currentChild;
-    private Item _nextResult;
-    private int _childIndex;
+    private RuntimeIterator currentChild;
+    private Item nextResult;
+    private int childIndex;
 
     public CommaExpressionIterator(
             List<RuntimeIterator> childIterators,
@@ -45,8 +45,8 @@ public class CommaExpressionIterator extends LocalRuntimeIterator {
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            Item result = this._nextResult; // save the result to be returned
+        if (this.hasNext) {
+            Item result = this.nextResult; // save the result to be returned
             setNextResult(); // calculate and store the next result
             return result;
         }
@@ -56,30 +56,30 @@ public class CommaExpressionIterator extends LocalRuntimeIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        this._childIndex = 0;
+        this.childIndex = 0;
 
-        this._currentChild = this._children.get(this._childIndex);
-        this._currentChild.open(this._currentDynamicContextForLocalExecution);
+        this.currentChild = this.children.get(this.childIndex);
+        this.currentChild.open(this.currentDynamicContextForLocalExecution);
 
         setNextResult();
     }
 
     public void setNextResult() {
-        this._nextResult = null;
+        this.nextResult = null;
 
-        while (this._nextResult == null) {
-            if (this._currentChild.hasNext()) {
-                this._nextResult = this._currentChild.next();
+        while (this.nextResult == null) {
+            if (this.currentChild.hasNext()) {
+                this.nextResult = this.currentChild.next();
             } else {
-                this._currentChild.close();
-                if (++this._childIndex == this._children.size()) {
+                this.currentChild.close();
+                if (++this.childIndex == this.children.size()) {
                     break;
                 }
-                this._currentChild = this._children.get(this._childIndex);
-                this._currentChild.open(this._currentDynamicContextForLocalExecution);
+                this.currentChild = this.children.get(this.childIndex);
+                this.currentChild.open(this.currentDynamicContextForLocalExecution);
             }
         }
 
-        this._hasNext = this._nextResult != null;
+        this.hasNext = this.nextResult != null;
     }
 }

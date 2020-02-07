@@ -48,14 +48,14 @@ public class LastFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        this._hasNext = true;
+        this.hasNext = true;
     }
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            this._hasNext = false;
-            Item result = this._currentDynamicContextForLocalExecution.getLast();
+        if (this.hasNext) {
+            this.hasNext = false;
+            Item result = this.currentDynamicContextForLocalExecution.getLast();
             if (result == null) {
                 throw new AbsentPartOfDynamicContextException("Context undefined (last) ", getMetadata());
             }

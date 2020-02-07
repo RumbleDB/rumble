@@ -28,41 +28,41 @@ import java.util.List;
 
 public abstract class UnaryExpressionBase extends OperationalExpressionBase {
 
-    protected UnaryExpressionBase(Expression _mainExpression, ExceptionMetadata metadata) {
-        super(_mainExpression, Operator.NONE, metadata);
+    protected UnaryExpressionBase(Expression mainExpression, ExceptionMetadata metadata) {
+        super(mainExpression, Operator.NONE, metadata);
     }
 
     protected UnaryExpressionBase(
-            Expression _mainExpression,
+            Expression mainExpression,
             List<Operator> ops,
             boolean isActive,
             ExceptionMetadata metadata
     ) {
-        super(_mainExpression, ops, metadata);
-        this._isActive = isActive;
+        super(mainExpression, ops, metadata);
+        this.isActive = isActive;
 
     }
 
     protected UnaryExpressionBase(
-            Expression _mainExpression,
+            Expression mainExpression,
             Operator singleOperator,
             boolean isActive,
             ExceptionMetadata metadata
     ) {
-        super(_mainExpression, singleOperator, metadata);
-        this._isActive = isActive;
+        super(mainExpression, singleOperator, metadata);
+        this.isActive = isActive;
     }
 
     @Override
     public boolean isActive() {
-        return this._isActive;
+        return this.isActive;
     }
 
     public List<Operator> getOperators() {
-        return this._multipleOperators;
+        return this.multipleOperators;
     }
 
     public Operator getSingleOperator() {
-        return this._singleOperator;
+        return this.singleOperator;
     }
 }

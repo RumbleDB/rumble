@@ -126,7 +126,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitFunctionDeclaration(FunctionDeclaration expression, StaticContext argument) {
         // define a static context for the function body, add params to the context and visit the body expression
         StaticContext functionDeclarationContext = new StaticContext(argument);
-        expression.get_params()
+        expression.getParams()
             .forEach(
                 (paramName, flworVarSequenceType) -> functionDeclarationContext.addVariable(
                     paramName,
@@ -136,7 +136,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                 )
             );
         // visit the body first to make its execution mode available while adding the function to the catalog
-        this.visit(expression.get_body(), functionDeclarationContext);
+        this.visit(expression.getBody(), functionDeclarationContext);
         expression.initHighestExecutionMode();
         expression.registerUserDefinedFunctionExecutionMode(
             this.ignoreDuplicateUserDefinedFunctionError,
@@ -155,7 +155,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitPostfixExpression(PostFixExpression expression, StaticContext argument) {
         // visit and initialize firstly the primary expression, then the postfix extensions
-        this.visit(expression.get_primaryExpressionNode(), argument);
+        this.visit(expression.getPrimaryExpressionNode(), argument);
         expression.initHighestExecutionMode();
         expression.getExtensions().forEach(extension -> extension.initHighestExecutionMode());
         return visitDescendants(expression, argument);
@@ -167,11 +167,11 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitFlowrExpression(FlworExpression expression, StaticContext argument) {
         StaticContext result = this.visit(expression.getStartClause(), argument);
-        for (FlworClause clause : expression.get_contentClauses()) {
+        for (FlworClause clause : expression.getContentClauses()) {
             result = this.visit(clause, result);
         }
 
-        result = this.visit(expression.get_returnClause(), result);
+        result = this.visit(expression.getReturnClause(), result);
         return result;
     }
 

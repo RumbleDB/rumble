@@ -35,7 +35,7 @@ public class ZeroOrOneIterator extends CardinalityFunctionIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private Item _nextResult;
+    private Item nextResult;
 
     public ZeroOrOneIterator(
             List<RuntimeIterator> arguments,
@@ -47,9 +47,9 @@ public class ZeroOrOneIterator extends CardinalityFunctionIterator {
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            this._hasNext = false;
-            return this._nextResult;
+        if (this.hasNext) {
+            this.hasNext = false;
+            return this.nextResult;
         }
         throw new IteratorFlowException(
                 RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " ZERO-OR-ONE function",
@@ -61,32 +61,32 @@ public class ZeroOrOneIterator extends CardinalityFunctionIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        RuntimeIterator sequenceIterator = this._children.get(0);
+        RuntimeIterator sequenceIterator = this.children.get(0);
 
         if (!sequenceIterator.isRDD()) {
             sequenceIterator.open(context);
             if (!sequenceIterator.hasNext()) {
-                this._hasNext = false;
+                this.hasNext = false;
             } else {
-                this._nextResult = sequenceIterator.next();
+                this.nextResult = sequenceIterator.next();
                 if (sequenceIterator.hasNext()) {
                     throw new SequenceExceptionZeroOrOne(
                             "fn:zero-or-one() called with a sequence containing more than one item",
                             getMetadata()
                     );
                 } else {
-                    this._hasNext = true;
+                    this.hasNext = true;
                 }
             }
             sequenceIterator.close();
         } else {
-            JavaRDD<Item> rdd = sequenceIterator.getRDD(this._currentDynamicContextForLocalExecution);
+            JavaRDD<Item> rdd = sequenceIterator.getRDD(this.currentDynamicContextForLocalExecution);
             List<Item> results = rdd.take(2);
             if (results.size() == 0) {
-                this._hasNext = false;
+                this.hasNext = false;
             } else if (results.size() == 1) {
-                this._hasNext = true;
-                this._nextResult = results.get(0);
+                this.hasNext = true;
+                this.nextResult = results.get(0);
             } else if (results.size() > 1) {
                 throw new SequenceExceptionZeroOrOne(
                         "fn:zero-or-one() called with a sequence containing more than one item",

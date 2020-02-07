@@ -32,8 +32,8 @@ public class IfRuntimeIterator extends LocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator _selectedIterator = null;
-    private Item _nextResult = null;
+    private RuntimeIterator selectedIterator = null;
+    private Item nextResult = null;
 
     public IfRuntimeIterator(
             RuntimeIterator condition,
@@ -43,61 +43,61 @@ public class IfRuntimeIterator extends LocalRuntimeIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(null, executionMode, iteratorMetadata);
-        this._children.add(condition);
-        this._children.add(branch);
-        this._children.add(elseBranch);
+        this.children.add(condition);
+        this.children.add(branch);
+        this.children.add(elseBranch);
     }
 
     @Override
     public void reset(DynamicContext context) {
         super.reset(context);
-        this._selectedIterator = null;
+        this.selectedIterator = null;
         setNextResult();
     }
 
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        this._selectedIterator = null;
+        this.selectedIterator = null;
         setNextResult();
     }
 
     @Override
     public Item next() {
-        if (this._nextResult == null) {
+        if (this.nextResult == null) {
             throw new IteratorFlowException("No next item.");
         }
-        Item result = this._nextResult;
+        Item result = this.nextResult;
         setNextResult();
         return result;
     }
 
     @Override
     public boolean hasNext() {
-        return this._nextResult != null;
+        return this.nextResult != null;
     }
 
     public void setNextResult() {
-        if (this._selectedIterator != null && this._nextResult == null) {
+        if (this.selectedIterator != null && this.nextResult == null) {
             throw new IteratorFlowException("Branch iterator has been fully consumed already.");
         }
-        if (this._selectedIterator == null) {
-            RuntimeIterator condition = this._children.get(0);
-            condition.open(this._currentDynamicContextForLocalExecution);
+        if (this.selectedIterator == null) {
+            RuntimeIterator condition = this.children.get(0);
+            condition.open(this.currentDynamicContextForLocalExecution);
             boolean effectiveBooleanValue = getEffectiveBooleanValue(condition);
             condition.close();
             if (effectiveBooleanValue) {
-                this._selectedIterator = this._children.get(1);
+                this.selectedIterator = this.children.get(1);
             } else {
-                this._selectedIterator = this._children.get(2);
+                this.selectedIterator = this.children.get(2);
             }
-            this._selectedIterator.open(this._currentDynamicContextForLocalExecution);
+            this.selectedIterator.open(this.currentDynamicContextForLocalExecution);
         }
-        if (this._selectedIterator.hasNext()) {
-            this._nextResult = this._selectedIterator.next();
+        if (this.selectedIterator.hasNext()) {
+            this.nextResult = this.selectedIterator.next();
         } else {
-            this._nextResult = null;
-            this._selectedIterator.close();
+            this.nextResult = null;
+            this.selectedIterator.close();
         }
     }
 }

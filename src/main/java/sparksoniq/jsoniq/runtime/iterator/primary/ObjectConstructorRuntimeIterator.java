@@ -37,9 +37,9 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private List<RuntimeIterator> _keys;
-    private List<RuntimeIterator> _values;
-    private boolean _isMergedObject = false;
+    private List<RuntimeIterator> keys;
+    private List<RuntimeIterator> values;
+    private boolean isMergedObject = false;
 
     public ObjectConstructorRuntimeIterator(
             List<RuntimeIterator> keys,
@@ -48,9 +48,9 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(keys, executionMode, iteratorMetadata);
-        this._children.addAll(values);
-        this._keys = keys;
-        this._values = values;
+        this.children.addAll(values);
+        this.keys = keys;
+        this.values = values;
     }
 
     public ObjectConstructorRuntimeIterator(
@@ -59,18 +59,18 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(null, executionMode, iteratorMetadata);
-        this._children.addAll(childExpressions);
-        this._isMergedObject = true;
+        this.children.addAll(childExpressions);
+        this.isMergedObject = true;
     }
 
     @Override
     public Item next() {
-        if (this._hasNext) {
+        if (this.hasNext) {
             List<Item> values = new ArrayList<>();
             List<String> keys = new ArrayList<>();
-            if (this._isMergedObject) {
-                for (RuntimeIterator iterator : this._children) {
-                    iterator.open(this._currentDynamicContextForLocalExecution);
+            if (this.isMergedObject) {
+                for (RuntimeIterator iterator : this.children) {
+                    iterator.open(this.currentDynamicContextForLocalExecution);
                     while (iterator.hasNext()) {
                         ObjectItem item = (ObjectItem) iterator.next();
                         keys.addAll(item.getKeys());
@@ -78,15 +78,15 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
                     }
                     iterator.close();
                 }
-                this._hasNext = false;
+                this.hasNext = false;
                 return ItemFactory.getInstance()
                     .createObjectItem(keys, values, getMetadata());
 
             } else {
 
-                for (RuntimeIterator valueIterator : this._values) {
+                for (RuntimeIterator valueIterator : this.values) {
                     List<Item> currentResults = new ArrayList<>();
-                    valueIterator.open(this._currentDynamicContextForLocalExecution);
+                    valueIterator.open(this.currentDynamicContextForLocalExecution);
                     while (valueIterator.hasNext()) {
                         currentResults.add(valueIterator.next());
                     }
@@ -101,8 +101,8 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
                     }
                 }
 
-                for (RuntimeIterator keyIterator : this._keys) {
-                    keyIterator.open(this._currentDynamicContextForLocalExecution);
+                for (RuntimeIterator keyIterator : this.keys) {
+                    keyIterator.open(this.currentDynamicContextForLocalExecution);
                     if (!keyIterator.hasNext()) {
                         throw new IteratorFlowException("A key cannot be the empty sequence", getMetadata());
                     }
@@ -121,7 +121,7 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
                         );
                     keyIterator.close();
                 }
-                this._hasNext = false;
+                this.hasNext = false;
                 return ItemFactory.getInstance()
                     .createObjectItem(keys, values, getMetadata());
             }

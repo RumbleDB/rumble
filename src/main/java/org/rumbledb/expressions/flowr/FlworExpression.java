@@ -32,9 +32,9 @@ import java.util.List;
 
 public class FlworExpression extends Expression {
 
-    private FlworClause _startClause;
-    private List<FlworClause> _contentClauses;
-    private ReturnClause _returnClause;
+    private FlworClause startClause;
+    private List<FlworClause> contentClauses;
+    private ReturnClause returnClause;
 
     public FlworExpression(
             FlworClause startClause,
@@ -50,53 +50,53 @@ public class FlworExpression extends Expression {
         )
             throw new SemanticException("FLOWR clause must starts with a FOR or a LET\n", this.getMetadata());
 
-        set_startClause(startClause);
-        set_contentClauses(containingClauses);
-        set_returnClause(returnClause);
+        setStartClause(startClause);
+        setContentClauses(containingClauses);
+        setReturnClause(returnClause);
     }
 
     public FlworClause getStartClause() {
-        return this._startClause;
+        return this.startClause;
     }
 
-    public List<FlworClause> get_contentClauses() {
-        return this._contentClauses;
+    public List<FlworClause> getContentClauses() {
+        return this.contentClauses;
     }
 
-    private void set_contentClauses(List<FlworClause> contentClauses) {
-        this._contentClauses = new ArrayList<>();
-        this._contentClauses.addAll(contentClauses);
+    private void setContentClauses(List<FlworClause> contentClauses) {
+        this.contentClauses = new ArrayList<>();
+        this.contentClauses.addAll(contentClauses);
     }
 
-    public ReturnClause get_returnClause() {
-        return this._returnClause;
+    public ReturnClause getReturnClause() {
+        return this.returnClause;
     }
 
-    private void set_returnClause(ReturnClause returnClause) {
-        this._returnClause = returnClause;
+    private void setReturnClause(ReturnClause returnClause) {
+        this.returnClause = returnClause;
     }
 
     @Override
     public void initHighestExecutionMode() {
         // overall flwor expression's execution mode is never used and remains unset
-        this._highestExecutionMode = ExecutionMode.UNSET;
+        this.highestExecutionMode = ExecutionMode.UNSET;
     }
 
     @Override
     public ExecutionMode getHighestExecutionMode(boolean ignoreUnsetError) {
         // overall flwor expression's execution mode is stored in the return clause
-        return this._returnClause.getHighestExecutionMode(ignoreUnsetError);
+        return this.returnClause.getHighestExecutionMode(ignoreUnsetError);
     }
 
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        result.add(this._startClause);
-        if (this._contentClauses != null)
-            this._contentClauses.forEach(e -> {
+        result.add(this.startClause);
+        if (this.contentClauses != null)
+            this.contentClauses.forEach(e -> {
                 if (e != null)
                     result.add(e);
             });
-        result.add(this._returnClause);
+        result.add(this.returnClause);
         return result;
     }
 
@@ -108,16 +108,16 @@ public class FlworExpression extends Expression {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(flowrExpr ";
-        result += this._startClause.serializationString(true) + " ";
-        for (FlworClause clause : this._contentClauses)
+        result += this.startClause.serializationString(true) + " ";
+        for (FlworClause clause : this.contentClauses)
             result += clause.serializationString(true) + " ";
-        result += this._returnClause.serializationString(true);
+        result += this.returnClause.serializationString(true);
         result += "))";
         return result;
     }
 
-    private void set_startClause(FlworClause startClause) {
-        this._startClause = startClause;
+    private void setStartClause(FlworClause startClause) {
+        this.startClause = startClause;
     }
 
 

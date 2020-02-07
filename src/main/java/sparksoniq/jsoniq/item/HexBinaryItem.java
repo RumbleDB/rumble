@@ -21,8 +21,8 @@ import java.util.regex.Pattern;
 public class HexBinaryItem extends AtomicItem {
 
     private static final long serialVersionUID = 1L;
-    private byte[] _value;
-    private String _stringValue;
+    private byte[] value;
+    private String stringValue;
 
     private final static String hexDigit = "[\\da-fA-F]";
     private final static String hexOctet = "(" + hexDigit + hexDigit + ")";
@@ -34,22 +34,22 @@ public class HexBinaryItem extends AtomicItem {
     }
 
     HexBinaryItem(String stringValue) {
-        this._stringValue = stringValue;
-        this._value = parseHexBinaryString(stringValue);
+        this.stringValue = stringValue;
+        this.value = parseHexBinaryString(stringValue);
     }
 
     public byte[] getValue() {
-        return this._value;
+        return this.value;
     }
 
     @Override
     public byte[] getBinaryValue() {
-        return this._value;
+        return this.value;
     }
 
     @Override
     public String getStringValue() {
-        return this._stringValue;
+        return this.stringValue;
     }
 
     private static boolean checkInvalidHexBinaryFormat(String hexBinaryString) {
@@ -98,7 +98,7 @@ public class HexBinaryItem extends AtomicItem {
             case StringItem:
                 return ItemFactory.getInstance().createStringItem(this.getStringValue());
             case Base64BinaryItem:
-                return ItemFactory.getInstance().createBase64BinaryItem(Base64.encodeBase64String(this._value));
+                return ItemFactory.getInstance().createBase64BinaryItem(Base64.encodeBase64String(this.value));
             default:
                 throw new ClassCastException();
         }
@@ -186,7 +186,7 @@ public class HexBinaryItem extends AtomicItem {
     @Override
     public void read(Kryo kryo, Input input) {
         int bytesLength = input.readInt();
-        this._value = input.readBytes(bytesLength);
-        this._stringValue = Hex.encodeHexString(this._value);
+        this.value = input.readBytes(bytesLength);
+        this.stringValue = Hex.encodeHexString(this.value);
     }
 }

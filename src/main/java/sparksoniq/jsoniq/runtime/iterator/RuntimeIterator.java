@@ -46,21 +46,21 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
 
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
     private static final long serialVersionUID = 1L;
-    protected transient boolean _hasNext;
-    protected transient boolean _isOpen;
-    protected List<RuntimeIterator> _children;
-    protected transient DynamicContext _currentDynamicContextForLocalExecution;
+    protected transient boolean hasNext;
+    protected transient boolean isOpen;
+    protected List<RuntimeIterator> children;
+    protected transient DynamicContext currentDynamicContextForLocalExecution;
     private ExceptionMetadata metadata;
 
-    protected ExecutionMode _highestExecutionMode;
+    protected ExecutionMode highestExecutionMode;
 
     protected RuntimeIterator(List<RuntimeIterator> children, ExecutionMode executionMode, ExceptionMetadata metadata) {
         this.metadata = metadata;
-        this._isOpen = false;
-        this._highestExecutionMode = executionMode;
-        this._children = new ArrayList<>();
+        this.isOpen = false;
+        this.highestExecutionMode = executionMode;
+        this.children = new ArrayList<>();
         if (children != null && !children.isEmpty())
-            this._children.addAll(children);
+            this.children.addAll(children);
     }
 
     /**
@@ -148,44 +148,44 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     }
 
     public void open(DynamicContext context) {
-        if (this._isOpen)
+        if (this.isOpen)
             throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
-        this._isOpen = true;
-        this._hasNext = true;
-        this._currentDynamicContextForLocalExecution = context;
+        this.isOpen = true;
+        this.hasNext = true;
+        this.currentDynamicContextForLocalExecution = context;
     }
 
     public void close() {
-        this._isOpen = false;
-        this._children.forEach(c -> c.close());
+        this.isOpen = false;
+        this.children.forEach(c -> c.close());
     }
 
     public void reset(DynamicContext context) {
-        this._hasNext = true;
-        this._currentDynamicContextForLocalExecution = context;
-        this._children.forEach(c -> c.reset(context));
+        this.hasNext = true;
+        this.currentDynamicContextForLocalExecution = context;
+        this.children.forEach(c -> c.reset(context));
     }
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this._children);
+        kryo.writeObject(output, this.children);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public void read(Kryo kryo, Input input) {
-        this._hasNext = false;
-        this._isOpen = false;
-        this._currentDynamicContextForLocalExecution = null;
-        this._children = kryo.readObject(input, ArrayList.class);
+        this.hasNext = false;
+        this.isOpen = false;
+        this.currentDynamicContextForLocalExecution = null;
+        this.children = kryo.readObject(input, ArrayList.class);
     }
 
     public boolean hasNext() {
-        return this._hasNext;
+        return this.hasNext;
     }
 
     public boolean isOpen() {
-        return this._isOpen;
+        return this.isOpen;
     }
 
     public ExceptionMetadata getMetadata() {
@@ -193,14 +193,14 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     }
 
     public ExecutionMode getHighestExecutionMode() {
-        return this._highestExecutionMode;
+        return this.highestExecutionMode;
     }
 
     public boolean isRDD() {
-        if (this._highestExecutionMode == ExecutionMode.UNSET) {
+        if (this.highestExecutionMode == ExecutionMode.UNSET) {
             throw new OurBadException("isRDD field in iterator without execution mode being set.");
         }
-        return this._highestExecutionMode.isRDD();
+        return this.highestExecutionMode.isRDD();
     }
 
     public JavaRDD<Item> getRDD(DynamicContext context) {
@@ -208,10 +208,10 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     }
 
     public boolean isDataFrame() {
-        if (this._highestExecutionMode == ExecutionMode.UNSET) {
+        if (this.highestExecutionMode == ExecutionMode.UNSET) {
             throw new OurBadException("isDataFrame accessed in iterator without execution mode being set.");
         }
-        return this._highestExecutionMode.isDataFrame();
+        return this.highestExecutionMode.isDataFrame();
     }
 
     public Dataset<Row> getDataFrame(DynamicContext context) {
@@ -241,7 +241,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<String, DynamicContext.VariableDependency> result =
             new TreeMap<>();
-        for (RuntimeIterator iterator : this._children) {
+        for (RuntimeIterator iterator : this.children) {
             DynamicContext.mergeVariableDependencies(result, iterator.getVariableDependencies());
         }
         return result;
@@ -260,7 +260,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
             buffer.append(v).append("(").append(dependencies.get(v)).append(")").append(" ");
         }
         buffer.append("\n");
-        for (RuntimeIterator iterator : this._children) {
+        for (RuntimeIterator iterator : this.children) {
             iterator.print(buffer, indent + 1);
         }
     }

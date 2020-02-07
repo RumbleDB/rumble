@@ -37,7 +37,7 @@ public class StringItem extends AtomicItem {
 
 
     private static final long serialVersionUID = 1L;
-    private String _value;
+    private String value;
 
     public StringItem() {
         super();
@@ -45,11 +45,11 @@ public class StringItem extends AtomicItem {
 
     public StringItem(String value) {
         super();
-        this._value = value;
+        this.value = value;
     }
 
     public String getValue() {
-        return this._value;
+        return this.value;
     }
 
     @Override
@@ -152,7 +152,7 @@ public class StringItem extends AtomicItem {
             } else if (itemType == AtomicTypes.NullItem) {
                 return isNullLiteral(this.getValue());
             } else if (itemType == AtomicTypes.DurationItem) {
-                DurationItem.getDurationFromString(this._value, AtomicTypes.DurationItem);
+                DurationItem.getDurationFromString(this.value, AtomicTypes.DurationItem);
             } else if (itemType == AtomicTypes.YearMonthDurationItem) {
                 DurationItem.getDurationFromString(this.getValue(), AtomicTypes.YearMonthDurationItem);
             } else if (itemType == AtomicTypes.DayTimeDurationItem) {
@@ -186,7 +186,7 @@ public class StringItem extends AtomicItem {
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this._value = input.readString();
+        this.value = input.readString();
     }
 
     public boolean equals(Object otherItem) {

@@ -46,8 +46,8 @@ public class GetEstimatorFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
     public static final List<String> estimatorParameterNames = new ArrayList<>(Arrays.asList("input", "params"));
-    private String _estimatorShortName;
-    private Class<?> _estimatorSparkMLClass;
+    private String estimatorShortName;
+    private Class<?> estimatorSparkMLClass;
 
     public GetEstimatorFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -61,7 +61,7 @@ public class GetEstimatorFunctionIterator extends LocalFunctionCallIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        RuntimeIterator nameIterator = this._children.get(0);
+        RuntimeIterator nameIterator = this.children.get(0);
         nameIterator.open(context);
         if (!nameIterator.hasNext()) {
             throw new UnexpectedTypeException(
@@ -69,7 +69,7 @@ public class GetEstimatorFunctionIterator extends LocalFunctionCallIterator {
                     getMetadata()
             );
         }
-        this._estimatorShortName = nameIterator.next().getStringValue();
+        this.estimatorShortName = nameIterator.next().getStringValue();
         if (nameIterator.hasNext()) {
             throw new UnexpectedTypeException(
                     "Estimator lookup can't be performed on a sequence.",
@@ -79,12 +79,12 @@ public class GetEstimatorFunctionIterator extends LocalFunctionCallIterator {
         nameIterator.close();
 
         String estimatorFullClassName = RumbleMLCatalog.getEstimatorFullClassName(
-            this._estimatorShortName,
+            this.estimatorShortName,
             getMetadata()
         );
         try {
-            this._estimatorSparkMLClass = Class.forName(estimatorFullClassName);
-            this._hasNext = true;
+            this.estimatorSparkMLClass = Class.forName(estimatorFullClassName);
+            this.hasNext = true;
         } catch (ClassNotFoundException e) {
             throw new OurBadException(
                     "No SparkML estimator implementation found with the given full class name."
@@ -94,12 +94,12 @@ public class GetEstimatorFunctionIterator extends LocalFunctionCallIterator {
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            this._hasNext = false;
+        if (this.hasNext) {
+            this.hasNext = false;
             try {
-                Estimator<?> estimator = (Estimator<?>) this._estimatorSparkMLClass.newInstance();
+                Estimator<?> estimator = (Estimator<?>) this.estimatorSparkMLClass.newInstance();
                 RuntimeIterator bodyIterator = new ApplyEstimatorRuntimeIterator(
-                        this._estimatorShortName,
+                        this.estimatorShortName,
                         estimator,
                         ExecutionMode.LOCAL,
                         getMetadata()
@@ -122,7 +122,7 @@ public class GetEstimatorFunctionIterator extends LocalFunctionCallIterator {
                 );
 
                 return new FunctionItem(
-                        new FunctionIdentifier(this._estimatorSparkMLClass.getName(), 2),
+                        new FunctionIdentifier(this.estimatorSparkMLClass.getName(), 2),
                         estimatorParameterNames,
                         new FunctionSignature(
                                 paramTypes,

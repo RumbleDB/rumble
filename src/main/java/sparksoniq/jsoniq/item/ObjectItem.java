@@ -39,8 +39,8 @@ public class ObjectItem extends JsonItem {
 
 
     private static final long serialVersionUID = 1L;
-    private List<Item> _values;
-    private List<String> _keys;
+    private List<Item> values;
+    private List<String> keys;
 
     public ObjectItem() {
         super();
@@ -49,8 +49,8 @@ public class ObjectItem extends JsonItem {
     public ObjectItem(List<String> keys, List<Item> values, ExceptionMetadata itemMetadata) {
         super();
         checkForDuplicateKeys(keys, itemMetadata);
-        this._keys = keys;
-        this._values = values;
+        this.keys = keys;
+        this.values = values;
     }
 
     /**
@@ -82,18 +82,18 @@ public class ObjectItem extends JsonItem {
             }
         }
 
-        this._keys = keyList;
-        this._values = valueList;
+        this.keys = keyList;
+        this.values = valueList;
     }
 
     @Override
     public List<String> getKeys() {
-        return this._keys;
+        return this.keys;
     }
 
     @Override
     public List<Item> getValues() {
-        return this._values;
+        return this.values;
     }
 
     private void checkForDuplicateKeys(List<String> keys, ExceptionMetadata metadata) {
@@ -109,16 +109,16 @@ public class ObjectItem extends JsonItem {
 
     @Override
     public Item getItemByKey(String s) {
-        if (this._keys.contains(s))
-            return this._values.get(this._keys.indexOf(s));
+        if (this.keys.contains(s))
+            return this.values.get(this.keys.indexOf(s));
         else
             return null;
     }
 
     @Override
     public void putItemByKey(String s, Item value) {
-        this._values.replaceAll(item -> {
-            if (this._values.indexOf(item) == this._keys.indexOf(s))
+        this.values.replaceAll(item -> {
+            if (this.values.indexOf(item) == this.keys.indexOf(s))
                 return value;
             else
                 return item;
@@ -139,9 +139,9 @@ public class ObjectItem extends JsonItem {
     public String serialize() {
         StringBuilder sb = new StringBuilder();
         sb.append("{ ");
-        for (int i = 0; i < this._keys.size(); ++i) {
-            String key = this._keys.get(i);
-            Item value = this._values.get(i);
+        for (int i = 0; i < this.keys.size(); ++i) {
+            String key = this.keys.get(i);
+            Item value = this.values.get(i);
             boolean isStringValue = value.isString();
             sb.append("\"").append(StringEscapeUtils.escapeJson(key)).append("\"").append(" : ");
             if (isStringValue) {
@@ -152,7 +152,7 @@ public class ObjectItem extends JsonItem {
                 sb.append(value.serialize());
             }
 
-            if (i < this._keys.size() - 1)
+            if (i < this.keys.size() - 1)
                 sb.append(", ");
             else
                 sb.append(" ");
@@ -163,15 +163,15 @@ public class ObjectItem extends JsonItem {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this._keys);
-        kryo.writeObject(output, this._values);
+        kryo.writeObject(output, this.keys);
+        kryo.writeObject(output, this.values);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public void read(Kryo kryo, Input input) {
-        this._keys = kryo.readObject(input, ArrayList.class);
-        this._values = kryo.readObject(input, ArrayList.class);
+        this.keys = kryo.readObject(input, ArrayList.class);
+        this.values = kryo.readObject(input, ArrayList.class);
     }
 
     public boolean equals(Object otherItem) {

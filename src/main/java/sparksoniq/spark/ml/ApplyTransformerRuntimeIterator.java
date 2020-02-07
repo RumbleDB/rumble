@@ -20,8 +20,8 @@ import static sparksoniq.spark.ml.RumbleMLUtils.convertRumbleObjectItemToSparkML
 public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private String _transformerShortName;
-    private Transformer _transformer;
+    private String transformerShortName;
+    private Transformer transformer;
 
     public ApplyTransformerRuntimeIterator(
             String transformerShortName,
@@ -30,8 +30,8 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(null, executionMode, iteratorMetadata);
-        this._transformerShortName = transformerShortName;
-        this._transformer = transformer;
+        this.transformerShortName = transformerShortName;
+        this.transformer = transformer;
     }
 
     @Override
@@ -52,18 +52,18 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
         }
         Item paramMapItem = paramMapItemList.get(0);
         ParamMap paramMap = convertRumbleObjectItemToSparkMLParamMap(
-            this._transformerShortName,
-            this._transformer,
+            this.transformerShortName,
+            this.transformer,
             paramMapItem,
             getMetadata()
         );
 
         try {
-            return this._transformer.transform(inputDataset, paramMap);
+            return this.transformer.transform(inputDataset, paramMap);
         } catch (IllegalArgumentException e) {
             throw new InvalidRumbleMLParamException(
                     "Parameter provided to "
-                        + this._transformerShortName
+                        + this.transformerShortName
                         + " causes the following error: "
                         + e.getMessage(),
                     getMetadata()

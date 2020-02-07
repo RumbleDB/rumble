@@ -35,10 +35,10 @@ import java.util.List;
 public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
-    private String[] _results;
-    private Item _nextResult;
-    private int _currentPosition;
-    private boolean _lastEmptyString;
+    private String[] results;
+    private Item nextResult;
+    private int currentPosition;
+    private boolean lastEmptyString;
 
     public TokenizeFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -50,8 +50,8 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
 
     @Override
     public Item next() {
-        if (this._nextResult != null) {
-            Item result = this._nextResult;
+        if (this.nextResult != null) {
+            Item result = this.nextResult;
             setNextResult();
             return result;
         }
@@ -61,18 +61,18 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        this._results = null;
-        this._currentPosition = -1;
+        this.results = null;
+        this.currentPosition = -1;
         setNextResult();
     }
 
     public void setNextResult() {
-        if (this._results == null) {
+        if (this.results == null) {
             // Getting first parameter
-            RuntimeIterator stringIterator = this._children.get(0);
-            stringIterator.open(this._currentDynamicContextForLocalExecution);
+            RuntimeIterator stringIterator = this.children.get(0);
+            stringIterator.open(this.currentDynamicContextForLocalExecution);
             if (!stringIterator.hasNext()) {
-                this._hasNext = false;
+                this.hasNext = false;
                 stringIterator.close();
                 return;
             }
@@ -101,11 +101,11 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
             }
 
             // Getting second parameter
-            if (this._children.size() == 1) {
+            if (this.children.size() == 1) {
                 separator = "\\s+";
             } else {
-                RuntimeIterator separatorIterator = this._children.get(1);
-                separatorIterator.open(this._currentDynamicContextForLocalExecution);
+                RuntimeIterator separatorIterator = this.children.get(1);
+                separatorIterator.open(this.currentDynamicContextForLocalExecution);
                 if (!separatorIterator.hasNext()) {
                     throw new UnexpectedTypeException("Second parameter of tokenize must be a string.", getMetadata());
                 }
@@ -121,23 +121,23 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
                     throw new UnexpectedTypeException("Second parameter of tokenize must be a string.", getMetadata());
                 }
             }
-            this._results = input.split(separator);
-            this._currentPosition = 0;
-            if (this._children.size() == 1 && this._results.length != 0 && this._results[0].equals("")) {
-                this._currentPosition++;
+            this.results = input.split(separator);
+            this.currentPosition = 0;
+            if (this.children.size() == 1 && this.results.length != 0 && this.results[0].equals("")) {
+                this.currentPosition++;
             }
-            this._lastEmptyString = this._children.size() == 2 && input.matches(".*" + separator + "$");
+            this.lastEmptyString = this.children.size() == 2 && input.matches(".*" + separator + "$");
         }
-        if (this._currentPosition < this._results.length) {
-            this._nextResult = ItemFactory.getInstance().createStringItem(this._results[this._currentPosition]);
-            this._currentPosition++;
-            this._hasNext = true;
-        } else if (this._lastEmptyString) {
-            this._nextResult = ItemFactory.getInstance().createStringItem(new String(""));
-            this._hasNext = true;
-            this._lastEmptyString = false;
+        if (this.currentPosition < this.results.length) {
+            this.nextResult = ItemFactory.getInstance().createStringItem(this.results[this.currentPosition]);
+            this.currentPosition++;
+            this.hasNext = true;
+        } else if (this.lastEmptyString) {
+            this.nextResult = ItemFactory.getInstance().createStringItem(new String(""));
+            this.hasNext = true;
+            this.lastEmptyString = false;
         } else {
-            this._hasNext = false;
+            this.hasNext = false;
         }
     }
 }

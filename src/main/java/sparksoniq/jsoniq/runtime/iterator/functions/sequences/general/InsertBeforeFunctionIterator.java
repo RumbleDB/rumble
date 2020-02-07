@@ -37,13 +37,13 @@ public class InsertBeforeFunctionIterator extends LocalFunctionCallIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator _sequenceIterator;
-    private RuntimeIterator _insertIterator;
-    private Item _nextResult;
-    private int _insertPosition; // position to start inserting
-    private int _currentPosition; // current position
-    private boolean _insertingNow; // check if currently iterating over insertIterator
-    private boolean _insertingCompleted;
+    private RuntimeIterator sequenceIterator;
+    private RuntimeIterator insertIterator;
+    private Item nextResult;
+    private int insertPosition; // position to start inserting
+    private int currentPosition; // current position
+    private boolean insertingNow; // check if currently iterating over insertIterator
+    private boolean insertingCompleted;
 
     public InsertBeforeFunctionIterator(
             List<RuntimeIterator> parameters,
@@ -56,7 +56,7 @@ public class InsertBeforeFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public Item next() {
         if (this.hasNext()) {
-            Item result = this._nextResult; // save the result to be returned
+            Item result = this.nextResult; // save the result to be returned
             setNextResult(); // calculate and store the next result
             return result;
         }
@@ -67,11 +67,11 @@ public class InsertBeforeFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        this._currentPosition = 1; // initialize index as the first item
-        this._insertingNow = false;
-        this._insertingCompleted = false;
+        this.currentPosition = 1; // initialize index as the first item
+        this.insertingNow = false;
+        this.insertingCompleted = false;
 
-        RuntimeIterator positionIterator = this._children.get(1);
+        RuntimeIterator positionIterator = this.children.get(1);
         positionIterator.open(context);
         if (!positionIterator.hasNext()) {
             throw new UnexpectedTypeException(
@@ -96,59 +96,59 @@ public class InsertBeforeFunctionIterator extends LocalFunctionCallIterator {
                     getMetadata()
             );
         }
-        this._insertPosition = ((IntegerItem) positionItem).getIntegerValue();
+        this.insertPosition = ((IntegerItem) positionItem).getIntegerValue();
         positionIterator.close();
 
-        this._sequenceIterator = this._children.get(0);
-        this._insertIterator = this._children.get(2);
+        this.sequenceIterator = this.children.get(0);
+        this.insertIterator = this.children.get(2);
 
-        this._sequenceIterator.open(context);
-        this._insertIterator.open(context);
+        this.sequenceIterator.open(context);
+        this.insertIterator.open(context);
 
         setNextResult();
     }
 
     public void setNextResult() {
-        this._nextResult = null;
+        this.nextResult = null;
 
         // don't check for insertion triggers once insertion is completed
-        if (this._insertingCompleted == false) {
-            if (!this._insertingNow) {
-                if (this._insertPosition <= this._currentPosition) { // start inserting if condition is met
-                    if (this._insertIterator.hasNext()) {
-                        this._insertingNow = true;
-                        this._nextResult = this._insertIterator.next();
+        if (this.insertingCompleted == false) {
+            if (!this.insertingNow) {
+                if (this.insertPosition <= this.currentPosition) { // start inserting if condition is met
+                    if (this.insertIterator.hasNext()) {
+                        this.insertingNow = true;
+                        this.nextResult = this.insertIterator.next();
                     } else {
-                        this._insertingNow = false;
-                        this._insertingCompleted = true;
+                        this.insertingNow = false;
+                        this.insertingCompleted = true;
                     }
                 }
             } else { // if inserting
-                if (this._insertIterator.hasNext()) { // return an item from _insertIterator at each iteration
-                    this._nextResult = this._insertIterator.next();
+                if (this.insertIterator.hasNext()) { // return an item from insertIterator at each iteration
+                    this.nextResult = this.insertIterator.next();
                 } else {
-                    this._insertingNow = false;
-                    this._insertingCompleted = true;
+                    this.insertingNow = false;
+                    this.insertingCompleted = true;
                 }
             }
         }
 
         // if not inserting, take the next element from input sequence
-        if (this._insertingNow == false) {
-            if (this._sequenceIterator.hasNext()) {
-                this._nextResult = this._sequenceIterator.next();
-                this._currentPosition++;
-            } else if (this._insertIterator.hasNext()) {
-                this._nextResult = this._insertIterator.next();
+        if (this.insertingNow == false) {
+            if (this.sequenceIterator.hasNext()) {
+                this.nextResult = this.sequenceIterator.next();
+                this.currentPosition++;
+            } else if (this.insertIterator.hasNext()) {
+                this.nextResult = this.insertIterator.next();
             }
         }
 
-        if (this._nextResult == null) {
-            this._hasNext = false;
-            this._sequenceIterator.close();
-            this._insertIterator.close();
+        if (this.nextResult == null) {
+            this.hasNext = false;
+            this.sequenceIterator.close();
+            this.insertIterator.close();
         } else {
-            this._hasNext = true;
+            this.hasNext = true;
         }
     }
 }

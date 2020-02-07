@@ -31,23 +31,23 @@ import java.util.List;
 
 public class OrExpression extends NaryExpressionBase {
 
-    public OrExpression(Expression _mainExpression, ExceptionMetadata metadata) {
-        super(_mainExpression, metadata);
+    public OrExpression(Expression mainExpression, ExceptionMetadata metadata) {
+        super(mainExpression, metadata);
 
     }
 
     public OrExpression(
-            Expression _mainExpression,
+            Expression mainExpression,
             List<Expression> rhs,
             ExceptionMetadata metadata
     ) {
-        super(_mainExpression, rhs, Operator.OR, metadata);
+        super(mainExpression, rhs, Operator.OR, metadata);
     }
 
     @Override
     public String serializationString(boolean prefix) {
         String result = (prefix ? "(exprSingle " : "") + "(orExpr ";
-        result += this._mainExpression.serializationString(true);
+        result += this.mainExpression.serializationString(true);
         if (this.getRightExpressions() != null && this.getRightExpressions().size() > 0)
             for (Expression expr : this.getRightExpressions())
                 result += " or " + expr.serializationString(true);

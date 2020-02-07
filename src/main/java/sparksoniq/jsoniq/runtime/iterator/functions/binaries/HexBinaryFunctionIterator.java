@@ -15,7 +15,7 @@ import java.util.List;
 public class HexBinaryFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
-    private Item _hexBinaryStringItem = null;
+    private Item hexBinaryStringItem = null;
 
     public HexBinaryFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -27,14 +27,14 @@ public class HexBinaryFunctionIterator extends LocalFunctionCallIterator {
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            this._hasNext = false;
+        if (this.hasNext) {
+            this.hasNext = false;
             try {
-                return ItemFactory.getInstance().createHexBinaryItem(this._hexBinaryStringItem.getStringValue());
+                return ItemFactory.getInstance().createHexBinaryItem(this.hexBinaryStringItem.getStringValue());
             } catch (IllegalArgumentException e) {
                 String message = String.format(
                     "\"%s\": value of type %s is not castable to type %s",
-                    this._hexBinaryStringItem.serialize(),
+                    this.hexBinaryStringItem.serialize(),
                     "string",
                     "hexBinary"
                 );
@@ -51,8 +51,8 @@ public class HexBinaryFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        this._hexBinaryStringItem = this._children.get(0)
-            .materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
-        this._hasNext = this._hexBinaryStringItem != null;
+        this.hexBinaryStringItem = this.children.get(0)
+            .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        this.hasNext = this.hexBinaryStringItem != null;
     }
 }

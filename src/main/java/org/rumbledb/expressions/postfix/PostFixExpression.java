@@ -34,12 +34,12 @@ import java.util.List;
 
 public class PostFixExpression extends Expression {
 
-    private PrimaryExpression _primaryExpressionNode;
-    private List<PostfixExtension> _extensions = null;
+    private PrimaryExpression primaryExpressionNode;
+    private List<PostfixExtension> extensions = null;
 
     public PostFixExpression(PrimaryExpression primaryExpressionNode, ExceptionMetadata metadata) {
         super(metadata);
-        this._primaryExpressionNode = primaryExpressionNode;
+        this.primaryExpressionNode = primaryExpressionNode;
     }
 
     public PostFixExpression(
@@ -48,21 +48,21 @@ public class PostFixExpression extends Expression {
             ExceptionMetadata metadata
     ) {
         super(metadata);
-        this._primaryExpressionNode = primaryExpressionNode;
-        this._extensions = new ArrayList<>();
-        this._extensions.addAll(extensions);
+        this.primaryExpressionNode = primaryExpressionNode;
+        this.extensions = new ArrayList<>();
+        this.extensions.addAll(extensions);
     }
 
     public boolean isPrimary() {
-        return this._extensions == null || this._extensions.isEmpty();
+        return this.extensions == null || this.extensions.isEmpty();
     }
 
-    public PrimaryExpression get_primaryExpressionNode() {
-        return this._primaryExpressionNode;
+    public PrimaryExpression getPrimaryExpressionNode() {
+        return this.primaryExpressionNode;
     }
 
     public List<PostfixExtension> getExtensions() {
-        return this._extensions;
+        return this.extensions;
     }
 
     private boolean bypassCurrentExpressionForExecutionModeOperations() {
@@ -74,13 +74,13 @@ public class PostFixExpression extends Expression {
         if (bypassCurrentExpressionForExecutionModeOperations()) {
             return;
         }
-        this._highestExecutionMode = this._primaryExpressionNode.getHighestExecutionMode();
+        this.highestExecutionMode = this.primaryExpressionNode.getHighestExecutionMode();
     }
 
     @Override
     public ExecutionMode getHighestExecutionMode(boolean ignoreUnsetError) {
         if (bypassCurrentExpressionForExecutionModeOperations()) {
-            return this._primaryExpressionNode.getHighestExecutionMode(ignoreUnsetError);
+            return this.primaryExpressionNode.getHighestExecutionMode(ignoreUnsetError);
         }
         return super.getHighestExecutionMode(ignoreUnsetError);
     }
@@ -93,9 +93,9 @@ public class PostFixExpression extends Expression {
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        result.add(this._primaryExpressionNode);
-        if (this._extensions != null)
-            this._extensions.forEach(e -> {
+        result.add(this.primaryExpressionNode);
+        if (this.extensions != null)
+            this.extensions.forEach(e -> {
                 if (e != null)
                     result.add(e);
             });
@@ -105,12 +105,12 @@ public class PostFixExpression extends Expression {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(postFixExpr ";
-        result += get_primaryExpressionNode().serializationString(true);
-        if (this._extensions != null && this._extensions.size() > 0) {
-            for (PostfixExtension ext : this._extensions)
+        result += getPrimaryExpressionNode().serializationString(true);
+        if (this.extensions != null && this.extensions.size() > 0) {
+            for (PostfixExtension ext : this.extensions)
                 result += " "
                     + ext.serializationString(true)
-                    + (this._extensions.indexOf(ext) < this._extensions.size() - 1 ? " " : "");
+                    + (this.extensions.indexOf(ext) < this.extensions.size() - 1 ? " " : "");
         }
         result += ")";
         return result;

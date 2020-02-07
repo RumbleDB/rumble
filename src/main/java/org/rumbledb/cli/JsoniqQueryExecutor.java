@@ -57,12 +57,12 @@ import java.util.List;
 
 public class JsoniqQueryExecutor {
     public static final String TEMP_QUERY_FILE_NAME = "Temp_Query";
-    private SparksoniqRuntimeConfiguration _configuration;
-    private boolean _useLocalOutputLog;
+    private SparksoniqRuntimeConfiguration configuration;
+    private boolean useLocalOutputLog;
 
     public JsoniqQueryExecutor(boolean useLocalOutputLog, SparksoniqRuntimeConfiguration configuration) {
-        this._configuration = configuration;
-        this._useLocalOutputLog = useLocalOutputLog;
+        this.configuration = configuration;
+        this.useLocalOutputLog = useLocalOutputLog;
         SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
     }
 
@@ -71,7 +71,7 @@ public class JsoniqQueryExecutor {
         if (outputPath != null) {
             outputFile = new File(outputPath);
             if (outputFile.exists()) {
-                if (!this._configuration.getOverwrite()) {
+                if (!this.configuration.getOverwrite()) {
                     System.err.println(
                         "Output path " + outputPath + " already exists. Please use --overwrite yes to overwrite."
                     );
@@ -89,7 +89,7 @@ public class JsoniqQueryExecutor {
         JsoniqExpressionTreeVisitor visitor = this.parse(new JsoniqLexer(charStream));
         generateStaticContext(visitor.getMainModule());
         RuntimeIterator result = generateRuntimeIterators(visitor.getMainModule());
-        if (this._configuration.isPrintIteratorTree()) {
+        if (this.configuration.isPrintIteratorTree()) {
             StringBuffer sb = new StringBuffer();
             result.print(sb, 0);
             System.out.println(sb);
@@ -110,7 +110,7 @@ public class JsoniqQueryExecutor {
         }
         long endTime = System.currentTimeMillis();
         long totalTime = endTime - startTime;
-        if (this._configuration.getLogPath() != null) {
+        if (this.configuration.getLogPath() != null) {
             writeTimeLog(totalTime);
         }
     }
@@ -122,7 +122,7 @@ public class JsoniqQueryExecutor {
         generateStaticContext(visitor.getMainModule());
         RuntimeIterator result = generateRuntimeIterators(visitor.getMainModule());
         // collect output in memory and write to filesystem from java
-        if (this._useLocalOutputLog) {
+        if (this.useLocalOutputLog) {
             String output = runIterators(result);
             org.apache.hadoop.fs.FileSystem fileSystem = org.apache.hadoop.fs.FileSystem
                 .get(SparkSessionManager.getInstance().getJavaSparkContext().hadoopConfiguration());
@@ -140,7 +140,7 @@ public class JsoniqQueryExecutor {
         }
         long endTime = System.currentTimeMillis();
         long totalTime = endTime - startTime;
-        if (this._configuration.getLogPath() != null) {
+        if (this.configuration.getLogPath() != null) {
             writeTimeLog(totalTime);
         }
     }
@@ -148,25 +148,25 @@ public class JsoniqQueryExecutor {
     private void writeTimeLog(long totalTime) throws IOException {
         String result = "[ExecTime]" + totalTime;
         if (
-            this._configuration.getLogPath().startsWith("file://") || this._configuration.getLogPath().startsWith("/")
+            this.configuration.getLogPath().startsWith("file://") || this.configuration.getLogPath().startsWith("/")
         ) {
-            String timeLogPath = this._configuration.getLogPath()
-                .substring(0, this._configuration.getLogPath().lastIndexOf("/"));
+            String timeLogPath = this.configuration.getLogPath()
+                .substring(0, this.configuration.getLogPath().lastIndexOf("/"));
             timeLogPath += Path.SEPARATOR + "time_log_";
             java.nio.file.Path finalPath = FileUtils.getUniqueFileName(timeLogPath);
             java.nio.file.Files.write(finalPath, result.getBytes());
         }
-        if (this._configuration.getLogPath().startsWith("hdfs://")) {
+        if (this.configuration.getLogPath().startsWith("hdfs://")) {
             org.apache.hadoop.fs.FileSystem fileSystem = org.apache.hadoop.fs.FileSystem
                 .get(SparkSessionManager.getInstance().getJavaSparkContext().hadoopConfiguration());
-            FSDataOutputStream fsDataOutputStream = fileSystem.create(new Path(this._configuration.getLogPath()));
+            FSDataOutputStream fsDataOutputStream = fileSystem.create(new Path(this.configuration.getLogPath()));
             BufferedOutputStream stream = new BufferedOutputStream(fsDataOutputStream);
             stream.write(result.getBytes());
             stream.close();
         }
-        if (this._configuration.getLogPath().startsWith("./")) {
+        if (this.configuration.getLogPath().startsWith("./")) {
             List<String> lines = Arrays.asList(result);
-            java.nio.file.Path file = Paths.get(this._configuration.getLogPath());
+            java.nio.file.Path file = Paths.get(this.configuration.getLogPath());
             Files.write(file, lines, Charset.forName("UTF-8"));
         }
     }
@@ -264,9 +264,9 @@ public class JsoniqQueryExecutor {
             while (
                 iterator.hasNext()
                     &&
-                    ((itemCount < this._configuration.getResultSizeCap() && this._configuration.getResultSizeCap() > 0)
+                    ((itemCount < this.configuration.getResultSizeCap() && this.configuration.getResultSizeCap() > 0)
                         ||
-                        this._configuration.getResultSizeCap() == 0)
+                        this.configuration.getResultSizeCap() == 0)
             ) {
                 sb.append(iterator.next().serialize());
                 sb.append("\n");

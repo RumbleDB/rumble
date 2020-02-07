@@ -194,17 +194,17 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     public RuntimeIterator visitFlowrExpression(FlworExpression expression, RuntimeIterator argument) {
         FlworClause startClause = expression.getStartClause();
         RuntimeTupleIterator previous = this.visitFlowrClause(startClause, argument, null);
-        for (FlworClause clause : expression.get_contentClauses()) {
+        for (FlworClause clause : expression.getContentClauses()) {
             previous = this.visitFlowrClause(clause, argument, previous);
         }
         return new ReturnClauseSparkIterator(
                 previous,
                 this.visit(
-                    (expression.get_returnClause()).getReturnExpr(),
+                    (expression.getReturnClause()).getReturnExpr(),
                     argument
                 ),
-                expression.get_returnClause().getHighestExecutionMode(),
-                expression.get_returnClause().getMetadata()
+                expression.getReturnClause().getHighestExecutionMode(),
+                expression.getReturnClause().getMetadata()
         );
     }
 
@@ -370,7 +370,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         if (expression.isPrimary()) {
             return defaultAction(expression, argument);
         } else {
-            RuntimeIterator previous = this.visit(expression.get_primaryExpressionNode(), argument);
+            RuntimeIterator previous = this.visit(expression.getPrimaryExpressionNode(), argument);
             for (PostfixExtension extension : expression.getExtensions()) {
                 try {
                     ExecutionMode executionMode = extension.getHighestExecutionMode();
@@ -487,18 +487,18 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     @Override
     public RuntimeIterator visitFunctionDeclaration(FunctionDeclaration expression, RuntimeIterator argument) {
         Map<String, SequenceType> paramNameToSequenceTypes = new LinkedHashMap<>();
-        for (Map.Entry<String, FlworVarSequenceType> paramEntry : expression.get_params().entrySet()) {
+        for (Map.Entry<String, FlworVarSequenceType> paramEntry : expression.getParams().entrySet()) {
             paramNameToSequenceTypes.put(paramEntry.getKey(), paramEntry.getValue().getSequence());
         }
-        SequenceType returnType = expression.get_returnType().getSequence();
-        RuntimeIterator bodyIterator = this.visit(expression.get_body(), argument);
+        SequenceType returnType = expression.getReturnType().getSequence();
+        RuntimeIterator bodyIterator = this.visit(expression.getBody(), argument);
         FunctionItem function = new FunctionItem(
-                expression.get_name(),
+                expression.getName(),
                 paramNameToSequenceTypes,
                 returnType,
                 bodyIterator
         );
-        if (expression.get_name().equals("")) {
+        if (expression.getName().equals("")) {
             // unnamed (inline function declaration)
             return new FunctionRuntimeIterator(
                     function,
@@ -906,7 +906,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             RuntimeIterator childExpression = this.visit(expression.getMainExpression(), argument);
             return new CastableIterator(
                     childExpression,
-                    expression.get_atomicType().getSingleType(),
+                    expression.getAtomicType().getSingleType(),
                     expression.getHighestExecutionMode(),
                     expression.getMetadata()
             );

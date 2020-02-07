@@ -43,10 +43,10 @@ import java.util.TreeMap;
 public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private RuntimeTupleIterator _child;
-    private DynamicContext _tupleContext; // re-use same DynamicContext object for efficiency
-    private RuntimeIterator _expression;
-    private Item _nextResult;
+    private RuntimeTupleIterator child;
+    private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
+    private RuntimeIterator expression;
+    private Item nextResult;
 
     public ReturnClauseSparkIterator(
             RuntimeTupleIterator child,
@@ -55,13 +55,13 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(Collections.singletonList(expression), executionMode, iteratorMetadata);
-        this._child = child;
-        this._expression = expression;
+        this.child = child;
+        this.expression = expression;
     }
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        RuntimeIterator expression = this._children.get(0);
+        RuntimeIterator expression = this.children.get(0);
         if (expression.isRDD()) {
             throw new JobWithinAJobException(
                     "A return clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
@@ -70,20 +70,20 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         }
 
 
-        Dataset<Row> df = this._child.getDataFrame(context, expression.getVariableDependencies());
+        Dataset<Row> df = this.child.getDataFrame(context, expression.getVariableDependencies());
         StructType oldSchema = df.schema();
         return df.javaRDD().flatMap(new ReturnFlatMapClosure(expression, context, oldSchema));
     }
 
     @Override
     protected boolean hasNextLocal() {
-        return this._hasNext;
+        return this.hasNext;
     }
 
     @Override
     protected Item nextLocal() {
-        if (this._hasNext) {
-            Item result = this._nextResult; // save the result to be returned
+        if (this.hasNext) {
+            Item result = this.nextResult; // save the result to be returned
             setNextResult(); // calculate and store the next result
             return result;
         }
@@ -92,26 +92,26 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
     @Override
     protected void openLocal() {
-        this._child.open(this._currentDynamicContextForLocalExecution);
-        this._tupleContext = new DynamicContext(this._currentDynamicContextForLocalExecution); // assign current context
-                                                                                               // as parent
+        this.child.open(this.currentDynamicContextForLocalExecution);
+        this.tupleContext = new DynamicContext(this.currentDynamicContextForLocalExecution); // assign current context
+                                                                                             // as parent
         setNextResult();
     }
 
     private void setNextResult() {
-        if (this._expression.isOpen()) {
+        if (this.expression.isOpen()) {
             boolean isResultSet = setResultFromExpression();
             if (isResultSet) {
                 return;
             }
         }
 
-        while (this._child.hasNext()) {
-            FlworTuple tuple = this._child.next();
-            this._tupleContext.removeAllVariables(); // clear the previous variables
-            this._tupleContext.setBindingsFromTuple(tuple, getMetadata()); // assign new variables from new tuple
+        while (this.child.hasNext()) {
+            FlworTuple tuple = this.child.next();
+            this.tupleContext.removeAllVariables(); // clear the previous variables
+            this.tupleContext.setBindingsFromTuple(tuple, getMetadata()); // assign new variables from new tuple
 
-            this._expression.open(this._tupleContext);
+            this.expression.open(this.tupleContext);
             boolean isResultSet = setResultFromExpression();
             if (isResultSet) {
                 return;
@@ -119,46 +119,46 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         }
 
         // execution reaches here when there are no more results
-        this._child.close();
-        this._hasNext = false;
+        this.child.close();
+        this.hasNext = false;
     }
 
     /**
-     * _expression has to be open prior to call.
+     * expression has to be open prior to call.
      *
-     * @return true if _nextResult is set and _hasNext is true, false otherwise
+     * @return true if nextResult is set and hasNext is true, false otherwise
      */
     private boolean setResultFromExpression() {
-        if (this._expression.hasNext()) { // if expression returns a value, set it as next
-            this._nextResult = this._expression.next();
-            this._hasNext = true;
+        if (this.expression.hasNext()) { // if expression returns a value, set it as next
+            this.nextResult = this.expression.next();
+            this.hasNext = true;
             return true;
         } else { // if not, keep iterating
-            this._expression.close();
+            this.expression.close();
             return false;
         }
     }
 
     @Override
     protected void closeLocal() {
-        this._child.close();
-        this._expression.close();
+        this.child.close();
+        this.expression.close();
     }
 
     @Override
     protected void resetLocal(DynamicContext context) {
-        this._child.reset(this._currentDynamicContextForLocalExecution);
-        this._expression.close();
+        this.child.reset(this.currentDynamicContextForLocalExecution);
+        this.expression.close();
         setNextResult();
     }
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<String, DynamicContext.VariableDependency> result =
-            new TreeMap<>(this._expression.getVariableDependencies());
-        for (String variable : this._child.getVariablesBoundInCurrentFLWORExpression()) {
+            new TreeMap<>(this.expression.getVariableDependencies());
+        for (String variable : this.child.getVariablesBoundInCurrentFLWORExpression()) {
             result.remove(variable);
         }
-        result.putAll(this._child.getVariableDependencies());
+        result.putAll(this.child.getVariableDependencies());
         return result;
     }
 
@@ -168,7 +168,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         }
         buffer.append(getClass().getName());
         buffer.append("\n");
-        this._child.print(buffer, indent + 1);
-        this._expression.print(buffer, indent + 1);
+        this.child.print(buffer, indent + 1);
+        this.expression.print(buffer, indent + 1);
     }
 }

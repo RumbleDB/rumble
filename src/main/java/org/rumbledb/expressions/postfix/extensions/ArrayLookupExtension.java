@@ -30,22 +30,22 @@ import java.util.List;
 
 public class ArrayLookupExtension extends PostfixExtension {
 
-    Expression _expression;
+    private Expression expression;
 
     public ArrayLookupExtension(Expression commaExpr, ExceptionMetadata metadata) {
         super(metadata);
-        this._expression = commaExpr;
+        this.expression = commaExpr;
     }
 
     public Expression getExpression() {
-        return this._expression;
+        return this.expression;
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        if (this._expression != null)
-            result.add(this._expression);
+        if (this.expression != null)
+            result.add(this.expression);
         return result;
     }
 
@@ -53,7 +53,7 @@ public class ArrayLookupExtension extends PostfixExtension {
     public String serializationString(boolean prefix) {
         String result = "(arrayLookup [["
             +
-            this._expression.serializationString(true)
+            this.expression.serializationString(true)
             + "]])";
         return result;
     }

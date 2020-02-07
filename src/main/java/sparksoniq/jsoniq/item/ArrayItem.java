@@ -35,7 +35,7 @@ public class ArrayItem extends JsonItem {
 
 
     private static final long serialVersionUID = 1L;
-    private List<Item> _arrayItems;
+    private List<Item> arrayItems;
 
     public ArrayItem() {
         super();
@@ -43,21 +43,21 @@ public class ArrayItem extends JsonItem {
 
     public ArrayItem(List<Item> arrayItems) {
         super();
-        this._arrayItems = arrayItems;
+        this.arrayItems = arrayItems;
     }
 
     public List<Item> getItems() {
-        return this._arrayItems;
+        return this.arrayItems;
     }
 
     @Override
     public Item getItemAt(int i) {
-        return this._arrayItems.get(i);
+        return this.arrayItems.get(i);
     }
 
     @Override
     public void putItem(Item value) {
-        this._arrayItems.add(value);
+        this.arrayItems.add(value);
     }
 
     @Override
@@ -67,7 +67,7 @@ public class ArrayItem extends JsonItem {
 
     @Override
     public int getSize() {
-        return this._arrayItems.size();
+        return this.arrayItems.size();
     }
 
     @Override
@@ -81,7 +81,7 @@ public class ArrayItem extends JsonItem {
         sb.append("[");
 
         String separator = " ";
-        for (Item item : this._arrayItems) {
+        for (Item item : this.arrayItems) {
             sb.append(separator);
             separator = ", ";
             boolean isStringValue = item.isString();
@@ -100,13 +100,13 @@ public class ArrayItem extends JsonItem {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this._arrayItems);
+        kryo.writeObject(output, this.arrayItems);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public void read(Kryo kryo, Input input) {
-        this._arrayItems = kryo.readObject(input, ArrayList.class);
+        this.arrayItems = kryo.readObject(input, ArrayList.class);
     }
 
     public boolean equals(Object otherItem) {

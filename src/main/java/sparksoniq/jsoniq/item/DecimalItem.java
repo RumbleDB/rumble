@@ -39,7 +39,7 @@ public class DecimalItem extends AtomicItem {
 
 
     private static final long serialVersionUID = 1L;
-    private BigDecimal _value;
+    private BigDecimal value;
 
     public DecimalItem() {
         super();
@@ -47,16 +47,16 @@ public class DecimalItem extends AtomicItem {
 
     public DecimalItem(BigDecimal decimal) {
         super();
-        this._value = decimal;
+        this.value = decimal;
     }
 
     public BigDecimal getValue() {
-        return this._value;
+        return this.value;
     }
 
     @Override
     public BigDecimal getDecimalValue() {
-        return this._value;
+        return this.value;
     }
 
     @Override
@@ -118,7 +118,7 @@ public class DecimalItem extends AtomicItem {
 
     @Override
     public String serialize() {
-        return String.valueOf(this._value.stripTrailingZeros().toPlainString());
+        return String.valueOf(this.value.stripTrailingZeros().toPlainString());
     }
 
     @Override
@@ -128,7 +128,7 @@ public class DecimalItem extends AtomicItem {
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this._value = kryo.readObject(input, BigDecimal.class);
+        this.value = kryo.readObject(input, BigDecimal.class);
     }
 
     public boolean equals(Object otherItem) {

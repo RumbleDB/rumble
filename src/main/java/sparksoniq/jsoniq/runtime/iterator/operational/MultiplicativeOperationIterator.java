@@ -35,8 +35,8 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
 
 
     private static final long serialVersionUID = 1L;
-    Item _left;
-    Item _right;
+    Item left;
+    Item right;
 
     public MultiplicativeOperationIterator(
             RuntimeIterator left,
@@ -52,52 +52,52 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
     public void open(DynamicContext context) {
         super.open(context);
 
-        this._leftIterator.open(this._currentDynamicContextForLocalExecution);
-        this._rightIterator.open(this._currentDynamicContextForLocalExecution);
+        this.leftIterator.open(this.currentDynamicContextForLocalExecution);
+        this.rightIterator.open(this.currentDynamicContextForLocalExecution);
 
         // if left or right equals empty sequence, return empty sequence
-        if (!this._leftIterator.hasNext() || !this._rightIterator.hasNext()) {
-            this._hasNext = false;
+        if (!this.leftIterator.hasNext() || !this.rightIterator.hasNext()) {
+            this.hasNext = false;
         } else {
-            this._left = this._leftIterator.next();
-            this._right = this._rightIterator.next();
-            this.checkBinaryOperation(this._left, this._right, this._operator);
-            this._hasNext = true;
-            if (this._leftIterator.hasNext() || this._rightIterator.hasNext())
+            this.left = this.leftIterator.next();
+            this.right = this.rightIterator.next();
+            this.checkBinaryOperation(this.left, this.right, this.operator);
+            this.hasNext = true;
+            if (this.leftIterator.hasNext() || this.rightIterator.hasNext())
                 throw new UnexpectedTypeException(
                         "Sequence of more than one item can not be promoted to parameter type atomic of function add()",
                         getMetadata()
                 );
         }
-        this._leftIterator.close();
-        this._rightIterator.close();
+        this.leftIterator.close();
+        this.rightIterator.close();
     }
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            this._hasNext = false;
+        if (this.hasNext) {
+            this.hasNext = false;
             try {
-                switch (this._operator) {
+                switch (this.operator) {
                     case MUL:
-                        return this._left.multiply(this._right);
+                        return this.left.multiply(this.right);
                     case DIV:
-                        return this._left.divide(this._right);
+                        return this.left.divide(this.right);
                     case IDIV:
-                        return this._left.idivide(this._right);
+                        return this.left.idivide(this.right);
                     case MOD:
-                        return this._left.modulo(this._right);
+                        return this.left.modulo(this.right);
                     default:
                         throw new IteratorFlowException("Non recognized multiplicative operator.", getMetadata());
                 }
             } catch (RuntimeException e) {
                 throw new UnexpectedTypeException(
                         " \""
-                            + this._operator.name().toLowerCase()
+                            + this.operator.name().toLowerCase()
                             + "\": operation not possible with parameters of type \""
-                            + ItemTypes.getItemTypeName(this._left.getClass().getSimpleName())
+                            + ItemTypes.getItemTypeName(this.left.getClass().getSimpleName())
                             + "\" and \""
-                            + ItemTypes.getItemTypeName(this._right.getClass().getSimpleName())
+                            + ItemTypes.getItemTypeName(this.right.getClass().getSimpleName())
                             + "\"",
                         getMetadata()
                 );

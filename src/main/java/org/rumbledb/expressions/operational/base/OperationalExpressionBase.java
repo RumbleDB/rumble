@@ -34,31 +34,31 @@ import java.util.List;
 
 public abstract class OperationalExpressionBase extends Expression {
 
-    protected boolean _isActive;
-    protected Expression _mainExpression;
-    protected List<Operator> _multipleOperators;
-    protected Operator _singleOperator;
+    protected boolean isActive;
+    protected Expression mainExpression;
+    protected List<Operator> multipleOperators;
+    protected Operator singleOperator;
 
 
     protected OperationalExpressionBase(
-            Expression _mainExpression,
+            Expression mainExpression,
             Operator op,
             ExceptionMetadata metadata
     ) {
         super(metadata);
-        this._mainExpression = _mainExpression;
-        this._singleOperator = op;
+        this.mainExpression = mainExpression;
+        this.singleOperator = op;
 
     }
 
     protected OperationalExpressionBase(
-            Expression _mainExpression,
+            Expression mainExpression,
             List<Operator> ops,
             ExceptionMetadata metadata
     ) {
         super(metadata);
-        this._mainExpression = _mainExpression;
-        this._multipleOperators = ops;
+        this.mainExpression = mainExpression;
+        this.multipleOperators = ops;
     }
 
     protected boolean bypassCurrentExpressionForExecutionModeOperations() {
@@ -76,7 +76,7 @@ public abstract class OperationalExpressionBase extends Expression {
     @Override
     public ExecutionMode getHighestExecutionMode(boolean ignoreUnsetError) {
         if (bypassCurrentExpressionForExecutionModeOperations()) {
-            return this._mainExpression.getHighestExecutionMode(ignoreUnsetError);
+            return this.mainExpression.getHighestExecutionMode(ignoreUnsetError);
         }
         return super.getHighestExecutionMode(ignoreUnsetError);
     }
@@ -185,14 +185,14 @@ public abstract class OperationalExpressionBase extends Expression {
     }
 
     public Expression getMainExpression() {
-        return this._mainExpression;
+        return this.mainExpression;
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        if (this._mainExpression != null)
-            result.add(this._mainExpression);
+        if (this.mainExpression != null)
+            result.add(this.mainExpression);
         return result;
     }
 

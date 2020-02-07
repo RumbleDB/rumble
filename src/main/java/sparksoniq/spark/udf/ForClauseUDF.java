@@ -41,52 +41,52 @@ public class ForClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
      *
      */
     private static final long serialVersionUID = 1L;
-    private Map<String, List<String>> _columnNamesByType;
-    private RuntimeIterator _expression;
-    private List<List<Item>> _deserializedParams;
-    private List<Item> _longParams;
-    private DynamicContext _context;
-    private List<Item> _nextResult;
-    private List<byte[]> _results;
+    private Map<String, List<String>> columnNamesByType;
+    private RuntimeIterator expression;
+    private List<List<Item>> deserializedParams;
+    private List<Item> longParams;
+    private DynamicContext context;
+    private List<Item> nextResult;
+    private List<byte[]> results;
 
-    private transient Kryo _kryo;
-    private transient Output _output;
-    private transient Input _input;
+    private transient Kryo kryo;
+    private transient Output output;
+    private transient Input input;
 
     public ForClauseUDF(
             RuntimeIterator expression,
             DynamicContext context,
             Map<String, List<String>> columnNamesByType
     ) {
-        this._expression = expression;
-        this._columnNamesByType = columnNamesByType;
+        this.expression = expression;
+        this.columnNamesByType = columnNamesByType;
 
-        this._deserializedParams = new ArrayList<>();
-        this._longParams = new ArrayList<>();
+        this.deserializedParams = new ArrayList<>();
+        this.longParams = new ArrayList<>();
 
-        this._context = new DynamicContext(context);
-        this._nextResult = new ArrayList<>();
-        this._results = new ArrayList<>();
+        this.context = new DynamicContext(context);
+        this.nextResult = new ArrayList<>();
+        this.results = new ArrayList<>();
 
-        this._kryo = new Kryo();
-        this._kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(this._kryo);
-        this._output = new Output(128, -1);
-        this._input = new Input();
+        this.kryo = new Kryo();
+        this.kryo.setReferences(false);
+        DataFrameUtils.registerKryoClassesKryo(this.kryo);
+        this.output = new Output(128, -1);
+        this.input = new Input();
     }
 
 
     @Override
     public List<byte[]> call(WrappedArray<byte[]> wrappedParameters, WrappedArray<Long> wrappedParametersLong) {
-        this._deserializedParams.clear();
-        this._context.removeAllVariables();
-        this._results.clear();
+        this.deserializedParams.clear();
+        this.context.removeAllVariables();
+        this.results.clear();
 
         DataFrameUtils.deserializeWrappedParameters(
             wrappedParameters,
-            this._deserializedParams,
-            this._kryo,
-            this._input
+            this.deserializedParams,
+            this.kryo,
+            this.input
         );
 
         // Long parameters correspond to pre-computed counts, when a materialization of the
@@ -94,28 +94,28 @@ public class ForClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
         Object[] longParams = (Object[]) wrappedParametersLong.array();
         for (Object longParam : longParams) {
             Item count = ItemFactory.getInstance().createIntegerItem(((Long) longParam).intValue());
-            this._longParams.add(count);
+            this.longParams.add(count);
         }
 
         DataFrameUtils.prepareDynamicContext(
-            this._context,
-            this._columnNamesByType.get("byte[]"),
-            this._columnNamesByType.get("Long"),
-            this._deserializedParams,
-            this._longParams
+            this.context,
+            this.columnNamesByType.get("byte[]"),
+            this.columnNamesByType.get("Long"),
+            this.deserializedParams,
+            this.longParams
         );
 
         // apply expression in the dynamic context
-        this._expression.open(this._context);
-        while (this._expression.hasNext()) {
-            this._nextResult.clear();
-            Item nextItem = this._expression.next();
-            this._nextResult.add(nextItem);
-            this._results.add(DataFrameUtils.serializeItemList(this._nextResult, this._kryo, this._output));
+        this.expression.open(this.context);
+        while (this.expression.hasNext()) {
+            this.nextResult.clear();
+            Item nextItem = this.expression.next();
+            this.nextResult.add(nextItem);
+            this.results.add(DataFrameUtils.serializeItemList(this.nextResult, this.kryo, this.output));
         }
-        this._expression.close();
+        this.expression.close();
 
-        return this._results;
+        return this.results;
     }
 
     private void readObject(java.io.ObjectInputStream in)
@@ -123,10 +123,10 @@ public class ForClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
                 ClassNotFoundException {
         in.defaultReadObject();
 
-        this._kryo = new Kryo();
-        this._kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(this._kryo);
-        this._output = new Output(128, -1);
-        this._input = new Input();
+        this.kryo = new Kryo();
+        this.kryo.setReferences(false);
+        DataFrameUtils.registerKryoClassesKryo(this.kryo);
+        this.output = new Output(128, -1);
+        this.input = new Input();
     }
 }

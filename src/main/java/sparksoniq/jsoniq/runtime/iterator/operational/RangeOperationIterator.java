@@ -35,9 +35,9 @@ public class RangeOperationIterator extends BinaryOperationBaseIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private int _left;
-    private int _right;
-    private int _index;
+    private int left;
+    private int right;
+    private int index;
 
     public RangeOperationIterator(
             RuntimeIterator left,
@@ -49,15 +49,15 @@ public class RangeOperationIterator extends BinaryOperationBaseIterator {
     }
 
     public boolean hasNext() {
-        return this._hasNext;
+        return this.hasNext;
     }
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            if (this._index == this._right)
-                this._hasNext = false;
-            return ItemFactory.getInstance().createIntegerItem(this._index++);
+        if (this.hasNext) {
+            if (this.index == this.right)
+                this.hasNext = false;
+            return ItemFactory.getInstance().createIntegerItem(this.index++);
         }
         throw new IteratorFlowException("Invalid next call in Range Operation", getMetadata());
     }
@@ -65,16 +65,16 @@ public class RangeOperationIterator extends BinaryOperationBaseIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        this._index = 0;
-        this._leftIterator.open(this._currentDynamicContextForLocalExecution);
-        this._rightIterator.open(this._currentDynamicContextForLocalExecution);
-        if (this._leftIterator.hasNext() && this._rightIterator.hasNext()) {
-            Item left = this._leftIterator.next();
-            Item right = this._rightIterator.next();
+        this.index = 0;
+        this.leftIterator.open(this.currentDynamicContextForLocalExecution);
+        this.rightIterator.open(this.currentDynamicContextForLocalExecution);
+        if (this.leftIterator.hasNext() && this.rightIterator.hasNext()) {
+            Item left = this.leftIterator.next();
+            Item right = this.rightIterator.next();
 
             if (
-                this._leftIterator.hasNext()
-                    || this._rightIterator.hasNext()
+                this.leftIterator.hasNext()
+                    || this.rightIterator.hasNext()
                     || !(left.isInteger())
                     || !(right.isInteger())
             )
@@ -87,23 +87,23 @@ public class RangeOperationIterator extends BinaryOperationBaseIterator {
                         getMetadata()
                 );
             try {
-                this._left = left.castToIntegerValue();
-                this._right = right.castToIntegerValue();
+                this.left = left.castToIntegerValue();
+                this.right = right.castToIntegerValue();
             } catch (IteratorFlowException e) {
                 throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
             }
-            if (this._right < this._left) {
-                this._hasNext = false;
+            if (this.right < this.left) {
+                this.hasNext = false;
             } else {
-                this._index = this._left;
-                this._hasNext = true;
+                this.index = this.left;
+                this.hasNext = true;
             }
         } else {
-            this._hasNext = false;
+            this.hasNext = false;
         }
 
-        this._leftIterator.close();
-        this._rightIterator.close();
+        this.leftIterator.close();
+        this.rightIterator.close();
 
     }
 }

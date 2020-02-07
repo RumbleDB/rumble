@@ -33,18 +33,18 @@ public class AdditiveExpression extends NaryExpressionBase {
 
     public static final Operator[] operators = new Operator[] { Operator.PLUS, Operator.MINUS };
 
-    public AdditiveExpression(Expression _mainExpression, ExceptionMetadata metadata) {
-        super(_mainExpression, metadata);
+    public AdditiveExpression(Expression mainExpression, ExceptionMetadata metadata) {
+        super(mainExpression, metadata);
 
     }
 
     public AdditiveExpression(
-            Expression _mainExpression,
+            Expression mainExpression,
             List<Expression> rhs,
             List<Operator> ops,
             ExceptionMetadata metadata
     ) {
-        super(_mainExpression, rhs, ops, metadata);
+        super(mainExpression, rhs, ops, metadata);
         validateOperators(Arrays.asList(operators), ops);
     }
 
@@ -56,12 +56,12 @@ public class AdditiveExpression extends NaryExpressionBase {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(additiveExpr ";
-        result += this._mainExpression.serializationString(true);
+        result += this.mainExpression.serializationString(true);
         if (this.getRightExpressions() != null && this.getRightExpressions().size() > 0)
             for (Expression expr : this.getRightExpressions())
                 result += " "
                     +
-                    getStringFromOperator(this._multipleOperators.get(this.getRightExpressions().indexOf(expr)))
+                    getStringFromOperator(this.multipleOperators.get(this.getRightExpressions().indexOf(expr)))
                     + " "
                     + expr.serializationString(true);
         result += ")";

@@ -61,47 +61,47 @@ public class StaticContext {
         }
     }
 
-    private Map<String, InScopeVariable> _inScopeVariables;
-    private StaticContext _parent;
+    private Map<String, InScopeVariable> inScopeVariables;
+    private StaticContext parent;
 
     public StaticContext() {
-        this._parent = null;
-        this._inScopeVariables = new HashMap<>();
+        this.parent = null;
+        this.inScopeVariables = new HashMap<>();
     }
 
     public StaticContext(StaticContext parent) {
-        this._parent = parent;
-        this._inScopeVariables = new HashMap<>();
+        this.parent = parent;
+        this.inScopeVariables = new HashMap<>();
     }
 
     public StaticContext getParent() {
-        return this._parent;
+        return this.parent;
     }
 
     public boolean isInScope(String varName) {
         boolean found = false;
-        if (this._inScopeVariables.containsKey(varName))
+        if (this.inScopeVariables.containsKey(varName))
             return true;
         else {
-            StaticContext ancestor = this._parent;
+            StaticContext ancestor = this.parent;
             while (ancestor != null) {
                 found = found || ancestor.getInScopeVariables().containsKey(varName);
-                ancestor = ancestor._parent;
+                ancestor = ancestor.parent;
             }
         }
         return found;
     }
 
     private InScopeVariable getInScopeVariable(String varName) {
-        if (this._inScopeVariables.containsKey(varName))
-            return this._inScopeVariables.get(varName);
+        if (this.inScopeVariables.containsKey(varName))
+            return this.inScopeVariables.get(varName);
         else {
-            StaticContext ancestor = this._parent;
+            StaticContext ancestor = this.parent;
             while (ancestor != null) {
-                if (ancestor._inScopeVariables.containsKey(varName)) {
-                    return ancestor._inScopeVariables.get(varName);
+                if (ancestor.inScopeVariables.containsKey(varName)) {
+                    return ancestor.inScopeVariables.get(varName);
                 }
-                ancestor = ancestor._parent;
+                ancestor = ancestor.parent;
             }
             throw new SemanticException("Variable " + varName + " not in scope", null);
         }
@@ -125,10 +125,10 @@ public class StaticContext {
             ExceptionMetadata metadata,
             ExecutionMode storageMode
     ) {
-        this._inScopeVariables.put(varName, new InScopeVariable(varName, type, metadata, storageMode));
+        this.inScopeVariables.put(varName, new InScopeVariable(varName, type, metadata, storageMode));
     }
 
     protected Map<String, InScopeVariable> getInScopeVariables() {
-        return this._inScopeVariables;
+        return this.inScopeVariables;
     }
 }

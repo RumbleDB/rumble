@@ -49,10 +49,10 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(null, executionMode, iteratorMetadata);
-        this._children.add(test);
-        this._children.addAll(cases.keySet());
-        this._children.addAll(cases.values());
-        this._children.add(defaultReturn);
+        this.children.add(test);
+        this.children.addAll(cases.keySet());
+        this.children.addAll(cases.values());
+        this.children.add(defaultReturn);
         this.testField = test;
         this.cases = cases;
         this.defaultReturn = defaultReturn;
@@ -66,11 +66,11 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            this.matchingIterator.open(this._currentDynamicContextForLocalExecution);
+        if (this.hasNext) {
+            this.matchingIterator.open(this.currentDynamicContextForLocalExecution);
             Item nextItem = this.matchingIterator.next();
             this.matchingIterator.close();
-            this._hasNext = false;
+            this.hasNext = false;
             return nextItem;
         }
         throw new IteratorFlowException(
@@ -91,7 +91,7 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
             Map<RuntimeIterator, RuntimeIterator> cases,
             RuntimeIterator defaultReturn
     ) {
-        Item testValue = test.materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
+        Item testValue = test.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
 
         if (testValue != null) {
             if (testValue.isArray()) {
@@ -108,7 +108,7 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
         }
 
         for (RuntimeIterator caseKey : cases.keySet()) {
-            Item caseValue = caseKey.materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
+            Item caseValue = caseKey.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
 
             if (caseValue != null) {
                 if (caseValue.isArray()) {
@@ -141,8 +141,8 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
         if (this.matchingIterator == null)
             this.matchingIterator = defaultReturn;
 
-        this.matchingIterator.open(this._currentDynamicContextForLocalExecution);
-        this._hasNext = this.matchingIterator.hasNext();
+        this.matchingIterator.open(this.currentDynamicContextForLocalExecution);
+        this.hasNext = this.matchingIterator.hasNext();
         this.matchingIterator.close();
     }
 }

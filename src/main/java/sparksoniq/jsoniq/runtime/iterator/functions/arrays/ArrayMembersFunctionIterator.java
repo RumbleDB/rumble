@@ -36,8 +36,8 @@ public class ArrayMembersFunctionIterator extends LocalFunctionCallIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator _iterator;
-    private Queue<Item> _nextResults; // queue that holds the results created by the current item in inspection
+    private RuntimeIterator iterator;
+    private Queue<Item> nextResults; // queue that holds the results created by the current item in inspection
 
     public ArrayMembersFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -51,18 +51,18 @@ public class ArrayMembersFunctionIterator extends LocalFunctionCallIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        this._iterator = this._children.get(0);
-        this._iterator.open(this._currentDynamicContextForLocalExecution);
-        this._nextResults = new LinkedList<>();
+        this.iterator = this.children.get(0);
+        this.iterator.open(this.currentDynamicContextForLocalExecution);
+        this.nextResults = new LinkedList<>();
 
         setNextResult();
     }
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            Item result = this._nextResults.remove(); // save the result to be returned
-            if (this._nextResults.isEmpty()) {
+        if (this.hasNext) {
+            Item result = this.nextResults.remove(); // save the result to be returned
+            if (this.nextResults.isEmpty()) {
                 // if there are no more results left in the queue, trigger calculation for the next result
                 setNextResult();
             }
@@ -75,18 +75,18 @@ public class ArrayMembersFunctionIterator extends LocalFunctionCallIterator {
     }
 
     public void setNextResult() {
-        while (this._iterator.hasNext()) {
-            Item item = this._iterator.next();
+        while (this.iterator.hasNext()) {
+            Item item = this.iterator.next();
             if (item.isArray()) {
-                this._nextResults.addAll(item.getItems());
+                this.nextResults.addAll(item.getItems());
             }
         }
 
-        if (this._nextResults.isEmpty()) {
-            this._hasNext = false;
-            this._iterator.close();
+        if (this.nextResults.isEmpty()) {
+            this.hasNext = false;
+            this.iterator.close();
         } else {
-            this._hasNext = true;
+            this.hasNext = true;
         }
     }
 }

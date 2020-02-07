@@ -30,10 +30,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OrderByClauseExpr extends FlworClause {
-    private final Expression _expression;
-    private final boolean _ascending;
-    private final EMPTY_ORDER _emptyOrder;
-    private final String _uri;
+    private final Expression expression;
+    private final boolean ascending;
+    private final EMPTY_ORDER emptyOrder;
+    private final String uri;
 
     public OrderByClauseExpr(
             Expression expression,
@@ -43,32 +43,32 @@ public class OrderByClauseExpr extends FlworClause {
             ExceptionMetadata metadata
     ) {
         super(FLWOR_CLAUSES.ORDER_BY_EXPR, metadata);
-        this._expression = expression;
-        this._ascending = ascending;
-        this._uri = uri;
-        this._emptyOrder = empty_order;
+        this.expression = expression;
+        this.ascending = ascending;
+        this.uri = uri;
+        this.emptyOrder = empty_order;
     }
 
     @Override
     public void initHighestExecutionMode() {
         // OrderByClauseExpr's execution mode is not used. Leave it unset
-        this._highestExecutionMode = ExecutionMode.UNSET;
+        this.highestExecutionMode = ExecutionMode.UNSET;
     }
 
     public Expression getExpression() {
-        return this._expression;
+        return this.expression;
     }
 
     public boolean isAscending() {
-        return this._ascending;
+        return this.ascending;
     }
 
     public EMPTY_ORDER getEmptyOrder() {
-        return this._emptyOrder;
+        return this.emptyOrder;
     }
 
     public String getUri() {
-        return this._uri;
+        return this.uri;
     }
 
     @Override
@@ -79,13 +79,13 @@ public class OrderByClauseExpr extends FlworClause {
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        result.add(this._expression);
+        result.add(this.expression);
         return result;
     }
 
     @Override
     public String serializationString(boolean prefix) {
-        String result = "(orderByExpr " + this._expression.serializationString(false);
+        String result = "(orderByExpr " + this.expression.serializationString(false);
         // if(this.asSequence !=null)
         // result += " as " + asSequence.serializationString(true);
         // if(this.expression!=null)

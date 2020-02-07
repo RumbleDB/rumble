@@ -31,9 +31,9 @@ import java.util.List;
 
 public class IfExpression extends Expression {
 
-    private final Expression _elseBranch;
-    private final Expression _condition;
-    private final Expression _branch;
+    private final Expression elseBranch;
+    private final Expression condition;
+    private final Expression branch;
 
     public IfExpression(
             Expression condition,
@@ -42,31 +42,31 @@ public class IfExpression extends Expression {
             ExceptionMetadata metadataFromContext
     ) {
         super(metadataFromContext);
-        this._condition = condition;
-        this._branch = branch;
-        this._elseBranch = elseBranch;
+        this.condition = condition;
+        this.branch = branch;
+        this.elseBranch = elseBranch;
 
     }
 
     public Expression getElseBranch() {
-        return this._elseBranch;
+        return this.elseBranch;
     }
 
     public Expression getCondition() {
-        return this._condition;
+        return this.condition;
     }
 
     public Expression getBranch() {
-        return this._branch;
+        return this.branch;
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        result.add(this._condition);
-        result.add(this._branch);
-        if (this._elseBranch != null)
-            result.add(this._elseBranch);
+        result.add(this.condition);
+        result.add(this.branch);
+        if (this.elseBranch != null)
+            result.add(this.elseBranch);
         return result;
     }
 
@@ -78,11 +78,11 @@ public class IfExpression extends Expression {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(ifExpr if ( ";
-        result += this._condition.serializationString(prefix);
+        result += this.condition.serializationString(prefix);
         result += " ) then ";
-        result += this._branch.serializationString(true);
+        result += this.branch.serializationString(true);
         result += ") else ";
-        result += this._elseBranch.serializationString(true);
+        result += this.elseBranch.serializationString(true);
         result += "))";
         return result;
     }

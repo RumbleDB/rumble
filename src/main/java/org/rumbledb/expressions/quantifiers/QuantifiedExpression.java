@@ -30,9 +30,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class QuantifiedExpression extends Expression {
-    private final Expression _expression;
-    private final QuantifiedOperators _operator;
-    private final List<QuantifiedExpressionVar> _variables;
+    private final Expression expression;
+    private final QuantifiedOperators operator;
+    private final List<QuantifiedExpressionVar> variables;
 
 
     public QuantifiedExpression(
@@ -42,32 +42,32 @@ public class QuantifiedExpression extends Expression {
             ExceptionMetadata metadataFromContext
     ) {
         super(metadataFromContext);
-        this._operator = operator;
-        this._variables = vars;
-        this._expression = expression;
+        this.operator = operator;
+        this.variables = vars;
+        this.expression = expression;
     }
 
     public Node getEvaluationExpression() {
-        return this._expression;
+        return this.expression;
     }
 
     public QuantifiedOperators getOperator() {
-        return this._operator;
+        return this.operator;
     }
 
     public List<QuantifiedExpressionVar> getVariables() {
-        return this._variables;
+        return this.variables;
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        if (this._variables != null)
-            this._variables.forEach(e -> {
+        if (this.variables != null)
+            this.variables.forEach(e -> {
                 if (e != null)
                     result.add(e);
             });
-        result.add(this._expression);
+        result.add(this.expression);
         return result;
     }
 

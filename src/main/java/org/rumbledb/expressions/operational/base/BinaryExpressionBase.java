@@ -34,7 +34,7 @@ public abstract class BinaryExpressionBase extends OperationalExpressionBase {
 
     public BinaryExpressionBase(Expression mainExpression, ExceptionMetadata metadata) {
         super(mainExpression, Operator.NONE, metadata);
-        this._isActive = false;
+        this.isActive = false;
 
     }
 
@@ -47,7 +47,7 @@ public abstract class BinaryExpressionBase extends OperationalExpressionBase {
         super(mainExpression, op, metadata);
         this.rightExpression = rhs;
         if (Operator.NONE != op && rhs != null)
-            this._isActive = true;
+            this.isActive = true;
     }
 
     public Expression getRightExpression() {
@@ -56,17 +56,17 @@ public abstract class BinaryExpressionBase extends OperationalExpressionBase {
 
     @Override
     public boolean isActive() {
-        return this._isActive;
+        return this.isActive;
     }
 
     public Operator getOperator() {
-        return this._singleOperator;
+        return this.singleOperator;
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        result.add(this._mainExpression);
+        result.add(this.mainExpression);
         if (this.rightExpression != null)
             result.add(this.rightExpression);
         return result;

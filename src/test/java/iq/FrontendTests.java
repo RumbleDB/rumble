@@ -120,7 +120,7 @@ public class FrontendTests extends AnnotationsTestsBase {
      * if (testFile.getName().contains("ManualFlowr.")) {
      * try {
      * FlworExpression node = (FlworExpression) visitor.getQueryExpression().getDescendants().get(0);
-     * Assert.assertTrue(node.get_contentClauses().size() == 4);
+     * Assert.assertTrue(node.getContentClauses().size() == 4);
      * Assert.assertTrue(node.getStartClause().getClauseType() == FLWOR_CLAUSES.FOR);
      * 
      * ForClause startClause = (ForClause) node.getStartClause();
@@ -133,17 +133,17 @@ public class FrontendTests extends AnnotationsTestsBase {
      * .getDescendantsOfType(d -> d instanceof RangeExpression, true).get(0);
      * UnaryExpression unary = (UnaryExpression) range.
      * getDescendantsOfType(d -> d instanceof UnaryExpression, true).get(0);
-     * Assert.assertTrue(((IntegerLiteral) unary.get_postfixExpression()
-     * .get_primaryExpressionNode()).getValue() == 1);
+     * Assert.assertTrue(((IntegerLiteral) unary.getPostfixExpression()
+     * .getPrimaryExpressionNode()).getValue() == 1);
      * unary = (UnaryExpression) range.
      * getDescendantsOfType(d -> d instanceof UnaryExpression, true).get(1);
-     * Assert.assertTrue(((IntegerLiteral) unary.get_postfixExpression()
-     * .get_primaryExpressionNode()).getValue() == 10);
+     * Assert.assertTrue(((IntegerLiteral) unary.getPostfixExpression()
+     * .getPrimaryExpressionNode()).getValue() == 10);
      * 
-     * Assert.assertTrue(node.get_contentClauses().get(0) instanceof LetClause);
-     * Assert.assertTrue(node.get_contentClauses().get(1) instanceof WhereClause);
-     * Assert.assertTrue(node.get_contentClauses().get(2) instanceof WhereClause);
-     * Assert.assertTrue(node.get_contentClauses().get(3) instanceof GroupByClause);
+     * Assert.assertTrue(node.getContentClauses().get(0) instanceof LetClause);
+     * Assert.assertTrue(node.getContentClauses().get(1) instanceof WhereClause);
+     * Assert.assertTrue(node.getContentClauses().get(2) instanceof WhereClause);
+     * Assert.assertTrue(node.getContentClauses().get(3) instanceof GroupByClause);
      * 
      * VariableReference var = (VariableReference) node.getDescendantsOfType(d -> d instanceof VariableReference,
      * true).get(0);
@@ -165,15 +165,15 @@ public class FrontendTests extends AnnotationsTestsBase {
      * PostFixExpression array = (PostFixExpression) node
      * .getDescendantsOfType(d -> d instanceof PostFixExpression, true)
      * .stream().filter(p -> ((PostFixExpression) p)
-     * .get_primaryExpressionNode() instanceof ArrayConstructor).findFirst().get();
+     * .getPrimaryExpressionNode() instanceof ArrayConstructor).findFirst().get();
      * 
      * Assert.assertTrue(array != null);
      * 
      * PostFixExpression object = (PostFixExpression) node
      * .getDescendantsOfType(d -> d instanceof PostFixExpression, true)
      * .stream().filter(p -> ((PostFixExpression) p)
-     * .get_primaryExpressionNode() instanceof ObjectConstructor).findFirst().get();
-     * Assert.assertTrue(object.get_primaryExpressionNode() != null);
+     * .getPrimaryExpressionNode() instanceof ObjectConstructor).findFirst().get();
+     * Assert.assertTrue(object.getPrimaryExpressionNode() != null);
      * 
      * } catch (Exception ex) {
      * Assert.fail("Unexpected AST expression in file " + testFile.getName());

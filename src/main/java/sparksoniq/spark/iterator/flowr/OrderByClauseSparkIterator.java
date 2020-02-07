@@ -58,12 +58,12 @@ import java.util.TreeMap;
 public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
     private static final long serialVersionUID = 1L;
-    private final boolean _isStable;
-    private final List<OrderByClauseAnnotatedChildIterator> _expressionsWithIterator;
-    private Map<String, DynamicContext.VariableDependency> _dependencies;
+    private final boolean isStable;
+    private final List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator;
+    private Map<String, DynamicContext.VariableDependency> dependencies;
 
-    private List<FlworTuple> _localTupleResults;
-    private int _resultIndex;
+    private List<FlworTuple> localTupleResults;
+    private int resultIndex;
 
     public OrderByClauseSparkIterator(
             RuntimeTupleIterator child,
@@ -73,21 +73,21 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(child, executionMode, iteratorMetadata);
-        this._expressionsWithIterator = expressionsWithIterator;
-        this._isStable = stable;
-        this._dependencies = new TreeMap<>();
-        for (OrderByClauseAnnotatedChildIterator e : this._expressionsWithIterator) {
-            this._dependencies.putAll(e.getIterator().getVariableDependencies());
+        this.expressionsWithIterator = expressionsWithIterator;
+        this.isStable = stable;
+        this.dependencies = new TreeMap<>();
+        for (OrderByClauseAnnotatedChildIterator e : this.expressionsWithIterator) {
+            this.dependencies.putAll(e.getIterator().getVariableDependencies());
         }
     }
 
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        if (this._child != null) {
-            this._child.open(this._currentDynamicContext);
+        if (this.child != null) {
+            this.child.open(this.currentDynamicContext);
 
-            this._hasNext = this._child.hasNext();
+            this.hasNext = this.child.hasNext();
         } else {
             throw new OurBadException("Invalid where clause.");
         }
@@ -95,16 +95,16 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
     @Override
     public FlworTuple next() {
-        if (this._hasNext) {
-            if (this._localTupleResults == null) {
-                this._localTupleResults = new ArrayList<>();
-                this._resultIndex = 0;
+        if (this.hasNext) {
+            if (this.localTupleResults == null) {
+                this.localTupleResults = new ArrayList<>();
+                this.resultIndex = 0;
                 setAllLocalResults();
             }
 
-            FlworTuple result = this._localTupleResults.get(this._resultIndex++);
-            if (this._resultIndex == this._localTupleResults.size()) {
-                this._hasNext = false;
+            FlworTuple result = this.localTupleResults.get(this.resultIndex++);
+            if (this.resultIndex == this.localTupleResults.size()) {
+                this.hasNext = false;
             }
             return result;
         }
@@ -117,15 +117,15 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
     private void setAllLocalResults() {
         TreeMap<FlworKey, List<FlworTuple>> keyValuePairs = mapExpressionsToOrderedPairs();
         // get only the values(ordered tuples) and save them in a list for next() calls
-        keyValuePairs.forEach((key, valueList) -> this._localTupleResults.addAll(valueList));
+        keyValuePairs.forEach((key, valueList) -> this.localTupleResults.addAll(valueList));
 
-        this._child.close();
-        this._hasNext = this._localTupleResults.size() != 0;
+        this.child.close();
+        this.hasNext = this.localTupleResults.size() != 0;
     }
 
     /**
      * Evaluates expressions to atomics(error is thrown if not possible) which are used as keys for sorted TreeMap.
-     * Requires _child iterator to be opened.
+     * Requires child iterator to be opened.
      *
      * @return Sorted TreeMap(ascending). key - atomics from expressions, value - input tuples
      */
@@ -134,16 +134,16 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         // OrderByClauseSortClosure implements a comparator and provides the exact desired behavior for local execution
         // as well
         TreeMap<FlworKey, List<FlworTuple>> keyValuePairs = new TreeMap<>(
-                new FlworKeyComparator(this._expressionsWithIterator, true)
+                new FlworKeyComparator(this.expressionsWithIterator, true)
         );
 
         // assign current context as parent. re-use the same context object for efficiency
-        DynamicContext tupleContext = new DynamicContext(this._currentDynamicContext);
-        while (this._child.hasNext()) {
-            FlworTuple inputTuple = this._child.next();
+        DynamicContext tupleContext = new DynamicContext(this.currentDynamicContext);
+        while (this.child.hasNext()) {
+            FlworTuple inputTuple = this.child.next();
 
             List<Item> results = new ArrayList<>(); // results from the expressions will become a key
-            for (OrderByClauseAnnotatedChildIterator expressionWithIterator : this._expressionsWithIterator) {
+            for (OrderByClauseAnnotatedChildIterator expressionWithIterator : this.expressionsWithIterator) {
                 tupleContext.removeAllVariables(); // clear the previous variables
                 tupleContext.setBindingsFromTuple(inputTuple, getMetadata()); // assign new variables from new tuple
 
@@ -196,11 +196,11 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             DynamicContext context,
             Map<String, DynamicContext.VariableDependency> parentProjection
     ) {
-        if (this._child == null) {
+        if (this.child == null) {
             throw new OurBadException("Invalid orderby clause.");
         }
 
-        for (OrderByClauseAnnotatedChildIterator expressionWithIterator : this._expressionsWithIterator) {
+        for (OrderByClauseAnnotatedChildIterator expressionWithIterator : this.expressionsWithIterator) {
             if (expressionWithIterator.getIterator().isRDD()) {
                 throw new JobWithinAJobException(
                         "An order by clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
@@ -209,7 +209,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             }
         }
 
-        Dataset<Row> df = this._child.getDataFrame(context, getProjection(parentProjection));
+        Dataset<Row> df = this.child.getDataFrame(context, getProjection(parentProjection));
         if (df.count() == 0) {
             return df;
         }
@@ -219,14 +219,14 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         Map<String, List<String>> UDFcolumnsByType = DataFrameUtils.getColumnNamesByType(
             inputSchema,
             -1,
-            this._dependencies
+            this.dependencies
         );
 
         df.sparkSession()
             .udf()
             .register(
                 "determineOrderingDataType",
-                new OrderClauseDetermineTypeUDF(this._expressionsWithIterator, context, UDFcolumnsByType),
+                new OrderClauseDetermineTypeUDF(this.expressionsWithIterator, context, UDFcolumnsByType),
                 DataTypes.createArrayType(DataTypes.StringType)
             );
 
@@ -339,7 +339,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             }
             typedFields.add(DataTypes.createStructField(columnName, columnType, true));
 
-            OrderByClauseAnnotatedChildIterator expressionWithIterator = this._expressionsWithIterator.get(columnIndex);
+            OrderByClauseAnnotatedChildIterator expressionWithIterator = this.expressionsWithIterator.get(columnIndex);
             // accessing the created ordering row as "`ordering_columns`.`0-nullEmptyCheckField` (desc)"
             // prepare sql for expression's 1st column
             orderingSQL.append("`");
@@ -377,7 +377,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             .register(
                 "createOrderingColumns",
                 new OrderClauseCreateColumnsUDF(
-                        this._expressionsWithIterator,
+                        this.expressionsWithIterator,
                         context,
                         typesForAllColumns,
                         UDFcolumnsByType
@@ -403,23 +403,23 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<String, DynamicContext.VariableDependency> result = new TreeMap<>();
-        for (OrderByClauseAnnotatedChildIterator expressionWithIterator : this._expressionsWithIterator) {
+        for (OrderByClauseAnnotatedChildIterator expressionWithIterator : this.expressionsWithIterator) {
             result.putAll(expressionWithIterator.getIterator().getVariableDependencies());
         }
-        for (String var : this._child.getVariablesBoundInCurrentFLWORExpression()) {
+        for (String var : this.child.getVariablesBoundInCurrentFLWORExpression()) {
             result.remove(var);
         }
-        result.putAll(this._child.getVariableDependencies());
+        result.putAll(this.child.getVariableDependencies());
         return result;
     }
 
     public Set<String> getVariablesBoundInCurrentFLWORExpression() {
-        return new HashSet<>(this._child.getVariablesBoundInCurrentFLWORExpression());
+        return new HashSet<>(this.child.getVariablesBoundInCurrentFLWORExpression());
     }
 
     public void print(StringBuffer buffer, int indent) {
         super.print(buffer, indent);
-        for (OrderByClauseAnnotatedChildIterator iterator : this._expressionsWithIterator) {
+        for (OrderByClauseAnnotatedChildIterator iterator : this.expressionsWithIterator) {
             iterator.getIterator().print(buffer, indent + 1);
         }
     }
@@ -432,7 +432,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             new TreeMap<>(parentProjection);
 
         // add the variable dependencies needed by this for clause's expression.
-        for (OrderByClauseAnnotatedChildIterator iterator : this._expressionsWithIterator) {
+        for (OrderByClauseAnnotatedChildIterator iterator : this.expressionsWithIterator) {
             Map<String, DynamicContext.VariableDependency> exprDependency = iterator.getIterator()
                 .getVariableDependencies();
             for (String variable : exprDependency.keySet()) {

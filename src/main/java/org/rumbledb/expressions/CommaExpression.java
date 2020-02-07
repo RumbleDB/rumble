@@ -30,22 +30,22 @@ import java.util.List;
 
 public class CommaExpression extends Expression {
 
-    private final List<Expression> _expressions;
+    private final List<Expression> expressions;
 
     public CommaExpression(List<Expression> expressions, ExceptionMetadata metadata) {
         super(metadata);
-        this._expressions = expressions;
+        this.expressions = expressions;
     }
 
     public List<Expression> getExpressions() {
-        return this._expressions;
+        return this.expressions;
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        if (this._expressions != null)
-            this._expressions.forEach(e -> {
+        if (this.expressions != null)
+            this.expressions.forEach(e -> {
                 if (e != null)
                     result.add(e);
             });
@@ -53,7 +53,7 @@ public class CommaExpression extends Expression {
     }
 
     private boolean bypassCurrentExpressionForExecutionModeOperations() {
-        return this._expressions.size() == 1;
+        return this.expressions.size() == 1;
     }
 
     @Override
@@ -67,7 +67,7 @@ public class CommaExpression extends Expression {
     @Override
     public ExecutionMode getHighestExecutionMode(boolean ignoreUnsetError) {
         if (bypassCurrentExpressionForExecutionModeOperations()) {
-            return this._expressions.get(0).getHighestExecutionMode(ignoreUnsetError);
+            return this.expressions.get(0).getHighestExecutionMode(ignoreUnsetError);
         }
         return super.getHighestExecutionMode(ignoreUnsetError);
     }
@@ -80,12 +80,12 @@ public class CommaExpression extends Expression {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(expr ";
-        for (Expression expr : this._expressions) {
+        for (Expression expr : this.expressions) {
 
             result += "(exprSingle "
                 + expr.serializationString(false)
-                + (this._expressions.size() >= 2
-                    && this._expressions.indexOf(expr) < this._expressions.size() - 1 ? ") , " : ")");
+                + (this.expressions.size() >= 2
+                    && this.expressions.indexOf(expr) < this.expressions.size() - 1 ? ") , " : ")");
         }
 
         result += ")";

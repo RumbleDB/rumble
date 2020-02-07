@@ -34,8 +34,8 @@ public class HeadFunctionIterator extends LocalFunctionCallIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator _iterator;
-    private Item _result;
+    private RuntimeIterator iterator;
+    private Item result;
 
     public HeadFunctionIterator(
             List<RuntimeIterator> parameters,
@@ -43,14 +43,14 @@ public class HeadFunctionIterator extends LocalFunctionCallIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(parameters, executionMode, iteratorMetadata);
-        this._iterator = this._children.get(0);
+        this.iterator = this.children.get(0);
     }
 
     @Override
     public Item next() {
         if (this.hasNext()) {
-            this._hasNext = false;
-            return this._result;
+            this.hasNext = false;
+            return this.result;
         }
         throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "head function", getMetadata());
     }
@@ -68,23 +68,23 @@ public class HeadFunctionIterator extends LocalFunctionCallIterator {
     }
 
     public void setResult() {
-        if (this._iterator.isRDD()) {
-            List<Item> i = this._iterator.getRDD(this._currentDynamicContextForLocalExecution).take(1);
+        if (this.iterator.isRDD()) {
+            List<Item> i = this.iterator.getRDD(this.currentDynamicContextForLocalExecution).take(1);
             if (i.isEmpty()) {
-                this._hasNext = false;
+                this.hasNext = false;
                 return;
             }
-            this._hasNext = true;
-            this._result = i.get(0);
+            this.hasNext = true;
+            this.result = i.get(0);
         }
-        this._iterator.open(this._currentDynamicContextForLocalExecution);
-        if (this._iterator.hasNext()) {
-            this._hasNext = true;
-            this._result = this._iterator.next();
+        this.iterator.open(this.currentDynamicContextForLocalExecution);
+        if (this.iterator.hasNext()) {
+            this.hasNext = true;
+            this.result = this.iterator.next();
         } else {
-            this._hasNext = false;
+            this.hasNext = false;
         }
-        this._iterator.close();
+        this.iterator.close();
     }
 
 }

@@ -36,30 +36,30 @@ public class Base64BinaryItem extends AtomicItem {
     private static final Pattern base64BinaryPattern = Pattern.compile(base64Binary);
 
     private static final long serialVersionUID = 1L;
-    private byte[] _value;
-    private String _stringValue;
+    private byte[] value;
+    private String stringValue;
 
     public Base64BinaryItem() {
         super();
     }
 
     public Base64BinaryItem(String stringValue) {
-        this._stringValue = stringValue;
-        this._value = parseBase64BinaryString(stringValue);
+        this.stringValue = stringValue;
+        this.value = parseBase64BinaryString(stringValue);
     }
 
     public byte[] getValue() {
-        return this._value;
+        return this.value;
     }
 
     @Override
     public byte[] getBinaryValue() {
-        return this._value;
+        return this.value;
     }
 
     @Override
     public String getStringValue() {
-        return this._stringValue;
+        return this.stringValue;
     }
 
     private static boolean checkInvalidBase64BinaryFormat(String base64BinaryString) {
@@ -104,7 +104,7 @@ public class Base64BinaryItem extends AtomicItem {
             case Base64BinaryItem:
                 return this;
             case HexBinaryItem:
-                return ItemFactory.getInstance().createHexBinaryItem(Hex.encodeHexString(this._value));
+                return ItemFactory.getInstance().createHexBinaryItem(Hex.encodeHexString(this.value));
             default:
                 throw new ClassCastException();
         }
@@ -192,7 +192,7 @@ public class Base64BinaryItem extends AtomicItem {
     @Override
     public void read(Kryo kryo, Input input) {
         int bytesLength = input.readInt();
-        this._value = input.readBytes(bytesLength);
-        this._stringValue = StringUtils.chomp(Base64.encodeBase64String(this._value));
+        this.value = input.readBytes(bytesLength);
+        this.stringValue = StringUtils.chomp(Base64.encodeBase64String(this.value));
     }
 }

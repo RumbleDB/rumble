@@ -30,76 +30,76 @@ public class SparksoniqRuntimeConfiguration {
     public static final String ARGUMENT_PREFIX = "--";
     private static final String ARGUMENT_FORMAT_ERROR_MESSAGE =
         "Invalid argument format. Required format: --property value";
-    private HashMap<String, String> _arguments;
+    private HashMap<String, String> arguments;
 
     public SparksoniqRuntimeConfiguration(String[] args) {
-        this._arguments = new HashMap<>();
+        this.arguments = new HashMap<>();
         for (int i = 0; i < args.length; i += 2)
             if (args[i].startsWith(ARGUMENT_PREFIX))
-                this._arguments.put(args[i].trim().replace(ARGUMENT_PREFIX, ""), args[i + 1]);
+                this.arguments.put(args[i].trim().replace(ARGUMENT_PREFIX, ""), args[i + 1]);
             else
                 throw new CliException(ARGUMENT_FORMAT_ERROR_MESSAGE);
     }
 
     public String getConfigurationArgument(String key) {
-        if (this._arguments.containsKey(key))
-            return this._arguments.get(key);
+        if (this.arguments.containsKey(key))
+            return this.arguments.get(key);
         else
             return null;
     }
 
     public String getOutputPath() {
-        if (this._arguments.containsKey("output-path"))
-            return this._arguments.get("output-path");
+        if (this.arguments.containsKey("output-path"))
+            return this.arguments.get("output-path");
         else
             return null;
     }
 
     public boolean getOverwrite() {
-        if (this._arguments.containsKey("overwrite"))
-            return this._arguments.get("overwrite").equals("yes");
+        if (this.arguments.containsKey("overwrite"))
+            return this.arguments.get("overwrite").equals("yes");
         else
             return false;
     }
 
     public boolean getShowErrorInfo() {
-        if (this._arguments.containsKey("show-error-info"))
-            return this._arguments.get("show-error-info").equals("yes");
+        if (this.arguments.containsKey("show-error-info"))
+            return this.arguments.get("show-error-info").equals("yes");
         else
             return false;
     }
 
     public String getLogPath() {
-        if (this._arguments.containsKey("log-path"))
-            return this._arguments.get("log-path");
+        if (this.arguments.containsKey("log-path"))
+            return this.arguments.get("log-path");
         else
             return null;
     }
 
     public String getQueryPath() {
-        if (this._arguments.containsKey("query-path"))
-            return this._arguments.get("query-path");
+        if (this.arguments.containsKey("query-path"))
+            return this.arguments.get("query-path");
         else
             return null;
     }
 
     public int getResultSizeCap() {
-        if (this._arguments.containsKey("result-size"))
-            return Integer.parseInt(this._arguments.get("result-size"));
+        if (this.arguments.containsKey("result-size"))
+            return Integer.parseInt(this.arguments.get("result-size"));
         else
             return 200;
     }
 
     public boolean isShell() {
-        if (this._arguments.containsKey("shell"))
-            return this._arguments.get("shell").equals("yes");
+        if (this.arguments.containsKey("shell"))
+            return this.arguments.get("shell").equals("yes");
         else
             return false;
     }
 
     public boolean isPrintIteratorTree() {
-        if (this._arguments.containsKey("print-iterator-tree"))
-            return this._arguments.get("print-iterator-tree").equals("yes");
+        if (this.arguments.containsKey("print-iterator-tree"))
+            return this.arguments.get("print-iterator-tree").equals("yes");
         else
             return false;
     }
@@ -117,19 +117,19 @@ public class SparksoniqRuntimeConfiguration {
             + "\n"
             +
             "Item Display Limit: "
-            + (this._arguments.getOrDefault("result-size", "-"))
+            + (this.arguments.getOrDefault("result-size", "-"))
             + "\n"
             +
             "Output Path: "
-            + (this._arguments.getOrDefault("output-path", "-"))
+            + (this.arguments.getOrDefault("output-path", "-"))
             + "\n"
             +
             "Log Path: "
-            + (this._arguments.getOrDefault("log-path", "-"))
+            + (this.arguments.getOrDefault("log-path", "-"))
             + "\n"
             +
             "Query Path : "
-            + (this._arguments.getOrDefault("query-path", "-"))
+            + (this.arguments.getOrDefault("query-path", "-"))
             + "\n";
         return result;
     }
