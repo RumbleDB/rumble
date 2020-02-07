@@ -121,14 +121,14 @@ public abstract class Node {
     public abstract String serializationString(boolean prefix);
 
     /**
-     * Returns all children nodes.
+     * Returns all children nodes as a list. The list is new and can be modified at will by the caller.
      * 
      * @return the children nodes as a list.
      */
     public abstract List<Node> getChildren();
 
     /**
-     * For gathering descendant nodes, as a depth-first search.
+     * For gathering descendant nodes, as a depth-first search. The list is new and can be modified at will by the caller.
      * 
      * @return the descendant nodes as a list.
      */
@@ -142,7 +142,7 @@ public abstract class Node {
     }
 
     /**
-     * For gathering descendant nodes that match a predicate.
+     * For gathering descendant nodes that match a predicate. The list is new and can be modified at will by the caller.
      * 
      * @param predicate a predicate to filter with.
      * 
