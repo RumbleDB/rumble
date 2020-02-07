@@ -28,7 +28,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
-public class NaryExpressionBase extends OperationalExpressionBase {
+public abstract class NaryExpressionBase extends OperationalExpressionBase {
 
     private List<Expression> _rightExpressions;
 

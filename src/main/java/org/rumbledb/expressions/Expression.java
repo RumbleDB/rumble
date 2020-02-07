@@ -46,11 +46,6 @@ public abstract class Expression extends Node {
         super(metadata);
     }
 
-    @Override
-    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        return visitor.visitDescendants(this, argument);
-    }
-
     public StaticContext getStaticContext() {
         return _staticContext;
     }

@@ -24,6 +24,7 @@ package org.rumbledb.expressions.flowr;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -114,6 +115,13 @@ public class FlworVarSequenceType extends Expression {
     @Override
     public List<Node> getChildren() {
         return new ArrayList<>();
+    }
+    
+    @Override
+    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
+    	//TO this class should not be an expression.
+        //nothing to do as no children 
+    	return argument;
     }
 
     @Override
