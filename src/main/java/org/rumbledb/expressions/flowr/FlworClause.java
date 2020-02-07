@@ -20,11 +20,6 @@
 
 package org.rumbledb.expressions.flowr;
 
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import org.rumbledb.expressions.Node;
 import org.rumbledb.exceptions.ExceptionMetadata;
 
