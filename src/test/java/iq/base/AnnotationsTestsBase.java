@@ -25,15 +25,14 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.Assert;
-import org.rumbledb.parser.JsoniqBaseVisitor;
-import org.rumbledb.parser.JsoniqLexer;
-import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.exceptions.SparksoniqRuntimeException;
 import org.rumbledb.expressions.module.MainModule;
-
+import org.rumbledb.parser.JsoniqBaseVisitor;
+import org.rumbledb.parser.JsoniqLexer;
+import org.rumbledb.parser.JsoniqParser;
 import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
@@ -56,8 +55,8 @@ public class AnnotationsTestsBase {
 
 
     public void initializeTests(File dir) {
-        FileManager.loadJiqFiles(dir).forEach(file -> testFiles.add(file));
-        testFiles.sort(Comparator.comparing(File::getName));
+        FileManager.loadJiqFiles(dir).forEach(file -> this.testFiles.add(file));
+        this.testFiles.sort(Comparator.comparing(File::getName));
     }
 
     /**
@@ -68,7 +67,7 @@ public class AnnotationsTestsBase {
         JsoniqParser.MainModuleContext context = null;
         RuntimeIterator runtimeIterator = null;
         try {
-            currentAnnotation = AnnotationProcessor.readAnnotation(new FileReader(path));
+            this.currentAnnotation = AnnotationProcessor.readAnnotation(new FileReader(path));
         } catch (AnnotationParseException e) {
             e.printStackTrace();
             Assert.fail();
@@ -88,8 +87,12 @@ public class AnnotationsTestsBase {
             // PARSING
         } catch (ParsingException exception) {
             String errorOutput = exception.getMessage();
-            checkErrorCode(errorOutput, currentAnnotation.getErrorCode(), currentAnnotation.getErrorMetadata());
-            if (currentAnnotation.shouldParse()) {
+            checkErrorCode(
+                errorOutput,
+                this.currentAnnotation.getErrorCode(),
+                this.currentAnnotation.getErrorMetadata()
+            );
+            if (this.currentAnnotation.shouldParse()) {
                 Assert.fail("Program did not parse when expected to.\nError output: " + errorOutput + "\n");
                 return context;
             } else {
@@ -101,9 +104,13 @@ public class AnnotationsTestsBase {
             // SEMANTIC
         } catch (SemanticException exception) {
             String errorOutput = exception.getMessage();
-            checkErrorCode(errorOutput, currentAnnotation.getErrorCode(), currentAnnotation.getErrorMetadata());
+            checkErrorCode(
+                errorOutput,
+                this.currentAnnotation.getErrorCode(),
+                this.currentAnnotation.getErrorMetadata()
+            );
             try {
-                if (currentAnnotation.shouldCompile()) {
+                if (this.currentAnnotation.shouldCompile()) {
                     Assert.fail("Program did not compile when expected to.\nError output: " + errorOutput + "\n");
                     return context;
                 } else {
@@ -117,9 +124,13 @@ public class AnnotationsTestsBase {
             // RUNTIME
         } catch (SparksoniqRuntimeException exception) {
             String errorOutput = exception.getMessage();
-            checkErrorCode(errorOutput, currentAnnotation.getErrorCode(), currentAnnotation.getErrorMetadata());
+            checkErrorCode(
+                errorOutput,
+                this.currentAnnotation.getErrorCode(),
+                this.currentAnnotation.getErrorMetadata()
+            );
             try {
-                if (currentAnnotation.shouldRun()) {
+                if (this.currentAnnotation.shouldRun()) {
                     Assert.fail("Program did not run when expected to.\nError output: " + errorOutput + "\n");
                     return context;
                 } else {
@@ -132,26 +143,26 @@ public class AnnotationsTestsBase {
         }
 
         try {
-            if (!currentAnnotation.shouldCompile()) {
+            if (!this.currentAnnotation.shouldCompile()) {
                 Assert.fail("Program compiled when not expected to.\n");
                 return context;
             }
         } catch (Exception ex) {
         }
 
-        if (!currentAnnotation.shouldParse()) {
+        if (!this.currentAnnotation.shouldParse()) {
             Assert.fail("Program parsed when not expected to.\n");
             return context;
         }
 
         // PROGRAM SHOULD RUN
         if (
-            currentAnnotation instanceof AnnotationProcessor.RunnableTestAnnotation
+            this.currentAnnotation instanceof AnnotationProcessor.RunnableTestAnnotation
                 &&
-                currentAnnotation.shouldRun()
+                this.currentAnnotation.shouldRun()
         ) {
             try {
-                checkExpectedOutput(currentAnnotation.getOutput(), runtimeIterator);
+                checkExpectedOutput(this.currentAnnotation.getOutput(), runtimeIterator);
             } catch (SparksoniqRuntimeException exception) {
                 String errorOutput = exception.getMessage();
                 Assert.fail("Program did not run when expected to.\nError output: " + errorOutput + "\n");
@@ -159,15 +170,19 @@ public class AnnotationsTestsBase {
         } else {
             // PROGRAM SHOULD CRASH
             if (
-                currentAnnotation instanceof AnnotationProcessor.UnrunnableTestAnnotation
+                this.currentAnnotation instanceof AnnotationProcessor.UnrunnableTestAnnotation
                     &&
-                    !currentAnnotation.shouldRun()
+                    !this.currentAnnotation.shouldRun()
             ) {
                 try {
-                    checkExpectedOutput(currentAnnotation.getOutput(), runtimeIterator);
+                    checkExpectedOutput(this.currentAnnotation.getOutput(), runtimeIterator);
                 } catch (Exception exception) {
                     String errorOutput = exception.getMessage();
-                    checkErrorCode(errorOutput, currentAnnotation.getErrorCode(), currentAnnotation.getErrorMetadata());
+                    checkErrorCode(
+                        errorOutput,
+                        this.currentAnnotation.getErrorCode(),
+                        this.currentAnnotation.getErrorMetadata()
+                    );
                     return context;
                 }
 

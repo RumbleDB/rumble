@@ -21,10 +21,8 @@
 package org.rumbledb.expressions.primary;
 
 
-
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
-
 import org.rumbledb.exceptions.ExceptionMetadata;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 
 
@@ -38,7 +36,7 @@ public class StringLiteral extends PrimaryExpression {
     }
 
     public String getValue() {
-        return value;
+        return this.value;
     }
 
     @Override

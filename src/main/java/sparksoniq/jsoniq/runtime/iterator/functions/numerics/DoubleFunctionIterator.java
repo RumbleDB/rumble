@@ -2,16 +2,15 @@ package sparksoniq.jsoniq.runtime.iterator.functions.numerics;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CastException;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidLexicalValueException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemTypes;
@@ -36,18 +35,18 @@ public class DoubleFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             this._hasNext = false;
             try {
-                if (!item.isAtomic()) {
+                if (!this.item.isAtomic()) {
                     String message = String.format(
                         "Can not atomize an %1$s item: an %1$s has probably been passed where an atomic value is expected.",
-                        ItemTypes.getItemTypeName(item.getClass().getSimpleName())
+                        ItemTypes.getItemTypeName(this.item.getClass().getSimpleName())
                     );
                     throw new NonAtomicKeyException(message, getMetadata());
                 }
-                AtomicItem atomicItem = (AtomicItem) item;
+                AtomicItem atomicItem = (AtomicItem) this.item;
                 String message = atomicItem.serialize()
                     +
                     ": value of type "
-                    + ItemTypes.getItemTypeName(item.getClass().getSimpleName())
+                    + ItemTypes.getItemTypeName(this.item.getClass().getSimpleName())
                     + " is not castable to type double.";
                 if (atomicItem.isNull())
                     throw new InvalidLexicalValueException(message, getMetadata());
@@ -63,7 +62,7 @@ public class DoubleFunctionIterator extends LocalFunctionCallIterator {
             } catch (IllegalArgumentException e) {
                 String message = String.format(
                     "\"%s\": value of type %s is not castable to type %s",
-                    item.serialize(),
+                    this.item.serialize(),
                     "string",
                     "double"
                 );
@@ -79,7 +78,7 @@ public class DoubleFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        item = this._children.get(0).materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
-        this._hasNext = item != null;
+        this.item = this._children.get(0).materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
+        this._hasNext = this.item != null;
     }
 }

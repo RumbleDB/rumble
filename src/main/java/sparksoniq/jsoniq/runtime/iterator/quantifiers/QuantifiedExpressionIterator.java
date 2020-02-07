@@ -21,15 +21,14 @@
 package sparksoniq.jsoniq.runtime.iterator.quantifiers;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.BooleanItem;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
@@ -53,7 +52,7 @@ public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
         this._operator = operator;
         this._children.addAll(children);
         this._evaluationExpression = evaluationExpression;
-        _children.add(_evaluationExpression);
+        this._children.add(this._evaluationExpression);
     }
 
     @Override
@@ -61,8 +60,8 @@ public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
         if (this._hasNext) {
             this._hasNext = false;
             List<DynamicContext> contexts = new ArrayList<>();
-            contexts.add(new DynamicContext(_currentDynamicContextForLocalExecution));
-            for (RuntimeIterator iterator : _children) {
+            contexts.add(new DynamicContext(this._currentDynamicContextForLocalExecution));
+            for (RuntimeIterator iterator : this._children) {
                 if (iterator instanceof QuantifiedExpressionVarIterator) {
                     QuantifiedExpressionVarIterator var = (QuantifiedExpressionVarIterator) iterator;
                     contexts = generateContexts(contexts, var);
@@ -71,9 +70,9 @@ public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
 
             List<BooleanItem> results = new ArrayList<>();
             for (DynamicContext context : contexts) {
-                _evaluationExpression.open(context);
-                BooleanItem result = (BooleanItem) _evaluationExpression.next();
-                _evaluationExpression.close();
+                this._evaluationExpression.open(context);
+                BooleanItem result = (BooleanItem) this._evaluationExpression.next();
+                this._evaluationExpression.close();
                 results.add(result);
             }
 

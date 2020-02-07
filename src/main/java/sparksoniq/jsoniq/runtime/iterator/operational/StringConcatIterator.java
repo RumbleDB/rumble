@@ -21,15 +21,14 @@
 package sparksoniq.jsoniq.runtime.iterator.operational;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 
 public class StringConcatIterator extends BinaryOperationBaseIterator {
 
@@ -47,18 +46,18 @@ public class StringConcatIterator extends BinaryOperationBaseIterator {
     @Override
     public Item next() {
         if (this.hasNext()) {
-            _leftIterator.open(_currentDynamicContextForLocalExecution);
-            _rightIterator.open(_currentDynamicContextForLocalExecution);
+            this._leftIterator.open(this._currentDynamicContextForLocalExecution);
+            this._rightIterator.open(this._currentDynamicContextForLocalExecution);
             Item left;
             Item right;
             // empty sequences are treated as empty strings in concatenation
-            if (_leftIterator.hasNext()) {
-                left = _leftIterator.next();
+            if (this._leftIterator.hasNext()) {
+                left = this._leftIterator.next();
             } else {
                 left = ItemFactory.getInstance().createStringItem("");
             }
-            if (_rightIterator.hasNext()) {
-                right = _rightIterator.next();
+            if (this._rightIterator.hasNext()) {
+                right = this._rightIterator.next();
             } else {
                 right = ItemFactory.getInstance().createStringItem("");
             }
@@ -75,8 +74,8 @@ public class StringConcatIterator extends BinaryOperationBaseIterator {
             String leftStringValue = left.serialize();
             String rightStringValue = right.serialize();
 
-            _leftIterator.close();
-            _rightIterator.close();
+            this._leftIterator.close();
+            this._rightIterator.close();
             this._hasNext = false;
             return ItemFactory.getInstance().createStringItem(leftStringValue.concat(rightStringValue));
         }

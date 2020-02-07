@@ -36,6 +36,6 @@ public class RowToItemMapper implements Function<Row, Item> {
 
     @Override
     public Item call(Row row) throws Exception {
-        return ItemParser.getItemFromRow(row, metadata);
+        return ItemParser.getItemFromRow(row, this.metadata);
     }
 }

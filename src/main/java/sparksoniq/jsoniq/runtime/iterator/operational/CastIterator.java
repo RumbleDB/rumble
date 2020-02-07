@@ -2,14 +2,13 @@ package sparksoniq.jsoniq.runtime.iterator.operational;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CastException;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SingleType;
@@ -35,14 +34,14 @@ public class CastIterator extends UnaryOperationIterator {
     @Override
     public Item next() {
         if (this._hasNext) {
-            String targetType = ItemTypes.getItemTypeName(_singleType.getType().toString());
+            String targetType = ItemTypes.getItemTypeName(this._singleType.getType().toString());
 
             List<Item> items = new ArrayList<>();
-            _child.open(_currentDynamicContextForLocalExecution);
-            while (_child.hasNext()) {
-                items.add(_child.next());
+            this._child.open(this._currentDynamicContextForLocalExecution);
+            while (this._child.hasNext()) {
+                items.add(this._child.next());
                 if (items.size() > 1) {
-                    _child.close();
+                    this._child.close();
                     this._hasNext = false;
                     throw new UnexpectedTypeException(
                             " Sequence of more than one item can not be treated as type "
@@ -51,7 +50,7 @@ public class CastIterator extends UnaryOperationIterator {
                     );
                 }
             }
-            _child.close();
+            this._child.close();
             this._hasNext = false;
 
             Item item = items.get(0);
@@ -67,11 +66,11 @@ public class CastIterator extends UnaryOperationIterator {
                 targetType
             );
 
-            AtomicItem atomicItem = CastableIterator.checkInvalidCastable(item, getMetadata(), _singleType);
+            AtomicItem atomicItem = CastableIterator.checkInvalidCastable(item, getMetadata(), this._singleType);
 
-            if (atomicItem.isCastableAs(_singleType.getType())) {
+            if (atomicItem.isCastableAs(this._singleType.getType())) {
                 try {
-                    return atomicItem.castAs(_singleType.getType());
+                    return atomicItem.castAs(this._singleType.getType());
                 } catch (ClassCastException e) {
                     throw new CastException(message, getMetadata());
                 }
@@ -85,7 +84,7 @@ public class CastIterator extends UnaryOperationIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        if (!_child.hasNext() && !_singleType.getZeroOrOne())
+        if (!this._child.hasNext() && !this._singleType.getZeroOrOne())
             throw new UnexpectedTypeException(
                     " Empty sequence can not be cast to type with quantifier '1'",
                     getMetadata()

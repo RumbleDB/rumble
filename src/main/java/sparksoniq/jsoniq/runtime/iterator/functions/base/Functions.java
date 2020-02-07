@@ -20,8 +20,11 @@
 
 package sparksoniq.jsoniq.runtime.iterator.functions.base;
 
-import sparksoniq.jsoniq.ExecutionMode;
+import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.UnknownFunctionCallException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.FunctionItemCallIterator;
@@ -129,7 +132,6 @@ import sparksoniq.jsoniq.runtime.iterator.functions.strings.SubstringBeforeFunct
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.SubstringFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.strings.TokenizeFunctionIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.TypePromotionIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
@@ -154,10 +156,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.UnknownFunctionCallException;
 
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.abs;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.accumulate;
@@ -217,6 +215,7 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.json_file2;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.keys;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.last;
+import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.libsvm_file;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.log;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.log10;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.matches;
@@ -258,7 +257,6 @@ import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.Functi
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.string_join2;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.string_length;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.structured_json_file;
-import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.libsvm_file;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.subsequence2;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.subsequence3;
 import static sparksoniq.jsoniq.runtime.iterator.functions.base.Functions.FunctionNames.substring2;

@@ -20,16 +20,15 @@
 
 package org.rumbledb.expressions.quantifiers;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.Expression;
+import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.primary.VariableReference;
 import sparksoniq.semantics.types.SequenceType;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.primary.VariableReference;
 
 public class QuantifiedExpressionVar extends Node {
     private final VariableReference _variableReference;
@@ -49,23 +48,23 @@ public class QuantifiedExpressionVar extends Node {
     }
 
     public Expression getExpression() {
-        return _expression;
+        return this._expression;
     }
 
     public VariableReference getVariableReference() {
 
-        return _variableReference;
+        return this._variableReference;
     }
 
     public SequenceType getSequenceType() {
-        return _sequenceType;
+        return this._sequenceType;
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        result.add(_variableReference);
-        result.add(_expression);
+        result.add(this._variableReference);
+        result.add(this._expression);
         return result;
     }
 

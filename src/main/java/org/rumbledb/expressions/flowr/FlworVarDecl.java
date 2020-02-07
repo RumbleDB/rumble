@@ -20,17 +20,16 @@
 
 package org.rumbledb.expressions.flowr;
 
-import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.types.SequenceType;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.primary.VariableReference;
+import sparksoniq.jsoniq.ExecutionMode;
+import sparksoniq.semantics.types.SequenceType;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class FlworVarDecl extends FlworClause {
 
@@ -69,15 +68,15 @@ public abstract class FlworVarDecl extends FlworClause {
     }
 
     public VariableReference getVariableReference() {
-        return variableReferenceNode;
+        return this.variableReferenceNode;
     }
 
     public Expression getExpression() {
-        return expression;
+        return this.expression;
     }
 
     public FlworVarSequenceType getAsSequence() {
-        return asSequence;
+        return this.asSequence;
     }
 
     @Override
@@ -88,17 +87,17 @@ public abstract class FlworVarDecl extends FlworClause {
     public abstract void initHighestExecutionAndVariableHighestStorageModes();
 
     public ExecutionMode getVariableHighestStorageMode() {
-        return _variableHighestStorageMode;
+        return this._variableHighestStorageMode;
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        result.add(variableReferenceNode);
-        if (asSequence != null)
-            result.add(asSequence);
+        result.add(this.variableReferenceNode);
+        if (this.asSequence != null)
+            result.add(this.asSequence);
         if (this.expression != null)
-            result.add(expression);
+            result.add(this.expression);
         return result;
     }
 }

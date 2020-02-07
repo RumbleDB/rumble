@@ -28,7 +28,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
@@ -50,12 +49,12 @@ public class DoubleItem extends AtomicItem {
     }
 
     public double getValue() {
-        return _value;
+        return this._value;
     }
 
     @Override
     public double getDoubleValue() {
-        return _value;
+        return this._value;
     }
 
     @Override

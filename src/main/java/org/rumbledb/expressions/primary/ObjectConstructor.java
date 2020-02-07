@@ -21,18 +21,14 @@
 package org.rumbledb.expressions.primary;
 
 
-
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
-
-
-
-import java.util.ArrayList;
-import java.util.List;
-
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ObjectConstructor extends PrimaryExpression {
 
@@ -58,29 +54,29 @@ public class ObjectConstructor extends PrimaryExpression {
     }
 
     public List<Expression> getKeys() {
-        return _keys;
+        return this._keys;
     }
 
     public List<Expression> getValues() {
-        return _values;
+        return this._values;
     }
 
     public boolean isMergedConstructor() {
-        return isMergedConstructor;
+        return this.isMergedConstructor;
     }
 
     public CommaExpression getChildExpression() {
-        return childExpression;
+        return this.childExpression;
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        if (!isMergedConstructor) {
+        if (!this.isMergedConstructor) {
             result.addAll(this._keys);
             result.addAll(this._values);
         } else
-            result.add(childExpression);
+            result.add(this.childExpression);
         return result;
     }
 
@@ -92,14 +88,14 @@ public class ObjectConstructor extends PrimaryExpression {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(primaryExpr (objectConstructor {";
-        if (!isMergedConstructor) {
+        if (!this.isMergedConstructor) {
             result += " ";
-            for (Expression key : _keys)
-                result += new PairConstructor(key, _values.get(_keys.indexOf(key)), key.getMetadata())
+            for (Expression key : this._keys)
+                result += new PairConstructor(key, this._values.get(this._keys.indexOf(key)), key.getMetadata())
                     .serializationString(true)
-                    + (_keys.indexOf(key) < _keys.size() - 1 ? " , " : " ");
+                    + (this._keys.indexOf(key) < this._keys.size() - 1 ? " , " : " ");
         } else
-            result += "| " + childExpression.serializationString(prefix) + " |";
+            result += "| " + this.childExpression.serializationString(prefix) + " |";
         result += "}))";
         return result;
 
@@ -117,19 +113,19 @@ public class ObjectConstructor extends PrimaryExpression {
         }
 
         public Expression get_key() {
-            return _key;
+            return this._key;
         }
 
         public Expression get_value() {
-            return _value;
+            return this._value;
         }
 
         @Override
         public String serializationString(boolean prefix) {
             String result = "(pairConstructor (exprSingle "
-                + _key.serializationString(false)
+                + this._key.serializationString(false)
                 + ") : (exprSingle "
-                + _value.serializationString(false);
+                + this._value.serializationString(false);
             result += "))";
             return result;
 

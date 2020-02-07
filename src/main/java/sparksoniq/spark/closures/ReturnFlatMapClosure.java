@@ -51,40 +51,40 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
     public ReturnFlatMapClosure(RuntimeIterator expression, DynamicContext context, StructType oldSchema) {
         this._expression = expression;
         this._oldSchema = oldSchema;
-        _parentContext = context;
-        _context = new DynamicContext(_parentContext);
+        this._parentContext = context;
+        this._context = new DynamicContext(this._parentContext);
 
-        _kryo = new Kryo();
-        _kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(_kryo);
-        _input = new Input();
+        this._kryo = new Kryo();
+        this._kryo.setReferences(false);
+        DataFrameUtils.registerKryoClassesKryo(this._kryo);
+        this._input = new Input();
     }
 
     @Override
     public Iterator<Item> call(Row row) {
-        String[] columnNames = _oldSchema.fieldNames();
-        Map<String, DynamicContext.VariableDependency> dependencies = _expression.getVariableDependencies();
-        _context.removeAllVariables();
+        String[] columnNames = this._oldSchema.fieldNames();
+        Map<String, DynamicContext.VariableDependency> dependencies = this._expression.getVariableDependencies();
+        this._context.removeAllVariables();
         // Create dynamic context with deserialized data but only with dependencies
         for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
             String field = columnNames[columnIndex];
             if (dependencies.containsKey(field)) {
-                List<Item> i = DataFrameUtils.deserializeRowField(row, columnIndex, _kryo, _input); // rowColumns.get(columnIndex);
+                List<Item> i = DataFrameUtils.deserializeRowField(row, columnIndex, this._kryo, this._input); // rowColumns.get(columnIndex);
                 if (dependencies.get(field).equals(DynamicContext.VariableDependency.COUNT)) {
-                    _context.addVariableCount(field, i.get(0));
+                    this._context.addVariableCount(field, i.get(0));
                 } else {
-                    _context.addVariableValue(field, i);
+                    this._context.addVariableValue(field, i);
                 }
             }
         }
 
         // Apply expression to the context
         List<Item> results = new ArrayList<>();
-        _expression.open(_context);
-        while (_expression.hasNext()) {
-            results.add(_expression.next());
+        this._expression.open(this._context);
+        while (this._expression.hasNext()) {
+            results.add(this._expression.next());
         }
-        _expression.close();
+        this._expression.close();
 
         return results.iterator();
     }
@@ -94,9 +94,9 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
                 ClassNotFoundException {
         in.defaultReadObject();
 
-        _kryo = new Kryo();
-        _kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(_kryo);
-        _input = new Input();
+        this._kryo = new Kryo();
+        this._kryo.setReferences(false);
+        DataFrameUtils.registerKryoClassesKryo(this._kryo);
+        this._input = new Input();
     }
 }

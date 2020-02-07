@@ -21,17 +21,16 @@
 package sparksoniq.jsoniq.runtime.iterator.operational;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase.Operator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
@@ -77,19 +76,19 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
             this._hasNext = false;
 
             // use stored values for value comparison
-            if (_isValueComparison) {
-                return comparePair(_left, _right);
+            if (this._isValueComparison) {
+                return comparePair(this._left, this._right);
             } else {
                 // fetch all values and perform comparison
                 ArrayList<Item> left = new ArrayList<>();
                 ArrayList<Item> right = new ArrayList<>();
-                while (_leftIterator.hasNext())
-                    left.add(_leftIterator.next());
-                while (_rightIterator.hasNext())
-                    right.add(_rightIterator.next());
+                while (this._leftIterator.hasNext())
+                    left.add(this._leftIterator.next());
+                while (this._rightIterator.hasNext())
+                    right.add(this._rightIterator.next());
 
-                _leftIterator.close();
-                _rightIterator.close();
+                this._leftIterator.close();
+                this._rightIterator.close();
 
                 return compareAllPairs(left, right);
             }
@@ -101,28 +100,28 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        _leftIterator.open(_currentDynamicContextForLocalExecution);
-        _rightIterator.open(_currentDynamicContextForLocalExecution);
+        this._leftIterator.open(this._currentDynamicContextForLocalExecution);
+        this._rightIterator.open(this._currentDynamicContextForLocalExecution);
 
         // value comparison may return an empty sequence
         if (Arrays.asList(valueComparisonOperators).contains(this._operator)) {
             // if EMPTY SEQUENCE - eg. () or ((),())
             // this check is added here to provide lazy evaluation: eg. () eq (2,3) = () instead of exception
-            if (!(_leftIterator.hasNext() && _rightIterator.hasNext())) {
+            if (!(this._leftIterator.hasNext() && this._rightIterator.hasNext())) {
                 this._hasNext = false;
             } else {
-                _left = _leftIterator.next();
-                _right = _rightIterator.next();
+                this._left = this._leftIterator.next();
+                this._right = this._rightIterator.next();
 
                 // value comparison doesn't support more than 1 items
-                if (_leftIterator.hasNext() || _rightIterator.hasNext()) {
+                if (this._leftIterator.hasNext() || this._rightIterator.hasNext()) {
                     throw new UnexpectedTypeException(
                             "Invalid args. Value comparison can't be performed on sequences with more than 1 items",
                             getMetadata()
                     );
                 }
 
-                _isValueComparison = true;
+                this._isValueComparison = true;
                 this._hasNext = true;
             }
         } else if (Arrays.asList(generalComparisonOperators).contains(this._operator)) {
@@ -130,8 +129,8 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
             this._hasNext = true;
         }
 
-        _leftIterator.close();
-        _rightIterator.close();
+        this._leftIterator.close();
+        this._rightIterator.close();
     }
 
     /**

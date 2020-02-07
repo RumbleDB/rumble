@@ -30,9 +30,9 @@ public class KryoManager {
     }
 
     public Kryo getOrCreateKryo() {
-        if (kryoPool == null) {
+        if (this.kryoPool == null) {
             // 3rd param: max capacity is omitted for no limit
-            kryoPool = new Pool<Kryo>(true, false) {
+            this.kryoPool = new Pool<Kryo>(true, false) {
                 @Override
                 protected Kryo create() {
                     Kryo kryo = new Kryo();
@@ -67,17 +67,17 @@ public class KryoManager {
                 }
             };
         }
-        return kryoPool.obtain();
+        return this.kryoPool.obtain();
     }
 
     public void releaseKryoInstance(Kryo kryo) {
-        kryoPool.free(kryo);
+        this.kryoPool.free(kryo);
     }
 
     public Output getOrCreateOutput() {
-        if (outputPool == null) {
+        if (this.outputPool == null) {
             // 3rd param: max capacity is omitted for no limit
-            outputPool = new Pool<Output>(true, false) {
+            this.outputPool = new Pool<Output>(true, false) {
                 @Override
                 protected Output create() {
                     return new ByteBufferOutput(128, -1);
@@ -85,27 +85,27 @@ public class KryoManager {
             };
         }
 
-        return outputPool.obtain();
+        return this.outputPool.obtain();
     }
 
     public void releaseOutputInstance(Output output) {
-        outputPool.free(output);
+        this.outputPool.free(output);
     }
 
     public Input getOrCreateInput() {
-        if (inputPool == null) {
+        if (this.inputPool == null) {
             // 3rd param: max capacity is omitted for no limit
-            inputPool = new Pool<Input>(true, false) {
+            this.inputPool = new Pool<Input>(true, false) {
                 @Override
                 protected Input create() {
                     return new ByteBufferInput();
                 }
             };
         }
-        return inputPool.obtain();
+        return this.inputPool.obtain();
     }
 
     public void releaseInputInstance(Input input) {
-        inputPool.free(input);
+        this.inputPool.free(input);
     }
 }

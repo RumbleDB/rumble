@@ -1,10 +1,9 @@
 package sparksoniq.jsoniq.runtime.iterator.control;
 
+import org.rumbledb.expressions.flowr.FlworVarSequenceType;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 
 import java.util.List;
-
-import org.rumbledb.expressions.flowr.FlworVarSequenceType;
 
 public class TypeSwitchCase {
     private final String variableName;
@@ -28,14 +27,14 @@ public class TypeSwitchCase {
     }
 
     String getVariableName() {
-        return variableName;
+        return this.variableName;
     }
 
     List<FlworVarSequenceType> getSequenceTypeUnion() {
-        return sequenceTypeUnion;
+        return this.sequenceTypeUnion;
     }
 
     RuntimeIterator getReturnIterator() {
-        return returnIterator;
+        return this.returnIterator;
     }
 }

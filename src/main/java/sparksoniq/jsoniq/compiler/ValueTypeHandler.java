@@ -21,8 +21,6 @@
 package sparksoniq.jsoniq.compiler;
 
 
-import java.math.BigDecimal;
-
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.primary.BooleanLiteral;
 import org.rumbledb.expressions.primary.DecimalLiteral;
@@ -31,6 +29,8 @@ import org.rumbledb.expressions.primary.IntegerLiteral;
 import org.rumbledb.expressions.primary.NullLiteral;
 import org.rumbledb.expressions.primary.PrimaryExpression;
 import org.rumbledb.parser.JsoniqParser;
+
+import java.math.BigDecimal;
 
 
 public class ValueTypeHandler {

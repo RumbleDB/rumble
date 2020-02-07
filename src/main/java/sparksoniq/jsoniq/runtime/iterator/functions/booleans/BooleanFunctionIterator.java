@@ -21,13 +21,12 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.booleans;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.util.List;
 
@@ -48,7 +47,7 @@ public class BooleanFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             this._hasNext = false;
             RuntimeIterator iterator = this._children.get(0);
-            iterator.open(_currentDynamicContextForLocalExecution);
+            iterator.open(this._currentDynamicContextForLocalExecution);
             boolean effectiveBooleanValue = getEffectiveBooleanValue(iterator);
             iterator.close();
             return ItemFactory.getInstance().createBooleanItem(effectiveBooleanValue);

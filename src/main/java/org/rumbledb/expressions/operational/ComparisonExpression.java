@@ -20,13 +20,12 @@
 
 package org.rumbledb.expressions.operational;
 
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
-
-import java.util.Arrays;
-
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.operational.base.BinaryExpressionBase;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
+import java.util.Arrays;
 
 public class ComparisonExpression extends BinaryExpressionBase {
 
@@ -67,7 +66,7 @@ public class ComparisonExpression extends BinaryExpressionBase {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(comparisonExpr ";
-        result += _mainExpression.serializationString(true);
+        result += this._mainExpression.serializationString(true);
         if (this.getRightExpression() != null)
             result += " "
                 + this.getOperator().toString().toLowerCase()

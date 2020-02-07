@@ -1,13 +1,12 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.durations.components;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
@@ -29,7 +28,7 @@ public class DaysFromDurationFunctionIterator extends LocalFunctionCallIterator 
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            return ItemFactory.getInstance().createIntegerItem(_durationItem.getDurationValue().getDays());
+            return ItemFactory.getInstance().createIntegerItem(this._durationItem.getDurationValue().getDays());
         } else
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " days-from-duration function",
@@ -40,7 +39,8 @@ public class DaysFromDurationFunctionIterator extends LocalFunctionCallIterator 
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        _durationItem = this._children.get(0).materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
-        this._hasNext = _durationItem != null;
+        this._durationItem = this._children.get(0)
+            .materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
+        this._hasNext = this._durationItem != null;
     }
 }

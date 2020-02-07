@@ -21,15 +21,13 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.object;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSelectorException;
 import org.rumbledb.exceptions.IteratorFlowException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
@@ -55,11 +53,11 @@ public class ObjectProjectFunctionIterator extends LocalFunctionCallIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        _iterator = this._children.get(0);
-        _iterator.open(context);
+        this._iterator = this._children.get(0);
+        this._iterator.open(context);
 
-        _projKeys = this._children.get(1).materialize(_currentDynamicContextForLocalExecution);
-        if (_projKeys.isEmpty()) {
+        this._projKeys = this._children.get(1).materialize(this._currentDynamicContextForLocalExecution);
+        if (this._projKeys.isEmpty()) {
             throw new InvalidSelectorException(
                     "Invalid Projection Key; Object projection can't be performed with zero keys: ",
                     getMetadata()
@@ -72,7 +70,7 @@ public class ObjectProjectFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public Item next() {
         if (this._hasNext) {
-            Item result = _nextResult; // save the result to be returned
+            Item result = this._nextResult; // save the result to be returned
             setNextResult(); // calculate and store the next result
             return result;
         }
@@ -83,20 +81,20 @@ public class ObjectProjectFunctionIterator extends LocalFunctionCallIterator {
     }
 
     public void setNextResult() {
-        _nextResult = null;
+        this._nextResult = null;
 
-        if (_iterator.hasNext()) {
-            Item item = _iterator.next();
+        if (this._iterator.hasNext()) {
+            Item item = this._iterator.next();
             if (item.isObject()) {
-                _nextResult = getProjection(item, _projKeys);
+                this._nextResult = getProjection(item, this._projKeys);
             } else {
-                _nextResult = item;
+                this._nextResult = item;
             }
         }
 
-        if (_nextResult == null) {
+        if (this._nextResult == null) {
             this._hasNext = false;
-            _iterator.close();
+            this._iterator.close();
         } else {
             this._hasNext = true;
         }

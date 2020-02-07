@@ -21,13 +21,12 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.sequences.value;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
@@ -59,8 +58,8 @@ public class DeepEqualFunctionIterator extends LocalFunctionCallIterator {
             RuntimeIterator sequenceIterator1 = this._children.get(0);
             RuntimeIterator sequenceIterator2 = this._children.get(1);
 
-            List<Item> items1 = sequenceIterator1.materialize(_currentDynamicContextForLocalExecution);
-            List<Item> items2 = sequenceIterator2.materialize(_currentDynamicContextForLocalExecution);
+            List<Item> items1 = sequenceIterator1.materialize(this._currentDynamicContextForLocalExecution);
+            List<Item> items2 = sequenceIterator2.materialize(this._currentDynamicContextForLocalExecution);
 
             boolean res = checkDeepEqual(items1, items2);
             return ItemFactory.getInstance().createBooleanItem(res);

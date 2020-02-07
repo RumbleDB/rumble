@@ -44,26 +44,31 @@ public class GroupClauseSerializeAggregateResultsUDF implements UDF1<WrappedArra
     private transient Input _input;
 
     public GroupClauseSerializeAggregateResultsUDF() {
-        _nextResult = new ArrayList<>();
-        _deserializedParams = new ArrayList<>();
+        this._nextResult = new ArrayList<>();
+        this._deserializedParams = new ArrayList<>();
 
-        _kryo = new Kryo();
-        _kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(_kryo);
-        _output = new Output(128, -1);
-        _input = new Input();
+        this._kryo = new Kryo();
+        this._kryo.setReferences(false);
+        DataFrameUtils.registerKryoClassesKryo(this._kryo);
+        this._output = new Output(128, -1);
+        this._input = new Input();
     }
 
     @Override
     public byte[] call(WrappedArray<byte[]> wrappedParameters) {
-        _nextResult.clear();
-        _deserializedParams.clear();
-        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
+        this._nextResult.clear();
+        this._deserializedParams.clear();
+        DataFrameUtils.deserializeWrappedParameters(
+            wrappedParameters,
+            this._deserializedParams,
+            this._kryo,
+            this._input
+        );
 
-        for (List<Item> deserializedParam : _deserializedParams) {
-            _nextResult.addAll(deserializedParam);
+        for (List<Item> deserializedParam : this._deserializedParams) {
+            this._nextResult.addAll(deserializedParam);
         }
-        return DataFrameUtils.serializeItemList(_nextResult, _kryo, _output);
+        return DataFrameUtils.serializeItemList(this._nextResult, this._kryo, this._output);
     }
 
     private void readObject(java.io.ObjectInputStream in)
@@ -71,10 +76,10 @@ public class GroupClauseSerializeAggregateResultsUDF implements UDF1<WrappedArra
                 ClassNotFoundException {
         in.defaultReadObject();
 
-        _kryo = new Kryo();
-        _kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(_kryo);
-        _output = new Output(128, -1);
-        _input = new Input();
+        this._kryo = new Kryo();
+        this._kryo.setReferences(false);
+        DataFrameUtils.registerKryoClassesKryo(this._kryo);
+        this._output = new Output(128, -1);
+        this._input = new Input();
     }
 }

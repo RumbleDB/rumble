@@ -29,7 +29,6 @@ import org.apache.spark.sql.SparkSession;
 import org.rumbledb.api.Item;
 import org.rumbledb.cli.Main;
 import org.rumbledb.exceptions.OurBadException;
-
 import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.BooleanItem;
 import sparksoniq.jsoniq.item.DecimalItem;
@@ -72,35 +71,35 @@ public class SparkSessionManager {
     }
 
     public SparkSession getOrCreateSession() {
-        if (session == null) {
+        if (this.session == null) {
             if (this.configuration == null) {
                 setDefaultConfiguration();
             }
             initialize();
         }
-        return session;
+        return this.session;
     }
 
     private void setDefaultConfiguration() {
-        configuration = new SparkConf()
+        this.configuration = new SparkConf()
             .setAppName(APP_NAME)
             .set("spark.sql.crossJoin.enabled", "true"); // enables cartesian product
     }
 
     private void initialize() {
-        if (session == null) {
+        if (this.session == null) {
             initializeKryoSerialization();
             Logger.getLogger("org").setLevel(LOG_LEVEL);
             Logger.getLogger("akka").setLevel(LOG_LEVEL);
 
-            session = SparkSession.builder().config(this.configuration).getOrCreate();
+            this.session = SparkSession.builder().config(this.configuration).getOrCreate();
         } else {
             throw new OurBadException("Session already exists: new session initialization prevented.");
         }
     }
 
     private void initializeKryoSerialization() {
-        configuration.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
+        this.configuration.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
         Class<?>[] serializedClasses = new Class[] {
             Item.class,
             ArrayItem.class,
@@ -117,7 +116,7 @@ public class SparkSessionManager {
             RuntimeIterator.class,
             RuntimeTupleIterator.class };
 
-        configuration.registerKryoClasses(serializedClasses);
+        this.configuration.registerKryoClasses(serializedClasses);
     }
 
 
@@ -135,10 +134,10 @@ public class SparkSessionManager {
     }
 
     public JavaSparkContext getJavaSparkContext() {
-        if (javaSparkContext == null) {
-            javaSparkContext = JavaSparkContext.fromSparkContext(this.getOrCreateSession().sparkContext());
+        if (this.javaSparkContext == null) {
+            this.javaSparkContext = JavaSparkContext.fromSparkContext(this.getOrCreateSession().sparkContext());
         }
-        return javaSparkContext;
+        return this.javaSparkContext;
     }
 
     public static <T> List<T> collectRDDwithLimit(JavaRDD<T> rdd) {

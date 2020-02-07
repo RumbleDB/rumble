@@ -30,7 +30,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.OurBadException;
-
 import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
@@ -92,9 +91,9 @@ public class RuntimeTests extends AnnotationsTestsBase {
 
     @Test(timeout = 1000000)
     public void testRuntimeIterators() throws Throwable {
-        System.err.println(AnnotationsTestsBase.counter++ + " : " + _testFile);
+        System.err.println(AnnotationsTestsBase.counter++ + " : " + this._testFile);
         JsoniqExpressionTreeVisitor visitor = new JsoniqExpressionTreeVisitor();
-        testAnnotations(_testFile.getAbsolutePath(), visitor);
+        testAnnotations(this._testFile.getAbsolutePath(), visitor);
     }
 
     @Override

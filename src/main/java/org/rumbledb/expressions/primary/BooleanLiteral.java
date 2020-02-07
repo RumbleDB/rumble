@@ -21,8 +21,8 @@
 package org.rumbledb.expressions.primary;
 
 
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 public class BooleanLiteral extends PrimaryExpression {
 
@@ -34,7 +34,7 @@ public class BooleanLiteral extends PrimaryExpression {
     }
 
     public boolean getValue() {
-        return value;
+        return this.value;
     }
 
     @Override

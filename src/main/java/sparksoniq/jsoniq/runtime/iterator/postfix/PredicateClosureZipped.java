@@ -37,26 +37,26 @@ public class PredicateClosureZipped implements Function<Tuple2<Item, Long>, Bool
     private final long _contextSize;
 
     public PredicateClosureZipped(RuntimeIterator expression, DynamicContext dynamicContext, long contextSize) {
-        _expression = expression;
-        _dynamicContext = dynamicContext;
-        _contextSize = contextSize;
+        this._expression = expression;
+        this._dynamicContext = dynamicContext;
+        this._contextSize = contextSize;
     }
 
     @Override
     public Boolean call(Tuple2<Item, Long> v1) throws Exception {
         List<Item> currentItems = new ArrayList<>();
         currentItems.add(v1._1());
-        DynamicContext dynamicContext = new DynamicContext(_dynamicContext);
+        DynamicContext dynamicContext = new DynamicContext(this._dynamicContext);
         dynamicContext.addVariableValue("$$", currentItems);
         dynamicContext.setPosition(v1._2() + 1);
-        dynamicContext.setLast(_contextSize);
+        dynamicContext.setLast(this._contextSize);
 
-        _expression.open(dynamicContext);
+        this._expression.open(dynamicContext);
         boolean result = RuntimeIterator.getEffectiveBooleanValueOrCheckPosition(
-            _expression,
+            this._expression,
             dynamicContext.getPosition()
         );
-        _expression.close();
+        this._expression.close();
         return result;
     }
 

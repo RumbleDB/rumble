@@ -10,7 +10,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidRumbleMLParamException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
@@ -52,11 +51,11 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
         }
         this._hasNext = false;
 
-        Dataset<Row> inputDataset = _currentDynamicContextForLocalExecution.getDataFrameVariableValue(
+        Dataset<Row> inputDataset = this._currentDynamicContextForLocalExecution.getDataFrameVariableValue(
             GetEstimatorFunctionIterator.estimatorParameterNames.get(0),
             getMetadata()
         );
-        List<Item> paramMapItemList = _currentDynamicContextForLocalExecution.getLocalVariableValue(
+        List<Item> paramMapItemList = this._currentDynamicContextForLocalExecution.getLocalVariableValue(
             GetEstimatorFunctionIterator.estimatorParameterNames.get(1),
             getMetadata()
         );
@@ -68,18 +67,21 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
         }
         Item paramMapItem = paramMapItemList.get(0);
         ParamMap paramMap = convertRumbleObjectItemToSparkMLParamMap(
-            _estimatorShortName,
-            _estimator,
+            this._estimatorShortName,
+            this._estimator,
             paramMapItem,
             getMetadata()
         );
 
         Transformer fittedModel;
         try {
-            fittedModel = _estimator.fit(inputDataset, paramMap);
+            fittedModel = this._estimator.fit(inputDataset, paramMap);
         } catch (IllegalArgumentException e) {
             throw new InvalidRumbleMLParamException(
-                    "Parameter provided to " + _estimatorShortName + " causes the following error: " + e.getMessage(),
+                    "Parameter provided to "
+                        + this._estimatorShortName
+                        + " causes the following error: "
+                        + e.getMessage(),
                     getMetadata()
             );
         }

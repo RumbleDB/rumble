@@ -2,13 +2,12 @@ package sparksoniq.jsoniq.runtime.iterator.functions.datetime.components;
 
 import org.joda.time.Period;
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
@@ -32,7 +31,7 @@ public class TimezoneFromDateFunctionIterator extends LocalFunctionCallIterator 
             this._hasNext = false;
             return ItemFactory.getInstance()
                 .createDayTimeDurationItem(
-                    new Period(_dateItem.getDateTimeValue().getZone().toTimeZone().getRawOffset())
+                    new Period(this._dateItem.getDateTimeValue().getZone().toTimeZone().getRawOffset())
                 );
         } else
             throw new IteratorFlowException(
@@ -44,7 +43,7 @@ public class TimezoneFromDateFunctionIterator extends LocalFunctionCallIterator 
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        _dateItem = this._children.get(0).materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
-        this._hasNext = _dateItem != null && _dateItem.hasTimeZone();
+        this._dateItem = this._children.get(0).materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
+        this._hasNext = this._dateItem != null && this._dateItem.hasTimeZone();
     }
 }

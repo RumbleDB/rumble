@@ -21,16 +21,15 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.sequences.general;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ObjectItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
@@ -57,9 +56,9 @@ public class SubsequenceFunctionIterator extends LocalFunctionCallIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        _currentPosition = 1; // JSONiq indices start from 1
+        this._currentPosition = 1; // JSONiq indices start from 1
 
-        _length = -1; // unassigned
+        this._length = -1; // unassigned
         // if length param is given, process it
         RuntimeIterator lengthIterator;
         Item lengthItem = null;
@@ -93,7 +92,7 @@ public class SubsequenceFunctionIterator extends LocalFunctionCallIterator {
             lengthIterator.close();
             // round double to nearest int
             try {
-                _length = (int) Math.round((lengthItem.castToDoubleValue()));
+                this._length = (int) Math.round((lengthItem.castToDoubleValue()));
 
             } catch (IteratorFlowException e) {
                 throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
@@ -128,37 +127,37 @@ public class SubsequenceFunctionIterator extends LocalFunctionCallIterator {
         }
         positionIterator.close();
         // round double to nearest int
-        _startPosition = (int) Math.round((positionItem.castToDoubleValue()));
+        this._startPosition = (int) Math.round((positionItem.castToDoubleValue()));
 
         // first, perform all parameter checks (above)
         // if length is 0, just return empty sequence
-        if (_length == 0) {
+        if (this._length == 0) {
             this._hasNext = false;
             return;
         } else {
-            _sequenceIterator = this._children.get(0);
-            _sequenceIterator.open(context);
+            this._sequenceIterator = this._children.get(0);
+            this._sequenceIterator.open(context);
 
             // find the start of the subsequence
-            while (_sequenceIterator.hasNext()) {
-                if (_currentPosition < _startPosition) {
-                    _sequenceIterator.next(); // skip item
+            while (this._sequenceIterator.hasNext()) {
+                if (this._currentPosition < this._startPosition) {
+                    this._sequenceIterator.next(); // skip item
                 } else {
-                    _nextResult = _sequenceIterator.next();
+                    this._nextResult = this._sequenceIterator.next();
                     // if length is specified, decrement it
-                    if (_length != -1) {
-                        _length--;
+                    if (this._length != -1) {
+                        this._length--;
                     }
                     break;
                 }
-                _currentPosition++;
+                this._currentPosition++;
             }
         }
 
         // if _startPosition overshoots, return empty sequence
-        if (_nextResult == null) {
+        if (this._nextResult == null) {
             this._hasNext = false;
-            _sequenceIterator.close();
+            this._sequenceIterator.close();
         } else {
             this._hasNext = true;
         }
@@ -167,7 +166,7 @@ public class SubsequenceFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public Item next() {
         if (this.hasNext()) {
-            Item result = _nextResult; // save the result to be returned
+            Item result = this._nextResult; // save the result to be returned
             setNextResult(); // calculate and store the next result
             return result;
         }
@@ -175,15 +174,15 @@ public class SubsequenceFunctionIterator extends LocalFunctionCallIterator {
     }
 
     public void setNextResult() {
-        _nextResult = null;
+        this._nextResult = null;
 
-        if (_length != 0) {
-            if (_sequenceIterator.hasNext()) {
-                if (_length > 0) { // take _length many items -> decrement the value for each item until 0
-                    _nextResult = _sequenceIterator.next();
-                    _length--;
-                } else if (_length == -1) { // _length not specified -> take all items until the end
-                    _nextResult = _sequenceIterator.next();
+        if (this._length != 0) {
+            if (this._sequenceIterator.hasNext()) {
+                if (this._length > 0) { // take _length many items -> decrement the value for each item until 0
+                    this._nextResult = this._sequenceIterator.next();
+                    this._length--;
+                } else if (this._length == -1) { // _length not specified -> take all items until the end
+                    this._nextResult = this._sequenceIterator.next();
                 } else {
                     throw new OurBadException(
                             "Unexpected length value found."
@@ -192,9 +191,9 @@ public class SubsequenceFunctionIterator extends LocalFunctionCallIterator {
             }
         }
 
-        if (_nextResult == null) {
+        if (this._nextResult == null) {
             this._hasNext = false;
-            _sequenceIterator.close();
+            this._sequenceIterator.close();
         } else {
             this._hasNext = true;
         }

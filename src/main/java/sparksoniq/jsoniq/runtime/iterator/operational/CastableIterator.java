@@ -2,16 +2,15 @@ package sparksoniq.jsoniq.runtime.iterator.operational;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CastableException;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.UnaryOperationBaseIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SingleType;
@@ -38,27 +37,27 @@ public class CastableIterator extends UnaryOperationBaseIterator {
     public Item next() {
         if (this._hasNext) {
             List<Item> items = new ArrayList<>();
-            _child.open(_currentDynamicContextForLocalExecution);
-            while (_child.hasNext()) {
-                items.add(_child.next());
+            this._child.open(this._currentDynamicContextForLocalExecution);
+            while (this._child.hasNext()) {
+                items.add(this._child.next());
                 if (items.size() > 1) {
-                    _child.close();
+                    this._child.close();
                     this._hasNext = false;
                     return ItemFactory.getInstance().createBooleanItem(false);
                 }
             }
-            _child.close();
+            this._child.close();
             this._hasNext = false;
 
             if (items.isEmpty())
-                return ItemFactory.getInstance().createBooleanItem(_singleType.getZeroOrOne());
+                return ItemFactory.getInstance().createBooleanItem(this._singleType.getZeroOrOne());
 
             if (items.size() != 1 || items.get(0) == null)
                 return ItemFactory.getInstance().createBooleanItem(false);
 
-            AtomicItem atomicItem = checkInvalidCastable(items.get(0), getMetadata(), _singleType);
+            AtomicItem atomicItem = checkInvalidCastable(items.get(0), getMetadata(), this._singleType);
 
-            return ItemFactory.getInstance().createBooleanItem(atomicItem.isCastableAs(_singleType.getType()));
+            return ItemFactory.getInstance().createBooleanItem(atomicItem.isCastableAs(this._singleType.getType()));
         } else
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
     }

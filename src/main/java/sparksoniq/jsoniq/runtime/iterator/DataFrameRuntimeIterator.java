@@ -20,12 +20,11 @@
 
 package sparksoniq.jsoniq.runtime.iterator;
 
-import sparksoniq.jsoniq.ExecutionMode;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
+import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.List;
-
-import org.rumbledb.exceptions.OurBadException;
 
 public abstract class DataFrameRuntimeIterator extends RDDRuntimeIterator {
 

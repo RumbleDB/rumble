@@ -20,19 +20,14 @@
 
 package org.rumbledb.expressions.flowr;
 
-import sparksoniq.jsoniq.ExecutionMode;
-
-
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
-
-
-
-import java.util.ArrayList;
-import java.util.List;
-
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import sparksoniq.jsoniq.ExecutionMode;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class OrderByClauseExpr extends FlworClause {
     private final Expression _expression;
@@ -61,19 +56,19 @@ public class OrderByClauseExpr extends FlworClause {
     }
 
     public Expression getExpression() {
-        return _expression;
+        return this._expression;
     }
 
     public boolean isAscending() {
-        return _ascending;
+        return this._ascending;
     }
 
     public EMPTY_ORDER getEmptyOrder() {
-        return _emptyOrder;
+        return this._emptyOrder;
     }
 
     public String getUri() {
-        return _uri;
+        return this._uri;
     }
 
     @Override
@@ -84,13 +79,13 @@ public class OrderByClauseExpr extends FlworClause {
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        result.add(_expression);
+        result.add(this._expression);
         return result;
     }
 
     @Override
     public String serializationString(boolean prefix) {
-        String result = "(orderByExpr " + _expression.serializationString(false);
+        String result = "(orderByExpr " + this._expression.serializationString(false);
         // if(this.asSequence !=null)
         // result += " as " + asSequence.serializationString(true);
         // if(this.expression!=null)

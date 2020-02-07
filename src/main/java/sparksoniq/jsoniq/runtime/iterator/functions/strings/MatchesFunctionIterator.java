@@ -21,13 +21,12 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.strings;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.util.List;
 import java.util.regex.Matcher;
@@ -50,8 +49,10 @@ public class MatchesFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             this._hasNext = false;
 
-            Item regexpItem = this._children.get(1).materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
-            Item stringItem = this._children.get(0).materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
+            Item regexpItem = this._children.get(1)
+                .materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
+            Item stringItem = this._children.get(0)
+                .materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
             if (stringItem == null) {
                 stringItem = ItemFactory.getInstance().createStringItem("");
             }

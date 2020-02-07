@@ -1,13 +1,12 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.datetime.components;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.math.BigDecimal;
@@ -33,8 +32,8 @@ public class SecondsFromTimeFunctionIterator extends LocalFunctionCallIterator {
             return ItemFactory.getInstance()
                 .createDecimalItem(
                     BigDecimal.valueOf(
-                        _timeItem.getDateTimeValue().getSecondOfMinute()
-                            + _timeItem.getDateTimeValue().getMillisOfSecond() * 1.0 / 1000
+                        this._timeItem.getDateTimeValue().getSecondOfMinute()
+                            + this._timeItem.getDateTimeValue().getMillisOfSecond() * 1.0 / 1000
                     )
                 );
         } else
@@ -47,7 +46,7 @@ public class SecondsFromTimeFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        _timeItem = this._children.get(0).materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
-        this._hasNext = _timeItem != null;
+        this._timeItem = this._children.get(0).materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
+        this._hasNext = this._timeItem != null;
     }
 }

@@ -24,9 +24,9 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
-
 import scala.Tuple2;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.IntegerItem;
@@ -37,7 +37,6 @@ import sparksoniq.jsoniq.runtime.iterator.operational.ComparisonOperationIterato
 import sparksoniq.jsoniq.runtime.iterator.operational.NotOperationIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.OrOperationIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.BooleanRuntimeIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
@@ -64,15 +63,15 @@ public class PredicateIterator extends HybridRuntimeIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(Arrays.asList(sequence, filterExpression), executionMode, iteratorMetadata);
-        _iterator = sequence;
-        _filter = filterExpression;
-        _filterDynamicContext = null;
+        this._iterator = sequence;
+        this._filter = filterExpression;
+        this._filterDynamicContext = null;
     }
 
     @Override
     protected Item nextLocal() {
-        if (_hasNext == true) {
-            Item result = _nextResult; // save the result to be returned
+        if (this._hasNext == true) {
+            Item result = this._nextResult; // save the result to be returned
             setNextResult(); // calculate and store the next result
             return result;
         }
@@ -81,27 +80,27 @@ public class PredicateIterator extends HybridRuntimeIterator {
 
     @Override
     protected boolean hasNextLocal() {
-        return _hasNext;
+        return this._hasNext;
     }
 
     @Override
     protected void resetLocal(DynamicContext context) {
-        _iterator.close();
-        _filterDynamicContext = new DynamicContext(_currentDynamicContextForLocalExecution);
-        if (_filter.getVariableDependencies().containsKey("$last")) {
+        this._iterator.close();
+        this._filterDynamicContext = new DynamicContext(this._currentDynamicContextForLocalExecution);
+        if (this._filter.getVariableDependencies().containsKey("$last")) {
             setLast();
         }
-        if (_filter.getVariableDependencies().containsKey("$position")) {
-            _position = 0;
-            _mustMaintainPosition = true;
+        if (this._filter.getVariableDependencies().containsKey("$position")) {
+            this._position = 0;
+            this._mustMaintainPosition = true;
         }
-        _iterator.open(_currentDynamicContextForLocalExecution);
+        this._iterator.open(this._currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
     @Override
     protected void closeLocal() {
-        _iterator.close();
+        this._iterator.close();
     }
 
     @Override
@@ -109,68 +108,68 @@ public class PredicateIterator extends HybridRuntimeIterator {
         if (this._children.size() < 2) {
             throw new OurBadException("Invalid Predicate! Must initialize filter before calling next");
         }
-        _filterDynamicContext = new DynamicContext(_currentDynamicContextForLocalExecution);
-        if (_filter.getVariableDependencies().containsKey("$last")) {
+        this._filterDynamicContext = new DynamicContext(this._currentDynamicContextForLocalExecution);
+        if (this._filter.getVariableDependencies().containsKey("$last")) {
             setLast();
         }
-        if (_filter.getVariableDependencies().containsKey("$position")) {
-            _position = 0;
-            _mustMaintainPosition = true;
+        if (this._filter.getVariableDependencies().containsKey("$position")) {
+            this._position = 0;
+            this._mustMaintainPosition = true;
         }
-        _iterator.open(_currentDynamicContextForLocalExecution);
+        this._iterator.open(this._currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
     private void setLast() {
         long last = 0;
-        _iterator.open(_currentDynamicContextForLocalExecution);
-        while (_iterator.hasNext()) {
-            _iterator.next();
+        this._iterator.open(this._currentDynamicContextForLocalExecution);
+        while (this._iterator.hasNext()) {
+            this._iterator.next();
             ++last;
         }
-        _iterator.close();
-        _filterDynamicContext.setLast(last);
+        this._iterator.close();
+        this._filterDynamicContext.setLast(last);
     }
 
     private void setNextResult() {
-        _nextResult = null;
+        this._nextResult = null;
 
-        while (_iterator.hasNext()) {
-            Item item = _iterator.next();
+        while (this._iterator.hasNext()) {
+            Item item = this._iterator.next();
             List<Item> currentItems = new ArrayList<>();
             currentItems.add(item);
-            _filterDynamicContext.addVariableValue("$$", currentItems);
-            if (_mustMaintainPosition)
-                _filterDynamicContext.setPosition(++_position);
+            this._filterDynamicContext.addVariableValue("$$", currentItems);
+            if (this._mustMaintainPosition)
+                this._filterDynamicContext.setPosition(++this._position);
 
-            _filter.open(_filterDynamicContext);
+            this._filter.open(this._filterDynamicContext);
             Item fil = null;
-            if (_filter.hasNext()) {
-                fil = _filter.next();
+            if (this._filter.hasNext()) {
+                fil = this._filter.next();
             }
-            _filter.close();
+            this._filter.close();
             // if filter is an integer, it is used to return the element with the index equal to the given integer
             if (fil instanceof IntegerItem) {
-                _iterator.close();
-                List<Item> sequence = _iterator.materialize(_currentDynamicContextForLocalExecution);
+                this._iterator.close();
+                List<Item> sequence = this._iterator.materialize(this._currentDynamicContextForLocalExecution);
                 int index = ((IntegerItem) fil).getIntegerValue();
                 // less than or equal to size -> b/c of -1
                 if (index >= 1 && index <= sequence.size()) {
                     // -1 for Jsoniq convention, arrays start from 1
-                    _nextResult = sequence.get(index - 1);
+                    this._nextResult = sequence.get(index - 1);
                 }
                 break;
             } else if (fil != null && fil.getEffectiveBooleanValue()) {
-                _nextResult = item;
+                this._nextResult = item;
                 break;
             }
-            _filter.close();
+            this._filter.close();
         }
-        _filterDynamicContext.removeVariable("$$");
+        this._filterDynamicContext.removeVariable("$$");
 
-        if (_nextResult == null) {
+        if (this._nextResult == null) {
             this._hasNext = false;
-            _iterator.close();
+            this._iterator.close();
         } else {
             this._hasNext = true;
         }
@@ -212,9 +211,9 @@ public class PredicateIterator extends HybridRuntimeIterator {
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<String, DynamicContext.VariableDependency> result =
             new TreeMap<String, DynamicContext.VariableDependency>();
-        result.putAll(_filter.getVariableDependencies());
+        result.putAll(this._filter.getVariableDependencies());
         result.remove("$");
-        result.putAll(_iterator.getVariableDependencies());
+        result.putAll(this._iterator.getVariableDependencies());
         return result;
     }
 }

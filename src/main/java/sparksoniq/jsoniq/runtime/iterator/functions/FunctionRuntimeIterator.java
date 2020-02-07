@@ -21,13 +21,12 @@
 package sparksoniq.jsoniq.runtime.iterator.functions;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 
 public class FunctionRuntimeIterator extends LocalRuntimeIterator {
 
@@ -47,7 +46,7 @@ public class FunctionRuntimeIterator extends LocalRuntimeIterator {
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            return _item;
+            return this._item;
         }
 
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item, getMetadata());

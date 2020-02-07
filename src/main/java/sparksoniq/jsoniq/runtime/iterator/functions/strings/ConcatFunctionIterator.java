@@ -21,13 +21,12 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.strings;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.util.List;
 
@@ -48,7 +47,7 @@ public class ConcatFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             StringBuilder builder = new StringBuilder();
             for (RuntimeIterator iterator : this._children) {
-                Item item = iterator.materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
+                Item item = iterator.materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
                 // if not empty sequence
                 if (item != null) {
                     String stringValue = item.serialize();

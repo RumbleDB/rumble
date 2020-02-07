@@ -23,15 +23,14 @@ package sparksoniq.jsoniq.runtime.iterator.postfix;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSelectorException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.Arrays;
@@ -51,13 +50,13 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(Arrays.asList(array, iterator), executionMode, iteratorMetadata);
-        _iterator = array;
+        this._iterator = array;
     }
 
     @Override
     public Item nextLocal() {
-        if (_hasNext == true) {
-            Item result = _nextResult; // save the result to be returned
+        if (this._hasNext == true) {
+            Item result = this._nextResult; // save the result to be returned
             setNextResult(); // calculate and store the next result
             return result;
         }
@@ -67,24 +66,24 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
 
     @Override
     protected boolean hasNextLocal() {
-        return _hasNext;
+        return this._hasNext;
     }
 
     @Override
     protected void resetLocal(DynamicContext context) {
-        _iterator.reset(_currentDynamicContextForLocalExecution);
+        this._iterator.reset(this._currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
     @Override
     protected void closeLocal() {
-        _iterator.close();
+        this._iterator.close();
     }
 
     private void initLookupPosition() {
         RuntimeIterator lookupIterator = this._children.get(1);
 
-        lookupIterator.open(_currentDynamicContextForLocalExecution);
+        lookupIterator.open(this._currentDynamicContextForLocalExecution);
         Item lookupExpression = null;
         if (lookupIterator.hasNext()) {
             lookupExpression = lookupIterator.next();
@@ -104,7 +103,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
         }
         lookupIterator.close();
         try {
-            _lookup = lookupExpression.castToIntegerValue();
+            this._lookup = lookupExpression.castToIntegerValue();
         } catch (IteratorFlowException e) {
             throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
         }
@@ -113,29 +112,29 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     @Override
     public void openLocal() {
         initLookupPosition();
-        _iterator.open(_currentDynamicContextForLocalExecution);
+        this._iterator.open(this._currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
     public void setNextResult() {
-        _nextResult = null;
+        this._nextResult = null;
 
-        while (_iterator.hasNext()) {
-            Item item = _iterator.next();
+        while (this._iterator.hasNext()) {
+            Item item = this._iterator.next();
             if (item instanceof ArrayItem) {
                 ArrayItem arrItem = (ArrayItem) item;
-                if (_lookup > 0 && _lookup <= arrItem.getSize()) {
+                if (this._lookup > 0 && this._lookup <= arrItem.getSize()) {
                     // -1 for Jsoniq convention, arrays start from 1
-                    Item result = arrItem.getItemAt(_lookup - 1);
-                    _nextResult = result;
+                    Item result = arrItem.getItemAt(this._lookup - 1);
+                    this._nextResult = result;
                     break;
                 }
             }
         }
 
-        if (_nextResult == null) {
+        if (this._nextResult == null) {
             this._hasNext = false;
-            _iterator.close();
+            this._iterator.close();
         } else {
             this._hasNext = true;
         }
@@ -145,7 +144,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this._children.get(0).getRDD(dynamicContext);
         initLookupPosition();
-        FlatMapFunction<Item, Item> transformation = new ArrayLookupClosure(_lookup);
+        FlatMapFunction<Item, Item> transformation = new ArrayLookupClosure(this._lookup);
 
         JavaRDD<Item> resultRDD = childRDD.flatMap(transformation);
         return resultRDD;

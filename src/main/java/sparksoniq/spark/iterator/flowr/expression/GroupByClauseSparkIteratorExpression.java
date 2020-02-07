@@ -21,9 +21,9 @@
 package sparksoniq.spark.iterator.flowr.expression;
 
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.io.Serializable;
 
@@ -46,14 +46,14 @@ public class GroupByClauseSparkIteratorExpression implements Serializable {
     }
 
     public VariableReferenceIterator getVariableReference() {
-        return _variableReference;
+        return this._variableReference;
     }
 
-    public ExceptionMetadata getMetadata() {
-        return iteratorMetadata;
+    public ExceptionMetadata getIteratorMetadata() {
+        return this.iteratorMetadata;
     }
 
     public RuntimeIterator getExpression() {
-        return _expression;
+        return this._expression;
     }
 }

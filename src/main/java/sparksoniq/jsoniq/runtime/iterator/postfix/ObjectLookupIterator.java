@@ -23,10 +23,10 @@ package sparksoniq.jsoniq.runtime.iterator.postfix;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSelectorException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.BooleanItem;
 import sparksoniq.jsoniq.item.DecimalItem;
@@ -36,7 +36,6 @@ import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.ContextExpressionIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.math.BigDecimal;
@@ -57,17 +56,17 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(Arrays.asList(object, lookupIterator), executionMode, iteratorMetadata);
-        _iterator = object;
+        this._iterator = object;
     }
 
     private void initLookupKey() {
 
         RuntimeIterator lookupIterator = this._children.get(1);
 
-        _contextLookup = lookupIterator instanceof ContextExpressionIterator;
+        this._contextLookup = lookupIterator instanceof ContextExpressionIterator;
 
-        if (!_contextLookup) {
-            lookupIterator.open(_currentDynamicContextForLocalExecution);
+        if (!this._contextLookup) {
+            lookupIterator.open(this._currentDynamicContextForLocalExecution);
             if (lookupIterator.hasNext()) {
                 this._lookupKey = lookupIterator.next();
             } else {
@@ -79,37 +78,37 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             if (lookupIterator.hasNext()) {
                 throw new InvalidSelectorException(
                         "\"Invalid Lookup Key; Object lookup can't be performed with multiple keys: "
-                            + _lookupKey.serialize(),
+                            + this._lookupKey.serialize(),
                         getMetadata()
                 );
             }
-            if (_lookupKey.isNull() || _lookupKey.isObject() || _lookupKey.isArray()) {
+            if (this._lookupKey.isNull() || this._lookupKey.isObject() || this._lookupKey.isArray()) {
                 throw new UnexpectedTypeException(
                         "Type error; Object selector can't be converted to a string: "
-                            + _lookupKey.serialize(),
+                            + this._lookupKey.serialize(),
                         getMetadata()
                 );
             } else {
                 // convert to string
-                if (_lookupKey.isBoolean()) {
-                    Boolean value = ((BooleanItem) _lookupKey).getValue();
-                    _lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
-                } else if (_lookupKey.isDecimal()) {
-                    BigDecimal value = ((DecimalItem) _lookupKey).getValue();
-                    _lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
-                } else if (_lookupKey.isDouble()) {
-                    Double value = ((DoubleItem) _lookupKey).getValue();
-                    _lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
-                } else if (_lookupKey.isInteger()) {
-                    Integer value = ((IntegerItem) _lookupKey).getValue();
-                    _lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
-                } else if (_lookupKey.isString()) {
+                if (this._lookupKey.isBoolean()) {
+                    Boolean value = ((BooleanItem) this._lookupKey).getValue();
+                    this._lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
+                } else if (this._lookupKey.isDecimal()) {
+                    BigDecimal value = ((DecimalItem) this._lookupKey).getValue();
+                    this._lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
+                } else if (this._lookupKey.isDouble()) {
+                    Double value = ((DoubleItem) this._lookupKey).getValue();
+                    this._lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
+                } else if (this._lookupKey.isInteger()) {
+                    Integer value = ((IntegerItem) this._lookupKey).getValue();
+                    this._lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
+                } else if (this._lookupKey.isString()) {
                     // do nothing
                 }
             }
-            if (!_lookupKey.isString()) {
+            if (!this._lookupKey.isString()) {
                 throw new UnexpectedTypeException(
-                        "Non string object lookup for " + _lookupKey.serialize(),
+                        "Non string object lookup for " + this._lookupKey.serialize(),
                         getMetadata()
                 );
             }
@@ -120,30 +119,30 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     @Override
     public void openLocal() {
         initLookupKey();
-        _iterator.open(_currentDynamicContextForLocalExecution);
+        this._iterator.open(this._currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
     @Override
     protected boolean hasNextLocal() {
-        return _hasNext;
+        return this._hasNext;
     }
 
     @Override
     protected void resetLocal(DynamicContext context) {
-        _iterator.reset(_currentDynamicContextForLocalExecution);
+        this._iterator.reset(this._currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
     @Override
     protected void closeLocal() {
-        _iterator.close();
+        this._iterator.close();
     }
 
     @Override
     public Item nextLocal() {
-        if (_hasNext) {
-            Item result = _nextResult; // save the result to be returned
+        if (this._hasNext) {
+            Item result = this._nextResult; // save the result to be returned
             setNextResult(); // calculate and store the next result
             return result;
         }
@@ -151,30 +150,30 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     }
 
     public void setNextResult() {
-        _nextResult = null;
+        this._nextResult = null;
 
-        while (_iterator.hasNext()) {
-            Item item = _iterator.next();
+        while (this._iterator.hasNext()) {
+            Item item = this._iterator.next();
             if (item.isObject()) {
-                if (!_contextLookup) {
-                    Item result = item.getItemByKey(_lookupKey.getStringValue());
+                if (!this._contextLookup) {
+                    Item result = item.getItemByKey(this._lookupKey.getStringValue());
                     if (result != null) {
-                        _nextResult = result;
+                        this._nextResult = result;
                         break;
                     }
                 } else {
-                    Item contextItem = _currentDynamicContextForLocalExecution.getLocalVariableValue(
+                    Item contextItem = this._currentDynamicContextForLocalExecution.getLocalVariableValue(
                         "$$",
                         getMetadata()
                     ).get(0);
-                    _nextResult = item.getItemByKey(contextItem.getStringValue());
+                    this._nextResult = item.getItemByKey(contextItem.getStringValue());
                 }
             }
         }
 
-        if (_nextResult == null) {
+        if (this._nextResult == null) {
             this._hasNext = false;
-            _iterator.close();
+            this._iterator.close();
         } else {
             this._hasNext = true;
         }
@@ -185,11 +184,11 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         JavaRDD<Item> childRDD = this._children.get(0).getRDD(dynamicContext);
         initLookupKey();
         String key;
-        if (_contextLookup) {
+        if (this._contextLookup) {
             // For now this will always be an error. Later on we will pass the dynamic context from the parent iterator.
             key = dynamicContext.getLocalVariableValue("$$", getMetadata()).get(0).getStringValue();
         } else {
-            key = _lookupKey.getStringValue();
+            key = this._lookupKey.getStringValue();
         }
         FlatMapFunction<Item, Item> transformation = new ObjectLookupClosure(key);
 

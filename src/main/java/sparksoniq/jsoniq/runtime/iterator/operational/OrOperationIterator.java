@@ -21,13 +21,12 @@
 package sparksoniq.jsoniq.runtime.iterator.operational;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 
 public class OrOperationIterator extends BinaryOperationBaseIterator {
 
@@ -45,14 +44,14 @@ public class OrOperationIterator extends BinaryOperationBaseIterator {
 
     @Override
     public Item next() {
-        _leftIterator.open(_currentDynamicContextForLocalExecution);
-        _rightIterator.open(_currentDynamicContextForLocalExecution);
+        this._leftIterator.open(this._currentDynamicContextForLocalExecution);
+        this._rightIterator.open(this._currentDynamicContextForLocalExecution);
 
-        boolean leftEffectiveBooleanValue = getEffectiveBooleanValue(_leftIterator);
-        boolean rightEffectiveBooleanValue = getEffectiveBooleanValue(_rightIterator);
+        boolean leftEffectiveBooleanValue = getEffectiveBooleanValue(this._leftIterator);
+        boolean rightEffectiveBooleanValue = getEffectiveBooleanValue(this._rightIterator);
 
-        _leftIterator.close();
-        _rightIterator.close();
+        this._leftIterator.close();
+        this._rightIterator.close();
         this._hasNext = false;
         return ItemFactory.getInstance().createBooleanItem((leftEffectiveBooleanValue || rightEffectiveBooleanValue));
     }

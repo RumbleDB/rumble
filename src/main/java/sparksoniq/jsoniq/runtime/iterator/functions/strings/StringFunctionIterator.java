@@ -2,15 +2,14 @@ package sparksoniq.jsoniq.runtime.iterator.functions.strings;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CastException;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.StringOfJSONiqItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemTypes;
@@ -35,19 +34,19 @@ public class StringFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             this._hasNext = false;
             try {
-                if (!item.isAtomic()) {
+                if (!this.item.isAtomic()) {
                     throw new StringOfJSONiqItemException(
-                            ItemTypes.getItemTypeName(item.getClass().getSimpleName())
+                            ItemTypes.getItemTypeName(this.item.getClass().getSimpleName())
                                 +
                                 " items do not have string value",
                             getMetadata()
                     );
                 }
-                AtomicItem atomicItem = (AtomicItem) item;
+                AtomicItem atomicItem = (AtomicItem) this.item;
                 String message = atomicItem.serialize()
                     +
                     ": value of type "
-                    + ItemTypes.getItemTypeName(item.getClass().getSimpleName())
+                    + ItemTypes.getItemTypeName(this.item.getClass().getSimpleName())
                     + " is not castable to type string.";
                 if (atomicItem.isCastableAs(AtomicTypes.StringItem)) {
                     try {
@@ -61,7 +60,7 @@ public class StringFunctionIterator extends LocalFunctionCallIterator {
             } catch (IllegalArgumentException e) {
                 String message = String.format(
                     "\"%s\": value of type %s is not castable to type %s",
-                    item.serialize(),
+                    this.item.serialize(),
                     "string",
                     "string"
                 );
@@ -77,7 +76,7 @@ public class StringFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        item = this._children.get(0).materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
-        this._hasNext = item != null;
+        this.item = this._children.get(0).materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
+        this._hasNext = this.item != null;
     }
 }

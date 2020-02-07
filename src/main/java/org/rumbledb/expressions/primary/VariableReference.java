@@ -21,14 +21,13 @@
 package org.rumbledb.expressions.primary;
 
 
-import sparksoniq.jsoniq.ExecutionMode;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.types.SequenceType;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.io.Serializable;
-
-import org.rumbledb.exceptions.OurBadException;
 
 public class VariableReference extends PrimaryExpression implements Serializable {
 
@@ -47,11 +46,11 @@ public class VariableReference extends PrimaryExpression implements Serializable
     }
 
     public String getVariableName() {
-        return name;
+        return this.name;
     }
 
     public SequenceType getType() {
-        return _type;
+        return this._type;
     }
 
     public void setType(SequenceType type) {
@@ -72,7 +71,7 @@ public class VariableReference extends PrimaryExpression implements Serializable
 
     @Override
     public String serializationString(boolean prefix) {
-        String result = (prefix ? "(primaryExpr " : "") + "(varRef $ " + name;
+        String result = (prefix ? "(primaryExpr " : "") + "(varRef $ " + this.name;
         result += (prefix ? ")" : "") + ")";
         return result;
     }

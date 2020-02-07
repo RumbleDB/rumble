@@ -21,11 +21,10 @@
 package sparksoniq.jsoniq.runtime.iterator.primary;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.Map;
@@ -43,7 +42,7 @@ public class ContextExpressionIterator extends LocalRuntimeIterator {
     public Item next() {
         if (hasNext()) {
             this._hasNext = false;
-            return _currentDynamicContextForLocalExecution.getLocalVariableValue("$$", getMetadata()).get(0);
+            return this._currentDynamicContextForLocalExecution.getLocalVariableValue("$$", getMetadata()).get(0);
         }
         throw new IteratorFlowException("Invalid next() call in Context Expression!", getMetadata());
     }

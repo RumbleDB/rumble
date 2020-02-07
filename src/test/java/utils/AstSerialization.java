@@ -20,11 +20,10 @@
 
 package utils;
 
+import org.rumbledb.parser.JsoniqParser;
 import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
 
 import java.util.Arrays;
-
-import org.rumbledb.parser.JsoniqParser;
 
 public class AstSerialization {
 

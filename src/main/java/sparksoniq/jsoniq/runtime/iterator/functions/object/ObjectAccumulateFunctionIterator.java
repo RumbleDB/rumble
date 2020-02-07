@@ -21,13 +21,12 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.object;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -51,7 +50,7 @@ public class ObjectAccumulateFunctionIterator extends LocalFunctionCallIterator 
     public Item next() {
         if (this._hasNext) {
             RuntimeIterator sequenceIterator = this._children.get(0);
-            List<Item> items = sequenceIterator.materialize(_currentDynamicContextForLocalExecution);
+            List<Item> items = sequenceIterator.materialize(this._currentDynamicContextForLocalExecution);
             LinkedHashMap<String, List<Item>> keyValuePairs = new LinkedHashMap<>();
             for (Item item : items) {
                 // ignore non-object items

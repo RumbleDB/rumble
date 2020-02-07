@@ -6,11 +6,10 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.parser.JsoniqLexer;
-import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.expressions.Expression;
-
+import org.rumbledb.parser.JsoniqLexer;
+import org.rumbledb.parser.JsoniqParser;
 import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.visitor.VisitorHelpers;
@@ -36,7 +35,7 @@ public class Rumble {
      * @param conf a RumbleConf object containing the configuration.
      */
     public Rumble(RumbleConf conf) {
-        _conf = conf;
+        this._conf = conf;
         SparkSessionManager.COLLECT_ITEM_LIMIT = conf.getResultsSizeCap();
     }
 

@@ -21,18 +21,13 @@
 package org.rumbledb.expressions.postfix.extensions;
 
 
-
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.postfix.PostFixExpression;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
-
-
 
 import java.util.ArrayList;
 import java.util.List;
-
-
-import org.rumbledb.expressions.Node;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.postfix.PostFixExpression;
 
 
 public abstract class PostfixExtension extends Node {
@@ -45,15 +40,15 @@ public abstract class PostfixExtension extends Node {
     }
 
     public PostFixExpression getParent() {
-        return parent;
+        return this.parent;
     }
 
     public void setParent(PostFixExpression _parent) {
-        parent = _parent;
+        this.parent = _parent;
     }
 
     public PostfixExtension getPrevious() {
-        return previous;
+        return this.previous;
     }
 
     public void setPrevious(PostfixExtension previous) {
@@ -67,7 +62,7 @@ public abstract class PostfixExtension extends Node {
 
     @Override
     public void initHighestExecutionMode() {
-        if (previous != null) {
+        if (this.previous != null) {
             this._highestExecutionMode = this.previous.getHighestExecutionMode();
         } else {
             this._highestExecutionMode = this.parent.getHighestExecutionMode();

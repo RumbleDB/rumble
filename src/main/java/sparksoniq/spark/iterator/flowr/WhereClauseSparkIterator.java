@@ -24,13 +24,12 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.OurBadException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
@@ -59,16 +58,16 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(child, executionMode, iteratorMetadata);
-        _expression = whereExpression;
-        _dependencies = _expression.getVariableDependencies();
+        this._expression = whereExpression;
+        this._dependencies = this._expression.getVariableDependencies();
     }
 
     @Override
     public void open(DynamicContext context) {
         super.open(context);
         if (this._child != null) {
-            _child.open(_currentDynamicContext);
-            _tupleContext = new DynamicContext(_currentDynamicContext); // assign current context as parent
+            this._child.open(this._currentDynamicContext);
+            this._tupleContext = new DynamicContext(this._currentDynamicContext); // assign current context as parent
 
             setNextLocalTupleResult();
 
@@ -79,8 +78,8 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
 
     @Override
     public FlworTuple next() {
-        if (_hasNext) {
-            FlworTuple result = _nextLocalTupleResult; // save the result to be returned
+        if (this._hasNext) {
+            FlworTuple result = this._nextLocalTupleResult; // save the result to be returned
             setNextLocalTupleResult(); // calculate and store the next result
             return result;
         }
@@ -92,24 +91,24 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         // forward if true, drop if false
 
         FlworTuple inputTuple;
-        while (_child.hasNext()) {
+        while (this._child.hasNext()) {
             // tuple received from child, used for tuple creation
-            inputTuple = _child.next();
-            _tupleContext.removeAllVariables(); // clear the previous variables
-            _tupleContext.setBindingsFromTuple(inputTuple, getMetadata()); // assign new variables from new tuple
+            inputTuple = this._child.next();
+            this._tupleContext.removeAllVariables(); // clear the previous variables
+            this._tupleContext.setBindingsFromTuple(inputTuple, getMetadata()); // assign new variables from new tuple
 
-            _expression.open(_tupleContext);
-            boolean effectiveBooleanValue = RuntimeIterator.getEffectiveBooleanValue(_expression);
-            _expression.close();
+            this._expression.open(this._tupleContext);
+            boolean effectiveBooleanValue = RuntimeIterator.getEffectiveBooleanValue(this._expression);
+            this._expression.close();
             if (effectiveBooleanValue) {
-                _nextLocalTupleResult = inputTuple;
+                this._nextLocalTupleResult = inputTuple;
                 this._hasNext = true;
                 return;
             }
         }
 
         // execution reaches here when there are no more results
-        _child.close();
+        this._child.close();
         this._hasNext = false;
     }
 
@@ -122,27 +121,27 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             throw new OurBadException("Invalid where clause.");
         }
 
-        if (_expression.isRDD()) {
+        if (this._expression.isRDD()) {
             throw new JobWithinAJobException(
                     "A where clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
                     getMetadata()
             );
         }
 
-        Dataset<Row> df = _child.getDataFrame(context, getProjection(parentProjection));
+        Dataset<Row> df = this._child.getDataFrame(context, getProjection(parentProjection));
         StructType inputSchema = df.schema();
 
         Map<String, List<String>> UDFcolumnsByType = DataFrameUtils.getColumnNamesByType(
             inputSchema,
             -1,
-            _dependencies
+            this._dependencies
         );
 
         df.sparkSession()
             .udf()
             .register(
                 "whereClauseUDF",
-                new WhereClauseUDF(_expression, context, inputSchema, UDFcolumnsByType),
+                new WhereClauseUDF(this._expression, context, inputSchema, UDFcolumnsByType),
                 DataTypes.BooleanType
             );
 
@@ -160,21 +159,23 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<String, DynamicContext.VariableDependency> result = new TreeMap<>(_expression.getVariableDependencies());
-        for (String var : _child.getVariablesBoundInCurrentFLWORExpression()) {
+        Map<String, DynamicContext.VariableDependency> result = new TreeMap<>(
+                this._expression.getVariableDependencies()
+        );
+        for (String var : this._child.getVariablesBoundInCurrentFLWORExpression()) {
             result.remove(var);
         }
-        result.putAll(_child.getVariableDependencies());
+        result.putAll(this._child.getVariableDependencies());
         return result;
     }
 
     public Set<String> getVariablesBoundInCurrentFLWORExpression() {
-        return new HashSet<>(_child.getVariablesBoundInCurrentFLWORExpression());
+        return new HashSet<>(this._child.getVariablesBoundInCurrentFLWORExpression());
     }
 
     public void print(StringBuffer buffer, int indent) {
         super.print(buffer, indent);
-        _expression.print(buffer, indent + 1);
+        this._expression.print(buffer, indent + 1);
     }
 
     public Map<String, DynamicContext.VariableDependency> getProjection(
@@ -184,7 +185,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         Map<String, DynamicContext.VariableDependency> projection = new TreeMap<>(parentProjection);
 
         // add the variable dependencies needed by this for clause's expression.
-        Map<String, DynamicContext.VariableDependency> exprDependency = _expression.getVariableDependencies();
+        Map<String, DynamicContext.VariableDependency> exprDependency = this._expression.getVariableDependencies();
         for (String variable : exprDependency.keySet()) {
             if (projection.containsKey(variable)) {
                 if (projection.get(variable) != exprDependency.get(variable)) {

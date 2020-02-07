@@ -21,13 +21,12 @@
 package sparksoniq.jsoniq.runtime.iterator.control;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.Map;
@@ -62,15 +61,15 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        initializeIterator(testField, cases, defaultReturn);
+        initializeIterator(this.testField, this.cases, this.defaultReturn);
     }
 
     @Override
     public Item next() {
         if (this._hasNext) {
-            matchingIterator.open(_currentDynamicContextForLocalExecution);
-            Item nextItem = matchingIterator.next();
-            matchingIterator.close();
+            this.matchingIterator.open(this._currentDynamicContextForLocalExecution);
+            Item nextItem = this.matchingIterator.next();
+            this.matchingIterator.close();
             this._hasNext = false;
             return nextItem;
         }
@@ -84,7 +83,7 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
     public void reset(DynamicContext context) {
         super.reset(context);
         this.matchingIterator = null;
-        initializeIterator(testField, cases, defaultReturn);
+        initializeIterator(this.testField, this.cases, this.defaultReturn);
     }
 
     private void initializeIterator(
@@ -92,7 +91,7 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
             Map<RuntimeIterator, RuntimeIterator> cases,
             RuntimeIterator defaultReturn
     ) {
-        Item testValue = test.materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
+        Item testValue = test.materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
 
         if (testValue != null) {
             if (testValue.isArray()) {
@@ -109,7 +108,7 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
         }
 
         for (RuntimeIterator caseKey : cases.keySet()) {
-            Item caseValue = caseKey.materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
+            Item caseValue = caseKey.materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
 
             if (caseValue != null) {
                 if (caseValue.isArray()) {
@@ -128,22 +127,22 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
             // both are empty sequences
             if (testValue == null) {
                 if (caseValue == null) {
-                    matchingIterator = cases.get(caseKey);
+                    this.matchingIterator = cases.get(caseKey);
                     break;
                 } else {
                     // no match, do nothing
                 }
             } else if (testValue.equals(caseValue)) {
-                matchingIterator = cases.get(caseKey);
+                this.matchingIterator = cases.get(caseKey);
                 break;
             }
         }
 
-        if (matchingIterator == null)
-            matchingIterator = defaultReturn;
+        if (this.matchingIterator == null)
+            this.matchingIterator = defaultReturn;
 
-        matchingIterator.open(_currentDynamicContextForLocalExecution);
-        this._hasNext = matchingIterator.hasNext();
-        matchingIterator.close();
+        this.matchingIterator.open(this._currentDynamicContextForLocalExecution);
+        this._hasNext = this.matchingIterator.hasNext();
+        this.matchingIterator.close();
     }
 }

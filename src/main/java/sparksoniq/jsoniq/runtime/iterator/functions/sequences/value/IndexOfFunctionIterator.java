@@ -21,15 +21,14 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.sequences.value;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
@@ -54,7 +53,7 @@ public class IndexOfFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public Item next() {
         if (this._hasNext) {
-            Item result = _nextResult; // save the result to be returned
+            Item result = this._nextResult; // save the result to be returned
             setNextResult(); // calculate and store the next result
             return result;
         }
@@ -65,11 +64,11 @@ public class IndexOfFunctionIterator extends LocalFunctionCallIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        _sequenceIterator = this._children.get(0);
+        this._sequenceIterator = this._children.get(0);
         RuntimeIterator searchIterator = this._children.get(1);
-        _currentIndex = 0;
+        this._currentIndex = 0;
 
-        _sequenceIterator.open(context);
+        this._sequenceIterator.open(context);
         searchIterator.open(context);
 
         if (!searchIterator.hasNext()) {
@@ -78,14 +77,14 @@ public class IndexOfFunctionIterator extends LocalFunctionCallIterator {
                     getMetadata()
             );
         }
-        _search = searchIterator.next();
+        this._search = searchIterator.next();
         if (searchIterator.hasNext()) {
             throw new UnexpectedTypeException(
                     "Invalid args. index-of can't be performed with sequences with more than one items",
                     getMetadata()
             );
         }
-        if (!_search.isAtomic()) {
+        if (!this._search.isAtomic()) {
             throw new NonAtomicKeyException(
                     "Invalid args. index-of can't be performed with a non-atomic parameter",
                     getMetadata()
@@ -97,27 +96,27 @@ public class IndexOfFunctionIterator extends LocalFunctionCallIterator {
     }
 
     public void setNextResult() {
-        _nextResult = null;
+        this._nextResult = null;
 
-        while (_sequenceIterator.hasNext()) {
-            _currentIndex += 1;
-            Item item = _sequenceIterator.next();
+        while (this._sequenceIterator.hasNext()) {
+            this._currentIndex += 1;
+            Item item = this._sequenceIterator.next();
             if (!item.isAtomic()) {
                 throw new NonAtomicKeyException(
                         "Invalid args. index-of can't be performed with a non-atomic in the input sequence",
                         getMetadata()
                 );
             } else {
-                if (item.compareTo(_search) == 0) {
-                    _nextResult = ItemFactory.getInstance().createIntegerItem(_currentIndex);
+                if (item.compareTo(this._search) == 0) {
+                    this._nextResult = ItemFactory.getInstance().createIntegerItem(this._currentIndex);
                     break;
                 }
             }
         }
 
-        if (_nextResult == null) {
+        if (this._nextResult == null) {
             this._hasNext = false;
-            _sequenceIterator.close();
+            this._sequenceIterator.close();
         } else {
             this._hasNext = true;
         }

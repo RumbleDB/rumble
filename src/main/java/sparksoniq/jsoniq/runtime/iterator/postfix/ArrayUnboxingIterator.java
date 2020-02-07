@@ -23,13 +23,12 @@ package sparksoniq.jsoniq.runtime.iterator.postfix;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.Arrays;
@@ -48,26 +47,26 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(Arrays.asList(arrayIterator), executionMode, iteratorMetadata);
-        _iterator = arrayIterator;
+        this._iterator = arrayIterator;
     }
 
     @Override
     public void openLocal() {
-        _iterator.open(_currentDynamicContextForLocalExecution);
-        _nextResults = new LinkedList<>();
+        this._iterator.open(this._currentDynamicContextForLocalExecution);
+        this._nextResults = new LinkedList<>();
         setNextResult();
     }
 
     @Override
     protected boolean hasNextLocal() {
-        return _hasNext;
+        return this._hasNext;
     }
 
     @Override
     public Item nextLocal() {
         if (this._hasNext) {
-            Item result = _nextResults.remove(); // save the result to be returned
-            if (_nextResults.isEmpty()) {
+            Item result = this._nextResults.remove(); // save the result to be returned
+            if (this._nextResults.isEmpty()) {
                 // if there are no more results left in the queue, trigger calculation for the next result
                 setNextResult();
             }
@@ -78,31 +77,31 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
 
     @Override
     protected void resetLocal(DynamicContext context) {
-        _iterator.reset(_currentDynamicContextForLocalExecution);
+        this._iterator.reset(this._currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
     @Override
     protected void closeLocal() {
-        _iterator.close();
+        this._iterator.close();
     }
 
     private void setNextResult() {
-        while (_iterator.hasNext()) {
-            Item item = _iterator.next();
+        while (this._iterator.hasNext()) {
+            Item item = this._iterator.next();
             if (item instanceof ArrayItem) {
                 ArrayItem arrItem = (ArrayItem) item;
                 // if array is not empty, set the first item as the result
                 if (0 < arrItem.getSize()) {
-                    _nextResults.addAll(arrItem.getItems());
+                    this._nextResults.addAll(arrItem.getItems());
                     break;
                 }
             }
         }
 
-        if (_nextResults.isEmpty()) {
+        if (this._nextResults.isEmpty()) {
             this._hasNext = false;
-            _iterator.close();
+            this._iterator.close();
         } else {
             this._hasNext = true;
         }

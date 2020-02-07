@@ -23,9 +23,6 @@ package org.rumbledb.expressions.operational;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.operational.base.BinaryExpressionBase;
-
-
-
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 
@@ -49,7 +46,7 @@ public class RangeExpression extends BinaryExpressionBase {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(rangeExpr ";
-        result += _mainExpression.serializationString(true);
+        result += this._mainExpression.serializationString(true);
         if (this.getRightExpression() != null)
             result += " "
                 + this.getOperator().toString().toLowerCase()

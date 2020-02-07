@@ -23,13 +23,12 @@ package sparksoniq.jsoniq.runtime.iterator.functions.sequences.value;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.HybridRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
@@ -48,12 +47,12 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(arguments, executionMode, iteratorMetadata);
-        _sequenceIterator = arguments.get(0);
+        this._sequenceIterator = arguments.get(0);
     }
 
     public Item nextLocal() {
         if (this._hasNext) {
-            Item result = _nextResult; // save the result to be returned
+            Item result = this._nextResult; // save the result to be returned
             setNextResult(); // calculate and store the next result
             return result;
         }
@@ -62,50 +61,50 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected boolean hasNextLocal() {
-        return _hasNext;
+        return this._hasNext;
     }
 
     @Override
     protected void resetLocal(DynamicContext context) {
-        _sequenceIterator.reset(_currentDynamicContextForLocalExecution);
+        this._sequenceIterator.reset(this._currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
     @Override
     protected void closeLocal() {
-        _sequenceIterator.close();
+        this._sequenceIterator.close();
     }
 
 
     @Override
     public void openLocal() {
-        _prevResults = new ArrayList<>();
-        _sequenceIterator.open(_currentDynamicContextForLocalExecution);
+        this._prevResults = new ArrayList<>();
+        this._sequenceIterator.open(this._currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
     public void setNextResult() {
-        _nextResult = null;
+        this._nextResult = null;
 
-        while (_sequenceIterator.hasNext()) {
-            Item item = _sequenceIterator.next();
+        while (this._sequenceIterator.hasNext()) {
+            Item item = this._sequenceIterator.next();
             if (!item.isAtomic()) {
                 throw new NonAtomicKeyException(
                         "Invalid args. distinct-values can't be performed on non-atomics",
                         getMetadata()
                 );
             } else {
-                if (!_prevResults.contains(item)) {
-                    _prevResults.add(item);
-                    _nextResult = item;
+                if (!this._prevResults.contains(item)) {
+                    this._prevResults.add(item);
+                    this._nextResult = item;
                     break;
                 }
             }
         }
 
-        if (_nextResult == null) {
+        if (this._nextResult == null) {
             this._hasNext = false;
-            _sequenceIterator.close();
+            this._sequenceIterator.close();
         } else {
             this._hasNext = true;
         }
@@ -113,7 +112,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        JavaRDD<Item> childRDD = _sequenceIterator.getRDD(dynamicContext);
+        JavaRDD<Item> childRDD = this._sequenceIterator.getRDD(dynamicContext);
         Function<Item, Boolean> transformation = new FilterNonAtomicClosure();
         if (childRDD.filter(transformation).isEmpty()) {
             return childRDD.distinct();

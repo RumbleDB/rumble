@@ -5,10 +5,9 @@ import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.param.Param;
 import org.apache.spark.ml.param.ParamMap;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.OurBadException;
-
-import sparksoniq.jsoniq.item.AtomicItem;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
+import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.semantics.types.AtomicTypes;
 
 import java.lang.reflect.InvocationTargetException;

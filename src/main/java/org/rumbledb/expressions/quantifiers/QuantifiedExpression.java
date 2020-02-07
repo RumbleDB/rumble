@@ -21,17 +21,13 @@
 package org.rumbledb.expressions.quantifiers;
 
 
-
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
-
-
-
-import java.util.ArrayList;
-import java.util.List;
-
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class QuantifiedExpression extends Expression {
     private final Expression _expression;
@@ -52,26 +48,26 @@ public class QuantifiedExpression extends Expression {
     }
 
     public Node getEvaluationExpression() {
-        return _expression;
+        return this._expression;
     }
 
     public QuantifiedOperators getOperator() {
-        return _operator;
+        return this._operator;
     }
 
     public List<QuantifiedExpressionVar> getVariables() {
-        return _variables;
+        return this._variables;
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        if (_variables != null)
-            _variables.forEach(e -> {
+        if (this._variables != null)
+            this._variables.forEach(e -> {
                 if (e != null)
                     result.add(e);
             });
-        result.add(_expression);
+        result.add(this._expression);
         return result;
     }
 

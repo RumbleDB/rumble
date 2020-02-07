@@ -21,13 +21,12 @@
 package sparksoniq.jsoniq.runtime.iterator.primary;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +51,7 @@ public class ArrayRuntimeIterator extends LocalRuntimeIterator {
         if (this._hasNext) {
             List<Item> result = new ArrayList<>();
             if (!this._children.isEmpty()) {
-                result.addAll(this._children.get(0).materialize(_currentDynamicContextForLocalExecution));
+                result.addAll(this._children.get(0).materialize(this._currentDynamicContextForLocalExecution));
             }
             Item _item = ItemFactory.getInstance().createArrayItem(result);
             this._hasNext = false;

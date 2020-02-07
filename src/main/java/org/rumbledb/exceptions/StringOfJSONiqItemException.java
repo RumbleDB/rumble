@@ -2,8 +2,6 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCodes;
 
-import org.rumbledb.exceptions.ExceptionMetadata;
-
 public class StringOfJSONiqItemException extends SparksoniqRuntimeException {
 
     private static final long serialVersionUID = 1L;

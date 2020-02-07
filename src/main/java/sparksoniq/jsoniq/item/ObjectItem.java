@@ -26,7 +26,6 @@ import com.esotericsoftware.kryo.io.Output;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DuplicateObjectKeyException;
-
 import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
@@ -89,12 +88,12 @@ public class ObjectItem extends JsonItem {
 
     @Override
     public List<String> getKeys() {
-        return _keys;
+        return this._keys;
     }
 
     @Override
     public List<Item> getValues() {
-        return _values;
+        return this._values;
     }
 
     private void checkForDuplicateKeys(List<String> keys, ExceptionMetadata metadata) {
@@ -110,16 +109,16 @@ public class ObjectItem extends JsonItem {
 
     @Override
     public Item getItemByKey(String s) {
-        if (_keys.contains(s))
-            return _values.get(_keys.indexOf(s));
+        if (this._keys.contains(s))
+            return this._values.get(this._keys.indexOf(s));
         else
             return null;
     }
 
     @Override
     public void putItemByKey(String s, Item value) {
-        _values.replaceAll(item -> {
-            if (_values.indexOf(item) == _keys.indexOf(s))
+        this._values.replaceAll(item -> {
+            if (this._values.indexOf(item) == this._keys.indexOf(s))
                 return value;
             else
                 return item;
@@ -140,9 +139,9 @@ public class ObjectItem extends JsonItem {
     public String serialize() {
         StringBuilder sb = new StringBuilder();
         sb.append("{ ");
-        for (int i = 0; i < _keys.size(); ++i) {
-            String key = _keys.get(i);
-            Item value = _values.get(i);
+        for (int i = 0; i < this._keys.size(); ++i) {
+            String key = this._keys.get(i);
+            Item value = this._values.get(i);
             boolean isStringValue = value.isString();
             sb.append("\"").append(StringEscapeUtils.escapeJson(key)).append("\"").append(" : ");
             if (isStringValue) {
@@ -153,7 +152,7 @@ public class ObjectItem extends JsonItem {
                 sb.append(value.serialize());
             }
 
-            if (i < _keys.size() - 1)
+            if (i < this._keys.size() - 1)
                 sb.append(", ");
             else
                 sb.append(" ");
@@ -164,8 +163,8 @@ public class ObjectItem extends JsonItem {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, _keys);
-        kryo.writeObject(output, _values);
+        kryo.writeObject(output, this._keys);
+        kryo.writeObject(output, this._values);
     }
 
     @SuppressWarnings("unchecked")

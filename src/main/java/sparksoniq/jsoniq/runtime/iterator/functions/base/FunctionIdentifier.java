@@ -35,11 +35,11 @@ public class FunctionIdentifier implements Serializable {
     }
 
     public int getArity() {
-        return arity;
+        return this.arity;
     }
 
     public String getName() {
-        return name;
+        return this.name;
     }
 
     @Override
@@ -51,6 +51,6 @@ public class FunctionIdentifier implements Serializable {
 
     @Override
     public int hashCode() {
-        return name.hashCode() + arity;
+        return this.name.hashCode() + this.arity;
     }
 }
