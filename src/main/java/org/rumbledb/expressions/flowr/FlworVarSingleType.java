@@ -83,12 +83,12 @@ public class FlworVarSingleType extends Expression {
     public List<Node> getChildren() {
         return new ArrayList<>();
     }
-    
+
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-    	//TO this class should not be an expression.
-        //nothing to do as no children 
-    	return argument;
+        // TO this class should not be an expression.
+        // nothing to do as no children
+        return argument;
     }
 
     @Override
