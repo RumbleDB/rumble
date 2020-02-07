@@ -29,7 +29,7 @@ import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 public class InstanceOfExpression extends UnaryExpressionBase {
 
-    private FlworVarSequenceType _sequenceType;
+    private FlworVarSequenceType sequenceType;
 
     public InstanceOfExpression(Expression _mainExpression, ExceptionMetadata metadata) {
         super(_mainExpression, metadata);
@@ -42,11 +42,11 @@ public class InstanceOfExpression extends UnaryExpressionBase {
             ExceptionMetadata metadata
     ) {
         super(_mainExpression, Operator.INSTANCE_OF, true, metadata);
-        this._sequenceType = sequenceType;
+        this.sequenceType = sequenceType;
     }
 
     public FlworVarSequenceType getsequenceType() {
-        return this._sequenceType;
+        return this.sequenceType;
     }
 
     @Override
@@ -63,7 +63,7 @@ public class InstanceOfExpression extends UnaryExpressionBase {
     public String serializationString(boolean prefix) {
         String result = "(instanceOfExpr ";
         result += this._mainExpression.serializationString(true);
-        result += this._sequenceType != null ? "instance of " + this._sequenceType.serializationString(prefix) : "";
+        result += this.sequenceType != null ? "instance of " + this.sequenceType.serializationString(prefix) : "";
         result += ")";
         return result;
     }

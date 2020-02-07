@@ -48,7 +48,7 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
 
     private static final long serialVersionUID = 1L;
     private List<OrderByClauseAnnotatedChildIterator> _expressionsWithIterator;
-    private Map<String, DynamicContext.VariableDependency> _dependencies;
+    private Map<String, DynamicContext.VariableDependency> dependencies;
 
     private Map<String, List<String>> _columnNamesByType;
     private Map<Integer, String> _allColumnTypes;
@@ -77,9 +77,9 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
         this._context = new DynamicContext(this._parentContext);
         this._results = new ArrayList<>();
 
-        this._dependencies = new TreeMap<>();
+        this.dependencies = new TreeMap<>();
         for (OrderByClauseAnnotatedChildIterator expressionWithIterator : this._expressionsWithIterator) {
-            this._dependencies.putAll(expressionWithIterator.getIterator().getVariableDependencies());
+            this.dependencies.putAll(expressionWithIterator.getIterator().getVariableDependencies());
         }
         this._columnNamesByType = columnNamesByType;
 

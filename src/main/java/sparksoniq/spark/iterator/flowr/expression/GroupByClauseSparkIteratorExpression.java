@@ -32,7 +32,7 @@ public class GroupByClauseSparkIteratorExpression implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private final VariableReferenceIterator _variableReference;
-    private final RuntimeIterator _expression;
+    private final RuntimeIterator expression;
     private final ExceptionMetadata iteratorMetadata;
 
     public GroupByClauseSparkIteratorExpression(
@@ -40,7 +40,7 @@ public class GroupByClauseSparkIteratorExpression implements Serializable {
             VariableReferenceIterator variable,
             ExceptionMetadata iteratorMetadata
     ) {
-        this._expression = expression;
+        this.expression = expression;
         this._variableReference = variable;
         this.iteratorMetadata = iteratorMetadata;
     }
@@ -54,6 +54,6 @@ public class GroupByClauseSparkIteratorExpression implements Serializable {
     }
 
     public RuntimeIterator getExpression() {
-        return this._expression;
+        return this.expression;
     }
 }

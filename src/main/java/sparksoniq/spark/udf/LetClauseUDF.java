@@ -39,7 +39,7 @@ import java.util.Map;
 public class LetClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, byte[]> {
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator _expression;
+    private RuntimeIterator expression;
 
     private Map<String, List<String>> _columnNamesByType;
 
@@ -47,7 +47,7 @@ public class LetClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
     private List<Item> _longParams;
     private DynamicContext _parentContext;
     private DynamicContext _context;
-    private List<Item> _nextResult;
+    private List<Item> nextResult;
 
     private transient Kryo _kryo;
     private transient Output _output;
@@ -58,13 +58,13 @@ public class LetClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
             DynamicContext context,
             Map<String, List<String>> columnNamesByType
     ) {
-        this._expression = expression;
+        this.expression = expression;
 
         this._deserializedParams = new ArrayList<>();
         this._longParams = new ArrayList<>();
         this._parentContext = context;
         this._context = new DynamicContext(this._parentContext);
-        this._nextResult = new ArrayList<>();
+        this.nextResult = new ArrayList<>();
 
         this._kryo = new Kryo();
         this._kryo.setReferences(false);
@@ -81,7 +81,7 @@ public class LetClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
         this._deserializedParams.clear();
         this._longParams.clear();
         this._context.removeAllVariables();
-        this._nextResult.clear();
+        this.nextResult.clear();
 
         DataFrameUtils.deserializeWrappedParameters(
             wrappedParameters,
@@ -107,14 +107,14 @@ public class LetClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
         );
 
         // apply expression in the dynamic context
-        this._expression.open(this._context);
-        while (this._expression.hasNext()) {
-            Item nextItem = this._expression.next();
-            this._nextResult.add(nextItem);
+        this.expression.open(this._context);
+        while (this.expression.hasNext()) {
+            Item nextItem = this.expression.next();
+            this.nextResult.add(nextItem);
         }
-        this._expression.close();
+        this.expression.close();
 
-        return DataFrameUtils.serializeItemList(this._nextResult, this._kryo, this._output);
+        return DataFrameUtils.serializeItemList(this.nextResult, this._kryo, this._output);
     }
 
     private void readObject(java.io.ObjectInputStream in)

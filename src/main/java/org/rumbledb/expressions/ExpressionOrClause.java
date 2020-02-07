@@ -37,7 +37,7 @@ public abstract class ExpressionOrClause {
 
     private ExceptionMetadata metadata;
 
-    protected ExecutionMode _highestExecutionMode = ExecutionMode.UNSET;
+    protected ExecutionMode highestExecutionMode = ExecutionMode.UNSET;
 
     protected ExpressionOrClause() {
     }
@@ -50,7 +50,7 @@ public abstract class ExpressionOrClause {
      * initHighestExecutionMode is meant to be overridden by expression subclasses which support higher execution modes
      */
     public void initHighestExecutionMode() {
-        this._highestExecutionMode = ExecutionMode.LOCAL;
+        this.highestExecutionMode = ExecutionMode.LOCAL;
     }
 
     /**
@@ -63,10 +63,10 @@ public abstract class ExpressionOrClause {
     }
 
     public ExecutionMode getHighestExecutionMode(boolean ignoreUnsetError) {
-        if (!ignoreUnsetError && this._highestExecutionMode == ExecutionMode.UNSET) {
+        if (!ignoreUnsetError && this.highestExecutionMode == ExecutionMode.UNSET) {
             throw new OurBadException("An execution mode is accessed without being set.");
         }
-        return this._highestExecutionMode;
+        return this.highestExecutionMode;
     }
 
     // Visitor pattern implementation

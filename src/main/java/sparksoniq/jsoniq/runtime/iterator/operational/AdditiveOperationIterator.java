@@ -36,8 +36,8 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
 
     private static final long serialVersionUID = 1L;
 
-    Item _left;
-    Item _right;
+    Item left;
+    Item right;
 
     public AdditiveOperationIterator(
             RuntimeIterator left,
@@ -51,25 +51,25 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            this._hasNext = false;
+        if (this.hasNext) {
+            this.hasNext = false;
             try {
-                switch (this._operator) {
+                switch (this.operator) {
                     case PLUS:
-                        return this._left.add(this._right);
+                        return this.left.add(this.right);
                     case MINUS:
-                        return this._left.subtract(this._right);
+                        return this.left.subtract(this.right);
                     default:
                         throw new IteratorFlowException("Non recognized additive operator.", getMetadata());
                 }
             } catch (RuntimeException e) {
                 throw new UnexpectedTypeException(
                         " \""
-                            + this._operator.name().toLowerCase()
+                            + this.operator.name().toLowerCase()
                             + "\": operation not possible with parameters of type \""
-                            + ItemTypes.getItemTypeName(this._left.getClass().getSimpleName())
+                            + ItemTypes.getItemTypeName(this.left.getClass().getSimpleName())
                             + "\" and \""
-                            + ItemTypes.getItemTypeName(this._right.getClass().getSimpleName())
+                            + ItemTypes.getItemTypeName(this.right.getClass().getSimpleName())
                             + "\"",
                         getMetadata()
                 );
@@ -82,17 +82,17 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        this._leftIterator.open(this._currentDynamicContextForLocalExecution);
-        this._rightIterator.open(this._currentDynamicContextForLocalExecution);
+        this.leftIterator.open(this.currentDynamicContextForLocalExecution);
+        this.rightIterator.open(this.currentDynamicContextForLocalExecution);
 
-        if (!this._leftIterator.hasNext() || !this._rightIterator.hasNext()) {
-            this._hasNext = false;
+        if (!this.leftIterator.hasNext() || !this.rightIterator.hasNext()) {
+            this.hasNext = false;
         } else {
-            this._left = this._leftIterator.next();
-            this._right = this._rightIterator.next();
-            this.checkBinaryOperation(this._left, this._right, this._operator);
-            this._hasNext = true;
-            if (this._leftIterator.hasNext() || this._rightIterator.hasNext())
+            this.left = this.leftIterator.next();
+            this.right = this.rightIterator.next();
+            this.checkBinaryOperation(this.left, this.right, this.operator);
+            this.hasNext = true;
+            if (this.leftIterator.hasNext() || this.rightIterator.hasNext())
                 throw new UnexpectedTypeException(
                         "Sequence of more than one item can not be promoted to "
                             +
@@ -100,8 +100,8 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
                         getMetadata()
                 );
         }
-        this._leftIterator.close();
-        this._rightIterator.close();
+        this.leftIterator.close();
+        this.rightIterator.close();
     }
 
 }

@@ -41,7 +41,7 @@ public class MaxFunctionIterator extends LocalFunctionCallIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator _iterator;
+    private RuntimeIterator iterator;
 
     public MaxFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -55,19 +55,19 @@ public class MaxFunctionIterator extends LocalFunctionCallIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        this._iterator = this._children.get(0);
-        this._iterator.open(this._currentDynamicContextForLocalExecution);
-        this._hasNext = this._iterator.hasNext();
-        this._iterator.close();
+        this.iterator = this.children.get(0);
+        this.iterator.open(this.currentDynamicContextForLocalExecution);
+        this.hasNext = this.iterator.hasNext();
+        this.iterator.close();
     }
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            this._hasNext = false;
+        if (this.hasNext) {
+            this.hasNext = false;
             ItemComparatorForSequences comparator = new ItemComparatorForSequences();
-            if (!this._iterator.isRDD()) {
-                List<Item> results = this._iterator.materialize(this._currentDynamicContextForLocalExecution);
+            if (!this.iterator.isRDD()) {
+                List<Item> results = this.iterator.materialize(this.currentDynamicContextForLocalExecution);
 
                 try {
                     return Collections.max(results, comparator);
@@ -80,7 +80,7 @@ public class MaxFunctionIterator extends LocalFunctionCallIterator {
                 }
             } else {
                 try {
-                    return this._iterator.getRDD(this._currentDynamicContextForLocalExecution).max(comparator);
+                    return this.iterator.getRDD(this.currentDynamicContextForLocalExecution).max(comparator);
                 } catch (SparksoniqRuntimeException e) {
                     throw new InvalidArgumentTypeException(
                             "Max expression input error. Input has to be non-null atomics of matching types: "
@@ -97,8 +97,8 @@ public class MaxFunctionIterator extends LocalFunctionCallIterator {
     }
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        if (this._children.get(0) instanceof VariableReferenceIterator) {
-            VariableReferenceIterator expr = (VariableReferenceIterator) this._children.get(0);
+        if (this.children.get(0) instanceof VariableReferenceIterator) {
+            VariableReferenceIterator expr = (VariableReferenceIterator) this.children.get(0);
             Map<String, DynamicContext.VariableDependency> result =
                 new TreeMap<String, DynamicContext.VariableDependency>();
             result.put(expr.getVariableName(), DynamicContext.VariableDependency.MAX);

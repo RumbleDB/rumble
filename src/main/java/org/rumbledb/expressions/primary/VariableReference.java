@@ -42,7 +42,7 @@ public class VariableReference extends PrimaryExpression implements Serializable
     }
 
     public void setHighestExecutionMode(ExecutionMode highestExecutionMode) {
-        this._highestExecutionMode = highestExecutionMode;
+        this.highestExecutionMode = highestExecutionMode;
     }
 
     public String getVariableName() {

@@ -59,7 +59,7 @@ public class FlworClause extends Node {
      */
     @Override
     public void initHighestExecutionMode() {
-        this._highestExecutionMode = this.previousClause.getHighestExecutionMode();
+        this.highestExecutionMode = this.previousClause.getHighestExecutionMode();
     }
 
     @Override

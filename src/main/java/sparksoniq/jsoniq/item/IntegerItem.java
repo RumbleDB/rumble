@@ -38,7 +38,7 @@ public class IntegerItem extends AtomicItem {
 
 
     private static final long serialVersionUID = 1L;
-    private int _value;
+    private int value;
 
     public IntegerItem() {
         super();
@@ -46,16 +46,16 @@ public class IntegerItem extends AtomicItem {
 
     public IntegerItem(int value) {
         super();
-        this._value = value;
+        this.value = value;
     }
 
     public int getValue() {
-        return this._value;
+        return this.value;
     }
 
     @Override
     public int getIntegerValue() {
-        return this._value;
+        return this.value;
     }
 
     @Override
@@ -129,7 +129,7 @@ public class IntegerItem extends AtomicItem {
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this._value = input.readInt();
+        this.value = input.readInt();
     }
 
     public boolean equals(Object otherItem) {

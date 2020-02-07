@@ -14,7 +14,7 @@ import java.util.List;
 public class MinutesFromDateTimeFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
-    private Item _dateTimeItem = null;
+    private Item dateTimeItem = null;
 
     public MinutesFromDateTimeFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -26,9 +26,9 @@ public class MinutesFromDateTimeFunctionIterator extends LocalFunctionCallIterat
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            this._hasNext = false;
-            return ItemFactory.getInstance().createIntegerItem(this._dateTimeItem.getDateTimeValue().getMinuteOfHour());
+        if (this.hasNext) {
+            this.hasNext = false;
+            return ItemFactory.getInstance().createIntegerItem(this.dateTimeItem.getDateTimeValue().getMinuteOfHour());
         } else
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " minutes-from-dateTime function",
@@ -39,8 +39,8 @@ public class MinutesFromDateTimeFunctionIterator extends LocalFunctionCallIterat
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        this._dateTimeItem = this._children.get(0)
-            .materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
-        this._hasNext = this._dateTimeItem != null;
+        this.dateTimeItem = this.children.get(0)
+            .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        this.hasNext = this.dateTimeItem != null;
     }
 }

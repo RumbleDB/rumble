@@ -56,7 +56,7 @@ public class DynamicFunctionCallExtension extends PostfixExtension {
 
     @Override
     public void initHighestExecutionMode() {
-        this._highestExecutionMode = ExecutionMode.LOCAL;
+        this.highestExecutionMode = ExecutionMode.LOCAL;
     }
 
     @Override

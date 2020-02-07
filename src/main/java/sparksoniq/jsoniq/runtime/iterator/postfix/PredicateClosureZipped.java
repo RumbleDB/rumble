@@ -32,31 +32,31 @@ import java.util.List;
 public class PredicateClosureZipped implements Function<Tuple2<Item, Long>, Boolean> {
 
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator _expression;
-    private final DynamicContext _dynamicContext;
-    private final long _contextSize;
+    private final RuntimeIterator expression;
+    private final DynamicContext dynamicContext;
+    private final long contextSize;
 
     public PredicateClosureZipped(RuntimeIterator expression, DynamicContext dynamicContext, long contextSize) {
-        this._expression = expression;
-        this._dynamicContext = dynamicContext;
-        this._contextSize = contextSize;
+        this.expression = expression;
+        this.dynamicContext = dynamicContext;
+        this.contextSize = contextSize;
     }
 
     @Override
     public Boolean call(Tuple2<Item, Long> v1) throws Exception {
         List<Item> currentItems = new ArrayList<>();
         currentItems.add(v1._1());
-        DynamicContext dynamicContext = new DynamicContext(this._dynamicContext);
+        DynamicContext dynamicContext = new DynamicContext(this.dynamicContext);
         dynamicContext.addVariableValue("$$", currentItems);
         dynamicContext.setPosition(v1._2() + 1);
-        dynamicContext.setLast(this._contextSize);
+        dynamicContext.setLast(this.contextSize);
 
-        this._expression.open(dynamicContext);
+        this.expression.open(dynamicContext);
         boolean result = RuntimeIterator.getEffectiveBooleanValueOrCheckPosition(
-            this._expression,
+            this.expression,
             dynamicContext.getPosition()
         );
-        this._expression.close();
+        this.expression.close();
         return result;
     }
 

@@ -40,7 +40,7 @@ import java.util.Map;
 public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator _expression;
+    private RuntimeIterator expression;
     private StructType _oldSchema;
     private DynamicContext _parentContext;
     private DynamicContext _context;
@@ -49,7 +49,7 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
     private transient Input _input;
 
     public ReturnFlatMapClosure(RuntimeIterator expression, DynamicContext context, StructType oldSchema) {
-        this._expression = expression;
+        this.expression = expression;
         this._oldSchema = oldSchema;
         this._parentContext = context;
         this._context = new DynamicContext(this._parentContext);
@@ -63,7 +63,7 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
     @Override
     public Iterator<Item> call(Row row) {
         String[] columnNames = this._oldSchema.fieldNames();
-        Map<String, DynamicContext.VariableDependency> dependencies = this._expression.getVariableDependencies();
+        Map<String, DynamicContext.VariableDependency> dependencies = this.expression.getVariableDependencies();
         this._context.removeAllVariables();
         // Create dynamic context with deserialized data but only with dependencies
         for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
@@ -80,11 +80,11 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
 
         // Apply expression to the context
         List<Item> results = new ArrayList<>();
-        this._expression.open(this._context);
-        while (this._expression.hasNext()) {
-            results.add(this._expression.next());
+        this.expression.open(this._context);
+        while (this.expression.hasNext()) {
+            results.add(this.expression.next());
         }
-        this._expression.close();
+        this.expression.close();
 
         return results.iterator();
     }

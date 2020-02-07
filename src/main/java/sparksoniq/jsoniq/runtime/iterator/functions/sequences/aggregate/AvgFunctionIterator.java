@@ -40,7 +40,7 @@ public class AvgFunctionIterator extends LocalFunctionCallIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator _iterator;
+    private RuntimeIterator iterator;
 
     public AvgFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -54,17 +54,17 @@ public class AvgFunctionIterator extends LocalFunctionCallIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        this._iterator = this._children.get(0);
-        this._iterator.open(this._currentDynamicContextForLocalExecution);
-        this._hasNext = this._iterator.hasNext();
-        this._iterator.close();
+        this.iterator = this.children.get(0);
+        this.iterator.open(this.currentDynamicContextForLocalExecution);
+        this.hasNext = this.iterator.hasNext();
+        this.iterator.close();
     }
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            List<Item> results = this._iterator.materialize(this._currentDynamicContextForLocalExecution);
-            this._hasNext = false;
+        if (this.hasNext) {
+            List<Item> results = this.iterator.materialize(this.currentDynamicContextForLocalExecution);
+            this.hasNext = false;
             results.forEach(r -> {
                 if (!r.isNumeric())
                     throw new InvalidArgumentTypeException(
@@ -93,8 +93,8 @@ public class AvgFunctionIterator extends LocalFunctionCallIterator {
     }
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        if (this._children.get(0) instanceof VariableReferenceIterator) {
-            VariableReferenceIterator expr = (VariableReferenceIterator) this._children.get(0);
+        if (this.children.get(0) instanceof VariableReferenceIterator) {
+            VariableReferenceIterator expr = (VariableReferenceIterator) this.children.get(0);
             Map<String, DynamicContext.VariableDependency> result =
                 new TreeMap<String, DynamicContext.VariableDependency>();
             result.put(expr.getVariableName(), DynamicContext.VariableDependency.AVG);

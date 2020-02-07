@@ -38,9 +38,9 @@ public class ObjectRemoveKeysFunctionIterator extends LocalFunctionCallIterator 
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator _iterator;
-    private Item _nextResult;
-    private List<String> _removalKeys;
+    private RuntimeIterator iterator;
+    private Item nextResult;
+    private List<String> removalKeys;
 
     public ObjectRemoveKeysFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -54,23 +54,23 @@ public class ObjectRemoveKeysFunctionIterator extends LocalFunctionCallIterator 
     public void open(DynamicContext context) {
         super.open(context);
 
-        this._iterator = this._children.get(0);
-        this._iterator.open(context);
+        this.iterator = this.children.get(0);
+        this.iterator.open(context);
 
-        List<Item> removalKeys = this._children.get(1).materialize(this._currentDynamicContextForLocalExecution);
+        List<Item> removalKeys = this.children.get(1).materialize(this.currentDynamicContextForLocalExecution);
         if (removalKeys.isEmpty()) {
             throw new InvalidSelectorException(
                     "Invalid Key Removal Parameter; Object key removal can't be performed with zero keys: ",
                     getMetadata()
             );
         }
-        this._removalKeys = new ArrayList<>();
+        this.removalKeys = new ArrayList<>();
         for (Item removalKeyItem : removalKeys) {
             if (!removalKeyItem.isString()) {
                 throw new UnexpectedTypeException("Remove-keys function has non-string key args.", getMetadata());
             }
             String removalKey = removalKeyItem.getStringValue();
-            this._removalKeys.add(removalKey);
+            this.removalKeys.add(removalKey);
         }
 
         setNextResult();
@@ -78,8 +78,8 @@ public class ObjectRemoveKeysFunctionIterator extends LocalFunctionCallIterator 
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            Item result = this._nextResult; // save the result to be returned
+        if (this.hasNext) {
+            Item result = this.nextResult; // save the result to be returned
             setNextResult(); // calculate and store the next result
             return result;
         }
@@ -90,22 +90,22 @@ public class ObjectRemoveKeysFunctionIterator extends LocalFunctionCallIterator 
     }
 
     public void setNextResult() {
-        this._nextResult = null;
+        this.nextResult = null;
 
-        if (this._iterator.hasNext()) {
-            Item item = this._iterator.next();
+        if (this.iterator.hasNext()) {
+            Item item = this.iterator.next();
             if (item.isObject()) {
-                this._nextResult = removeKeys(item, this._removalKeys);
+                this.nextResult = removeKeys(item, this.removalKeys);
             } else {
-                this._nextResult = item;
+                this.nextResult = item;
             }
         }
 
-        if (this._nextResult == null) {
-            this._hasNext = false;
-            this._iterator.close();
+        if (this.nextResult == null) {
+            this.hasNext = false;
+            this.iterator.close();
         } else {
-            this._hasNext = true;
+            this.hasNext = true;
         }
     }
 

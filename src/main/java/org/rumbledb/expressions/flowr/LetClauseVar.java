@@ -42,11 +42,11 @@ public class LetClauseVar extends FlworVarDecl {
 
     @Override
     public void initHighestExecutionAndVariableHighestStorageModes() {
-        this._highestExecutionMode =
+        this.highestExecutionMode =
             (this.previousClause == null) ? ExecutionMode.LOCAL : this.previousClause.getHighestExecutionMode();
 
         // if let clause is local, defined variables are stored according to the execution mode of the expression
-        if (this._highestExecutionMode == ExecutionMode.LOCAL) {
+        if (this.highestExecutionMode == ExecutionMode.LOCAL) {
             this._variableHighestStorageMode = this.expression.getHighestExecutionMode();
         } else {
             this._variableHighestStorageMode = ExecutionMode.LOCAL;

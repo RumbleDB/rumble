@@ -74,7 +74,7 @@ public class PostFixExpression extends Expression {
         if (bypassCurrentExpressionForExecutionModeOperations()) {
             return;
         }
-        this._highestExecutionMode = this._primaryExpressionNode.getHighestExecutionMode();
+        this.highestExecutionMode = this._primaryExpressionNode.getHighestExecutionMode();
     }
 
     @Override

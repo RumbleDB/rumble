@@ -38,14 +38,14 @@ public class ForClauseLocalToRowClosure implements Function<Item, Row> {
 
     private static final long serialVersionUID = 1L;
 
-    private final FlworTuple _inputTuple;
+    private final FlworTuple inputTuple;
     private final ExceptionMetadata _metadata;
 
     private transient Kryo _kryo;
     private transient Output _output;
 
     public ForClauseLocalToRowClosure(FlworTuple inputTuple, ExceptionMetadata metadata) {
-        this._inputTuple = inputTuple;
+        this.inputTuple = inputTuple;
         this._metadata = metadata;
         this._kryo = new Kryo();
         this._kryo.setReferences(false);
@@ -56,8 +56,8 @@ public class ForClauseLocalToRowClosure implements Function<Item, Row> {
     @Override
     public Row call(Item item) {
         List<List<Item>> rowColumns = new ArrayList<>();
-        this._inputTuple.getLocalKeys()
-            .forEach(key -> rowColumns.add(this._inputTuple.getLocalValue(key, this._metadata)));
+        this.inputTuple.getLocalKeys()
+            .forEach(key -> rowColumns.add(this.inputTuple.getLocalValue(key, this._metadata)));
 
         List<Item> itemList = new ArrayList<>();
         itemList.add(item);

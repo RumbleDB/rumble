@@ -42,11 +42,11 @@ public class ForClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
      */
     private static final long serialVersionUID = 1L;
     private Map<String, List<String>> _columnNamesByType;
-    private RuntimeIterator _expression;
+    private RuntimeIterator expression;
     private List<List<Item>> _deserializedParams;
     private List<Item> _longParams;
     private DynamicContext _context;
-    private List<Item> _nextResult;
+    private List<Item> nextResult;
     private List<byte[]> _results;
 
     private transient Kryo _kryo;
@@ -58,14 +58,14 @@ public class ForClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
             DynamicContext context,
             Map<String, List<String>> columnNamesByType
     ) {
-        this._expression = expression;
+        this.expression = expression;
         this._columnNamesByType = columnNamesByType;
 
         this._deserializedParams = new ArrayList<>();
         this._longParams = new ArrayList<>();
 
         this._context = new DynamicContext(context);
-        this._nextResult = new ArrayList<>();
+        this.nextResult = new ArrayList<>();
         this._results = new ArrayList<>();
 
         this._kryo = new Kryo();
@@ -106,14 +106,14 @@ public class ForClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
         );
 
         // apply expression in the dynamic context
-        this._expression.open(this._context);
-        while (this._expression.hasNext()) {
-            this._nextResult.clear();
-            Item nextItem = this._expression.next();
-            this._nextResult.add(nextItem);
-            this._results.add(DataFrameUtils.serializeItemList(this._nextResult, this._kryo, this._output));
+        this.expression.open(this._context);
+        while (this.expression.hasNext()) {
+            this.nextResult.clear();
+            Item nextItem = this.expression.next();
+            this.nextResult.add(nextItem);
+            this._results.add(DataFrameUtils.serializeItemList(this.nextResult, this._kryo, this._output));
         }
-        this._expression.close();
+        this.expression.close();
 
         return this._results;
     }

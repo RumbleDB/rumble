@@ -44,10 +44,10 @@ public class BooleanFunctionIterator extends LocalFunctionCallIterator {
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            this._hasNext = false;
-            RuntimeIterator iterator = this._children.get(0);
-            iterator.open(this._currentDynamicContextForLocalExecution);
+        if (this.hasNext) {
+            this.hasNext = false;
+            RuntimeIterator iterator = this.children.get(0);
+            iterator.open(this.currentDynamicContextForLocalExecution);
             boolean effectiveBooleanValue = getEffectiveBooleanValue(iterator);
             iterator.close();
             return ItemFactory.getInstance().createBooleanItem(effectiveBooleanValue);

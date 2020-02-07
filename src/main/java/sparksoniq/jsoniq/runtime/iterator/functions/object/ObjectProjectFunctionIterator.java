@@ -37,9 +37,9 @@ public class ObjectProjectFunctionIterator extends LocalFunctionCallIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator _iterator;
-    private Item _nextResult;
-    private List<Item> _projKeys;
+    private RuntimeIterator iterator;
+    private Item nextResult;
+    private List<Item> projectionKeys;
 
     public ObjectProjectFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -53,11 +53,11 @@ public class ObjectProjectFunctionIterator extends LocalFunctionCallIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        this._iterator = this._children.get(0);
-        this._iterator.open(context);
+        this.iterator = this.children.get(0);
+        this.iterator.open(context);
 
-        this._projKeys = this._children.get(1).materialize(this._currentDynamicContextForLocalExecution);
-        if (this._projKeys.isEmpty()) {
+        this.projectionKeys = this.children.get(1).materialize(this.currentDynamicContextForLocalExecution);
+        if (this.projectionKeys.isEmpty()) {
             throw new InvalidSelectorException(
                     "Invalid Projection Key; Object projection can't be performed with zero keys: ",
                     getMetadata()
@@ -69,8 +69,8 @@ public class ObjectProjectFunctionIterator extends LocalFunctionCallIterator {
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            Item result = this._nextResult; // save the result to be returned
+        if (this.hasNext) {
+            Item result = this.nextResult; // save the result to be returned
             setNextResult(); // calculate and store the next result
             return result;
         }
@@ -81,22 +81,22 @@ public class ObjectProjectFunctionIterator extends LocalFunctionCallIterator {
     }
 
     public void setNextResult() {
-        this._nextResult = null;
+        this.nextResult = null;
 
-        if (this._iterator.hasNext()) {
-            Item item = this._iterator.next();
+        if (this.iterator.hasNext()) {
+            Item item = this.iterator.next();
             if (item.isObject()) {
-                this._nextResult = getProjection(item, this._projKeys);
+                this.nextResult = getProjection(item, this.projectionKeys);
             } else {
-                this._nextResult = item;
+                this.nextResult = item;
             }
         }
 
-        if (this._nextResult == null) {
-            this._hasNext = false;
-            this._iterator.close();
+        if (this.nextResult == null) {
+            this.hasNext = false;
+            this.iterator.close();
         } else {
-            this._hasNext = true;
+            this.hasNext = true;
         }
     }
 

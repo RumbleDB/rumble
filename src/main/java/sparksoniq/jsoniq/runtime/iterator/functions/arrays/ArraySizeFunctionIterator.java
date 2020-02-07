@@ -50,18 +50,18 @@ public class ArraySizeFunctionIterator extends LocalFunctionCallIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        this.arrayIterator = this._children.get(0);
+        this.arrayIterator = this.children.get(0);
         this.arrayIterator.open(context);
-        this._hasNext = this.arrayIterator.hasNext();
+        this.hasNext = this.arrayIterator.hasNext();
         this.arrayIterator.close();
     }
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            this._hasNext = false;
+        if (this.hasNext) {
+            this.hasNext = false;
 
-            Item array = this.arrayIterator.materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
+            Item array = this.arrayIterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
             return ItemFactory.getInstance().createIntegerItem(array.getSize());
         }
         throw new IteratorFlowException(

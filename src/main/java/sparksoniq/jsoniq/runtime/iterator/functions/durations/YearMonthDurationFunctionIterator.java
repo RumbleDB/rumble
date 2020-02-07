@@ -18,7 +18,7 @@ import java.util.List;
 public class YearMonthDurationFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
-    private Item _durationStringItem = null;
+    private Item durationStringItem = null;
 
     public YearMonthDurationFunctionIterator(
             List<RuntimeIterator> parameters,
@@ -30,18 +30,18 @@ public class YearMonthDurationFunctionIterator extends LocalFunctionCallIterator
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            this._hasNext = false;
+        if (this.hasNext) {
+            this.hasNext = false;
             try {
                 Period period = DurationItem.getDurationFromString(
-                    this._durationStringItem.getStringValue(),
+                    this.durationStringItem.getStringValue(),
                     AtomicTypes.YearMonthDurationItem
                 );
                 return ItemFactory.getInstance().createYearMonthDurationItem(period);
             } catch (UnsupportedOperationException | IllegalArgumentException e) {
                 String message = String.format(
                     "\"%s\": value of type %s is not castable to type %s",
-                    this._durationStringItem.serialize(),
+                    this.durationStringItem.serialize(),
                     "string",
                     "yearMonthDuration"
                 );
@@ -57,8 +57,8 @@ public class YearMonthDurationFunctionIterator extends LocalFunctionCallIterator
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        this._durationStringItem = this._children.get(0)
-            .materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
-        this._hasNext = this._durationStringItem != null;
+        this.durationStringItem = this.children.get(0)
+            .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        this.hasNext = this.durationStringItem != null;
     }
 }

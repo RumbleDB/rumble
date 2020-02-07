@@ -19,7 +19,7 @@ import java.util.List;
 
 public class CastIterator extends UnaryOperationIterator {
     private static final long serialVersionUID = 1L;
-    private final SingleType _singleType;
+    private final SingleType singleType;
 
     public CastIterator(
             RuntimeIterator child,
@@ -28,21 +28,21 @@ public class CastIterator extends UnaryOperationIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(child, OperationalExpressionBase.Operator.CAST, executionMode, iteratorMetadata);
-        this._singleType = singleType;
+        this.singleType = singleType;
     }
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            String targetType = ItemTypes.getItemTypeName(this._singleType.getType().toString());
+        if (this.hasNext) {
+            String targetType = ItemTypes.getItemTypeName(this.singleType.getType().toString());
 
             List<Item> items = new ArrayList<>();
-            this._child.open(this._currentDynamicContextForLocalExecution);
-            while (this._child.hasNext()) {
-                items.add(this._child.next());
+            this.child.open(this.currentDynamicContextForLocalExecution);
+            while (this.child.hasNext()) {
+                items.add(this.child.next());
                 if (items.size() > 1) {
-                    this._child.close();
-                    this._hasNext = false;
+                    this.child.close();
+                    this.hasNext = false;
                     throw new UnexpectedTypeException(
                             " Sequence of more than one item can not be treated as type "
                                 + targetType,
@@ -50,8 +50,8 @@ public class CastIterator extends UnaryOperationIterator {
                     );
                 }
             }
-            this._child.close();
-            this._hasNext = false;
+            this.child.close();
+            this.hasNext = false;
 
             Item item = items.get(0);
             String itemType = ItemTypes.getItemTypeName(item.getClass().getSimpleName());
@@ -66,11 +66,11 @@ public class CastIterator extends UnaryOperationIterator {
                 targetType
             );
 
-            AtomicItem atomicItem = CastableIterator.checkInvalidCastable(item, getMetadata(), this._singleType);
+            AtomicItem atomicItem = CastableIterator.checkInvalidCastable(item, getMetadata(), this.singleType);
 
-            if (atomicItem.isCastableAs(this._singleType.getType())) {
+            if (atomicItem.isCastableAs(this.singleType.getType())) {
                 try {
-                    return atomicItem.castAs(this._singleType.getType());
+                    return atomicItem.castAs(this.singleType.getType());
                 } catch (ClassCastException e) {
                     throw new CastException(message, getMetadata());
                 }
@@ -84,7 +84,7 @@ public class CastIterator extends UnaryOperationIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        if (!this._child.hasNext() && !this._singleType.getZeroOrOne())
+        if (!this.child.hasNext() && !this.singleType.getZeroOrOne())
             throw new UnexpectedTypeException(
                     " Empty sequence can not be cast to type with quantifier '1'",
                     getMetadata()

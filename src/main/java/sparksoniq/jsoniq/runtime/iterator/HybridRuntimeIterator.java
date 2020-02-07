@@ -57,7 +57,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
     protected void fallbackToRDDIfDFNotImplemented(ExecutionMode executionMode) {
         if (executionMode == ExecutionMode.DATAFRAME && !this.implementsDataFrames()) {
-            this._highestExecutionMode = ExecutionMode.RDD;
+            this.highestExecutionMode = ExecutionMode.RDD;
         }
     }
 
@@ -96,11 +96,11 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         }
         if (this.result == null) {
             this.currentResultIndex = 0;
-            JavaRDD<Item> rdd = this.getRDD(this._currentDynamicContextForLocalExecution);
+            JavaRDD<Item> rdd = this.getRDD(this.currentDynamicContextForLocalExecution);
             this.result = SparkSessionManager.collectRDDwithLimit(rdd);
-            this._hasNext = !this.result.isEmpty();
+            this.hasNext = !this.result.isEmpty();
         }
-        return this._hasNext;
+        return this.hasNext;
     }
 
     @Override
@@ -108,7 +108,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         if (!isRDD()) {
             return nextLocal();
         }
-        if (!this._isOpen)
+        if (!this.isOpen)
             throw new IteratorFlowException("Runtime iterator is not open", getMetadata());
 
         if (!(this.currentResultIndex <= this.result.size() - 1))
@@ -117,7 +117,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
                     getMetadata()
             );
         if (this.currentResultIndex == this.result.size() - 1)
-            this._hasNext = false;
+            this.hasNext = false;
 
         Item item = this.result.get(this.currentResultIndex);
         this.currentResultIndex++;

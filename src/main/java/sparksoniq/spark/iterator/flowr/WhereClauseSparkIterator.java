@@ -46,10 +46,10 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private Map<String, DynamicContext.VariableDependency> _dependencies;
-    private RuntimeIterator _expression;
-    private DynamicContext _tupleContext; // re-use same DynamicContext object for efficiency
-    private FlworTuple _nextLocalTupleResult;
+    private Map<String, DynamicContext.VariableDependency> dependencies;
+    private RuntimeIterator expression;
+    private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
+    private FlworTuple nextLocalTupleResult;
 
     public WhereClauseSparkIterator(
             RuntimeTupleIterator child,
@@ -58,16 +58,16 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(child, executionMode, iteratorMetadata);
-        this._expression = whereExpression;
-        this._dependencies = this._expression.getVariableDependencies();
+        this.expression = whereExpression;
+        this.dependencies = this.expression.getVariableDependencies();
     }
 
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        if (this._child != null) {
-            this._child.open(this._currentDynamicContext);
-            this._tupleContext = new DynamicContext(this._currentDynamicContext); // assign current context as parent
+        if (this.child != null) {
+            this.child.open(this.currentDynamicContext);
+            this.tupleContext = new DynamicContext(this.currentDynamicContext); // assign current context as parent
 
             setNextLocalTupleResult();
 
@@ -78,8 +78,8 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
 
     @Override
     public FlworTuple next() {
-        if (this._hasNext) {
-            FlworTuple result = this._nextLocalTupleResult; // save the result to be returned
+        if (this.hasNext) {
+            FlworTuple result = this.nextLocalTupleResult; // save the result to be returned
             setNextLocalTupleResult(); // calculate and store the next result
             return result;
         }
@@ -91,25 +91,25 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         // forward if true, drop if false
 
         FlworTuple inputTuple;
-        while (this._child.hasNext()) {
+        while (this.child.hasNext()) {
             // tuple received from child, used for tuple creation
-            inputTuple = this._child.next();
-            this._tupleContext.removeAllVariables(); // clear the previous variables
-            this._tupleContext.setBindingsFromTuple(inputTuple, getMetadata()); // assign new variables from new tuple
+            inputTuple = this.child.next();
+            this.tupleContext.removeAllVariables(); // clear the previous variables
+            this.tupleContext.setBindingsFromTuple(inputTuple, getMetadata()); // assign new variables from new tuple
 
-            this._expression.open(this._tupleContext);
-            boolean effectiveBooleanValue = RuntimeIterator.getEffectiveBooleanValue(this._expression);
-            this._expression.close();
+            this.expression.open(this.tupleContext);
+            boolean effectiveBooleanValue = RuntimeIterator.getEffectiveBooleanValue(this.expression);
+            this.expression.close();
             if (effectiveBooleanValue) {
-                this._nextLocalTupleResult = inputTuple;
-                this._hasNext = true;
+                this.nextLocalTupleResult = inputTuple;
+                this.hasNext = true;
                 return;
             }
         }
 
         // execution reaches here when there are no more results
-        this._child.close();
-        this._hasNext = false;
+        this.child.close();
+        this.hasNext = false;
     }
 
     @Override
@@ -117,31 +117,31 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             DynamicContext context,
             Map<String, DynamicContext.VariableDependency> parentProjection
     ) {
-        if (this._child == null) {
+        if (this.child == null) {
             throw new OurBadException("Invalid where clause.");
         }
 
-        if (this._expression.isRDD()) {
+        if (this.expression.isRDD()) {
             throw new JobWithinAJobException(
                     "A where clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
                     getMetadata()
             );
         }
 
-        Dataset<Row> df = this._child.getDataFrame(context, getProjection(parentProjection));
+        Dataset<Row> df = this.child.getDataFrame(context, getProjection(parentProjection));
         StructType inputSchema = df.schema();
 
         Map<String, List<String>> UDFcolumnsByType = DataFrameUtils.getColumnNamesByType(
             inputSchema,
             -1,
-            this._dependencies
+            this.dependencies
         );
 
         df.sparkSession()
             .udf()
             .register(
                 "whereClauseUDF",
-                new WhereClauseUDF(this._expression, context, inputSchema, UDFcolumnsByType),
+                new WhereClauseUDF(this.expression, context, inputSchema, UDFcolumnsByType),
                 DataTypes.BooleanType
             );
 
@@ -160,22 +160,22 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<String, DynamicContext.VariableDependency> result = new TreeMap<>(
-                this._expression.getVariableDependencies()
+                this.expression.getVariableDependencies()
         );
-        for (String var : this._child.getVariablesBoundInCurrentFLWORExpression()) {
+        for (String var : this.child.getVariablesBoundInCurrentFLWORExpression()) {
             result.remove(var);
         }
-        result.putAll(this._child.getVariableDependencies());
+        result.putAll(this.child.getVariableDependencies());
         return result;
     }
 
     public Set<String> getVariablesBoundInCurrentFLWORExpression() {
-        return new HashSet<>(this._child.getVariablesBoundInCurrentFLWORExpression());
+        return new HashSet<>(this.child.getVariablesBoundInCurrentFLWORExpression());
     }
 
     public void print(StringBuffer buffer, int indent) {
         super.print(buffer, indent);
-        this._expression.print(buffer, indent + 1);
+        this.expression.print(buffer, indent + 1);
     }
 
     public Map<String, DynamicContext.VariableDependency> getProjection(
@@ -185,7 +185,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         Map<String, DynamicContext.VariableDependency> projection = new TreeMap<>(parentProjection);
 
         // add the variable dependencies needed by this for clause's expression.
-        Map<String, DynamicContext.VariableDependency> exprDependency = this._expression.getVariableDependencies();
+        Map<String, DynamicContext.VariableDependency> exprDependency = this.expression.getVariableDependencies();
         for (String variable : exprDependency.keySet()) {
             if (projection.containsKey(variable)) {
                 if (projection.get(variable) != exprDependency.get(variable)) {

@@ -43,10 +43,10 @@ public class NotOperationIterator extends UnaryOperationBaseIterator {
 
     @Override
     public Item next() {
-        this._child.open(this._currentDynamicContextForLocalExecution);
-        boolean effectiveBooleanValue = getEffectiveBooleanValue(this._child);
-        this._child.close();
-        this._hasNext = false;
+        this.child.open(this.currentDynamicContextForLocalExecution);
+        boolean effectiveBooleanValue = getEffectiveBooleanValue(this.child);
+        this.child.close();
+        this.hasNext = false;
         return ItemFactory.getInstance().createBooleanItem(!(effectiveBooleanValue));
     }
 }

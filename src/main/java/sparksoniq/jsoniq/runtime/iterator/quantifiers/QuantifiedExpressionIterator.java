@@ -38,8 +38,8 @@ public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private final QuantifiedExpression.QuantifiedOperators _operator;
-    private final RuntimeIterator _evaluationExpression;
+    private final QuantifiedExpression.QuantifiedOperators operator;
+    private final RuntimeIterator evaluationExpression;
 
     public QuantifiedExpressionIterator(
             QuantifiedExpression.QuantifiedOperators operator,
@@ -49,19 +49,19 @@ public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(null, executionMode, iteratorMetadata);
-        this._operator = operator;
-        this._children.addAll(children);
-        this._evaluationExpression = evaluationExpression;
-        this._children.add(this._evaluationExpression);
+        this.operator = operator;
+        this.children.addAll(children);
+        this.evaluationExpression = evaluationExpression;
+        this.children.add(this.evaluationExpression);
     }
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            this._hasNext = false;
+        if (this.hasNext) {
+            this.hasNext = false;
             List<DynamicContext> contexts = new ArrayList<>();
-            contexts.add(new DynamicContext(this._currentDynamicContextForLocalExecution));
-            for (RuntimeIterator iterator : this._children) {
+            contexts.add(new DynamicContext(this.currentDynamicContextForLocalExecution));
+            for (RuntimeIterator iterator : this.children) {
                 if (iterator instanceof QuantifiedExpressionVarIterator) {
                     QuantifiedExpressionVarIterator var = (QuantifiedExpressionVarIterator) iterator;
                     contexts = generateContexts(contexts, var);
@@ -70,15 +70,15 @@ public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
 
             List<BooleanItem> results = new ArrayList<>();
             for (DynamicContext context : contexts) {
-                this._evaluationExpression.open(context);
-                BooleanItem result = (BooleanItem) this._evaluationExpression.next();
-                this._evaluationExpression.close();
+                this.evaluationExpression.open(context);
+                BooleanItem result = (BooleanItem) this.evaluationExpression.next();
+                this.evaluationExpression.close();
                 results.add(result);
             }
 
-            boolean result = this._operator == QuantifiedExpression.QuantifiedOperators.EVERY;
+            boolean result = this.operator == QuantifiedExpression.QuantifiedOperators.EVERY;
             for (BooleanItem res : results)
-                result = this._operator == QuantifiedExpression.QuantifiedOperators.EVERY
+                result = this.operator == QuantifiedExpression.QuantifiedOperators.EVERY
                     ? result && res.getBooleanValue()
                     : result || res.getBooleanValue();
             return ItemFactory.getInstance().createBooleanItem(result);

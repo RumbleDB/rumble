@@ -48,9 +48,9 @@ public class ObjectAccumulateFunctionIterator extends LocalFunctionCallIterator 
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            RuntimeIterator sequenceIterator = this._children.get(0);
-            List<Item> items = sequenceIterator.materialize(this._currentDynamicContextForLocalExecution);
+        if (this.hasNext) {
+            RuntimeIterator sequenceIterator = this.children.get(0);
+            List<Item> items = sequenceIterator.materialize(this.currentDynamicContextForLocalExecution);
             LinkedHashMap<String, List<Item>> keyValuePairs = new LinkedHashMap<>();
             for (Item item : items) {
                 // ignore non-object items
@@ -72,7 +72,7 @@ public class ObjectAccumulateFunctionIterator extends LocalFunctionCallIterator 
 
             Item result = ItemFactory.getInstance().createObjectItem(keyValuePairs);
 
-            this._hasNext = false;
+            this.hasNext = false;
             return result;
         }
         throw new IteratorFlowException(

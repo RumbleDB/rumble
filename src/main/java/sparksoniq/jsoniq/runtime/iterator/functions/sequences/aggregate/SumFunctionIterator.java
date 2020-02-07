@@ -41,8 +41,8 @@ public class SumFunctionIterator extends LocalFunctionCallIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator _iterator;
-    private Item _zeroItem;
+    private RuntimeIterator iterator;
+    private Item zeroItem;
 
     public SumFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -56,18 +56,18 @@ public class SumFunctionIterator extends LocalFunctionCallIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        this._iterator = this._children.get(0);
-        this._iterator.open(context);
-        if (!this._iterator.hasNext()) {
-            if (this._children.size() > 1) {
-                RuntimeIterator zeroIterator = this._children.get(1);
-                zeroIterator.open(this._currentDynamicContextForLocalExecution);
+        this.iterator = this.children.get(0);
+        this.iterator.open(context);
+        if (!this.iterator.hasNext()) {
+            if (this.children.size() > 1) {
+                RuntimeIterator zeroIterator = this.children.get(1);
+                zeroIterator.open(this.currentDynamicContextForLocalExecution);
                 if (!zeroIterator.hasNext()) {
-                    this._hasNext = false;
+                    this.hasNext = false;
                     return;
                 } else {
-                    this._zeroItem = zeroIterator.next();
-                    if (!this._zeroItem.isAtomic()) {
+                    this.zeroItem = zeroIterator.next();
+                    if (!this.zeroItem.isAtomic()) {
                         throw new NonAtomicKeyException(
                                 "Invalid args. Zero item has to be of an atomic type",
                                 getMetadata()
@@ -76,19 +76,19 @@ public class SumFunctionIterator extends LocalFunctionCallIterator {
                 }
             }
         }
-        this._iterator.close();
-        this._hasNext = true;
+        this.iterator.close();
+        this.hasNext = true;
     }
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            this._hasNext = false;
-            List<Item> results = this._iterator.materialize(this._currentDynamicContextForLocalExecution);
+        if (this.hasNext) {
+            this.hasNext = false;
+            List<Item> results = this.iterator.materialize(this.currentDynamicContextForLocalExecution);
 
-            // if input is empty sequence and _zeroItem is given
-            if (results.size() == 0 && this._zeroItem != null) {
-                return this._zeroItem;
+            // if input is empty sequence and zeroItem is given
+            if (results.size() == 0 && this.zeroItem != null) {
+                return this.zeroItem;
             }
 
             results.forEach(r -> {
@@ -101,7 +101,7 @@ public class SumFunctionIterator extends LocalFunctionCallIterator {
                     );
             });
             try {
-                // if input is empty sequence and _zeroItem is not given 0 is returned
+                // if input is empty sequence and zeroItem is not given 0 is returned
                 BigDecimal sumResult = new BigDecimal(0);
                 for (Item r : results) {
                     BigDecimal current = r.castToDecimalValue();
@@ -120,8 +120,8 @@ public class SumFunctionIterator extends LocalFunctionCallIterator {
     }
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        if (this._children.get(0) instanceof VariableReferenceIterator) {
-            VariableReferenceIterator expr = (VariableReferenceIterator) this._children.get(0);
+        if (this.children.get(0) instanceof VariableReferenceIterator) {
+            VariableReferenceIterator expr = (VariableReferenceIterator) this.children.get(0);
             Map<String, DynamicContext.VariableDependency> result =
                 new TreeMap<String, DynamicContext.VariableDependency>();
             result.put(expr.getVariableName(), DynamicContext.VariableDependency.SUM);

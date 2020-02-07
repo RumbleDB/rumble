@@ -24,20 +24,20 @@ import sparksoniq.semantics.DynamicContext;
  */
 public class SequenceOfItems {
 
-    private RuntimeIterator _iterator;
-    private boolean _isOpen;
+    private RuntimeIterator iterator;
+    private boolean isOpen;
 
     protected SequenceOfItems(RuntimeIterator iterator) {
-        this._iterator = iterator;
-        this._isOpen = false;
+        this.iterator = iterator;
+        this.isOpen = false;
     }
 
     /**
      * Opens the iterator.
      */
     public void open() {
-        this._iterator.open(new DynamicContext());
-        this._isOpen = true;
+        this.iterator.open(new DynamicContext());
+        this.isOpen = true;
     }
 
     /**
@@ -46,15 +46,15 @@ public class SequenceOfItems {
      * @return true if it is open, false if it is closed.
      */
     public boolean isOpen() {
-        return this._isOpen;
+        return this.isOpen;
     }
 
     /**
      * Closes the iterator.
      */
     public void close() {
-        this._iterator.close();
-        this._isOpen = false;
+        this.iterator.close();
+        this.isOpen = false;
     }
 
     /**
@@ -63,7 +63,7 @@ public class SequenceOfItems {
      * @return true if there are more items, false otherwise.
      */
     public boolean hasNext() {
-        return this._iterator.hasNext();
+        return this.iterator.hasNext();
     }
 
     /**
@@ -73,7 +73,7 @@ public class SequenceOfItems {
      * @return the next item.
      */
     public Item next() {
-        return this._iterator.next();
+        return this.iterator.next();
     }
 
     /**
@@ -82,7 +82,7 @@ public class SequenceOfItems {
      * @return true if it is available as an RDD of Items.
      */
     public boolean availableAsRDD() {
-        return this._iterator.isRDD();
+        return this.iterator.isRDD();
     }
 
     /**
@@ -92,10 +92,10 @@ public class SequenceOfItems {
      * @return an RDD of Items.
      */
     public JavaRDD<Item> getAsRDD() {
-        if (this._isOpen) {
+        if (this.isOpen) {
             throw new RuntimeException("Cannot obtain an RDD if the iterator is open.");
         }
-        return this._iterator.getRDD(new DynamicContext());
+        return this.iterator.getRDD(new DynamicContext());
     }
 
 }

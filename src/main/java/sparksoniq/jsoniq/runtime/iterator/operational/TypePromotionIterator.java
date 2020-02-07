@@ -20,15 +20,15 @@ import java.util.Collections;
 public class TypePromotionIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private final String _exceptionMessage;
-    private RuntimeIterator _iterator;
-    private SequenceType _sequenceType;
+    private final String exceptionMessage;
+    private RuntimeIterator iterator;
+    private SequenceType sequenceType;
 
     private ItemType itemType;
     private String sequenceTypeName;
 
-    private Item _nextResult;
-    private int _childIndex;
+    private Item nextResult;
+    private int childIndex;
 
     public TypePromotionIterator(
             RuntimeIterator iterator,
@@ -38,64 +38,64 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(Collections.singletonList(iterator), executionMode, iteratorMetadata);
-        this._exceptionMessage = exceptionMessage;
-        this._iterator = iterator;
-        this._sequenceType = sequenceType;
-        this.itemType = this._sequenceType.getItemType();
+        this.exceptionMessage = exceptionMessage;
+        this.iterator = iterator;
+        this.sequenceType = sequenceType;
+        this.itemType = this.sequenceType.getItemType();
         this.sequenceTypeName = ItemTypes.getItemTypeName(this.itemType.getType().toString());
     }
 
     @Override
     public boolean hasNextLocal() {
-        return this._hasNext;
+        return this.hasNext;
     }
 
     @Override
     public void resetLocal(DynamicContext context) {
-        this._iterator.reset(this._currentDynamicContextForLocalExecution);
-        this._childIndex = 0;
+        this.iterator.reset(this.currentDynamicContextForLocalExecution);
+        this.childIndex = 0;
         setNextResult();
     }
 
     @Override
     public void closeLocal() {
-        this._iterator.close();
+        this.iterator.close();
     }
 
     @Override
     public void openLocal() {
-        this._childIndex = 0;
-        this._iterator.open(this._currentDynamicContextForLocalExecution);
+        this.childIndex = 0;
+        this.iterator.open(this.currentDynamicContextForLocalExecution);
         this.setNextResult();
     }
 
 
     @Override
     public Item nextLocal() {
-        if (this._hasNext) {
-            Item _currentResult = this._nextResult;
+        if (this.hasNext) {
+            Item currentResult = this.nextResult;
             setNextResult();
-            return _currentResult;
+            return currentResult;
         } else
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
     }
 
     private void setNextResult() {
-        this._nextResult = null;
-        if (this._iterator.hasNext()) {
-            this._nextResult = this._iterator.next();
-            this._childIndex++;
+        this.nextResult = null;
+        if (this.iterator.hasNext()) {
+            this.nextResult = this.iterator.next();
+            this.childIndex++;
         } else {
-            this._iterator.close();
-            checkEmptySequence(this._childIndex);
+            this.iterator.close();
+            checkEmptySequence(this.childIndex);
         }
 
-        this._hasNext = this._nextResult != null;
+        this.hasNext = this.nextResult != null;
         if (!hasNext())
             return;
 
-        checkItemsSize(this._childIndex);
-        if (!this._nextResult.isTypeOf(this.itemType)) {
+        checkItemsSize(this.childIndex);
+        if (!this.nextResult.isTypeOf(this.itemType)) {
             checkTypePromotion();
         }
     }
@@ -103,14 +103,14 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     private void checkEmptySequence(long size) {
         if (
             size == 0
-                && (this._sequenceType.getArity() == SequenceType.Arity.One
+                && (this.sequenceType.getArity() == SequenceType.Arity.One
                     ||
-                    this._sequenceType.getArity() == SequenceType.Arity.OneOrMore)
+                    this.sequenceType.getArity() == SequenceType.Arity.OneOrMore)
         ) {
             throw new UnexpectedTypeException(
-                    this._exceptionMessage
+                    this.exceptionMessage
                         + "Expecting"
-                        + ((this._sequenceType.getArity() == SequenceType.Arity.OneOrMore) ? " at least" : "")
+                        + ((this.sequenceType.getArity() == SequenceType.Arity.OneOrMore) ? " at least" : "")
                         + " one item, but the value provided is the empty sequence.",
                     getMetadata()
             );
@@ -118,9 +118,9 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     }
 
     private void checkItemsSize(long size) {
-        if (size > 0 && this._sequenceType.isEmptySequence()) {
+        if (size > 0 && this.sequenceType.isEmptySequence()) {
             throw new UnexpectedTypeException(
-                    this._exceptionMessage
+                    this.exceptionMessage
                         + "Expecting empty sequence, but the value provided has at least one item.",
                     getMetadata()
             );
@@ -129,14 +129,14 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
 
         if (
             size > 1
-                && (this._sequenceType.getArity() == SequenceType.Arity.One
+                && (this.sequenceType.getArity() == SequenceType.Arity.One
                     ||
-                    this._sequenceType.getArity() == SequenceType.Arity.OneOrZero)
+                    this.sequenceType.getArity() == SequenceType.Arity.OneOrZero)
         ) {
             throw new UnexpectedTypeException(
-                    this._exceptionMessage
+                    this.exceptionMessage
                         + "Expecting"
-                        + ((this._sequenceType.getArity() == SequenceType.Arity.OneOrZero) ? " at most" : "")
+                        + ((this.sequenceType.getArity() == SequenceType.Arity.OneOrZero) ? " at most" : "")
                         + " one item, but the value provided has at least two items.",
                     getMetadata()
             );
@@ -145,32 +145,32 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        JavaRDD<Item> childRDD = this._iterator.getRDD(context);
+        JavaRDD<Item> childRDD = this.iterator.getRDD(context);
 
         int count = childRDD.take(2).size();
         checkEmptySequence(count);
         checkItemsSize(count);
         Function<Item, Item> transformation = new TypePromotionClosure(
-                this._exceptionMessage,
-                this._sequenceType,
+                this.exceptionMessage,
+                this.sequenceType,
                 getMetadata()
         );
         return childRDD.map(transformation);
     }
 
     private void checkTypePromotion() {
-        if (this._nextResult.isFunction())
+        if (this.nextResult.isFunction())
             return;
-        if (!this._nextResult.canBePromotedTo(this._sequenceType.getItemType()))
+        if (!this.nextResult.canBePromotedTo(this.sequenceType.getItemType()))
             throw new UnexpectedTypeException(
-                    this._exceptionMessage
-                        + ItemTypes.getItemTypeName(this._nextResult.getClass().getSimpleName())
+                    this.exceptionMessage
+                        + ItemTypes.getItemTypeName(this.nextResult.getClass().getSimpleName())
                         + " cannot be promoted to type "
                         + this.sequenceTypeName
-                        + this._sequenceType.getArity().getSymbol()
+                        + this.sequenceType.getArity().getSymbol()
                         + ".",
                     getMetadata()
             );
-        this._nextResult = this._nextResult.promoteTo(this._sequenceType.getItemType());
+        this.nextResult = this.nextResult.promoteTo(this.sequenceType.getItemType());
     }
 }

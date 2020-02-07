@@ -8,12 +8,12 @@ import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
 
 public class TypePromotionClosure implements Function<Item, Item> {
-    private String _exceptionMessage;
+    private String exceptionMessage;
     private SequenceType sequenceType;
     private ExceptionMetadata metadata;
 
     public TypePromotionClosure(String exceptionMessage, SequenceType sequenceType, ExceptionMetadata metadata) {
-        this._exceptionMessage = exceptionMessage;
+        this.exceptionMessage = exceptionMessage;
         this.sequenceType = sequenceType;
         this.metadata = metadata;
     }
@@ -25,7 +25,7 @@ public class TypePromotionClosure implements Function<Item, Item> {
                 return input.promoteTo(this.sequenceType.getItemType());
             }
             throw new UnexpectedTypeException(
-                    this._exceptionMessage
+                    this.exceptionMessage
                         +
                         ItemTypes.getItemTypeName(input.getClass().getSimpleName())
                         + " cannot be promoted to type "

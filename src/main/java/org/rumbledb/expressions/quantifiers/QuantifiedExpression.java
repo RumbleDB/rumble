@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class QuantifiedExpression extends Expression {
-    private final Expression _expression;
+    private final Expression expression;
     private final QuantifiedOperators _operator;
     private final List<QuantifiedExpressionVar> _variables;
 
@@ -44,11 +44,11 @@ public class QuantifiedExpression extends Expression {
         super(metadataFromContext);
         this._operator = operator;
         this._variables = vars;
-        this._expression = expression;
+        this.expression = expression;
     }
 
     public Node getEvaluationExpression() {
-        return this._expression;
+        return this.expression;
     }
 
     public QuantifiedOperators getOperator() {
@@ -67,7 +67,7 @@ public class QuantifiedExpression extends Expression {
                 if (e != null)
                     result.add(e);
             });
-        result.add(this._expression);
+        result.add(this.expression);
         return getDescendantsFromChildren(result, depthSearch);
     }
 

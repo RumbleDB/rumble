@@ -30,28 +30,28 @@ import java.util.List;
 
 public class ObjectLookupExtension extends PostfixExtension {
 
-    Expression _expression;
+    Expression expression;
 
     public ObjectLookupExtension(Expression expr, ExceptionMetadata metadata) {
         super(metadata);
-        this._expression = expr;
+        this.expression = expr;
     }
 
     public Expression getExpression() {
-        return this._expression;
+        return this.expression;
     }
 
     @Override
     public List<Node> getDescendants(boolean depthSearch) {
         List<Node> result = new ArrayList<>();
-        if (this._expression != null) // field
-            result.add(this._expression); // field
+        if (this.expression != null) // field
+            result.add(this.expression); // field
         return getDescendantsFromChildren(result, depthSearch);
     }
 
     @Override
     public String serializationString(boolean prefix) {
-        String result = "(objectLookup . " + this._expression.serializationString(false) + ")";
+        String result = "(objectLookup . " + this.expression.serializationString(false) + ")";
         return result;
     }
 }

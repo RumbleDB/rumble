@@ -80,16 +80,16 @@ public class FunctionCall extends PrimaryExpression {
                 );
             }
             BuiltinFunction builtinFunction = Functions.getBuiltInFunction(identifier);
-            this._highestExecutionMode = this.getBuiltInFunctionExecutionMode(builtinFunction);
+            this.highestExecutionMode = this.getBuiltInFunctionExecutionMode(builtinFunction);
             return;
         }
 
         if (Functions.checkUserDefinedFunctionExecutionModeExists(identifier)) {
             if (this._isPartialApplication) {
-                this._highestExecutionMode = ExecutionMode.LOCAL;
+                this.highestExecutionMode = ExecutionMode.LOCAL;
                 return;
             }
-            this._highestExecutionMode = Functions.getUserDefinedFunctionExecutionMode(identifier, getMetadata());
+            this.highestExecutionMode = Functions.getUserDefinedFunctionExecutionMode(identifier, getMetadata());
             return;
         }
 

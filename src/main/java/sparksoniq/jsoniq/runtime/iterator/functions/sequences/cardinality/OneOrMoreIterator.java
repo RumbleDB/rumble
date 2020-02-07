@@ -34,8 +34,8 @@ public class OneOrMoreIterator extends CardinalityFunctionIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator _iterator;
-    private Item _nextResult;
+    private RuntimeIterator iterator;
+    private Item nextResult;
 
     public OneOrMoreIterator(
             List<RuntimeIterator> arguments,
@@ -49,9 +49,9 @@ public class OneOrMoreIterator extends CardinalityFunctionIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        this._iterator = this._children.get(0);
-        this._iterator.open(context);
-        if (!this._iterator.hasNext()) {
+        this.iterator = this.children.get(0);
+        this.iterator.open(context);
+        if (!this.iterator.hasNext()) {
             throw new SequenceExceptionOneOrMore(
                     "fn:one-or-more() called with a sequence containing less than 1 item",
                     getMetadata()
@@ -62,8 +62,8 @@ public class OneOrMoreIterator extends CardinalityFunctionIterator {
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            Item result = this._nextResult; // save the result to be returned
+        if (this.hasNext) {
+            Item result = this.nextResult; // save the result to be returned
             setNextResult(); // calculate and store the next result
             return result;
         }
@@ -74,17 +74,17 @@ public class OneOrMoreIterator extends CardinalityFunctionIterator {
     }
 
     public void setNextResult() {
-        this._nextResult = null;
+        this.nextResult = null;
 
-        if (this._iterator.hasNext()) {
-            this._nextResult = this._iterator.next();
+        if (this.iterator.hasNext()) {
+            this.nextResult = this.iterator.next();
         }
 
-        if (this._nextResult == null) {
-            this._hasNext = false;
-            this._iterator.close();
+        if (this.nextResult == null) {
+            this.hasNext = false;
+            this.iterator.close();
         } else {
-            this._hasNext = true;
+            this.hasNext = true;
         }
     }
 }

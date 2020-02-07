@@ -61,7 +61,7 @@ public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        RuntimeIterator nameIterator = this._children.get(0);
+        RuntimeIterator nameIterator = this.children.get(0);
         nameIterator.open(context);
         if (!nameIterator.hasNext()) {
             throw new UnexpectedTypeException(
@@ -84,7 +84,7 @@ public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
         );
         try {
             this._transformerSparkMLClass = Class.forName(transformerFullClassName);
-            this._hasNext = true;
+            this.hasNext = true;
         } catch (ClassNotFoundException e) {
             throw new OurBadException(
                     "No SparkML transformer implementation found with the given full class name."
@@ -94,8 +94,8 @@ public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            this._hasNext = false;
+        if (this.hasNext) {
+            this.hasNext = false;
             try {
                 Transformer transformer = (Transformer) this._transformerSparkMLClass.newInstance();
                 RuntimeIterator bodyIterator = new ApplyTransformerRuntimeIterator(

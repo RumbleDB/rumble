@@ -36,13 +36,13 @@ public class CountClauseSerializeUDF implements UDF1<Long, byte[]> {
 
     private static final long serialVersionUID = 1L;
 
-    private List<Item> _nextResult;
+    private List<Item> nextResult;
 
     private transient Kryo _kryo;
     private transient Output _output;
 
     public CountClauseSerializeUDF() {
-        this._nextResult = new ArrayList<>();
+        this.nextResult = new ArrayList<>();
 
         this._kryo = new Kryo();
         this._kryo.setReferences(false);
@@ -52,10 +52,10 @@ public class CountClauseSerializeUDF implements UDF1<Long, byte[]> {
 
     @Override
     public byte[] call(Long countIndex) {
-        this._nextResult.clear();
-        this._nextResult.add(new IntegerItem(countIndex.intValue()));
+        this.nextResult.clear();
+        this.nextResult.add(new IntegerItem(countIndex.intValue()));
 
-        return DataFrameUtils.serializeItemList(this._nextResult, this._kryo, this._output);
+        return DataFrameUtils.serializeItemList(this.nextResult, this._kryo, this._output);
     }
 
     private void readObject(java.io.ObjectInputStream in)

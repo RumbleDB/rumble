@@ -34,8 +34,8 @@ public class TailFunctionIterator extends LocalFunctionCallIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator _iterator;
-    private Item _nextResult;
+    private RuntimeIterator iterator;
+    private Item nextResult;
 
     public TailFunctionIterator(
             List<RuntimeIterator> parameters,
@@ -48,7 +48,7 @@ public class TailFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public Item next() {
         if (this.hasNext()) {
-            Item result = this._nextResult; // save the result to be returned
+            Item result = this.nextResult; // save the result to be returned
             setNextResult(); // calculate and store the next result
             return result;
         }
@@ -59,29 +59,29 @@ public class TailFunctionIterator extends LocalFunctionCallIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        this._iterator = this._children.get(0);
-        this._iterator.open(context);
+        this.iterator = this.children.get(0);
+        this.iterator.open(context);
 
-        if (!this._iterator.hasNext()) {
-            this._hasNext = false;
+        if (!this.iterator.hasNext()) {
+            this.hasNext = false;
         } else {
-            this._iterator.next(); // skip the first item
+            this.iterator.next(); // skip the first item
             setNextResult();
         }
     }
 
     public void setNextResult() {
-        this._nextResult = null;
+        this.nextResult = null;
 
-        if (this._iterator.hasNext()) {
-            this._nextResult = this._iterator.next();
+        if (this.iterator.hasNext()) {
+            this.nextResult = this.iterator.next();
         }
 
-        if (this._nextResult == null) {
-            this._hasNext = false;
-            this._iterator.close();
+        if (this.nextResult == null) {
+            this.hasNext = false;
+            this.iterator.close();
         } else {
-            this._hasNext = true;
+            this.hasNext = true;
         }
     }
 

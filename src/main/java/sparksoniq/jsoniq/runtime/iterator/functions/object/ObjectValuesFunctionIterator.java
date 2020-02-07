@@ -37,8 +37,8 @@ import java.util.Queue;
 public class ObjectValuesFunctionIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator _iterator;
-    private Queue<Item> _nextResults; // queue that holds the results created by the current item in inspection
+    private RuntimeIterator iterator;
+    private Queue<Item> nextResults; // queue that holds the results created by the current item in inspection
 
     public ObjectValuesFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -46,22 +46,22 @@ public class ObjectValuesFunctionIterator extends HybridRuntimeIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(arguments, executionMode, iteratorMetadata);
-        this._iterator = arguments.get(0);
+        this.iterator = arguments.get(0);
     }
 
     @Override
     public void openLocal() {
-        this._iterator.open(this._currentDynamicContextForLocalExecution);
-        this._nextResults = new LinkedList<>();
+        this.iterator.open(this.currentDynamicContextForLocalExecution);
+        this.nextResults = new LinkedList<>();
 
         setNextResult();
     }
 
     @Override
     public Item nextLocal() {
-        if (this._hasNext) {
-            Item result = this._nextResults.remove(); // save the result to be returned
-            if (this._nextResults.isEmpty()) {
+        if (this.hasNext) {
+            Item result = this.nextResults.remove(); // save the result to be returned
+            if (this.nextResults.isEmpty()) {
                 // if there are no more results left in the queue, trigger calculation for the next result
                 setNextResult();
             }
@@ -75,42 +75,42 @@ public class ObjectValuesFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected boolean hasNextLocal() {
-        return this._hasNext;
+        return this.hasNext;
     }
 
     @Override
     protected void resetLocal(DynamicContext context) {
-        this._iterator.reset(this._currentDynamicContextForLocalExecution);
+        this.iterator.reset(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
     @Override
     protected void closeLocal() {
-        this._iterator.close();
+        this.iterator.close();
     }
 
     public void setNextResult() {
-        while (this._iterator.hasNext()) {
-            Item item = this._iterator.next();
+        while (this.iterator.hasNext()) {
+            Item item = this.iterator.next();
             if (item.isObject()) {
-                this._nextResults.addAll(item.getValues());
-                if (!(this._nextResults.isEmpty())) {
+                this.nextResults.addAll(item.getValues());
+                if (!(this.nextResults.isEmpty())) {
                     break;
                 }
             }
         }
 
-        if (this._nextResults.isEmpty()) {
-            this._hasNext = false;
-            this._iterator.close();
+        if (this.nextResults.isEmpty()) {
+            this.hasNext = false;
+            this.iterator.close();
         } else {
-            this._hasNext = true;
+            this.hasNext = true;
         }
     }
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        JavaRDD<Item> childRDD = this._iterator.getRDD(dynamicContext);
+        JavaRDD<Item> childRDD = this.iterator.getRDD(dynamicContext);
         FlatMapFunction<Item, Item> transformation = new ObjectValuesClosure();
         return childRDD.flatMap(transformation);
     }

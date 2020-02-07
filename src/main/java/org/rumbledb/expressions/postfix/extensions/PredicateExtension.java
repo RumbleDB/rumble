@@ -31,28 +31,28 @@ import java.util.List;
 
 public class PredicateExtension extends PostfixExtension {
 
-    Expression _expression;
+    Expression expression;
 
     public PredicateExtension(Expression _collection, ExceptionMetadata metadata) {
         super(metadata);
-        this._expression = _collection;
+        this.expression = _collection;
     }
 
     public Expression getExpression() {
-        return this._expression;
+        return this.expression;
     }
 
     @Override
     public List<Node> getDescendants(boolean depthSearch) {
         List<Node> result = new ArrayList<>();
-        if (this._expression != null)
-            result.add(this._expression);
+        if (this.expression != null)
+            result.add(this.expression);
         return getDescendantsFromChildren(result, depthSearch);
     }
 
     @Override
     public String serializationString(boolean prefix) {
-        String result = "(predicate [" + this._expression.serializationString(true) + "])";
+        String result = "(predicate [" + this.expression.serializationString(true) + "])";
         return result;
     }
 

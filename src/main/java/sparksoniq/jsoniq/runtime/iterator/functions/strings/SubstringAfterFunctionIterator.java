@@ -24,12 +24,12 @@ public class SubstringAfterFunctionIterator extends LocalFunctionCallIterator {
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            this._hasNext = false;
-            Item stringItem = this._children.get(0)
-                .materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
-            Item substringItem = this._children.get(1)
-                .materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
+        if (this.hasNext) {
+            this.hasNext = false;
+            Item stringItem = this.children.get(0)
+                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+            Item substringItem = this.children.get(1)
+                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
 
             if (stringItem == null || stringItem.getStringValue().isEmpty())
                 return ItemFactory.getInstance().createStringItem("");

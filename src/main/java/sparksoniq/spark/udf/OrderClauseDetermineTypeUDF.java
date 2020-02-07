@@ -42,7 +42,7 @@ import java.util.TreeMap;
 
 public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, List<String>> {
     private static final long serialVersionUID = 1L;
-    private Map<String, DynamicContext.VariableDependency> _dependencies;
+    private Map<String, DynamicContext.VariableDependency> dependencies;
     private Map<String, List<String>> _columnNamesByType;
     private List<OrderByClauseAnnotatedChildIterator> _expressionsWithIterator;
     private List<List<Item>> _deserializedParams;
@@ -68,9 +68,9 @@ public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, W
         this._context = new DynamicContext(this._parentContext);
         this.result = new ArrayList<>();
 
-        this._dependencies = new TreeMap<String, DynamicContext.VariableDependency>();
+        this.dependencies = new TreeMap<String, DynamicContext.VariableDependency>();
         for (OrderByClauseAnnotatedChildIterator expressionWithIterator : this._expressionsWithIterator) {
-            this._dependencies.putAll(expressionWithIterator.getIterator().getVariableDependencies());
+            this.dependencies.putAll(expressionWithIterator.getIterator().getVariableDependencies());
         }
         this._columnNamesByType = columnNamesByType;
 

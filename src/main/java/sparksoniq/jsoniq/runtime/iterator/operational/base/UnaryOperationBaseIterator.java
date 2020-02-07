@@ -32,8 +32,8 @@ public abstract class UnaryOperationBaseIterator extends LocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    protected final RuntimeIterator _child;
-    protected final OperationalExpressionBase.Operator _operator;
+    protected final RuntimeIterator child;
+    protected final OperationalExpressionBase.Operator operator;
 
     protected UnaryOperationBaseIterator(
             RuntimeIterator child,
@@ -42,8 +42,8 @@ public abstract class UnaryOperationBaseIterator extends LocalRuntimeIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(new ArrayList<>(), executionMode, iteratorMetadata);
-        this._children.add(child);
-        this._child = child;
-        this._operator = operator;
+        this.children.add(child);
+        this.child = child;
+        this.operator = operator;
     }
 }

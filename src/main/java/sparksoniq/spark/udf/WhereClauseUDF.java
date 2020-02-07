@@ -38,8 +38,8 @@ import java.util.Map;
 
 public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, Boolean> {
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator _expression;
-    private Map<String, DynamicContext.VariableDependency> _dependencies;
+    private RuntimeIterator expression;
+    private Map<String, DynamicContext.VariableDependency> dependencies;
 
     private Map<String, List<String>> _columnNamesByType;
 
@@ -57,7 +57,7 @@ public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<L
             StructType inputSchema,
             Map<String, List<String>> columnNamesByType
     ) {
-        this._expression = expression;
+        this.expression = expression;
 
         this._deserializedParams = new ArrayList<>();
         this._longParams = new ArrayList<>();
@@ -70,7 +70,7 @@ public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<L
         this._input = new Input();
 
         this._columnNamesByType = columnNamesByType;
-        this._dependencies = this._expression.getVariableDependencies();
+        this.dependencies = this.expression.getVariableDependencies();
 
     }
 
@@ -104,9 +104,9 @@ public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<L
         );
 
         // apply expression in the dynamic context
-        this._expression.open(this._context);
-        boolean result = RuntimeIterator.getEffectiveBooleanValue(this._expression);
-        this._expression.close();
+        this.expression.open(this._context);
+        boolean result = RuntimeIterator.getEffectiveBooleanValue(this.expression);
+        this.expression.close();
         return result;
     }
 

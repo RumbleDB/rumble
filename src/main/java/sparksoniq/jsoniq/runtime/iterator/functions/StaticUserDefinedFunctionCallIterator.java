@@ -40,12 +40,12 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
 
     private static final long serialVersionUID = 1L;
     // parametrized fields
-    private FunctionIdentifier _functionIdentifier;
-    private List<RuntimeIterator> _functionArguments;
+    private FunctionIdentifier functionIdentifier;
+    private List<RuntimeIterator> functionArguments;
 
     // calculated fields
-    private RuntimeIterator _userDefinedFunctionCallIterator;
-    private Item _nextResult;
+    private RuntimeIterator userDefinedFunctionCallIterator;
+    private Item nextResult;
 
 
     public StaticUserDefinedFunctionCallIterator(
@@ -55,44 +55,44 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
             ExceptionMetadata iteratorMetadata
     ) {
         super(null, executionMode, iteratorMetadata);
-        this._functionIdentifier = functionIdentifier;
-        this._functionArguments = functionArguments;
+        this.functionIdentifier = functionIdentifier;
+        this.functionArguments = functionArguments;
 
     }
 
     @Override
     public void openLocal() {
-        this._userDefinedFunctionCallIterator = Functions.getUserDefinedFunctionCallIterator(
-            this._functionIdentifier,
+        this.userDefinedFunctionCallIterator = Functions.getUserDefinedFunctionCallIterator(
+            this.functionIdentifier,
             this.getHighestExecutionMode(),
             getMetadata(),
-            this._functionArguments
+            this.functionArguments
         );
-        this._userDefinedFunctionCallIterator.open(this._currentDynamicContextForLocalExecution);
+        this.userDefinedFunctionCallIterator.open(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
     @Override
     public Item nextLocal() {
-        if (this._hasNext) {
-            Item result = this._nextResult;
+        if (this.hasNext) {
+            Item result = this.nextResult;
             setNextResult();
             return result;
         }
         throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in " + this._functionIdentifier.getName() + "  function",
+                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in " + this.functionIdentifier.getName() + "  function",
                 getMetadata()
         );
     }
 
     @Override
     protected boolean hasNextLocal() {
-        return this._hasNext;
+        return this.hasNext;
     }
 
     @Override
     protected void resetLocal(DynamicContext context) {
-        this._userDefinedFunctionCallIterator.reset(this._currentDynamicContextForLocalExecution);
+        this.userDefinedFunctionCallIterator.reset(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
@@ -101,39 +101,39 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
         // ensure that recursive function calls terminate gracefully
         // the function call in the body of the deepest recursion call is never visited, never opened and never closed
         if (this.isOpen()) {
-            this._userDefinedFunctionCallIterator.close();
+            this.userDefinedFunctionCallIterator.close();
         }
     }
 
     public void setNextResult() {
-        this._nextResult = null;
-        if (this._userDefinedFunctionCallIterator.hasNext()) {
-            this._nextResult = this._userDefinedFunctionCallIterator.next();
+        this.nextResult = null;
+        if (this.userDefinedFunctionCallIterator.hasNext()) {
+            this.nextResult = this.userDefinedFunctionCallIterator.next();
         }
 
-        if (this._nextResult == null) {
-            this._hasNext = false;
-            this._userDefinedFunctionCallIterator.close();
+        if (this.nextResult == null) {
+            this.hasNext = false;
+            this.userDefinedFunctionCallIterator.close();
         } else {
-            this._hasNext = true;
+            this.hasNext = true;
         }
     }
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        this._userDefinedFunctionCallIterator = Functions.getUserDefinedFunctionCallIterator(
-            this._functionIdentifier,
+        this.userDefinedFunctionCallIterator = Functions.getUserDefinedFunctionCallIterator(
+            this.functionIdentifier,
             this.getHighestExecutionMode(),
             getMetadata(),
-            this._functionArguments
+            this.functionArguments
         );
-        return this._userDefinedFunctionCallIterator.getRDD(dynamicContext);
+        return this.userDefinedFunctionCallIterator.getRDD(dynamicContext);
     }
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<String, DynamicContext.VariableDependency> result =
             new TreeMap<>(super.getVariableDependencies());
-        for (RuntimeIterator iterator : this._functionArguments) {
+        for (RuntimeIterator iterator : this.functionArguments) {
             if (iterator == null) {
                 continue;
             }

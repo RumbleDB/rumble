@@ -22,16 +22,16 @@ import java.util.Collections;
 public class TreatIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator _iterator;
-    private final SequenceType _sequenceType;
-    private boolean _shouldThrowTreatException;
+    private RuntimeIterator iterator;
+    private final SequenceType sequenceType;
+    private boolean shouldThrowTreatException;
 
     private ItemType itemType;
     private String sequenceTypeName;
 
-    private Item _nextResult;
-    private Item _currentResult;
-    private int _childIndex;
+    private Item nextResult;
+    private Item currentResult;
+    private int childIndex;
 
     public TreatIterator(
             RuntimeIterator iterator,
@@ -41,81 +41,81 @@ public class TreatIterator extends HybridRuntimeIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(Collections.singletonList(iterator), executionMode, iteratorMetadata);
-        this._iterator = iterator;
-        this._sequenceType = sequenceType;
-        this._shouldThrowTreatException = shouldThrowTreatException;
-        this.itemType = this._sequenceType.getItemType();
+        this.iterator = iterator;
+        this.sequenceType = sequenceType;
+        this.shouldThrowTreatException = shouldThrowTreatException;
+        this.itemType = this.sequenceType.getItemType();
         this.sequenceTypeName = ItemTypes.getItemTypeName(this.itemType.getType().toString());
     }
 
     @Override
     public boolean hasNextLocal() {
-        return this._hasNext;
+        return this.hasNext;
     }
 
     @Override
     public void resetLocal(DynamicContext context) {
-        this._childIndex = 0;
-        this._iterator.reset(this._currentDynamicContextForLocalExecution);
+        this.childIndex = 0;
+        this.iterator.reset(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
     @Override
     public void closeLocal() {
-        this._iterator.close();
+        this.iterator.close();
     }
 
     @Override
     public void openLocal() {
-        this._childIndex = 0;
-        this._iterator.open(this._currentDynamicContextForLocalExecution);
+        this.childIndex = 0;
+        this.iterator.open(this.currentDynamicContextForLocalExecution);
         this.setNextResult();
     }
 
     @Override
     public Item nextLocal() {
-        if (this._hasNext) {
-            this._currentResult = this._nextResult;
+        if (this.hasNext) {
+            this.currentResult = this.nextResult;
             setNextResult();
-            return this._currentResult;
+            return this.currentResult;
         } else
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
     }
 
     private void setNextResult() {
-        this._nextResult = null;
-        if (this._iterator.hasNext()) {
-            if (this._iterator.isRDD()) {
-                if (this._currentResult == null) {
-                    JavaRDD<Item> childRDD = this._iterator.getRDD(this._currentDynamicContextForLocalExecution);
+        this.nextResult = null;
+        if (this.iterator.hasNext()) {
+            if (this.iterator.isRDD()) {
+                if (this.currentResult == null) {
+                    JavaRDD<Item> childRDD = this.iterator.getRDD(this.currentDynamicContextForLocalExecution);
                     int size = childRDD.take(2).size();
                     checkMoreThanOneItemSequence(size);
-                    this._nextResult = childRDD.first();
+                    this.nextResult = childRDD.first();
                 } else {
-                    this._nextResult = null;
+                    this.nextResult = null;
                 }
             } else {
-                this._nextResult = this._iterator.next();
+                this.nextResult = this.iterator.next();
             }
-            if (this._nextResult != null)
-                this._childIndex++;
+            if (this.nextResult != null)
+                this.childIndex++;
         } else {
-            this._iterator.close();
-            checkEmptySequence(this._childIndex);
+            this.iterator.close();
+            checkEmptySequence(this.childIndex);
         }
 
-        this._hasNext = this._nextResult != null;
+        this.hasNext = this.nextResult != null;
         if (!hasNext())
             return;
 
-        checkTreatAsEmptySequence(this._childIndex);
-        checkMoreThanOneItemSequence(this._childIndex);
-        if (!this._nextResult.isTypeOf(this.itemType)) {
-            String message = ItemTypes.getItemTypeName(this._nextResult.getClass().getSimpleName())
+        checkTreatAsEmptySequence(this.childIndex);
+        checkMoreThanOneItemSequence(this.childIndex);
+        if (!this.nextResult.isTypeOf(this.itemType)) {
+            String message = ItemTypes.getItemTypeName(this.nextResult.getClass().getSimpleName())
                 + " cannot be treated as type "
                 + this.sequenceTypeName
-                + this._sequenceType.getArity().getSymbol();
-            throw this._shouldThrowTreatException
+                + this.sequenceType.getArity().getSymbol();
+            throw this.shouldThrowTreatException
                 ? new TreatException(message, getMetadata())
                 : new UnexpectedTypeException(message, getMetadata());
         }
@@ -123,36 +123,36 @@ public class TreatIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        JavaRDD<Item> childRDD = this._iterator.getRDD(dynamicContext);
+        JavaRDD<Item> childRDD = this.iterator.getRDD(dynamicContext);
 
-        if (this._sequenceType.getArity() != SequenceType.Arity.ZeroOrMore)
+        if (this.sequenceType.getArity() != SequenceType.Arity.ZeroOrMore)
             checkEmptySequence(childRDD.take(2).size());
 
-        Function<Item, Boolean> transformation = new TreatAsClosure(this._sequenceType, getMetadata());
+        Function<Item, Boolean> transformation = new TreatAsClosure(this.sequenceType, getMetadata());
         return childRDD.filter(transformation);
     }
 
     private void checkEmptySequence(int size) {
         if (
             size == 0
-                && (this._sequenceType.getArity() == SequenceType.Arity.One
+                && (this.sequenceType.getArity() == SequenceType.Arity.One
                     ||
-                    this._sequenceType.getArity() == SequenceType.Arity.OneOrMore)
+                    this.sequenceType.getArity() == SequenceType.Arity.OneOrMore)
         ) {
             String message = "Empty sequence cannot be treated as type "
                 + this.sequenceTypeName
-                + this._sequenceType.getArity().getSymbol();
-            throw this._shouldThrowTreatException
+                + this.sequenceType.getArity().getSymbol();
+            throw this.shouldThrowTreatException
                 ? new TreatException(message, getMetadata())
                 : new UnexpectedTypeException(message, getMetadata());
         }
     }
 
     private void checkTreatAsEmptySequence(int size) {
-        if (size > 0 && this._sequenceType.isEmptySequence()) {
-            String message = ItemTypes.getItemTypeName(this._nextResult.getClass().getSimpleName())
+        if (size > 0 && this.sequenceType.isEmptySequence()) {
+            String message = ItemTypes.getItemTypeName(this.nextResult.getClass().getSimpleName())
                 + " cannot be treated as type empty-sequence()";
-            throw this._shouldThrowTreatException
+            throw this.shouldThrowTreatException
                 ? new TreatException(message, getMetadata())
                 : new UnexpectedTypeException(message, getMetadata());
         }
@@ -161,14 +161,14 @@ public class TreatIterator extends HybridRuntimeIterator {
     private void checkMoreThanOneItemSequence(int size) {
         if (
             size > 1
-                && (this._sequenceType.getArity() == SequenceType.Arity.One
+                && (this.sequenceType.getArity() == SequenceType.Arity.One
                     ||
-                    this._sequenceType.getArity() == SequenceType.Arity.OneOrZero)
+                    this.sequenceType.getArity() == SequenceType.Arity.OneOrZero)
         ) {
             String message = "Sequences of more than one item cannot be treated as type "
                 + this.sequenceTypeName
-                + this._sequenceType.getArity().getSymbol();
-            throw this._shouldThrowTreatException
+                + this.sequenceType.getArity().getSymbol();
+            throw this.shouldThrowTreatException
                 ? new TreatException(message, getMetadata())
                 : new UnexpectedTypeException(message, getMetadata());
         }

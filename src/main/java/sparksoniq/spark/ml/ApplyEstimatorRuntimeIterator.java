@@ -49,13 +49,13 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
         if (!this.hasNext()) {
             throw new IteratorFlowException("Invalid next() call in ApplyEstimatorRuntimeIterator", getMetadata());
         }
-        this._hasNext = false;
+        this.hasNext = false;
 
-        Dataset<Row> inputDataset = this._currentDynamicContextForLocalExecution.getDataFrameVariableValue(
+        Dataset<Row> inputDataset = this.currentDynamicContextForLocalExecution.getDataFrameVariableValue(
             GetEstimatorFunctionIterator.estimatorParameterNames.get(0),
             getMetadata()
         );
-        List<Item> paramMapItemList = this._currentDynamicContextForLocalExecution.getLocalVariableValue(
+        List<Item> paramMapItemList = this.currentDynamicContextForLocalExecution.getLocalVariableValue(
             GetEstimatorFunctionIterator.estimatorParameterNames.get(1),
             getMetadata()
         );

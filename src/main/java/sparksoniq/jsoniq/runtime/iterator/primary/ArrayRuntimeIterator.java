@@ -42,20 +42,20 @@ public class ArrayRuntimeIterator extends LocalRuntimeIterator {
     ) {
         super(null, executionMode, iteratorMetadata);
         if (arrayItems != null) {
-            this._children.add(arrayItems);
+            this.children.add(arrayItems);
         }
     }
 
     @Override
     public Item next() {
-        if (this._hasNext) {
+        if (this.hasNext) {
             List<Item> result = new ArrayList<>();
-            if (!this._children.isEmpty()) {
-                result.addAll(this._children.get(0).materialize(this._currentDynamicContextForLocalExecution));
+            if (!this.children.isEmpty()) {
+                result.addAll(this.children.get(0).materialize(this.currentDynamicContextForLocalExecution));
             }
-            Item _item = ItemFactory.getInstance().createArrayItem(result);
-            this._hasNext = false;
-            return _item;
+            Item item = ItemFactory.getInstance().createArrayItem(result);
+            this.hasNext = false;
+            return item;
         } else {
             throw new IteratorFlowException("Invalid next() call on array iterator", getMetadata());
         }

@@ -49,8 +49,8 @@ import java.util.TreeMap;
 public class CountClauseSparkIterator extends RuntimeTupleIterator {
 
     private static final long serialVersionUID = 1L;
-    private String _variableName;
-    private FlworTuple _nextLocalTupleResult;
+    private String variableName;
+    private FlworTuple nextLocalTupleResult;
     private int _currentCountIndex;
 
     public CountClauseSparkIterator(
@@ -60,15 +60,15 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(child, executionMode, iteratorMetadata);
-        this._variableName = ((VariableReferenceIterator) variableReference).getVariableName();
+        this.variableName = ((VariableReferenceIterator) variableReference).getVariableName();
         this._currentCountIndex = 1; // indices start at 1 in JSONiq
     }
 
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        if (this._child != null) {
-            this._child.open(this._currentDynamicContext);
+        if (this.child != null) {
+            this.child.open(this.currentDynamicContext);
 
             setNextLocalTupleResult();
         } else {
@@ -84,8 +84,8 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
 
     @Override
     public FlworTuple next() {
-        if (this._hasNext) {
-            FlworTuple result = this._nextLocalTupleResult; // save the result to be returned
+        if (this.hasNext) {
+            FlworTuple result = this.nextLocalTupleResult; // save the result to be returned
             setNextLocalTupleResult(); // calculate and store the next result
             return result;
         }
@@ -93,17 +93,17 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     private void setNextLocalTupleResult() {
-        if (this._child.hasNext()) {
-            FlworTuple inputTuple = this._child.next();
+        if (this.child.hasNext()) {
+            FlworTuple inputTuple = this.child.next();
 
             List<Item> results = new ArrayList<>();
             results.add(ItemFactory.getInstance().createIntegerItem(this._currentCountIndex++));
 
-            this._nextLocalTupleResult = new FlworTuple(inputTuple).putValue(this._variableName, results);
-            this._hasNext = true;
+            this.nextLocalTupleResult = new FlworTuple(inputTuple).putValue(this.variableName, results);
+            this.hasNext = true;
         } else {
-            this._child.close();
-            this._hasNext = false;
+            this.child.close();
+            this.hasNext = false;
         }
     }
 
@@ -112,18 +112,18 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
             DynamicContext context,
             Map<String, DynamicContext.VariableDependency> parentProjection
     ) {
-        if (this._child == null) {
+        if (this.child == null) {
             throw new OurBadException("Invalid count clause.");
         }
-        Dataset<Row> df = this._child.getDataFrame(context, getProjection(parentProjection));
+        Dataset<Row> df = this.child.getDataFrame(context, getProjection(parentProjection));
         StructType inputSchema = df.schema();
-        int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(this._variableName);
+        int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(this.variableName);
 
         List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
 
         String selectSQL = DataFrameUtils.getSQL(allColumns, true);
 
-        Dataset<Row> dfWithIndex = DataFrameUtils.zipWithIndex(df, 1L, this._variableName);
+        Dataset<Row> dfWithIndex = DataFrameUtils.zipWithIndex(df, 1L, this.variableName);
 
         df.sparkSession()
             .udf()
@@ -139,8 +139,8 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
                 String.format(
                     "select %s serializeCountIndex(`%s`) as `%s` from input",
                     selectSQL,
-                    this._variableName,
-                    this._variableName
+                    this.variableName,
+                    this.variableName
                 )
             );
         return dfWithIndex;
@@ -149,14 +149,14 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<String, DynamicContext.VariableDependency> result =
             new TreeMap<String, DynamicContext.VariableDependency>();
-        result.putAll(this._child.getVariableDependencies());
+        result.putAll(this.child.getVariableDependencies());
         return result;
     }
 
     public Set<String> getVariablesBoundInCurrentFLWORExpression() {
         Set<String> result = new HashSet<String>();
-        result.addAll(this._child.getVariablesBoundInCurrentFLWORExpression());
-        result.add(this._variableName);
+        result.addAll(this.child.getVariablesBoundInCurrentFLWORExpression());
+        result.add(this.variableName);
         return result;
     }
 
@@ -165,7 +165,7 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
         for (int i = 0; i < indent + 1; ++i) {
             buffer.append("  ");
         }
-        buffer.append("Variable ").append(this._variableName);
+        buffer.append("Variable ").append(this.variableName);
         buffer.append("\n");
     }
 
@@ -180,7 +180,7 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
         projection.putAll(parentProjection);
 
         // remove the variable that this clause binds.
-        projection.remove(this._variableName);
+        projection.remove(this.variableName);
         return projection;
     }
 }

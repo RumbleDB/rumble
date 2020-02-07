@@ -79,7 +79,7 @@ public class FlworExpression extends Expression {
     @Override
     public void initHighestExecutionMode() {
         // overall flwor expression's execution mode is never used and remains unset
-        this._highestExecutionMode = ExecutionMode.UNSET;
+        this.highestExecutionMode = ExecutionMode.UNSET;
     }
 
     @Override

@@ -32,8 +32,8 @@ import java.util.List;
 
 public class QuantifiedExpressionVar extends Node {
     private final VariableReference _variableReference;
-    private final Expression _expression;
-    private final SequenceType _sequenceType;
+    private final Expression expression;
+    private final SequenceType sequenceType;
 
     public QuantifiedExpressionVar(
             VariableReference varRef,
@@ -43,12 +43,12 @@ public class QuantifiedExpressionVar extends Node {
     ) {
         super(metadata);
         this._variableReference = varRef;
-        this._expression = varExpression;
-        this._sequenceType = sequenceType;
+        this.expression = varExpression;
+        this.sequenceType = sequenceType;
     }
 
     public Expression getExpression() {
-        return this._expression;
+        return this.expression;
     }
 
     public VariableReference getVariableReference() {
@@ -57,14 +57,14 @@ public class QuantifiedExpressionVar extends Node {
     }
 
     public SequenceType getSequenceType() {
-        return this._sequenceType;
+        return this.sequenceType;
     }
 
     @Override
     public List<Node> getDescendants(boolean depthSearch) {
         List<Node> result = new ArrayList<>();
         result.add(this._variableReference);
-        result.add(this._expression);
+        result.add(this.expression);
         return getDescendantsFromChildren(result, depthSearch);
     }
 

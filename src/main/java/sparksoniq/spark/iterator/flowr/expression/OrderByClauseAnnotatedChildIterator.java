@@ -28,7 +28,7 @@ import java.io.Serializable;
 public class OrderByClauseAnnotatedChildIterator implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator _iterator;
+    private final RuntimeIterator iterator;
     private final boolean _ascending;
     private final String _uri;
     private final OrderByClauseExpr.EMPTY_ORDER _emptyOrder;
@@ -40,14 +40,14 @@ public class OrderByClauseAnnotatedChildIterator implements Serializable {
             String uri,
             OrderByClauseExpr.EMPTY_ORDER empty_order
     ) {
-        this._iterator = iterator;
+        this.iterator = iterator;
         this._ascending = ascending;
         this._uri = uri;
         this._emptyOrder = empty_order;
     }
 
     public RuntimeIterator getIterator() {
-        return this._iterator;
+        return this.iterator;
     }
 
     public boolean isAscending() {

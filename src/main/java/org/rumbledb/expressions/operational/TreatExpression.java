@@ -11,7 +11,7 @@ import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 public class TreatExpression extends UnaryExpressionBase {
 
-    private FlworVarSequenceType _sequenceType;
+    private FlworVarSequenceType sequenceType;
 
     public TreatExpression(Expression _mainExpression, ExceptionMetadata metadata) {
         super(_mainExpression, metadata);
@@ -24,11 +24,11 @@ public class TreatExpression extends UnaryExpressionBase {
             ExceptionMetadata metadata
     ) {
         super(_mainExpression, Operator.TREAT, true, metadata);
-        this._sequenceType = sequenceType;
+        this.sequenceType = sequenceType;
     }
 
     public FlworVarSequenceType getsequenceType() {
-        return this._sequenceType;
+        return this.sequenceType;
     }
 
     @Override
@@ -36,8 +36,8 @@ public class TreatExpression extends UnaryExpressionBase {
         if (bypassCurrentExpressionForExecutionModeOperations()) {
             return;
         }
-        SequenceType sequenceType = this._sequenceType.getSequence();
-        this._highestExecutionMode = calculateIsRDDFromSequenceTypeAndExpression(sequenceType, this._mainExpression);
+        SequenceType sequenceType = this.sequenceType.getSequence();
+        this.highestExecutionMode = calculateIsRDDFromSequenceTypeAndExpression(sequenceType, this._mainExpression);
     }
 
     public static ExecutionMode calculateIsRDDFromSequenceTypeAndExpression(
@@ -63,7 +63,7 @@ public class TreatExpression extends UnaryExpressionBase {
     public String serializationString(boolean prefix) {
         String result = "(treatExpr ";
         result += this._mainExpression.serializationString(true);
-        result += this._sequenceType != null ? " treat as " + this._sequenceType.serializationString(prefix) : "";
+        result += this.sequenceType != null ? " treat as " + this.sequenceType.serializationString(prefix) : "";
         result += ")";
         return result;
     }

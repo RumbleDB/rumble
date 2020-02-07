@@ -34,7 +34,7 @@ public class ExistsFunctionIterator extends LocalFunctionCallIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator _sequenceIterator;
+    private RuntimeIterator sequenceIterator;
 
     public ExistsFunctionIterator(
             List<RuntimeIterator> parameters,
@@ -42,26 +42,26 @@ public class ExistsFunctionIterator extends LocalFunctionCallIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(parameters, executionMode, iteratorMetadata);
-        this._sequenceIterator = this._children.get(0);
+        this.sequenceIterator = this.children.get(0);
     }
 
     @Override
     public Item next() {
         if (this.hasNext()) {
-            this._hasNext = false;
-            if (this._sequenceIterator.isRDD()) {
-                List<Item> i = this._sequenceIterator.getRDD(this._currentDynamicContextForLocalExecution).take(1);
+            this.hasNext = false;
+            if (this.sequenceIterator.isRDD()) {
+                List<Item> i = this.sequenceIterator.getRDD(this.currentDynamicContextForLocalExecution).take(1);
                 return ItemFactory.getInstance().createBooleanItem(!i.isEmpty());
             }
-            this._sequenceIterator.open(this._currentDynamicContextForLocalExecution);
+            this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
             Item result;
-            if (this._sequenceIterator.hasNext()) {
+            if (this.sequenceIterator.hasNext()) {
                 result = ItemFactory.getInstance().createBooleanItem(true);
 
             } else {
                 result = ItemFactory.getInstance().createBooleanItem(false);
             }
-            this._sequenceIterator.close();
+            this.sequenceIterator.close();
             return result;
         }
         throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "exists function", getMetadata());

@@ -36,7 +36,7 @@ public class GroupClauseSerializeAggregateResultsUDF implements UDF1<WrappedArra
 
 
     private static final long serialVersionUID = 1L;
-    private List<Item> _nextResult;
+    private List<Item> nextResult;
     private List<List<Item>> _deserializedParams;
 
     private transient Kryo _kryo;
@@ -44,7 +44,7 @@ public class GroupClauseSerializeAggregateResultsUDF implements UDF1<WrappedArra
     private transient Input _input;
 
     public GroupClauseSerializeAggregateResultsUDF() {
-        this._nextResult = new ArrayList<>();
+        this.nextResult = new ArrayList<>();
         this._deserializedParams = new ArrayList<>();
 
         this._kryo = new Kryo();
@@ -56,7 +56,7 @@ public class GroupClauseSerializeAggregateResultsUDF implements UDF1<WrappedArra
 
     @Override
     public byte[] call(WrappedArray<byte[]> wrappedParameters) {
-        this._nextResult.clear();
+        this.nextResult.clear();
         this._deserializedParams.clear();
         DataFrameUtils.deserializeWrappedParameters(
             wrappedParameters,
@@ -66,9 +66,9 @@ public class GroupClauseSerializeAggregateResultsUDF implements UDF1<WrappedArra
         );
 
         for (List<Item> deserializedParam : this._deserializedParams) {
-            this._nextResult.addAll(deserializedParam);
+            this.nextResult.addAll(deserializedParam);
         }
-        return DataFrameUtils.serializeItemList(this._nextResult, this._kryo, this._output);
+        return DataFrameUtils.serializeItemList(this.nextResult, this._kryo, this._output);
     }
 
     private void readObject(java.io.ObjectInputStream in)

@@ -49,7 +49,7 @@ public class StructuredJsonFileFunctionIterator extends DataFrameRuntimeIterator
 
     @Override
     public Dataset<Row> getDataFrame(DynamicContext context) {
-        RuntimeIterator urlIterator = this._children.get(0);
+        RuntimeIterator urlIterator = this.children.get(0);
         urlIterator.open(context);
         String url = urlIterator.next().getStringValue();
         urlIterator.close();
