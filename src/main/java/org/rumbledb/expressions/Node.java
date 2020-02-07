@@ -128,9 +128,7 @@ public abstract class Node {
     public abstract List<Node> getChildren();
 
     /**
-     * For gathering descendant nodes.
-     * 
-     * @param depthSearch activates depth-first search if true. If false, only returns children.
+     * For gathering descendant nodes, as a depth-first search.
      * 
      * @return the descendant nodes as a list.
      */
@@ -150,7 +148,7 @@ public abstract class Node {
      * 
      * @return the descendant nodes as a list.
      */
-    public List<Node> getDescendantsMatching(Predicate<Node> predicate) {
+    public final List<Node> getDescendantsMatching(Predicate<Node> predicate) {
         List<Node> result = this.getDescendants();
         List<Node> filter = new ArrayList<>();
         result.stream().filter(predicate).forEach(r -> filter.add(r));
