@@ -32,7 +32,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
  * GRAMMAR:flowrExpression
  */
 
-public class FlworClause extends Node {
+public abstract class FlworClause extends Node {
 
     protected FlworClause previousClause;
     protected FLWOR_CLAUSES clauseType;
@@ -61,18 +61,6 @@ public class FlworClause extends Node {
     @Override
     public void initHighestExecutionMode() {
         this._highestExecutionMode = previousClause.getHighestExecutionMode();
-    }
-
-    @Override
-    public List<Node> getChildren() {
-        return new ArrayList<>();
-    }
-
-    @Override
-    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        // TO this class should not be an expression.
-        // nothing to do as no children
-        return argument;
     }
 
     @Override
