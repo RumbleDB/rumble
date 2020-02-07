@@ -187,10 +187,9 @@ public class FrontendTests extends AnnotationsTestsBase {
     private void testVariableTypes(File testFile, JsoniqExpressionTreeVisitor visitor) {
 
         List<Node> vars = visitor.getMainModule()
-            .getDescendantsOfType(
+            .getDescendantsMatching(
                 d -> d instanceof VariableReference
-                    && ((VariableReference) d).getVariableName().equals("var"),
-                true
+                    && ((VariableReference) d).getVariableName().equals("var")
             );
         vars.forEach(
             var -> Assert.assertTrue(
@@ -212,10 +211,9 @@ public class FrontendTests extends AnnotationsTestsBase {
         );
 
         List<Node> internals = visitor.getMainModule()
-            .getDescendantsOfType(
+            .getDescendantsMatching(
                 d -> d instanceof VariableReference
-                    && ((VariableReference) d).getVariableName().equals("internal"),
-                true
+                    && ((VariableReference) d).getVariableName().equals("internal")
             );
         internals.forEach(
             j -> Assert.assertTrue(
@@ -224,10 +222,9 @@ public class FrontendTests extends AnnotationsTestsBase {
         );
 
         List<Node> arry = visitor.getMainModule()
-            .getDescendantsOfType(
+            .getDescendantsMatching(
                 d -> d instanceof VariableReference
-                    && ((VariableReference) d).getVariableName().equals("arry"),
-                true
+                    && ((VariableReference) d).getVariableName().equals("arry")
             );
         arry.forEach(
             j -> Assert.assertTrue(
