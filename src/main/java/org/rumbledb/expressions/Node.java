@@ -136,7 +136,7 @@ public abstract class Node {
     public final List<Node> getDescendants() {
         List<Node> result = new ArrayList<>();
         for (Node child : this.getChildren()) {
-            result.forEach(r -> result.addAll(child.getDescendants()));
+            result.addAll(child.getDescendants());
             result.add(child);
         }
         return result;
