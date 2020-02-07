@@ -101,22 +101,6 @@ public abstract class Node {
     }
 
     /**
-     * For gathering descendant nodes.
-     * 
-     * @param depthSearch activates depth-first search if true. If false, only returns children.
-     * 
-     * @return the descendant nodes as a list.
-     */
-    public final List<Node> getDescendants() {
-        List<Node> result = new ArrayList<>();
-        for (Node child : this.getChildren()) {
-        	result.forEach(r -> result.addAll(child.getDescendants()));
-        	result.add(child);
-        }
-        return result;
-    }
-
-    /**
      * Accept method for the visitor pattern.
      * 
      * @param <T> the type of the objects returned by the visitor.
@@ -144,14 +128,29 @@ public abstract class Node {
     public abstract List<Node> getChildren();
 
     /**
-     * For gathering descendant nodes that match a predicate.
+     * For gathering descendant nodes.
      * 
-     * @param predicate a predicate to filter with.
-     * @param depthSearch to switch between all descendants or only direct children.
+     * @param depthSearch activates depth-first search if true. If false, only returns children.
      * 
      * @return the descendant nodes as a list.
      */
-    public List<Node> getDescendantsOfType(Predicate<Node> predicate, boolean depthSearch) {
+    public final List<Node> getDescendants() {
+        List<Node> result = new ArrayList<>();
+        for (Node child : this.getChildren()) {
+        	result.forEach(r -> result.addAll(child.getDescendants()));
+        	result.add(child);
+        }
+        return result;
+    }
+
+    /**
+     * For gathering descendant nodes that match a predicate.
+     * 
+     * @param predicate a predicate to filter with.
+     * 
+     * @return the descendant nodes as a list.
+     */
+    public List<Node> getDescendantsMatching(Predicate<Node> predicate) {
         List<Node> result = this.getDescendants();
         List<Node> filter = new ArrayList<>();
         result.stream().filter(predicate).forEach(r -> filter.add(r));

@@ -199,10 +199,9 @@ public class FrontendTests extends AnnotationsTestsBase {
         );
 
         List<Node> js = visitor.getMainModule()
-            .getDescendantsOfType(
+            .getDescendantsMatching(
                 d -> d instanceof VariableReference
-                    && ((VariableReference) d).getVariableName().equals("j"),
-                true
+                    && ((VariableReference) d).getVariableName().equals("j")
             );
         js.forEach(
             j -> Assert.assertTrue(
