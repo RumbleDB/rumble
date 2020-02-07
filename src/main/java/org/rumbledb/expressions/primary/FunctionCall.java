@@ -61,9 +61,9 @@ public class FunctionCall extends PrimaryExpression {
     }
 
     @Override
-    public List<Node> getDescendants(boolean depthSearch) {
+    public List<Node> getChildren() {
         List<Node> result = new ArrayList<>(this._arguments);
-        return getDescendantsFromChildren(result, depthSearch);
+        return result;
     }
 
     @Override

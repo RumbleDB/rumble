@@ -74,14 +74,14 @@ public class ObjectConstructor extends PrimaryExpression {
     }
 
     @Override
-    public List<Node> getDescendants(boolean depthSearch) {
+    public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         if (!isMergedConstructor) {
             result.addAll(this._keys);
             result.addAll(this._values);
         } else
             result.add(childExpression);
-        return getDescendantsFromChildren(result, depthSearch);
+        return result;
     }
 
     @Override

@@ -62,11 +62,11 @@ public class QuantifiedExpressionVar extends Node {
     }
 
     @Override
-    public List<Node> getDescendants(boolean depthSearch) {
+    public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         result.add(_variableReference);
         result.add(_expression);
-        return getDescendantsFromChildren(result, depthSearch);
+        return result;
     }
 
     @Override

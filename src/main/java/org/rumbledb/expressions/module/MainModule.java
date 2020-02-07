@@ -54,7 +54,7 @@ public class MainModule extends Expression {
     }
 
     @Override
-    public List<Node> getDescendants(boolean depthSearch) {
+    public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         if (_prolog != null) {
             result.add(_prolog);
@@ -62,7 +62,7 @@ public class MainModule extends Expression {
         if (_commaExpression != null) {
             result.add(_commaExpression);
         }
-        return getDescendantsFromChildren(result, depthSearch);
+        return result;
     }
 
     @Override

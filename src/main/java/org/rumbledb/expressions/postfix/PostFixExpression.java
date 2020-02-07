@@ -96,7 +96,7 @@ public class PostFixExpression extends Expression {
     }
 
     @Override
-    public List<Node> getDescendants(boolean depthSearch) {
+    public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         result.add(this._primaryExpressionNode);
         if (this._extensions != null)
@@ -104,7 +104,7 @@ public class PostFixExpression extends Expression {
                 if (e != null)
                     result.add(e);
             });
-        return getDescendantsFromChildren(result, depthSearch);
+        return result;
     }
 
     @Override

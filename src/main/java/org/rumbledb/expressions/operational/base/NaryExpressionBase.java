@@ -79,7 +79,7 @@ public class NaryExpressionBase extends OperationalExpressionBase {
     }
 
     @Override
-    public List<Node> getDescendants(boolean depthSearch) {
+    public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         result.add(this._mainExpression);
         if (this._rightExpressions != null)
@@ -87,7 +87,7 @@ public class NaryExpressionBase extends OperationalExpressionBase {
                 if (e != null)
                     result.add(e);
             });
-        return getDescendantsFromChildren(result, depthSearch);
+        return result;
     }
 
 

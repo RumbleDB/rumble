@@ -48,14 +48,14 @@ public class Prolog extends Expression {
     }
 
     @Override
-    public List<Node> getDescendants(boolean depthSearch) {
+    public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         if (this._functionDeclaration != null)
             _functionDeclaration.forEach(e -> {
                 if (e != null)
                     result.add(e);
             });
-        return getDescendantsFromChildren(result, depthSearch);
+        return result;
     }
 
     @Override

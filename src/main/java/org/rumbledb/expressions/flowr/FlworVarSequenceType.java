@@ -112,7 +112,7 @@ public class FlworVarSequenceType extends Expression {
     }
 
     @Override
-    public List<Node> getDescendants(boolean depthSearch) {
+    public List<Node> getChildren() {
         return new ArrayList<>();
     }
 

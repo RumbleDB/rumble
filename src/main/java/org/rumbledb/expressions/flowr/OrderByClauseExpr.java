@@ -82,10 +82,10 @@ public class OrderByClauseExpr extends FlworClause {
     }
 
     @Override
-    public List<Node> getDescendants(boolean depthSearch) {
+    public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         result.add(_expression);
-        return getDescendantsFromChildren(result, depthSearch);
+        return result;
     }
 
     @Override

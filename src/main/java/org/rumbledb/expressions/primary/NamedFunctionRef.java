@@ -30,7 +30,6 @@ import java.util.List;
 import org.rumbledb.expressions.Node;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.ExpressionOrClause;
 
 
 public class NamedFunctionRef extends PrimaryExpression {
@@ -47,9 +46,9 @@ public class NamedFunctionRef extends PrimaryExpression {
     }
 
     @Override
-    public List<Node> getDescendants(boolean depthSearch) {
+    public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        return getDescendantsFromChildren(result, depthSearch);
+        return result;
     }
 
     @Override

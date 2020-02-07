@@ -63,13 +63,13 @@ public class IfExpression extends Expression {
     }
 
     @Override
-    public List<Node> getDescendants(boolean depthSearch) {
+    public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         result.add(_condition);
         result.add(_branch);
         if (_elseBranch != null)
             result.add(_elseBranch);
-        return getDescendantsFromChildren(result, depthSearch);
+        return result;
     }
 
     @Override

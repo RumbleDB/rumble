@@ -64,7 +64,7 @@ public class QuantifiedExpression extends Expression {
     }
 
     @Override
-    public List<Node> getDescendants(boolean depthSearch) {
+    public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         if (_variables != null)
             _variables.forEach(e -> {
@@ -72,7 +72,7 @@ public class QuantifiedExpression extends Expression {
                     result.add(e);
             });
         result.add(_expression);
-        return getDescendantsFromChildren(result, depthSearch);
+        return result;
     }
 
     @Override

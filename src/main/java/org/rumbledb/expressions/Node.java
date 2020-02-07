@@ -107,7 +107,14 @@ public abstract class Node {
      * 
      * @return the descendant nodes as a list.
      */
-    public abstract List<Node> getDescendants(boolean depthSearch);
+    public final List<Node> getDescendants() {
+        List<Node> result = new ArrayList<>();
+        for (Node child : this.getChildren()) {
+        	result.forEach(r -> result.addAll(child.getDescendants()));
+        	result.add(child);
+        }
+        return result;
+    }
 
     /**
      * Accept method for the visitor pattern.
@@ -134,9 +141,7 @@ public abstract class Node {
      * 
      * @return the children nodes as a list.
      */
-    public final List<Node> getChildren() {
-        return getDescendants(false);
-    }
+    public abstract List<Node> getChildren();
 
     /**
      * For gathering descendant nodes that match a predicate.
@@ -147,7 +152,7 @@ public abstract class Node {
      * @return the descendant nodes as a list.
      */
     public List<Node> getDescendantsOfType(Predicate<Node> predicate, boolean depthSearch) {
-        List<Node> result = this.getDescendants(depthSearch);
+        List<Node> result = this.getDescendants();
         List<Node> filter = new ArrayList<>();
         result.stream().filter(predicate).forEach(r -> filter.add(r));
         return filter;
@@ -161,28 +166,6 @@ public abstract class Node {
      */
     public ExceptionMetadata getMetadata() {
         return metadata;
-    }
-
-    /**
-     * Utility method that can be used in overrides of getDescendants().
-     * It iterates over the list of nodes and, if depth-first search is activated,
-     * returns a list with recursively added descendants.
-     * 
-     * @param result the children.
-     * @param depthSearch whether or not to recursively return descendants.
-     * 
-     * @return the metadata.
-     */
-    protected static List<Node> getDescendantsFromChildren(
-            List<Node> result,
-            boolean depthSearch
-    ) {
-        if (depthSearch) {
-            List<Node> childrenResults = new ArrayList<>();
-            result.forEach(r -> childrenResults.addAll(r.getDescendants(depthSearch)));
-            result.addAll(childrenResults);
-        }
-        return result;
     }
 
 }
