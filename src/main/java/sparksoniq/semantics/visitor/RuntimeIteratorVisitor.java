@@ -148,14 +148,14 @@ import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
 public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator> {
 
     @Override
-    public RuntimeIterator visit(Node expression, RuntimeIterator argument) {
-        return expression.accept(this, argument);
+    public RuntimeIterator visit(Node node, RuntimeIterator argument) {
+        return node.accept(this, argument);
     }
 
     @Override
-    public RuntimeIterator visitDescendants(Node expression, RuntimeIterator argument) {
+    public RuntimeIterator visitDescendants(Node node, RuntimeIterator argument) {
         RuntimeIterator result = argument;
-        for (Node child : expression.getChildren()) {
+        for (Node child : node.getChildren()) {
             result = visit(child, argument);
         }
         return result;
