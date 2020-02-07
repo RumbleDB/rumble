@@ -21,11 +21,6 @@
 package org.rumbledb.expressions.primary;
 
 
-
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
-
-
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,11 +34,6 @@ public abstract class PrimaryExpression extends Expression {
 
     protected PrimaryExpression(ExceptionMetadata metadata) {
         super(metadata);
-    }
-
-    @Override
-    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        return visitor.visitDescendants(this, argument);
     }
 
     @Override
