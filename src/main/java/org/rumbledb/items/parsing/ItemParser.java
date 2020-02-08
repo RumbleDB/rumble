@@ -23,7 +23,6 @@ package org.rumbledb.items.parsing;
 import com.jsoniter.JsonIterator;
 import com.jsoniter.ValueType;
 import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.spark.ml.linalg.SparseVector;
 import org.apache.spark.ml.linalg.VectorUDT;
 import org.apache.spark.sql.Row;
@@ -228,18 +227,16 @@ public class ItemParser implements Serializable {
             }
             values.add(ItemFactory.getInstance().createArrayItem(members));
         } else if (fieldType instanceof VectorUDT) {
-            // a vector type is essentially an array of doubles in rumble terms
+            // a vector is mapped to a Rumble object where keys are indices of the non-0 values in the vector
             SparseVector vector = (SparseVector) row.get(i);
-            List<Item> members = new ArrayList<>(vector.size());
 
-            for (int j = 0; j < vector.size(); j++) {
-                double value = 0.0;
-                if (ArrayUtils.contains(vector.indices(), j)) {
-                    value = vector.values()[j];
-                }
-                members.add(ItemFactory.getInstance().createDoubleItem(value));
+            List<String> keyList = new ArrayList<>();
+            List<Item> valueList = new ArrayList<>();
+            for (int index : vector.indices()) {
+                keyList.add(String.valueOf(index));
+                valueList.add(ItemFactory.getInstance().createDoubleItem(vector.values()[index]));
             }
-            values.add(ItemFactory.getInstance().createArrayItem(members));
+            values.add(ItemFactory.getInstance().createObjectItem(keyList, valueList, metadata));
         } else {
             throw new RuntimeException("DataFrame type unsupported: " + fieldType.json());
         }
