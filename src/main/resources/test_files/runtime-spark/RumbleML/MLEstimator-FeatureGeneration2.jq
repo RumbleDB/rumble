@@ -12,3 +12,6 @@ return {
     "label": $resultRow.label,
     "prediction": $resultRow.prediction
 }
+
+
+(: featureCol parameter defaults to 'features' column, the column with this default name is vectorized and used :)

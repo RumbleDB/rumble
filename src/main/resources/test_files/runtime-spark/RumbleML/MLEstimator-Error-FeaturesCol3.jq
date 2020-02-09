@@ -2,7 +2,7 @@
 let $est := get-estimator("LogisticRegression")
 let $tra := $est(
     libsvm-file("./src/main/resources/queries/rumbleML/sample-libsvm-data-short.txt"),
-    {"featuresCol": ["does not exist"]}
+    {"featuresCol": [3] }
 )
 let $res := $tra(
     libsvm-file("./src/main/resources/queries/rumbleML/sample-libsvm-data-short.txt"),
@@ -10,4 +10,4 @@ let $res := $tra(
 )
 return $res
 
-(: estimator's featuresCol does not exist :)
+(: estimator's featuresCol does not exist (but integer is correctly converted to string) :)
