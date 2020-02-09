@@ -2,6 +2,7 @@ package sparksoniq.spark.ml;
 
 import org.apache.spark.ml.Estimator;
 import org.apache.spark.ml.Transformer;
+import org.apache.spark.ml.feature.VectorAssembler;
 import org.apache.spark.ml.param.ParamMap;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -10,8 +11,11 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidRumbleMLParamException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
+
 import sparksoniq.jsoniq.ExecutionMode;
+import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.FunctionItem;
+import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
@@ -55,10 +59,17 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
         Dataset<Row> inputDataset = getInputDataset(_currentDynamicContextForLocalExecution);
         Item paramMapItem = getParamMapItem(_currentDynamicContextForLocalExecution);
 
+        String columnsToVectorizeParameterName = "columnsToVectorize";
+        ArrayItem columnsToVectorize = (ArrayItem) paramMapItem.getItemByKey(columnsToVectorizeParameterName);
+        if (columnsToVectorize != null) {
+            inputDataset = vectorizeColumns(inputDataset, columnsToVectorize);
+        }
+        Item updatedParamMapItem = removeParameter(paramMapItem, columnsToVectorizeParameterName);
+
         ParamMap paramMap = convertRumbleObjectItemToSparkMLParamMap(
             _estimatorShortName,
             _estimator,
-            paramMapItem,
+            updatedParamMapItem,
             getMetadata()
         );
 
@@ -94,6 +105,29 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
             );
         }
         return paramMapItemList.get(0);
+    }
+
+    private Dataset<Row> vectorizeColumns(Dataset<Row> inputDataset, ArrayItem columns) {
+        VectorAssembler vectorAssembler = new VectorAssembler();
+        String[] columnNames = new String[columns.getSize()];
+        for (int i = 0; i < columnNames.length; i++) {
+            columnNames[i] = columns.getItemAt(i).getStringValue();
+        }
+        inputDataset.select("asd", columnNames);
+        // TODO: columns contain items -> convert them to java types so that VectorAssembler can operate
+        vectorAssembler.setInputCols(columnNames);
+        // TODO: resolve how user input of featuresCol and this outputCol should work together
+        vectorAssembler.setOutputCol("features");
+        return vectorAssembler.transform(inputDataset);
+    }
+
+    private Item removeParameter(Item paramMapItem, String key) {
+        List<String> keys = paramMapItem.getKeys();
+        List<Item> values = paramMapItem.getValues();
+        int indexToRemove = keys.indexOf(key);
+        keys.remove(indexToRemove);
+        values.remove(indexToRemove);
+        return ItemFactory.getInstance().createObjectItem(keys, values, getMetadata());
     }
 
     private Item generateTransformerFunctionItem(Transformer fittedModel) {
