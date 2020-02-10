@@ -79,6 +79,9 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
     @Override
     public void openLocal() {
+        this.validateNumberOfArguments();
+        this.wrapArgumentIteratorsWithTypeCheckingIterators();
+
         if (this.isPartialApplication) {
             this.functionBodyIterator = generatePartiallyAppliedFunction(this.currentDynamicContextForLocalExecution);
         } else {
@@ -134,9 +137,6 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
      * @return FunctionRuntimeIterator that contains the newly generated FunctionItem
      */
     private FunctionRuntimeIterator generatePartiallyAppliedFunction(DynamicContext context) {
-        this.validateNumberOfArguments();
-        this.wrapArgumentIteratorsWithTypeCheckingIterators();
-
         String argName;
         RuntimeIterator argIterator;
 
@@ -188,9 +188,6 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     }
 
     private DynamicContext createNewDynamicContextWithArguments(DynamicContext context) {
-        this.validateNumberOfArguments();
-        this.wrapArgumentIteratorsWithTypeCheckingIterators();
-
         String argName;
         RuntimeIterator argIterator;
 
@@ -274,9 +271,11 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                     "Unexpected program state reached. Partially applied function calls must be evaluated locally."
             );
         }
-        DynamicContext contextWithArguments = dynamicContext;
+        this.validateNumberOfArguments();
+        this.wrapArgumentIteratorsWithTypeCheckingIterators();
+
+        DynamicContext contextWithArguments = this.createNewDynamicContextWithArguments(dynamicContext);
         this.functionBodyIterator = this.functionItem.getBodyIterator();
-        contextWithArguments = this.createNewDynamicContextWithArguments(contextWithArguments);
         return this.functionBodyIterator.getRDD(contextWithArguments);
     }
 }
