@@ -45,7 +45,12 @@ import java.util.List;
 public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
-    public static final List<String> transformerParameterNames = new ArrayList<>(Arrays.asList("input", "params"));
+    public static final List<String> transformerParameterNames = new ArrayList<>(
+            Arrays.asList(
+                "transformer-input-9470aa1b-13cb-405b-b598-910cb2d18224",
+                "transformer-paramobject-e05c895c-be12-4df1-8a86-8b90f10a7129"
+            )
+    );
     private String transformerShortName;
     private Class<?> transformerSparkMLClass;
 

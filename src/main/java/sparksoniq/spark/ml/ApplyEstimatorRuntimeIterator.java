@@ -80,14 +80,14 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
 
     private Dataset<Row> getInputDataset(DynamicContext context) {
         return context.getDataFrameVariableValue(
-            GetEstimatorFunctionIterator.estimatorParameterNames.get(0),
+            GetEstimatorFunctionIterator.estimatorFunctionParameterNames.get(0),
             getMetadata()
         );
     }
 
     private Item getParamMapItem(DynamicContext context) {
         List<Item> paramMapItemList = context.getLocalVariableValue(
-            GetEstimatorFunctionIterator.estimatorParameterNames.get(1),
+            GetEstimatorFunctionIterator.estimatorFunctionParameterNames.get(1),
             getMetadata()
         );
         if (paramMapItemList.size() != 1) {
