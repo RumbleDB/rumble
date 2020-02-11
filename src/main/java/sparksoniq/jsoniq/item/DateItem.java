@@ -19,34 +19,34 @@ import sparksoniq.semantics.types.ItemTypes;
 public class DateItem extends AtomicItem {
 
     private static final long serialVersionUID = 1L;
-    private DateTime _value;
-    private boolean _hasTimeZone = true;
+    private DateTime value;
+    private boolean hasTimeZone = true;
 
     public DateItem() {
         super();
     }
 
-    DateItem(DateTime _value, boolean hasTimeZone) {
+    DateItem(DateTime value, boolean hasTimeZone) {
         super();
-        this._value = _value;
-        this._hasTimeZone = hasTimeZone;
+        this.value = value;
+        this.hasTimeZone = hasTimeZone;
     }
 
     DateItem(String dateTimeString) {
-        this._value = DateTimeItem.parseDateTime(dateTimeString, AtomicTypes.DateItem);
-        if (!dateTimeString.endsWith("Z") && this._value.getZone() == DateTimeZone.getDefault()) {
-            this._hasTimeZone = false;
-            this._value = this._value.withZoneRetainFields(DateTimeZone.UTC);
+        this.value = DateTimeItem.parseDateTime(dateTimeString, AtomicTypes.DateItem);
+        if (!dateTimeString.endsWith("Z") && this.value.getZone() == DateTimeZone.getDefault()) {
+            this.hasTimeZone = false;
+            this.value = this.value.withZoneRetainFields(DateTimeZone.UTC);
         }
     }
 
     public DateTime getValue() {
-        return this._value;
+        return this.value;
     }
 
     @Override
     public DateTime getDateTimeValue() {
-        return this._value;
+        return this.value;
     }
 
     @Override
@@ -61,7 +61,7 @@ public class DateItem extends AtomicItem {
 
     @Override
     public boolean hasTimeZone() {
-        return this._hasTimeZone;
+        return this.hasTimeZone;
     }
 
     @Override
@@ -101,7 +101,7 @@ public class DateItem extends AtomicItem {
             case DateItem:
                 return this;
             case DateTimeItem:
-                return ItemFactory.getInstance().createDateTimeItem(this.getValue(), this._hasTimeZone);
+                return ItemFactory.getInstance().createDateTimeItem(this.getValue(), this.hasTimeZone);
             case StringItem:
                 return ItemFactory.getInstance().createStringItem(this.serialize());
             default:
@@ -118,7 +118,7 @@ public class DateItem extends AtomicItem {
     public Item add(Item other) {
         if (other.isYearMonthDuration() || other.isDayTimeDuration())
             return ItemFactory.getInstance()
-                .createDateItem(this.getValue().plus(other.getDurationValue()), this._hasTimeZone);
+                .createDateItem(this.getValue().plus(other.getDurationValue()), this.hasTimeZone);
         throw new ClassCastException();
     }
 
@@ -130,7 +130,7 @@ public class DateItem extends AtomicItem {
         }
         if (other.isYearMonthDuration() || other.isDayTimeDuration())
             return ItemFactory.getInstance()
-                .createDateItem(this.getValue().minus(other.getDurationValue()), this._hasTimeZone);
+                .createDateItem(this.getValue().minus(other.getDurationValue()), this.hasTimeZone);
         throw new ClassCastException();
     }
 
@@ -170,21 +170,21 @@ public class DateItem extends AtomicItem {
         String value = this.getValue().toString();
         String zone = this.getValue().getZone() == DateTimeZone.UTC ? "Z" : this.getValue().getZone().toString();
         int dateTimeSeparatorIndex = value.indexOf("T");
-        return value.substring(0, dateTimeSeparatorIndex) + (this._hasTimeZone ? zone : "");
+        return value.substring(0, dateTimeSeparatorIndex) + (this.hasTimeZone ? zone : "");
     }
 
     @Override
     public void write(Kryo kryo, Output output) {
         output.writeLong(this.getDateTimeValue().getMillis(), true);
-        output.writeBoolean(this._hasTimeZone);
+        output.writeBoolean(this.hasTimeZone);
         output.writeString(this.getDateTimeValue().getZone().getID());
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
         Long millis = input.readLong(true);
-        this._hasTimeZone = input.readBoolean();
+        this.hasTimeZone = input.readBoolean();
         DateTimeZone zone = DateTimeZone.forID(input.readString());
-        this._value = new DateTime(millis, zone);
+        this.value = new DateTime(millis, zone);
     }
 }

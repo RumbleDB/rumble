@@ -29,29 +29,29 @@ import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 public class InstanceOfExpression extends UnaryExpressionBase {
 
-    private FlworVarSequenceType _sequenceType;
+    private FlworVarSequenceType sequenceType;
 
-    public InstanceOfExpression(Expression _mainExpression, ExceptionMetadata metadata) {
-        super(_mainExpression, metadata);
-        this._isActive = false;
+    public InstanceOfExpression(Expression mainExpression, ExceptionMetadata metadata) {
+        super(mainExpression, metadata);
+        this.isActive = false;
     }
 
     public InstanceOfExpression(
-            Expression _mainExpression,
+            Expression mainExpression,
             FlworVarSequenceType sequenceType,
             ExceptionMetadata metadata
     ) {
-        super(_mainExpression, Operator.INSTANCE_OF, true, metadata);
-        this._sequenceType = sequenceType;
+        super(mainExpression, Operator.INSTANCE_OF, true, metadata);
+        this.sequenceType = sequenceType;
     }
 
     public FlworVarSequenceType getsequenceType() {
-        return this._sequenceType;
+        return this.sequenceType;
     }
 
     @Override
     public boolean isActive() {
-        return this._isActive;
+        return this.isActive;
     }
 
     @Override
@@ -62,8 +62,8 @@ public class InstanceOfExpression extends UnaryExpressionBase {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(instanceOfExpr ";
-        result += this._mainExpression.serializationString(true);
-        result += this._sequenceType != null ? "instance of " + this._sequenceType.serializationString(prefix) : "";
+        result += this.mainExpression.serializationString(true);
+        result += this.sequenceType != null ? "instance of " + this.sequenceType.serializationString(prefix) : "";
         result += ")";
         return result;
     }

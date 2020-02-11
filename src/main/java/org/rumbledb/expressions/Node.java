@@ -37,7 +37,7 @@ public abstract class Node {
 
     private ExceptionMetadata metadata;
 
-    protected ExecutionMode _highestExecutionMode = ExecutionMode.UNSET;
+    protected ExecutionMode highestExecutionMode = ExecutionMode.UNSET;
 
     protected Node() {
     }
@@ -55,7 +55,7 @@ public abstract class Node {
      * default, the highest execution mode is assumed to be local.
      */
     public void initHighestExecutionMode() {
-        this._highestExecutionMode = ExecutionMode.LOCAL;
+        this.highestExecutionMode = ExecutionMode.LOCAL;
     }
 
     /**
@@ -92,10 +92,10 @@ public abstract class Node {
      * @return the highest execution mode.
      */
     public ExecutionMode getHighestExecutionMode(boolean ignoreUnsetError) {
-        if (!ignoreUnsetError && this._highestExecutionMode == ExecutionMode.UNSET) {
+        if (!ignoreUnsetError && this.highestExecutionMode == ExecutionMode.UNSET) {
             throw new OurBadException("An execution mode is accessed without being set.");
         }
-        return this._highestExecutionMode;
+        return this.highestExecutionMode;
     }
 
     /**

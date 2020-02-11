@@ -30,22 +30,22 @@ import java.util.List;
 
 public class DynamicFunctionCallExtension extends PostfixExtension {
 
-    private List<Expression> _arguments;
+    private List<Expression> arguments;
 
     public DynamicFunctionCallExtension(List<Expression> arguments, ExceptionMetadata metadata) {
         super(metadata);
-        this._arguments = arguments;
+        this.arguments = arguments;
     }
 
     public List<Expression> getArguments() {
-        return this._arguments;
+        return this.arguments;
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        if (this._arguments != null)
-            result.addAll(this._arguments);
+        if (this.arguments != null)
+            result.addAll(this.arguments);
         return result;
     }
 
@@ -56,16 +56,16 @@ public class DynamicFunctionCallExtension extends PostfixExtension {
 
     @Override
     public void initHighestExecutionMode() {
-        this._highestExecutionMode = ExecutionMode.LOCAL;
+        this.highestExecutionMode = ExecutionMode.LOCAL;
     }
 
     @Override
     public String serializationString(boolean prefix) {
         StringBuilder result = new StringBuilder("(argumentList ( ");
-        for (Expression arg : this._arguments) {
+        for (Expression arg : this.arguments) {
             result.append("(argument (exprSingle ");
             result.append(arg.serializationString(false));
-            result.append((this._arguments.indexOf(arg) < this._arguments.size() - 1 ? ")) , " : ")) "));
+            result.append((this.arguments.indexOf(arg) < this.arguments.size() - 1 ? ")) , " : ")) "));
         }
         result.append("))");
         return result.toString();

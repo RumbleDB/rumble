@@ -38,18 +38,18 @@ import java.util.Map;
 
 public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, Boolean> {
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator _expression;
-    private Map<String, DynamicContext.VariableDependency> _dependencies;
+    private RuntimeIterator expression;
+    private Map<String, DynamicContext.VariableDependency> dependencies;
 
-    private Map<String, List<String>> _columnNamesByType;
+    private Map<String, List<String>> columnNamesByType;
 
-    private List<List<Item>> _deserializedParams;
-    private List<Item> _longParams;
-    private DynamicContext _context;
-    private DynamicContext _parentContext;
+    private List<List<Item>> deserializedParams;
+    private List<Item> longParams;
+    private DynamicContext context;
+    private DynamicContext parentContext;
 
-    private transient Kryo _kryo;
-    private transient Input _input;
+    private transient Kryo kryo;
+    private transient Input input;
 
     public WhereClauseUDF(
             RuntimeIterator expression,
@@ -57,34 +57,34 @@ public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<L
             StructType inputSchema,
             Map<String, List<String>> columnNamesByType
     ) {
-        this._expression = expression;
+        this.expression = expression;
 
-        this._deserializedParams = new ArrayList<>();
-        this._longParams = new ArrayList<>();
-        this._parentContext = context;
-        this._context = new DynamicContext(this._parentContext);
+        this.deserializedParams = new ArrayList<>();
+        this.longParams = new ArrayList<>();
+        this.parentContext = context;
+        this.context = new DynamicContext(this.parentContext);
 
-        this._kryo = new Kryo();
-        this._kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(this._kryo);
-        this._input = new Input();
+        this.kryo = new Kryo();
+        this.kryo.setReferences(false);
+        DataFrameUtils.registerKryoClassesKryo(this.kryo);
+        this.input = new Input();
 
-        this._columnNamesByType = columnNamesByType;
-        this._dependencies = this._expression.getVariableDependencies();
+        this.columnNamesByType = columnNamesByType;
+        this.dependencies = this.expression.getVariableDependencies();
 
     }
 
 
     @Override
     public Boolean call(WrappedArray<byte[]> wrappedParameters, WrappedArray<Long> wrappedParametersLong) {
-        this._deserializedParams.clear();
-        this._context.removeAllVariables();
+        this.deserializedParams.clear();
+        this.context.removeAllVariables();
 
         DataFrameUtils.deserializeWrappedParameters(
             wrappedParameters,
-            this._deserializedParams,
-            this._kryo,
-            this._input
+            this.deserializedParams,
+            this.kryo,
+            this.input
         );
 
         // Long parameters correspond to pre-computed counts, when a materialization of the
@@ -92,21 +92,21 @@ public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<L
         Object[] longParams = (Object[]) wrappedParametersLong.array();
         for (Object longParam : longParams) {
             Item count = ItemFactory.getInstance().createIntegerItem(((Long) longParam).intValue());
-            this._longParams.add(count);
+            this.longParams.add(count);
         }
 
         DataFrameUtils.prepareDynamicContext(
-            this._context,
-            this._columnNamesByType.get("byte[]"),
-            this._columnNamesByType.get("Long"),
-            this._deserializedParams,
-            this._longParams
+            this.context,
+            this.columnNamesByType.get("byte[]"),
+            this.columnNamesByType.get("Long"),
+            this.deserializedParams,
+            this.longParams
         );
 
         // apply expression in the dynamic context
-        this._expression.open(this._context);
-        boolean result = RuntimeIterator.getEffectiveBooleanValue(this._expression);
-        this._expression.close();
+        this.expression.open(this.context);
+        boolean result = RuntimeIterator.getEffectiveBooleanValue(this.expression);
+        this.expression.close();
         return result;
     }
 
@@ -115,9 +115,9 @@ public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<L
                 ClassNotFoundException {
         in.defaultReadObject();
 
-        this._kryo = new Kryo();
-        this._kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(this._kryo);
-        this._input = new Input();
+        this.kryo = new Kryo();
+        this.kryo.setReferences(false);
+        DataFrameUtils.registerKryoClassesKryo(this.kryo);
+        this.input = new Input();
     }
 }

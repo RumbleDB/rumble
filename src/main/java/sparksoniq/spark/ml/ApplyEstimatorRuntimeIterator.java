@@ -30,8 +30,8 @@ import static sparksoniq.spark.ml.RumbleMLUtils.convertRumbleObjectItemToSparkML
 public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private String _estimatorShortName;
-    private Estimator<?> _estimator;
+    private String estimatorShortName;
+    private Estimator<?> estimator;
 
     public ApplyEstimatorRuntimeIterator(
             String estimatorShortName,
@@ -40,8 +40,8 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
             ExceptionMetadata metadata
     ) {
         super(null, executionMode, metadata);
-        this._estimatorShortName = estimatorShortName;
-        this._estimator = estimator;
+        this.estimatorShortName = estimatorShortName;
+        this.estimator = estimator;
     }
 
     @Override
@@ -49,13 +49,13 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
         if (!this.hasNext()) {
             throw new IteratorFlowException("Invalid next() call in ApplyEstimatorRuntimeIterator", getMetadata());
         }
-        this._hasNext = false;
+        this.hasNext = false;
 
-        Dataset<Row> inputDataset = this._currentDynamicContextForLocalExecution.getDataFrameVariableValue(
+        Dataset<Row> inputDataset = this.currentDynamicContextForLocalExecution.getDataFrameVariableValue(
             GetEstimatorFunctionIterator.estimatorParameterNames.get(0),
             getMetadata()
         );
-        List<Item> paramMapItemList = this._currentDynamicContextForLocalExecution.getLocalVariableValue(
+        List<Item> paramMapItemList = this.currentDynamicContextForLocalExecution.getLocalVariableValue(
             GetEstimatorFunctionIterator.estimatorParameterNames.get(1),
             getMetadata()
         );
@@ -67,19 +67,19 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
         }
         Item paramMapItem = paramMapItemList.get(0);
         ParamMap paramMap = convertRumbleObjectItemToSparkMLParamMap(
-            this._estimatorShortName,
-            this._estimator,
+            this.estimatorShortName,
+            this.estimator,
             paramMapItem,
             getMetadata()
         );
 
         Transformer fittedModel;
         try {
-            fittedModel = this._estimator.fit(inputDataset, paramMap);
+            fittedModel = this.estimator.fit(inputDataset, paramMap);
         } catch (IllegalArgumentException e) {
             throw new InvalidRumbleMLParamException(
                     "Parameter provided to "
-                        + this._estimatorShortName
+                        + this.estimatorShortName
                         + " causes the following error: "
                         + e.getMessage(),
                     getMetadata()

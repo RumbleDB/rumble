@@ -43,8 +43,8 @@ public abstract class PostfixExtension extends Node {
         return this.parent;
     }
 
-    public void setParent(PostFixExpression _parent) {
-        this.parent = _parent;
+    public void setParent(PostFixExpression parent) {
+        this.parent = parent;
     }
 
     public PostfixExtension getPrevious() {
@@ -63,9 +63,9 @@ public abstract class PostfixExtension extends Node {
     @Override
     public void initHighestExecutionMode() {
         if (this.previous != null) {
-            this._highestExecutionMode = this.previous.getHighestExecutionMode();
+            this.highestExecutionMode = this.previous.getHighestExecutionMode();
         } else {
-            this._highestExecutionMode = this.parent.getHighestExecutionMode();
+            this.highestExecutionMode = this.parent.getHighestExecutionMode();
         }
     }
 

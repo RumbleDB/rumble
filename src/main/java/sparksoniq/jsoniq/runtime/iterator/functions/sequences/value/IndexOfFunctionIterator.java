@@ -37,10 +37,10 @@ public class IndexOfFunctionIterator extends LocalFunctionCallIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator _sequenceIterator;
-    private Item _search;
-    private Item _nextResult;
-    private int _currentIndex;
+    private RuntimeIterator sequenceIterator;
+    private Item search;
+    private Item nextResult;
+    private int currentIndex;
 
     public IndexOfFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -52,8 +52,8 @@ public class IndexOfFunctionIterator extends LocalFunctionCallIterator {
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            Item result = this._nextResult; // save the result to be returned
+        if (this.hasNext) {
+            Item result = this.nextResult; // save the result to be returned
             setNextResult(); // calculate and store the next result
             return result;
         }
@@ -64,11 +64,11 @@ public class IndexOfFunctionIterator extends LocalFunctionCallIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        this._sequenceIterator = this._children.get(0);
-        RuntimeIterator searchIterator = this._children.get(1);
-        this._currentIndex = 0;
+        this.sequenceIterator = this.children.get(0);
+        RuntimeIterator searchIterator = this.children.get(1);
+        this.currentIndex = 0;
 
-        this._sequenceIterator.open(context);
+        this.sequenceIterator.open(context);
         searchIterator.open(context);
 
         if (!searchIterator.hasNext()) {
@@ -77,14 +77,14 @@ public class IndexOfFunctionIterator extends LocalFunctionCallIterator {
                     getMetadata()
             );
         }
-        this._search = searchIterator.next();
+        this.search = searchIterator.next();
         if (searchIterator.hasNext()) {
             throw new UnexpectedTypeException(
                     "Invalid args. index-of can't be performed with sequences with more than one items",
                     getMetadata()
             );
         }
-        if (!this._search.isAtomic()) {
+        if (!this.search.isAtomic()) {
             throw new NonAtomicKeyException(
                     "Invalid args. index-of can't be performed with a non-atomic parameter",
                     getMetadata()
@@ -96,29 +96,29 @@ public class IndexOfFunctionIterator extends LocalFunctionCallIterator {
     }
 
     public void setNextResult() {
-        this._nextResult = null;
+        this.nextResult = null;
 
-        while (this._sequenceIterator.hasNext()) {
-            this._currentIndex += 1;
-            Item item = this._sequenceIterator.next();
+        while (this.sequenceIterator.hasNext()) {
+            this.currentIndex += 1;
+            Item item = this.sequenceIterator.next();
             if (!item.isAtomic()) {
                 throw new NonAtomicKeyException(
                         "Invalid args. index-of can't be performed with a non-atomic in the input sequence",
                         getMetadata()
                 );
             } else {
-                if (item.compareTo(this._search) == 0) {
-                    this._nextResult = ItemFactory.getInstance().createIntegerItem(this._currentIndex);
+                if (item.compareTo(this.search) == 0) {
+                    this.nextResult = ItemFactory.getInstance().createIntegerItem(this.currentIndex);
                     break;
                 }
             }
         }
 
-        if (this._nextResult == null) {
-            this._hasNext = false;
-            this._sequenceIterator.close();
+        if (this.nextResult == null) {
+            this.hasNext = false;
+            this.sequenceIterator.close();
         } else {
-            this._hasNext = true;
+            this.hasNext = true;
         }
     }
 }

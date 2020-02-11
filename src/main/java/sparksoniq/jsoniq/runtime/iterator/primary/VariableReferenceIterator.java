@@ -40,10 +40,10 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private SequenceType _sequence;
-    private String _variableName;
-    private List<Item> _items = null;
-    private int _currentIndex = 0;
+    private SequenceType sequence;
+    private String variableName;
+    private List<Item> items = null;
+    private int currentIndex = 0;
 
     public VariableReferenceIterator(
             String variableName,
@@ -52,13 +52,13 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(null, executionMode, iteratorMetadata);
-        this._variableName = variableName;
-        this._sequence = seq;
+        this.variableName = variableName;
+        this.sequence = seq;
     }
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        return context.getRDDVariableValue(this._variableName, getMetadata());
+        return context.getRDDVariableValue(this.variableName, getMetadata());
     }
 
     @Override
@@ -68,38 +68,38 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
 
     @Override
     public Dataset<Row> getDataFrame(DynamicContext context) {
-        return context.getDataFrameVariableValue(this._variableName, getMetadata());
+        return context.getDataFrameVariableValue(this.variableName, getMetadata());
     }
 
     @Override
     protected boolean hasNextLocal() {
-        return this._hasNext;
+        return this.hasNext;
     }
 
     @Override
     public Item nextLocal() {
-        if (!this._hasNext) {
+        if (!this.hasNext) {
             throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._variableName,
+                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.variableName,
                     getMetadata()
             );
         }
-        Item item = this._items.get(this._currentIndex);
-        this._currentIndex++;
-        if (this._currentIndex == this._items.size()) {
-            this._hasNext = false;
+        Item item = this.items.get(this.currentIndex);
+        this.currentIndex++;
+        if (this.currentIndex == this.items.size()) {
+            this.hasNext = false;
         }
         return item;
     }
 
     @Override
     public void openLocal() {
-        this._currentIndex = 0;
-        this._items = this._currentDynamicContextForLocalExecution.getLocalVariableValue(
-            this._variableName,
+        this.currentIndex = 0;
+        this.items = this.currentDynamicContextForLocalExecution.getLocalVariableValue(
+            this.variableName,
             getMetadata()
         );
-        this._hasNext = this._items.size() != 0;
+        this.hasNext = this.items.size() != 0;
     }
 
     @Override
@@ -109,21 +109,21 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
 
     @Override
     public void resetLocal(DynamicContext context) {
-        this._currentIndex = 0;
-        this._items = null;
+        this.currentIndex = 0;
+        this.items = null;
     }
 
     public SequenceType getSequence() {
-        return this._sequence;
+        return this.sequence;
     }
 
     public String getVariableName() {
-        return this._variableName;
+        return this.variableName;
     }
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<String, DynamicContext.VariableDependency> result = new TreeMap<>();
-        result.put(this._variableName, DynamicContext.VariableDependency.FULL);
+        result.put(this.variableName, DynamicContext.VariableDependency.FULL);
         return result;
     }
 }

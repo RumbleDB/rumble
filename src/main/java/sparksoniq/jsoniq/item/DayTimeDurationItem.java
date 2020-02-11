@@ -25,18 +25,18 @@ public class DayTimeDurationItem extends DurationItem {
 
     public DayTimeDurationItem(Period value) {
         super();
-        this._value = value.normalizedStandard(PeriodType.dayTime());
-        this.isNegative = this._value.toString().contains("-");
+        this.value = value.normalizedStandard(PeriodType.dayTime());
+        this.isNegative = this.value.toString().contains("-");
     }
 
     @Override
     public Period getValue() {
-        return this._value;
+        return this.value;
     }
 
     @Override
     public Period getDurationValue() {
-        return this._value;
+        return this.value;
     }
 
     @Override
@@ -56,10 +56,10 @@ public class DayTimeDurationItem extends DurationItem {
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this._value = getDurationFromString(input.readString(), AtomicTypes.DayTimeDurationItem).normalizedStandard(
+        this.value = getDurationFromString(input.readString(), AtomicTypes.DayTimeDurationItem).normalizedStandard(
             PeriodType.dayTime()
         );
-        this.isNegative = this._value.toString().contains("-");
+        this.isNegative = this.value.toString().contains("-");
     }
 
     @Override

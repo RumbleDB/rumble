@@ -35,10 +35,10 @@ import java.util.Map;
 
 public class FunctionDeclaration extends PrimaryExpression {
 
-    private final String _name;
-    private final Map<String, FlworVarSequenceType> _params;
-    private final FlworVarSequenceType _returnType;
-    private final Expression _body;
+    private final String name;
+    private final Map<String, FlworVarSequenceType> params;
+    private final FlworVarSequenceType returnType;
+    private final Expression body;
 
     public FunctionDeclaration(
             String name,
@@ -48,26 +48,26 @@ public class FunctionDeclaration extends PrimaryExpression {
             ExceptionMetadata metadata
     ) {
         super(metadata);
-        this._name = name;
-        this._params = params;
-        this._returnType = returnType;
-        this._body = body;
+        this.name = name;
+        this.params = params;
+        this.returnType = returnType;
+        this.body = body;
     }
 
-    public String get_name() {
-        return this._name;
+    public String getName() {
+        return this.name;
     }
 
-    public Map<String, FlworVarSequenceType> get_params() {
-        return this._params;
+    public Map<String, FlworVarSequenceType> getParams() {
+        return this.params;
     }
 
-    public FlworVarSequenceType get_returnType() {
-        return this._returnType;
+    public FlworVarSequenceType getReturnType() {
+        return this.returnType;
     }
 
-    public Expression get_body() {
-        return this._body;
+    public Expression getBody() {
+        return this.body;
     }
 
     @Override
@@ -80,12 +80,12 @@ public class FunctionDeclaration extends PrimaryExpression {
             boolean ignoreDuplicateUserDefinedFunctionError,
             boolean ignoreUnsetExecutionModeAccessDuringFunctionDeclaration
     ) {
-        FunctionIdentifier identifier = new FunctionIdentifier(this._name, this._params.size());
+        FunctionIdentifier identifier = new FunctionIdentifier(this.name, this.params.size());
         // if named(static) function declaration
-        if (!this._name.equals("")) {
+        if (!this.name.equals("")) {
             Functions.addUserDefinedFunctionExecutionMode(
                 identifier,
-                this._body.getHighestExecutionMode(ignoreUnsetExecutionModeAccessDuringFunctionDeclaration),
+                this.body.getHighestExecutionMode(ignoreUnsetExecutionModeAccessDuringFunctionDeclaration),
                 ignoreDuplicateUserDefinedFunctionError,
                 this.getMetadata()
             );
@@ -100,9 +100,9 @@ public class FunctionDeclaration extends PrimaryExpression {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(functionDeclaration ";
-        result += this._name;
+        result += this.name;
         result += " (paramList (";
-        for (Map.Entry<String, FlworVarSequenceType> entry : this._params.entrySet()) {
+        for (Map.Entry<String, FlworVarSequenceType> entry : this.params.entrySet()) {
             result += "param (";
             result += "NCName "
                 + entry.getKey()
@@ -113,9 +113,9 @@ public class FunctionDeclaration extends PrimaryExpression {
         result = result.substring(0, result.length() - 1); // remove last comma
         result += "))";
 
-        result += " (sequenceType ( " + this._returnType.serializationString(false) + "))";
+        result += " (sequenceType ( " + this.returnType.serializationString(false) + "))";
 
-        result += " (expr (" + this._body.serializationString(false) + "))";
+        result += " (expr (" + this.body.serializationString(false) + "))";
 
         result += ")";
         return result;

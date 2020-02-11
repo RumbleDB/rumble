@@ -35,17 +35,17 @@ import sparksoniq.semantics.StaticContext;
  */
 public abstract class Expression extends Node {
 
-    protected StaticContext _staticContext;
+    protected StaticContext staticContext;
 
     protected Expression(ExceptionMetadata metadata) {
         super(metadata);
     }
 
     public StaticContext getStaticContext() {
-        return this._staticContext;
+        return this.staticContext;
     }
 
-    public void setStaticContext(StaticContext _staticContext) {
-        this._staticContext = _staticContext;
+    public void setStaticContext(StaticContext staticContext) {
+        this.staticContext = staticContext;
     }
 }

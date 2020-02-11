@@ -48,7 +48,7 @@ public class JsonFileFunctionIterator extends RDDRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         JavaRDD<String> strings;
-        RuntimeIterator urlIterator = this._children.get(0);
+        RuntimeIterator urlIterator = this.children.get(0);
         urlIterator.open(context);
         String url = urlIterator.next().getStringValue();
         urlIterator.close();
@@ -56,13 +56,13 @@ public class JsonFileFunctionIterator extends RDDRuntimeIterator {
             throw new CannotRetrieveResourceException("File " + url + " not found.", getMetadata());
         }
 
-        if (this._children.size() == 1) {
+        if (this.children.size() == 1) {
             strings = SparkSessionManager.getInstance()
                 .getJavaSparkContext()
                 .textFile(url);
         } else {
-            RuntimeIterator partitionsIterator = this._children.get(1);
-            partitionsIterator.open(this._currentDynamicContextForLocalExecution);
+            RuntimeIterator partitionsIterator = this.children.get(1);
+            partitionsIterator.open(this.currentDynamicContextForLocalExecution);
             strings = SparkSessionManager.getInstance()
                 .getJavaSparkContext()
                 .textFile(

@@ -44,8 +44,8 @@ public class RumbleJLineShell {
     private static final String EXIT_COMMAND = "exit";
     private static final String PROMPT = "rumble$ ";
     private static final String MID_QUERY_PROMPT = ">>> ";
-    private final boolean _printTime;
-    private final SparksoniqRuntimeConfiguration _configuration;
+    private final boolean printTime;
+    private final SparksoniqRuntimeConfiguration configuration;
     private LineReader lineReader;
     private JsoniqQueryExecutor jsoniqQueryExecutor;
     private boolean queryStarted;
@@ -55,9 +55,9 @@ public class RumbleJLineShell {
     private String welcomeMessage;
 
     public RumbleJLineShell(SparksoniqRuntimeConfiguration configuration) throws IOException {
-        this._configuration = configuration;
+        this.configuration = configuration;
         initialize();
-        this._printTime = true;
+        this.printTime = true;
     }
 
     public void launch() {
@@ -78,7 +78,7 @@ public class RumbleJLineShell {
                 }
                 this.previousLine = this.currentLine;
             } catch (Exception ex) {
-                handleException(ex, this._configuration.getShowErrorInfo());
+                handleException(ex, this.configuration.getShowErrorInfo());
             }
         }
     }
@@ -90,11 +90,11 @@ public class RumbleJLineShell {
             String result = this.jsoniqQueryExecutor.runInteractive(file);
             output(result);
             long time = System.currentTimeMillis() - startTime;
-            if (this._printTime)
+            if (this.printTime)
                 output("[EXEC TIME]: " + time);
             removeQueryFile(file);
         } catch (Exception ex) {
-            handleException(ex, this._configuration.getShowErrorInfo());
+            handleException(ex, this.configuration.getShowErrorInfo());
             removeQueryFile(file);
         }
         this.queryStarted = false;
@@ -122,7 +122,7 @@ public class RumbleJLineShell {
             .highlighter(new DefaultHighlighter())
             // .parser(new JiqsJlineParser())
             .build();
-        this.jsoniqQueryExecutor = new JsoniqQueryExecutor(false, this._configuration);
+        this.jsoniqQueryExecutor = new JsoniqQueryExecutor(false, this.configuration);
     }
 
     private void handleException(Throwable ex, boolean showErrorInfo) {
@@ -182,7 +182,7 @@ public class RumbleJLineShell {
     }
 
     private String getInitializationMessage() {
-        return this.welcomeMessage + "\n" + this._configuration.toString();
+        return this.welcomeMessage + "\n" + this.configuration.toString();
     }
 
 

@@ -51,31 +51,31 @@ public class CountFunctionIterator extends LocalFunctionCallIterator {
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            RuntimeIterator iterator = this._children.get(0);
+        if (this.hasNext) {
+            RuntimeIterator iterator = this.children.get(0);
 
             // the count($x) case is treated separately because we can short-circuit the
             // count, e.g., if it comes from the group-by aggregation of a non-grouping
             // key.
             if (iterator instanceof VariableReferenceIterator) {
                 VariableReferenceIterator expr = (VariableReferenceIterator) iterator;
-                this._hasNext = false;
-                return this._currentDynamicContextForLocalExecution.getVariableCount(expr.getVariableName());
+                this.hasNext = false;
+                return this.currentDynamicContextForLocalExecution.getVariableCount(expr.getVariableName());
             }
 
             if (!iterator.isRDD()) {
-                List<Item> results = iterator.materialize(this._currentDynamicContextForLocalExecution);
-                this._hasNext = false;
+                List<Item> results = iterator.materialize(this.currentDynamicContextForLocalExecution);
+                this.hasNext = false;
                 return ItemFactory.getInstance().createIntegerItem(results.size());
             }
 
             long count;
             if (iterator.isDataFrame()) {
-                count = iterator.getDataFrame(this._currentDynamicContextForLocalExecution).count();
+                count = iterator.getDataFrame(this.currentDynamicContextForLocalExecution).count();
             } else {
-                count = iterator.getRDD(this._currentDynamicContextForLocalExecution).count();
+                count = iterator.getRDD(this.currentDynamicContextForLocalExecution).count();
             }
-            this._hasNext = false;
+            this.hasNext = false;
             if (count > (long) Integer.MAX_VALUE) {
                 // TODO: handle too big x values
                 throw new OurBadException("The count value is too big to convert to integer type.");
@@ -91,8 +91,8 @@ public class CountFunctionIterator extends LocalFunctionCallIterator {
     }
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        if (this._children.get(0) instanceof VariableReferenceIterator) {
-            VariableReferenceIterator expr = (VariableReferenceIterator) this._children.get(0);
+        if (this.children.get(0) instanceof VariableReferenceIterator) {
+            VariableReferenceIterator expr = (VariableReferenceIterator) this.children.get(0);
             Map<String, DynamicContext.VariableDependency> result = new TreeMap<>();
             result.put(expr.getVariableName(), DynamicContext.VariableDependency.COUNT);
             return result;

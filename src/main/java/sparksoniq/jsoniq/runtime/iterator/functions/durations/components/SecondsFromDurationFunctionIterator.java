@@ -15,7 +15,7 @@ import java.util.List;
 public class SecondsFromDurationFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
-    private Item _durationItem = null;
+    private Item durationItem = null;
 
     public SecondsFromDurationFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -27,13 +27,13 @@ public class SecondsFromDurationFunctionIterator extends LocalFunctionCallIterat
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            this._hasNext = false;
+        if (this.hasNext) {
+            this.hasNext = false;
             return ItemFactory.getInstance()
                 .createDecimalItem(
                     BigDecimal.valueOf(
-                        this._durationItem.getDurationValue().getSeconds()
-                            + this._durationItem.getDurationValue().getMillis() * 1.0 / 1000
+                        this.durationItem.getDurationValue().getSeconds()
+                            + this.durationItem.getDurationValue().getMillis() * 1.0 / 1000
                     )
                 );
         } else
@@ -46,8 +46,8 @@ public class SecondsFromDurationFunctionIterator extends LocalFunctionCallIterat
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        this._durationItem = this._children.get(0)
-            .materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
-        this._hasNext = this._durationItem != null;
+        this.durationItem = this.children.get(0)
+            .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        this.hasNext = this.durationItem != null;
     }
 }

@@ -45,16 +45,16 @@ public class SubstringFunctionIterator extends LocalFunctionCallIterator {
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            this._hasNext = false;
+        if (this.hasNext) {
+            this.hasNext = false;
             String result;
-            Item stringItem = this._children.get(0)
-                .materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
+            Item stringItem = this.children.get(0)
+                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
             if (stringItem == null) {
                 return ItemFactory.getInstance().createStringItem("");
             }
-            Item indexItem = this._children.get(1)
-                .materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
+            Item indexItem = this.children.get(1)
+                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
             if (indexItem == null) {
                 throw new UnexpectedTypeException(
                         "Type error; Start index parameter can't be empty sequence ",
@@ -64,9 +64,9 @@ public class SubstringFunctionIterator extends LocalFunctionCallIterator {
             int index = (int) Math.round(indexItem.getDoubleValue() - 1);
             if (index >= stringItem.getStringValue().length())
                 return ItemFactory.getInstance().createStringItem("");
-            if (this._children.size() > 2) {
-                Item endIndexItem = this._children.get(2)
-                    .materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
+            if (this.children.size() > 2) {
+                Item endIndexItem = this.children.get(2)
+                    .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
                 if (endIndexItem == null) {
                     throw new UnexpectedTypeException(
                             "Type error; End index parameter can't be empty sequence ",

@@ -49,11 +49,11 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private String _variableName; // for efficient use in local iteration
-    private RuntimeIterator _assignmentIterator;
-    private DynamicContext _tupleContext; // re-use same DynamicContext object for efficiency
-    private FlworTuple _nextLocalTupleResult;
-    private Map<String, DynamicContext.VariableDependency> _dependencies;
+    private String variableName; // for efficient use in local iteration
+    private RuntimeIterator assignmentIterator;
+    private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
+    private FlworTuple nextLocalTupleResult;
+    private Map<String, DynamicContext.VariableDependency> dependencies;
 
     public LetClauseSparkIterator(
             RuntimeTupleIterator child,
@@ -63,40 +63,40 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(child, executionMode, iteratorMetadata);
-        this._variableName = variableName;
-        this._assignmentIterator = assignmentIterator;
-        this._dependencies = this._assignmentIterator.getVariableDependencies();
+        this.variableName = variableName;
+        this.assignmentIterator = assignmentIterator;
+        this.dependencies = this.assignmentIterator.getVariableDependencies();
     }
 
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        if (this._child == null) {
-            this._nextLocalTupleResult = generateTupleFromExpressionWithContext(null, this._currentDynamicContext);
+        if (this.child == null) {
+            this.nextLocalTupleResult = generateTupleFromExpressionWithContext(null, this.currentDynamicContext);
         } else {
-            this._child.open(this._currentDynamicContext);
-            this._tupleContext = new DynamicContext(this._currentDynamicContext); // assign current context as parent
+            this.child.open(this.currentDynamicContext);
+            this.tupleContext = new DynamicContext(this.currentDynamicContext); // assign current context as parent
             setNextLocalTupleResult();
         }
     }
 
     private void setNextLocalTupleResult() {
         // if starting clause: result is a single tuple -> no more tuples after the first next call
-        if (this._child == null) {
-            this._hasNext = false;
+        if (this.child == null) {
+            this.hasNext = false;
             return;
         }
 
-        if (this._child.hasNext()) {
-            FlworTuple inputTuple = this._child.next();
-            this._tupleContext.removeAllVariables(); // clear the previous variables
-            this._tupleContext.setBindingsFromTuple(inputTuple, getMetadata()); // assign new variables from new tuple
+        if (this.child.hasNext()) {
+            FlworTuple inputTuple = this.child.next();
+            this.tupleContext.removeAllVariables(); // clear the previous variables
+            this.tupleContext.setBindingsFromTuple(inputTuple, getMetadata()); // assign new variables from new tuple
 
-            this._nextLocalTupleResult = generateTupleFromExpressionWithContext(inputTuple, this._tupleContext);
-            this._hasNext = true;
+            this.nextLocalTupleResult = generateTupleFromExpressionWithContext(inputTuple, this.tupleContext);
+            this.hasNext = true;
         } else {
-            this._child.close();
-            this._hasNext = false;
+            this.child.close();
+            this.hasNext = false;
         }
     }
 
@@ -107,28 +107,28 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         } else {
             resultTuple = new FlworTuple(inputTuple);
         }
-        if (this._assignmentIterator.isDataFrame()) {
-            Dataset<Row> df = this._assignmentIterator.getDataFrame(context);
-            resultTuple.putValue(this._variableName, df);
-        } else if (this._assignmentIterator.isRDD()) {
-            JavaRDD<Item> itemRDD = this._assignmentIterator.getRDD(context);
-            resultTuple.putValue(this._variableName, itemRDD);
+        if (this.assignmentIterator.isDataFrame()) {
+            Dataset<Row> df = this.assignmentIterator.getDataFrame(context);
+            resultTuple.putValue(this.variableName, df);
+        } else if (this.assignmentIterator.isRDD()) {
+            JavaRDD<Item> itemRDD = this.assignmentIterator.getRDD(context);
+            resultTuple.putValue(this.variableName, itemRDD);
         } else {
             List<Item> results = new ArrayList<>();
-            this._assignmentIterator.open(context);
-            while (this._assignmentIterator.hasNext()) {
-                results.add(this._assignmentIterator.next());
+            this.assignmentIterator.open(context);
+            while (this.assignmentIterator.hasNext()) {
+                results.add(this.assignmentIterator.next());
             }
-            this._assignmentIterator.close();
-            resultTuple.putValue(this._variableName, results);
+            this.assignmentIterator.close();
+            resultTuple.putValue(this.variableName, results);
         }
         return resultTuple;
     }
 
     @Override
     public FlworTuple next() {
-        if (this._hasNext) {
-            FlworTuple result = this._nextLocalTupleResult; // save the result to be returned
+        if (this.hasNext) {
+            FlworTuple result = this.nextLocalTupleResult; // save the result to be returned
             setNextLocalTupleResult(); // calculate and store the next result
             return result;
         }
@@ -137,9 +137,9 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
     @Override
     public void close() {
-        this._isOpen = false;
-        if (this._child != null) {
-            this._child.close();
+        this.isOpen = false;
+        if (this.child != null) {
+            this.child.close();
         }
     }
 
@@ -148,10 +148,10 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             DynamicContext context,
             Map<String, DynamicContext.VariableDependency> parentProjection
     ) {
-        if (this._child != null) {
-            Dataset<Row> df = this._child.getDataFrame(context, getProjection(parentProjection));
+        if (this.child != null) {
+            Dataset<Row> df = this.child.getDataFrame(context, getProjection(parentProjection));
 
-            if (this._assignmentIterator.isRDD()) {
+            if (this.assignmentIterator.isRDD()) {
                 throw new JobWithinAJobException(
                         "A let clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
                         getMetadata()
@@ -160,20 +160,20 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
             StructType inputSchema = df.schema();
 
-            int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(this._variableName);
+            int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(this.variableName);
 
             List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
             Map<String, List<String>> UDFcolumnsByType = DataFrameUtils.getColumnNamesByType(
                 inputSchema,
                 -1,
-                this._dependencies
+                this.dependencies
             );
 
             df.sparkSession()
                 .udf()
                 .register(
                     "letClauseUDF",
-                    new LetClauseUDF(this._assignmentIterator, context, UDFcolumnsByType),
+                    new LetClauseUDF(this.assignmentIterator, context, UDFcolumnsByType),
                     DataTypes.BinaryType
                 );
 
@@ -187,7 +187,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                         "select %s letClauseUDF(%s) as `%s` from input",
                         selectSQL,
                         UDFParameters,
-                        this._variableName
+                        this.variableName
                     )
                 );
             return df;
@@ -199,22 +199,22 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<String, DynamicContext.VariableDependency> result =
-            new TreeMap<>(this._assignmentIterator.getVariableDependencies());
-        if (this._child != null) {
-            for (String var : this._child.getVariablesBoundInCurrentFLWORExpression()) {
+            new TreeMap<>(this.assignmentIterator.getVariableDependencies());
+        if (this.child != null) {
+            for (String var : this.child.getVariablesBoundInCurrentFLWORExpression()) {
                 result.remove(var);
             }
-            result.putAll(this._child.getVariableDependencies());
+            result.putAll(this.child.getVariableDependencies());
         }
         return result;
     }
 
     public Set<String> getVariablesBoundInCurrentFLWORExpression() {
         Set<String> result = new HashSet<>();
-        if (this._child != null) {
-            result.addAll(this._child.getVariablesBoundInCurrentFLWORExpression());
+        if (this.child != null) {
+            result.addAll(this.child.getVariablesBoundInCurrentFLWORExpression());
         }
-        result.add(this._variableName);
+        result.add(this.variableName);
         return result;
     }
 
@@ -223,14 +223,14 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         for (int i = 0; i < indent + 1; ++i) {
             buffer.append("  ");
         }
-        buffer.append("Variable ").append(this._variableName).append("\n");
-        this._assignmentIterator.print(buffer, indent + 1);
+        buffer.append("Variable ").append(this.variableName).append("\n");
+        this.assignmentIterator.print(buffer, indent + 1);
     }
 
     public Map<String, DynamicContext.VariableDependency> getProjection(
             Map<String, DynamicContext.VariableDependency> parentProjection
     ) {
-        if (this._child == null) {
+        if (this.child == null) {
             return null;
         }
 
@@ -241,10 +241,10 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             new TreeMap<>(parentProjection);
 
         // remove the variable that this clause binds.
-        projection.remove(this._variableName);
+        projection.remove(this.variableName);
 
         // add the variable dependencies needed by this for clause's expression.
-        Map<String, DynamicContext.VariableDependency> exprDependency = this._assignmentIterator
+        Map<String, DynamicContext.VariableDependency> exprDependency = this.assignmentIterator
             .getVariableDependencies();
         for (String variable : exprDependency.keySet()) {
             if (projection.containsKey(variable)) {

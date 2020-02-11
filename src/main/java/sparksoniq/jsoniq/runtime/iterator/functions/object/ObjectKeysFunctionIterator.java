@@ -41,9 +41,9 @@ import java.util.Queue;
 public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator _iterator;
-    private Queue<Item> _nextResults; // queue that holds the results created by the current item in inspection
-    private List<Item> _alreadyFoundKeys;
+    private RuntimeIterator iterator;
+    private Queue<Item> nextResults; // queue that holds the results created by the current item in inspection
+    private List<Item> alreadyFoundKeys;
 
     public ObjectKeysFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -51,63 +51,63 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(arguments, executionMode, iteratorMetadata);
-        this._iterator = arguments.get(0);
+        this.iterator = arguments.get(0);
     }
 
     @Override
     public void openLocal() {
-        this._alreadyFoundKeys = new ArrayList<>();
-        this._nextResults = new LinkedList<>();
+        this.alreadyFoundKeys = new ArrayList<>();
+        this.nextResults = new LinkedList<>();
 
-        if (this._iterator.isDataFrame()) {
+        if (this.iterator.isDataFrame()) {
             setResultsFromDF();
         } else {
-            this._iterator.open(this._currentDynamicContextForLocalExecution);
+            this.iterator.open(this.currentDynamicContextForLocalExecution);
             setResultsFromNextObjectItem();
         }
     }
 
     private void setResultsFromDF() {
-        Dataset<Row> childDF = this._iterator.getDataFrame(this._currentDynamicContextForLocalExecution);
+        Dataset<Row> childDF = this.iterator.getDataFrame(this.currentDynamicContextForLocalExecution);
         String[] keys = childDF.schema().fieldNames();
         for (String key : keys) {
-            this._nextResults.add(ItemFactory.getInstance().createStringItem(key));
+            this.nextResults.add(ItemFactory.getInstance().createStringItem(key));
         }
     }
 
     private void setResultsFromNextObjectItem() {
-        while (this._iterator.hasNext()) {
-            Item item = this._iterator.next();
+        while (this.iterator.hasNext()) {
+            Item item = this.iterator.next();
             if (item.isObject()) { // ignore non-object items
                 Item result;
                 for (String key : item.getKeys()) {
                     result = ItemFactory.getInstance().createStringItem(key);
-                    if (!this._alreadyFoundKeys.contains(result)) {
-                        this._alreadyFoundKeys.add(result);
-                        this._nextResults.add(result);
+                    if (!this.alreadyFoundKeys.contains(result)) {
+                        this.alreadyFoundKeys.add(result);
+                        this.nextResults.add(result);
                     }
                 }
-                if (!this._nextResults.isEmpty()) {
+                if (!this.nextResults.isEmpty()) {
                     break;
                 }
             }
         }
 
-        if (this._nextResults.isEmpty()) {
-            this._hasNext = false;
-            this._iterator.close();
+        if (this.nextResults.isEmpty()) {
+            this.hasNext = false;
+            this.iterator.close();
         } else {
-            this._hasNext = true;
+            this.hasNext = true;
         }
     }
 
     @Override
     public Item nextLocal() {
-        if (this._hasNext) {
-            Item result = this._nextResults.remove();
-            if (this._nextResults.isEmpty()) {
-                if (this._iterator.isDataFrame()) {
-                    this._hasNext = false;
+        if (this.hasNext) {
+            Item result = this.nextResults.remove();
+            if (this.nextResults.isEmpty()) {
+                if (this.iterator.isDataFrame()) {
+                    this.hasNext = false;
                 } else {
                     setResultsFromNextObjectItem();
                 }
@@ -122,30 +122,30 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected boolean hasNextLocal() {
-        return this._hasNext;
+        return this.hasNext;
     }
 
     @Override
     protected void resetLocal(DynamicContext context) {
-        this._alreadyFoundKeys = new ArrayList<>();
-        this._nextResults = new LinkedList<>();
+        this.alreadyFoundKeys = new ArrayList<>();
+        this.nextResults = new LinkedList<>();
 
-        if (this._iterator.isDataFrame()) {
+        if (this.iterator.isDataFrame()) {
             setResultsFromDF();
         } else {
-            this._iterator.reset(this._currentDynamicContextForLocalExecution);
+            this.iterator.reset(this.currentDynamicContextForLocalExecution);
             setResultsFromNextObjectItem();
         }
     }
 
     @Override
     protected void closeLocal() {
-        this._iterator.close();
+        this.iterator.close();
     }
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        JavaRDD<Item> childRDD = this._iterator.getRDD(context);
+        JavaRDD<Item> childRDD = this.iterator.getRDD(context);
         FlatMapFunction<Item, Item> transformation = new ObjectKeysClosure();
         return childRDD.flatMap(transformation).distinct();
     }

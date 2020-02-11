@@ -44,10 +44,10 @@ public class ConcatFunctionIterator extends LocalFunctionCallIterator {
 
     @Override
     public Item next() {
-        if (this._hasNext) {
+        if (this.hasNext) {
             StringBuilder builder = new StringBuilder();
-            for (RuntimeIterator iterator : this._children) {
-                Item item = iterator.materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
+            for (RuntimeIterator iterator : this.children) {
+                Item item = iterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
                 // if not empty sequence
                 if (item != null) {
                     String stringValue = item.serialize();
@@ -56,7 +56,7 @@ public class ConcatFunctionIterator extends LocalFunctionCallIterator {
                     }
                 }
             }
-            this._hasNext = false;
+            this.hasNext = false;
             return ItemFactory.getInstance().createStringItem(builder.toString());
         } else
             throw new IteratorFlowException(

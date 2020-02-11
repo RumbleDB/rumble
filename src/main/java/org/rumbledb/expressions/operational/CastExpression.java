@@ -8,22 +8,22 @@ import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 public class CastExpression extends UnaryExpressionBase {
 
-    private FlworVarSingleType _singleType;
+    private FlworVarSingleType singleType;
 
-    public CastExpression(Expression _mainExpression, ExceptionMetadata metadata) {
-        super(_mainExpression, metadata);
-        this._isActive = false;
+    public CastExpression(Expression mainExpression, ExceptionMetadata metadata) {
+        super(mainExpression, metadata);
+        this.isActive = false;
     }
 
-    public CastExpression(Expression _mainExpression, FlworVarSingleType singleType, ExceptionMetadata metadata) {
-        super(_mainExpression, Operator.CAST, true, metadata);
-        this._singleType = singleType;
+    public CastExpression(Expression mainExpression, FlworVarSingleType singleType, ExceptionMetadata metadata) {
+        super(mainExpression, Operator.CAST, true, metadata);
+        this.singleType = singleType;
     }
 
 
     @Override
     public boolean isActive() {
-        return this._isActive;
+        return this.isActive;
     }
 
     @Override
@@ -34,13 +34,13 @@ public class CastExpression extends UnaryExpressionBase {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(castExpr ";
-        result += this._mainExpression.serializationString(true);
-        result += this._singleType != null ? " cast as" + this._singleType.serializationString(prefix) : "";
+        result += this.mainExpression.serializationString(true);
+        result += this.singleType != null ? " cast as" + this.singleType.serializationString(prefix) : "";
         result += ")";
         return result;
     }
 
     public FlworVarSingleType getFlworVarSingleType() {
-        return this._singleType;
+        return this.singleType;
     }
 }

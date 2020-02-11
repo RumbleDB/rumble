@@ -45,10 +45,10 @@ public class ATan2FunctionIterator extends LocalFunctionCallIterator {
 
     @Override
     public Item next() {
-        if (this._hasNext) {
+        if (this.hasNext) {
             Item y;
-            RuntimeIterator yIterator = this._children.get(0);
-            yIterator.open(this._currentDynamicContextForLocalExecution);
+            RuntimeIterator yIterator = this.children.get(0);
+            yIterator.open(this.currentDynamicContextForLocalExecution);
             if (yIterator.hasNext()) {
                 y = yIterator.next();
             } else {
@@ -56,8 +56,8 @@ public class ATan2FunctionIterator extends LocalFunctionCallIterator {
             }
 
             Item x;
-            RuntimeIterator xIterator = this._children.get(1);
-            xIterator.open(this._currentDynamicContextForLocalExecution);
+            RuntimeIterator xIterator = this.children.get(1);
+            xIterator.open(this.currentDynamicContextForLocalExecution);
             if (xIterator.hasNext()) {
                 x = xIterator.next();
             } else {
@@ -66,7 +66,7 @@ public class ATan2FunctionIterator extends LocalFunctionCallIterator {
 
             if (y.isNumeric() && x.isNumeric()) {
                 try {
-                    this._hasNext = false;
+                    this.hasNext = false;
                     return ItemFactory.getInstance()
                         .createDoubleItem(Math.atan2(y.castToDoubleValue(), x.castToDoubleValue()));
 

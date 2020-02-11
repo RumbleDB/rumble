@@ -25,9 +25,9 @@ import java.io.Serializable;
 public class SequenceType implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private Arity _arity;
-    private ItemType _itemType;
-    private boolean _isEmptySequence = false;
+    private Arity arity;
+    private ItemType itemType;
+    private boolean isEmptySequence = false;
 
     public final static SequenceType mostGeneralSequenceType = new SequenceType(
             new ItemType(ItemTypes.Item),
@@ -36,37 +36,37 @@ public class SequenceType implements Serializable {
 
 
     public SequenceType(ItemType itemType, Arity arity) {
-        this._itemType = itemType;
-        this._arity = arity;
+        this.itemType = itemType;
+        this.arity = arity;
     }
 
     public SequenceType(ItemType itemType) {
-        this._itemType = itemType;
-        this._arity = Arity.One;
+        this.itemType = itemType;
+        this.arity = Arity.One;
     }
 
     public SequenceType() {
-        this._itemType = new ItemType(ItemTypes.Item);
-        this._arity = Arity.ZeroOrMore;
-        this._isEmptySequence = true;
+        this.itemType = new ItemType(ItemTypes.Item);
+        this.arity = Arity.ZeroOrMore;
+        this.isEmptySequence = true;
     }
 
     public boolean isEmptySequence() {
-        return this._isEmptySequence;
+        return this.isEmptySequence;
     }
 
     public ItemType getItemType() {
-        return this._itemType;
+        return this.itemType;
     }
 
     public Arity getArity() {
-        return this._arity;
+        return this.arity;
     }
 
     public boolean isSubtypeOf(SequenceType superType) {
-        return this._itemType.isSubtypeOf(superType.getItemType())
+        return this.itemType.isSubtypeOf(superType.getItemType())
             &&
-            this._arity == superType._arity;
+            this.arity == superType.arity;
     }
 
     @Override

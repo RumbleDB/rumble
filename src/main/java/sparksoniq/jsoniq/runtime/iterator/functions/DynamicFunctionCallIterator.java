@@ -39,13 +39,13 @@ public class DynamicFunctionCallIterator extends LocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     // parametrized fields
-    private RuntimeIterator _functionItemIterator;
-    private List<RuntimeIterator> _functionArguments;
+    private RuntimeIterator functionItemIterator;
+    private List<RuntimeIterator> functionArguments;
 
     // calculated fields
-    private FunctionItem _functionItem;
-    private RuntimeIterator _functionCallIterator;
-    private Item _nextResult;
+    private FunctionItem functionItem;
+    private RuntimeIterator functionCallIterator;
+    private Item nextResult;
 
     public DynamicFunctionCallIterator(
             RuntimeIterator functionItemIterator,
@@ -56,85 +56,85 @@ public class DynamicFunctionCallIterator extends LocalRuntimeIterator {
         super(null, executionMode, iteratorMetadata);
         for (RuntimeIterator arg : functionArguments) {
             if (arg != null) {
-                this._children.add(arg);
+                this.children.add(arg);
             }
         }
-        if (!this._children.contains(functionItemIterator)) {
-            this._children.add(functionItemIterator);
+        if (!this.children.contains(functionItemIterator)) {
+            this.children.add(functionItemIterator);
         }
-        this._functionItemIterator = functionItemIterator;
-        this._functionArguments = functionArguments;
+        this.functionItemIterator = functionItemIterator;
+        this.functionArguments = functionArguments;
     }
 
     @Override
     public void open(DynamicContext context) {
         super.open(context);
         setFunctionItemAndIteratorWithCurrentContext();
-        this._functionCallIterator.open(this._currentDynamicContextForLocalExecution);
+        this.functionCallIterator.open(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            Item result = this._nextResult;
+        if (this.hasNext) {
+            Item result = this.nextResult;
             setNextResult();
             return result;
         }
         throw new IteratorFlowException(
                 RuntimeIterator.FLOW_EXCEPTION_MESSAGE
                     + " in "
-                    + this._functionItem.getIdentifier().getName()
+                    + this.functionItem.getIdentifier().getName()
                     + "  function",
                 getMetadata()
         );
     }
 
     public void setNextResult() {
-        this._nextResult = null;
-        if (this._functionCallIterator.hasNext()) {
-            this._nextResult = this._functionCallIterator.next();
+        this.nextResult = null;
+        if (this.functionCallIterator.hasNext()) {
+            this.nextResult = this.functionCallIterator.next();
         }
 
-        if (this._nextResult == null) {
-            this._hasNext = false;
-            this._functionCallIterator.close();
+        if (this.nextResult == null) {
+            this.hasNext = false;
+            this.functionCallIterator.close();
         } else {
-            this._hasNext = true;
+            this.hasNext = true;
         }
     }
 
     private void setFunctionItemAndIteratorWithCurrentContext() {
         try {
-            this._functionItemIterator.open(this._currentDynamicContextForLocalExecution);
-            if (this._functionItemIterator.hasNext()) {
-                this._functionItem = (FunctionItem) this._functionItemIterator.next();
+            this.functionItemIterator.open(this.currentDynamicContextForLocalExecution);
+            if (this.functionItemIterator.hasNext()) {
+                this.functionItem = (FunctionItem) this.functionItemIterator.next();
             }
-            if (this._functionItemIterator.hasNext()) {
+            if (this.functionItemIterator.hasNext()) {
                 throw new UnexpectedTypeException(
                         "Dynamic function call can not be performed on a sequence.",
                         getMetadata()
                 );
             }
-            this._functionItemIterator.close();
+            this.functionItemIterator.close();
         } catch (ClassCastException e) {
             throw new UnexpectedTypeException(
                     "Dynamic function call can only be performed on functions.",
                     getMetadata()
             );
         }
-        this._functionCallIterator = Functions.buildUserDefinedFunctionCallIterator(
-            this._functionItem,
-            this._functionItem.getBodyIterator().getHighestExecutionMode(),
+        this.functionCallIterator = Functions.buildUserDefinedFunctionCallIterator(
+            this.functionItem,
+            this.functionItem.getBodyIterator().getHighestExecutionMode(),
             getMetadata(),
-            this._functionArguments
+            this.functionArguments
         );
     }
 
     @Override
     public void reset(DynamicContext context) {
         super.reset(context);
-        this._functionCallIterator.reset(this._currentDynamicContextForLocalExecution);
+        this.functionCallIterator.reset(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
@@ -142,8 +142,8 @@ public class DynamicFunctionCallIterator extends LocalRuntimeIterator {
     public void close() {
         // ensure that recursive function calls terminate gracefully
         // the function call in the body of the deepest recursion call is never visited, never opened and never closed
-        if (this._isOpen) {
-            this._functionCallIterator.close();
+        if (this.isOpen) {
+            this.functionCallIterator.close();
         }
         super.close();
     }

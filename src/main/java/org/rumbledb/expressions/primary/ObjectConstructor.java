@@ -33,8 +33,8 @@ import java.util.List;
 public class ObjectConstructor extends PrimaryExpression {
 
     private boolean isMergedConstructor = false;
-    private List<Expression> _values;
-    private List<Expression> _keys;
+    private List<Expression> values;
+    private List<Expression> keys;
     private CommaExpression childExpression;
 
     public ObjectConstructor(
@@ -43,8 +43,8 @@ public class ObjectConstructor extends PrimaryExpression {
             ExceptionMetadata metadata
     ) {
         super(metadata);
-        this._keys = keys;
-        this._values = values;
+        this.keys = keys;
+        this.values = values;
     }
 
     public ObjectConstructor(CommaExpression expression, ExceptionMetadata metadata) {
@@ -54,11 +54,11 @@ public class ObjectConstructor extends PrimaryExpression {
     }
 
     public List<Expression> getKeys() {
-        return this._keys;
+        return this.keys;
     }
 
     public List<Expression> getValues() {
-        return this._values;
+        return this.values;
     }
 
     public boolean isMergedConstructor() {
@@ -73,8 +73,8 @@ public class ObjectConstructor extends PrimaryExpression {
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         if (!this.isMergedConstructor) {
-            result.addAll(this._keys);
-            result.addAll(this._values);
+            result.addAll(this.keys);
+            result.addAll(this.values);
         } else
             result.add(this.childExpression);
         return result;
@@ -90,10 +90,10 @@ public class ObjectConstructor extends PrimaryExpression {
         String result = "(primaryExpr (objectConstructor {";
         if (!this.isMergedConstructor) {
             result += " ";
-            for (Expression key : this._keys)
-                result += new PairConstructor(key, this._values.get(this._keys.indexOf(key)), key.getMetadata())
+            for (Expression key : this.keys)
+                result += new PairConstructor(key, this.values.get(this.keys.indexOf(key)), key.getMetadata())
                     .serializationString(true)
-                    + (this._keys.indexOf(key) < this._keys.size() - 1 ? " , " : " ");
+                    + (this.keys.indexOf(key) < this.keys.size() - 1 ? " , " : " ");
         } else
             result += "| " + this.childExpression.serializationString(prefix) + " |";
         result += "}))";
@@ -103,29 +103,29 @@ public class ObjectConstructor extends PrimaryExpression {
 
     public static class PairConstructor extends PrimaryExpression {
 
-        private Expression _key;
-        private Expression _value;
+        private Expression key;
+        private Expression value;
 
         public PairConstructor(Expression key, Expression value, ExceptionMetadata metadata) {
             super(metadata);
-            this._key = key;
-            this._value = value;
+            this.key = key;
+            this.value = value;
         }
 
-        public Expression get_key() {
-            return this._key;
+        public Expression getKey() {
+            return this.key;
         }
 
-        public Expression get_value() {
-            return this._value;
+        public Expression getValue() {
+            return this.value;
         }
 
         @Override
         public String serializationString(boolean prefix) {
             String result = "(pairConstructor (exprSingle "
-                + this._key.serializationString(false)
+                + this.key.serializationString(false)
                 + ") : (exprSingle "
-                + this._value.serializationString(false);
+                + this.value.serializationString(false);
             result += "))";
             return result;
 

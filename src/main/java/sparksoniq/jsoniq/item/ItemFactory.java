@@ -11,19 +11,19 @@ import java.util.Map;
 
 public class ItemFactory {
 
-    private static ItemFactory _instance;
-    private Item _nullItem;
-    private Item _trueBooleanItem;
-    private Item _falseBooleanItem;
+    private static ItemFactory instance;
+    private Item nullItem;
+    private Item trueBooleanItem;
+    private Item falseBooleanItem;
 
     public static ItemFactory getInstance() {
-        if (_instance == null) {
-            _instance = new ItemFactory();
-            _instance._nullItem = new NullItem();
-            _instance._trueBooleanItem = new BooleanItem(true);
-            _instance._falseBooleanItem = new BooleanItem(false);
+        if (instance == null) {
+            instance = new ItemFactory();
+            instance.nullItem = new NullItem();
+            instance.trueBooleanItem = new BooleanItem(true);
+            instance.falseBooleanItem = new BooleanItem(false);
         }
-        return _instance;
+        return instance;
     }
 
     public Item createStringItem(String s) {
@@ -31,11 +31,11 @@ public class ItemFactory {
     }
 
     public Item createBooleanItem(boolean b) {
-        return b ? this._trueBooleanItem : this._falseBooleanItem;
+        return b ? this.trueBooleanItem : this.falseBooleanItem;
     }
 
     public Item createNullItem() {
-        return this._nullItem;
+        return this.nullItem;
     }
 
     public Item createIntegerItem(int i) {

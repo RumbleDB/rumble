@@ -35,7 +35,7 @@ public class ExactlyOneIterator extends CardinalityFunctionIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private Item _nextResult;
+    private Item nextResult;
 
     public ExactlyOneIterator(
             List<RuntimeIterator> arguments,
@@ -47,9 +47,9 @@ public class ExactlyOneIterator extends CardinalityFunctionIterator {
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            this._hasNext = false;
-            return this._nextResult;
+        if (this.hasNext) {
+            this.hasNext = false;
+            return this.nextResult;
         }
         throw new IteratorFlowException(
                 RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " EXACTLY-ONE function",
@@ -61,7 +61,7 @@ public class ExactlyOneIterator extends CardinalityFunctionIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        RuntimeIterator sequenceIterator = this._children.get(0);
+        RuntimeIterator sequenceIterator = this.children.get(0);
 
         if (!sequenceIterator.isRDD()) {
             sequenceIterator.open(context);
@@ -71,23 +71,23 @@ public class ExactlyOneIterator extends CardinalityFunctionIterator {
                         getMetadata()
                 );
             } else {
-                this._nextResult = sequenceIterator.next();
+                this.nextResult = sequenceIterator.next();
                 if (sequenceIterator.hasNext()) {
                     throw new SequenceExceptionExactlyOne(
                             "fn:exactly-one() called with a sequence that doesn't contain exactly one item",
                             getMetadata()
                     );
                 } else {
-                    this._hasNext = true;
+                    this.hasNext = true;
                 }
             }
             sequenceIterator.close();
         } else {
-            JavaRDD<Item> rdd = sequenceIterator.getRDD(this._currentDynamicContextForLocalExecution);
+            JavaRDD<Item> rdd = sequenceIterator.getRDD(this.currentDynamicContextForLocalExecution);
             List<Item> results = rdd.take(2);
             if (results.size() == 1) {
-                this._hasNext = true;
-                this._nextResult = results.get(0);
+                this.hasNext = true;
+                this.nextResult = results.get(0);
             } else {
                 throw new SequenceExceptionExactlyOne(
                         "fn:exactly-one() called with a sequence that doesn't contain exactly one item",

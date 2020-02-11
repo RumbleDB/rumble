@@ -42,48 +42,48 @@ import java.util.Map;
 public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, Row> {
 
     private static final long serialVersionUID = 1L;
-    private List<VariableReferenceIterator> _expressions;
-    private Map<String, List<String>> _columnNamesByType;
+    private List<VariableReferenceIterator> expressions;
+    private Map<String, List<String>> columnNamesByType;
 
-    private List<List<Item>> _deserializedParams;
-    private List<Item> _longParams;
-    private DynamicContext _parentContext;
-    private DynamicContext _context;
-    private List<Object> _results;
+    private List<List<Item>> deserializedParams;
+    private List<Item> longParams;
+    private DynamicContext parentContext;
+    private DynamicContext context;
+    private List<Object> results;
 
-    private transient Kryo _kryo;
-    private transient Input _input;
+    private transient Kryo kryo;
+    private transient Input input;
 
     public GroupClauseCreateColumnsUDF(
             List<VariableReferenceIterator> expressions,
             DynamicContext context,
             Map<String, List<String>> columnNamesByType
     ) {
-        this._expressions = expressions;
-        this._columnNamesByType = columnNamesByType;
+        this.expressions = expressions;
+        this.columnNamesByType = columnNamesByType;
 
-        this._deserializedParams = new ArrayList<>();
-        this._longParams = new ArrayList<>();
-        this._parentContext = context;
-        this._context = new DynamicContext(this._parentContext);
-        this._results = new ArrayList<>();
+        this.deserializedParams = new ArrayList<>();
+        this.longParams = new ArrayList<>();
+        this.parentContext = context;
+        this.context = new DynamicContext(this.parentContext);
+        this.results = new ArrayList<>();
 
-        this._kryo = new Kryo();
-        this._kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(this._kryo);
-        this._input = new Input();
+        this.kryo = new Kryo();
+        this.kryo.setReferences(false);
+        DataFrameUtils.registerKryoClassesKryo(this.kryo);
+        this.input = new Input();
     }
 
     @Override
     public Row call(WrappedArray<byte[]> wrappedParameters, WrappedArray<Long> wrappedParametersLong) {
-        this._deserializedParams.clear();
-        this._results.clear();
+        this.deserializedParams.clear();
+        this.results.clear();
 
         DataFrameUtils.deserializeWrappedParameters(
             wrappedParameters,
-            this._deserializedParams,
-            this._kryo,
-            this._input
+            this.deserializedParams,
+            this.kryo,
+            this.input
         );
 
         // Long parameters correspond to pre-computed counts, when a materialization of the
@@ -91,10 +91,10 @@ public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
         Object[] longParams = (Object[]) wrappedParametersLong.array();
         for (Object longParam : longParams) {
             Item count = ItemFactory.getInstance().createIntegerItem(((Long) longParam).intValue());
-            this._longParams.add(count);
+            this.longParams.add(count);
         }
 
-        for (VariableReferenceIterator expression : this._expressions) {
+        for (VariableReferenceIterator expression : this.expressions) {
             // nulls, true, false and empty sequences have special grouping captured in the first grouping column.
             // The second column is used for strings, with a special value in the first column.
             // The third column is used for numbers (as a double), with a special value in the first column.
@@ -108,70 +108,70 @@ public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
             int dateTimeGroupIndex = 5;
 
             // prepare dynamic context
-            this._context.removeAllVariables();
-            for (int columnIndex = 0; columnIndex < this._columnNamesByType.get("byte[]").size(); columnIndex++) {
-                this._context.addVariableValue(
-                    this._columnNamesByType.get("byte[]").get(columnIndex),
-                    this._deserializedParams.get(columnIndex)
+            this.context.removeAllVariables();
+            for (int columnIndex = 0; columnIndex < this.columnNamesByType.get("byte[]").size(); columnIndex++) {
+                this.context.addVariableValue(
+                    this.columnNamesByType.get("byte[]").get(columnIndex),
+                    this.deserializedParams.get(columnIndex)
                 );
             }
-            for (int columnIndex = 0; columnIndex < this._columnNamesByType.get("Long").size(); columnIndex++) {
-                this._context.addVariableCount(
-                    this._columnNamesByType.get("Long").get(columnIndex),
-                    this._longParams.get(columnIndex)
+            for (int columnIndex = 0; columnIndex < this.columnNamesByType.get("Long").size(); columnIndex++) {
+                this.context.addVariableCount(
+                    this.columnNamesByType.get("Long").get(columnIndex),
+                    this.longParams.get(columnIndex)
                 );
             }
 
             // apply expression in the dynamic context
-            expression.open(this._context);
+            expression.open(this.context);
             boolean isEmptySequence = true;
             if (expression.hasNext()) {
                 isEmptySequence = false;
                 Item nextItem = expression.next();
                 if (nextItem.isNull()) {
-                    this._results.add(nullGroupIndex);
-                    this._results.add(null);
-                    this._results.add(null);
-                    this._results.add(null);
+                    this.results.add(nullGroupIndex);
+                    this.results.add(null);
+                    this.results.add(null);
+                    this.results.add(null);
                 } else if (nextItem.isBoolean()) {
                     if (nextItem.getBooleanValue()) {
-                        this._results.add(booleanTrueGroupIndex);
+                        this.results.add(booleanTrueGroupIndex);
                     } else {
-                        this._results.add(booleanFalseGroupIndex);
+                        this.results.add(booleanFalseGroupIndex);
                     }
-                    this._results.add(null);
-                    this._results.add(null);
-                    this._results.add(null);
+                    this.results.add(null);
+                    this.results.add(null);
+                    this.results.add(null);
                 } else if (nextItem.isString() || nextItem.isHexBinary() || nextItem.isBase64Binary()) {
-                    this._results.add(stringGroupIndex);
-                    this._results.add(nextItem.getStringValue());
-                    this._results.add(null);
-                    this._results.add(null);
+                    this.results.add(stringGroupIndex);
+                    this.results.add(nextItem.getStringValue());
+                    this.results.add(null);
+                    this.results.add(null);
                 } else if (nextItem.isInteger()) {
-                    this._results.add(doubleGroupIndex);
-                    this._results.add(null);
-                    this._results.add(nextItem.castToDoubleValue());
-                    this._results.add(null);
+                    this.results.add(doubleGroupIndex);
+                    this.results.add(null);
+                    this.results.add(nextItem.castToDoubleValue());
+                    this.results.add(null);
                 } else if (nextItem.isDecimal()) {
-                    this._results.add(doubleGroupIndex);
-                    this._results.add(null);
-                    this._results.add(nextItem.castToDoubleValue());
-                    this._results.add(null);
+                    this.results.add(doubleGroupIndex);
+                    this.results.add(null);
+                    this.results.add(nextItem.castToDoubleValue());
+                    this.results.add(null);
                 } else if (nextItem.isDouble()) {
-                    this._results.add(doubleGroupIndex);
-                    this._results.add(null);
-                    this._results.add(nextItem.getDoubleValue());
-                    this._results.add(null);
+                    this.results.add(doubleGroupIndex);
+                    this.results.add(null);
+                    this.results.add(nextItem.getDoubleValue());
+                    this.results.add(null);
                 } else if (nextItem.isDuration()) {
-                    this._results.add(durationGroupIndex);
-                    this._results.add(null);
-                    this._results.add(null);
-                    this._results.add(nextItem.getDurationValue().toDurationFrom(Instant.now()).getMillis());
+                    this.results.add(durationGroupIndex);
+                    this.results.add(null);
+                    this.results.add(null);
+                    this.results.add(nextItem.getDurationValue().toDurationFrom(Instant.now()).getMillis());
                 } else if (nextItem.hasDateTime()) {
-                    this._results.add(dateTimeGroupIndex);
-                    this._results.add(null);
-                    this._results.add(null);
-                    this._results.add(nextItem.getDateTimeValue().getMillis());
+                    this.results.add(dateTimeGroupIndex);
+                    this.results.add(null);
+                    this.results.add(null);
+                    this.results.add(nextItem.getDateTimeValue().getMillis());
                 } else {
                     throw new UnexpectedTypeException(
                             "Group by variable can not contain arrays or objects.",
@@ -186,15 +186,15 @@ public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
                 );
             }
             if (isEmptySequence) {
-                this._results.add(emptySequenceGroupIndex);
-                this._results.add(null);
-                this._results.add(null);
-                this._results.add(null);
+                this.results.add(emptySequenceGroupIndex);
+                this.results.add(null);
+                this.results.add(null);
+                this.results.add(null);
             }
             expression.close();
 
         }
-        return RowFactory.create(this._results.toArray());
+        return RowFactory.create(this.results.toArray());
     }
 
     private void readObject(java.io.ObjectInputStream in)
@@ -202,9 +202,9 @@ public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
                 ClassNotFoundException {
         in.defaultReadObject();
 
-        this._kryo = new Kryo();
-        this._kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(this._kryo);
-        this._input = new Input();
+        this.kryo = new Kryo();
+        this.kryo.setReferences(false);
+        DataFrameUtils.registerKryoClassesKryo(this.kryo);
+        this.input = new Input();
     }
 }

@@ -6,24 +6,24 @@ import java.io.Serializable;
 public class SingleType implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private final AtomicTypes _type;
-    private boolean _zeroOrOne;
+    private final AtomicTypes type;
+    private boolean zeroOrOne;
 
     public SingleType(AtomicTypes type) {
-        this._type = type;
-        this._zeroOrOne = false;
+        this.type = type;
+        this.zeroOrOne = false;
     }
 
     public SingleType(AtomicTypes itemType, boolean zeroOrOne) {
-        this._type = itemType;
-        this._zeroOrOne = zeroOrOne;
+        this.type = itemType;
+        this.zeroOrOne = zeroOrOne;
     }
 
     public AtomicTypes getType() {
-        return this._type;
+        return this.type;
     }
 
     public boolean getZeroOrOne() {
-        return this._zeroOrOne;
+        return this.zeroOrOne;
     }
 }

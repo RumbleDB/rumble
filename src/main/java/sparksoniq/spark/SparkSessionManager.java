@@ -49,7 +49,7 @@ public class SparkSessionManager {
 
     private static final String APP_NAME = "jsoniq-on-spark";
     public static int COLLECT_ITEM_LIMIT = 0;
-    private static SparkSessionManager _instance;
+    private static SparkSessionManager instance;
     private static Level LOG_LEVEL = Level.FATAL;
     private SparkConf configuration;
     private SparkSession session;
@@ -65,9 +65,9 @@ public class SparkSessionManager {
     }
 
     public static SparkSessionManager getInstance() {
-        if (_instance == null)
-            _instance = new SparkSessionManager();
-        return _instance;
+        if (instance == null)
+            instance = new SparkSessionManager();
+        return instance;
     }
 
     public SparkSession getOrCreateSession() {

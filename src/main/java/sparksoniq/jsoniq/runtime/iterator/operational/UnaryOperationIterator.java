@@ -49,13 +49,13 @@ public class UnaryOperationIterator extends UnaryOperationBaseIterator {
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            this._hasNext = false;
-            this._child.open(this._currentDynamicContextForLocalExecution);
-            Item child = this._child.next();
-            this._child.close();
+        if (this.hasNext) {
+            this.hasNext = false;
+            this.child.open(this.currentDynamicContextForLocalExecution);
+            Item child = this.child.next();
+            this.child.close();
 
-            if (this._operator == OperationalExpressionBase.Operator.MINUS) {
+            if (this.operator == OperationalExpressionBase.Operator.MINUS) {
                 if (child.isNumeric()) {
                     if (child.isInteger())
                         return ItemFactory.getInstance().createIntegerItem(-1 * child.getIntegerValue());
@@ -83,9 +83,9 @@ public class UnaryOperationIterator extends UnaryOperationBaseIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        this._child.open(this._currentDynamicContextForLocalExecution);
-        this._hasNext = this._child.hasNext();
-        this._child.close();
+        this.child.open(this.currentDynamicContextForLocalExecution);
+        this.hasNext = this.child.hasNext();
+        this.child.close();
     }
 
 }

@@ -44,11 +44,11 @@ public class StringLengthFunctionIterator extends LocalFunctionCallIterator {
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            this._hasNext = false;
+        if (this.hasNext) {
+            this.hasNext = false;
 
-            Item stringItem = this._children.get(0)
-                .materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
+            Item stringItem = this.children.get(0)
+                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
 
             if (stringItem == null) {
                 return ItemFactory.getInstance().createIntegerItem(0);

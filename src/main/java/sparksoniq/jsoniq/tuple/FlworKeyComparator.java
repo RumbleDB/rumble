@@ -30,12 +30,12 @@ import java.util.List;
 public class FlworKeyComparator implements Comparator<FlworKey>, Serializable {
 
     private static final long serialVersionUID = 1L;
-    // private final boolean _isStable;
-    private final List<OrderByClauseAnnotatedChildIterator> _expressions;
+    // private final boolean isStable;
+    private final List<OrderByClauseAnnotatedChildIterator> expressions;
 
     public FlworKeyComparator(List<OrderByClauseAnnotatedChildIterator> expressions, boolean isStable) {
         // this._isStable = isStable;
-        this._expressions = expressions;
+        this.expressions = expressions;
     }
 
     @Override
@@ -54,7 +54,7 @@ public class FlworKeyComparator implements Comparator<FlworKey>, Serializable {
             if (key1.getKeyItems().get(expressionIndex) == null || key2.getKeyItems().get(expressionIndex) == null) {
                 // Default behavior(NONE) for empty ordering expressions is equal to FIRST(empty least)
                 // if LAST is given, empty ordering expressions are the greatest (reverse the comparison)
-                if (this._expressions.get(expressionIndex).getEmptyOrder() == OrderByClauseExpr.EMPTY_ORDER.LAST) {
+                if (this.expressions.get(expressionIndex).getEmptyOrder() == OrderByClauseExpr.EMPTY_ORDER.LAST) {
                     result *= -1;
                 }
             }
@@ -67,6 +67,6 @@ public class FlworKeyComparator implements Comparator<FlworKey>, Serializable {
     }
 
     private int getSortOrder(int index) {
-        return (this._expressions.get(index).isAscending() ? 1 : -1);
+        return (this.expressions.get(index).isAscending() ? 1 : -1);
     }
 }

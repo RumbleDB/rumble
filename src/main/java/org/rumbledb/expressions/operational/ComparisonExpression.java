@@ -44,17 +44,17 @@ public class ComparisonExpression extends BinaryExpressionBase {
         Operator.GC_LT };
 
 
-    public ComparisonExpression(Expression _mainExpression, ExceptionMetadata metadata) {
-        super(_mainExpression, metadata);
+    public ComparisonExpression(Expression mainExpression, ExceptionMetadata metadata) {
+        super(mainExpression, metadata);
     }
 
     public ComparisonExpression(
-            Expression _mainExpression,
+            Expression mainExpression,
             Expression rhs,
             Operator op,
             ExceptionMetadata metadata
     ) {
-        super(_mainExpression, rhs, op, metadata);
+        super(mainExpression, rhs, op, metadata);
         validateOperator(Arrays.asList(operators), op);
     }
 
@@ -66,7 +66,7 @@ public class ComparisonExpression extends BinaryExpressionBase {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(comparisonExpr ";
-        result += this._mainExpression.serializationString(true);
+        result += this.mainExpression.serializationString(true);
         if (this.getRightExpression() != null)
             result += " "
                 + this.getOperator().toString().toLowerCase()

@@ -33,16 +33,16 @@ public class VariableReference extends PrimaryExpression implements Serializable
 
     private static final long serialVersionUID = 1L;
     private String name;
-    private SequenceType _type;
+    private SequenceType type;
 
 
-    public VariableReference(String _name, ExceptionMetadata metadata) {
+    public VariableReference(String name, ExceptionMetadata metadata) {
         super(metadata);
-        this.name = _name;
+        this.name = name;
     }
 
     public void setHighestExecutionMode(ExecutionMode highestExecutionMode) {
-        this._highestExecutionMode = highestExecutionMode;
+        this.highestExecutionMode = highestExecutionMode;
     }
 
     public String getVariableName() {
@@ -50,11 +50,11 @@ public class VariableReference extends PrimaryExpression implements Serializable
     }
 
     public SequenceType getType() {
-        return this._type;
+        return this.type;
     }
 
     public void setType(SequenceType type) {
-        this._type = type;
+        this.type = type;
     }
 
     @Override

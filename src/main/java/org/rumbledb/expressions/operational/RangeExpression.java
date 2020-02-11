@@ -29,13 +29,13 @@ import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 public class RangeExpression extends BinaryExpressionBase {
 
-    public RangeExpression(Expression _mainExpression, ExceptionMetadata metadata) {
-        super(_mainExpression, metadata);
+    public RangeExpression(Expression mainExpression, ExceptionMetadata metadata) {
+        super(mainExpression, metadata);
 
     }
 
-    public RangeExpression(Expression _mainExpression, Expression rhs, ExceptionMetadata metadata) {
-        super(_mainExpression, rhs, Operator.TO, metadata);
+    public RangeExpression(Expression mainExpression, Expression rhs, ExceptionMetadata metadata) {
+        super(mainExpression, rhs, Operator.TO, metadata);
     }
 
     @Override
@@ -46,7 +46,7 @@ public class RangeExpression extends BinaryExpressionBase {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(rangeExpr ";
-        result += this._mainExpression.serializationString(true);
+        result += this.mainExpression.serializationString(true);
         if (this.getRightExpression() != null)
             result += " "
                 + this.getOperator().toString().toLowerCase()

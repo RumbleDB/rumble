@@ -44,8 +44,8 @@ public class PiFunctionIterator extends LocalFunctionCallIterator {
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            this._hasNext = false;
+        if (this.hasNext) {
+            this.hasNext = false;
             return ItemFactory.getInstance().createDoubleItem(Math.PI);
         } else
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " pi function", getMetadata());

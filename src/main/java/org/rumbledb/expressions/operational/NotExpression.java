@@ -29,8 +29,8 @@ import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 public class NotExpression extends UnaryExpressionBase {
 
-    public NotExpression(Expression _mainExpression, boolean _isActive, ExceptionMetadata metadata) {
-        super(_mainExpression, Operator.NOT, _isActive, metadata);
+    public NotExpression(Expression mainExpression, boolean isActive, ExceptionMetadata metadata) {
+        super(mainExpression, Operator.NOT, isActive, metadata);
     }
 
     @Override
@@ -43,7 +43,7 @@ public class NotExpression extends UnaryExpressionBase {
         String result = "(notExpr ";
         if (this.isActive())
             result += "not ";
-        result += this._mainExpression.serializationString(true);
+        result += this.mainExpression.serializationString(true);
         result += ")";
         return result;
     }

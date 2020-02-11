@@ -43,11 +43,11 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     private static final long serialVersionUID = 1L;
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
     private final ExceptionMetadata metadata;
-    protected boolean _hasNext;
-    protected boolean _isOpen;
-    protected RuntimeTupleIterator _child;
-    protected DynamicContext _currentDynamicContext;
-    protected ExecutionMode _highestExecutionMode;
+    protected boolean hasNext;
+    protected boolean isOpen;
+    protected RuntimeTupleIterator child;
+    protected DynamicContext currentDynamicContext;
+    protected ExecutionMode highestExecutionMode;
 
     protected RuntimeTupleIterator(
             RuntimeTupleIterator child,
@@ -55,55 +55,55 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
             ExceptionMetadata metadata
     ) {
         this.metadata = metadata;
-        this._isOpen = false;
-        this._highestExecutionMode = executionMode;
-        this._child = child;
+        this.isOpen = false;
+        this.highestExecutionMode = executionMode;
+        this.child = child;
     }
 
     public void open(DynamicContext context) {
-        if (this._isOpen)
+        if (this.isOpen)
             throw new IteratorFlowException(
                     "Runtime tuple iterator cannot be opened twice" + ", this: " + this.toString(),
                     getMetadata()
             );
-        this._isOpen = true;
-        this._hasNext = true;
-        this._currentDynamicContext = context;
+        this.isOpen = true;
+        this.hasNext = true;
+        this.currentDynamicContext = context;
     }
 
     public void close() {
-        this._isOpen = false;
-        this._child.close();
+        this.isOpen = false;
+        this.child.close();
     }
 
     public void reset(DynamicContext context) {
-        this._hasNext = true;
-        this._currentDynamicContext = context;
-        this._child.reset(context);
+        this.hasNext = true;
+        this.currentDynamicContext = context;
+        this.child.reset(context);
     }
 
     @Override
     public void write(Kryo kryo, Output output) {
-        output.writeBoolean(this._hasNext);
-        output.writeBoolean(this._isOpen);
-        kryo.writeObject(output, this._currentDynamicContext);
-        kryo.writeObject(output, this._child);
+        output.writeBoolean(this.hasNext);
+        output.writeBoolean(this.isOpen);
+        kryo.writeObject(output, this.currentDynamicContext);
+        kryo.writeObject(output, this.child);
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this._hasNext = input.readBoolean();
-        this._isOpen = input.readBoolean();
-        this._currentDynamicContext = kryo.readObject(input, DynamicContext.class);
-        this._child = kryo.readObject(input, RuntimeTupleIterator.class);
+        this.hasNext = input.readBoolean();
+        this.isOpen = input.readBoolean();
+        this.currentDynamicContext = kryo.readObject(input, DynamicContext.class);
+        this.child = kryo.readObject(input, RuntimeTupleIterator.class);
     }
 
     public boolean isOpen() {
-        return this._isOpen;
+        return this.isOpen;
     }
 
     public boolean hasNext() {
-        return this._hasNext;
+        return this.hasNext;
     }
 
     public abstract FlworTuple next();
@@ -113,14 +113,14 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     }
 
     public ExecutionMode getHighestExecutionMode() {
-        return this._highestExecutionMode;
+        return this.highestExecutionMode;
     }
 
     public boolean isDataFrame() {
-        if (this._highestExecutionMode == ExecutionMode.UNSET) {
+        if (this.highestExecutionMode == ExecutionMode.UNSET) {
             throw new OurBadException("isDataFrame accessed in iterator without execution mode being set.");
         }
-        return this._highestExecutionMode.isDataFrame();
+        return this.highestExecutionMode.isDataFrame();
     }
 
     /**
@@ -167,7 +167,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<String, DynamicContext.VariableDependency> result =
             new TreeMap<String, DynamicContext.VariableDependency>();
-        result.putAll(this._child.getVariableDependencies());
+        result.putAll(this.child.getVariableDependencies());
         return result;
     }
 
@@ -202,8 +202,8 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         }
         buffer.append("\n");
 
-        if (this._child != null) {
-            this._child.print(buffer, indent + 1);
+        if (this.child != null) {
+            this.child.print(buffer, indent + 1);
         }
     }
 }

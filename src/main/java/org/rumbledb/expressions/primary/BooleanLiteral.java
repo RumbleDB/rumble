@@ -28,9 +28,9 @@ public class BooleanLiteral extends PrimaryExpression {
 
     private boolean value;
 
-    public BooleanLiteral(boolean _value, ExceptionMetadata metadata) {
+    public BooleanLiteral(boolean value, ExceptionMetadata metadata) {
         super(metadata);
-        this.value = _value;
+        this.value = value;
     }
 
     public boolean getValue() {

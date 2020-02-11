@@ -36,7 +36,7 @@ public class ReverseFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
     private List<Item> results;
-    private int _currentIndex = 0;
+    private int currentIndex = 0;
 
     public ReverseFunctionIterator(
             List<RuntimeIterator> parameters,
@@ -58,25 +58,25 @@ public class ReverseFunctionIterator extends LocalFunctionCallIterator {
         if (this.results == null || this.results.size() == 0) {
             throw new IteratorFlowException("getResult called on an empty list of results", getMetadata());
         }
-        if (this._currentIndex == this.results.size() - 1)
-            this._hasNext = false;
-        return this.results.get(this._currentIndex++);
+        if (this.currentIndex == this.results.size() - 1)
+            this.hasNext = false;
+        return this.results.get(this.currentIndex++);
     }
 
     @Override
     public void open(DynamicContext context) {
         super.open(context);
         this.results = new ArrayList<>();
-        this._currentIndex = 0;
+        this.currentIndex = 0;
 
-        RuntimeIterator sequenceIterator = this._children.get(0);
+        RuntimeIterator sequenceIterator = this.children.get(0);
 
-        List<Item> items = sequenceIterator.materialize(this._currentDynamicContextForLocalExecution);
+        List<Item> items = sequenceIterator.materialize(this.currentDynamicContextForLocalExecution);
 
         for (int i = items.size() - 1; i >= 0; i--) {
             this.results.add(items.get(i));
         }
 
-        this._hasNext = this.results.size() != 0;
+        this.hasNext = this.results.size() != 0;
     }
 }

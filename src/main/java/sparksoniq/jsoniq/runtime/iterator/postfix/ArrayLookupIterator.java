@@ -39,9 +39,9 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator _iterator;
-    private Integer _lookup;
-    private Item _nextResult;
+    private RuntimeIterator iterator;
+    private Integer lookup;
+    private Item nextResult;
 
     public ArrayLookupIterator(
             RuntimeIterator array,
@@ -50,13 +50,13 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(Arrays.asList(array, iterator), executionMode, iteratorMetadata);
-        this._iterator = array;
+        this.iterator = array;
     }
 
     @Override
     public Item nextLocal() {
-        if (this._hasNext == true) {
-            Item result = this._nextResult; // save the result to be returned
+        if (this.hasNext) {
+            Item result = this.nextResult; // save the result to be returned
             setNextResult(); // calculate and store the next result
             return result;
         }
@@ -66,24 +66,24 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
 
     @Override
     protected boolean hasNextLocal() {
-        return this._hasNext;
+        return this.hasNext;
     }
 
     @Override
     protected void resetLocal(DynamicContext context) {
-        this._iterator.reset(this._currentDynamicContextForLocalExecution);
+        this.iterator.reset(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
     @Override
     protected void closeLocal() {
-        this._iterator.close();
+        this.iterator.close();
     }
 
     private void initLookupPosition() {
-        RuntimeIterator lookupIterator = this._children.get(1);
+        RuntimeIterator lookupIterator = this.children.get(1);
 
-        lookupIterator.open(this._currentDynamicContextForLocalExecution);
+        lookupIterator.open(this.currentDynamicContextForLocalExecution);
         Item lookupExpression = null;
         if (lookupIterator.hasNext()) {
             lookupExpression = lookupIterator.next();
@@ -103,7 +103,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
         }
         lookupIterator.close();
         try {
-            this._lookup = lookupExpression.castToIntegerValue();
+            this.lookup = lookupExpression.castToIntegerValue();
         } catch (IteratorFlowException e) {
             throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
         }
@@ -112,39 +112,39 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     @Override
     public void openLocal() {
         initLookupPosition();
-        this._iterator.open(this._currentDynamicContextForLocalExecution);
+        this.iterator.open(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
     public void setNextResult() {
-        this._nextResult = null;
+        this.nextResult = null;
 
-        while (this._iterator.hasNext()) {
-            Item item = this._iterator.next();
+        while (this.iterator.hasNext()) {
+            Item item = this.iterator.next();
             if (item instanceof ArrayItem) {
                 ArrayItem arrItem = (ArrayItem) item;
-                if (this._lookup > 0 && this._lookup <= arrItem.getSize()) {
+                if (this.lookup > 0 && this.lookup <= arrItem.getSize()) {
                     // -1 for Jsoniq convention, arrays start from 1
-                    Item result = arrItem.getItemAt(this._lookup - 1);
-                    this._nextResult = result;
+                    Item result = arrItem.getItemAt(this.lookup - 1);
+                    this.nextResult = result;
                     break;
                 }
             }
         }
 
-        if (this._nextResult == null) {
-            this._hasNext = false;
-            this._iterator.close();
+        if (this.nextResult == null) {
+            this.hasNext = false;
+            this.iterator.close();
         } else {
-            this._hasNext = true;
+            this.hasNext = true;
         }
     }
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        JavaRDD<Item> childRDD = this._children.get(0).getRDD(dynamicContext);
+        JavaRDD<Item> childRDD = this.children.get(0).getRDD(dynamicContext);
         initLookupPosition();
-        FlatMapFunction<Item, Item> transformation = new ArrayLookupClosure(this._lookup);
+        FlatMapFunction<Item, Item> transformation = new ArrayLookupClosure(this.lookup);
 
         JavaRDD<Item> resultRDD = childRDD.flatMap(transformation);
         return resultRDD;

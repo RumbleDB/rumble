@@ -15,7 +15,7 @@ import java.util.List;
 public class TimeFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
-    private Item _timeStringItem = null;
+    private Item timeStringItem = null;
 
     public TimeFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -27,14 +27,14 @@ public class TimeFunctionIterator extends LocalFunctionCallIterator {
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            this._hasNext = false;
+        if (this.hasNext) {
+            this.hasNext = false;
             try {
-                return ItemFactory.getInstance().createTimeItem(this._timeStringItem.getStringValue());
+                return ItemFactory.getInstance().createTimeItem(this.timeStringItem.getStringValue());
             } catch (UnsupportedOperationException | IllegalArgumentException e) {
                 String message = String.format(
                     "\"%s\": value of type %s is not castable to type %s",
-                    this._timeStringItem.serialize(),
+                    this.timeStringItem.serialize(),
                     "string",
                     "time"
                 );
@@ -50,8 +50,8 @@ public class TimeFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        this._timeStringItem = this._children.get(0)
-            .materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
-        this._hasNext = this._timeStringItem != null;
+        this.timeStringItem = this.children.get(0)
+            .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        this.hasNext = this.timeStringItem != null;
     }
 }

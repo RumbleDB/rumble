@@ -27,18 +27,18 @@ public class ItemType implements Serializable {
 
 
     private static final long serialVersionUID = 1L;
-    private ItemTypes _type;
+    private ItemTypes type;
 
     public ItemType() {
     }
 
     public ItemType(ItemTypes type) {
-        this._type = type;
+        this.type = type;
 
     }
 
     public ItemTypes getType() {
-        return this._type;
+        return this.type;
     }
 
     public boolean isSubtypeOf(ItemType superType) {
@@ -46,10 +46,10 @@ public class ItemType implements Serializable {
             return true;
         if (superType.getType() == ItemTypes.JSONItem) {
             if (
-                this._type == ItemTypes.ObjectItem
-                    || this._type == ItemTypes.ArrayItem
-                    || this._type == ItemTypes.JSONItem
-                    || this._type == ItemTypes.NullItem
+                this.type == ItemTypes.ObjectItem
+                    || this.type == ItemTypes.ArrayItem
+                    || this.type == ItemTypes.JSONItem
+                    || this.type == ItemTypes.NullItem
             )
                 return true;
             return false;
@@ -57,11 +57,11 @@ public class ItemType implements Serializable {
 
         if (superType.getType() == ItemTypes.AtomicItem) {
             if (
-                this._type == ItemTypes.StringItem
-                    || this._type == ItemTypes.IntegerItem
-                    || this._type == ItemTypes.DecimalItem
-                    || this._type == ItemTypes.DoubleItem
-                    || this._type == ItemTypes.BooleanItem
+                this.type == ItemTypes.StringItem
+                    || this.type == ItemTypes.IntegerItem
+                    || this.type == ItemTypes.DecimalItem
+                    || this.type == ItemTypes.DoubleItem
+                    || this.type == ItemTypes.BooleanItem
             )
                 return true;
             return false;

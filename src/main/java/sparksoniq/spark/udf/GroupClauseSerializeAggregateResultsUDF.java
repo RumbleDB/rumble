@@ -36,39 +36,39 @@ public class GroupClauseSerializeAggregateResultsUDF implements UDF1<WrappedArra
 
 
     private static final long serialVersionUID = 1L;
-    private List<Item> _nextResult;
-    private List<List<Item>> _deserializedParams;
+    private List<Item> nextResult;
+    private List<List<Item>> deserializedParams;
 
-    private transient Kryo _kryo;
-    private transient Output _output;
-    private transient Input _input;
+    private transient Kryo kryo;
+    private transient Output output;
+    private transient Input input;
 
     public GroupClauseSerializeAggregateResultsUDF() {
-        this._nextResult = new ArrayList<>();
-        this._deserializedParams = new ArrayList<>();
+        this.nextResult = new ArrayList<>();
+        this.deserializedParams = new ArrayList<>();
 
-        this._kryo = new Kryo();
-        this._kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(this._kryo);
-        this._output = new Output(128, -1);
-        this._input = new Input();
+        this.kryo = new Kryo();
+        this.kryo.setReferences(false);
+        DataFrameUtils.registerKryoClassesKryo(this.kryo);
+        this.output = new Output(128, -1);
+        this.input = new Input();
     }
 
     @Override
     public byte[] call(WrappedArray<byte[]> wrappedParameters) {
-        this._nextResult.clear();
-        this._deserializedParams.clear();
+        this.nextResult.clear();
+        this.deserializedParams.clear();
         DataFrameUtils.deserializeWrappedParameters(
             wrappedParameters,
-            this._deserializedParams,
-            this._kryo,
-            this._input
+            this.deserializedParams,
+            this.kryo,
+            this.input
         );
 
-        for (List<Item> deserializedParam : this._deserializedParams) {
-            this._nextResult.addAll(deserializedParam);
+        for (List<Item> deserializedParam : this.deserializedParams) {
+            this.nextResult.addAll(deserializedParam);
         }
-        return DataFrameUtils.serializeItemList(this._nextResult, this._kryo, this._output);
+        return DataFrameUtils.serializeItemList(this.nextResult, this.kryo, this.output);
     }
 
     private void readObject(java.io.ObjectInputStream in)
@@ -76,10 +76,10 @@ public class GroupClauseSerializeAggregateResultsUDF implements UDF1<WrappedArra
                 ClassNotFoundException {
         in.defaultReadObject();
 
-        this._kryo = new Kryo();
-        this._kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(this._kryo);
-        this._output = new Output(128, -1);
-        this._input = new Input();
+        this.kryo = new Kryo();
+        this.kryo.setReferences(false);
+        DataFrameUtils.registerKryoClassesKryo(this.kryo);
+        this.output = new Output(128, -1);
+        this.input = new Input();
     }
 }

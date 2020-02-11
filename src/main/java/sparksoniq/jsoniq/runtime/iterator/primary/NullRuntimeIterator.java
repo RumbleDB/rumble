@@ -38,8 +38,8 @@ public class NullRuntimeIterator extends AtomicRuntimeIterator {
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            this._hasNext = false;
+        if (this.hasNext) {
+            this.hasNext = false;
             return ItemFactory.getInstance().createNullItem();
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "\"null\"", getMetadata());

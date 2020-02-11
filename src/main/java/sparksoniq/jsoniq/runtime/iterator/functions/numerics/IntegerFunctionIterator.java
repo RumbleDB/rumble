@@ -32,8 +32,8 @@ public class IntegerFunctionIterator extends LocalFunctionCallIterator {
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            this._hasNext = false;
+        if (this.hasNext) {
+            this.hasNext = false;
             try {
                 if (!this.item.isAtomic()) {
                     String message = String.format(
@@ -79,7 +79,7 @@ public class IntegerFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        this.item = this._children.get(0).materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
-        this._hasNext = this.item != null;
+        this.item = this.children.get(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        this.hasNext = this.item != null;
     }
 }

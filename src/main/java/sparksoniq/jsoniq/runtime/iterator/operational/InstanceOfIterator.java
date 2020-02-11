@@ -40,7 +40,7 @@ import java.util.List;
 public class InstanceOfIterator extends UnaryOperationBaseIterator {
 
     private static final long serialVersionUID = 1L;
-    private final SequenceType _sequenceType;
+    private final SequenceType sequenceType;
 
     public InstanceOfIterator(
             RuntimeIterator iterator,
@@ -49,25 +49,25 @@ public class InstanceOfIterator extends UnaryOperationBaseIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(iterator, OperationalExpressionBase.Operator.INSTANCE_OF, executionMode, iteratorMetadata);
-        this._sequenceType = sequenceType;
+        this.sequenceType = sequenceType;
     }
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            if (!this._child.isRDD()) {
+        if (this.hasNext) {
+            if (!this.child.isRDD()) {
                 List<Item> items = new ArrayList<>();
-                this._child.open(this._currentDynamicContextForLocalExecution);
+                this.child.open(this.currentDynamicContextForLocalExecution);
 
-                while (this._child.hasNext())
-                    items.add(this._child.next());
-                this._child.close();
-                this._hasNext = false;
+                while (this.child.hasNext())
+                    items.add(this.child.next());
+                this.child.close();
+                this.hasNext = false;
 
                 if (isInvalidArity(items.size()))
                     return ItemFactory.getInstance().createBooleanItem(false);
 
-                ItemType itemType = this._sequenceType.getItemType();
+                ItemType itemType = this.sequenceType.getItemType();
                 for (Item item : items) {
                     if (!item.isTypeOf(itemType)) {
                         return ItemFactory.getInstance().createBooleanItem(false);
@@ -75,13 +75,13 @@ public class InstanceOfIterator extends UnaryOperationBaseIterator {
                 }
                 return ItemFactory.getInstance().createBooleanItem(true);
             } else {
-                JavaRDD<Item> childRDD = this._child.getRDD(this._currentDynamicContextForLocalExecution);
-                this._hasNext = false;
+                JavaRDD<Item> childRDD = this.child.getRDD(this.currentDynamicContextForLocalExecution);
+                this.hasNext = false;
 
                 if (isInvalidArity(childRDD.take(2).size()))
                     return ItemFactory.getInstance().createBooleanItem(false);
 
-                JavaRDD<Item> result = childRDD.filter(new InstanceOfClosure(this._sequenceType.getItemType()));
+                JavaRDD<Item> result = childRDD.filter(new InstanceOfClosure(this.sequenceType.getItemType()));
                 return ItemFactory.getInstance().createBooleanItem(result.isEmpty());
             }
         } else
@@ -89,16 +89,16 @@ public class InstanceOfIterator extends UnaryOperationBaseIterator {
     }
 
     private boolean isInvalidArity(long numOfItems) {
-        return (numOfItems != 0 && this._sequenceType.isEmptySequence())
+        return (numOfItems != 0 && this.sequenceType.isEmptySequence())
             ||
             (numOfItems == 0
-                && (this._sequenceType.getArity() == SequenceType.Arity.One
+                && (this.sequenceType.getArity() == SequenceType.Arity.One
                     ||
-                    this._sequenceType.getArity() == SequenceType.Arity.OneOrMore))
+                    this.sequenceType.getArity() == SequenceType.Arity.OneOrMore))
             ||
             (numOfItems > 1
-                && (this._sequenceType.getArity() == SequenceType.Arity.One
+                && (this.sequenceType.getArity() == SequenceType.Arity.One
                     ||
-                    this._sequenceType.getArity() == SequenceType.Arity.OneOrZero));
+                    this.sequenceType.getArity() == SequenceType.Arity.OneOrZero));
     }
 }

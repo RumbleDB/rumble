@@ -32,31 +32,31 @@ import java.util.List;
 
 public class MainModule extends Expression {
 
-    private final Prolog _prolog;
-    private final CommaExpression _commaExpression;
+    private final Prolog prolog;
+    private final CommaExpression commaExpression;
 
-    public MainModule(Prolog _prolog, CommaExpression _commaExpression, ExceptionMetadata metadata) {
+    public MainModule(Prolog prolog, CommaExpression commaExpression, ExceptionMetadata metadata) {
         super(metadata);
-        this._prolog = _prolog;
-        this._commaExpression = _commaExpression;
+        this.prolog = prolog;
+        this.commaExpression = commaExpression;
     }
 
-    public Prolog get_prolog() {
-        return this._prolog;
+    public Prolog getProlog() {
+        return this.prolog;
     }
 
-    public CommaExpression get_commaExpression() {
-        return this._commaExpression;
+    public CommaExpression getCommaExpression() {
+        return this.commaExpression;
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        if (this._prolog != null) {
-            result.add(this._prolog);
+        if (this.prolog != null) {
+            result.add(this.prolog);
         }
-        if (this._commaExpression != null) {
-            result.add(this._commaExpression);
+        if (this.commaExpression != null) {
+            result.add(this.commaExpression);
         }
         return result;
     }
@@ -69,8 +69,8 @@ public class MainModule extends Expression {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(mainModule ";
-        result += " (prolog " + this._prolog.serializationString(false) + "), ";
-        result += " (expr " + this._commaExpression.serializationString(false) + ") ";
+        result += " (prolog " + this.prolog.serializationString(false) + "), ";
+        result += " (expr " + this.commaExpression.serializationString(false) + ") ";
         result += ")";
         return result;
     }

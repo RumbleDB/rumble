@@ -34,9 +34,9 @@ public abstract class BinaryOperationBaseIterator extends LocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    protected final RuntimeIterator _leftIterator;
-    protected final RuntimeIterator _rightIterator;
-    protected final OperationalExpressionBase.Operator _operator;
+    protected final RuntimeIterator leftIterator;
+    protected final RuntimeIterator rightIterator;
+    protected final OperationalExpressionBase.Operator operator;
 
     protected BinaryOperationBaseIterator(
             RuntimeIterator left,
@@ -46,11 +46,11 @@ public abstract class BinaryOperationBaseIterator extends LocalRuntimeIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(null, executionMode, iteratorMetadata);
-        this._children.add(left);
-        this._children.add(right);
-        this._leftIterator = left;
-        this._rightIterator = right;
-        this._operator = operator;
+        this.children.add(left);
+        this.children.add(right);
+        this.leftIterator = left;
+        this.rightIterator = right;
+        this.operator = operator;
     }
 
     protected void checkBinaryOperation(Item left, Item right, OperationalExpressionBase.Operator operator) {

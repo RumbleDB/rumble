@@ -46,18 +46,18 @@ public class StringConcatIterator extends BinaryOperationBaseIterator {
     @Override
     public Item next() {
         if (this.hasNext()) {
-            this._leftIterator.open(this._currentDynamicContextForLocalExecution);
-            this._rightIterator.open(this._currentDynamicContextForLocalExecution);
+            this.leftIterator.open(this.currentDynamicContextForLocalExecution);
+            this.rightIterator.open(this.currentDynamicContextForLocalExecution);
             Item left;
             Item right;
             // empty sequences are treated as empty strings in concatenation
-            if (this._leftIterator.hasNext()) {
-                left = this._leftIterator.next();
+            if (this.leftIterator.hasNext()) {
+                left = this.leftIterator.next();
             } else {
                 left = ItemFactory.getInstance().createStringItem("");
             }
-            if (this._rightIterator.hasNext()) {
-                right = this._rightIterator.next();
+            if (this.rightIterator.hasNext()) {
+                right = this.rightIterator.next();
             } else {
                 right = ItemFactory.getInstance().createStringItem("");
             }
@@ -74,9 +74,9 @@ public class StringConcatIterator extends BinaryOperationBaseIterator {
             String leftStringValue = left.serialize();
             String rightStringValue = right.serialize();
 
-            this._leftIterator.close();
-            this._rightIterator.close();
-            this._hasNext = false;
+            this.leftIterator.close();
+            this.rightIterator.close();
+            this.hasNext = false;
             return ItemFactory.getInstance().createStringItem(leftStringValue.concat(rightStringValue));
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());

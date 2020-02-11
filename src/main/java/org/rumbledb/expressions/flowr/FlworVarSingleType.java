@@ -12,23 +12,23 @@ import java.util.List;
 
 public class FlworVarSingleType extends Expression {
 
-    private SingleType _singleType;
+    private SingleType singleType;
     private boolean isEmpty;
 
     public FlworVarSingleType(ExceptionMetadata metadata) {
         super(metadata);
-        this._singleType = new SingleType(AtomicTypes.AtomicItem);
+        this.singleType = new SingleType(AtomicTypes.AtomicItem);
         this.isEmpty = true;
     }
 
     public FlworVarSingleType(AtomicTypes atomicType, ExceptionMetadata metadata) {
         super(metadata);
-        this._singleType = new SingleType(atomicType);
+        this.singleType = new SingleType(atomicType);
     }
 
     public FlworVarSingleType(AtomicTypes atomicType, boolean zeroOrOne, ExceptionMetadata metadata) {
         super(metadata);
-        this._singleType = new SingleType(atomicType, zeroOrOne);
+        this.singleType = new SingleType(atomicType, zeroOrOne);
         this.isEmpty = false;
 
     }
@@ -75,7 +75,7 @@ public class FlworVarSingleType extends Expression {
     }
 
     public SingleType getSingleType() {
-        return this._singleType;
+        return this.singleType;
     }
 
     @Override
@@ -94,7 +94,7 @@ public class FlworVarSingleType extends Expression {
     public String serializationString(boolean prefix) {
         String result = "(atomicType ";
         result += "(itemType ";
-        result += getSerializationOfAtomicType(this._singleType.getType());
+        result += getSerializationOfAtomicType(this.singleType.getType());
         result += "))";
         return result;
     }

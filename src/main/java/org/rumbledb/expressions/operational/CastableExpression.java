@@ -8,22 +8,22 @@ import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 public class CastableExpression extends UnaryExpressionBase {
 
-    private FlworVarSingleType _atomicType;
+    private FlworVarSingleType atomicType;
 
-    public CastableExpression(Expression _mainExpression, ExceptionMetadata metadata) {
-        super(_mainExpression, metadata);
-        this._isActive = false;
+    public CastableExpression(Expression mainExpression, ExceptionMetadata metadata) {
+        super(mainExpression, metadata);
+        this.isActive = false;
     }
 
-    public CastableExpression(Expression _mainExpression, FlworVarSingleType atomicType, ExceptionMetadata metadata) {
-        super(_mainExpression, Operator.CASTABLE, true, metadata);
-        this._atomicType = atomicType;
+    public CastableExpression(Expression mainExpression, FlworVarSingleType atomicType, ExceptionMetadata metadata) {
+        super(mainExpression, Operator.CASTABLE, true, metadata);
+        this.atomicType = atomicType;
     }
 
 
     @Override
     public boolean isActive() {
-        return this._isActive;
+        return this.isActive;
     }
 
     @Override
@@ -34,13 +34,13 @@ public class CastableExpression extends UnaryExpressionBase {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(castableExpr ";
-        result += this._mainExpression.serializationString(true);
-        result += this._atomicType != null ? " castable as " + this._atomicType.serializationString(prefix) : "";
+        result += this.mainExpression.serializationString(true);
+        result += this.atomicType != null ? " castable as " + this.atomicType.serializationString(prefix) : "";
         result += ")";
         return result;
     }
 
-    public FlworVarSingleType get_atomicType() {
-        return this._atomicType;
+    public FlworVarSingleType getAtomicType() {
+        return this.atomicType;
     }
 }

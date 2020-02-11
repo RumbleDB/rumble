@@ -27,7 +27,7 @@ import sparksoniq.spark.SparkSessionManager;
  */
 public class Rumble {
 
-    private RumbleConf _conf;
+    private RumbleConf conf;
 
     /**
      * Creates a new Rumble instance. This does NOT initialize Spark. You need to do so before instantiating Rumble.
@@ -35,7 +35,7 @@ public class Rumble {
      * @param conf a RumbleConf object containing the configuration.
      */
     public Rumble(RumbleConf conf) {
-        this._conf = conf;
+        this.conf = conf;
         SparkSessionManager.COLLECT_ITEM_LIMIT = conf.getResultsSizeCap();
     }
 

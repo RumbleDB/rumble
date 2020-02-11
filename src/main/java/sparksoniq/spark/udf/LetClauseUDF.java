@@ -39,55 +39,55 @@ import java.util.Map;
 public class LetClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, byte[]> {
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator _expression;
+    private RuntimeIterator expression;
 
-    private Map<String, List<String>> _columnNamesByType;
+    private Map<String, List<String>> columnNamesByType;
 
-    private List<List<Item>> _deserializedParams;
-    private List<Item> _longParams;
-    private DynamicContext _parentContext;
-    private DynamicContext _context;
-    private List<Item> _nextResult;
+    private List<List<Item>> deserializedParams;
+    private List<Item> longParams;
+    private DynamicContext parentContext;
+    private DynamicContext context;
+    private List<Item> nextResult;
 
-    private transient Kryo _kryo;
-    private transient Output _output;
-    private transient Input _input;
+    private transient Kryo kryo;
+    private transient Output output;
+    private transient Input input;
 
     public LetClauseUDF(
             RuntimeIterator expression,
             DynamicContext context,
             Map<String, List<String>> columnNamesByType
     ) {
-        this._expression = expression;
+        this.expression = expression;
 
-        this._deserializedParams = new ArrayList<>();
-        this._longParams = new ArrayList<>();
-        this._parentContext = context;
-        this._context = new DynamicContext(this._parentContext);
-        this._nextResult = new ArrayList<>();
+        this.deserializedParams = new ArrayList<>();
+        this.longParams = new ArrayList<>();
+        this.parentContext = context;
+        this.context = new DynamicContext(this.parentContext);
+        this.nextResult = new ArrayList<>();
 
-        this._kryo = new Kryo();
-        this._kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(this._kryo);
-        this._output = new Output(128, -1);
-        this._input = new Input();
+        this.kryo = new Kryo();
+        this.kryo.setReferences(false);
+        DataFrameUtils.registerKryoClassesKryo(this.kryo);
+        this.output = new Output(128, -1);
+        this.input = new Input();
 
-        this._columnNamesByType = columnNamesByType;
+        this.columnNamesByType = columnNamesByType;
     }
 
 
     @Override
     public byte[] call(WrappedArray<byte[]> wrappedParameters, WrappedArray<Long> wrappedParametersLong) {
-        this._deserializedParams.clear();
-        this._longParams.clear();
-        this._context.removeAllVariables();
-        this._nextResult.clear();
+        this.deserializedParams.clear();
+        this.longParams.clear();
+        this.context.removeAllVariables();
+        this.nextResult.clear();
 
         DataFrameUtils.deserializeWrappedParameters(
             wrappedParameters,
-            this._deserializedParams,
-            this._kryo,
-            this._input
+            this.deserializedParams,
+            this.kryo,
+            this.input
         );
 
         // Long parameters correspond to pre-computed counts, when a materialization of the
@@ -95,26 +95,26 @@ public class LetClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
         Object[] longParams = (Object[]) wrappedParametersLong.array();
         for (Object longParam : longParams) {
             Item count = ItemFactory.getInstance().createIntegerItem(((Long) longParam).intValue());
-            this._longParams.add(count);
+            this.longParams.add(count);
         }
 
         DataFrameUtils.prepareDynamicContext(
-            this._context,
-            this._columnNamesByType.get("byte[]"),
-            this._columnNamesByType.get("Long"),
-            this._deserializedParams,
-            this._longParams
+            this.context,
+            this.columnNamesByType.get("byte[]"),
+            this.columnNamesByType.get("Long"),
+            this.deserializedParams,
+            this.longParams
         );
 
         // apply expression in the dynamic context
-        this._expression.open(this._context);
-        while (this._expression.hasNext()) {
-            Item nextItem = this._expression.next();
-            this._nextResult.add(nextItem);
+        this.expression.open(this.context);
+        while (this.expression.hasNext()) {
+            Item nextItem = this.expression.next();
+            this.nextResult.add(nextItem);
         }
-        this._expression.close();
+        this.expression.close();
 
-        return DataFrameUtils.serializeItemList(this._nextResult, this._kryo, this._output);
+        return DataFrameUtils.serializeItemList(this.nextResult, this.kryo, this.output);
     }
 
     private void readObject(java.io.ObjectInputStream in)
@@ -122,11 +122,11 @@ public class LetClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
                 ClassNotFoundException {
         in.defaultReadObject();
 
-        this._kryo = new Kryo();
-        this._kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(this._kryo);
-        this._output = new Output(128, -1);
-        this._input = new Input();
+        this.kryo = new Kryo();
+        this.kryo.setReferences(false);
+        DataFrameUtils.registerKryoClassesKryo(this.kryo);
+        this.output = new Output(128, -1);
+        this.input = new Input();
     }
 
 }

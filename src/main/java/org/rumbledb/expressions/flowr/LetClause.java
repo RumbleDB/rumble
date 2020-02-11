@@ -58,7 +58,7 @@ public class LetClause extends FlworClause {
     @Override
     public void initHighestExecutionMode() {
         // call isDataFrame on the last letVariable
-        this._highestExecutionMode = this.letVars.get(this.letVars.size() - 1).getHighestExecutionMode();
+        this.highestExecutionMode = this.letVars.get(this.letVars.size() - 1).getHighestExecutionMode();
     }
 
     @Override

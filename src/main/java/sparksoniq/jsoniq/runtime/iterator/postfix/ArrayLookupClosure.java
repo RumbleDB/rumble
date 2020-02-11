@@ -31,10 +31,10 @@ import java.util.List;
 public class ArrayLookupClosure implements FlatMapFunction<Item, Item> {
 
     private static final long serialVersionUID = 1L;
-    private final Integer _lookup;
+    private final Integer lookup;
 
     public ArrayLookupClosure(Integer lookup) {
-        this._lookup = lookup;
+        this.lookup = lookup;
     }
 
     public Iterator<Item> call(Item arg0) throws Exception {
@@ -43,10 +43,10 @@ public class ArrayLookupClosure implements FlatMapFunction<Item, Item> {
         if (!(arg0 instanceof ArrayItem))
             return results.iterator();
 
-        if (this._lookup <= 0 || this._lookup > arg0.getSize())
+        if (this.lookup <= 0 || this.lookup > arg0.getSize())
             return results.iterator();
 
-        Item item = arg0.getItemAt(this._lookup - 1);
+        Item item = arg0.getItemAt(this.lookup - 1);
         if (item != null) {
             results.add(item);
         }

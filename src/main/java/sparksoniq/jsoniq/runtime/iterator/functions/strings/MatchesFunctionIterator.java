@@ -46,13 +46,13 @@ public class MatchesFunctionIterator extends LocalFunctionCallIterator {
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            this._hasNext = false;
+        if (this.hasNext) {
+            this.hasNext = false;
 
-            Item regexpItem = this._children.get(1)
-                .materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
-            Item stringItem = this._children.get(0)
-                .materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
+            Item regexpItem = this.children.get(1)
+                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+            Item stringItem = this.children.get(0)
+                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
             if (stringItem == null) {
                 stringItem = ItemFactory.getInstance().createStringItem("");
             }

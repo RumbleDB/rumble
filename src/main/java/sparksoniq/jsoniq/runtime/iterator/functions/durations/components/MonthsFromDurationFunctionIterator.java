@@ -14,7 +14,7 @@ import java.util.List;
 public class MonthsFromDurationFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
-    private Item _durationItem = null;
+    private Item durationItem = null;
 
     public MonthsFromDurationFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -26,9 +26,9 @@ public class MonthsFromDurationFunctionIterator extends LocalFunctionCallIterato
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            this._hasNext = false;
-            return ItemFactory.getInstance().createIntegerItem(this._durationItem.getDurationValue().getMonths());
+        if (this.hasNext) {
+            this.hasNext = false;
+            return ItemFactory.getInstance().createIntegerItem(this.durationItem.getDurationValue().getMonths());
         } else
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " months-from-duration function",
@@ -39,8 +39,8 @@ public class MonthsFromDurationFunctionIterator extends LocalFunctionCallIterato
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        this._durationItem = this._children.get(0)
-            .materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
-        this._hasNext = this._durationItem != null;
+        this.durationItem = this.children.get(0)
+            .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        this.hasNext = this.durationItem != null;
     }
 }

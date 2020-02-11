@@ -37,10 +37,10 @@ public class RemoveFunctionIterator extends LocalFunctionCallIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator _sequenceIterator;
-    private Item _nextResult;
-    private int _removePosition; // position to remove the item
-    private int _currentPosition; // current position
+    private RuntimeIterator sequenceIterator;
+    private Item nextResult;
+    private int removePosition; // position to remove the item
+    private int currentPosition; // current position
 
 
     public RemoveFunctionIterator(
@@ -54,7 +54,7 @@ public class RemoveFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public Item next() {
         if (this.hasNext()) {
-            Item result = this._nextResult; // save the result to be returned
+            Item result = this.nextResult; // save the result to be returned
             setNextResult(); // calculate and store the next result
             return result;
         }
@@ -65,9 +65,9 @@ public class RemoveFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        this._currentPosition = 1;
+        this.currentPosition = 1;
 
-        RuntimeIterator positionIterator = this._children.get(1);
+        RuntimeIterator positionIterator = this.children.get(1);
         positionIterator.open(context);
         if (!positionIterator.hasNext()) {
             throw new UnexpectedTypeException(
@@ -92,36 +92,36 @@ public class RemoveFunctionIterator extends LocalFunctionCallIterator {
                     getMetadata()
             );
         }
-        this._removePosition = ((IntegerItem) positionItem).getIntegerValue();
+        this.removePosition = ((IntegerItem) positionItem).getIntegerValue();
         positionIterator.close();
 
-        this._sequenceIterator = this._children.get(0);
-        this._sequenceIterator.open(context);
+        this.sequenceIterator = this.children.get(0);
+        this.sequenceIterator.open(context);
         setNextResult();
     }
 
     public void setNextResult() {
-        this._nextResult = null;
+        this.nextResult = null;
 
-        if (this._sequenceIterator.hasNext()) {
-            if (this._currentPosition == this._removePosition) {
-                this._sequenceIterator.next(); // skip item to be removed
-                this._currentPosition++;
-                if (this._sequenceIterator.hasNext()) {
-                    this._nextResult = this._sequenceIterator.next();
-                    this._currentPosition++;
+        if (this.sequenceIterator.hasNext()) {
+            if (this.currentPosition == this.removePosition) {
+                this.sequenceIterator.next(); // skip item to be removed
+                this.currentPosition++;
+                if (this.sequenceIterator.hasNext()) {
+                    this.nextResult = this.sequenceIterator.next();
+                    this.currentPosition++;
                 }
             } else {
-                this._nextResult = this._sequenceIterator.next();
-                this._currentPosition++;
+                this.nextResult = this.sequenceIterator.next();
+                this.currentPosition++;
             }
         }
 
-        if (this._nextResult == null) {
-            this._hasNext = false;
-            this._sequenceIterator.close();
+        if (this.nextResult == null) {
+            this.hasNext = false;
+            this.sequenceIterator.close();
         } else {
-            this._hasNext = true;
+            this.hasNext = true;
         }
     }
 }

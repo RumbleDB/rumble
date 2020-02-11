@@ -15,7 +15,7 @@ import java.util.List;
 public class TimezoneFromTimeFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
-    private Item _timeItem = null;
+    private Item timeItem = null;
 
     public TimezoneFromTimeFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -27,11 +27,11 @@ public class TimezoneFromTimeFunctionIterator extends LocalFunctionCallIterator 
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            this._hasNext = false;
+        if (this.hasNext) {
+            this.hasNext = false;
             return ItemFactory.getInstance()
                 .createDayTimeDurationItem(
-                    new Period(this._timeItem.getDateTimeValue().getZone().toTimeZone().getRawOffset())
+                    new Period(this.timeItem.getDateTimeValue().getZone().toTimeZone().getRawOffset())
                 );
         } else
             throw new IteratorFlowException(
@@ -43,7 +43,7 @@ public class TimezoneFromTimeFunctionIterator extends LocalFunctionCallIterator 
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        this._timeItem = this._children.get(0).materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
-        this._hasNext = this._timeItem != null && this._timeItem.hasTimeZone();
+        this.timeItem = this.children.get(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        this.hasNext = this.timeItem != null && this.timeItem.hasTimeZone();
     }
 }

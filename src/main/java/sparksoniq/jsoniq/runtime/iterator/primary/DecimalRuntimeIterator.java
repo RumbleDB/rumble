@@ -33,21 +33,21 @@ public class DecimalRuntimeIterator extends AtomicRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private BigDecimal _item;
+    private BigDecimal item;
 
     public DecimalRuntimeIterator(BigDecimal value, ExecutionMode executionMode, ExceptionMetadata iteratorMetadata) {
         super(null, executionMode, iteratorMetadata);
-        this._item = value;
+        this.item = value;
 
     }
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            this._hasNext = false;
-            return ItemFactory.getInstance().createDecimalItem(this._item);
+        if (this.hasNext) {
+            this.hasNext = false;
+            return ItemFactory.getInstance().createDecimalItem(this.item);
         }
 
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item, getMetadata());
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.item, getMetadata());
     }
 }

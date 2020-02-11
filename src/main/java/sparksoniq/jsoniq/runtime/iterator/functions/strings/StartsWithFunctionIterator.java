@@ -44,15 +44,15 @@ public class StartsWithFunctionIterator extends LocalFunctionCallIterator {
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            this._hasNext = false;
-            Item substringItem = this._children.get(1)
-                .materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
+        if (this.hasNext) {
+            this.hasNext = false;
+            Item substringItem = this.children.get(1)
+                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
             if (substringItem == null || substringItem.getStringValue().isEmpty()) {
                 return ItemFactory.getInstance().createBooleanItem(true);
             }
-            Item stringItem = this._children.get(0)
-                .materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
+            Item stringItem = this.children.get(0)
+                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
             if (stringItem == null || stringItem.getStringValue().isEmpty()) {
                 return ItemFactory.getInstance().createBooleanItem(false);
             }

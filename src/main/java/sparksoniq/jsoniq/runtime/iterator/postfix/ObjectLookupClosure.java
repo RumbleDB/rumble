@@ -30,10 +30,10 @@ import java.util.List;
 public class ObjectLookupClosure implements FlatMapFunction<Item, Item> {
 
     private static final long serialVersionUID = 1L;
-    private final String _key;
+    private final String key;
 
     public ObjectLookupClosure(String key) {
-        this._key = key;
+        this.key = key;
     }
 
     public Iterator<Item> call(Item arg0) throws Exception {
@@ -42,7 +42,7 @@ public class ObjectLookupClosure implements FlatMapFunction<Item, Item> {
         if (!(arg0.isObject()))
             return results.iterator();
 
-        Item item = arg0.getItemByKey(this._key);
+        Item item = arg0.getItemByKey(this.key);
         if (item != null) {
             results.add(item);
         }

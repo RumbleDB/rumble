@@ -31,11 +31,11 @@ import java.util.List;
 public abstract class NaryExpressionBase extends OperationalExpressionBase {
 
 
-    private List<Expression> _rightExpressions;
+    private List<Expression> rightExpressions;
 
     public NaryExpressionBase(Expression mainExpression, ExceptionMetadata metadata) {
         super(mainExpression, Operator.NONE, metadata);
-        this._isActive = false;
+        this.isActive = false;
 
     }
 
@@ -46,9 +46,9 @@ public abstract class NaryExpressionBase extends OperationalExpressionBase {
             ExceptionMetadata metadata
     ) {
         super(mainExpression, op, metadata);
-        this._rightExpressions = rhs;
+        this.rightExpressions = rhs;
         if (Operator.NONE != op)
-            this._isActive = true;
+            this.isActive = true;
     }
 
     public NaryExpressionBase(
@@ -58,33 +58,33 @@ public abstract class NaryExpressionBase extends OperationalExpressionBase {
             ExceptionMetadata metadata
     ) {
         super(mainExpression, ops, metadata);
-        this._rightExpressions = rhs;
-        this._isActive = true;
+        this.rightExpressions = rhs;
+        this.isActive = true;
     }
 
     public List<Expression> getRightExpressions() {
-        return this._rightExpressions;
+        return this.rightExpressions;
     }
 
     public List<Operator> getOperators() {
-        return this._multipleOperators;
+        return this.multipleOperators;
     }
 
     public Operator getSingleOperator() {
-        return this._singleOperator;
+        return this.singleOperator;
     }
 
     @Override
     public boolean isActive() {
-        return this._isActive;
+        return this.isActive;
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        result.add(this._mainExpression);
-        if (this._rightExpressions != null)
-            this._rightExpressions.forEach(e -> {
+        result.add(this.mainExpression);
+        if (this.rightExpressions != null)
+            this.rightExpressions.forEach(e -> {
                 if (e != null)
                     result.add(e);
             });

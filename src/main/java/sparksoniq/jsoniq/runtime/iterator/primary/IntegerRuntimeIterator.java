@@ -31,21 +31,21 @@ public class IntegerRuntimeIterator extends AtomicRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private int _item;
+    private int item;
 
     public IntegerRuntimeIterator(int value, ExecutionMode executionMode, ExceptionMetadata iteratorMetadata) {
         super(null, executionMode, iteratorMetadata);
-        this._item = value;
+        this.item = value;
 
     }
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            this._hasNext = false;
-            return ItemFactory.getInstance().createIntegerItem(this._item);
+        if (this.hasNext) {
+            this.hasNext = false;
+            return ItemFactory.getInstance().createIntegerItem(this.item);
         }
 
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this._item, getMetadata());
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.item, getMetadata());
     }
 }

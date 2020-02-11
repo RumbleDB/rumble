@@ -45,12 +45,12 @@ public class StringJoinFunctionIterator extends LocalFunctionCallIterator {
 
     @Override
     public Item next() {
-        if (this._hasNext) {
+        if (this.hasNext) {
             Item joinString = ItemFactory.getInstance().createStringItem("");
-            List<Item> strings = this._children.get(0).materialize(this._currentDynamicContextForLocalExecution);
-            if (this._children.size() > 1) {
-                RuntimeIterator joinStringIterator = this._children.get(1);
-                joinStringIterator.open(this._currentDynamicContextForLocalExecution);
+            List<Item> strings = this.children.get(0).materialize(this.currentDynamicContextForLocalExecution);
+            if (this.children.size() > 1) {
+                RuntimeIterator joinStringIterator = this.children.get(1);
+                joinStringIterator.open(this.currentDynamicContextForLocalExecution);
                 if (joinStringIterator.hasNext()) {
                     joinString = joinStringIterator.next();
                 }
@@ -59,13 +59,13 @@ public class StringJoinFunctionIterator extends LocalFunctionCallIterator {
             StringBuilder stringBuilder = new StringBuilder();
             for (Item item : strings) {
                 if (!(item.isString()))
-                    throw new UnexpectedTypeException("String item expected", this._children.get(0).getMetadata());
+                    throw new UnexpectedTypeException("String item expected", this.children.get(0).getMetadata());
                 if (!stringBuilder.toString().isEmpty()) {
                     stringBuilder.append(joinString.getStringValue());
                 }
                 stringBuilder.append(item.getStringValue());
             }
-            this._hasNext = false;
+            this.hasNext = false;
             return ItemFactory.getInstance().createStringItem(stringBuilder.toString());
         } else
             throw new IteratorFlowException(

@@ -28,9 +28,9 @@ public class DoubleLiteral extends PrimaryExpression {
 
     private double value;
 
-    public DoubleLiteral(double _value, ExceptionMetadata metadata) {
+    public DoubleLiteral(double value, ExceptionMetadata metadata) {
         super(metadata);
-        this.value = _value;
+        this.value = value;
     }
 
     public double getValue() {

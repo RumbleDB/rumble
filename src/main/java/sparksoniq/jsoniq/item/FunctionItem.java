@@ -54,9 +54,9 @@ public class FunctionItem extends Item {
     // signature contains type information for all parameters and the return value
     private FunctionSignature signature;
     private RuntimeIterator bodyIterator;
-    private Map<String, List<Item>> _localVariablesInClosure;
-    private Map<String, JavaRDD<Item>> _RDDVariablesInClosure;
-    private Map<String, Dataset<Row>> _DFVariablesInClosure;
+    private Map<String, List<Item>> localVariablesInClosure;
+    private Map<String, JavaRDD<Item>> RDDVariablesInClosure;
+    private Map<String, Dataset<Row>> DFVariablesInClosure;
 
     protected FunctionItem() {
         super();
@@ -72,9 +72,9 @@ public class FunctionItem extends Item {
         this.parameterNames = parameterNames;
         this.signature = signature;
         this.bodyIterator = bodyIterator;
-        this._localVariablesInClosure = new HashMap<>();
-        this._RDDVariablesInClosure = new HashMap<>();
-        this._DFVariablesInClosure = new HashMap<>();
+        this.localVariablesInClosure = new HashMap<>();
+        this.RDDVariablesInClosure = new HashMap<>();
+        this.DFVariablesInClosure = new HashMap<>();
     }
 
     public FunctionItem(
@@ -90,9 +90,9 @@ public class FunctionItem extends Item {
         this.parameterNames = parameterNames;
         this.signature = signature;
         this.bodyIterator = bodyIterator;
-        this._localVariablesInClosure = localVariablesInClosure;
-        this._RDDVariablesInClosure = RDDVariablesInClosure;
-        this._DFVariablesInClosure = DFVariablesInClosure;
+        this.localVariablesInClosure = localVariablesInClosure;
+        this.RDDVariablesInClosure = RDDVariablesInClosure;
+        this.DFVariablesInClosure = DFVariablesInClosure;
     }
 
     public FunctionItem(
@@ -112,9 +112,9 @@ public class FunctionItem extends Item {
         this.parameterNames = paramNames;
         this.signature = new FunctionSignature(parameters, returnType);
         this.bodyIterator = bodyIterator;
-        this._localVariablesInClosure = new HashMap<>();
-        this._RDDVariablesInClosure = new HashMap<>();
-        this._DFVariablesInClosure = new HashMap<>();
+        this.localVariablesInClosure = new HashMap<>();
+        this.RDDVariablesInClosure = new HashMap<>();
+        this.DFVariablesInClosure = new HashMap<>();
     }
 
     public FunctionIdentifier getIdentifier() {
@@ -134,15 +134,15 @@ public class FunctionItem extends Item {
     }
 
     public Map<String, List<Item>> getLocalVariablesInClosure() {
-        return this._localVariablesInClosure;
+        return this.localVariablesInClosure;
     }
 
     public Map<String, JavaRDD<Item>> getRDDVariablesInClosure() {
-        return this._RDDVariablesInClosure;
+        return this.RDDVariablesInClosure;
     }
 
     public Map<String, Dataset<Row>> getDFVariablesInClosure() {
-        return this._DFVariablesInClosure;
+        return this.DFVariablesInClosure;
     }
 
     @Override
@@ -188,9 +188,9 @@ public class FunctionItem extends Item {
         kryo.writeObject(output, this.signature.getParameterTypes());
         kryo.writeObject(output, this.signature.getReturnType());
         // kryo.writeObject(output, this.bodyIterator);
-        kryo.writeObject(output, this._localVariablesInClosure);
-        kryo.writeObject(output, this._RDDVariablesInClosure);
-        kryo.writeObject(output, this._DFVariablesInClosure);
+        kryo.writeObject(output, this.localVariablesInClosure);
+        kryo.writeObject(output, this.RDDVariablesInClosure);
+        kryo.writeObject(output, this.DFVariablesInClosure);
 
         // convert RuntimeIterator to byte[] data
         try {
@@ -217,9 +217,9 @@ public class FunctionItem extends Item {
         SequenceType returnType = kryo.readObject(input, SequenceType.class);
         this.signature = new FunctionSignature(parameters, returnType);
         // this.bodyIterator = kryo.readObject(input, RuntimeIterator.class);
-        this._localVariablesInClosure = kryo.readObject(input, HashMap.class);
-        this._RDDVariablesInClosure = kryo.readObject(input, HashMap.class);
-        this._DFVariablesInClosure = kryo.readObject(input, HashMap.class);
+        this.localVariablesInClosure = kryo.readObject(input, HashMap.class);
+        this.RDDVariablesInClosure = kryo.readObject(input, HashMap.class);
+        this.DFVariablesInClosure = kryo.readObject(input, HashMap.class);
 
         try {
             int dataLength = input.readInt();

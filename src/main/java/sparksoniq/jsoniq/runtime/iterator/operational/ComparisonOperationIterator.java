@@ -55,9 +55,9 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
         Operator.GC_NE,
         Operator.GC_LE,
         Operator.GC_LT };
-    private boolean _isValueComparison;
-    private Item _left;
-    private Item _right;
+    private boolean isValueComparison;
+    private Item left;
+    private Item right;
 
 
     public ComparisonOperationIterator(
@@ -73,22 +73,22 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
     @Override
     public Item next() {
         if (this.hasNext()) {
-            this._hasNext = false;
+            this.hasNext = false;
 
             // use stored values for value comparison
-            if (this._isValueComparison) {
-                return comparePair(this._left, this._right);
+            if (this.isValueComparison) {
+                return comparePair(this.left, this.right);
             } else {
                 // fetch all values and perform comparison
                 ArrayList<Item> left = new ArrayList<>();
                 ArrayList<Item> right = new ArrayList<>();
-                while (this._leftIterator.hasNext())
-                    left.add(this._leftIterator.next());
-                while (this._rightIterator.hasNext())
-                    right.add(this._rightIterator.next());
+                while (this.leftIterator.hasNext())
+                    left.add(this.leftIterator.next());
+                while (this.rightIterator.hasNext())
+                    right.add(this.rightIterator.next());
 
-                this._leftIterator.close();
-                this._rightIterator.close();
+                this.leftIterator.close();
+                this.rightIterator.close();
 
                 return compareAllPairs(left, right);
             }
@@ -100,37 +100,37 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        this._leftIterator.open(this._currentDynamicContextForLocalExecution);
-        this._rightIterator.open(this._currentDynamicContextForLocalExecution);
+        this.leftIterator.open(this.currentDynamicContextForLocalExecution);
+        this.rightIterator.open(this.currentDynamicContextForLocalExecution);
 
         // value comparison may return an empty sequence
-        if (Arrays.asList(valueComparisonOperators).contains(this._operator)) {
+        if (Arrays.asList(valueComparisonOperators).contains(this.operator)) {
             // if EMPTY SEQUENCE - eg. () or ((),())
             // this check is added here to provide lazy evaluation: eg. () eq (2,3) = () instead of exception
-            if (!(this._leftIterator.hasNext() && this._rightIterator.hasNext())) {
-                this._hasNext = false;
+            if (!(this.leftIterator.hasNext() && this.rightIterator.hasNext())) {
+                this.hasNext = false;
             } else {
-                this._left = this._leftIterator.next();
-                this._right = this._rightIterator.next();
+                this.left = this.leftIterator.next();
+                this.right = this.rightIterator.next();
 
                 // value comparison doesn't support more than 1 items
-                if (this._leftIterator.hasNext() || this._rightIterator.hasNext()) {
+                if (this.leftIterator.hasNext() || this.rightIterator.hasNext()) {
                     throw new UnexpectedTypeException(
                             "Invalid args. Value comparison can't be performed on sequences with more than 1 items",
                             getMetadata()
                     );
                 }
 
-                this._isValueComparison = true;
-                this._hasNext = true;
+                this.isValueComparison = true;
+                this.hasNext = true;
             }
-        } else if (Arrays.asList(generalComparisonOperators).contains(this._operator)) {
+        } else if (Arrays.asList(generalComparisonOperators).contains(this.operator)) {
             // general comparison always returns a boolean
-            this._hasNext = true;
+            this.hasNext = true;
         }
 
-        this._leftIterator.close();
-        this._rightIterator.close();
+        this.leftIterator.close();
+        this.rightIterator.close();
     }
 
     /**
@@ -171,7 +171,7 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
         }
 
         if (left.isAtomic()) {
-            Item comparisonResult = left.compareItem(right, this._operator, getMetadata());
+            Item comparisonResult = left.compareItem(right, this.operator, getMetadata());
             if (comparisonResult != null)
                 return comparisonResult;
             throw new IteratorFlowException("Unrecognized operator found", getMetadata());

@@ -35,7 +35,7 @@ public class PowFunctionIterator extends LocalFunctionCallIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator _iterator;
+    private RuntimeIterator iterator;
 
     public PowFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -48,20 +48,20 @@ public class PowFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        this._iterator = this._children.get(0);
-        this._iterator.open(this._currentDynamicContextForLocalExecution);
-        this._hasNext = this._iterator.hasNext();
-        this._iterator.close();
+        this.iterator = this.children.get(0);
+        this.iterator.open(this.currentDynamicContextForLocalExecution);
+        this.hasNext = this.iterator.hasNext();
+        this.iterator.close();
     }
 
     @Override
     public Item next() {
-        if (this._hasNext) {
-            Item base = this._iterator.materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
-            Item exponent = this._children.get(1)
-                .materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
+        if (this.hasNext) {
+            Item base = this.iterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+            Item exponent = this.children.get(1)
+                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
             try {
-                this._hasNext = false;
+                this.hasNext = false;
                 return ItemFactory.getInstance()
                     .createDoubleItem(Math.pow(base.castToDoubleValue(), exponent.castToDoubleValue()));
             } catch (IteratorFlowException e) {

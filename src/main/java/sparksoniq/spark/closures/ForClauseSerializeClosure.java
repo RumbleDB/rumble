@@ -36,14 +36,14 @@ public class ForClauseSerializeClosure implements Function<Item, Row> {
 
 
     private static final long serialVersionUID = 1L;
-    private transient Kryo _kryo;
-    private transient Output _output;
+    private transient Kryo kryo;
+    private transient Output output;
 
     public ForClauseSerializeClosure() {
-        this._kryo = new Kryo();
-        this._kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(this._kryo);
-        this._output = new Output(128, -1);
+        this.kryo = new Kryo();
+        this.kryo.setReferences(false);
+        DataFrameUtils.registerKryoClassesKryo(this.kryo);
+        this.output = new Output(128, -1);
     }
 
     /**
@@ -55,7 +55,7 @@ public class ForClauseSerializeClosure implements Function<Item, Row> {
         List<Item> itemList = new ArrayList<>();
         itemList.add(item);
 
-        return RowFactory.create((Object) DataFrameUtils.serializeItemList(itemList, this._kryo, this._output));
+        return RowFactory.create((Object) DataFrameUtils.serializeItemList(itemList, this.kryo, this.output));
     }
 
     private void readObject(java.io.ObjectInputStream in)
@@ -63,9 +63,9 @@ public class ForClauseSerializeClosure implements Function<Item, Row> {
                 ClassNotFoundException {
         in.defaultReadObject();
 
-        this._kryo = new Kryo();
-        this._kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(this._kryo);
-        this._output = new Output(128, -1);
+        this.kryo = new Kryo();
+        this.kryo.setReferences(false);
+        DataFrameUtils.registerKryoClassesKryo(this.kryo);
+        this.output = new Output(128, -1);
     }
 }

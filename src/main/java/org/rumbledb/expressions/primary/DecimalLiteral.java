@@ -30,9 +30,9 @@ public class DecimalLiteral extends PrimaryExpression {
 
     private BigDecimal value;
 
-    public DecimalLiteral(BigDecimal _value, ExceptionMetadata metadata) {
+    public DecimalLiteral(BigDecimal value, ExceptionMetadata metadata) {
         super(metadata);
-        this.value = _value;
+        this.value = value;
     }
 
     public BigDecimal getValue() {

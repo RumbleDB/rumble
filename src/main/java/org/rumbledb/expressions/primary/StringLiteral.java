@@ -30,9 +30,9 @@ public class StringLiteral extends PrimaryExpression {
 
     private String value;
 
-    public StringLiteral(String _value, ExceptionMetadata metadata) {
+    public StringLiteral(String value, ExceptionMetadata metadata) {
         super(metadata);
-        this.value = _value;
+        this.value = value;
     }
 
     public String getValue() {

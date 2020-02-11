@@ -37,7 +37,7 @@ import java.math.BigDecimal;
 public class DoubleItem extends AtomicItem {
 
     private static final long serialVersionUID = 1L;
-    private double _value;
+    private double value;
 
     public DoubleItem() {
         super();
@@ -45,16 +45,16 @@ public class DoubleItem extends AtomicItem {
 
     public DoubleItem(double value) {
         super();
-        this._value = value;
+        this.value = value;
     }
 
     public double getValue() {
-        return this._value;
+        return this.value;
     }
 
     @Override
     public double getDoubleValue() {
-        return this._value;
+        return this.value;
     }
 
     @Override
@@ -132,7 +132,7 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this._value = input.readDouble();
+        this.value = input.readDouble();
     }
 
     public boolean equals(Object otherItem) {

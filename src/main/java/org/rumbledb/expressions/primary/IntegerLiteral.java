@@ -28,9 +28,9 @@ public class IntegerLiteral extends PrimaryExpression {
 
     private int value;
 
-    public IntegerLiteral(int _value, ExceptionMetadata metadata) {
+    public IntegerLiteral(int value, ExceptionMetadata metadata) {
         super(metadata);
-        this.value = _value;
+        this.value = value;
     }
 
     public int getValue() {

@@ -15,15 +15,15 @@ import java.util.ArrayList;
 
 public class KryoManager {
 
-    private static KryoManager _instance;
+    private static KryoManager instance;
     private Pool<Kryo> kryoPool;
     private Pool<Output> outputPool;
     private Pool<Input> inputPool;
 
     public static KryoManager getInstance() {
-        if (_instance == null)
-            _instance = new KryoManager();
-        return _instance;
+        if (instance == null)
+            instance = new KryoManager();
+        return instance;
     }
 
     private KryoManager() {

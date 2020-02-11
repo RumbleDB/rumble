@@ -37,7 +37,7 @@ public class BooleanItem extends AtomicItem {
 
 
     private static final long serialVersionUID = 1L;
-    private boolean _value;
+    private boolean value;
 
     public BooleanItem() {
         super();
@@ -45,11 +45,11 @@ public class BooleanItem extends AtomicItem {
 
     public BooleanItem(boolean value) {
         super();
-        this._value = value;
+        this.value = value;
     }
 
     public boolean getValue() {
-        return this._value;
+        return this.value;
     }
 
     @Override
@@ -109,7 +109,7 @@ public class BooleanItem extends AtomicItem {
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this._value = input.readBoolean();
+        this.value = input.readBoolean();
     }
 
     public boolean equals(Object otherItem) {
