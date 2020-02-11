@@ -13,7 +13,13 @@ import java.io.IOException;
 public class UrlValidator {
 
     public static boolean isValid(String url) {
-        if (url.startsWith("file://") || url.startsWith("/") || url.startsWith("./") || url.startsWith("hdfs://") || url.startsWith("s3://")) {
+        if (
+            url.startsWith("file://")
+                || url.startsWith("/")
+                || url.startsWith("./")
+                || url.startsWith("hdfs://")
+                || url.startsWith("s3://")
+        ) {
             JavaSparkContext sparkContext = SparkSessionManager.getInstance().getJavaSparkContext();
             try {
                 FileSystem fileSystem = FileSystem.get(sparkContext.hadoopConfiguration());
