@@ -57,7 +57,7 @@ import org.rumbledb.expressions.operational.UnaryExpression;
 import org.rumbledb.expressions.postfix.PostFixExpression;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
-import org.rumbledb.expressions.primary.ContextExpression;
+import org.rumbledb.expressions.primary.ContextItemExpression;
 import org.rumbledb.expressions.primary.DecimalLiteralExpression;
 import org.rumbledb.expressions.primary.DoubleLiteralExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
@@ -172,7 +172,7 @@ public abstract class AbstractNodeVisitor<T> {
         return defaultAction(expression, argument);
     }
 
-    public T visitContextExpr(ContextExpression expression, T argument) {
+    public T visitContextExpr(ContextItemExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 

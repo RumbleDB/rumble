@@ -76,7 +76,7 @@ import org.rumbledb.expressions.postfix.extensions.ObjectLookupExtension;
 import org.rumbledb.expressions.postfix.extensions.PostfixExtension;
 import org.rumbledb.expressions.postfix.extensions.PredicateExtension;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
-import org.rumbledb.expressions.primary.ContextExpression;
+import org.rumbledb.expressions.primary.ContextItemExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.FunctionDeclaration;
 import org.rumbledb.expressions.primary.IntegerLiteralExpression;
@@ -108,12 +108,12 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
     private MainModule mainModule;
 
     private Expression currentExpression;
+    private Expression otherCurrentExpression;
+
     private PrimaryExpression currentPrimaryExpression;
     private PostfixExtension currentPostFixExtension;
     private FlworClause currentFlworClause;
 
-    private Expression intermediateResult1;
-    private Expression intermediateResult2;
 
     public JsoniqExpressionTreeVisitor() {
     }
@@ -933,8 +933,8 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
             List<Expression> values = new ArrayList<>();
             for (JsoniqParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
                 this.visitPairConstructor(currentPair);
-                keys.add(this.intermediateResult1);
-                values.add(this.intermediateResult2);
+                keys.add(this.currentExpression);
+                values.add(this.otherCurrentExpression);
             }
             node = new ObjectConstructorExpression(keys, values, createMetadataFromContext(ctx));
         } else {
@@ -960,8 +960,8 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
         } else {
             lhs = new StringLiteralExpression(ctx.name.getText(), createMetadataFromContext(ctx));
         }
-        this.intermediateResult1 = lhs;
-        this.intermediateResult2 = rhs;
+        this.currentExpression = lhs;
+        this.otherCurrentExpression = rhs;
         return null;
 
     }
@@ -1010,7 +1010,7 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
 
     @Override
     public Void visitContextItemExpr(JsoniqParser.ContextItemExprContext ctx) {
-        this.currentPrimaryExpression = new ContextExpression(createMetadataFromContext(ctx));
+        this.currentPrimaryExpression = new ContextItemExpression(createMetadataFromContext(ctx));
         return null;
     }
 

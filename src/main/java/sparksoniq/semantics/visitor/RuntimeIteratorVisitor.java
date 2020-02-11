@@ -69,7 +69,7 @@ import org.rumbledb.expressions.postfix.extensions.PostfixExtension;
 import org.rumbledb.expressions.postfix.extensions.PredicateExtension;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
-import org.rumbledb.expressions.primary.ContextExpression;
+import org.rumbledb.expressions.primary.ContextItemExpression;
 import org.rumbledb.expressions.primary.DecimalLiteralExpression;
 import org.rumbledb.expressions.primary.DoubleLiteralExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
@@ -479,7 +479,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     }
 
     @Override
-    public RuntimeIterator visitContextExpr(ContextExpression expression, RuntimeIterator argument) {
+    public RuntimeIterator visitContextExpr(ContextItemExpression expression, RuntimeIterator argument) {
         return new ContextExpressionIterator(expression.getHighestExecutionMode(), expression.getMetadata());
     }
 
