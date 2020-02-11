@@ -142,6 +142,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator> {
 
@@ -449,25 +450,15 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     public RuntimeIterator visitObjectConstructor(ObjectConstructorExpression expression, RuntimeIterator argument) {
         RuntimeIterator iterator;
         if (expression.isMergedConstructor()) {
-            List<RuntimeIterator> childExpressions = new ArrayList<>();
-            for (Expression child : expression.getChildExpression().getExpressions()) {
-                childExpressions.add((this.visit(child, argument)));
-            }
             iterator = new ObjectConstructorRuntimeIterator(
-                    childExpressions,
+            		expression.getChildren().stream().map(arg -> this.visit(arg, argument)).collect(Collectors.toList()),
                     expression.getHighestExecutionMode(),
                     expression.getMetadata()
             );
             return iterator;
         } else {
-            List<RuntimeIterator> keys = new ArrayList<>();
-            List<RuntimeIterator> values = new ArrayList<>();
-            for (Expression key : expression.getKeys()) {
-                keys.add(this.visit(key, argument));
-            }
-            for (Expression value : expression.getValues()) {
-                values.add(this.visit(value, argument));
-            }
+            List<RuntimeIterator> keys = expression.getKeys().stream().map(arg -> this.visit(arg, argument)).collect(Collectors.toList());
+            List<RuntimeIterator> values = expression.getValues().stream().map(arg -> this.visit(arg, argument)).collect(Collectors.toList());
             iterator = new ObjectConstructorRuntimeIterator(
                     keys,
                     values,

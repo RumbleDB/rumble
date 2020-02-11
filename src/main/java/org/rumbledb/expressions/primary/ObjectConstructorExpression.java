@@ -35,7 +35,7 @@ public class ObjectConstructorExpression extends PrimaryExpression {
     private boolean isMergedConstructor = false;
     private List<Expression> values;
     private List<Expression> keys;
-    private CommaExpression childExpression;
+    private Expression childExpression;
 
     public ObjectConstructorExpression(
             List<Expression> keys,
@@ -47,7 +47,7 @@ public class ObjectConstructorExpression extends PrimaryExpression {
         this.values = values;
     }
 
-    public ObjectConstructorExpression(CommaExpression expression, ExceptionMetadata metadata) {
+    public ObjectConstructorExpression(Expression expression, ExceptionMetadata metadata) {
         super(metadata);
         this.childExpression = expression;
         this.isMergedConstructor = true;
@@ -63,10 +63,6 @@ public class ObjectConstructorExpression extends PrimaryExpression {
 
     public boolean isMergedConstructor() {
         return this.isMergedConstructor;
-    }
-
-    public CommaExpression getChildExpression() {
-        return this.childExpression;
     }
 
     @Override
