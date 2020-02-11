@@ -545,7 +545,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     }
 
     @Override
-    public RuntimeIterator visitNamedFunctionRef(NamedFunctionReferenceExpression expression, RuntimeIterator argument) {
+    public RuntimeIterator visitNamedFunctionRef(
+            NamedFunctionReferenceExpression expression,
+            RuntimeIterator argument
+    ) {
         FunctionIdentifier identifier = expression.getIdentifier();
         if (Functions.checkBuiltInFunctionExists(identifier)) {
             throw new UnsupportedFeatureException(
