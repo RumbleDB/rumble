@@ -42,11 +42,17 @@ public class ObjectLookupExtension extends PostfixExtension {
     }
 
     @Override
-    public List<Node> getDescendants(boolean depthSearch) {
+    public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
+<<<<<<< HEAD
         if (this.expression != null) // field
             result.add(this.expression); // field
         return getDescendantsFromChildren(result, depthSearch);
+=======
+        if (this._expression != null) // field
+            result.add(this._expression); // field
+        return result;
+>>>>>>> c94fc8ddae10d0d8652a240536e13bdcdb7fce0d
     }
 
     @Override

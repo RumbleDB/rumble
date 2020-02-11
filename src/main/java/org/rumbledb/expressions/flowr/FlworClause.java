@@ -20,18 +20,23 @@
 
 package org.rumbledb.expressions.flowr;
 
+<<<<<<< HEAD
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Node;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
+=======
+import org.rumbledb.expressions.Node;
+import org.rumbledb.exceptions.ExceptionMetadata;
+>>>>>>> c94fc8ddae10d0d8652a240536e13bdcdb7fce0d
 
 /**
  * GRAMMAR:flowrExpression
  */
 
-public class FlworClause extends Node {
+public abstract class FlworClause extends Node {
 
     protected FlworClause previousClause;
     protected FLWOR_CLAUSES clauseType;
@@ -60,16 +65,6 @@ public class FlworClause extends Node {
     @Override
     public void initHighestExecutionMode() {
         this.highestExecutionMode = this.previousClause.getHighestExecutionMode();
-    }
-
-    @Override
-    public List<Node> getDescendants(boolean depthSearch) {
-        return new ArrayList<>();
-    }
-
-    @Override
-    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        return visitor.visitDescendants(this, argument);
     }
 
     @Override

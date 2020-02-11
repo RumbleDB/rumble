@@ -71,9 +71,9 @@ public class FunctionDeclaration extends PrimaryExpression {
     }
 
     @Override
-    public List<Node> getDescendants(boolean depthSearch) {
+    public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        return getDescendantsFromChildren(result, depthSearch);
+        return result;
     }
 
     public void registerUserDefinedFunctionExecutionMode(

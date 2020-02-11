@@ -64,11 +64,11 @@ public abstract class BinaryExpressionBase extends OperationalExpressionBase {
     }
 
     @Override
-    public List<Node> getDescendants(boolean depthSearch) {
+    public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         result.add(this._mainExpression);
         if (this.rightExpression != null)
             result.add(this.rightExpression);
-        return getDescendantsFromChildren(result, depthSearch);
+        return result;
     }
 }

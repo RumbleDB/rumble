@@ -49,14 +49,23 @@ public class TypeSwitchExpression extends Expression {
     }
 
     @Override
-    public List<Node> getDescendants(boolean depthSearch) {
+    public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
+<<<<<<< HEAD
         result.add(this.testCondition);
         result.addAll(this.cases);
         result.add(this.defaultExpression);
         if (this.varRefDefault != null)
             result.add(this.varRefDefault);
         return getDescendantsFromChildren(result, depthSearch);
+=======
+        result.add(testCondition);
+        result.addAll(cases);
+        result.add(defaultExpression);
+        if (varRefDefault != null)
+            result.add(varRefDefault);
+        return result;
+>>>>>>> c94fc8ddae10d0d8652a240536e13bdcdb7fce0d
     }
 
     @Override

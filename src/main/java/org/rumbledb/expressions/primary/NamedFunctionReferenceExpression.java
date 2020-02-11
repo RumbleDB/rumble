@@ -29,6 +29,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 
+<<<<<<< HEAD:src/main/java/org/rumbledb/expressions/primary/NamedFunctionReferenceExpression.java
+=======
+import org.rumbledb.expressions.Node;
+
+import org.rumbledb.exceptions.ExceptionMetadata;
+
+>>>>>>> c94fc8ddae10d0d8652a240536e13bdcdb7fce0d:src/main/java/org/rumbledb/expressions/primary/NamedFunctionRef.java
 
 public class NamedFunctionReferenceExpression extends PrimaryExpression {
 
@@ -44,9 +51,9 @@ public class NamedFunctionReferenceExpression extends PrimaryExpression {
     }
 
     @Override
-    public List<Node> getDescendants(boolean depthSearch) {
+    public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        return getDescendantsFromChildren(result, depthSearch);
+        return result;
     }
 
     @Override

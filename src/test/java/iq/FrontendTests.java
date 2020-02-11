@@ -186,10 +186,16 @@ public class FrontendTests extends AnnotationsTestsBase {
     private void testVariableTypes(File testFile, JsoniqExpressionTreeVisitor visitor) {
 
         List<Node> vars = visitor.getMainModule()
+<<<<<<< HEAD
             .getDescendantsOfType(
                 d -> d instanceof VariableReferenceExpression
                     && ((VariableReferenceExpression) d).getVariableName().equals("var"),
                 true
+=======
+            .getDescendantsMatching(
+                d -> d instanceof VariableReference
+                    && ((VariableReference) d).getVariableName().equals("var")
+>>>>>>> c94fc8ddae10d0d8652a240536e13bdcdb7fce0d
             );
         vars.forEach(
             var -> Assert.assertTrue(
@@ -198,10 +204,16 @@ public class FrontendTests extends AnnotationsTestsBase {
         );
 
         List<Node> js = visitor.getMainModule()
+<<<<<<< HEAD
             .getDescendantsOfType(
                 d -> d instanceof VariableReferenceExpression
                     && ((VariableReferenceExpression) d).getVariableName().equals("j"),
                 true
+=======
+            .getDescendantsMatching(
+                d -> d instanceof VariableReference
+                    && ((VariableReference) d).getVariableName().equals("j")
+>>>>>>> c94fc8ddae10d0d8652a240536e13bdcdb7fce0d
             );
         js.forEach(
             j -> Assert.assertTrue(
@@ -212,10 +224,16 @@ public class FrontendTests extends AnnotationsTestsBase {
         );
 
         List<Node> internals = visitor.getMainModule()
+<<<<<<< HEAD
             .getDescendantsOfType(
                 d -> d instanceof VariableReferenceExpression
                     && ((VariableReferenceExpression) d).getVariableName().equals("internal"),
                 true
+=======
+            .getDescendantsMatching(
+                d -> d instanceof VariableReference
+                    && ((VariableReference) d).getVariableName().equals("internal")
+>>>>>>> c94fc8ddae10d0d8652a240536e13bdcdb7fce0d
             );
         internals.forEach(
             j -> Assert.assertTrue(
@@ -224,10 +242,16 @@ public class FrontendTests extends AnnotationsTestsBase {
         );
 
         List<Node> arry = visitor.getMainModule()
+<<<<<<< HEAD
             .getDescendantsOfType(
                 d -> d instanceof VariableReferenceExpression
                     && ((VariableReferenceExpression) d).getVariableName().equals("arry"),
                 true
+=======
+            .getDescendantsMatching(
+                d -> d instanceof VariableReference
+                    && ((VariableReference) d).getVariableName().equals("arry")
+>>>>>>> c94fc8ddae10d0d8652a240536e13bdcdb7fce0d
             );
         arry.forEach(
             j -> Assert.assertTrue(

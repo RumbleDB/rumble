@@ -42,14 +42,14 @@ public class CommaExpression extends Expression {
     }
 
     @Override
-    public List<Node> getDescendants(boolean depthSearch) {
+    public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         if (this._expressions != null)
             this._expressions.forEach(e -> {
                 if (e != null)
                     result.add(e);
             });
-        return getDescendantsFromChildren(result, depthSearch);
+        return result;
     }
 
     private boolean bypassCurrentExpressionForExecutionModeOperations() {

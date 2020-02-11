@@ -189,12 +189,15 @@ public abstract class OperationalExpressionBase extends Expression {
     }
 
     @Override
-    public List<Node> getDescendants(boolean depthSearch) {
+    public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         if (this._mainExpression != null)
             result.add(this._mainExpression);
+<<<<<<< HEAD
         if (depthSearch && this._mainExpression != null)
             result.addAll(this._mainExpression.getDescendants(depthSearch));
+=======
+>>>>>>> c94fc8ddae10d0d8652a240536e13bdcdb7fce0d
         return result;
     }
 

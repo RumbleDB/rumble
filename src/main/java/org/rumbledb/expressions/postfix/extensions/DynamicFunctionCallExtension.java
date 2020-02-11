@@ -42,11 +42,11 @@ public class DynamicFunctionCallExtension extends PostfixExtension {
     }
 
     @Override
-    public List<Node> getDescendants(boolean depthSearch) {
+    public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         if (this._arguments != null)
             result.addAll(this._arguments);
-        return getDescendantsFromChildren(result, depthSearch);
+        return result;
     }
 
     /**

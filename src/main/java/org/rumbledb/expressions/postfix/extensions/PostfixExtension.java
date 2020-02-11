@@ -30,6 +30,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 
+<<<<<<< HEAD
+=======
+import org.rumbledb.expressions.Node;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.postfix.PostFixExpression;
+
+
+>>>>>>> c94fc8ddae10d0d8652a240536e13bdcdb7fce0d
 public abstract class PostfixExtension extends Node {
 
     private PostFixExpression parent;
@@ -56,7 +64,7 @@ public abstract class PostfixExtension extends Node {
     }
 
     @Override
-    public List<Node> getDescendants(boolean depthSearch) {
+    public List<Node> getChildren() {
         return new ArrayList<>();
     }
 

@@ -7,22 +7,23 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SparksoniqRuntimeException;
 import sparksoniq.spark.SparkSessionManager;
 
-import java.io.File;
 import java.io.IOException;
 
 public class UrlValidator {
 
     public static boolean isValid(String url) {
-        if (url.startsWith("file://") || url.startsWith("/") || url.startsWith("./")) {
-            File f = new File(url);
-            return f.exists();
-        }
-        if (url.startsWith("hdfs://")) {
+        if (
+            url.startsWith("file://")
+                || url.startsWith("/")
+                || url.startsWith("./")
+                || url.startsWith("hdfs://")
+                || url.startsWith("s3://")
+        ) {
             JavaSparkContext sparkContext = SparkSessionManager.getInstance().getJavaSparkContext();
             try {
                 FileSystem fileSystem = FileSystem.get(sparkContext.hadoopConfiguration());
-                Path path = new Path(sparkContext.getConf().get(url));
-                return fileSystem.exists(path);
+                Path path = new Path(url);
+                return url.contains("*") || fileSystem.exists(path);
             } catch (IOException e) {
                 throw new SparksoniqRuntimeException("Error while accessing hadoop filesystem.");
             }

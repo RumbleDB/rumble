@@ -38,8 +38,13 @@ public class CountClause extends FlworClause {
     }
 
     @Override
+<<<<<<< HEAD
     public List<Node> getDescendants(boolean depthSearch) {
         return getDescendantsFromChildren(Collections.singletonList(this.countClauseVar), depthSearch);
+=======
+    public List<Node> getChildren() {
+        return Collections.singletonList(countClauseVar);
+>>>>>>> c94fc8ddae10d0d8652a240536e13bdcdb7fce0d
     }
 
     @Override

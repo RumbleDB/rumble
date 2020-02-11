@@ -42,15 +42,20 @@ public class TypeSwitchCaseExpression extends Expression {
     }
 
     @Override
-    public List<Node> getDescendants(boolean depthSearch) {
+    public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         if (this.variableReferenceNode != null)
             result.add(this.variableReferenceNode);
         if (this.union != null && !this.union.isEmpty())
             result.addAll(this.union);
         if (this.returnExpression != null)
+<<<<<<< HEAD
             result.add(this.returnExpression);
         return getDescendantsFromChildren(result, depthSearch);
+=======
+            result.add(returnExpression);
+        return result;
+>>>>>>> c94fc8ddae10d0d8652a240536e13bdcdb7fce0d
     }
 
     @Override

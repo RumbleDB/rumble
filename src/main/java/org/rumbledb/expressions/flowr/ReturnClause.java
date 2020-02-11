@@ -52,11 +52,17 @@ public class ReturnClause extends FlworClause {
     }
 
     @Override
-    public List<Node> getDescendants(boolean depthSearch) {
+    public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
+<<<<<<< HEAD
         if (this.returnExpr != null)
             result.add(this.returnExpr);
         return getDescendantsFromChildren(result, depthSearch);
+=======
+        if (returnExpr != null)
+            result.add(returnExpr);
+        return result;
+>>>>>>> c94fc8ddae10d0d8652a240536e13bdcdb7fce0d
     }
 
     @Override

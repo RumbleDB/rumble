@@ -25,10 +25,14 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
+<<<<<<< HEAD
 import java.util.ArrayList;
 import java.util.List;
 
 public class NaryExpressionBase extends OperationalExpressionBase {
+=======
+public abstract class NaryExpressionBase extends OperationalExpressionBase {
+>>>>>>> c94fc8ddae10d0d8652a240536e13bdcdb7fce0d
 
     private List<Expression> _rightExpressions;
 
@@ -79,7 +83,7 @@ public class NaryExpressionBase extends OperationalExpressionBase {
     }
 
     @Override
-    public List<Node> getDescendants(boolean depthSearch) {
+    public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         result.add(this._mainExpression);
         if (this._rightExpressions != null)
@@ -87,7 +91,7 @@ public class NaryExpressionBase extends OperationalExpressionBase {
                 if (e != null)
                     result.add(e);
             });
-        return getDescendantsFromChildren(result, depthSearch);
+        return result;
     }
 
 

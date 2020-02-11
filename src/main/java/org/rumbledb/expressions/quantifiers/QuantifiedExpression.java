@@ -60,15 +60,20 @@ public class QuantifiedExpression extends Expression {
     }
 
     @Override
-    public List<Node> getDescendants(boolean depthSearch) {
+    public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         if (this._variables != null)
             this._variables.forEach(e -> {
                 if (e != null)
                     result.add(e);
             });
+<<<<<<< HEAD
         result.add(this.expression);
         return getDescendantsFromChildren(result, depthSearch);
+=======
+        result.add(_expression);
+        return result;
+>>>>>>> c94fc8ddae10d0d8652a240536e13bdcdb7fce0d
     }
 
     @Override

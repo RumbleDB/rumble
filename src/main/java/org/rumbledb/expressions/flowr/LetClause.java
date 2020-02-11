@@ -62,13 +62,13 @@ public class LetClause extends FlworClause {
     }
 
     @Override
-    public List<Node> getDescendants(boolean depthSearch) {
+    public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         this.letVars.forEach(e -> {
             if (e != null)
                 result.add(e);
         });
-        return getDescendantsFromChildren(result, depthSearch);
+        return result;
     }
 
     @Override

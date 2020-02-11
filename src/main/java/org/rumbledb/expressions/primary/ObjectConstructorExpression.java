@@ -70,14 +70,19 @@ public class ObjectConstructorExpression extends PrimaryExpression {
     }
 
     @Override
-    public List<Node> getDescendants(boolean depthSearch) {
+    public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         if (!this.isMergedConstructor) {
             result.addAll(this._keys);
             result.addAll(this._values);
         } else
+<<<<<<< HEAD:src/main/java/org/rumbledb/expressions/primary/ObjectConstructorExpression.java
             result.add(this.childExpression);
         return getDescendantsFromChildren(result, depthSearch);
+=======
+            result.add(childExpression);
+        return result;
+>>>>>>> c94fc8ddae10d0d8652a240536e13bdcdb7fce0d:src/main/java/org/rumbledb/expressions/primary/ObjectConstructor.java
     }
 
     @Override

@@ -91,13 +91,18 @@ public abstract class FlworVarDecl extends FlworClause {
     }
 
     @Override
-    public List<Node> getDescendants(boolean depthSearch) {
+    public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         result.add(this.variableReferenceNode);
         if (this.asSequence != null)
             result.add(this.asSequence);
         if (this.expression != null)
+<<<<<<< HEAD
             result.add(this.expression);
         return getDescendantsFromChildren(result, depthSearch);
+=======
+            result.add(expression);
+        return result;
+>>>>>>> c94fc8ddae10d0d8652a240536e13bdcdb7fce0d
     }
 }

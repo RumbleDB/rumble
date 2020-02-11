@@ -28,6 +28,7 @@ import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.types.SequenceType;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -79,12 +80,18 @@ public class ForClauseVar extends FlworVarDecl {
     }
 
     @Override
-    public List<Node> getDescendants(boolean depthSearch) {
-        List<Node> result = super.getDescendants(depthSearch);
+    public List<Node> getChildren() {
+        List<Node> result = new ArrayList<>();
 
+<<<<<<< HEAD
         if (this.positionalVariableReference != null)
             result.add(this.positionalVariableReference);
         return getDescendantsFromChildren(result, depthSearch);
+=======
+        if (positionalVariableReference != null)
+            result.add(positionalVariableReference);
+        return result;
+>>>>>>> c94fc8ddae10d0d8652a240536e13bdcdb7fce0d
     }
 
     @Override
