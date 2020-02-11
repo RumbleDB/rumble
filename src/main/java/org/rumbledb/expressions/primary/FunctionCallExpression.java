@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class FunctionCallExpression extends PrimaryExpression {
 
@@ -61,7 +62,7 @@ public class FunctionCallExpression extends PrimaryExpression {
 
     @Override
     public List<Node> getChildren() {
-        List<Node> result = new ArrayList<>(this.arguments);
+        List<Node> result = this.arguments.stream().filter(arg -> arg != null).collect(Collectors.toList());
         return result;
     }
 
