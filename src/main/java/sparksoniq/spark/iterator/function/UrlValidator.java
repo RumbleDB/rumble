@@ -8,7 +8,6 @@ import org.rumbledb.exceptions.SparksoniqRuntimeException;
 
 import sparksoniq.spark.SparkSessionManager;
 
-import java.io.File;
 import java.io.IOException;
 
 public class UrlValidator {
