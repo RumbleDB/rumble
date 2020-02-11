@@ -46,7 +46,7 @@ public class TypeSwitchCaseExpression extends Expression {
     }
 
     @Override
-    public List<Node> getDescendants(boolean depthSearch) {
+    public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         if (variableReferenceNode != null)
             result.add(variableReferenceNode);
@@ -54,7 +54,7 @@ public class TypeSwitchCaseExpression extends Expression {
             result.addAll(union);
         if (this.returnExpression != null)
             result.add(returnExpression);
-        return getDescendantsFromChildren(result, depthSearch);
+        return result;
     }
 
     @Override

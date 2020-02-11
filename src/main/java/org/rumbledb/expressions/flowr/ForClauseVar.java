@@ -24,6 +24,7 @@ import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.types.SequenceType;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -80,12 +81,12 @@ public class ForClauseVar extends FlworVarDecl {
     }
 
     @Override
-    public List<Node> getDescendants(boolean depthSearch) {
-        List<Node> result = super.getDescendants(depthSearch);
+    public List<Node> getChildren() {
+        List<Node> result = new ArrayList<>();
 
         if (positionalVariableReference != null)
             result.add(positionalVariableReference);
-        return getDescendantsFromChildren(result, depthSearch);
+        return result;
     }
 
     @Override

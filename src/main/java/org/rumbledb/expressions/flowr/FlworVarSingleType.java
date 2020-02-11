@@ -2,6 +2,7 @@ package org.rumbledb.expressions.flowr;
 
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.SingleType;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -79,8 +80,15 @@ public class FlworVarSingleType extends Expression {
     }
 
     @Override
-    public List<Node> getDescendants(boolean depthSearch) {
+    public List<Node> getChildren() {
         return new ArrayList<>();
+    }
+
+    @Override
+    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
+        // TO this class should not be an expression.
+        // nothing to do as no children
+        return argument;
     }
 
     @Override

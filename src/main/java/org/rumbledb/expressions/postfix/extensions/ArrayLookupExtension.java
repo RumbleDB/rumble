@@ -42,11 +42,11 @@ public class ArrayLookupExtension extends PostfixExtension {
     }
 
     @Override
-    public List<Node> getDescendants(boolean depthSearch) {
+    public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         if (this._expression != null)
             result.add(this._expression);
-        return getDescendantsFromChildren(result, depthSearch);
+        return result;
     }
 
     @Override

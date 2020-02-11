@@ -65,13 +65,13 @@ public class ForClause extends FlworClause {
     }
 
     @Override
-    public List<Node> getDescendants(boolean depthSearch) {
+    public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         forVariables.forEach(e -> {
             if (e != null)
                 result.add(e);
         });
-        return getDescendantsFromChildren(result, depthSearch);
+        return result;
     }
 
     @Override

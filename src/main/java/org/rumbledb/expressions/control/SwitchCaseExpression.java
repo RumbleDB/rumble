@@ -49,11 +49,11 @@ public class SwitchCaseExpression extends Expression {
     }
 
     @Override
-    public List<Node> getDescendants(boolean depthSearch) {
+    public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         result.add(condition);
         result.add(returnExpression);
-        return getDescendantsFromChildren(result, depthSearch);
+        return result;
     }
 
     public Expression getReturnExpression() {

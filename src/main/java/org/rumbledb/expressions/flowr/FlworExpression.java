@@ -89,7 +89,7 @@ public class FlworExpression extends Expression {
         return this._returnClause.getHighestExecutionMode(ignoreUnsetError);
     }
 
-    public List<Node> getDescendants(boolean depthSearch) {
+    public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         result.add(_startClause);
         if (_contentClauses != null)
@@ -98,7 +98,7 @@ public class FlworExpression extends Expression {
                     result.add(e);
             });
         result.add(_returnClause);
-        return getDescendantsFromChildren(result, depthSearch);
+        return result;
     }
 
     @Override
