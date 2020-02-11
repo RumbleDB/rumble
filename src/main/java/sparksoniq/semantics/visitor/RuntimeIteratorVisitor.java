@@ -451,14 +451,23 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator iterator;
         if (expression.isMergedConstructor()) {
             iterator = new ObjectConstructorRuntimeIterator(
-            		expression.getChildren().stream().map(arg -> this.visit(arg, argument)).collect(Collectors.toList()),
+                    expression.getChildren()
+                        .stream()
+                        .map(arg -> this.visit(arg, argument))
+                        .collect(Collectors.toList()),
                     expression.getHighestExecutionMode(),
                     expression.getMetadata()
             );
             return iterator;
         } else {
-            List<RuntimeIterator> keys = expression.getKeys().stream().map(arg -> this.visit(arg, argument)).collect(Collectors.toList());
-            List<RuntimeIterator> values = expression.getValues().stream().map(arg -> this.visit(arg, argument)).collect(Collectors.toList());
+            List<RuntimeIterator> keys = expression.getKeys()
+                .stream()
+                .map(arg -> this.visit(arg, argument))
+                .collect(Collectors.toList());
+            List<RuntimeIterator> values = expression.getValues()
+                .stream()
+                .map(arg -> this.visit(arg, argument))
+                .collect(Collectors.toList());
             iterator = new ObjectConstructorRuntimeIterator(
                     keys,
                     values,
