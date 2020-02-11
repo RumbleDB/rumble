@@ -33,8 +33,8 @@ import java.util.List;
 public class ObjectConstructorExpression extends PrimaryExpression {
 
     private boolean isMergedConstructor = false;
-    private List<Expression> _values;
-    private List<Expression> _keys;
+    private List<Expression> values;
+    private List<Expression> keys;
     private CommaExpression childExpression;
 
     public ObjectConstructorExpression(
@@ -43,8 +43,8 @@ public class ObjectConstructorExpression extends PrimaryExpression {
             ExceptionMetadata metadata
     ) {
         super(metadata);
-        this._keys = keys;
-        this._values = values;
+        this.keys = keys;
+        this.values = values;
     }
 
     public ObjectConstructorExpression(CommaExpression expression, ExceptionMetadata metadata) {
@@ -54,11 +54,11 @@ public class ObjectConstructorExpression extends PrimaryExpression {
     }
 
     public List<Expression> getKeys() {
-        return this._keys;
+        return this.keys;
     }
 
     public List<Expression> getValues() {
-        return this._values;
+        return this.values;
     }
 
     public boolean isMergedConstructor() {
@@ -73,8 +73,8 @@ public class ObjectConstructorExpression extends PrimaryExpression {
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         if (!this.isMergedConstructor) {
-            result.addAll(this._keys);
-            result.addAll(this._values);
+            result.addAll(this.keys);
+            result.addAll(this.values);
         } else
             result.add(this.childExpression);
         return result;
@@ -91,13 +91,13 @@ public class ObjectConstructorExpression extends PrimaryExpression {
         builder.append("(primaryExpr (objectConstructor {");
         if (!this.isMergedConstructor) {
             builder.append(" ");
-            for (Expression key : this._keys) {
+            for (Expression key : this.keys) {
                 builder.append("(pairConstructor (exprSingle ");
                 builder.append(key.serializationString(false));
                 builder.append(") : (exprSingle ");
-                builder.append(this._values.get(this._keys.indexOf(key)).serializationString(false));
+                builder.append(this.values.get(this.keys.indexOf(key)).serializationString(false));
                 builder.append("))");
-                builder.append((this._keys.indexOf(key) < this._keys.size() - 1 ? " , " : " "));
+                builder.append((this.keys.indexOf(key) < this.keys.size() - 1 ? " , " : " "));
             }
         } else {
             builder.append("| " + this.childExpression.serializationString(prefix) + " |");
