@@ -24,7 +24,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.primary.VariableReference;
+import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.types.SequenceType;
 
@@ -33,7 +33,7 @@ import java.util.List;
 
 public abstract class FlworVarDecl extends FlworClause {
 
-    protected VariableReference variableReferenceNode;
+    protected VariableReferenceExpression variableReferenceNode;
     protected Expression expression;
 
     // asSequence is null by default if the type of the variable in the for/let/groupBy clause is not specified.
@@ -48,7 +48,7 @@ public abstract class FlworVarDecl extends FlworClause {
 
     public FlworVarDecl(
             FLWOR_CLAUSES forVar,
-            VariableReference varRef,
+            VariableReferenceExpression varRef,
             FlworVarSequenceType seq,
             Expression expression,
             ExceptionMetadata metadata
@@ -67,7 +67,7 @@ public abstract class FlworVarDecl extends FlworClause {
             this.variableReferenceNode.setType(this.asSequence.getSequence());
     }
 
-    public VariableReference getVariableReference() {
+    public VariableReferenceExpression getVariableReference() {
         return this.variableReferenceNode;
     }
 

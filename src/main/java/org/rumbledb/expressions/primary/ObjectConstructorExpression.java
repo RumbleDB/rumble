@@ -30,14 +30,14 @@ import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ObjectConstructor extends PrimaryExpression {
+public class ObjectConstructorExpression extends PrimaryExpression {
 
     private boolean isMergedConstructor = false;
     private List<Expression> _values;
     private List<Expression> _keys;
     private CommaExpression childExpression;
 
-    public ObjectConstructor(
+    public ObjectConstructorExpression(
             List<Expression> keys,
             List<Expression> values,
             ExceptionMetadata metadata
@@ -47,7 +47,7 @@ public class ObjectConstructor extends PrimaryExpression {
         this._values = values;
     }
 
-    public ObjectConstructor(CommaExpression expression, ExceptionMetadata metadata) {
+    public ObjectConstructorExpression(CommaExpression expression, ExceptionMetadata metadata) {
         super(metadata);
         this.childExpression = expression;
         this.isMergedConstructor = true;
@@ -87,52 +87,23 @@ public class ObjectConstructor extends PrimaryExpression {
 
     @Override
     public String serializationString(boolean prefix) {
-        String result = "(primaryExpr (objectConstructor {";
+        StringBuilder builder = new StringBuilder();
+        builder.append("(primaryExpr (objectConstructor {");
         if (!this.isMergedConstructor) {
-            result += " ";
-            for (Expression key : this._keys)
-                result += new PairConstructor(key, this._values.get(this._keys.indexOf(key)), key.getMetadata())
-                    .serializationString(true)
-                    + (this._keys.indexOf(key) < this._keys.size() - 1 ? " , " : " ");
-        } else
-            result += "| " + this.childExpression.serializationString(prefix) + " |";
-        result += "}))";
-        return result;
-
+            builder.append(" ");
+            for (Expression key : this._keys) {
+                builder.append("(pairConstructor (exprSingle ");
+                builder.append(key.serializationString(false));
+                builder.append(") : (exprSingle ");
+                builder.append(this._values.get(this._keys.indexOf(key)).serializationString(false));
+                builder.append("))");
+                builder.append((this._keys.indexOf(key) < this._keys.size() - 1 ? " , " : " "));
+            }
+        } else {
+            builder.append("| " + this.childExpression.serializationString(prefix) + " |");
+        }
+        builder.append("}))");
+        return builder.toString();
     }
-
-    public static class PairConstructor extends PrimaryExpression {
-
-        private Expression _key;
-        private Expression _value;
-
-        public PairConstructor(Expression key, Expression value, ExceptionMetadata metadata) {
-            super(metadata);
-            this._key = key;
-            this._value = value;
-        }
-
-        public Expression get_key() {
-            return this._key;
-        }
-
-        public Expression get_value() {
-            return this._value;
-        }
-
-        @Override
-        public String serializationString(boolean prefix) {
-            String result = "(pairConstructor (exprSingle "
-                + this._key.serializationString(false)
-                + ") : (exprSingle "
-                + this._value.serializationString(false);
-            result += "))";
-            return result;
-
-        }
-
-
-    }
-
 
 }

@@ -5,7 +5,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.flowr.FlworVarSequenceType;
-import org.rumbledb.expressions.primary.VariableReference;
+import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.ArrayList;
@@ -13,12 +13,12 @@ import java.util.List;
 
 public class TypeSwitchCaseExpression extends Expression {
 
-    private VariableReference variableReferenceNode;
+    private VariableReferenceExpression variableReferenceNode;
     private List<FlworVarSequenceType> union = new ArrayList<>();
     private final Expression returnExpression;
 
     public TypeSwitchCaseExpression(
-            VariableReference var,
+            VariableReferenceExpression var,
             List<FlworVarSequenceType> union,
             Expression returnExpression,
             ExceptionMetadata metadataFromContext
@@ -29,7 +29,7 @@ public class TypeSwitchCaseExpression extends Expression {
         this.returnExpression = returnExpression;
     }
 
-    public VariableReference getVariableReference() {
+    public VariableReferenceExpression getVariableReference() {
         return this.variableReferenceNode;
     }
 

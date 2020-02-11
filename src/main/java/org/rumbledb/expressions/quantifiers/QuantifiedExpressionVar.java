@@ -23,7 +23,7 @@ package org.rumbledb.expressions.quantifiers;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.primary.VariableReference;
+import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import sparksoniq.semantics.types.SequenceType;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
@@ -31,12 +31,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class QuantifiedExpressionVar extends Node {
-    private final VariableReference _variableReference;
+    private final VariableReferenceExpression _variableReference;
     private final Expression expression;
     private final SequenceType sequenceType;
 
     public QuantifiedExpressionVar(
-            VariableReference varRef,
+            VariableReferenceExpression varRef,
             Expression varExpression,
             SequenceType sequenceType,
             ExceptionMetadata metadata
@@ -51,7 +51,7 @@ public class QuantifiedExpressionVar extends Node {
         return this.expression;
     }
 
-    public VariableReference getVariableReference() {
+    public VariableReferenceExpression getVariableReference() {
 
         return this._variableReference;
     }

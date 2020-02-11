@@ -25,7 +25,7 @@ import iq.base.AnnotationsTestsBase;
 import org.junit.Assert;
 import org.junit.Test;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.primary.VariableReference;
+import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.parser.JsoniqBaseVisitor;
 import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
 import sparksoniq.semantics.types.ItemTypes;
@@ -187,51 +187,51 @@ public class FrontendTests extends AnnotationsTestsBase {
 
         List<Node> vars = visitor.getMainModule()
             .getDescendantsOfType(
-                d -> d instanceof VariableReference
-                    && ((VariableReference) d).getVariableName().equals("var"),
+                d -> d instanceof VariableReferenceExpression
+                    && ((VariableReferenceExpression) d).getVariableName().equals("var"),
                 true
             );
         vars.forEach(
             var -> Assert.assertTrue(
-                ((VariableReference) var).getType().getItemType().getType().equals(ItemTypes.IntegerItem)
+                ((VariableReferenceExpression) var).getType().getItemType().getType().equals(ItemTypes.IntegerItem)
             )
         );
 
         List<Node> js = visitor.getMainModule()
             .getDescendantsOfType(
-                d -> d instanceof VariableReference
-                    && ((VariableReference) d).getVariableName().equals("j"),
+                d -> d instanceof VariableReferenceExpression
+                    && ((VariableReferenceExpression) d).getVariableName().equals("j"),
                 true
             );
         js.forEach(
             j -> Assert.assertTrue(
-                ((VariableReference) j).getType().getItemType().getType().equals(ItemTypes.Item)
+                ((VariableReferenceExpression) j).getType().getItemType().getType().equals(ItemTypes.Item)
                     ||
-                    ((VariableReference) j).getType().getItemType().getType().equals(ItemTypes.StringItem)
+                    ((VariableReferenceExpression) j).getType().getItemType().getType().equals(ItemTypes.StringItem)
             )
         );
 
         List<Node> internals = visitor.getMainModule()
             .getDescendantsOfType(
-                d -> d instanceof VariableReference
-                    && ((VariableReference) d).getVariableName().equals("internal"),
+                d -> d instanceof VariableReferenceExpression
+                    && ((VariableReferenceExpression) d).getVariableName().equals("internal"),
                 true
             );
         internals.forEach(
             j -> Assert.assertTrue(
-                ((VariableReference) j).getType().getItemType().getType().equals(ItemTypes.IntegerItem)
+                ((VariableReferenceExpression) j).getType().getItemType().getType().equals(ItemTypes.IntegerItem)
             )
         );
 
         List<Node> arry = visitor.getMainModule()
             .getDescendantsOfType(
-                d -> d instanceof VariableReference
-                    && ((VariableReference) d).getVariableName().equals("arry"),
+                d -> d instanceof VariableReferenceExpression
+                    && ((VariableReferenceExpression) d).getVariableName().equals("arry"),
                 true
             );
         arry.forEach(
             j -> Assert.assertTrue(
-                ((VariableReference) j).getType().getItemType().getType().equals(ItemTypes.ArrayItem)
+                ((VariableReferenceExpression) j).getType().getItemType().getType().equals(ItemTypes.ArrayItem)
             )
         );
 

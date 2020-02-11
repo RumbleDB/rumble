@@ -24,24 +24,29 @@ package org.rumbledb.expressions.primary;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
+public class BooleanLiteralExpression extends PrimaryExpression {
 
+    private boolean value;
 
-public class NullLiteral extends PrimaryExpression {
-
-    public NullLiteral(ExceptionMetadata metadata) {
+    public BooleanLiteralExpression(boolean _value, ExceptionMetadata metadata) {
         super(metadata);
+        this.value = _value;
+    }
+
+    public boolean getValue() {
+        return this.value;
     }
 
     @Override
     public String serializationString(boolean prefix) {
         String result = "(primaryExpr ";
-        result += "null";
+        result += this.getValue();
         result += ")";
         return result;
     }
 
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        return visitor.visitNull(this, argument);
+        return visitor.visitBoolean(this, argument);
     }
 }

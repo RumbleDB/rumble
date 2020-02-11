@@ -21,45 +21,56 @@
 package org.rumbledb.expressions.primary;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.CommaExpression;
+import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
 
 
+public class ArrayConstructorExpression extends PrimaryExpression {
 
-public class NamedFunctionRef extends PrimaryExpression {
+    private Expression expression;
 
-    private final FunctionIdentifier identifier;
-
-    public NamedFunctionRef(FunctionIdentifier identifier, ExceptionMetadata metadata) {
+    public ArrayConstructorExpression(Expression expression, ExceptionMetadata metadata) {
         super(metadata);
-        this.identifier = identifier;
+        this.expression = expression;
     }
 
-    public FunctionIdentifier getIdentifier() {
-        return this.identifier;
+    public ArrayConstructorExpression(ExceptionMetadata metadata) {
+        super(metadata);
+        this.expression = null;
+    }
+
+    public Expression getExpression() {
+        return this.expression;
     }
 
     @Override
     public List<Node> getDescendants(boolean depthSearch) {
         List<Node> result = new ArrayList<>();
+        if (this.expression != null)
+            result.add(this.expression);
         return getDescendantsFromChildren(result, depthSearch);
     }
 
+
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        return visitor.visitNamedFunctionRef(this, argument);
+        return visitor.visitArrayConstructor(this, argument);
     }
 
     @Override
     public String serializationString(boolean prefix) {
-        return "(namedFunctionRef(NCName "
-            + this.identifier.getName()
-            + ") (IntegerLiteral "
-            + this.identifier.getArity()
-            + "))";
+        String result = "(primaryExpr (arrayConstructor [";
+        if (this.expression != null && ((CommaExpression) this.expression).getExpressions().size() > 0) {
+            result += " " + this.expression.serializationString(true);
+        }
+
+        result += " ]))";
+        return result;
     }
+
 }

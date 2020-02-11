@@ -23,7 +23,7 @@ package org.rumbledb.expressions.flowr;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.primary.VariableReference;
+import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.types.SequenceType;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
@@ -34,13 +34,13 @@ import java.util.List;
 public class ForClauseVar extends FlworVarDecl {
 
     private final boolean allowEmpty;
-    private final VariableReference positionalVariableReference;
+    private final VariableReferenceExpression positionalVariableReference;
 
     public ForClauseVar(
-            VariableReference varRef,
+            VariableReferenceExpression varRef,
             FlworVarSequenceType seq,
             boolean emptyFlag,
-            VariableReference atVarRef,
+            VariableReferenceExpression atVarRef,
             Expression expression,
             ExceptionMetadata metadataFromContext
     ) {
@@ -63,7 +63,7 @@ public class ForClauseVar extends FlworVarDecl {
         return this.allowEmpty;
     }
 
-    public VariableReference getPositionalVariableReference() {
+    public VariableReferenceExpression getPositionalVariableReference() {
         return this.positionalVariableReference;
     }
 

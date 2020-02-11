@@ -38,13 +38,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class FunctionCall extends PrimaryExpression {
+public class FunctionCallExpression extends PrimaryExpression {
 
     private final String _functionName;
     private final List<Expression> _arguments;
     private final boolean _isPartialApplication;
 
-    public FunctionCall(String functionName, List<Expression> arguments, ExceptionMetadata metadata) {
+    public FunctionCallExpression(String functionName, List<Expression> arguments, ExceptionMetadata metadata) {
         super(metadata);
         this._functionName = functionName;
         this._arguments = arguments;

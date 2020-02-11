@@ -4,7 +4,7 @@ package org.rumbledb.expressions.control;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.primary.VariableReference;
+import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.ArrayList;
@@ -15,13 +15,13 @@ public class TypeSwitchExpression extends Expression {
     private final Expression testCondition;
     private final List<TypeSwitchCaseExpression> cases;
     private final Expression defaultExpression;
-    private final VariableReference varRefDefault;
+    private final VariableReferenceExpression varRefDefault;
 
     public TypeSwitchExpression(
             Expression testCondition,
             List<TypeSwitchCaseExpression> cases,
             Expression defaultExpression,
-            VariableReference varRefDefault,
+            VariableReferenceExpression varRefDefault,
             ExceptionMetadata metadataFromContext
     ) {
 
@@ -44,7 +44,7 @@ public class TypeSwitchExpression extends Expression {
         return this.defaultExpression;
     }
 
-    public VariableReference getVarRefDefault() {
+    public VariableReferenceExpression getVarRefDefault() {
         return this.varRefDefault;
     }
 

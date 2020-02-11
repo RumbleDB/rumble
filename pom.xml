@@ -49,6 +49,7 @@
                     <compilerArguments>
                         <properties>${basedir}/org.eclipse.jdt.core.prefs</properties>
                     </compilerArguments>
+		    <showWarnings>true</showWarnings>
                 </configuration>
                 <dependencies>
                     <dependency>

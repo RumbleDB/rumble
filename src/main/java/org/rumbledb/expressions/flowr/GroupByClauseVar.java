@@ -22,7 +22,7 @@ package org.rumbledb.expressions.flowr;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.primary.VariableReference;
+import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
@@ -32,7 +32,7 @@ public class GroupByClauseVar extends FlworVarDecl {
 
 
     public GroupByClauseVar(
-            VariableReference varRef,
+            VariableReferenceExpression varRef,
             FlworVarSequenceType sequence,
             Expression expr,
             String uri,
