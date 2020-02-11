@@ -20,35 +20,45 @@
 
 package org.rumbledb.expressions.primary;
 
-
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.Node;
+import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
-public class IntegerLiteral extends PrimaryExpression {
+import java.util.ArrayList;
+import java.util.List;
 
-    private int value;
 
-    public IntegerLiteral(int value, ExceptionMetadata metadata) {
+public class NamedFunctionReferenceExpression extends PrimaryExpression {
+
+    private final FunctionIdentifier identifier;
+
+    public NamedFunctionReferenceExpression(FunctionIdentifier identifier, ExceptionMetadata metadata) {
         super(metadata);
-        this.value = value;
+        this.identifier = identifier;
     }
 
-    public int getValue() {
-        return this.value;
+    public FunctionIdentifier getIdentifier() {
+        return this.identifier;
     }
 
     @Override
-    public String serializationString(boolean prefix) {
-        String result = "(primaryExpr ";
-        result += this.getValue();
-        result += ")";
+    public List<Node> getChildren() {
+        List<Node> result = new ArrayList<>();
         return result;
     }
 
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        return visitor.visitInteger(this, argument);
+        return visitor.visitNamedFunctionRef(this, argument);
     }
 
-
+    @Override
+    public String serializationString(boolean prefix) {
+        return "(namedFunctionRef(NCName "
+            + this.identifier.getName()
+            + ") (IntegerLiteral "
+            + this.identifier.getArity()
+            + "))";
+    }
 }

@@ -26,11 +26,11 @@ import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 import java.math.BigDecimal;
 
 
-public class DecimalLiteral extends PrimaryExpression {
+public class DecimalLiteralExpression extends PrimaryExpression {
 
     private BigDecimal value;
 
-    public DecimalLiteral(BigDecimal value, ExceptionMetadata metadata) {
+    public DecimalLiteralExpression(BigDecimal value, ExceptionMetadata metadata) {
         super(metadata);
         this.value = value;
     }

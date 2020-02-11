@@ -30,35 +30,35 @@ import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ObjectConstructor extends PrimaryExpression {
+public class ObjectConstructorExpression extends PrimaryExpression {
 
     private boolean isMergedConstructor = false;
-    private List<Expression> values;
-    private List<Expression> keys;
+    private List<Expression> _values;
+    private List<Expression> _keys;
     private CommaExpression childExpression;
 
-    public ObjectConstructor(
+    public ObjectConstructorExpression(
             List<Expression> keys,
             List<Expression> values,
             ExceptionMetadata metadata
     ) {
         super(metadata);
-        this.keys = keys;
-        this.values = values;
+        this._keys = keys;
+        this._values = values;
     }
 
-    public ObjectConstructor(CommaExpression expression, ExceptionMetadata metadata) {
+    public ObjectConstructorExpression(CommaExpression expression, ExceptionMetadata metadata) {
         super(metadata);
         this.childExpression = expression;
         this.isMergedConstructor = true;
     }
 
     public List<Expression> getKeys() {
-        return this.keys;
+        return this._keys;
     }
 
     public List<Expression> getValues() {
-        return this.values;
+        return this._values;
     }
 
     public boolean isMergedConstructor() {
@@ -73,8 +73,8 @@ public class ObjectConstructor extends PrimaryExpression {
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         if (!this.isMergedConstructor) {
-            result.addAll(this.keys);
-            result.addAll(this.values);
+            result.addAll(this._keys);
+            result.addAll(this._values);
         } else
             result.add(this.childExpression);
         return result;
@@ -87,52 +87,23 @@ public class ObjectConstructor extends PrimaryExpression {
 
     @Override
     public String serializationString(boolean prefix) {
-        String result = "(primaryExpr (objectConstructor {";
+        StringBuilder builder = new StringBuilder();
+        builder.append("(primaryExpr (objectConstructor {");
         if (!this.isMergedConstructor) {
-            result += " ";
-            for (Expression key : this.keys)
-                result += new PairConstructor(key, this.values.get(this.keys.indexOf(key)), key.getMetadata())
-                    .serializationString(true)
-                    + (this.keys.indexOf(key) < this.keys.size() - 1 ? " , " : " ");
-        } else
-            result += "| " + this.childExpression.serializationString(prefix) + " |";
-        result += "}))";
-        return result;
-
+            builder.append(" ");
+            for (Expression key : this._keys) {
+                builder.append("(pairConstructor (exprSingle ");
+                builder.append(key.serializationString(false));
+                builder.append(") : (exprSingle ");
+                builder.append(this._values.get(this._keys.indexOf(key)).serializationString(false));
+                builder.append("))");
+                builder.append((this._keys.indexOf(key) < this._keys.size() - 1 ? " , " : " "));
+            }
+        } else {
+            builder.append("| " + this.childExpression.serializationString(prefix) + " |");
+        }
+        builder.append("}))");
+        return builder.toString();
     }
-
-    public static class PairConstructor extends PrimaryExpression {
-
-        private Expression key;
-        private Expression value;
-
-        public PairConstructor(Expression key, Expression value, ExceptionMetadata metadata) {
-            super(metadata);
-            this.key = key;
-            this.value = value;
-        }
-
-        public Expression getKey() {
-            return this.key;
-        }
-
-        public Expression getValue() {
-            return this.value;
-        }
-
-        @Override
-        public String serializationString(boolean prefix) {
-            String result = "(pairConstructor (exprSingle "
-                + this.key.serializationString(false)
-                + ") : (exprSingle "
-                + this.value.serializationString(false);
-            result += "))";
-            return result;
-
-        }
-
-
-    }
-
 
 }

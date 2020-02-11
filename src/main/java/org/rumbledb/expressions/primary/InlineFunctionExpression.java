@@ -33,14 +33,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class FunctionDeclaration extends PrimaryExpression {
+public class InlineFunctionExpression extends PrimaryExpression {
 
     private final String name;
     private final Map<String, FlworVarSequenceType> params;
     private final FlworVarSequenceType returnType;
     private final Expression body;
 
-    public FunctionDeclaration(
+    public InlineFunctionExpression(
             String name,
             Map<String, FlworVarSequenceType> params,
             FlworVarSequenceType returnType,

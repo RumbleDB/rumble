@@ -56,20 +56,20 @@ import org.rumbledb.expressions.operational.TreatExpression;
 import org.rumbledb.expressions.operational.UnaryExpression;
 import org.rumbledb.expressions.postfix.PostFixExpression;
 import org.rumbledb.expressions.primary.ArgumentPlaceholder;
-import org.rumbledb.expressions.primary.ArrayConstructor;
-import org.rumbledb.expressions.primary.BooleanLiteral;
-import org.rumbledb.expressions.primary.ContextExpression;
-import org.rumbledb.expressions.primary.DecimalLiteral;
-import org.rumbledb.expressions.primary.DoubleLiteral;
-import org.rumbledb.expressions.primary.FunctionCall;
-import org.rumbledb.expressions.primary.FunctionDeclaration;
-import org.rumbledb.expressions.primary.IntegerLiteral;
-import org.rumbledb.expressions.primary.NamedFunctionRef;
-import org.rumbledb.expressions.primary.NullLiteral;
-import org.rumbledb.expressions.primary.ObjectConstructor;
+import org.rumbledb.expressions.primary.ArrayConstructorExpression;
+import org.rumbledb.expressions.primary.BooleanLiteralExpression;
+import org.rumbledb.expressions.primary.ContextItemExpression;
+import org.rumbledb.expressions.primary.DecimalLiteralExpression;
+import org.rumbledb.expressions.primary.DoubleLiteralExpression;
+import org.rumbledb.expressions.primary.FunctionCallExpression;
+import org.rumbledb.expressions.primary.InlineFunctionExpression;
+import org.rumbledb.expressions.primary.IntegerLiteralExpression;
+import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
+import org.rumbledb.expressions.primary.NullLiteralExpression;
+import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.ParenthesizedExpression;
-import org.rumbledb.expressions.primary.StringLiteral;
-import org.rumbledb.expressions.primary.VariableReference;
+import org.rumbledb.expressions.primary.StringLiteralExpression;
+import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
 
@@ -111,7 +111,7 @@ public abstract class AbstractNodeVisitor<T> {
         return defaultAction(expression, argument);
     }
 
-    public T visitVariableReference(VariableReference expression, T argument) {
+    public T visitVariableReference(VariableReferenceExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
@@ -165,19 +165,19 @@ public abstract class AbstractNodeVisitor<T> {
         return defaultAction(expression, argument);
     }
 
-    public T visitArrayConstructor(ArrayConstructor expression, T argument) {
+    public T visitArrayConstructor(ArrayConstructorExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
-    public T visitObjectConstructor(ObjectConstructor expression, T argument) {
+    public T visitObjectConstructor(ObjectConstructorExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
-    public T visitContextExpr(ContextExpression expression, T argument) {
+    public T visitContextExpr(ContextItemExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
-    public T visitFunctionCall(FunctionCall expression, T argument) {
+    public T visitFunctionCall(FunctionCallExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
@@ -185,11 +185,11 @@ public abstract class AbstractNodeVisitor<T> {
         return defaultAction(expression, argument);
     }
 
-    public T visitFunctionDeclaration(FunctionDeclaration expression, T argument) {
+    public T visitFunctionDeclaration(InlineFunctionExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
-    public T visitNamedFunctionRef(NamedFunctionRef expression, T argument) {
+    public T visitNamedFunctionRef(NamedFunctionReferenceExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
@@ -199,27 +199,27 @@ public abstract class AbstractNodeVisitor<T> {
     // endregion
 
     // region literal
-    public T visitInteger(IntegerLiteral expression, T argument) {
+    public T visitInteger(IntegerLiteralExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
-    public T visitString(StringLiteral expression, T argument) {
+    public T visitString(StringLiteralExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
-    public T visitDouble(DoubleLiteral expression, T argument) {
+    public T visitDouble(DoubleLiteralExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
-    public T visitDecimal(DecimalLiteral expression, T argument) {
+    public T visitDecimal(DecimalLiteralExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
-    public T visitNull(NullLiteral expression, T argument) {
+    public T visitNull(NullLiteralExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
-    public T visitBoolean(BooleanLiteral expression, T argument) {
+    public T visitBoolean(BooleanLiteralExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
     // endregion

@@ -24,16 +24,16 @@ package org.rumbledb.expressions.primary;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
-public class DoubleLiteral extends PrimaryExpression {
+public class IntegerLiteralExpression extends PrimaryExpression {
 
-    private double value;
+    private int value;
 
-    public DoubleLiteral(double value, ExceptionMetadata metadata) {
+    public IntegerLiteralExpression(int value, ExceptionMetadata metadata) {
         super(metadata);
         this.value = value;
     }
 
-    public double getValue() {
+    public int getValue() {
         return this.value;
     }
 
@@ -47,6 +47,8 @@ public class DoubleLiteral extends PrimaryExpression {
 
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        return visitor.visitDouble(this, argument);
+        return visitor.visitInteger(this, argument);
     }
+
+
 }

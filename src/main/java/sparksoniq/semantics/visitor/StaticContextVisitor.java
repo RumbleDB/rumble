@@ -33,9 +33,9 @@ import org.rumbledb.expressions.flowr.ForClauseVar;
 import org.rumbledb.expressions.flowr.GroupByClauseVar;
 import org.rumbledb.expressions.flowr.LetClauseVar;
 import org.rumbledb.expressions.postfix.PostFixExpression;
-import org.rumbledb.expressions.primary.FunctionCall;
-import org.rumbledb.expressions.primary.FunctionDeclaration;
-import org.rumbledb.expressions.primary.VariableReference;
+import org.rumbledb.expressions.primary.FunctionCallExpression;
+import org.rumbledb.expressions.primary.InlineFunctionExpression;
+import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
 import sparksoniq.jsoniq.ExecutionMode;
@@ -108,7 +108,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     // region primary
     @Override
-    public StaticContext visitVariableReference(VariableReference expression, StaticContext argument) {
+    public StaticContext visitVariableReference(VariableReferenceExpression expression, StaticContext argument) {
         String variableName = expression.getVariableName();
         if (!argument.isInScope(variableName)) {
             throw new UndeclaredVariableException(
@@ -123,7 +123,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     @Override
-    public StaticContext visitFunctionDeclaration(FunctionDeclaration expression, StaticContext argument) {
+    public StaticContext visitFunctionDeclaration(InlineFunctionExpression expression, StaticContext argument) {
         // define a static context for the function body, add params to the context and visit the body expression
         StaticContext functionDeclarationContext = new StaticContext(argument);
         expression.getParams()
@@ -146,7 +146,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     @Override
-    public StaticContext visitFunctionCall(FunctionCall expression, StaticContext argument) {
+    public StaticContext visitFunctionCall(FunctionCallExpression expression, StaticContext argument) {
         StaticContext generatedContext = visitDescendants(expression, argument);
         expression.initFunctionCallHighestExecutionMode(this.ignoreMissingFunctionError);
         return generatedContext;
@@ -289,7 +289,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         this.visit(expression.getTestCondition(), argument);
         expression.getCases().forEach(typeSwitchCaseExpression -> this.visit(typeSwitchCaseExpression, argument));
 
-        VariableReference defaultCaseVariableReference = expression.getVarRefDefault();
+        VariableReferenceExpression defaultCaseVariableReference = expression.getVarRefDefault();
         if (defaultCaseVariableReference == null) {
             this.visit(expression.getDefaultExpression(), argument);
         } else {
@@ -311,7 +311,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitTypeSwitchCaseExpression(TypeSwitchCaseExpression expression, StaticContext argument) {
         StaticContext caseContext = new StaticContext(argument);
-        VariableReference variableReference = expression.getVariableReference();
+        VariableReferenceExpression variableReference = expression.getVariableReference();
         if (variableReference != null) {
             caseContext.addVariable(
                 variableReference.getVariableName(),

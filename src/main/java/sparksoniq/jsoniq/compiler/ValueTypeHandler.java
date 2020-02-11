@@ -22,11 +22,11 @@ package sparksoniq.jsoniq.compiler;
 
 
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.primary.BooleanLiteral;
-import org.rumbledb.expressions.primary.DecimalLiteral;
-import org.rumbledb.expressions.primary.DoubleLiteral;
-import org.rumbledb.expressions.primary.IntegerLiteral;
-import org.rumbledb.expressions.primary.NullLiteral;
+import org.rumbledb.expressions.primary.BooleanLiteralExpression;
+import org.rumbledb.expressions.primary.DecimalLiteralExpression;
+import org.rumbledb.expressions.primary.DoubleLiteralExpression;
+import org.rumbledb.expressions.primary.IntegerLiteralExpression;
+import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.PrimaryExpression;
 import org.rumbledb.parser.JsoniqParser;
 
@@ -42,11 +42,11 @@ public class ValueTypeHandler {
     public static PrimaryExpression getValueType(String token, ExceptionMetadata metadataFromContext) {
         switch (token) {
             case "null":
-                return new NullLiteral(metadataFromContext);
+                return new NullLiteralExpression(metadataFromContext);
             case "true":
-                return new BooleanLiteral(true, metadataFromContext);
+                return new BooleanLiteralExpression(true, metadataFromContext);
             case "false":
-                return new BooleanLiteral(false, metadataFromContext);
+                return new BooleanLiteralExpression(false, metadataFromContext);
             default:
                 return ValueTypeHandler.getNumericLiteral(token, metadataFromContext);
         }
@@ -55,10 +55,10 @@ public class ValueTypeHandler {
     // TODO think of beter way to distinguish numeric literals
     private static PrimaryExpression getNumericLiteral(String token, ExceptionMetadata metadataFromContext) {
         if (!token.contains(".") && !token.contains("e") && !token.contains("E"))
-            return new IntegerLiteral(Integer.parseInt(token), metadataFromContext);
+            return new IntegerLiteralExpression(Integer.parseInt(token), metadataFromContext);
         if (!token.contains("e") && !token.contains("E"))
-            return new DecimalLiteral(new BigDecimal(token), metadataFromContext);
-        return new DoubleLiteral(Double.parseDouble(token), metadataFromContext);
+            return new DecimalLiteralExpression(new BigDecimal(token), metadataFromContext);
+        return new DoubleLiteralExpression(Double.parseDouble(token), metadataFromContext);
 
     }
 
