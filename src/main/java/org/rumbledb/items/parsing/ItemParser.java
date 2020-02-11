@@ -23,8 +23,9 @@ package org.rumbledb.items.parsing;
 import com.jsoniter.JsonIterator;
 import com.jsoniter.ValueType;
 import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.spark.ml.linalg.DenseVector;
 import org.apache.spark.ml.linalg.SparseVector;
+import org.apache.spark.ml.linalg.Vector;
 import org.apache.spark.ml.linalg.VectorUDT;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.ArrayType;
@@ -35,6 +36,7 @@ import org.apache.spark.sql.types.StructType;
 import org.joda.time.DateTime;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SparksoniqRuntimeException;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.spark.SparkSessionManager;
@@ -228,18 +230,28 @@ public class ItemParser implements Serializable {
             }
             values.add(ItemFactory.getInstance().createArrayItem(members));
         } else if (fieldType instanceof VectorUDT) {
-            // a vector type is essentially an array of doubles in rumble terms
-            SparseVector vector = (SparseVector) row.get(i);
-            List<Item> members = new ArrayList<>(vector.size());
-
-            for (int j = 0; j < vector.size(); j++) {
-                double value = 0.0;
-                if (ArrayUtils.contains(vector.indices(), j)) {
-                    value = vector.values()[j];
+            Vector vector = (Vector) row.get(i);
+            if (vector instanceof DenseVector) {
+                // a dense vector is mapped to a rumble array
+                DenseVector denseVector = (DenseVector) vector;
+                List<Item> members = new ArrayList<>(vector.size());
+                for (double value : denseVector.values()) {
+                    members.add(ItemFactory.getInstance().createDoubleItem(value));
                 }
-                members.add(ItemFactory.getInstance().createDoubleItem(value));
+                values.add(ItemFactory.getInstance().createArrayItem(members));
+            } else if (vector instanceof SparseVector) {
+                // a sparse vector is mapped to a Rumble object where keys are indices of the non-0 values in the vector
+                SparseVector sparseVector = (SparseVector) vector;
+                List<String> keyList = new ArrayList<>();
+                List<Item> valueList = new ArrayList<>();
+                for (int index : sparseVector.indices()) {
+                    keyList.add(String.valueOf(index));
+                    valueList.add(ItemFactory.getInstance().createDoubleItem(sparseVector.values()[index]));
+                }
+                values.add(ItemFactory.getInstance().createObjectItem(keyList, valueList, metadata));
+            } else {
+                throw new OurBadException("Unexpected program state reached while converting vectorUDT to rumble item");
             }
-            values.add(ItemFactory.getInstance().createArrayItem(members));
         } else {
             throw new RuntimeException("DataFrame type unsupported: " + fieldType.json());
         }

@@ -6,7 +6,9 @@ import org.apache.spark.ml.param.Param;
 import org.apache.spark.ml.param.ParamMap;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.OurBadException;
+import sparksoniq.jsoniq.item.ArrayItem;
 import sparksoniq.jsoniq.item.AtomicItem;
 import sparksoniq.semantics.types.AtomicTypes;
 
@@ -30,7 +32,7 @@ public class RumbleMLUtils {
             RumbleMLCatalog.validateParameterForTransformer(transformerShortName, paramName, metadata);
             String paramJavaTypeName = RumbleMLCatalog.getParamJavaTypeName(paramName, metadata);
 
-            Object paramValueInJava = convertParamItemToJava(paramValue, paramJavaTypeName);
+            Object paramValueInJava = convertParamItemToJava(paramName, paramValue, paramJavaTypeName, metadata);
 
             try {
                 Param<Object> sparkMLParam = (Param<Object>) transformer.getClass()
@@ -67,7 +69,7 @@ public class RumbleMLUtils {
             RumbleMLCatalog.validateParameterForEstimator(estimatorShortName, paramName, metadata);
             String paramJavaTypeName = RumbleMLCatalog.getParamJavaTypeName(paramName, metadata);
 
-            Object paramValueInJava = convertParamItemToJava(paramValue, paramJavaTypeName);
+            Object paramValueInJava = convertParamItemToJava(paramName, paramValue, paramJavaTypeName, metadata);
 
             try {
                 Param<Object> sparkMLParam = (Param<Object>) estimator.getClass()
@@ -89,19 +91,29 @@ public class RumbleMLUtils {
         return result;
     }
 
-    private static Object convertParamItemToJava(Item param, String paramJavaTypeName) {
+    private static Object convertParamItemToJava(
+            String paramName,
+            Item param,
+            String paramJavaTypeName,
+            ExceptionMetadata metadata
+    ) {
         if (paramJavaTypeName.endsWith("[]")) {
+            if (!(param instanceof ArrayItem)) {
+                throw new InvalidArgumentTypeException(paramName + " is expected to be an array type", metadata);
+            }
             List<Object> paramAsListInJava = new ArrayList<>();
             // paramValue is expected to be an ArrayItem
             param.getItems().forEach(item -> {
                 paramAsListInJava.add(
                     convertParamItemToJava(
+                        paramName,
                         item,
-                        paramJavaTypeName.substring(0, paramJavaTypeName.length() - 2)
+                        paramJavaTypeName.substring(0, paramJavaTypeName.length() - 2),
+                        metadata
                     )
                 );
             });
-            return paramAsListInJava;
+            return convertArrayListToPrimitiveArray(paramAsListInJava, paramJavaTypeName);
         } else if (expectedJavaTypeMatchesRumbleAtomic(paramJavaTypeName)) {
             return convertRumbleAtomicToJava((AtomicItem) param, paramJavaTypeName);
         } else {
@@ -109,6 +121,32 @@ public class RumbleMLUtils {
             throw new OurBadException("Not Implemented");
         }
     }
+
+    private static Object convertArrayListToPrimitiveArray(List<Object> paramAsListInJava, String paramJavaTypeName) {
+        switch (paramJavaTypeName) {
+            case "String[]":
+                String[] stringArray = new String[paramAsListInJava.size()];
+                for (int i = 0; i < stringArray.length; i++) {
+                    stringArray[i] = (String) paramAsListInJava.get(i);
+                }
+                return stringArray;
+            case "int[]":
+                int[] intArray = new int[paramAsListInJava.size()];
+                for (int i = 0; i < intArray.length; i++) {
+                    intArray[i] = (Integer) paramAsListInJava.get(i);
+                }
+                return intArray;
+            case "double[]":
+                double[] doubleArray = new double[paramAsListInJava.size()];
+                for (int i = 0; i < doubleArray.length; i++) {
+                    doubleArray[i] = (Double) paramAsListInJava.get(i);
+                }
+                return doubleArray;
+            default:
+                throw new OurBadException("Unhandled case of arrayList to primitive[] conversion found.");
+        }
+    }
+
 
     private static boolean expectedJavaTypeMatchesRumbleAtomic(String javaTypeName) {
         return (javaTypeName.equals("boolean")
