@@ -41,14 +41,14 @@ import java.util.List;
 public class FunctionCallExpression extends PrimaryExpression {
 
     private final String functionName;
-    private final List<Expression> arguments;
+    private final List<Expression> arguments; // null for placeholder
     private final boolean isPartialApplication;
 
     public FunctionCallExpression(String functionName, List<Expression> arguments, ExceptionMetadata metadata) {
         super(metadata);
         this.functionName = functionName;
         this.arguments = arguments;
-        this.isPartialApplication = arguments.stream().anyMatch(arg -> arg instanceof ArgumentPlaceholder);
+        this.isPartialApplication = arguments.stream().anyMatch(arg -> arg == null);
     }
 
     public List<Expression> getArguments() {
