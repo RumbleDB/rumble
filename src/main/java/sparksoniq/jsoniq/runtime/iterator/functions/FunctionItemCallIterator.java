@@ -79,6 +79,9 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
     @Override
     public void openLocal() {
+        this.validateNumberOfArguments();
+        this.wrapArgumentIteratorsWithTypeCheckingIterators();
+
         if (this.isPartialApplication) {
             this.functionBodyIterator = generatePartiallyAppliedFunction(this.currentDynamicContextForLocalExecution);
         } else {
@@ -92,22 +95,21 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         setNextResult();
     }
 
-    private void validateAndReadArguments() {
-        String formattedName = (!this.functionItem.getIdentifier().getName().equals(""))
-            ? this.functionItem.getIdentifier().getName() + " "
-            : "";
+    private void validateNumberOfArguments() {
         if (this.functionItem.getParameterNames().size() != this.functionArguments.size()) {
             throw new UnexpectedTypeException(
                     "Dynamic function "
-                        + formattedName
-                        + "invoked with incorrect number of arguments. Expected: "
+                        + this.functionItem.getIdentifier().getName()
+                        + " invoked with incorrect number of arguments. Expected: "
                         + this.functionItem.getParameterNames().size()
                         + ", Found: "
                         + this.functionArguments.size(),
                     getMetadata()
             );
         }
+    }
 
+    private void wrapArgumentIteratorsWithTypeCheckingIterators() {
         if (this.functionItem.getSignature().getParameterTypes() != null) {
             for (int i = 0; i < this.functionArguments.size(); i++) {
                 if (
@@ -117,7 +119,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                     TypePromotionIterator typePromotionIterator = new TypePromotionIterator(
                             this.functionArguments.get(i),
                             this.functionItem.getSignature().getParameterTypes().get(i),
-                            "Invalid argument for " + formattedName + "function. ",
+                            "Invalid argument for " + this.functionItem.getIdentifier().getName() + "function. ",
                             this.functionArguments.get(i).getHighestExecutionMode(),
                             getMetadata()
                     );
@@ -135,8 +137,6 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
      * @return FunctionRuntimeIterator that contains the newly generated FunctionItem
      */
     private FunctionRuntimeIterator generatePartiallyAppliedFunction(DynamicContext context) {
-        this.validateAndReadArguments();
-
         String argName;
         RuntimeIterator argIterator;
 
@@ -170,7 +170,10 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         }
 
         FunctionItem partiallyAppliedFunction = new FunctionItem(
-                new FunctionIdentifier("", partialApplicationParamNames.size()),
+                new FunctionIdentifier(
+                        "partially applied " + this.functionItem.getIdentifier().getName(),
+                        partialApplicationParamNames.size()
+                ),
                 partialApplicationParamNames,
                 new FunctionSignature(
                         partialApplicationParamTypes,
@@ -185,8 +188,6 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     }
 
     private DynamicContext createNewDynamicContextWithArguments(DynamicContext context) {
-        this.validateAndReadArguments();
-
         String argName;
         RuntimeIterator argIterator;
 
@@ -270,9 +271,11 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                     "Unexpected program state reached. Partially applied function calls must be evaluated locally."
             );
         }
-        DynamicContext contextWithArguments = dynamicContext;
+        this.validateNumberOfArguments();
+        this.wrapArgumentIteratorsWithTypeCheckingIterators();
+
+        DynamicContext contextWithArguments = this.createNewDynamicContextWithArguments(dynamicContext);
         this.functionBodyIterator = this.functionItem.getBodyIterator();
-        contextWithArguments = this.createNewDynamicContextWithArguments(contextWithArguments);
         return this.functionBodyIterator.getRDD(contextWithArguments);
     }
 }
