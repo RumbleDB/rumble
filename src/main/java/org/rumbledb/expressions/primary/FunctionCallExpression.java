@@ -41,6 +41,7 @@ import java.util.List;
 public class FunctionCallExpression extends PrimaryExpression {
 
     private final String _functionName;
+    // placeholders (?) are represented with nulls.
     private final List<Expression> _arguments;
     private final boolean _isPartialApplication;
 
@@ -48,7 +49,7 @@ public class FunctionCallExpression extends PrimaryExpression {
         super(metadata);
         this._functionName = functionName;
         this._arguments = arguments;
-        this._isPartialApplication = arguments.stream().anyMatch(arg -> arg instanceof ArgumentPlaceholder);
+        this._isPartialApplication = arguments.stream().anyMatch(arg -> arg == null);
     }
 
     public List<Expression> getArguments() {

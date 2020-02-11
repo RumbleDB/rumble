@@ -55,7 +55,6 @@ import org.rumbledb.expressions.operational.StringConcatExpression;
 import org.rumbledb.expressions.operational.TreatExpression;
 import org.rumbledb.expressions.operational.UnaryExpression;
 import org.rumbledb.expressions.postfix.PostFixExpression;
-import org.rumbledb.expressions.primary.ArgumentPlaceholder;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextExpression;
@@ -190,10 +189,6 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitNamedFunctionRef(NamedFunctionReferenceExpression expression, T argument) {
-        return defaultAction(expression, argument);
-    }
-
-    public T visitArgumentPlaceholder(ArgumentPlaceholder expression, T argument) {
         return defaultAction(expression, argument);
     }
     // endregion

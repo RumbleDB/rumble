@@ -75,7 +75,6 @@ import org.rumbledb.expressions.postfix.extensions.DynamicFunctionCallExtension;
 import org.rumbledb.expressions.postfix.extensions.ObjectLookupExtension;
 import org.rumbledb.expressions.postfix.extensions.PostfixExtension;
 import org.rumbledb.expressions.postfix.extensions.PredicateExtension;
-import org.rumbledb.expressions.primary.ArgumentPlaceholder;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.ContextExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
@@ -1087,7 +1086,7 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
         if (ctx.exprSingle() != null) {
             this.visitExprSingle(ctx.exprSingle());
         } else {
-            this.currentExpression = new ArgumentPlaceholder(createMetadataFromContext(ctx));
+            this.currentExpression = null;
         }
         return null;
     }

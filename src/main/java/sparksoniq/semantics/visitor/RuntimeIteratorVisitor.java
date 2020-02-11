@@ -67,7 +67,6 @@ import org.rumbledb.expressions.postfix.extensions.DynamicFunctionCallExtension;
 import org.rumbledb.expressions.postfix.extensions.ObjectLookupExtension;
 import org.rumbledb.expressions.postfix.extensions.PostfixExtension;
 import org.rumbledb.expressions.postfix.extensions.PredicateExtension;
-import org.rumbledb.expressions.primary.ArgumentPlaceholder;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextExpression;
@@ -518,7 +517,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         List<RuntimeIterator> arguments = new ArrayList<>();
         ExceptionMetadata iteratorMetadata = expression.getMetadata();
         for (Expression arg : expression.getArguments()) {
-            if (arg instanceof ArgumentPlaceholder) {
+            if (arg == null) {
                 arguments.add(null);
             } else {
                 RuntimeIterator argumentIterator = this.visit(arg, argument);
