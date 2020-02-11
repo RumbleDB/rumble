@@ -36,21 +36,9 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
 
     @Override
     public Dataset<Row> getDataFrame(DynamicContext context) {
-        Dataset<Row> inputDataset = context.getDataFrameVariableValue(
-            GetTransformerFunctionIterator.transformerParameterNames.get(0),
-            getMetadata()
-        );
-        List<Item> paramMapItemList = context.getLocalVariableValue(
-            GetTransformerFunctionIterator.transformerParameterNames.get(1),
-            getMetadata()
-        );
-        if (paramMapItemList.size() != 1) {
-            throw new OurBadException(
-                    "Applying a transformer takes a single object as the second parameter.",
-                    getMetadata()
-            );
-        }
-        Item paramMapItem = paramMapItemList.get(0);
+        Dataset<Row> inputDataset = getInputDataset(context);
+        Item paramMapItem = getParamMapItem(context);
+
         ParamMap paramMap = convertRumbleObjectItemToSparkMLParamMap(
             this.transformerShortName,
             this.transformer,
@@ -69,5 +57,26 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
                     getMetadata()
             );
         }
+    }
+
+    private Dataset<Row> getInputDataset(DynamicContext context) {
+        return context.getDataFrameVariableValue(
+            GetTransformerFunctionIterator.transformerParameterNames.get(0),
+            getMetadata()
+        );
+    }
+
+    private Item getParamMapItem(DynamicContext context) {
+        List<Item> paramMapItemList = context.getLocalVariableValue(
+            GetTransformerFunctionIterator.transformerParameterNames.get(1),
+            getMetadata()
+        );
+        if (paramMapItemList.size() != 1) {
+            throw new OurBadException(
+                    "Applying a transformer takes a single object as the second parameter.",
+                    getMetadata()
+            );
+        }
+        return paramMapItemList.get(0);
     }
 }
