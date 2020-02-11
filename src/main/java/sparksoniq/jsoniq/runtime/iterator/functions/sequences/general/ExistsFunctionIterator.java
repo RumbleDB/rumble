@@ -21,13 +21,12 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.sequences.general;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.util.List;
 
@@ -43,26 +42,26 @@ public class ExistsFunctionIterator extends LocalFunctionCallIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(parameters, executionMode, iteratorMetadata);
-        _sequenceIterator = this._children.get(0);
+        this._sequenceIterator = this._children.get(0);
     }
 
     @Override
     public Item next() {
         if (this.hasNext()) {
             this._hasNext = false;
-            if (_sequenceIterator.isRDD()) {
-                List<Item> i = _sequenceIterator.getRDD(_currentDynamicContextForLocalExecution).take(1);
+            if (this._sequenceIterator.isRDD()) {
+                List<Item> i = this._sequenceIterator.getRDD(this._currentDynamicContextForLocalExecution).take(1);
                 return ItemFactory.getInstance().createBooleanItem(!i.isEmpty());
             }
-            _sequenceIterator.open(_currentDynamicContextForLocalExecution);
+            this._sequenceIterator.open(this._currentDynamicContextForLocalExecution);
             Item result;
-            if (_sequenceIterator.hasNext()) {
+            if (this._sequenceIterator.hasNext()) {
                 result = ItemFactory.getInstance().createBooleanItem(true);
 
             } else {
                 result = ItemFactory.getInstance().createBooleanItem(false);
             }
-            _sequenceIterator.close();
+            this._sequenceIterator.close();
             return result;
         }
         throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "exists function", getMetadata());

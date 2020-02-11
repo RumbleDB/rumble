@@ -20,16 +20,15 @@
 
 package org.rumbledb.expressions.flowr;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.SemanticException;
+import org.rumbledb.expressions.Expression;
+import org.rumbledb.expressions.Node;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.SemanticException;
-import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.Node;
 
 public class FlworExpression extends Expression {
 
@@ -57,11 +56,11 @@ public class FlworExpression extends Expression {
     }
 
     public FlworClause getStartClause() {
-        return _startClause;
+        return this._startClause;
     }
 
     public List<FlworClause> get_contentClauses() {
-        return _contentClauses;
+        return this._contentClauses;
     }
 
     private void set_contentClauses(List<FlworClause> contentClauses) {
@@ -70,7 +69,7 @@ public class FlworExpression extends Expression {
     }
 
     public ReturnClause get_returnClause() {
-        return _returnClause;
+        return this._returnClause;
     }
 
     private void set_returnClause(ReturnClause returnClause) {
@@ -91,13 +90,13 @@ public class FlworExpression extends Expression {
 
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        result.add(_startClause);
-        if (_contentClauses != null)
-            _contentClauses.forEach(e -> {
+        result.add(this._startClause);
+        if (this._contentClauses != null)
+            this._contentClauses.forEach(e -> {
                 if (e != null)
                     result.add(e);
             });
-        result.add(_returnClause);
+        result.add(this._returnClause);
         return result;
     }
 
@@ -109,10 +108,10 @@ public class FlworExpression extends Expression {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(flowrExpr ";
-        result += _startClause.serializationString(true) + " ";
+        result += this._startClause.serializationString(true) + " ";
         for (FlworClause clause : this._contentClauses)
             result += clause.serializationString(true) + " ";
-        result += _returnClause.serializationString(true);
+        result += this._returnClause.serializationString(true);
         result += "))";
         return result;
     }

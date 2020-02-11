@@ -3,7 +3,6 @@ package sparksoniq.jsoniq.item;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.rumbledb.api.Item;
-
 import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.math.BigDecimal;
@@ -32,11 +31,11 @@ public class ItemFactory {
     }
 
     public Item createBooleanItem(boolean b) {
-        return b ? _trueBooleanItem : _falseBooleanItem;
+        return b ? this._trueBooleanItem : this._falseBooleanItem;
     }
 
     public Item createNullItem() {
-        return _nullItem;
+        return this._nullItem;
     }
 
     public Item createIntegerItem(int i) {

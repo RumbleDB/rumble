@@ -39,11 +39,11 @@ public class FunctionSignature implements Serializable {
 
 
     public List<SequenceType> getParameterTypes() {
-        return parameterTypes;
+        return this.parameterTypes;
     }
 
     public SequenceType getReturnType() {
-        return returnType;
+        return this.returnType;
     }
 
     @Override

@@ -21,14 +21,13 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.strings;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.util.List;
 
@@ -49,11 +48,13 @@ public class SubstringFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             this._hasNext = false;
             String result;
-            Item stringItem = this._children.get(0).materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
+            Item stringItem = this._children.get(0)
+                .materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
             if (stringItem == null) {
                 return ItemFactory.getInstance().createStringItem("");
             }
-            Item indexItem = this._children.get(1).materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
+            Item indexItem = this._children.get(1)
+                .materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
             if (indexItem == null) {
                 throw new UnexpectedTypeException(
                         "Type error; Start index parameter can't be empty sequence ",
@@ -65,7 +66,7 @@ public class SubstringFunctionIterator extends LocalFunctionCallIterator {
                 return ItemFactory.getInstance().createStringItem("");
             if (this._children.size() > 2) {
                 Item endIndexItem = this._children.get(2)
-                    .materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
+                    .materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
                 if (endIndexItem == null) {
                     throw new UnexpectedTypeException(
                             "Type error; End index parameter can't be empty sequence ",

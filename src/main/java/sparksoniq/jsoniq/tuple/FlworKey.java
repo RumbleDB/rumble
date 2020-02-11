@@ -27,7 +27,6 @@ import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SparksoniqRuntimeException;
-
 import sparksoniq.semantics.types.ItemTypes;
 
 import java.util.ArrayList;
@@ -44,7 +43,7 @@ public class FlworKey implements KryoSerializable {
     }
 
     List<Item> getKeyItems() {
-        return keyItems;
+        return this.keyItems;
     }
 
     @Override
@@ -132,13 +131,13 @@ public class FlworKey implements KryoSerializable {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, keyItems);
+        kryo.writeObject(output, this.keyItems);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public void read(Kryo kryo, Input input) {
-        keyItems = kryo.readObject(input, ArrayList.class);
+        this.keyItems = kryo.readObject(input, ArrayList.class);
     }
 
 

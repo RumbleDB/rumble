@@ -29,7 +29,6 @@ import org.joda.time.Instant;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.flowr.OrderByClauseExpr;
-
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.NullItem;
@@ -69,53 +68,60 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
             Map<Integer, String> allColumnTypes,
             Map<String, List<String>> columnNamesByType
     ) {
-        _expressionsWithIterator = expressionsWithIterator;
-        _allColumnTypes = allColumnTypes;
+        this._expressionsWithIterator = expressionsWithIterator;
+        this._allColumnTypes = allColumnTypes;
 
-        _deserializedParams = new ArrayList<>();
-        _longParams = new ArrayList<>();
-        _parentContext = context;
-        _context = new DynamicContext(_parentContext);
-        _results = new ArrayList<>();
+        this._deserializedParams = new ArrayList<>();
+        this._longParams = new ArrayList<>();
+        this._parentContext = context;
+        this._context = new DynamicContext(this._parentContext);
+        this._results = new ArrayList<>();
 
-        _dependencies = new TreeMap<>();
-        for (OrderByClauseAnnotatedChildIterator expressionWithIterator : _expressionsWithIterator) {
-            _dependencies.putAll(expressionWithIterator.getIterator().getVariableDependencies());
+        this._dependencies = new TreeMap<>();
+        for (OrderByClauseAnnotatedChildIterator expressionWithIterator : this._expressionsWithIterator) {
+            this._dependencies.putAll(expressionWithIterator.getIterator().getVariableDependencies());
         }
-        _columnNamesByType = columnNamesByType;
+        this._columnNamesByType = columnNamesByType;
 
-        _kryo = new Kryo();
-        _kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(_kryo);
-        _input = new Input();
+        this._kryo = new Kryo();
+        this._kryo.setReferences(false);
+        DataFrameUtils.registerKryoClassesKryo(this._kryo);
+        this._input = new Input();
     }
 
     @Override
     public Row call(WrappedArray<byte[]> wrappedParameters, WrappedArray<Long> wrappedParametersLong) {
-        _deserializedParams.clear();
-        _context.removeAllVariables();
-        _results.clear();
+        this._deserializedParams.clear();
+        this._context.removeAllVariables();
+        this._results.clear();
 
-        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
+        DataFrameUtils.deserializeWrappedParameters(
+            wrappedParameters,
+            this._deserializedParams,
+            this._kryo,
+            this._input
+        );
 
         // Long parameters correspond to pre-computed counts, when a materialization of the
         // actual sequence was avoided upfront.
         Object[] longParams = (Object[]) wrappedParametersLong.array();
         for (Object longParam : longParams) {
             Item count = ItemFactory.getInstance().createIntegerItem(((Long) longParam).intValue());
-            _longParams.add(count);
+            this._longParams.add(count);
         }
 
         DataFrameUtils.prepareDynamicContext(
-            _context,
-            _columnNamesByType.get("byte[]"),
-            _columnNamesByType.get("Long"),
-            _deserializedParams,
-            _longParams
+            this._context,
+            this._columnNamesByType.get("byte[]"),
+            this._columnNamesByType.get("Long"),
+            this._deserializedParams,
+            this._longParams
         );
 
-        for (int expressionIndex = 0; expressionIndex < _expressionsWithIterator.size(); expressionIndex++) {
-            OrderByClauseAnnotatedChildIterator expressionWithIterator = _expressionsWithIterator.get(expressionIndex);
+        for (int expressionIndex = 0; expressionIndex < this._expressionsWithIterator.size(); expressionIndex++) {
+            OrderByClauseAnnotatedChildIterator expressionWithIterator = this._expressionsWithIterator.get(
+                expressionIndex
+            );
 
             // nulls and empty sequences have special ordering captured in the first sorting column
             // if non-null, non-empty-sequence value is given, the second column is used to sort the input
@@ -130,46 +136,48 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
 
             // apply expression in the dynamic context
             RuntimeIterator iterator = expressionWithIterator.getIterator();
-            iterator.open(_context);
+            iterator.open(this._context);
             boolean isEmptySequence = true;
             while (iterator.hasNext()) {
                 isEmptySequence = false;
                 Item nextItem = iterator.next();
                 if (nextItem instanceof NullItem) {
-                    _results.add(nullOrderIndex);
-                    _results.add(null); // placeholder for valueColumn(2nd column)
+                    this._results.add(nullOrderIndex);
+                    this._results.add(null); // placeholder for valueColumn(2nd column)
                 } else {
                     // any other atomic type
-                    _results.add(valueOrderIndex);
+                    this._results.add(valueOrderIndex);
 
                     // extract type information for the sorting column
-                    String typeName = _allColumnTypes.get(expressionIndex);
+                    String typeName = this._allColumnTypes.get(expressionIndex);
                     try {
                         switch (typeName) {
                             case "boolean":
-                                _results.add(nextItem.getBooleanValue());
+                                this._results.add(nextItem.getBooleanValue());
                                 break;
                             case "string":
-                                _results.add(nextItem.getStringValue());
+                                this._results.add(nextItem.getStringValue());
                                 break;
                             case "integer":
-                                _results.add(nextItem.castToIntegerValue());
+                                this._results.add(nextItem.castToIntegerValue());
                                 break;
                             case "double":
-                                _results.add(nextItem.castToDoubleValue());
+                                this._results.add(nextItem.castToDoubleValue());
                                 break;
                             case "decimal":
-                                _results.add(nextItem.castToDecimalValue());
+                                this._results.add(nextItem.castToDecimalValue());
                                 break;
                             case "duration":
                             case "yearMonthDuration":
                             case "dayTimeDuration":
-                                _results.add(nextItem.getDurationValue().toDurationFrom(Instant.now()).getMillis());
+                                this._results.add(
+                                    nextItem.getDurationValue().toDurationFrom(Instant.now()).getMillis()
+                                );
                                 break;
                             case "dateTime":
                             case "date":
                             case "time":
-                                _results.add(nextItem.getDateTimeValue().getMillis());
+                                this._results.add(nextItem.getDateTimeValue().getMillis());
                                 break;
                             default:
                                 throw new OurBadException(
@@ -188,13 +196,13 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
                 }
             }
             if (isEmptySequence) {
-                _results.add(emptySequenceOrderIndex);
-                _results.add(null); // placeholder for valueColumn(2nd column)
+                this._results.add(emptySequenceOrderIndex);
+                this._results.add(null); // placeholder for valueColumn(2nd column)
             }
             iterator.close();
 
         }
-        return RowFactory.create(_results.toArray());
+        return RowFactory.create(this._results.toArray());
     }
 
     private void readObject(java.io.ObjectInputStream in)
@@ -202,9 +210,9 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
                 ClassNotFoundException {
         in.defaultReadObject();
 
-        _kryo = new Kryo();
-        _kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(_kryo);
-        _input = new Input();
+        this._kryo = new Kryo();
+        this._kryo.setReferences(false);
+        DataFrameUtils.registerKryoClassesKryo(this._kryo);
+        this._input = new Input();
     }
 }

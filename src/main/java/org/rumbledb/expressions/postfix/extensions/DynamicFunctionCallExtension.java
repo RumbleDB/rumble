@@ -20,14 +20,13 @@
 
 package org.rumbledb.expressions.postfix.extensions;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.Expression;
+import org.rumbledb.expressions.Node;
 import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.Node;
 
 public class DynamicFunctionCallExtension extends PostfixExtension {
 
@@ -39,7 +38,7 @@ public class DynamicFunctionCallExtension extends PostfixExtension {
     }
 
     public List<Expression> getArguments() {
-        return _arguments;
+        return this._arguments;
     }
 
     @Override
@@ -66,7 +65,7 @@ public class DynamicFunctionCallExtension extends PostfixExtension {
         for (Expression arg : this._arguments) {
             result.append("(argument (exprSingle ");
             result.append(arg.serializationString(false));
-            result.append((_arguments.indexOf(arg) < _arguments.size() - 1 ? ")) , " : ")) "));
+            result.append((this._arguments.indexOf(arg) < this._arguments.size() - 1 ? ")) , " : ")) "));
         }
         result.append("))");
         return result.toString();

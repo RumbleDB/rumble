@@ -24,7 +24,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.flowr.FlworVarSequenceType;
 import org.rumbledb.expressions.operational.base.UnaryExpressionBase;
-
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 
@@ -47,7 +46,7 @@ public class InstanceOfExpression extends UnaryExpressionBase {
     }
 
     public FlworVarSequenceType getsequenceType() {
-        return _sequenceType;
+        return this._sequenceType;
     }
 
     @Override
@@ -63,8 +62,8 @@ public class InstanceOfExpression extends UnaryExpressionBase {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(instanceOfExpr ";
-        result += _mainExpression.serializationString(true);
-        result += _sequenceType != null ? "instance of " + _sequenceType.serializationString(prefix) : "";
+        result += this._mainExpression.serializationString(true);
+        result += this._sequenceType != null ? "instance of " + this._sequenceType.serializationString(prefix) : "";
         result += ")";
         return result;
     }

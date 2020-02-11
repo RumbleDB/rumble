@@ -21,13 +21,12 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.numerics.exponential;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
@@ -49,17 +48,17 @@ public class LogFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        _iterator = this._children.get(0);
-        _iterator.open(_currentDynamicContextForLocalExecution);
-        this._hasNext = _iterator.hasNext();
-        _iterator.close();
+        this._iterator = this._children.get(0);
+        this._iterator.open(this._currentDynamicContextForLocalExecution);
+        this._hasNext = this._iterator.hasNext();
+        this._iterator.close();
     }
 
     @Override
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            Item value = _iterator.materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
+            Item value = this._iterator.materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
             try {
                 return ItemFactory.getInstance().createDoubleItem(Math.log(value.castToDoubleValue()));
 

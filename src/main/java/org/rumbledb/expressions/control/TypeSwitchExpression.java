@@ -1,18 +1,14 @@
 package org.rumbledb.expressions.control;
 
 
-
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
-
-
-
-import java.util.ArrayList;
-import java.util.List;
-
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.primary.VariableReference;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class TypeSwitchExpression extends Expression {
 
@@ -37,29 +33,29 @@ public class TypeSwitchExpression extends Expression {
     }
 
     public Expression getTestCondition() {
-        return testCondition;
+        return this.testCondition;
     }
 
     public List<TypeSwitchCaseExpression> getCases() {
-        return cases;
+        return this.cases;
     }
 
     public Expression getDefaultExpression() {
-        return defaultExpression;
+        return this.defaultExpression;
     }
 
     public VariableReference getVarRefDefault() {
-        return varRefDefault;
+        return this.varRefDefault;
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        result.add(testCondition);
-        result.addAll(cases);
-        result.add(defaultExpression);
-        if (varRefDefault != null)
-            result.add(varRefDefault);
+        result.add(this.testCondition);
+        result.addAll(this.cases);
+        result.add(this.defaultExpression);
+        if (this.varRefDefault != null)
+            result.add(this.varRefDefault);
         return result;
     }
 

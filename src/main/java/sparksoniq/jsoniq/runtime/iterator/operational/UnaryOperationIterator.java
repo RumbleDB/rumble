@@ -21,15 +21,14 @@
 package sparksoniq.jsoniq.runtime.iterator.operational;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.UnaryOperationBaseIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.math.BigDecimal;
@@ -52,9 +51,9 @@ public class UnaryOperationIterator extends UnaryOperationBaseIterator {
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            _child.open(_currentDynamicContextForLocalExecution);
-            Item child = _child.next();
-            _child.close();
+            this._child.open(this._currentDynamicContextForLocalExecution);
+            Item child = this._child.next();
+            this._child.close();
 
             if (this._operator == OperationalExpressionBase.Operator.MINUS) {
                 if (child.isNumeric()) {
@@ -84,9 +83,9 @@ public class UnaryOperationIterator extends UnaryOperationBaseIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        _child.open(_currentDynamicContextForLocalExecution);
-        this._hasNext = _child.hasNext();
-        _child.close();
+        this._child.open(this._currentDynamicContextForLocalExecution);
+        this._hasNext = this._child.hasNext();
+        this._child.close();
     }
 
 }

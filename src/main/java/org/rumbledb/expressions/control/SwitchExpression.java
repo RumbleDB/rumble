@@ -21,17 +21,13 @@
 package org.rumbledb.expressions.control;
 
 
-
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
-
-
-
-import java.util.ArrayList;
-import java.util.List;
-
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class SwitchExpression extends Expression {
 
@@ -52,23 +48,23 @@ public class SwitchExpression extends Expression {
     }
 
     public Expression getTestCondition() {
-        return testCondition;
+        return this.testCondition;
     }
 
     public List<SwitchCaseExpression> getCases() {
-        return cases;
+        return this.cases;
     }
 
     public Expression getDefaultExpression() {
-        return defaultExpression;
+        return this.defaultExpression;
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        result.add(testCondition);
-        result.addAll(cases);
-        result.add(defaultExpression);
+        result.add(this.testCondition);
+        result.addAll(this.cases);
+        result.add(this.defaultExpression);
         return result;
     }
 

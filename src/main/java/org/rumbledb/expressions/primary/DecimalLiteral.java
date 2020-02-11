@@ -20,8 +20,8 @@
 
 package org.rumbledb.expressions.primary;
 
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.math.BigDecimal;
 
@@ -36,7 +36,7 @@ public class DecimalLiteral extends PrimaryExpression {
     }
 
     public BigDecimal getValue() {
-        return value;
+        return this.value;
     }
 
     @Override

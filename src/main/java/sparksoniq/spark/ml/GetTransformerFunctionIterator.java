@@ -22,17 +22,16 @@ package sparksoniq.spark.ml;
 
 import org.apache.spark.ml.Transformer;
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionSignature;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
@@ -70,7 +69,7 @@ public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
                     getMetadata()
             );
         }
-        _transformerShortName = nameIterator.next().getStringValue();
+        this._transformerShortName = nameIterator.next().getStringValue();
         if (nameIterator.hasNext()) {
             throw new UnexpectedTypeException(
                     "Transformer lookup can't be performed on a sequence.",
@@ -80,11 +79,11 @@ public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
         nameIterator.close();
 
         String transformerFullClassName = RumbleMLCatalog.getTransformerFullClassName(
-            _transformerShortName,
+            this._transformerShortName,
             getMetadata()
         );
         try {
-            _transformerSparkMLClass = Class.forName(transformerFullClassName);
+            this._transformerSparkMLClass = Class.forName(transformerFullClassName);
             this._hasNext = true;
         } catch (ClassNotFoundException e) {
             throw new OurBadException(
@@ -98,9 +97,9 @@ public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             this._hasNext = false;
             try {
-                Transformer transformer = (Transformer) _transformerSparkMLClass.newInstance();
+                Transformer transformer = (Transformer) this._transformerSparkMLClass.newInstance();
                 RuntimeIterator bodyIterator = new ApplyTransformerRuntimeIterator(
-                        _transformerShortName,
+                        this._transformerShortName,
                         transformer,
                         ExecutionMode.DATAFRAME,
                         getMetadata()
@@ -123,7 +122,7 @@ public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
                 );
 
                 return new FunctionItem(
-                        new FunctionIdentifier(_transformerSparkMLClass.getName(), 2),
+                        new FunctionIdentifier(this._transformerSparkMLClass.getName(), 2),
                         transformerParameterNames,
                         new FunctionSignature(
                                 paramTypes,

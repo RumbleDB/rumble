@@ -21,10 +21,10 @@
 package org.rumbledb.expressions.operational.base;
 
 
-import java.util.List;
-
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
+
+import java.util.List;
 
 public abstract class UnaryExpressionBase extends OperationalExpressionBase {
 
@@ -55,14 +55,14 @@ public abstract class UnaryExpressionBase extends OperationalExpressionBase {
 
     @Override
     public boolean isActive() {
-        return _isActive;
+        return this._isActive;
     }
 
     public List<Operator> getOperators() {
-        return _multipleOperators;
+        return this._multipleOperators;
     }
 
     public Operator getSingleOperator() {
-        return _singleOperator;
+        return this._singleOperator;
     }
 }

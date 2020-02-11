@@ -5,12 +5,11 @@ import org.apache.spark.ml.param.ParamMap;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidRumbleMLParamException;
 import org.rumbledb.exceptions.OurBadException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.DataFrameRuntimeIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
@@ -53,17 +52,20 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
         }
         Item paramMapItem = paramMapItemList.get(0);
         ParamMap paramMap = convertRumbleObjectItemToSparkMLParamMap(
-            _transformerShortName,
-            _transformer,
+            this._transformerShortName,
+            this._transformer,
             paramMapItem,
             getMetadata()
         );
 
         try {
-            return _transformer.transform(inputDataset, paramMap);
+            return this._transformer.transform(inputDataset, paramMap);
         } catch (IllegalArgumentException e) {
             throw new InvalidRumbleMLParamException(
-                    "Parameter provided to " + _transformerShortName + " causes the following error: " + e.getMessage(),
+                    "Parameter provided to "
+                        + this._transformerShortName
+                        + " causes the following error: "
+                        + e.getMessage(),
                     getMetadata()
             );
         }

@@ -25,7 +25,6 @@ import org.joda.time.Period;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 

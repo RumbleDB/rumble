@@ -21,17 +21,13 @@
 package org.rumbledb.expressions.control;
 
 
-
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
-
-
-
-import java.util.ArrayList;
-import java.util.List;
-
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class IfExpression extends Expression {
 
@@ -49,27 +45,28 @@ public class IfExpression extends Expression {
         this._condition = condition;
         this._branch = branch;
         this._elseBranch = elseBranch;
+
     }
 
     public Expression getElseBranch() {
-        return _elseBranch;
+        return this._elseBranch;
     }
 
     public Expression getCondition() {
-        return _condition;
+        return this._condition;
     }
 
     public Expression getBranch() {
-        return _branch;
+        return this._branch;
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        result.add(_condition);
-        result.add(_branch);
-        if (_elseBranch != null)
-            result.add(_elseBranch);
+        result.add(this._condition);
+        result.add(this._branch);
+        if (this._elseBranch != null)
+            result.add(this._elseBranch);
         return result;
     }
 
@@ -81,11 +78,11 @@ public class IfExpression extends Expression {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(ifExpr if ( ";
-        result += _condition.serializationString(prefix);
+        result += this._condition.serializationString(prefix);
         result += " ) then ";
-        result += _branch.serializationString(true);
+        result += this._branch.serializationString(true);
         result += ") else ";
-        result += _elseBranch.serializationString(true);
+        result += this._elseBranch.serializationString(true);
         result += "))";
         return result;
     }

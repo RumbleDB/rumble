@@ -42,7 +42,7 @@ public abstract class Expression extends Node {
     }
 
     public StaticContext getStaticContext() {
-        return _staticContext;
+        return this._staticContext;
     }
 
     public void setStaticContext(StaticContext _staticContext) {

@@ -21,10 +21,9 @@
 package sparksoniq.jsoniq.runtime.iterator;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.IteratorFlowException;
-
-import sparksoniq.jsoniq.ExecutionMode;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
@@ -46,8 +45,8 @@ public class CommaExpressionIterator extends LocalRuntimeIterator {
 
     @Override
     public Item next() {
-        if (_hasNext) {
-            Item result = _nextResult; // save the result to be returned
+        if (this._hasNext) {
+            Item result = this._nextResult; // save the result to be returned
             setNextResult(); // calculate and store the next result
             return result;
         }
@@ -59,28 +58,28 @@ public class CommaExpressionIterator extends LocalRuntimeIterator {
         super.open(context);
         this._childIndex = 0;
 
-        _currentChild = this._children.get(_childIndex);
-        _currentChild.open(_currentDynamicContextForLocalExecution);
+        this._currentChild = this._children.get(this._childIndex);
+        this._currentChild.open(this._currentDynamicContextForLocalExecution);
 
         setNextResult();
     }
 
     public void setNextResult() {
-        _nextResult = null;
+        this._nextResult = null;
 
-        while (_nextResult == null) {
-            if (_currentChild.hasNext()) {
-                _nextResult = _currentChild.next();
+        while (this._nextResult == null) {
+            if (this._currentChild.hasNext()) {
+                this._nextResult = this._currentChild.next();
             } else {
-                _currentChild.close();
-                if (++_childIndex == this._children.size()) {
+                this._currentChild.close();
+                if (++this._childIndex == this._children.size()) {
                     break;
                 }
-                _currentChild = this._children.get(_childIndex);
-                _currentChild.open(_currentDynamicContextForLocalExecution);
+                this._currentChild = this._children.get(this._childIndex);
+                this._currentChild.open(this._currentDynamicContextForLocalExecution);
             }
         }
 
-        this._hasNext = _nextResult != null;
+        this._hasNext = this._nextResult != null;
     }
 }

@@ -21,15 +21,14 @@
 package sparksoniq.jsoniq.runtime.iterator.operational;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.operational.base.BinaryOperationBaseIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 public class RangeOperationIterator extends BinaryOperationBaseIterator {
@@ -55,10 +54,10 @@ public class RangeOperationIterator extends BinaryOperationBaseIterator {
 
     @Override
     public Item next() {
-        if (_hasNext) {
-            if (_index == _right)
+        if (this._hasNext) {
+            if (this._index == this._right)
                 this._hasNext = false;
-            return ItemFactory.getInstance().createIntegerItem(_index++);
+            return ItemFactory.getInstance().createIntegerItem(this._index++);
         }
         throw new IteratorFlowException("Invalid next call in Range Operation", getMetadata());
     }
@@ -66,14 +65,19 @@ public class RangeOperationIterator extends BinaryOperationBaseIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        _index = 0;
-        _leftIterator.open(_currentDynamicContextForLocalExecution);
-        _rightIterator.open(_currentDynamicContextForLocalExecution);
-        if (_leftIterator.hasNext() && _rightIterator.hasNext()) {
-            Item left = _leftIterator.next();
-            Item right = _rightIterator.next();
+        this._index = 0;
+        this._leftIterator.open(this._currentDynamicContextForLocalExecution);
+        this._rightIterator.open(this._currentDynamicContextForLocalExecution);
+        if (this._leftIterator.hasNext() && this._rightIterator.hasNext()) {
+            Item left = this._leftIterator.next();
+            Item right = this._rightIterator.next();
 
-            if (_leftIterator.hasNext() || _rightIterator.hasNext() || !(left.isInteger()) || !(right.isInteger()))
+            if (
+                this._leftIterator.hasNext()
+                    || this._rightIterator.hasNext()
+                    || !(left.isInteger())
+                    || !(right.isInteger())
+            )
                 throw new UnexpectedTypeException(
                         "Range expression has non numeric args "
                             +
@@ -83,23 +87,23 @@ public class RangeOperationIterator extends BinaryOperationBaseIterator {
                         getMetadata()
                 );
             try {
-                _left = left.castToIntegerValue();
-                _right = right.castToIntegerValue();
+                this._left = left.castToIntegerValue();
+                this._right = right.castToIntegerValue();
             } catch (IteratorFlowException e) {
                 throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
             }
-            if (_right < _left) {
+            if (this._right < this._left) {
                 this._hasNext = false;
             } else {
-                _index = _left;
+                this._index = this._left;
                 this._hasNext = true;
             }
         } else {
             this._hasNext = false;
         }
 
-        _leftIterator.close();
-        _rightIterator.close();
+        this._leftIterator.close();
+        this._rightIterator.close();
 
     }
 }

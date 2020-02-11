@@ -21,17 +21,13 @@
 package org.rumbledb.expressions.operational;
 
 
-
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
-
-
-
-import java.util.Arrays;
-import java.util.List;
-
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.operational.base.UnaryExpressionBase;
 import org.rumbledb.expressions.postfix.PostFixExpression;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
+import java.util.Arrays;
+import java.util.List;
 
 
 public class UnaryExpression extends UnaryExpressionBase {
@@ -52,7 +48,7 @@ public class UnaryExpression extends UnaryExpressionBase {
     }
 
     public PostFixExpression get_postfixExpression() {
-        return _postfixExpression;
+        return this._postfixExpression;
     }
 
     @Override
@@ -72,7 +68,7 @@ public class UnaryExpression extends UnaryExpressionBase {
             for (Operator op : this._multipleOperators)
                 result += getStringFromOperator(op) + " ";
         }
-        result += _mainExpression.serializationString(true);
+        result += this._mainExpression.serializationString(true);
         result += ")";
         return result;
     }

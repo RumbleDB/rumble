@@ -21,12 +21,11 @@
 package sparksoniq.jsoniq.runtime.iterator.quantifiers;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.SequenceType;
 
@@ -58,23 +57,23 @@ public class QuantifiedExpressionVarIterator extends LocalRuntimeIterator {
     }
 
     public String getVariableReference() {
-        return _variableReference;
+        return this._variableReference;
     }
 
     @Override
     public void open(DynamicContext context) {
         super.open(context);
 
-        _iterator = this._children.get(0);
-        _iterator.open(_currentDynamicContextForLocalExecution);
+        this._iterator = this._children.get(0);
+        this._iterator.open(this._currentDynamicContextForLocalExecution);
 
         setNextResult();
     }
 
     @Override
     public Item next() {
-        if (_hasNext == true) {
-            Item result = _nextResult; // save the result to be returned
+        if (this._hasNext == true) {
+            Item result = this._nextResult; // save the result to be returned
             setNextResult(); // calculate and store the next result
             return result;
         }
@@ -82,17 +81,17 @@ public class QuantifiedExpressionVarIterator extends LocalRuntimeIterator {
     }
 
     public void setNextResult() {
-        _nextResult = null;
+        this._nextResult = null;
 
-        while (_iterator.hasNext()) {
-            _nextResult = _iterator.next();
+        while (this._iterator.hasNext()) {
+            this._nextResult = this._iterator.next();
             break;
         }
 
 
-        if (_nextResult == null) {
+        if (this._nextResult == null) {
             this._hasNext = false;
-            _iterator.close();
+            this._iterator.close();
         } else {
             this._hasNext = true;
         }

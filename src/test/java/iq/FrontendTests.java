@@ -27,7 +27,6 @@ import org.junit.Test;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.primary.VariableReference;
 import org.rumbledb.parser.JsoniqBaseVisitor;
-
 import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
 import sparksoniq.semantics.types.ItemTypes;
 
@@ -63,7 +62,7 @@ public class FrontendTests extends AnnotationsTestsBase {
     @Test(timeout = 1000000)
     public void testGrammarAndParser() throws Throwable {
         initializeTests(grammarTestsDirectory);
-        for (File testFile : testFiles) {
+        for (File testFile : this.testFiles) {
             System.err.println(counter++ + " : " + testFile);
             // FileReader reader = getReaderForFile(testFile.getAbsolutePath());
             testAnnotations(testFile.getAbsolutePath(), new JsoniqBaseVisitor<Void>());
@@ -99,7 +98,7 @@ public class FrontendTests extends AnnotationsTestsBase {
     @Test(timeout = 1000000)
     public void testSematicChecks() throws Throwable {
         initializeTests(semanticTestsDirectory);
-        for (File testFile : testFiles) {
+        for (File testFile : this.testFiles) {
             System.err.println(counter++ + " : " + testFile);
             JsoniqExpressionTreeVisitor visitor = new JsoniqExpressionTreeVisitor();
             testAnnotations(testFile.getAbsolutePath(), visitor);

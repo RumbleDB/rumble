@@ -21,9 +21,9 @@
 package org.rumbledb.expressions;
 
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
-import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,14 +38,14 @@ public class CommaExpression extends Expression {
     }
 
     public List<Expression> getExpressions() {
-        return _expressions;
+        return this._expressions;
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         if (this._expressions != null)
-            _expressions.forEach(e -> {
+            this._expressions.forEach(e -> {
                 if (e != null)
                     result.add(e);
             });
@@ -53,7 +53,7 @@ public class CommaExpression extends Expression {
     }
 
     private boolean bypassCurrentExpressionForExecutionModeOperations() {
-        return _expressions.size() == 1;
+        return this._expressions.size() == 1;
     }
 
     @Override
@@ -80,12 +80,12 @@ public class CommaExpression extends Expression {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(expr ";
-        for (Expression expr : _expressions) {
+        for (Expression expr : this._expressions) {
 
             result += "(exprSingle "
                 + expr.serializationString(false)
-                + (_expressions.size() >= 2
-                    && _expressions.indexOf(expr) < _expressions.size() - 1 ? ") , " : ")");
+                + (this._expressions.size() >= 2
+                    && this._expressions.indexOf(expr) < this._expressions.size() - 1 ? ") , " : ")");
         }
 
         result += ")";

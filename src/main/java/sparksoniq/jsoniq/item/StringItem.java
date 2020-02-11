@@ -27,7 +27,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
@@ -50,7 +49,7 @@ public class StringItem extends AtomicItem {
     }
 
     public String getValue() {
-        return _value;
+        return this._value;
     }
 
     @Override

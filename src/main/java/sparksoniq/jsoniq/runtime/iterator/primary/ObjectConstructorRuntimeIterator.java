@@ -21,16 +21,14 @@
 package sparksoniq.jsoniq.runtime.iterator.primary;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.item.ObjectItem;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -70,9 +68,9 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
         if (this._hasNext) {
             List<Item> values = new ArrayList<>();
             List<String> keys = new ArrayList<>();
-            if (_isMergedObject) {
+            if (this._isMergedObject) {
                 for (RuntimeIterator iterator : this._children) {
-                    iterator.open(_currentDynamicContextForLocalExecution);
+                    iterator.open(this._currentDynamicContextForLocalExecution);
                     while (iterator.hasNext()) {
                         ObjectItem item = (ObjectItem) iterator.next();
                         keys.addAll(item.getKeys());

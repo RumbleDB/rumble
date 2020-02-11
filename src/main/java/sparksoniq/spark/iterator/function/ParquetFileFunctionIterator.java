@@ -24,11 +24,10 @@ import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
-
+import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.DataFrameRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkSessionManager;
 

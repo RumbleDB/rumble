@@ -21,15 +21,14 @@
 package sparksoniq.jsoniq.runtime.iterator.functions;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.FunctionItem;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
@@ -57,49 +56,49 @@ public class DynamicFunctionCallIterator extends LocalRuntimeIterator {
         super(null, executionMode, iteratorMetadata);
         for (RuntimeIterator arg : functionArguments) {
             if (arg != null) {
-                _children.add(arg);
+                this._children.add(arg);
             }
         }
-        if (!_children.contains(functionItemIterator)) {
-            _children.add(functionItemIterator);
+        if (!this._children.contains(functionItemIterator)) {
+            this._children.add(functionItemIterator);
         }
-        _functionItemIterator = functionItemIterator;
-        _functionArguments = functionArguments;
+        this._functionItemIterator = functionItemIterator;
+        this._functionArguments = functionArguments;
     }
 
     @Override
     public void open(DynamicContext context) {
         super.open(context);
         setFunctionItemAndIteratorWithCurrentContext();
-        _functionCallIterator.open(_currentDynamicContextForLocalExecution);
+        this._functionCallIterator.open(this._currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
     @Override
     public Item next() {
         if (this._hasNext) {
-            Item result = _nextResult;
+            Item result = this._nextResult;
             setNextResult();
             return result;
         }
         throw new IteratorFlowException(
                 RuntimeIterator.FLOW_EXCEPTION_MESSAGE
                     + " in "
-                    + _functionItem.getIdentifier().getName()
+                    + this._functionItem.getIdentifier().getName()
                     + "  function",
                 getMetadata()
         );
     }
 
     public void setNextResult() {
-        _nextResult = null;
-        if (_functionCallIterator.hasNext()) {
-            _nextResult = _functionCallIterator.next();
+        this._nextResult = null;
+        if (this._functionCallIterator.hasNext()) {
+            this._nextResult = this._functionCallIterator.next();
         }
 
-        if (_nextResult == null) {
+        if (this._nextResult == null) {
             this._hasNext = false;
-            _functionCallIterator.close();
+            this._functionCallIterator.close();
         } else {
             this._hasNext = true;
         }
@@ -107,35 +106,35 @@ public class DynamicFunctionCallIterator extends LocalRuntimeIterator {
 
     private void setFunctionItemAndIteratorWithCurrentContext() {
         try {
-            _functionItemIterator.open(_currentDynamicContextForLocalExecution);
-            if (_functionItemIterator.hasNext()) {
-                _functionItem = (FunctionItem) _functionItemIterator.next();
+            this._functionItemIterator.open(this._currentDynamicContextForLocalExecution);
+            if (this._functionItemIterator.hasNext()) {
+                this._functionItem = (FunctionItem) this._functionItemIterator.next();
             }
-            if (_functionItemIterator.hasNext()) {
+            if (this._functionItemIterator.hasNext()) {
                 throw new UnexpectedTypeException(
                         "Dynamic function call can not be performed on a sequence.",
                         getMetadata()
                 );
             }
-            _functionItemIterator.close();
+            this._functionItemIterator.close();
         } catch (ClassCastException e) {
             throw new UnexpectedTypeException(
                     "Dynamic function call can only be performed on functions.",
                     getMetadata()
             );
         }
-        _functionCallIterator = Functions.buildUserDefinedFunctionCallIterator(
-            _functionItem,
-            _functionItem.getBodyIterator().getHighestExecutionMode(),
+        this._functionCallIterator = Functions.buildUserDefinedFunctionCallIterator(
+            this._functionItem,
+            this._functionItem.getBodyIterator().getHighestExecutionMode(),
             getMetadata(),
-            _functionArguments
+            this._functionArguments
         );
     }
 
     @Override
     public void reset(DynamicContext context) {
         super.reset(context);
-        _functionCallIterator.reset(_currentDynamicContextForLocalExecution);
+        this._functionCallIterator.reset(this._currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
@@ -144,7 +143,7 @@ public class DynamicFunctionCallIterator extends LocalRuntimeIterator {
         // ensure that recursive function calls terminate gracefully
         // the function call in the body of the deepest recursion call is never visited, never opened and never closed
         if (this._isOpen) {
-            _functionCallIterator.close();
+            this._functionCallIterator.close();
         }
         super.close();
     }

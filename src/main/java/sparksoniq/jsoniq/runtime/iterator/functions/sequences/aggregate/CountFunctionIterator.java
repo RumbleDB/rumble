@@ -21,15 +21,14 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.sequences.aggregate;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.runtime.iterator.primary.VariableReferenceIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
@@ -61,20 +60,20 @@ public class CountFunctionIterator extends LocalFunctionCallIterator {
             if (iterator instanceof VariableReferenceIterator) {
                 VariableReferenceIterator expr = (VariableReferenceIterator) iterator;
                 this._hasNext = false;
-                return _currentDynamicContextForLocalExecution.getVariableCount(expr.getVariableName());
+                return this._currentDynamicContextForLocalExecution.getVariableCount(expr.getVariableName());
             }
 
             if (!iterator.isRDD()) {
-                List<Item> results = iterator.materialize(_currentDynamicContextForLocalExecution);
+                List<Item> results = iterator.materialize(this._currentDynamicContextForLocalExecution);
                 this._hasNext = false;
                 return ItemFactory.getInstance().createIntegerItem(results.size());
             }
 
             long count;
             if (iterator.isDataFrame()) {
-                count = iterator.getDataFrame(_currentDynamicContextForLocalExecution).count();
+                count = iterator.getDataFrame(this._currentDynamicContextForLocalExecution).count();
             } else {
-                count = iterator.getRDD(_currentDynamicContextForLocalExecution).count();
+                count = iterator.getRDD(this._currentDynamicContextForLocalExecution).count();
             }
             this._hasNext = false;
             if (count > (long) Integer.MAX_VALUE) {
@@ -92,8 +91,8 @@ public class CountFunctionIterator extends LocalFunctionCallIterator {
     }
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        if (_children.get(0) instanceof VariableReferenceIterator) {
-            VariableReferenceIterator expr = (VariableReferenceIterator) _children.get(0);
+        if (this._children.get(0) instanceof VariableReferenceIterator) {
+            VariableReferenceIterator expr = (VariableReferenceIterator) this._children.get(0);
             Map<String, DynamicContext.VariableDependency> result = new TreeMap<>();
             result.put(expr.getVariableName(), DynamicContext.VariableDependency.COUNT);
             return result;

@@ -24,12 +24,11 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.parsing.RowToItemMapper;
-import org.rumbledb.exceptions.IteratorFlowException;
-
 import sparksoniq.jsoniq.ExecutionMode;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -77,7 +76,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
             resetLocal(context);
             return;
         }
-        result = null;
+        this.result = null;
     }
 
     @Override
@@ -87,7 +86,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
             closeLocal();
             return;
         }
-        result = null;
+        this.result = null;
     }
 
     @Override
@@ -95,13 +94,13 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         if (!isRDD()) {
             return hasNextLocal();
         }
-        if (result == null) {
-            currentResultIndex = 0;
-            JavaRDD<Item> rdd = this.getRDD(_currentDynamicContextForLocalExecution);
-            result = SparkSessionManager.collectRDDwithLimit(rdd);
-            _hasNext = !result.isEmpty();
+        if (this.result == null) {
+            this.currentResultIndex = 0;
+            JavaRDD<Item> rdd = this.getRDD(this._currentDynamicContextForLocalExecution);
+            this.result = SparkSessionManager.collectRDDwithLimit(rdd);
+            this._hasNext = !this.result.isEmpty();
         }
-        return _hasNext;
+        return this._hasNext;
     }
 
     @Override
@@ -112,16 +111,16 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         if (!this._isOpen)
             throw new IteratorFlowException("Runtime iterator is not open", getMetadata());
 
-        if (!(currentResultIndex <= result.size() - 1))
+        if (!(this.currentResultIndex <= this.result.size() - 1))
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.getClass().getSimpleName(),
                     getMetadata()
             );
-        if (currentResultIndex == result.size() - 1)
+        if (this.currentResultIndex == this.result.size() - 1)
             this._hasNext = false;
 
-        Item item = result.get(currentResultIndex);
-        currentResultIndex++;
+        Item item = this.result.get(this.currentResultIndex);
+        this.currentResultIndex++;
         return item;
     }
 

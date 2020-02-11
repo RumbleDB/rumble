@@ -24,10 +24,7 @@ package org.rumbledb.expressions.flowr;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.primary.VariableReference;
-
 import sparksoniq.jsoniq.ExecutionMode;
-
-
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 
@@ -46,11 +43,11 @@ public class LetClauseVar extends FlworVarDecl {
     @Override
     public void initHighestExecutionAndVariableHighestStorageModes() {
         this._highestExecutionMode =
-            (previousClause == null) ? ExecutionMode.LOCAL : previousClause.getHighestExecutionMode();
+            (this.previousClause == null) ? ExecutionMode.LOCAL : this.previousClause.getHighestExecutionMode();
 
         // if let clause is local, defined variables are stored according to the execution mode of the expression
         if (this._highestExecutionMode == ExecutionMode.LOCAL) {
-            this._variableHighestStorageMode = expression.getHighestExecutionMode();
+            this._variableHighestStorageMode = this.expression.getHighestExecutionMode();
         } else {
             this._variableHighestStorageMode = ExecutionMode.LOCAL;
         }
@@ -63,9 +60,9 @@ public class LetClauseVar extends FlworVarDecl {
 
     @Override
     public String serializationString(boolean prefix) {
-        String result = "(letVar " + variableReferenceNode.serializationString(false) + " ";
+        String result = "(letVar " + this.variableReferenceNode.serializationString(false) + " ";
         if (this.asSequence != null)
-            result += "as " + asSequence.serializationString(true) + " ";
+            result += "as " + this.asSequence.serializationString(true) + " ";
         result += ":= " + this.expression.serializationString(true);
         result += "))";
         return result;

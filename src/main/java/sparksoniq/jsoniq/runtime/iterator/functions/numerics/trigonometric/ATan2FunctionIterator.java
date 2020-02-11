@@ -21,14 +21,13 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.numerics.trigonometric;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.util.List;
 
@@ -49,7 +48,7 @@ public class ATan2FunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             Item y;
             RuntimeIterator yIterator = this._children.get(0);
-            yIterator.open(_currentDynamicContextForLocalExecution);
+            yIterator.open(this._currentDynamicContextForLocalExecution);
             if (yIterator.hasNext()) {
                 y = yIterator.next();
             } else {
@@ -58,7 +57,7 @@ public class ATan2FunctionIterator extends LocalFunctionCallIterator {
 
             Item x;
             RuntimeIterator xIterator = this._children.get(1);
-            xIterator.open(_currentDynamicContextForLocalExecution);
+            xIterator.open(this._currentDynamicContextForLocalExecution);
             if (xIterator.hasNext()) {
                 x = xIterator.next();
             } else {

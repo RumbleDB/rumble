@@ -4,7 +4,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.flowr.FlworVarSequenceType;
 import org.rumbledb.expressions.operational.base.UnaryExpressionBase;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.types.SequenceType;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
@@ -29,7 +28,7 @@ public class TreatExpression extends UnaryExpressionBase {
     }
 
     public FlworVarSequenceType getsequenceType() {
-        return _sequenceType;
+        return this._sequenceType;
     }
 
     @Override
@@ -37,7 +36,7 @@ public class TreatExpression extends UnaryExpressionBase {
         if (bypassCurrentExpressionForExecutionModeOperations()) {
             return;
         }
-        SequenceType sequenceType = _sequenceType.getSequence();
+        SequenceType sequenceType = this._sequenceType.getSequence();
         this._highestExecutionMode = calculateIsRDDFromSequenceTypeAndExpression(sequenceType, this._mainExpression);
     }
 
@@ -63,8 +62,8 @@ public class TreatExpression extends UnaryExpressionBase {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(treatExpr ";
-        result += _mainExpression.serializationString(true);
-        result += _sequenceType != null ? " treat as " + _sequenceType.serializationString(prefix) : "";
+        result += this._mainExpression.serializationString(true);
+        result += this._sequenceType != null ? " treat as " + this._sequenceType.serializationString(prefix) : "";
         result += ")";
         return result;
     }

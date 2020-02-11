@@ -22,12 +22,11 @@ package sparksoniq.jsoniq.runtime.iterator.functions.sequences.cardinality;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.SequenceExceptionZeroOrOne;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
@@ -50,7 +49,7 @@ public class ZeroOrOneIterator extends CardinalityFunctionIterator {
     public Item next() {
         if (this._hasNext) {
             this._hasNext = false;
-            return _nextResult;
+            return this._nextResult;
         }
         throw new IteratorFlowException(
                 RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " ZERO-OR-ONE function",
@@ -69,7 +68,7 @@ public class ZeroOrOneIterator extends CardinalityFunctionIterator {
             if (!sequenceIterator.hasNext()) {
                 this._hasNext = false;
             } else {
-                _nextResult = sequenceIterator.next();
+                this._nextResult = sequenceIterator.next();
                 if (sequenceIterator.hasNext()) {
                     throw new SequenceExceptionZeroOrOne(
                             "fn:zero-or-one() called with a sequence containing more than one item",
@@ -81,13 +80,13 @@ public class ZeroOrOneIterator extends CardinalityFunctionIterator {
             }
             sequenceIterator.close();
         } else {
-            JavaRDD<Item> rdd = sequenceIterator.getRDD(_currentDynamicContextForLocalExecution);
+            JavaRDD<Item> rdd = sequenceIterator.getRDD(this._currentDynamicContextForLocalExecution);
             List<Item> results = rdd.take(2);
             if (results.size() == 0) {
                 this._hasNext = false;
             } else if (results.size() == 1) {
                 this._hasNext = true;
-                _nextResult = results.get(0);
+                this._nextResult = results.get(0);
             } else if (results.size() > 1) {
                 throw new SequenceExceptionZeroOrOne(
                         "fn:zero-or-one() called with a sequence containing more than one item",

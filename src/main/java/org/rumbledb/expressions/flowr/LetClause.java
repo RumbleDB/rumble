@@ -20,19 +20,13 @@
 
 package org.rumbledb.expressions.flowr;
 
-import sparksoniq.jsoniq.ExecutionMode;
-
-
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
-
-
-
-import java.util.ArrayList;
-import java.util.List;
-
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.Node;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class LetClause extends FlworClause {
 
@@ -45,32 +39,32 @@ public class LetClause extends FlworClause {
         this.letVars = vars;
 
         // chain letVariables with previousClause relationship
-        for (int varIndex = letVars.size() - 1; varIndex > 0; varIndex--) {
-            letVars.get(varIndex).setPreviousClause(letVars.get(varIndex - 1));
+        for (int varIndex = this.letVars.size() - 1; varIndex > 0; varIndex--) {
+            this.letVars.get(varIndex).setPreviousClause(this.letVars.get(varIndex - 1));
         }
     }
 
     public List<LetClauseVar> getLetVariables() {
-        return letVars;
+        return this.letVars;
     }
 
     @Override
     public void setPreviousClause(FlworClause previousClause) {
         super.setPreviousClause(previousClause);
         // assign the previous clause of the LetClause as the first variable definition's previous
-        letVars.get(0).previousClause = this.previousClause;
+        this.letVars.get(0).previousClause = this.previousClause;
     }
 
     @Override
     public void initHighestExecutionMode() {
         // call isDataFrame on the last letVariable
-        this._highestExecutionMode = letVars.get(letVars.size() - 1).getHighestExecutionMode();
+        this._highestExecutionMode = this.letVars.get(this.letVars.size() - 1).getHighestExecutionMode();
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        letVars.forEach(e -> {
+        this.letVars.forEach(e -> {
             if (e != null)
                 result.add(e);
         });
@@ -85,9 +79,9 @@ public class LetClause extends FlworClause {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(letClause let ";
-        for (LetClauseVar var : letVars)
+        for (LetClauseVar var : this.letVars)
             result += var.serializationString(true)
-                + (letVars.indexOf(var) < letVars.size() - 1 ? " , " : "");
+                + (this.letVars.indexOf(var) < this.letVars.size() - 1 ? " , " : "");
         result += ")";
         return result;
     }

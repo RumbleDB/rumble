@@ -20,20 +20,15 @@
 
 package org.rumbledb.expressions.primary;
 
-import sparksoniq.jsoniq.ExecutionMode;
-
-
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
-
-
-
-import java.util.ArrayList;
-import java.util.List;
-
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import sparksoniq.jsoniq.ExecutionMode;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class ParenthesizedExpression extends PrimaryExpression {
@@ -51,7 +46,7 @@ public class ParenthesizedExpression extends PrimaryExpression {
     }
 
     public Expression getExpression() {
-        return expression;
+        return this.expression;
     }
 
     @Override
@@ -60,7 +55,7 @@ public class ParenthesizedExpression extends PrimaryExpression {
     }
 
     private boolean bypassCurrentExpressionForExecutionModeOperations() {
-        return expression != null;
+        return this.expression != null;
     }
 
     @Override

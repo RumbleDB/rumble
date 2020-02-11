@@ -4,7 +4,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.flowr.FlworVarSingleType;
 import org.rumbledb.expressions.operational.base.UnaryExpressionBase;
-
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 public class CastExpression extends UnaryExpressionBase {
@@ -35,13 +34,13 @@ public class CastExpression extends UnaryExpressionBase {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(castExpr ";
-        result += _mainExpression.serializationString(true);
-        result += _singleType != null ? " cast as" + _singleType.serializationString(prefix) : "";
+        result += this._mainExpression.serializationString(true);
+        result += this._singleType != null ? " cast as" + this._singleType.serializationString(prefix) : "";
         result += ")";
         return result;
     }
 
     public FlworVarSingleType getFlworVarSingleType() {
-        return _singleType;
+        return this._singleType;
     }
 }

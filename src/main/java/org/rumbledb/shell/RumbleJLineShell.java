@@ -34,7 +34,6 @@ import org.rumbledb.cli.JsoniqQueryExecutor;
 import org.rumbledb.cli.Main;
 import org.rumbledb.config.SparksoniqRuntimeConfiguration;
 import org.rumbledb.exceptions.SparksoniqRuntimeException;
-
 import sparksoniq.utils.FileUtils;
 
 import java.io.IOException;
@@ -65,41 +64,41 @@ public class RumbleJLineShell {
         this.output(getInitializationMessage());
         while (!exitCalled()) {
             try {
-                currentLine = lineReader.readLine(getPrompt());
+                this.currentLine = this.lineReader.readLine(getPrompt());
                 if (!isConfig()) {
 
-                    if (!currentLine.isEmpty()) {
-                        currentQueryContent += "\n" + currentLine;
-                        queryStarted = true;
+                    if (!this.currentLine.isEmpty()) {
+                        this.currentQueryContent += "\n" + this.currentLine;
+                        this.queryStarted = true;
                     }
 
                     if (isInQuery() && isQueryEnd()) {
                         processQuery();
                     }
                 }
-                previousLine = currentLine;
+                this.previousLine = this.currentLine;
             } catch (Exception ex) {
-                handleException(ex, _configuration.getShowErrorInfo());
+                handleException(ex, this._configuration.getShowErrorInfo());
             }
         }
     }
 
     private void processQuery() throws IOException {
-        Path file = FileUtils.writeToFileInCurrentDirectory(currentQueryContent.trim());
+        Path file = FileUtils.writeToFileInCurrentDirectory(this.currentQueryContent.trim());
         long startTime = System.currentTimeMillis();
         try {
-            String result = jsoniqQueryExecutor.runInteractive(file);
+            String result = this.jsoniqQueryExecutor.runInteractive(file);
             output(result);
             long time = System.currentTimeMillis() - startTime;
-            if (_printTime)
+            if (this._printTime)
                 output("[EXEC TIME]: " + time);
             removeQueryFile(file);
         } catch (Exception ex) {
-            handleException(ex, _configuration.getShowErrorInfo());
+            handleException(ex, this._configuration.getShowErrorInfo());
             removeQueryFile(file);
         }
-        queryStarted = false;
-        currentQueryContent = "";
+        this.queryStarted = false;
+        this.currentQueryContent = "";
     }
 
     private void removeQueryFile(Path file) {
@@ -110,20 +109,20 @@ public class RumbleJLineShell {
     }
 
     private void initialize() throws IOException {
-        welcomeMessage = IOUtils.toString(Main.class.getResourceAsStream("/assets/banner.txt"), "UTF-8");
+        this.welcomeMessage = IOUtils.toString(Main.class.getResourceAsStream("/assets/banner.txt"), "UTF-8");
         Terminal terminal = TerminalBuilder.builder()
             .system(true)
             .build();
         DefaultParser parser = new DefaultParser();
         parser.setEscapeChars(null);
-        lineReader = LineReaderBuilder.builder()
+        this.lineReader = LineReaderBuilder.builder()
             .parser(parser)
             .terminal(terminal)
             // .completer(new MyCompleter())
             .highlighter(new DefaultHighlighter())
             // .parser(new JiqsJlineParser())
             .build();
-        jsoniqQueryExecutor = new JsoniqQueryExecutor(false, _configuration);
+        this.jsoniqQueryExecutor = new JsoniqQueryExecutor(false, this._configuration);
     }
 
     private void handleException(Throwable ex, boolean showErrorInfo) {
@@ -162,16 +161,16 @@ public class RumbleJLineShell {
     }
 
     private boolean isInQuery() {
-        return !isConfig() && queryStarted;
+        return !isConfig() && this.queryStarted;
     }
 
     private boolean isQueryEnd() {
-        return previousLine != null
-            && currentLine != null
+        return this.previousLine != null
+            && this.currentLine != null
             &&
-            previousLine.equals("")
-            && currentLine.equals("")
-            && !currentQueryContent.isEmpty();
+            this.previousLine.equals("")
+            && this.currentLine.equals("")
+            && !this.currentQueryContent.isEmpty();
     }
 
     private boolean isConfig() {
@@ -179,11 +178,11 @@ public class RumbleJLineShell {
     }
 
     private boolean exitCalled() {
-        return currentLine != null && this.currentLine.trim().toLowerCase().equals(RumbleJLineShell.EXIT_COMMAND);
+        return this.currentLine != null && this.currentLine.trim().toLowerCase().equals(RumbleJLineShell.EXIT_COMMAND);
     }
 
     private String getInitializationMessage() {
-        return welcomeMessage + "\n" + _configuration.toString();
+        return this.welcomeMessage + "\n" + this._configuration.toString();
     }
 
 

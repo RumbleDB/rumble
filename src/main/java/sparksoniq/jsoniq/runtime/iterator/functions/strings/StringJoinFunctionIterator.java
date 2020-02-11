@@ -21,14 +21,13 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.strings;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.util.List;
 
@@ -48,10 +47,10 @@ public class StringJoinFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this._hasNext) {
             Item joinString = ItemFactory.getInstance().createStringItem("");
-            List<Item> strings = this._children.get(0).materialize(_currentDynamicContextForLocalExecution);
+            List<Item> strings = this._children.get(0).materialize(this._currentDynamicContextForLocalExecution);
             if (this._children.size() > 1) {
                 RuntimeIterator joinStringIterator = this._children.get(1);
-                joinStringIterator.open(_currentDynamicContextForLocalExecution);
+                joinStringIterator.open(this._currentDynamicContextForLocalExecution);
                 if (joinStringIterator.hasNext()) {
                     joinString = joinStringIterator.next();
                 }

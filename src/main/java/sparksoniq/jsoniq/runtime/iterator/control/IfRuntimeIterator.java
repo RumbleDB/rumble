@@ -21,12 +21,11 @@
 package sparksoniq.jsoniq.runtime.iterator.control;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 public class IfRuntimeIterator extends LocalRuntimeIterator {
@@ -65,40 +64,40 @@ public class IfRuntimeIterator extends LocalRuntimeIterator {
 
     @Override
     public Item next() {
-        if (_nextResult == null) {
+        if (this._nextResult == null) {
             throw new IteratorFlowException("No next item.");
         }
-        Item result = _nextResult;
+        Item result = this._nextResult;
         setNextResult();
         return result;
     }
 
     @Override
     public boolean hasNext() {
-        return _nextResult != null;
+        return this._nextResult != null;
     }
 
     public void setNextResult() {
-        if (_selectedIterator != null && _nextResult == null) {
+        if (this._selectedIterator != null && this._nextResult == null) {
             throw new IteratorFlowException("Branch iterator has been fully consumed already.");
         }
-        if (_selectedIterator == null) {
+        if (this._selectedIterator == null) {
             RuntimeIterator condition = this._children.get(0);
-            condition.open(_currentDynamicContextForLocalExecution);
+            condition.open(this._currentDynamicContextForLocalExecution);
             boolean effectiveBooleanValue = getEffectiveBooleanValue(condition);
             condition.close();
             if (effectiveBooleanValue) {
-                _selectedIterator = this._children.get(1);
+                this._selectedIterator = this._children.get(1);
             } else {
-                _selectedIterator = this._children.get(2);
+                this._selectedIterator = this._children.get(2);
             }
-            _selectedIterator.open(_currentDynamicContextForLocalExecution);
+            this._selectedIterator.open(this._currentDynamicContextForLocalExecution);
         }
-        if (_selectedIterator.hasNext()) {
-            _nextResult = _selectedIterator.next();
+        if (this._selectedIterator.hasNext()) {
+            this._nextResult = this._selectedIterator.next();
         } else {
-            _nextResult = null;
-            _selectedIterator.close();
+            this._nextResult = null;
+            this._selectedIterator.close();
         }
     }
 }

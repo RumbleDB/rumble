@@ -29,7 +29,6 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.exceptions.OurBadException;
-
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionSignature;
@@ -119,31 +118,31 @@ public class FunctionItem extends Item {
     }
 
     public FunctionIdentifier getIdentifier() {
-        return identifier;
+        return this.identifier;
     }
 
     public List<String> getParameterNames() {
-        return parameterNames;
+        return this.parameterNames;
     }
 
     public FunctionSignature getSignature() {
-        return signature;
+        return this.signature;
     }
 
     public RuntimeIterator getBodyIterator() {
-        return bodyIterator;
+        return this.bodyIterator;
     }
 
     public Map<String, List<Item>> getLocalVariablesInClosure() {
-        return _localVariablesInClosure;
+        return this._localVariablesInClosure;
     }
 
     public Map<String, JavaRDD<Item>> getRDDVariablesInClosure() {
-        return _RDDVariablesInClosure;
+        return this._RDDVariablesInClosure;
     }
 
     public Map<String, Dataset<Row>> getDFVariablesInClosure() {
-        return _DFVariablesInClosure;
+        return this._DFVariablesInClosure;
     }
 
     @Override

@@ -21,13 +21,12 @@
 package sparksoniq.jsoniq.runtime.iterator.functions.arrays;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.item.ItemFactory;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
@@ -51,10 +50,10 @@ public class ArraySizeFunctionIterator extends LocalFunctionCallIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        arrayIterator = this._children.get(0);
-        arrayIterator.open(context);
-        this._hasNext = arrayIterator.hasNext();
-        arrayIterator.close();
+        this.arrayIterator = this._children.get(0);
+        this.arrayIterator.open(context);
+        this._hasNext = this.arrayIterator.hasNext();
+        this.arrayIterator.close();
     }
 
     @Override
@@ -62,7 +61,7 @@ public class ArraySizeFunctionIterator extends LocalFunctionCallIterator {
         if (this._hasNext) {
             this._hasNext = false;
 
-            Item array = arrayIterator.materializeFirstItemOrNull(_currentDynamicContextForLocalExecution);
+            Item array = this.arrayIterator.materializeFirstItemOrNull(this._currentDynamicContextForLocalExecution);
             return ItemFactory.getInstance().createIntegerItem(array.getSize());
         }
         throw new IteratorFlowException(

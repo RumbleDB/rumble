@@ -57,51 +57,56 @@ public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<L
             StructType inputSchema,
             Map<String, List<String>> columnNamesByType
     ) {
-        _expression = expression;
+        this._expression = expression;
 
-        _deserializedParams = new ArrayList<>();
-        _longParams = new ArrayList<>();
-        _parentContext = context;
-        _context = new DynamicContext(_parentContext);
+        this._deserializedParams = new ArrayList<>();
+        this._longParams = new ArrayList<>();
+        this._parentContext = context;
+        this._context = new DynamicContext(this._parentContext);
 
-        _kryo = new Kryo();
-        _kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(_kryo);
-        _input = new Input();
+        this._kryo = new Kryo();
+        this._kryo.setReferences(false);
+        DataFrameUtils.registerKryoClassesKryo(this._kryo);
+        this._input = new Input();
 
-        _columnNamesByType = columnNamesByType;
-        _dependencies = _expression.getVariableDependencies();
+        this._columnNamesByType = columnNamesByType;
+        this._dependencies = this._expression.getVariableDependencies();
 
     }
 
 
     @Override
     public Boolean call(WrappedArray<byte[]> wrappedParameters, WrappedArray<Long> wrappedParametersLong) {
-        _deserializedParams.clear();
-        _context.removeAllVariables();
+        this._deserializedParams.clear();
+        this._context.removeAllVariables();
 
-        DataFrameUtils.deserializeWrappedParameters(wrappedParameters, _deserializedParams, _kryo, _input);
+        DataFrameUtils.deserializeWrappedParameters(
+            wrappedParameters,
+            this._deserializedParams,
+            this._kryo,
+            this._input
+        );
 
         // Long parameters correspond to pre-computed counts, when a materialization of the
         // actual sequence was avoided upfront.
         Object[] longParams = (Object[]) wrappedParametersLong.array();
         for (Object longParam : longParams) {
             Item count = ItemFactory.getInstance().createIntegerItem(((Long) longParam).intValue());
-            _longParams.add(count);
+            this._longParams.add(count);
         }
 
         DataFrameUtils.prepareDynamicContext(
-            _context,
-            _columnNamesByType.get("byte[]"),
-            _columnNamesByType.get("Long"),
-            _deserializedParams,
-            _longParams
+            this._context,
+            this._columnNamesByType.get("byte[]"),
+            this._columnNamesByType.get("Long"),
+            this._deserializedParams,
+            this._longParams
         );
 
         // apply expression in the dynamic context
-        _expression.open(_context);
-        boolean result = RuntimeIterator.getEffectiveBooleanValue(_expression);
-        _expression.close();
+        this._expression.open(this._context);
+        boolean result = RuntimeIterator.getEffectiveBooleanValue(this._expression);
+        this._expression.close();
         return result;
     }
 
@@ -110,9 +115,9 @@ public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<L
                 ClassNotFoundException {
         in.defaultReadObject();
 
-        _kryo = new Kryo();
-        _kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(_kryo);
-        _input = new Input();
+        this._kryo = new Kryo();
+        this._kryo.setReferences(false);
+        DataFrameUtils.registerKryoClassesKryo(this._kryo);
+        this._input = new Input();
     }
 }

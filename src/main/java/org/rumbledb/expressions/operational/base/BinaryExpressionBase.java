@@ -21,12 +21,12 @@
 package org.rumbledb.expressions.operational.base;
 
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class BinaryExpressionBase extends OperationalExpressionBase {
 
@@ -51,12 +51,12 @@ public abstract class BinaryExpressionBase extends OperationalExpressionBase {
     }
 
     public Expression getRightExpression() {
-        return rightExpression;
+        return this.rightExpression;
     }
 
     @Override
     public boolean isActive() {
-        return _isActive;
+        return this._isActive;
     }
 
     public Operator getOperator() {

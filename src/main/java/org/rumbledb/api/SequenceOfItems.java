@@ -28,16 +28,16 @@ public class SequenceOfItems {
     private boolean _isOpen;
 
     protected SequenceOfItems(RuntimeIterator iterator) {
-        _iterator = iterator;
-        _isOpen = false;
+        this._iterator = iterator;
+        this._isOpen = false;
     }
 
     /**
      * Opens the iterator.
      */
     public void open() {
-        _iterator.open(new DynamicContext());
-        _isOpen = true;
+        this._iterator.open(new DynamicContext());
+        this._isOpen = true;
     }
 
     /**
@@ -46,15 +46,15 @@ public class SequenceOfItems {
      * @return true if it is open, false if it is closed.
      */
     public boolean isOpen() {
-        return _isOpen;
+        return this._isOpen;
     }
 
     /**
      * Closes the iterator.
      */
     public void close() {
-        _iterator.close();
-        _isOpen = false;
+        this._iterator.close();
+        this._isOpen = false;
     }
 
     /**
@@ -63,7 +63,7 @@ public class SequenceOfItems {
      * @return true if there are more items, false otherwise.
      */
     public boolean hasNext() {
-        return _iterator.hasNext();
+        return this._iterator.hasNext();
     }
 
     /**
@@ -73,7 +73,7 @@ public class SequenceOfItems {
      * @return the next item.
      */
     public Item next() {
-        return _iterator.next();
+        return this._iterator.next();
     }
 
     /**
@@ -82,7 +82,7 @@ public class SequenceOfItems {
      * @return true if it is available as an RDD of Items.
      */
     public boolean availableAsRDD() {
-        return _iterator.isRDD();
+        return this._iterator.isRDD();
     }
 
     /**
@@ -92,10 +92,10 @@ public class SequenceOfItems {
      * @return an RDD of Items.
      */
     public JavaRDD<Item> getAsRDD() {
-        if (_isOpen) {
+        if (this._isOpen) {
             throw new RuntimeException("Cannot obtain an RDD if the iterator is open.");
         }
-        return _iterator.getRDD(new DynamicContext());
+        return this._iterator.getRDD(new DynamicContext());
     }
 
 }
