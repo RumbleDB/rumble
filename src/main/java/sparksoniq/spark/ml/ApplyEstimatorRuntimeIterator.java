@@ -16,6 +16,7 @@ import sparksoniq.jsoniq.runtime.iterator.LocalRuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionSignature;
+import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
@@ -51,21 +52,9 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
         }
         this.hasNext = false;
 
-        Dataset<Row> inputDataset = this.currentDynamicContextForLocalExecution.getDataFrameVariableValue(
-            GetEstimatorFunctionIterator.estimatorParameterNames.get(0),
-            getMetadata()
-        );
-        List<Item> paramMapItemList = this.currentDynamicContextForLocalExecution.getLocalVariableValue(
-            GetEstimatorFunctionIterator.estimatorParameterNames.get(1),
-            getMetadata()
-        );
-        if (paramMapItemList.size() != 1) {
-            throw new OurBadException(
-                    "Applying an estimator takes a single object as the second parameter.",
-                    getMetadata()
-            );
-        }
-        Item paramMapItem = paramMapItemList.get(0);
+        Dataset<Row> inputDataset = getInputDataset(this.currentDynamicContextForLocalExecution);
+        Item paramMapItem = getParamMapItem(this.currentDynamicContextForLocalExecution);
+
         ParamMap paramMap = convertRumbleObjectItemToSparkMLParamMap(
             this.estimatorShortName,
             this.estimator,
@@ -86,6 +75,31 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
             );
         }
 
+        return generateTransformerFunctionItem(fittedModel);
+    }
+
+    private Dataset<Row> getInputDataset(DynamicContext context) {
+        return context.getDataFrameVariableValue(
+            GetEstimatorFunctionIterator.estimatorFunctionParameterNames.get(0),
+            getMetadata()
+        );
+    }
+
+    private Item getParamMapItem(DynamicContext context) {
+        List<Item> paramMapItemList = context.getLocalVariableValue(
+            GetEstimatorFunctionIterator.estimatorFunctionParameterNames.get(1),
+            getMetadata()
+        );
+        if (paramMapItemList.size() != 1) {
+            throw new OurBadException(
+                    "Applying an estimator takes a single object as the second parameter.",
+                    getMetadata()
+            );
+        }
+        return paramMapItemList.get(0);
+    }
+
+    private Item generateTransformerFunctionItem(Transformer fittedModel) {
         RuntimeIterator bodyIterator = new ApplyTransformerRuntimeIterator(
                 RumbleMLCatalog.getRumbleMLShortName(fittedModel.getClass().getName()),
                 fittedModel,
