@@ -32,12 +32,12 @@ import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 public class LetClauseVar extends FlworVarDecl {
 
     public LetClauseVar(
-            VariableReferenceExpression varRef,
-            FlworVarSequenceType sequence,
-            Expression expr,
+            VariableReferenceExpression variableReferenceExpression,
+            FlworVarSequenceType sequenceType,
+            Expression expression,
             ExceptionMetadata metadataFromContext
     ) {
-        super(FLWOR_CLAUSES.LET_VAR, varRef, sequence, expr, metadataFromContext);
+        super(FLWOR_CLAUSES.LET_VAR, variableReferenceExpression, sequenceType, expression, metadataFromContext);
     }
 
     @Override

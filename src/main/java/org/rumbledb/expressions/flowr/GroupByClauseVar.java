@@ -32,13 +32,13 @@ public class GroupByClauseVar extends FlworVarDecl {
 
 
     public GroupByClauseVar(
-            VariableReferenceExpression varRef,
-            FlworVarSequenceType sequence,
-            Expression expr,
+            VariableReferenceExpression variableReferenceExpression,
+            FlworVarSequenceType sequenceType,
+            Expression expression,
             String uri,
             ExceptionMetadata metadata
     ) {
-        super(FLWOR_CLAUSES.GROUP_VAR, varRef, sequence, expr, metadata);
+        super(FLWOR_CLAUSES.GROUP_VAR, variableReferenceExpression, sequenceType, expression, metadata);
         this.uri = uri;
     }
 

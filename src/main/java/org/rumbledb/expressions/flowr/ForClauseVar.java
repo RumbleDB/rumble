@@ -35,26 +35,26 @@ import java.util.List;
 public class ForClauseVar extends FlworVarDecl {
 
     private final boolean allowEmpty;
-    private final VariableReferenceExpression positionalVariableReference;
+    private final VariableReferenceExpression positionalVariableReferenceExpression;
 
     public ForClauseVar(
-            VariableReferenceExpression varRef,
-            FlworVarSequenceType seq,
+            VariableReferenceExpression variableReferenceExpression,
+            FlworVarSequenceType sequenceType,
             boolean emptyFlag,
-            VariableReferenceExpression atVarRef,
+            VariableReferenceExpression positionalVariableReferenceExpression,
             Expression expression,
             ExceptionMetadata metadataFromContext
     ) {
-        super(FLWOR_CLAUSES.FOR_VAR, varRef, seq, expression, metadataFromContext);
+        super(FLWOR_CLAUSES.FOR_VAR, variableReferenceExpression, sequenceType, expression, metadataFromContext);
         this.allowEmpty = emptyFlag;
-        this.positionalVariableReference = atVarRef;
+        this.positionalVariableReferenceExpression = positionalVariableReferenceExpression;
 
         // If the sequenceType is specified, we have to "extend" its arity to *
         // because TreatIterator is wrapping the whole assignment expression,
         // meaning there is not one TreatIterator for each variable we loop over.
-        if (seq != null)
+        if (sequenceType != null)
             this.asSequenceType = new FlworVarSequenceType(
-                    seq.getSequence().getItemType().getType(),
+                    sequenceType.getSequence().getItemType().getType(),
                     SequenceType.Arity.ZeroOrMore,
                     metadataFromContext
             );
@@ -65,7 +65,7 @@ public class ForClauseVar extends FlworVarDecl {
     }
 
     public VariableReferenceExpression getPositionalVariableReference() {
-        return this.positionalVariableReference;
+        return this.positionalVariableReferenceExpression;
     }
 
     @Override
@@ -83,8 +83,8 @@ public class ForClauseVar extends FlworVarDecl {
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
 
-        if (this.positionalVariableReference != null)
-            result.add(this.positionalVariableReference);
+        if (this.positionalVariableReferenceExpression != null)
+            result.add(this.positionalVariableReferenceExpression);
         return result;
     }
 
@@ -100,8 +100,8 @@ public class ForClauseVar extends FlworVarDecl {
             result += "as " + this.asSequenceType.serializationString(true) + " ";
         if (this.allowEmpty)
             result += "allowing empty ";
-        if (this.positionalVariableReference != null)
-            result += "at " + this.positionalVariableReference.serializationString(false) + " ";
+        if (this.positionalVariableReferenceExpression != null)
+            result += "at " + this.positionalVariableReferenceExpression.serializationString(false) + " ";
         result += "in " + this.expression.serializationString(true);
         result += "))";
         return result;
