@@ -23,7 +23,7 @@ package org.rumbledb.expressions.flowr;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.primary.VariableReference;
+import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
@@ -32,12 +32,12 @@ import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 public class LetClauseVar extends FlworVarDecl {
 
     public LetClauseVar(
-            VariableReference varRef,
-            FlworVarSequenceType sequence,
-            Expression expr,
+            VariableReferenceExpression variableReferenceExpression,
+            FlworVarSequenceType sequenceType,
+            Expression expression,
             ExceptionMetadata metadataFromContext
     ) {
-        super(FLWOR_CLAUSES.LET_VAR, varRef, sequence, expr, metadataFromContext);
+        super(FLWOR_CLAUSES.LET_VAR, variableReferenceExpression, sequenceType, expression, metadataFromContext);
     }
 
     @Override
@@ -60,9 +60,9 @@ public class LetClauseVar extends FlworVarDecl {
 
     @Override
     public String serializationString(boolean prefix) {
-        String result = "(letVar " + this.variableReferenceNode.serializationString(false) + " ";
-        if (this.asSequence != null)
-            result += "as " + this.asSequence.serializationString(true) + " ";
+        String result = "(letVar " + this.variableReferenceExpression.serializationString(false) + " ";
+        if (this.asSequenceType != null)
+            result += "as " + this.asSequenceType.serializationString(true) + " ";
         result += ":= " + this.expression.serializationString(true);
         result += "))";
         return result;

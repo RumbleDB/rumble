@@ -27,6 +27,7 @@ import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class DynamicFunctionCallExtension extends PostfixExtension {
 
@@ -35,6 +36,8 @@ public class DynamicFunctionCallExtension extends PostfixExtension {
     public DynamicFunctionCallExtension(List<Expression> arguments, ExceptionMetadata metadata) {
         super(metadata);
         this.arguments = arguments;
+        if (this.arguments == null)
+            this.arguments = new ArrayList<>();
     }
 
     public List<Expression> getArguments() {
@@ -43,10 +46,7 @@ public class DynamicFunctionCallExtension extends PostfixExtension {
 
     @Override
     public List<Node> getChildren() {
-        List<Node> result = new ArrayList<>();
-        if (this.arguments != null)
-            result.addAll(this.arguments);
-        return result;
+        return this.arguments.stream().filter(arg -> arg != null).collect(Collectors.toList());
     }
 
     /**

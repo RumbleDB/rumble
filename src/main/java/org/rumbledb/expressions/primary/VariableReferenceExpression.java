@@ -29,14 +29,14 @@ import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.io.Serializable;
 
-public class VariableReference extends PrimaryExpression implements Serializable {
+public class VariableReferenceExpression extends PrimaryExpression implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private String name;
     private SequenceType type;
 
 
-    public VariableReference(String name, ExceptionMetadata metadata) {
+    public VariableReferenceExpression(String name, ExceptionMetadata metadata) {
         super(metadata);
         this.name = name;
     }

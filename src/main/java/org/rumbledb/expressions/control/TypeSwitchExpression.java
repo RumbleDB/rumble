@@ -4,7 +4,7 @@ package org.rumbledb.expressions.control;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.primary.VariableReference;
+import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.ArrayList;
@@ -15,13 +15,13 @@ public class TypeSwitchExpression extends Expression {
     private final Expression testCondition;
     private final List<TypeSwitchCaseExpression> cases;
     private final Expression defaultExpression;
-    private final VariableReference varRefDefault;
+    private final VariableReferenceExpression defaultVariableReferenceExpression;
 
     public TypeSwitchExpression(
             Expression testCondition,
             List<TypeSwitchCaseExpression> cases,
             Expression defaultExpression,
-            VariableReference varRefDefault,
+            VariableReferenceExpression defaultVariableReferenceExpression,
             ExceptionMetadata metadataFromContext
     ) {
 
@@ -29,7 +29,7 @@ public class TypeSwitchExpression extends Expression {
         this.testCondition = testCondition;
         this.cases = cases;
         this.defaultExpression = defaultExpression;
-        this.varRefDefault = varRefDefault;
+        this.defaultVariableReferenceExpression = defaultVariableReferenceExpression;
     }
 
     public Expression getTestCondition() {
@@ -44,8 +44,8 @@ public class TypeSwitchExpression extends Expression {
         return this.defaultExpression;
     }
 
-    public VariableReference getVarRefDefault() {
-        return this.varRefDefault;
+    public VariableReferenceExpression getDefaultVariableReferenceExpression() {
+        return this.defaultVariableReferenceExpression;
     }
 
     @Override
@@ -54,8 +54,8 @@ public class TypeSwitchExpression extends Expression {
         result.add(this.testCondition);
         result.addAll(this.cases);
         result.add(this.defaultExpression);
-        if (this.varRefDefault != null)
-            result.add(this.varRefDefault);
+        if (this.defaultVariableReferenceExpression != null)
+            result.add(this.defaultVariableReferenceExpression);
         return result;
     }
 

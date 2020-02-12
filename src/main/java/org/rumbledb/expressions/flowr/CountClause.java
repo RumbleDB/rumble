@@ -22,7 +22,7 @@ package org.rumbledb.expressions.flowr;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.primary.VariableReference;
+import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.Collections;
@@ -30,9 +30,9 @@ import java.util.List;
 
 
 public class CountClause extends FlworClause {
-    private VariableReference countClauseVar;
+    private VariableReferenceExpression countClauseVar;
 
-    public CountClause(VariableReference countClauseVar, ExceptionMetadata metadata) {
+    public CountClause(VariableReferenceExpression countClauseVar, ExceptionMetadata metadata) {
         super(FLWOR_CLAUSES.COUNT, metadata);
         this.countClauseVar = countClauseVar;
     }
@@ -52,7 +52,7 @@ public class CountClause extends FlworClause {
         return "(countClause count " + this.countClauseVar.serializationString(true) + ")";
     }
 
-    public VariableReference getCountVariable() {
+    public VariableReferenceExpression getCountVariable() {
         return this.countClauseVar;
     }
 

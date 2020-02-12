@@ -5,7 +5,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.flowr.FlworVarSequenceType;
-import org.rumbledb.expressions.primary.VariableReference;
+import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.ArrayList;
@@ -13,24 +13,24 @@ import java.util.List;
 
 public class TypeSwitchCaseExpression extends Expression {
 
-    private VariableReference variableReferenceNode;
+    private VariableReferenceExpression variableReferenceExpression;
     private List<FlworVarSequenceType> union = new ArrayList<>();
     private final Expression returnExpression;
 
     public TypeSwitchCaseExpression(
-            VariableReference var,
+            VariableReferenceExpression variableReferenceExpression,
             List<FlworVarSequenceType> union,
             Expression returnExpression,
             ExceptionMetadata metadataFromContext
     ) {
         super(metadataFromContext);
-        this.variableReferenceNode = var;
+        this.variableReferenceExpression = variableReferenceExpression;
         this.union.addAll(union);
         this.returnExpression = returnExpression;
     }
 
-    public VariableReference getVariableReference() {
-        return this.variableReferenceNode;
+    public VariableReferenceExpression getVariableReference() {
+        return this.variableReferenceExpression;
     }
 
     public List<FlworVarSequenceType> getUnion() {
@@ -44,8 +44,8 @@ public class TypeSwitchCaseExpression extends Expression {
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        if (this.variableReferenceNode != null)
-            result.add(this.variableReferenceNode);
+        if (this.variableReferenceExpression != null)
+            result.add(this.variableReferenceExpression);
         if (this.union != null && !this.union.isEmpty())
             result.addAll(this.union);
         if (this.returnExpression != null)

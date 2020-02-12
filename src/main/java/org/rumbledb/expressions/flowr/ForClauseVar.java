@@ -23,7 +23,7 @@ package org.rumbledb.expressions.flowr;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.primary.VariableReference;
+import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.types.SequenceType;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
@@ -35,26 +35,26 @@ import java.util.List;
 public class ForClauseVar extends FlworVarDecl {
 
     private final boolean allowEmpty;
-    private final VariableReference positionalVariableReference;
+    private final VariableReferenceExpression positionalVariableReferenceExpression;
 
     public ForClauseVar(
-            VariableReference varRef,
-            FlworVarSequenceType seq,
+            VariableReferenceExpression variableReferenceExpression,
+            FlworVarSequenceType sequenceType,
             boolean emptyFlag,
-            VariableReference atVarRef,
+            VariableReferenceExpression positionalVariableReferenceExpression,
             Expression expression,
             ExceptionMetadata metadataFromContext
     ) {
-        super(FLWOR_CLAUSES.FOR_VAR, varRef, seq, expression, metadataFromContext);
+        super(FLWOR_CLAUSES.FOR_VAR, variableReferenceExpression, sequenceType, expression, metadataFromContext);
         this.allowEmpty = emptyFlag;
-        this.positionalVariableReference = atVarRef;
+        this.positionalVariableReferenceExpression = positionalVariableReferenceExpression;
 
         // If the sequenceType is specified, we have to "extend" its arity to *
         // because TreatIterator is wrapping the whole assignment expression,
         // meaning there is not one TreatIterator for each variable we loop over.
-        if (seq != null)
-            this.asSequence = new FlworVarSequenceType(
-                    seq.getSequence().getItemType().getType(),
+        if (sequenceType != null)
+            this.asSequenceType = new FlworVarSequenceType(
+                    sequenceType.getSequence().getItemType().getType(),
                     SequenceType.Arity.ZeroOrMore,
                     metadataFromContext
             );
@@ -64,8 +64,8 @@ public class ForClauseVar extends FlworVarDecl {
         return this.allowEmpty;
     }
 
-    public VariableReference getPositionalVariableReference() {
-        return this.positionalVariableReference;
+    public VariableReferenceExpression getPositionalVariableReference() {
+        return this.positionalVariableReferenceExpression;
     }
 
     @Override
@@ -83,8 +83,8 @@ public class ForClauseVar extends FlworVarDecl {
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
 
-        if (this.positionalVariableReference != null)
-            result.add(this.positionalVariableReference);
+        if (this.positionalVariableReferenceExpression != null)
+            result.add(this.positionalVariableReferenceExpression);
         return result;
     }
 
@@ -95,13 +95,13 @@ public class ForClauseVar extends FlworVarDecl {
 
     @Override
     public String serializationString(boolean prefix) {
-        String result = "(forVar " + this.variableReferenceNode.serializationString(false) + " ";
-        if (this.asSequence != null)
-            result += "as " + this.asSequence.serializationString(true) + " ";
+        String result = "(forVar " + this.variableReferenceExpression.serializationString(false) + " ";
+        if (this.asSequenceType != null)
+            result += "as " + this.asSequenceType.serializationString(true) + " ";
         if (this.allowEmpty)
             result += "allowing empty ";
-        if (this.positionalVariableReference != null)
-            result += "at " + this.positionalVariableReference.serializationString(false) + " ";
+        if (this.positionalVariableReferenceExpression != null)
+            result += "at " + this.positionalVariableReferenceExpression.serializationString(false) + " ";
         result += "in " + this.expression.serializationString(true);
         result += "))";
         return result;

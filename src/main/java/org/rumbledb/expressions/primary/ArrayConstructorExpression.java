@@ -30,16 +30,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class ArrayConstructor extends PrimaryExpression {
+public class ArrayConstructorExpression extends PrimaryExpression {
 
     private Expression expression;
 
-    public ArrayConstructor(Expression expression, ExceptionMetadata metadata) {
+    public ArrayConstructorExpression(Expression expression, ExceptionMetadata metadata) {
         super(metadata);
         this.expression = expression;
     }
 
-    public ArrayConstructor(ExceptionMetadata metadata) {
+    public ArrayConstructorExpression(ExceptionMetadata metadata) {
         super(metadata);
         this.expression = null;
     }

@@ -20,25 +20,35 @@
 
 package org.rumbledb.expressions.primary;
 
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
-public class ContextExpression extends PrimaryExpression {
 
-    public ContextExpression(ExceptionMetadata metadataFromContext) {
-        super(metadataFromContext);
+
+public class StringLiteralExpression extends PrimaryExpression {
+
+    private String value;
+
+    public StringLiteralExpression(String value, ExceptionMetadata metadata) {
+        super(metadata);
+        this.value = value;
+    }
+
+    public String getValue() {
+        return this.value;
     }
 
     @Override
     public String serializationString(boolean prefix) {
-        String result = "(contextExpr ";
-        result += "$$";
-        result += ")";
+        String result = (prefix ? "(primaryExpr " : "") + "(stringLiteral ";
+        result += "\"" + this.getValue() + "\"";
+        result += (prefix ? ")" : "") + ")";
         return result;
     }
 
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        return visitor.visitContextExpr(this, argument);
+        return visitor.visitString(this, argument);
     }
 }

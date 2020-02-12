@@ -33,22 +33,22 @@ import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
-public class FunctionCall extends PrimaryExpression {
+public class FunctionCallExpression extends PrimaryExpression {
 
     private final String functionName;
-    private final List<Expression> arguments;
+    private final List<Expression> arguments; // null for placeholder
     private final boolean isPartialApplication;
 
-    public FunctionCall(String functionName, List<Expression> arguments, ExceptionMetadata metadata) {
+    public FunctionCallExpression(String functionName, List<Expression> arguments, ExceptionMetadata metadata) {
         super(metadata);
         this.functionName = functionName;
         this.arguments = arguments;
-        this.isPartialApplication = arguments.stream().anyMatch(arg -> arg instanceof ArgumentPlaceholder);
+        this.isPartialApplication = arguments.stream().anyMatch(arg -> arg == null);
     }
 
     public List<Expression> getArguments() {
@@ -61,7 +61,7 @@ public class FunctionCall extends PrimaryExpression {
 
     @Override
     public List<Node> getChildren() {
-        List<Node> result = new ArrayList<>(this.arguments);
+        List<Node> result = this.arguments.stream().filter(arg -> arg != null).collect(Collectors.toList());
         return result;
     }
 

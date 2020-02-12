@@ -24,7 +24,6 @@ package org.rumbledb.expressions.primary;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,13 +36,7 @@ public abstract class PrimaryExpression extends Expression {
         super(metadata);
     }
 
-    @Override
-    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        // TO this class should not be an expression.
-        // nothing to do as no children
-        return argument;
-    }
-
+    // Many primary expressions do not have children.
     @Override
     public List<Node> getChildren() {
         return new ArrayList<>();

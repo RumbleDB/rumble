@@ -67,21 +67,20 @@ import org.rumbledb.expressions.postfix.extensions.DynamicFunctionCallExtension;
 import org.rumbledb.expressions.postfix.extensions.ObjectLookupExtension;
 import org.rumbledb.expressions.postfix.extensions.PostfixExtension;
 import org.rumbledb.expressions.postfix.extensions.PredicateExtension;
-import org.rumbledb.expressions.primary.ArgumentPlaceholder;
-import org.rumbledb.expressions.primary.ArrayConstructor;
-import org.rumbledb.expressions.primary.BooleanLiteral;
-import org.rumbledb.expressions.primary.ContextExpression;
-import org.rumbledb.expressions.primary.DecimalLiteral;
-import org.rumbledb.expressions.primary.DoubleLiteral;
-import org.rumbledb.expressions.primary.FunctionCall;
-import org.rumbledb.expressions.primary.FunctionDeclaration;
-import org.rumbledb.expressions.primary.IntegerLiteral;
-import org.rumbledb.expressions.primary.NamedFunctionRef;
-import org.rumbledb.expressions.primary.NullLiteral;
-import org.rumbledb.expressions.primary.ObjectConstructor;
+import org.rumbledb.expressions.primary.ArrayConstructorExpression;
+import org.rumbledb.expressions.primary.BooleanLiteralExpression;
+import org.rumbledb.expressions.primary.ContextItemExpression;
+import org.rumbledb.expressions.primary.DecimalLiteralExpression;
+import org.rumbledb.expressions.primary.DoubleLiteralExpression;
+import org.rumbledb.expressions.primary.FunctionCallExpression;
+import org.rumbledb.expressions.primary.InlineFunctionExpression;
+import org.rumbledb.expressions.primary.IntegerLiteralExpression;
+import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
+import org.rumbledb.expressions.primary.NullLiteralExpression;
+import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.ParenthesizedExpression;
-import org.rumbledb.expressions.primary.StringLiteral;
-import org.rumbledb.expressions.primary.VariableReference;
+import org.rumbledb.expressions.primary.StringLiteralExpression;
+import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
 import sparksoniq.jsoniq.ExecutionMode;
@@ -143,6 +142,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator> {
 
@@ -285,7 +285,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     }
                 }
 
-                VariableReference variableReference = var.getVariableReference();
+                VariableReferenceExpression variableReference = var.getVariableReference();
                 VariableReferenceIterator variableReferenceIterator =
                     (VariableReferenceIterator) this.visit(variableReference, argument);
 
@@ -346,7 +346,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     }
 
     @Override
-    public RuntimeIterator visitVariableReference(VariableReference expression, RuntimeIterator argument) {
+    public RuntimeIterator visitVariableReference(VariableReferenceExpression expression, RuntimeIterator argument) {
         return new VariableReferenceIterator(
                 expression.getVariableName(),
                 expression.getType(),
@@ -434,7 +434,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     }
 
     @Override
-    public RuntimeIterator visitArrayConstructor(ArrayConstructor expression, RuntimeIterator argument) {
+    public RuntimeIterator visitArrayConstructor(ArrayConstructorExpression expression, RuntimeIterator argument) {
         RuntimeIterator result = null;
         if (expression.getExpression() != null) {
             result = this.visit(expression.getExpression(), argument);
@@ -447,28 +447,27 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     }
 
     @Override
-    public RuntimeIterator visitObjectConstructor(ObjectConstructor expression, RuntimeIterator argument) {
+    public RuntimeIterator visitObjectConstructor(ObjectConstructorExpression expression, RuntimeIterator argument) {
         RuntimeIterator iterator;
         if (expression.isMergedConstructor()) {
-            List<RuntimeIterator> childExpressions = new ArrayList<>();
-            for (Expression child : expression.getChildExpression().getExpressions()) {
-                childExpressions.add((this.visit(child, argument)));
-            }
             iterator = new ObjectConstructorRuntimeIterator(
-                    childExpressions,
+                    expression.getChildren()
+                        .stream()
+                        .map(arg -> this.visit(arg, argument))
+                        .collect(Collectors.toList()),
                     expression.getHighestExecutionMode(),
                     expression.getMetadata()
             );
             return iterator;
         } else {
-            List<RuntimeIterator> keys = new ArrayList<>();
-            List<RuntimeIterator> values = new ArrayList<>();
-            for (Expression key : expression.getKeys()) {
-                keys.add(this.visit(key, argument));
-            }
-            for (Expression value : expression.getValues()) {
-                values.add(this.visit(value, argument));
-            }
+            List<RuntimeIterator> keys = expression.getKeys()
+                .stream()
+                .map(arg -> this.visit(arg, argument))
+                .collect(Collectors.toList());
+            List<RuntimeIterator> values = expression.getValues()
+                .stream()
+                .map(arg -> this.visit(arg, argument))
+                .collect(Collectors.toList());
             iterator = new ObjectConstructorRuntimeIterator(
                     keys,
                     values,
@@ -480,12 +479,12 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     }
 
     @Override
-    public RuntimeIterator visitContextExpr(ContextExpression expression, RuntimeIterator argument) {
+    public RuntimeIterator visitContextExpr(ContextItemExpression expression, RuntimeIterator argument) {
         return new ContextExpressionIterator(expression.getHighestExecutionMode(), expression.getMetadata());
     }
 
     @Override
-    public RuntimeIterator visitFunctionDeclaration(FunctionDeclaration expression, RuntimeIterator argument) {
+    public RuntimeIterator visitFunctionDeclaration(InlineFunctionExpression expression, RuntimeIterator argument) {
         Map<String, SequenceType> paramNameToSequenceTypes = new LinkedHashMap<>();
         for (Map.Entry<String, FlworVarSequenceType> paramEntry : expression.getParams().entrySet()) {
             paramNameToSequenceTypes.put(paramEntry.getKey(), paramEntry.getValue().getSequence());
@@ -514,11 +513,11 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     }
 
     @Override
-    public RuntimeIterator visitFunctionCall(FunctionCall expression, RuntimeIterator argument) {
+    public RuntimeIterator visitFunctionCall(FunctionCallExpression expression, RuntimeIterator argument) {
         List<RuntimeIterator> arguments = new ArrayList<>();
         ExceptionMetadata iteratorMetadata = expression.getMetadata();
         for (Expression arg : expression.getArguments()) {
-            if (arg instanceof ArgumentPlaceholder) {
+            if (arg == null) {
                 arguments.add(null);
             } else {
                 RuntimeIterator argumentIterator = this.visit(arg, argument);
@@ -546,7 +545,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     }
 
     @Override
-    public RuntimeIterator visitNamedFunctionRef(NamedFunctionRef expression, RuntimeIterator argument) {
+    public RuntimeIterator visitNamedFunctionRef(
+            NamedFunctionReferenceExpression expression,
+            RuntimeIterator argument
+    ) {
         FunctionIdentifier identifier = expression.getIdentifier();
         if (Functions.checkBuiltInFunctionExists(identifier)) {
             throw new UnsupportedFeatureException(
@@ -572,7 +574,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     // region literal
     @Override
-    public RuntimeIterator visitInteger(IntegerLiteral expression, RuntimeIterator argument) {
+    public RuntimeIterator visitInteger(IntegerLiteralExpression expression, RuntimeIterator argument) {
         return new IntegerRuntimeIterator(
                 expression.getValue(),
                 expression.getHighestExecutionMode(),
@@ -581,7 +583,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     }
 
     @Override
-    public RuntimeIterator visitString(StringLiteral expression, RuntimeIterator argument) {
+    public RuntimeIterator visitString(StringLiteralExpression expression, RuntimeIterator argument) {
         return new StringRuntimeIterator(
                 expression.getValue(),
                 expression.getHighestExecutionMode(),
@@ -590,7 +592,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     }
 
     @Override
-    public RuntimeIterator visitDouble(DoubleLiteral expression, RuntimeIterator argument) {
+    public RuntimeIterator visitDouble(DoubleLiteralExpression expression, RuntimeIterator argument) {
         return new DoubleRuntimeIterator(
                 expression.getValue(),
                 expression.getHighestExecutionMode(),
@@ -599,7 +601,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     }
 
     @Override
-    public RuntimeIterator visitDecimal(DecimalLiteral expression, RuntimeIterator argument) {
+    public RuntimeIterator visitDecimal(DecimalLiteralExpression expression, RuntimeIterator argument) {
         return new DecimalRuntimeIterator(
                 expression.getValue(),
                 expression.getHighestExecutionMode(),
@@ -608,12 +610,12 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     }
 
     @Override
-    public RuntimeIterator visitNull(NullLiteral expression, RuntimeIterator argument) {
+    public RuntimeIterator visitNull(NullLiteralExpression expression, RuntimeIterator argument) {
         return new NullRuntimeIterator(expression.getHighestExecutionMode(), expression.getMetadata());
     }
 
     @Override
-    public RuntimeIterator visitBoolean(BooleanLiteral expression, RuntimeIterator argument) {
+    public RuntimeIterator visitBoolean(BooleanLiteralExpression expression, RuntimeIterator argument) {
         return new BooleanRuntimeIterator(
                 expression.getValue(),
                 expression.getHighestExecutionMode(),
@@ -1009,8 +1011,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
         TypeSwitchCase defaultCase;
         String defaultCaseVariableName = null;
-        if (expression.getVarRefDefault() != null) {
-            defaultCaseVariableName = expression.getVarRefDefault().getVariableName();
+        if (expression.getDefaultVariableReferenceExpression() != null) {
+            defaultCaseVariableName = expression.getDefaultVariableReferenceExpression().getVariableName();
         }
         defaultCase = new TypeSwitchCase(
                 defaultCaseVariableName,

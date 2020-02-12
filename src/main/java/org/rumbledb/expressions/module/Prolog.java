@@ -24,7 +24,7 @@ package org.rumbledb.expressions.module;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.primary.FunctionDeclaration;
+import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.ArrayList;
@@ -32,22 +32,22 @@ import java.util.List;
 
 public class Prolog extends Expression {
 
-    private final List<FunctionDeclaration> functionDeclaration;
+    private final List<InlineFunctionExpression> functionDeclarations;
 
-    public Prolog(List<FunctionDeclaration> functionDeclarations, ExceptionMetadata metadata) {
+    public Prolog(List<InlineFunctionExpression> functionDeclarations, ExceptionMetadata metadata) {
         super(metadata);
-        this.functionDeclaration = functionDeclarations;
+        this.functionDeclarations = functionDeclarations;
     }
 
-    public List<FunctionDeclaration> getFunctionDeclaration() {
-        return this.functionDeclaration;
+    public List<InlineFunctionExpression> getFunctionDeclaration() {
+        return this.functionDeclarations;
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        if (this.functionDeclaration != null)
-            this.functionDeclaration.forEach(e -> {
+        if (this.functionDeclarations != null)
+            this.functionDeclarations.forEach(e -> {
                 if (e != null)
                     result.add(e);
             });
@@ -63,7 +63,7 @@ public class Prolog extends Expression {
     public String serializationString(boolean prefix) {
         String result = "(prolog ";
         result += " (functionDecl ";
-        for (FunctionDeclaration func : this.functionDeclaration) {
+        for (InlineFunctionExpression func : this.functionDeclarations) {
             result += "(" + func.serializationString(false) + ") , ";
         }
         result = result.substring(0, result.length() - 1); // remove last comma
