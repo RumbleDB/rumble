@@ -55,9 +55,9 @@ public class ArrayLookupExpression extends PostfixExpression {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(arrayLookup "
-            + this.mainExpression.serializationString(true)
+            + this.mainExpression.serializationString(false)
             + " [["
-            + this.lookupExpression.serializationString(true)
+            + this.lookupExpression.serializationString(false)
             + "]])";
         return result;
     }

@@ -71,7 +71,7 @@ public class DynamicFunctionCallExpression extends PostfixExpression {
     public String serializationString(boolean prefix) {
         StringBuilder result = new StringBuilder();
         result.append("(dynamicFunctionCall ");
-        result.append(this.mainExpression.serializationString(true));
+        result.append(this.mainExpression.serializationString(false));
         for (Expression arg : this.arguments) {
             result.append("(argument (exprSingle ");
             result.append(arg.serializationString(false));

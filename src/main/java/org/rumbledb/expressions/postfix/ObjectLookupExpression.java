@@ -55,9 +55,9 @@ public class ObjectLookupExpression extends PostfixExpression {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(objectLookup "
-            + this.mainExpression.serializationString(true)
+            + this.mainExpression.serializationString(false)
             + " [["
-            + this.lookupExpression.serializationString(true)
+            + this.lookupExpression.serializationString(false)
             + "]])";
         return result;
     }

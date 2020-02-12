@@ -55,9 +55,9 @@ public class PredicateExpression extends PostfixExpression {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(predicate "
-            + this.mainExpression.serializationString(true)
+            + this.mainExpression.serializationString(false)
             + " [["
-            + this.predicateExpression.serializationString(true)
+            + this.predicateExpression.serializationString(false)
             + "]])";
         return result;
     }

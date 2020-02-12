@@ -38,7 +38,7 @@ public class ArrayUnboxingExpression extends PostfixExpression {
 
     @Override
     public String serializationString(boolean prefix) {
-        String result = "(arrayUnboxing [ ])";
+        String result = "(arrayUnboxing (" + this.mainExpression.serializationString(false) + ")[ ])";
         return result;
     }
 
