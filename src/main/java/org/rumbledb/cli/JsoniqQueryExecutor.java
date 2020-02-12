@@ -88,6 +88,9 @@ public class JsoniqQueryExecutor {
         long startTime = System.currentTimeMillis();
         JsoniqExpressionTreeVisitor visitor = this.parse(new JsoniqLexer(charStream));
         generateStaticContext(visitor.getMainModule());
+        if (this.configuration.isPrintIteratorTree()) {
+            System.out.println(visitor.getMainModule().serializationString(true));
+        }
         RuntimeIterator result = generateRuntimeIterators(visitor.getMainModule());
         if (this.configuration.isPrintIteratorTree()) {
             StringBuffer sb = new StringBuffer();
