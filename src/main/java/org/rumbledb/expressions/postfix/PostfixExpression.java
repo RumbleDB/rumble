@@ -42,10 +42,4 @@ public abstract class PostfixExpression extends Expression {
     public void initHighestExecutionMode() {
         this.highestExecutionMode = this.mainExpression.getHighestExecutionMode();
     }
-
-    @Override
-    public ExecutionMode getHighestExecutionMode(boolean ignoreUnsetError) {
-        return super.getHighestExecutionMode(ignoreUnsetError);
-    }
-
 }
