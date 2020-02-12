@@ -18,40 +18,40 @@
  *
  */
 
-package org.rumbledb.expressions.postfix.extensions;
+package org.rumbledb.expressions.postfix;
 
+
+import java.util.ArrayList;
+import java.util.List;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
-import java.util.ArrayList;
-import java.util.List;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
-public class ObjectLookupExtension extends PostfixExtension {
+public class ArrayUnboxingExpression extends PostfixExpression {
 
-    private Expression expression;
-
-    public ObjectLookupExtension(Expression expr, ExceptionMetadata metadata) {
-        super(metadata);
-        this.expression = expr;
+    public ArrayUnboxingExpression(Expression main, ExceptionMetadata metadata) {
+        super(main, metadata);
     }
 
-    public Expression getExpression() {
-        return this.expression;
+    @Override
+    public String serializationString(boolean prefix) {
+        String result = "(arrayUnboxing (" + this.mainExpression.serializationString(false) + ")[ ])";
+        return result;
+    }
+
+    @Override
+    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
+        return visitor.visitArrayUnboxingExpression(this, argument);
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        if (this.expression != null) // field
-            result.add(this.expression); // field
+        result.add(this.mainExpression);
         return result;
     }
 
-    @Override
-    public String serializationString(boolean prefix) {
-        String result = "(objectLookup . " + this.expression.serializationString(false) + ")";
-        return result;
-    }
 }

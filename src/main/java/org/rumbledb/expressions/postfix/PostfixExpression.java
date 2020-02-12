@@ -18,21 +18,27 @@
  *
  */
 
-package org.rumbledb.expressions.postfix.extensions;
-
+package org.rumbledb.expressions.postfix;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.Expression;
 
-public class ArrayUnboxingExtension extends PostfixExtension {
 
-    public ArrayUnboxingExtension(ExceptionMetadata metadata) {
+public abstract class PostfixExpression extends Expression {
+
+    protected Expression mainExpression;
+
+    public PostfixExpression(Expression mainExpression, ExceptionMetadata metadata) {
         super(metadata);
+        this.mainExpression = mainExpression;
+    }
+
+    public Expression getMainExpression() {
+        return this.mainExpression;
     }
 
     @Override
-    public String serializationString(boolean prefix) {
-        String result = "(arrayUnboxing [ ])";
-        return result;
+    public void initHighestExecutionMode() {
+        this.highestExecutionMode = this.mainExpression.getHighestExecutionMode();
     }
-
 }

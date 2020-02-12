@@ -32,7 +32,6 @@ import org.rumbledb.expressions.flowr.FlworVarDecl;
 import org.rumbledb.expressions.flowr.ForClauseVar;
 import org.rumbledb.expressions.flowr.GroupByClauseVar;
 import org.rumbledb.expressions.flowr.LetClauseVar;
-import org.rumbledb.expressions.postfix.PostFixExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
@@ -151,16 +150,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         expression.initFunctionCallHighestExecutionMode(this.ignoreMissingFunctionError);
         return generatedContext;
     }
-
-    @Override
-    public StaticContext visitPostfixExpression(PostFixExpression expression, StaticContext argument) {
-        // visit and initialize firstly the primary expression, then the postfix extensions
-        this.visit(expression.getPrimaryExpressionNode(), argument);
-        expression.initHighestExecutionMode();
-        expression.getExtensions().forEach(extension -> extension.initHighestExecutionMode());
-        return visitDescendants(expression, argument);
-    }
-
     // endregion
 
     // region FLWOR

@@ -18,42 +18,52 @@
  *
  */
 
-package org.rumbledb.expressions.postfix.extensions;
-
+package org.rumbledb.expressions.postfix;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
 import java.util.ArrayList;
 import java.util.List;
 
 
-public class PredicateExtension extends PostfixExtension {
+public class ArrayLookupExpression extends PostfixExpression {
 
-    private Expression expression;
+    private Expression lookupExpression;
 
-    public PredicateExtension(Expression collection, ExceptionMetadata metadata) {
-        super(metadata);
-        this.expression = collection;
-    }
-
-    public Expression getExpression() {
-        return this.expression;
+    public ArrayLookupExpression(Expression mainExpression, Expression lookupExpression, ExceptionMetadata metadata) {
+        super(mainExpression, metadata);
+        this.lookupExpression = lookupExpression;
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        if (this.expression != null)
-            result.add(this.expression);
+        result.add(this.mainExpression);
+        result.add(this.lookupExpression);
+        return result;
+    }
+
+    public Expression getLookupExpression() {
+        return this.lookupExpression;
+    }
+
+
+    @Override
+    public String serializationString(boolean prefix) {
+        String result = "(arrayLookup "
+            + this.mainExpression.serializationString(false)
+            + " [["
+            + this.lookupExpression.serializationString(false)
+            + "]])";
         return result;
     }
 
     @Override
-    public String serializationString(boolean prefix) {
-        String result = "(predicate [" + this.expression.serializationString(true) + "])";
-        return result;
+    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
+        return visitor.visitArrayLookupExpression(this, argument);
     }
-
 }

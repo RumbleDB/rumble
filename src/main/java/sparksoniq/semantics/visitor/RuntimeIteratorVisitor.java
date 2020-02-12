@@ -60,13 +60,11 @@ import org.rumbledb.expressions.operational.StringConcatExpression;
 import org.rumbledb.expressions.operational.TreatExpression;
 import org.rumbledb.expressions.operational.UnaryExpression;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-import org.rumbledb.expressions.postfix.PostFixExpression;
-import org.rumbledb.expressions.postfix.extensions.ArrayLookupExtension;
-import org.rumbledb.expressions.postfix.extensions.ArrayUnboxingExtension;
-import org.rumbledb.expressions.postfix.extensions.DynamicFunctionCallExtension;
-import org.rumbledb.expressions.postfix.extensions.ObjectLookupExtension;
-import org.rumbledb.expressions.postfix.extensions.PostfixExtension;
-import org.rumbledb.expressions.postfix.extensions.PredicateExtension;
+import org.rumbledb.expressions.postfix.ArrayLookupExpression;
+import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
+import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
+import org.rumbledb.expressions.postfix.ObjectLookupExpression;
+import org.rumbledb.expressions.postfix.PredicateExpression;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
@@ -366,71 +364,71 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     }
 
     @Override
-    public RuntimeIterator visitPostfixExpression(PostFixExpression expression, RuntimeIterator argument) {
-        if (expression.isPrimary()) {
-            return defaultAction(expression, argument);
-        } else {
-            RuntimeIterator previous = this.visit(expression.getPrimaryExpressionNode(), argument);
-            for (PostfixExtension extension : expression.getExtensions()) {
-                try {
-                    ExecutionMode executionMode = extension.getHighestExecutionMode();
-                    if (extension instanceof ArrayLookupExtension) {
-                        RuntimeIterator iterator =
-                            this.visit(((ArrayLookupExtension) extension).getExpression(), argument);
-                        previous = new ArrayLookupIterator(
-                                previous,
-                                iterator,
-                                executionMode,
-                                expression.getMetadata()
-                        );
-                    } else if (extension instanceof ObjectLookupExtension) {
-                        RuntimeIterator iterator =
-                            this.visit(((ObjectLookupExtension) extension).getExpression(), argument);
-                        previous = new ObjectLookupIterator(
-                                previous,
-                                iterator,
-                                executionMode,
-                                expression.getMetadata()
-                        );
-                    } else if (extension instanceof ArrayUnboxingExtension) {
-                        previous = new ArrayUnboxingIterator(
-                                previous,
-                                executionMode,
-                                expression.getMetadata()
-                        );
-                    } else if (extension instanceof PredicateExtension) {
-                        RuntimeIterator filterExpression = // pass the predicate as argument for $$ expresions
-                            this.visit(((PredicateExtension) extension).getExpression(), argument);
-                        previous = new PredicateIterator(
-                                previous,
-                                filterExpression,
-                                executionMode,
-                                expression.getMetadata()
-                        );
-                    } else if (extension instanceof DynamicFunctionCallExtension) {
-                        List<RuntimeIterator> arguments = new ArrayList<>();
-                        for (Expression arg : ((DynamicFunctionCallExtension) extension).getArguments()) {
-                            if (arg == null) { // check ArgumentPlaceholder
-                                arguments.add(null);
-                            } else {
-                                arguments.add(this.visit(arg, argument));
-                            }
-                        }
-                        ExceptionMetadata metadata = expression.getMetadata();
-                        previous = new DynamicFunctionCallIterator(
-                                previous,
-                                arguments,
-                                extension.getHighestExecutionMode(),
-                                metadata
-                        );
-                    }
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                    throw new UnsupportedFeatureException("Invalid Postfix extension", expression.getMetadata());
-                }
+    public RuntimeIterator visitPredicateExpression(PredicateExpression expression, RuntimeIterator argument) {
+        RuntimeIterator mainIterator = this.visit(expression.getMainExpression(), argument);
+        RuntimeIterator filterIterator = this.visit(expression.getPredicateExpression(), argument);
+        return new PredicateIterator(
+                mainIterator,
+                filterIterator,
+                expression.getHighestExecutionMode(),
+                expression.getMetadata()
+        );
+    }
+
+    @Override
+    public RuntimeIterator visitArrayLookupExpression(ArrayLookupExpression expression, RuntimeIterator argument) {
+        RuntimeIterator mainIterator = this.visit(expression.getMainExpression(), argument);
+        RuntimeIterator lookupIterator = this.visit(expression.getLookupExpression(), argument);
+        return new ArrayLookupIterator(
+                mainIterator,
+                lookupIterator,
+                expression.getHighestExecutionMode(),
+                expression.getMetadata()
+        );
+    }
+
+    @Override
+    public RuntimeIterator visitObjectLookupExpression(ObjectLookupExpression expression, RuntimeIterator argument) {
+        RuntimeIterator mainIterator = this.visit(expression.getMainExpression(), argument);
+        RuntimeIterator lookupIterator = this.visit(expression.getLookupExpression(), argument);
+        return new ObjectLookupIterator(
+                mainIterator,
+                lookupIterator,
+                expression.getHighestExecutionMode(),
+                expression.getMetadata()
+        );
+    }
+
+    @Override
+    public RuntimeIterator visitDynamicFunctionCallExpression(
+            DynamicFunctionCallExpression expression,
+            RuntimeIterator argument
+    ) {
+        RuntimeIterator mainIterator = this.visit(expression.getMainExpression(), argument);
+        List<RuntimeIterator> arguments = new ArrayList<>();
+        for (Expression arg : expression.getArguments()) {
+            if (arg == null) { // check ArgumentPlaceholder
+                arguments.add(null);
+            } else {
+                arguments.add(this.visit(arg, argument));
             }
-            return previous;
         }
+        return new DynamicFunctionCallIterator(
+                mainIterator,
+                arguments,
+                expression.getHighestExecutionMode(),
+                expression.getMetadata()
+        );
+    }
+
+    @Override
+    public RuntimeIterator visitArrayUnboxingExpression(ArrayUnboxingExpression expression, RuntimeIterator argument) {
+        RuntimeIterator mainIterator = this.visit(expression.getMainExpression(), argument);
+        return new ArrayUnboxingIterator(
+                mainIterator,
+                expression.getHighestExecutionMode(),
+                expression.getMetadata()
+        );
     }
 
     @Override

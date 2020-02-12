@@ -18,43 +18,52 @@
  *
  */
 
-package org.rumbledb.expressions.postfix.extensions;
+package org.rumbledb.expressions.postfix;
+
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
 import java.util.ArrayList;
 import java.util.List;
 
 
-public class ArrayLookupExtension extends PostfixExtension {
+public class PredicateExpression extends PostfixExpression {
 
-    private Expression expression;
+    private Expression predicateExpression;
 
-    public ArrayLookupExtension(Expression commaExpr, ExceptionMetadata metadata) {
-        super(metadata);
-        this.expression = commaExpr;
-    }
-
-    public Expression getExpression() {
-        return this.expression;
+    public PredicateExpression(Expression mainExpression, Expression predicateExpression, ExceptionMetadata metadata) {
+        super(mainExpression, metadata);
+        this.predicateExpression = predicateExpression;
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        if (this.expression != null)
-            result.add(this.expression);
+        result.add(this.mainExpression);
+        result.add(this.predicateExpression);
         return result;
+    }
+
+    public Expression getPredicateExpression() {
+        return this.predicateExpression;
     }
 
     @Override
     public String serializationString(boolean prefix) {
-        String result = "(arrayLookup [["
-            +
-            this.expression.serializationString(true)
+        String result = "(predicate "
+            + this.mainExpression.serializationString(false)
+            + " [["
+            + this.predicateExpression.serializationString(false)
             + "]])";
         return result;
+    }
+
+    @Override
+    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
+        return visitor.visitPredicateExpression(this, argument);
     }
 }
