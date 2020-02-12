@@ -18,43 +18,52 @@
  *
  */
 
-package org.rumbledb.expressions.postfix.extensions;
+package org.rumbledb.expressions.postfix;
+
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
 import java.util.ArrayList;
 import java.util.List;
 
+public class ObjectLookupExpression extends PostfixExpression {
 
-public class ArrayLookupExtension extends PostfixExtension {
+    private Expression lookupExpression;
 
-    private Expression expression;
-
-    public ArrayLookupExtension(Expression commaExpr, ExceptionMetadata metadata) {
-        super(metadata);
-        this.expression = commaExpr;
-    }
-
-    public Expression getExpression() {
-        return this.expression;
+    public ObjectLookupExpression(Expression mainExpression, Expression lookupExpression, ExceptionMetadata metadata) {
+        super(mainExpression, metadata);
+        this.lookupExpression = lookupExpression;
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        if (this.expression != null)
-            result.add(this.expression);
+        result.add(this.mainExpression);
+        result.add(this.lookupExpression);
+        return result;
+    }
+
+    public Expression getLookupExpression() {
+        return this.lookupExpression;
+    }
+
+
+    @Override
+    public String serializationString(boolean prefix) {
+        String result = "(objectLookup "
+            + this.mainExpression.serializationString(true)
+            + " [["
+            + this.lookupExpression.serializationString(true)
+            + "]])";
         return result;
     }
 
     @Override
-    public String serializationString(boolean prefix) {
-        String result = "(arrayLookup [["
-            +
-            this.expression.serializationString(true)
-            + "]])";
-        return result;
+    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
+        return visitor.visitObjectLookupExpression(this, argument);
     }
 }

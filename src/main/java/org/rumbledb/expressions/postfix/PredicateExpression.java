@@ -18,40 +18,52 @@
  *
  */
 
-package org.rumbledb.expressions.postfix.extensions;
+package org.rumbledb.expressions.postfix;
 
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+
 import java.util.ArrayList;
 import java.util.List;
 
-public class ObjectLookupExtension extends PostfixExtension {
 
-    private Expression expression;
+public class PredicateExpression extends PostfixExpression {
 
-    public ObjectLookupExtension(Expression expr, ExceptionMetadata metadata) {
-        super(metadata);
-        this.expression = expr;
-    }
+    private Expression predicateExpression;
 
-    public Expression getExpression() {
-        return this.expression;
+    public PredicateExpression(Expression mainExpression, Expression predicateExpression, ExceptionMetadata metadata) {
+        super(mainExpression, metadata);
+        this.predicateExpression = predicateExpression;
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        if (this.expression != null) // field
-            result.add(this.expression); // field
+        result.add(this.mainExpression);
+        result.add(this.predicateExpression);
         return result;
+    }
+
+    public Expression getPredicateExpression() {
+        return this.predicateExpression;
     }
 
     @Override
     public String serializationString(boolean prefix) {
-        String result = "(objectLookup . " + this.expression.serializationString(false) + ")";
+        String result = "(predicate "
+            + this.mainExpression.serializationString(true)
+            + " [["
+            + this.predicateExpression.serializationString(true)
+            + "]])";
         return result;
+    }
+
+    @Override
+    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
+        return visitor.visitPredicateExpression(this, argument);
     }
 }

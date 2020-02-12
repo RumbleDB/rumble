@@ -54,7 +54,12 @@ import org.rumbledb.expressions.operational.RangeExpression;
 import org.rumbledb.expressions.operational.StringConcatExpression;
 import org.rumbledb.expressions.operational.TreatExpression;
 import org.rumbledb.expressions.operational.UnaryExpression;
-import org.rumbledb.expressions.postfix.PostFixExpression;
+import org.rumbledb.expressions.postfix.ArrayLookupExpression;
+import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
+import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
+import org.rumbledb.expressions.postfix.ObjectLookupExpression;
+import org.rumbledb.expressions.postfix.PostfixExpression;
+import org.rumbledb.expressions.postfix.PredicateExpression;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
@@ -159,11 +164,29 @@ public abstract class AbstractNodeVisitor<T> {
     }
     // endregion
 
-    // region primary
-    public T visitPostfixExpression(PostFixExpression expression, T argument) {
+    // region postfix
+    public T visitArrayUnboxingExpression(ArrayUnboxingExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
+    public T visitArrayLookupExpression(ArrayLookupExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitObjectLookupExpression(ObjectLookupExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitPredicateExpression(PredicateExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitDynamicFunctionCallExpression(DynamicFunctionCallExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+    // endregion
+
+    // region primary
     public T visitArrayConstructor(ArrayConstructorExpression expression, T argument) {
         return defaultAction(expression, argument);
     }

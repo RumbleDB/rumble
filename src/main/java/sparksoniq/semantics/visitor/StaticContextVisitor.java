@@ -32,7 +32,12 @@ import org.rumbledb.expressions.flowr.FlworVarDecl;
 import org.rumbledb.expressions.flowr.ForClauseVar;
 import org.rumbledb.expressions.flowr.GroupByClauseVar;
 import org.rumbledb.expressions.flowr.LetClauseVar;
-import org.rumbledb.expressions.postfix.PostFixExpression;
+import org.rumbledb.expressions.postfix.ArrayLookupExpression;
+import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
+import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
+import org.rumbledb.expressions.postfix.ObjectLookupExpression;
+import org.rumbledb.expressions.postfix.PostfixExpression;
+import org.rumbledb.expressions.postfix.PredicateExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
@@ -153,13 +158,54 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     @Override
-    public StaticContext visitPostfixExpression(PostFixExpression expression, StaticContext argument) {
-        // visit and initialize firstly the primary expression, then the postfix extensions
-        this.visit(expression.getPrimaryExpressionNode(), argument);
-        expression.initHighestExecutionMode();
-        expression.getExtensions().forEach(extension -> extension.initHighestExecutionMode());
+    public StaticContext visitPredicateExpression(PredicateExpression expression, StaticContext argument) {
+        this.visit(expression.getMainExpression(), argument);
+        expression.getChildren().forEach(expr -> expr.initHighestExecutionMode());
         return visitDescendants(expression, argument);
     }
+
+    @Override
+    public StaticContext visitArrayUnboxingExpression(ArrayUnboxingExpression expression, StaticContext argument) {
+        this.visit(expression.getMainExpression(), argument);
+        expression.getMainExpression().initHighestExecutionMode();
+        return visitDescendants(expression, argument);
+    }
+
+    @Override
+    public StaticContext visitArrayLookupExpression(ArrayLookupExpression expression, StaticContext argument) {
+        this.visit(expression.getMainExpression(), argument);
+        expression.getChildren().forEach(expr -> expr.initHighestExecutionMode());
+        return visitDescendants(expression, argument);
+    }
+
+    @Override
+    public StaticContext visitObjectLookupExpression(ObjectLookupExpression expression, StaticContext argument) {
+        this.visit(expression.getMainExpression(), argument);
+        expression.getChildren().forEach(expr -> expr.initHighestExecutionMode());
+        return visitDescendants(expression, argument);
+    }
+
+    @Override
+    public StaticContext visitDynamicFunctionCallExpression(
+            DynamicFunctionCallExpression expression,
+            StaticContext argument
+    ) {
+        this.visit(expression.getMainExpression(), argument);
+        expression.getChildren().forEach(expr -> expr.initHighestExecutionMode());
+        return visitDescendants(expression, argument);
+    }
+
+    /*
+     * public StaticContext visitPostfixExpression(PostfixExpression expression, StaticContext argument) {
+     * 
+     * @Override
+     * // visit and initialize firstly the primary expression, then the postfix extensions
+     * this.visit(expression.getMainExpression(), argument);
+     * expression.initHighestExecutionMode();
+     * expression.getExtensions().forEach(extension -> extension.initHighestExecutionMode());
+     * return visitDescendants(expression, argument);
+     * }
+     */
 
     // endregion
 

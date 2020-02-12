@@ -68,13 +68,12 @@ import org.rumbledb.expressions.operational.StringConcatExpression;
 import org.rumbledb.expressions.operational.TreatExpression;
 import org.rumbledb.expressions.operational.UnaryExpression;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-import org.rumbledb.expressions.postfix.PostFixExpression;
-import org.rumbledb.expressions.postfix.extensions.ArrayLookupExtension;
-import org.rumbledb.expressions.postfix.extensions.ArrayUnboxingExtension;
-import org.rumbledb.expressions.postfix.extensions.DynamicFunctionCallExtension;
-import org.rumbledb.expressions.postfix.extensions.ObjectLookupExtension;
-import org.rumbledb.expressions.postfix.extensions.PostfixExtension;
-import org.rumbledb.expressions.postfix.extensions.PredicateExtension;
+import org.rumbledb.expressions.postfix.ArrayLookupExpression;
+import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
+import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
+import org.rumbledb.expressions.postfix.ObjectLookupExpression;
+import org.rumbledb.expressions.postfix.PostfixExpression;
+import org.rumbledb.expressions.postfix.PredicateExpression;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
@@ -111,7 +110,6 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
     private Expression otherCurrentExpression;
 
     private PrimaryExpression currentPrimaryExpression;
-    private PostfixExtension currentPostFixExtension;
     private FlworClause currentFlworClause;
 
 
@@ -757,10 +755,10 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
     @Override
     public Void visitUnaryExpr(JsoniqParser.UnaryExprContext ctx) {
         // TODO [EXPRVISITOR] jump from unary to postfix
-        PostFixExpression mainExpression;
+        Expression mainExpression;
         UnaryExpression node;
         this.visitSimpleMapExpr(ctx.main_expr);
-        mainExpression = (PostFixExpression) this.currentExpression;
+        mainExpression = this.currentExpression;
         if (ctx.op == null || ctx.op.isEmpty())
             node = new UnaryExpression(mainExpression, createMetadataFromContext(ctx));
         else
@@ -777,98 +775,95 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
     // region postfix
     @Override
     public Void visitPostFixExpr(JsoniqParser.PostFixExprContext ctx) {
-        PostfixExtension childExpression = null;
-        PrimaryExpression mainExpression;
-        PostFixExpression node;
-        List<PostfixExtension> rhs = new ArrayList<>();
         this.visitPrimaryExpr(ctx.main_expr);
-        mainExpression = this.currentPrimaryExpression;
-        PostfixExtension previousPostFixExtension = null;
+        Expression mainExpression = this.currentPrimaryExpression;
         for (ParseTree child : ctx.children.subList(1, ctx.children.size())) {
             if (child instanceof JsoniqParser.PredicateContext) {
                 this.visitPredicate((JsoniqParser.PredicateContext) child);
-                childExpression = this.currentPostFixExtension;
+                mainExpression = new PredicateExpression(
+                        mainExpression,
+                        this.currentExpression,
+                        createMetadataFromContext(ctx)
+                );
             } else if (child instanceof JsoniqParser.ObjectLookupContext) {
                 this.visitObjectLookup((JsoniqParser.ObjectLookupContext) child);
-                childExpression = this.currentPostFixExtension;
+                mainExpression = new ObjectLookupExpression(
+                        mainExpression,
+                        this.currentExpression,
+                        createMetadataFromContext(ctx)
+                );
             } else if (child instanceof JsoniqParser.ArrayLookupContext) {
                 this.visitArrayLookup((JsoniqParser.ArrayLookupContext) child);
-                childExpression = this.currentPostFixExtension;
+                mainExpression = new ArrayLookupExpression(
+                        mainExpression,
+                        this.currentExpression,
+                        createMetadataFromContext(ctx)
+                );
             } else if (child instanceof JsoniqParser.ArrayUnboxingContext) {
                 this.visitArrayUnboxing((JsoniqParser.ArrayUnboxingContext) child);
-                childExpression = this.currentPostFixExtension;
+                mainExpression = new ArrayUnboxingExpression(mainExpression, createMetadataFromContext(ctx));
             } else if (child instanceof JsoniqParser.ArgumentListContext) {
                 List<Expression> arguments = getArgumentsFromArgumentListContext(
                     (JsoniqParser.ArgumentListContext) child
                 );
-                childExpression = new DynamicFunctionCallExtension(arguments, createMetadataFromContext(ctx));
+                mainExpression = new DynamicFunctionCallExpression(
+                        mainExpression,
+                        arguments,
+                        createMetadataFromContext(ctx)
+                );
             } else {
-                throw new OurBadException("Unrecognized postfix extension found.");
+                throw new OurBadException("Unrecognized postfix expression found.");
             }
-            childExpression.setPrevious(previousPostFixExtension);
-            previousPostFixExtension = childExpression;
-            rhs.add(childExpression);
         }
-        node = new PostFixExpression(mainExpression, rhs, createMetadataFromContext(ctx));
-        rhs.forEach(e -> e.setParent(node));
-        this.currentExpression = node;
+        this.currentExpression = mainExpression;
         return null;
     }
 
     @Override
     public Void visitPredicate(JsoniqParser.PredicateContext ctx) {
-        PredicateExtension node;
-        CommaExpression content;
         this.visitExpr(ctx.expr());
-        content = (CommaExpression) this.currentExpression;
-        node = new PredicateExtension(content, createMetadataFromContext(ctx));
-        this.currentPostFixExtension = node;
+        this.currentExpression = (CommaExpression) this.currentExpression;
         return null;
     }
 
     @Override
     public Void visitObjectLookup(JsoniqParser.ObjectLookupContext ctx) {
         // TODO [EXPRVISITOR] support for ParenthesizedExpr | varRef | contextItemexpr in object lookup
-        ObjectLookupExtension node;
         Expression expr = null;
         if (ctx.lt != null) {
-            expr = new StringLiteralExpression(ValueTypeHandler.getStringValue(ctx.lt), createMetadataFromContext(ctx));
+            this.currentExpression = new StringLiteralExpression(
+                    ValueTypeHandler.getStringValue(ctx.lt),
+                    createMetadataFromContext(ctx)
+            );
         } else if (ctx.nc != null) {
-            expr = new StringLiteralExpression(ctx.nc.getText(), createMetadataFromContext(ctx));
+            this.currentExpression = new StringLiteralExpression(ctx.nc.getText(), createMetadataFromContext(ctx));
         } else if (ctx.kw != null) {
-            expr = new StringLiteralExpression(ctx.kw.getText(), createMetadataFromContext(ctx));
+            this.currentExpression = new StringLiteralExpression(ctx.kw.getText(), createMetadataFromContext(ctx));
         } else if (ctx.pe != null) {
             this.visitParenthesizedExpr(ctx.pe);
-            expr = this.currentPrimaryExpression;
+            this.currentExpression = this.currentPrimaryExpression;
         } else if (ctx.vr != null) {
             this.visitVarRef(ctx.vr);
-            expr = this.currentPrimaryExpression;
+            this.currentExpression = this.currentPrimaryExpression;
         } else if (ctx.ci != null) {
             this.visitContextItemExpr(ctx.ci);
-            expr = this.currentPrimaryExpression;
+            this.currentExpression = this.currentPrimaryExpression;
         } else if (ctx.tkw != null) {
-            expr = new StringLiteralExpression(ctx.tkw.getText(), createMetadataFromContext(ctx));
+            this.currentExpression = new StringLiteralExpression(ctx.tkw.getText(), createMetadataFromContext(ctx));
         }
 
-        node = new ObjectLookupExtension(expr, createMetadataFromContext(ctx));
-        this.currentPostFixExtension = node;
         return null;
     }
 
     @Override
     public Void visitArrayLookup(JsoniqParser.ArrayLookupContext ctx) {
-        ArrayLookupExtension node;
-        CommaExpression content;
         this.visitExpr(ctx.expr());
-        content = (CommaExpression) this.currentExpression;
-        node = new ArrayLookupExtension(content, createMetadataFromContext(ctx));
-        this.currentPostFixExtension = node;
+        this.currentExpression = (CommaExpression) this.currentExpression;
         return null;
     }
 
     @Override
     public Void visitArrayUnboxing(JsoniqParser.ArrayUnboxingContext ctx) {
-        this.currentPostFixExtension = new ArrayUnboxingExtension(createMetadataFromContext(ctx));
         return null;
     }
     // endregion

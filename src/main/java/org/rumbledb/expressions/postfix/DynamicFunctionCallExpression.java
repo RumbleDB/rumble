@@ -18,23 +18,29 @@
  *
  */
 
-package org.rumbledb.expressions.postfix.extensions;
+package org.rumbledb.expressions.postfix;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+
 import sparksoniq.jsoniq.ExecutionMode;
+import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class DynamicFunctionCallExtension extends PostfixExtension {
+public class DynamicFunctionCallExpression extends PostfixExpression {
 
     private List<Expression> arguments;
 
-    public DynamicFunctionCallExtension(List<Expression> arguments, ExceptionMetadata metadata) {
-        super(metadata);
+    public DynamicFunctionCallExpression(
+            Expression mainExpression,
+            List<Expression> arguments,
+            ExceptionMetadata metadata
+    ) {
+        super(mainExpression, metadata);
         this.arguments = arguments;
         if (this.arguments == null)
             this.arguments = new ArrayList<>();
@@ -46,14 +52,16 @@ public class DynamicFunctionCallExtension extends PostfixExtension {
 
     @Override
     public List<Node> getChildren() {
-        return this.arguments.stream().filter(arg -> arg != null).collect(Collectors.toList());
+        List<Node> result = new ArrayList<>();
+        result.add(this.mainExpression);
+        result.addAll(this.arguments.stream().filter(arg -> arg != null).collect(Collectors.toList()));
+        return result;
     }
 
     /**
      * DynamicFunctionCall is always locally evaluated as execution mode cannot be determined at static analysis phase.
      * This behavior is different from all other postfix extensions, hence this override is required.
      */
-
     @Override
     public void initHighestExecutionMode() {
         this.highestExecutionMode = ExecutionMode.LOCAL;
@@ -61,7 +69,9 @@ public class DynamicFunctionCallExtension extends PostfixExtension {
 
     @Override
     public String serializationString(boolean prefix) {
-        StringBuilder result = new StringBuilder("(argumentList ( ");
+        StringBuilder result = new StringBuilder();
+        result.append("(dynamicFunctionCall ");
+        result.append(this.mainExpression.serializationString(true));
         for (Expression arg : this.arguments) {
             result.append("(argument (exprSingle ");
             result.append(arg.serializationString(false));
@@ -69,5 +79,10 @@ public class DynamicFunctionCallExtension extends PostfixExtension {
         }
         result.append("))");
         return result.toString();
+    }
+
+    @Override
+    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
+        return visitor.visitDynamicFunctionCallExpression(this, argument);
     }
 }

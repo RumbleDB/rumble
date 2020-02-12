@@ -22,8 +22,8 @@ package org.rumbledb.expressions.operational;
 
 
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.operational.base.UnaryExpressionBase;
-import org.rumbledb.expressions.postfix.PostFixExpression;
 import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.Arrays;
@@ -33,22 +33,22 @@ import java.util.List;
 public class UnaryExpression extends UnaryExpressionBase {
 
     public static final Operator[] operators = new Operator[] { Operator.PLUS, Operator.MINUS };
-    private PostFixExpression postfixExpression;
+    private Expression mainExpression;
 
-    public UnaryExpression(PostFixExpression mainExpression, ExceptionMetadata metadata) {
+    public UnaryExpression(Expression mainExpression, ExceptionMetadata metadata) {
         super(mainExpression, metadata);
-        this.postfixExpression = mainExpression;
+        this.mainExpression = mainExpression;
         this.isActive = false;
     }
 
-    public UnaryExpression(PostFixExpression mainExpression, List<Operator> ops, ExceptionMetadata metadata) {
+    public UnaryExpression(Expression mainExpression, List<Operator> ops, ExceptionMetadata metadata) {
         super(mainExpression, ops, ops != null && !ops.isEmpty(), metadata);
         this.validateOperators(Arrays.asList(operators), ops);
-        this.postfixExpression = mainExpression;
+        this.mainExpression = mainExpression;
     }
 
-    public PostFixExpression getPostfixExpression() {
-        return this.postfixExpression;
+    public Expression getMainExpression() {
+        return this.mainExpression;
     }
 
     @Override
