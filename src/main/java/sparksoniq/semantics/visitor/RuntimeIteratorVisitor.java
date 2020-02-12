@@ -366,12 +366,11 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     @Override
     public RuntimeIterator visitPredicateExpression(PredicateExpression expression, RuntimeIterator argument) {
         RuntimeIterator mainIterator = this.visit(expression.getMainExpression(), argument);
-        ExecutionMode executionMode = mainIterator.getHighestExecutionMode();
         RuntimeIterator filterIterator = this.visit(expression.getPredicateExpression(), argument);
         return new PredicateIterator(
                 mainIterator,
                 filterIterator,
-                executionMode,
+                expression.getHighestExecutionMode(),
                 expression.getMetadata()
         );
     }
@@ -379,12 +378,11 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     @Override
     public RuntimeIterator visitArrayLookupExpression(ArrayLookupExpression expression, RuntimeIterator argument) {
         RuntimeIterator mainIterator = this.visit(expression.getMainExpression(), argument);
-        ExecutionMode executionMode = mainIterator.getHighestExecutionMode();
         RuntimeIterator lookupIterator = this.visit(expression.getLookupExpression(), argument);
         return new ArrayLookupIterator(
                 mainIterator,
                 lookupIterator,
-                executionMode,
+                expression.getHighestExecutionMode(),
                 expression.getMetadata()
         );
     }
@@ -392,12 +390,11 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     @Override
     public RuntimeIterator visitObjectLookupExpression(ObjectLookupExpression expression, RuntimeIterator argument) {
         RuntimeIterator mainIterator = this.visit(expression.getMainExpression(), argument);
-        ExecutionMode executionMode = mainIterator.getHighestExecutionMode();
         RuntimeIterator lookupIterator = this.visit(expression.getLookupExpression(), argument);
         return new ObjectLookupIterator(
                 mainIterator,
                 lookupIterator,
-                executionMode,
+                expression.getHighestExecutionMode(),
                 expression.getMetadata()
         );
     }
@@ -416,11 +413,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 arguments.add(this.visit(arg, argument));
             }
         }
-        ExecutionMode executionMode = expression.getHighestExecutionMode();
         return new DynamicFunctionCallIterator(
                 mainIterator,
                 arguments,
-                executionMode,
+                expression.getHighestExecutionMode(),
                 expression.getMetadata()
         );
     }
@@ -428,10 +424,9 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     @Override
     public RuntimeIterator visitArrayUnboxingExpression(ArrayUnboxingExpression expression, RuntimeIterator argument) {
         RuntimeIterator mainIterator = this.visit(expression.getMainExpression(), argument);
-        ExecutionMode executionMode = mainIterator.getHighestExecutionMode();
         return new ArrayUnboxingIterator(
                 mainIterator,
-                executionMode,
+                expression.getHighestExecutionMode(),
                 expression.getMetadata()
         );
     }
