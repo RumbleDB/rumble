@@ -62,9 +62,9 @@ public class GroupByClauseVar extends FlworVarDecl {
 
     @Override
     public String serializationString(boolean prefix) {
-        String result = "(groupByVar " + this.variableReferenceNode.serializationString(false);
-        if (this.asSequence != null)
-            result += " as " + this.asSequence.serializationString(true);
+        String result = "(groupByVar " + this.variableReferenceExpression.serializationString(false);
+        if (this.asSequenceType != null)
+            result += " as " + this.asSequenceType.serializationString(true);
         if (this.expression != null)
             result += " in " + this.expression.serializationString(true);
         result += ")";

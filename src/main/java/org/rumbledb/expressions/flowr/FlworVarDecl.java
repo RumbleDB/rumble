@@ -33,11 +33,11 @@ import java.util.List;
 
 public abstract class FlworVarDecl extends FlworClause {
 
-    protected VariableReferenceExpression variableReferenceNode;
+    protected VariableReferenceExpression variableReferenceExpression;
     protected Expression expression;
 
     // asSequence is null by default if the type of the variable in the for/let/groupBy clause is not specified.
-    protected FlworVarSequenceType asSequence;
+    protected FlworVarSequenceType asSequenceType;
 
     // Holds whether the variable will be stored in materialized(local) or native/spark(RDD or DF) format in a tuple
     protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
@@ -48,27 +48,27 @@ public abstract class FlworVarDecl extends FlworClause {
 
     public FlworVarDecl(
             FLWOR_CLAUSES forVar,
-            VariableReferenceExpression varRef,
-            FlworVarSequenceType seq,
+            VariableReferenceExpression variableReferenceExpression,
+            FlworVarSequenceType sequenceType,
             Expression expression,
             ExceptionMetadata metadata
     ) {
         this(forVar, metadata);
-        if (varRef == null)
+        if (variableReferenceExpression == null)
             throw new IllegalArgumentException("Flowr var decls cannot be empty");
-        this.variableReferenceNode = varRef;
-        this.asSequence = seq;
+        this.variableReferenceExpression = variableReferenceExpression;
+        this.asSequenceType = sequenceType;
         this.expression = expression;
 
         // TODO add type inference?
-        if (this.asSequence == null)
-            this.variableReferenceNode.setType(new SequenceType());
+        if (this.asSequenceType == null)
+            this.variableReferenceExpression.setType(new SequenceType());
         else
-            this.variableReferenceNode.setType(this.asSequence.getSequence());
+            this.variableReferenceExpression.setType(this.asSequenceType.getSequence());
     }
 
     public VariableReferenceExpression getVariableReference() {
-        return this.variableReferenceNode;
+        return this.variableReferenceExpression;
     }
 
     public Expression getExpression() {
@@ -76,7 +76,7 @@ public abstract class FlworVarDecl extends FlworClause {
     }
 
     public FlworVarSequenceType getAsSequence() {
-        return this.asSequence;
+        return this.asSequenceType;
     }
 
     @Override
@@ -93,9 +93,9 @@ public abstract class FlworVarDecl extends FlworClause {
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        result.add(this.variableReferenceNode);
-        if (this.asSequence != null)
-            result.add(this.asSequence);
+        result.add(this.variableReferenceExpression);
+        if (this.asSequenceType != null)
+            result.add(this.asSequenceType);
         if (this.expression != null)
             result.add(this.expression);
         return result;

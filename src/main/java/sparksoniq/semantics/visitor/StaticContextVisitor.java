@@ -289,7 +289,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         this.visit(expression.getTestCondition(), argument);
         expression.getCases().forEach(typeSwitchCaseExpression -> this.visit(typeSwitchCaseExpression, argument));
 
-        VariableReferenceExpression defaultCaseVariableReference = expression.getVarRefDefault();
+        VariableReferenceExpression defaultCaseVariableReference = expression.getDefaultVariableReferenceExpression();
         if (defaultCaseVariableReference == null) {
             this.visit(expression.getDefaultExpression(), argument);
         } else {

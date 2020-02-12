@@ -1011,8 +1011,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
         TypeSwitchCase defaultCase;
         String defaultCaseVariableName = null;
-        if (expression.getVarRefDefault() != null) {
-            defaultCaseVariableName = expression.getVarRefDefault().getVariableName();
+        if (expression.getDefaultVariableReferenceExpression() != null) {
+            defaultCaseVariableName = expression.getDefaultVariableReferenceExpression().getVariableName();
         }
         defaultCase = new TypeSwitchCase(
                 defaultCaseVariableName,
