@@ -22,7 +22,6 @@ package org.rumbledb.expressions.postfix;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
-import sparksoniq.jsoniq.ExecutionMode;
 
 
 public abstract class PostfixExpression extends Expression {
