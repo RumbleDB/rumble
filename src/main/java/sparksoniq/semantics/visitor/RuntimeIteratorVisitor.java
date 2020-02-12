@@ -416,7 +416,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 arguments.add(this.visit(arg, argument));
             }
         }
-        ExecutionMode executionMode = mainIterator.getHighestExecutionMode();
+        ExecutionMode executionMode = expression.getHighestExecutionMode();
         return new DynamicFunctionCallIterator(
                 mainIterator,
                 arguments,
