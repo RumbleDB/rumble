@@ -58,23 +58,21 @@ public class CommaExpressionIterator extends LocalRuntimeIterator {
         super.open(context);
         this.childIndex = 0;
 
-        if(this.children.size() >= 1)
-        {
-	        this.currentChild = this.children.get(this.childIndex);
-	        this.currentChild.open(this.currentDynamicContextForLocalExecution);
+        if (this.children.size() >= 1) {
+            this.currentChild = this.children.get(this.childIndex);
+            this.currentChild.open(this.currentDynamicContextForLocalExecution);
         } else {
-        	this.currentChild = null;
+            this.currentChild = null;
         }
 
         setNextResult();
     }
 
     public void setNextResult() {
-    	if(this.currentChild == null)
-    	{
-    		this.hasNext = false;
-    		return;
-    	}
+        if (this.currentChild == null) {
+            this.hasNext = false;
+            return;
+        }
 
         this.nextResult = null;
 

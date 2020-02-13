@@ -72,7 +72,6 @@ import org.rumbledb.expressions.postfix.ArrayLookupExpression;
 import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
 import org.rumbledb.expressions.postfix.ObjectLookupExpression;
-import org.rumbledb.expressions.postfix.PostfixExpression;
 import org.rumbledb.expressions.postfix.PredicateExpression;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
@@ -130,21 +129,18 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
 
     @Override
     public Void visitMainModule(JsoniqParser.MainModuleContext ctx) {
-        MainModule node;
         this.visitProlog(ctx.prolog());
         Prolog prolog = (Prolog) this.currentExpression;
         this.visitExpr(ctx.expr());
         CommaExpression commaExpression = (CommaExpression) this.currentExpression;
-        node = new MainModule(prolog, commaExpression, createMetadataFromContext(ctx));
-        this.currentExpression = node;
-        this.mainModule = node;
+        this.mainModule = new MainModule(prolog, commaExpression, createMetadataFromContext(ctx));
+        this.currentExpression = this.mainModule;
         return null;
     }
 
     @Override
     public Void visitProlog(JsoniqParser.PrologContext ctx) {
         List<InlineFunctionExpression> InlineFunctionExpressions = new ArrayList<>();
-        Prolog node;
         for (JsoniqParser.FunctionDeclContext function : ctx.functionDecl()) {
             this.visitFunctionDecl(function);
             InlineFunctionExpressions.add((InlineFunctionExpression) this.currentExpression);
@@ -153,8 +149,7 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
             this.visitModuleImport(module);
         }
 
-        node = new Prolog(InlineFunctionExpressions, createMetadataFromContext(ctx));
-        this.currentExpression = node;
+        this.currentExpression = new Prolog(InlineFunctionExpressions, createMetadataFromContext(ctx));
         return null;
     }
 
@@ -172,7 +167,6 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
                 createMetadataFromContext(ctx)
         );
         CommaExpression fnBody;
-        InlineFunctionExpression node;
         String paramName;
         FlworVarSequenceType paramType;
         if (ctx.paramList() != null) {
@@ -205,8 +199,13 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
         this.visitExpr(ctx.fn_body);
         fnBody = (CommaExpression) this.currentExpression;
 
-        node = new InlineFunctionExpression(fnName, fnParams, fnReturnType, fnBody, createMetadataFromContext(ctx));
-        this.currentExpression = node;
+        this.currentExpression = new InlineFunctionExpression(
+                fnName,
+                fnParams,
+                fnReturnType,
+                fnBody,
+                createMetadataFromContext(ctx)
+        );
         return null;
     }
     // endregion
@@ -214,7 +213,6 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
     // region expr
     @Override
     public Void visitExpr(JsoniqParser.ExprContext ctx) {
-        CommaExpression node;
         List<Expression> expressions = new ArrayList<>();
         Expression expression;
         for (JsoniqParser.ExprSingleContext expr : ctx.exprSingle()) {
@@ -223,15 +221,12 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
             expressions.add(expression);
 
         }
-        node = new CommaExpression(expressions, createMetadataFromContext(ctx));
-        this.currentExpression = node;
+        this.currentExpression = new CommaExpression(expressions, createMetadataFromContext(ctx));
         return null;
     }
 
     @Override
     public Void visitExprSingle(JsoniqParser.ExprSingleContext ctx) {
-
-        Expression node;
         ParseTree content = ctx.children.get(0);
         if (content instanceof JsoniqParser.OrExprContext)
             this.visitOrExpr((JsoniqParser.OrExprContext) content);
@@ -245,8 +240,6 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
             this.visitSwitchExpr((JsoniqParser.SwitchExprContext) content);
         else if (content instanceof JsoniqParser.TypeSwitchExprContext)
             this.visitTypeSwitchExpr((JsoniqParser.TypeSwitchExprContext) content);
-        node = this.currentExpression;
-        this.currentExpression = node;
         return null;
     }
     // endregion
@@ -255,7 +248,6 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
     // TODO [EXPRVISITOR] count
     @Override
     public Void visitFlowrExpr(JsoniqParser.FlowrExprContext ctx) {
-        FlworExpression node;
         FlworClause startClause, childClause;
         List<FlworClause> contentClauses = new ArrayList<>();
         ReturnClause returnClause;
@@ -311,14 +303,17 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
         );
         returnClause.setPreviousClause(previousFLWORClause);
 
-        node = new FlworExpression(startClause, contentClauses, returnClause, createMetadataFromContext(ctx));
-        this.currentExpression = node;
+        this.currentExpression = new FlworExpression(
+                startClause,
+                contentClauses,
+                returnClause,
+                createMetadataFromContext(ctx)
+        );
         return null;
     }
 
     @Override
     public Void visitForClause(JsoniqParser.ForClauseContext ctx) {
-        ForClause node;
         List<ForClauseVar> vars = new ArrayList<>();
         ForClauseVar child;
         for (JsoniqParser.ForVarContext var : ctx.vars) {
@@ -327,8 +322,7 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
             vars.add(child);
         }
 
-        node = new ForClause(vars, createMetadataFromContext(ctx));
-        this.currentFlworClause = node;
+        this.currentFlworClause = new ForClause(vars, createMetadataFromContext(ctx));
         return null;
     }
 
@@ -352,14 +346,12 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
         this.visitExprSingle(ctx.ex);
         expr = this.currentExpression;
 
-        ForClauseVar node = new ForClauseVar(var, seq, emptyFlag, atVarRef, expr, createMetadataFromContext(ctx));
-        this.currentFlworClause = node;
+        this.currentFlworClause = new ForClauseVar(var, seq, emptyFlag, atVarRef, expr, createMetadataFromContext(ctx));
         return null;
     }
 
     @Override
     public Void visitLetClause(JsoniqParser.LetClauseContext ctx) {
-        LetClause node;
         List<LetClauseVar> vars = new ArrayList<>();
         LetClauseVar child;
         for (JsoniqParser.LetVarContext var : ctx.vars) {
@@ -368,8 +360,7 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
             vars.add(child);
         }
 
-        node = new LetClause(vars, createMetadataFromContext(ctx));
-        this.currentFlworClause = node;
+        this.currentFlworClause = new LetClause(vars, createMetadataFromContext(ctx));
         return null;
     }
 
@@ -387,14 +378,12 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
         this.visitExprSingle(ctx.ex);
         expr = this.currentExpression;
 
-        LetClauseVar node = new LetClauseVar(var, seq, expr, createMetadataFromContext(ctx));
-        this.currentFlworClause = node;
+        this.currentFlworClause = new LetClauseVar(var, seq, expr, createMetadataFromContext(ctx));
         return null;
     }
 
     @Override
     public Void visitGroupByClause(JsoniqParser.GroupByClauseContext ctx) {
-        GroupByClause node;
         List<GroupByClauseVar> vars = new ArrayList<>();
         GroupByClauseVar child;
         for (JsoniqParser.GroupByVarContext var : ctx.vars) {
@@ -402,15 +391,13 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
             child = (GroupByClauseVar) this.currentFlworClause;
             vars.add(child);
         }
-        node = new GroupByClause(vars, createMetadataFromContext(ctx));
-        this.currentFlworClause = node;
+        this.currentFlworClause = new GroupByClause(vars, createMetadataFromContext(ctx));
         return null;
 
     }
 
     @Override
     public Void visitOrderByClause(JsoniqParser.OrderByClauseContext ctx) {
-        OrderByClause node;
         boolean stable = false;
         List<OrderByClauseExpr> exprs = new ArrayList<>();
         OrderByClauseExpr child;
@@ -421,15 +408,13 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
         }
         if (ctx.stb != null && !ctx.stb.getText().isEmpty())
             stable = true;
-        node = new OrderByClause(exprs, stable, createMetadataFromContext(ctx));
-        this.currentFlworClause = node;
+        this.currentFlworClause = new OrderByClause(exprs, stable, createMetadataFromContext(ctx));
         return null;
 
     }
 
     @Override
     public Void visitOrderByExpr(JsoniqParser.OrderByExprContext ctx) {
-        OrderByClauseExpr node;
         boolean ascending = true;
         if (ctx.desc != null && !ctx.desc.getText().isEmpty())
             ascending = false;
@@ -443,8 +428,13 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
             empty_order = OrderByClauseExpr.EMPTY_ORDER.FIRST;
         this.visitExprSingle(ctx.exprSingle());
         Expression expression = this.currentExpression;
-        node = new OrderByClauseExpr(expression, ascending, uri, empty_order, createMetadataFromContext(ctx));
-        this.currentFlworClause = node;
+        this.currentFlworClause = new OrderByClauseExpr(
+                expression,
+                ascending,
+                uri,
+                empty_order,
+                createMetadataFromContext(ctx)
+        );
         return null;
     }
 
@@ -470,30 +460,25 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
         if (ctx.uri != null)
             uri = ctx.uri.getText();
 
-        GroupByClauseVar node = new GroupByClauseVar(var, seq, expr, uri, createMetadataFromContext(ctx));
-        this.currentFlworClause = node;
+        this.currentFlworClause = new GroupByClauseVar(var, seq, expr, uri, createMetadataFromContext(ctx));
         return null;
     }
 
     @Override
     public Void visitWhereClause(JsoniqParser.WhereClauseContext ctx) {
-        WhereClause node;
         Expression expr;
         this.visitExprSingle(ctx.exprSingle());
         expr = this.currentExpression;
-        node = new WhereClause(expr, createMetadataFromContext(ctx));
-        this.currentFlworClause = node;
+        this.currentFlworClause = new WhereClause(expr, createMetadataFromContext(ctx));
         return null;
     }
 
     @Override
     public Void visitCountClause(JsoniqParser.CountClauseContext ctx) {
-        CountClause node;
         VariableReferenceExpression child;
         this.visitVarRef(ctx.varRef());
         child = (VariableReferenceExpression) this.currentExpression;
-        node = new CountClause(child, createMetadataFromContext(ctx));
-        this.currentFlworClause = node;
+        this.currentFlworClause = new CountClause(child, createMetadataFromContext(ctx));
         return null;
     }
     // endregion
@@ -502,7 +487,6 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
     @Override
     public Void visitOrExpr(JsoniqParser.OrExprContext ctx) {
         AndExpression mainExpression, childExpression;
-        OrExpression node;
         List<Expression> rhs = new ArrayList<>();
         this.visitAndExpr(ctx.main_expr);
         mainExpression = (AndExpression) this.currentExpression;
@@ -512,11 +496,10 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
                 childExpression = (AndExpression) this.currentExpression;
                 rhs.add(childExpression);
             }
-            node = new OrExpression(mainExpression, rhs, createMetadataFromContext(ctx));
+            this.currentExpression = new OrExpression(mainExpression, rhs, createMetadataFromContext(ctx));
         } else {
-            node = new OrExpression(mainExpression, createMetadataFromContext(ctx));
+            this.currentExpression = new OrExpression(mainExpression, createMetadataFromContext(ctx));
         }
-        this.currentExpression = node;
         return null;
 
     }
@@ -524,7 +507,6 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
     @Override
     public Void visitAndExpr(JsoniqParser.AndExprContext ctx) {
         NotExpression mainExpression, childExpression;
-        AndExpression node;
         List<Expression> rhs = new ArrayList<>();
         this.visitNotExpr(ctx.main_expr);
         mainExpression = (NotExpression) this.currentExpression;
@@ -534,33 +516,29 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
                 childExpression = (NotExpression) this.currentExpression;
                 rhs.add(childExpression);
             }
-            node = new AndExpression(mainExpression, rhs, createMetadataFromContext(ctx));
+            this.currentExpression = new AndExpression(mainExpression, rhs, createMetadataFromContext(ctx));
         } else {
-            node = new AndExpression(mainExpression, createMetadataFromContext(ctx));
+            this.currentExpression = new AndExpression(mainExpression, createMetadataFromContext(ctx));
         }
-        this.currentExpression = node;
         return null;
     }
 
     @Override
     public Void visitNotExpr(JsoniqParser.NotExprContext ctx) {
         ComparisonExpression mainExpression;
-        NotExpression node;
         this.visitComparisonExpr(ctx.main_expr);
         mainExpression = (ComparisonExpression) this.currentExpression;
-        node = new NotExpression(
+        this.currentExpression = new NotExpression(
                 mainExpression,
                 !(ctx.op == null || ctx.op.isEmpty()),
                 createMetadataFromContext(ctx)
         );
-        this.currentExpression = node;
         return null;
     }
 
     @Override
     public Void visitComparisonExpr(JsoniqParser.ComparisonExprContext ctx) {
         StringConcatExpression mainExpression, childExpression;
-        ComparisonExpression node;
         this.visitStringConcatExpr(ctx.main_expr);
         mainExpression = (StringConcatExpression) this.currentExpression;
         if (ctx.rhs != null && !ctx.rhs.isEmpty()) {
@@ -568,23 +546,21 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
             this.visitStringConcatExpr(child);
             childExpression = (StringConcatExpression) this.currentExpression;
 
-            node = new ComparisonExpression(
+            this.currentExpression = new ComparisonExpression(
                     mainExpression,
                     childExpression,
                     OperationalExpressionBase.getOperatorFromString(ctx.op.get(0).getText()),
                     createMetadataFromContext(ctx)
             );
         } else {
-            node = new ComparisonExpression(mainExpression, createMetadataFromContext(ctx));
+            this.currentExpression = new ComparisonExpression(mainExpression, createMetadataFromContext(ctx));
         }
-        this.currentExpression = node;
         return null;
     }
 
     @Override
     public Void visitStringConcatExpr(JsoniqParser.StringConcatExprContext ctx) {
         RangeExpression mainExpression, childExpression;
-        StringConcatExpression node;
         List<Expression> rhs = new ArrayList<>();
         this.visitRangeExpr(ctx.main_expr);
         mainExpression = (RangeExpression) this.currentExpression;
@@ -594,11 +570,10 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
                 childExpression = (RangeExpression) this.currentExpression;
                 rhs.add(childExpression);
             }
-            node = new StringConcatExpression(mainExpression, rhs, createMetadataFromContext(ctx));
+            this.currentExpression = new StringConcatExpression(mainExpression, rhs, createMetadataFromContext(ctx));
         } else {
-            node = new StringConcatExpression(mainExpression, createMetadataFromContext(ctx));
+            this.currentExpression = new StringConcatExpression(mainExpression, createMetadataFromContext(ctx));
         }
-        this.currentExpression = node;
         return null;
     }
 
@@ -606,26 +581,27 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
     public Void visitRangeExpr(JsoniqParser.RangeExprContext ctx) {
 
         AdditiveExpression mainExpression, childExpression;
-        RangeExpression node;
         this.visitAdditiveExpr(ctx.main_expr);
         mainExpression = (AdditiveExpression) this.currentExpression;
         if (ctx.rhs != null && !ctx.rhs.isEmpty()) {
             JsoniqParser.AdditiveExprContext child = ctx.rhs.get(0);
             this.visitAdditiveExpr(child);
             childExpression = (AdditiveExpression) this.currentExpression;
-            node = new RangeExpression(mainExpression, childExpression, createMetadataFromContext(ctx));
+            this.currentExpression = new RangeExpression(
+                    mainExpression,
+                    childExpression,
+                    createMetadataFromContext(ctx)
+            );
         } else {
-            node = new RangeExpression(mainExpression, createMetadataFromContext(ctx));
+            this.currentExpression = new RangeExpression(mainExpression, createMetadataFromContext(ctx));
         }
 
-        this.currentExpression = node;
         return null;
     }
 
     @Override
     public Void visitAdditiveExpr(JsoniqParser.AdditiveExprContext ctx) {
         MultiplicativeExpression mainExpression, childExpression;
-        AdditiveExpression node;
         List<Expression> rhs = new ArrayList<>();
         this.visitMultiplicativeExpr(ctx.main_expr);
         mainExpression = (MultiplicativeExpression) this.currentExpression;
@@ -635,23 +611,21 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
                 childExpression = (MultiplicativeExpression) this.currentExpression;
                 rhs.add(childExpression);
             }
-            node = new AdditiveExpression(
+            this.currentExpression = new AdditiveExpression(
                     mainExpression,
                     rhs,
                     OperationalExpressionBase.getOperatorFromOpList(ctx.op),
                     createMetadataFromContext(ctx)
             );
         } else {
-            node = new AdditiveExpression(mainExpression, createMetadataFromContext(ctx));
+            this.currentExpression = new AdditiveExpression(mainExpression, createMetadataFromContext(ctx));
         }
-        this.currentExpression = node;
         return null;
     }
 
     @Override
     public Void visitMultiplicativeExpr(JsoniqParser.MultiplicativeExprContext ctx) {
         InstanceOfExpression mainExpression, childExpression;
-        MultiplicativeExpression node;
         List<Expression> rhs = new ArrayList<>();
         this.visitInstanceOfExpr(ctx.main_expr);
         mainExpression = (InstanceOfExpression) this.currentExpression;
@@ -661,16 +635,15 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
                 childExpression = (InstanceOfExpression) this.currentExpression;
                 rhs.add(childExpression);
             }
-            node = new MultiplicativeExpression(
+            this.currentExpression = new MultiplicativeExpression(
                     mainExpression,
                     rhs,
                     OperationalExpressionBase.getOperatorFromOpList(ctx.op),
                     createMetadataFromContext(ctx)
             );
         } else {
-            node = new MultiplicativeExpression(mainExpression, createMetadataFromContext(ctx));
+            this.currentExpression = new MultiplicativeExpression(mainExpression, createMetadataFromContext(ctx));
         }
-        this.currentExpression = node;
         return null;
     }
 
@@ -678,18 +651,20 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
     public Void visitInstanceOfExpr(JsoniqParser.InstanceOfExprContext ctx) {
         TreatExpression mainExpression;
         FlworVarSequenceType sequenceType;
-        InstanceOfExpression node;
         this.visitTreatExpr(ctx.main_expr);
         mainExpression = (TreatExpression) this.currentExpression;
         if (ctx.seq != null && !ctx.seq.isEmpty()) {
             JsoniqParser.SequenceTypeContext child = ctx.seq;
             this.visitSequenceType(child);
             sequenceType = (FlworVarSequenceType) this.currentExpression;
-            node = new InstanceOfExpression(mainExpression, sequenceType, createMetadataFromContext(ctx));
+            this.currentExpression = new InstanceOfExpression(
+                    mainExpression,
+                    sequenceType,
+                    createMetadataFromContext(ctx)
+            );
         } else {
-            node = new InstanceOfExpression(mainExpression, createMetadataFromContext(ctx));
+            this.currentExpression = new InstanceOfExpression(mainExpression, createMetadataFromContext(ctx));
         }
-        this.currentExpression = node;
         return null;
     }
 
@@ -697,18 +672,16 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
     public Void visitTreatExpr(JsoniqParser.TreatExprContext ctx) {
         CastableExpression mainExpression;
         FlworVarSequenceType sequenceType;
-        TreatExpression node;
         this.visitCastableExpr(ctx.main_expr);
         mainExpression = (CastableExpression) this.currentExpression;
         if (ctx.seq != null && !ctx.seq.isEmpty()) {
             JsoniqParser.SequenceTypeContext child = ctx.seq;
             this.visitSequenceType(child);
             sequenceType = (FlworVarSequenceType) this.currentExpression;
-            node = new TreatExpression(mainExpression, sequenceType, createMetadataFromContext(ctx));
+            this.currentExpression = new TreatExpression(mainExpression, sequenceType, createMetadataFromContext(ctx));
         } else {
-            node = new TreatExpression(mainExpression, createMetadataFromContext(ctx));
+            this.currentExpression = new TreatExpression(mainExpression, createMetadataFromContext(ctx));
         }
-        this.currentExpression = node;
         return null;
     }
 
@@ -716,18 +689,16 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
     public Void visitCastableExpr(JsoniqParser.CastableExprContext ctx) {
         CastExpression mainExpression;
         FlworVarSingleType singleType;
-        CastableExpression node;
         this.visitCastExpr(ctx.main_expr);
         mainExpression = (CastExpression) this.currentExpression;
         if (ctx.single != null && !ctx.single.isEmpty()) {
             JsoniqParser.SingleTypeContext child = ctx.single;
             this.visitSingleType(child);
             singleType = (FlworVarSingleType) this.currentExpression;
-            node = new CastableExpression(mainExpression, singleType, createMetadataFromContext(ctx));
+            this.currentExpression = new CastableExpression(mainExpression, singleType, createMetadataFromContext(ctx));
         } else {
-            node = new CastableExpression(mainExpression, createMetadataFromContext(ctx));
+            this.currentExpression = new CastableExpression(mainExpression, createMetadataFromContext(ctx));
         }
-        this.currentExpression = node;
         return null;
     }
 
@@ -735,37 +706,32 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
     public Void visitCastExpr(JsoniqParser.CastExprContext ctx) {
         UnaryExpression mainExpression;
         FlworVarSingleType singleType;
-        CastExpression node;
         this.visitUnaryExpr(ctx.main_expr);
         mainExpression = (UnaryExpression) this.currentExpression;
         if (ctx.single != null && !ctx.single.isEmpty()) {
             JsoniqParser.SingleTypeContext child = ctx.single;
             this.visitSingleType(child);
             singleType = (FlworVarSingleType) this.currentExpression;
-            node = new CastExpression(mainExpression, singleType, createMetadataFromContext(ctx));
+            this.currentExpression = new CastExpression(mainExpression, singleType, createMetadataFromContext(ctx));
         } else {
-            node = new CastExpression(mainExpression, createMetadataFromContext(ctx));
+            this.currentExpression = new CastExpression(mainExpression, createMetadataFromContext(ctx));
         }
-        this.currentExpression = node;
         return null;
     }
 
     @Override
     public Void visitUnaryExpr(JsoniqParser.UnaryExprContext ctx) {
-        // TODO [EXPRVISITOR] jump from unary to postfix
         Expression mainExpression;
-        UnaryExpression node;
         this.visitSimpleMapExpr(ctx.main_expr);
         mainExpression = this.currentExpression;
         if (ctx.op == null || ctx.op.isEmpty())
-            node = new UnaryExpression(mainExpression, createMetadataFromContext(ctx));
+            this.currentExpression = new UnaryExpression(mainExpression, createMetadataFromContext(ctx));
         else
-            node = new UnaryExpression(
+            this.currentExpression = new UnaryExpression(
                     mainExpression,
                     OperationalExpressionBase.getOperatorFromOpList(ctx.op),
                     createMetadataFromContext(ctx)
             );
-        this.currentExpression = node;
         return null;
     }
     // endregion
@@ -827,7 +793,6 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
     @Override
     public Void visitObjectLookup(JsoniqParser.ObjectLookupContext ctx) {
         // TODO [EXPRVISITOR] support for ParenthesizedExpr | varRef | contextItemexpr in object lookup
-        Expression expr = null;
         if (ctx.lt != null) {
             this.currentExpression = new StringLiteralExpression(
                     ValueTypeHandler.getStringValue(ctx.lt),
@@ -867,51 +832,40 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
     // TODO [EXPRVISITOR] orderedExpr unorderedExpr;
     @Override
     public Void visitPrimaryExpr(JsoniqParser.PrimaryExprContext ctx) {
-        Expression node = null;
-
         ParseTree child = ctx.children.get(0);
         if (child instanceof JsoniqParser.VarRefContext) {
             this.visitVarRef((JsoniqParser.VarRefContext) child);
-            node = this.currentExpression;
         } else if (child instanceof JsoniqParser.ObjectConstructorContext) {
             this.visitObjectConstructor((JsoniqParser.ObjectConstructorContext) child);
-            node = this.currentExpression;
         } else if (child instanceof JsoniqParser.ArrayConstructorContext) {
             this.visitArrayConstructor((JsoniqParser.ArrayConstructorContext) child);
-            node = this.currentExpression;
         } else if (child instanceof JsoniqParser.ParenthesizedExprContext) {
             this.visitParenthesizedExpr((JsoniqParser.ParenthesizedExprContext) child);
-            node = this.currentExpression;
         } else if (child instanceof JsoniqParser.StringLiteralContext) {
-            node = new StringLiteralExpression(
+            this.currentExpression = new StringLiteralExpression(
                     ValueTypeHandler.getStringValue((JsoniqParser.StringLiteralContext) child),
                     createMetadataFromContext(ctx)
             );
         } else if (child instanceof TerminalNode) {
-            node = ValueTypeHandler.getValueType(child.getText(), createMetadataFromContext(ctx));
+            this.currentExpression = ValueTypeHandler.getValueType(child.getText(), createMetadataFromContext(ctx));
         } else if (child instanceof JsoniqParser.ContextItemExprContext) {
             this.visitContextItemExpr((JsoniqParser.ContextItemExprContext) child);
-            node = this.currentExpression;
         } else if (child instanceof JsoniqParser.FunctionCallContext) {
             this.visitFunctionCall((JsoniqParser.FunctionCallContext) child);
-            node = this.currentExpression;
         } else if (child instanceof JsoniqParser.FunctionItemExprContext) {
             this.visitFunctionItemExpr((JsoniqParser.FunctionItemExprContext) child);
-            node = this.currentExpression;
         } else
             throw new UnsupportedFeatureException(
                     "Primary expression not yet implemented",
                     createMetadataFromContext(ctx)
             );
 
-        this.currentExpression = node;
         return null;
 
     }
 
     @Override
     public Void visitObjectConstructor(JsoniqParser.ObjectConstructorContext ctx) {
-        ObjectConstructorExpression node;
         // no merging constructor, just visit the k/v pairs
         if (
             ctx.merge_operator == null
@@ -926,15 +880,17 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
                 keys.add(this.currentExpression);
                 values.add(this.otherCurrentExpression);
             }
-            node = new ObjectConstructorExpression(keys, values, createMetadataFromContext(ctx));
+            this.currentExpression = new ObjectConstructorExpression(keys, values, createMetadataFromContext(ctx));
         } else {
             Expression childExpr;
             this.visitExpr(ctx.expr());
             childExpr = this.currentExpression;
-            node = new ObjectConstructorExpression((CommaExpression) childExpr, createMetadataFromContext(ctx));
+            this.currentExpression = new ObjectConstructorExpression(
+                    (CommaExpression) childExpr,
+                    createMetadataFromContext(ctx)
+            );
         }
 
-        this.currentExpression = node;
         return null;
     }
 
@@ -961,13 +917,12 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
         ArrayConstructorExpression node;
         CommaExpression content;
         if (ctx.expr() == null)
-            node = new ArrayConstructorExpression(createMetadataFromContext(ctx));
+            this.currentExpression = new ArrayConstructorExpression(createMetadataFromContext(ctx));
         else {
             this.visitExpr(ctx.expr());
             content = (CommaExpression) this.currentExpression;
-            node = new ArrayConstructorExpression(content, createMetadataFromContext(ctx));
+            this.currentExpression = new ArrayConstructorExpression(content, createMetadataFromContext(ctx));
         }
-        this.currentExpression = node;
         return null;
 
     }
@@ -975,7 +930,7 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
     @Override
     public Void visitParenthesizedExpr(JsoniqParser.ParenthesizedExprContext ctx) {
         if (ctx.expr() == null)
-        	this.currentExpression = new CommaExpression(createMetadataFromContext(ctx));
+            this.currentExpression = new CommaExpression(createMetadataFromContext(ctx));
         else {
             this.visitExpr(ctx.expr());
             // implicit: this.currentExpression = this.currentExpression;
@@ -985,12 +940,10 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
 
     @Override
     public Void visitVarRef(JsoniqParser.VarRefContext ctx) {
-        VariableReferenceExpression node;
         String name = ctx.name.getText();
         if (ctx.ns != null)
             name = name + ":" + ctx.ns.getText();
-        node = new VariableReferenceExpression(name, createMetadataFromContext(ctx));
-        this.currentExpression = node;
+        this.currentExpression = new VariableReferenceExpression(name, createMetadataFromContext(ctx));
         return null;
     }
 
@@ -1002,21 +955,31 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
 
     @Override
     public Void visitSequenceType(JsoniqParser.SequenceTypeContext ctx) {
-        FlworVarSequenceType node;
         if (ctx.item == null)
-            node = new FlworVarSequenceType(createMetadataFromContext(ctx));
+            this.currentExpression = new FlworVarSequenceType(createMetadataFromContext(ctx));
         else {
             ItemTypes item = FlworVarSequenceType.getItemType(ctx.item.getText());
             if (ctx.question.size() > 0)
-                node = new FlworVarSequenceType(item, SequenceType.Arity.OneOrZero, createMetadataFromContext(ctx));
+                this.currentExpression = new FlworVarSequenceType(
+                        item,
+                        SequenceType.Arity.OneOrZero,
+                        createMetadataFromContext(ctx)
+                );
             else if (ctx.star.size() > 0)
-                node = new FlworVarSequenceType(item, SequenceType.Arity.ZeroOrMore, createMetadataFromContext(ctx));
+                this.currentExpression = new FlworVarSequenceType(
+                        item,
+                        SequenceType.Arity.ZeroOrMore,
+                        createMetadataFromContext(ctx)
+                );
             else if (ctx.plus.size() > 0)
-                node = new FlworVarSequenceType(item, SequenceType.Arity.OneOrMore, createMetadataFromContext(ctx));
+                this.currentExpression = new FlworVarSequenceType(
+                        item,
+                        SequenceType.Arity.OneOrMore,
+                        createMetadataFromContext(ctx)
+                );
             else
-                node = new FlworVarSequenceType(item, createMetadataFromContext(ctx));
+                this.currentExpression = new FlworVarSequenceType(item, createMetadataFromContext(ctx));
         }
-        this.currentExpression = node;
         return null;
     }
 
@@ -1024,21 +987,19 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
     public Void visitSingleType(JsoniqParser.SingleTypeContext ctx) {
         FlworVarSingleType node;
         if (ctx.item == null)
-            node = new FlworVarSingleType(createMetadataFromContext(ctx));
+            this.currentExpression = new FlworVarSingleType(createMetadataFromContext(ctx));
         else {
             AtomicTypes item = FlworVarSingleType.getAtomicType(ctx.item.getText());
             if (ctx.question.size() > 0)
-                node = new FlworVarSingleType(item, true, createMetadataFromContext(ctx));
+                this.currentExpression = new FlworVarSingleType(item, true, createMetadataFromContext(ctx));
             else
-                node = new FlworVarSingleType(item, createMetadataFromContext(ctx));
+                this.currentExpression = new FlworVarSingleType(item, createMetadataFromContext(ctx));
         }
-        this.currentExpression = node;
         return null;
     }
 
     @Override
     public Void visitFunctionCall(JsoniqParser.FunctionCallContext ctx) {
-        FunctionCallExpression node;
         String name;
         if (ctx.fn_name != null)
             name = ctx.fn_name.getText();
@@ -1046,12 +1007,11 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
             name = ctx.kw.getText();
         if (ctx.ns != null)
             name = name + ":" + ctx.ns.getText();
-        node = new FunctionCallExpression(
+        this.currentExpression = new FunctionCallExpression(
                 name,
                 getArgumentsFromArgumentListContext(ctx.argumentList()),
                 createMetadataFromContext(ctx)
         );
-        this.currentExpression = node;
         return null;
     }
 
@@ -1079,28 +1039,22 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
 
     @Override
     public Void visitFunctionItemExpr(JsoniqParser.FunctionItemExprContext ctx) {
-        Expression node;
-
         ParseTree child = ctx.children.get(0);
         if (child instanceof JsoniqParser.NamedFunctionRefContext) {
             this.visitNamedFunctionRef((JsoniqParser.NamedFunctionRefContext) child);
-            node = this.currentExpression;
         } else if (child instanceof JsoniqParser.InlineFunctionExprContext) {
             this.visitInlineFunctionExpr((JsoniqParser.InlineFunctionExprContext) child);
-            node = this.currentExpression;
         } else {
             throw new UnsupportedFeatureException(
                     "Function item expression not yet implemented",
                     createMetadataFromContext(ctx)
             );
         }
-        this.currentExpression = node;
         return null;
     }
 
     @Override
     public Void visitNamedFunctionRef(JsoniqParser.NamedFunctionRefContext ctx) {
-        NamedFunctionReferenceExpression node;
         PrimaryExpression literal = ValueTypeHandler.getValueType(
             ctx.arity.getText(),
             createMetadataFromContext(ctx)
@@ -1113,11 +1067,10 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
 
         String name = ctx.fn_name.getText();
         int arity = ((IntegerLiteralExpression) literal).getValue();
-        node = new NamedFunctionReferenceExpression(
+        this.currentExpression = new NamedFunctionReferenceExpression(
                 new FunctionIdentifier(name, arity),
                 createMetadataFromContext(ctx)
         );
-        this.currentExpression = node;
         return null;
     }
 
@@ -1129,7 +1082,6 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
                 createMetadataFromContext(ctx)
         );
         CommaExpression fnBody;
-        InlineFunctionExpression node;
         String paramName;
         FlworVarSequenceType paramType;
         if (ctx.paramList() != null) {
@@ -1162,8 +1114,13 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
         this.visitExpr(ctx.fn_body);
         fnBody = (CommaExpression) this.currentExpression;
 
-        node = new InlineFunctionExpression("", fnParams, fnReturnType, fnBody, createMetadataFromContext(ctx));
-        this.currentExpression = node;
+        this.currentExpression = new InlineFunctionExpression(
+                "",
+                fnParams,
+                fnReturnType,
+                fnBody,
+                createMetadataFromContext(ctx)
+        );
         return null;
     }
     // endregion
@@ -1171,7 +1128,6 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
     // region control
     @Override
     public Void visitIfExpr(JsoniqParser.IfExprContext ctx) {
-        IfExpression node;
         Expression condition, branch, else_branch;
         this.visitExpr(ctx.test_condition);
         condition = this.currentExpression;
@@ -1179,14 +1135,12 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
         branch = this.currentExpression;
         this.visitExprSingle(ctx.else_branch);
         else_branch = this.currentExpression;
-        node = new IfExpression(condition, branch, else_branch, createMetadataFromContext(ctx));
-        this.currentExpression = node;
+        this.currentExpression = new IfExpression(condition, branch, else_branch, createMetadataFromContext(ctx));
         return null;
     }
 
     @Override
     public Void visitSwitchExpr(JsoniqParser.SwitchExprContext ctx) {
-        SwitchExpression node;
         Expression condition, defaultCase;
         this.visitExpr(ctx.cond);
         condition = this.currentExpression;
@@ -1197,22 +1151,19 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
         }
         this.visitExprSingle(ctx.def);
         defaultCase = this.currentExpression;
-        node = new SwitchExpression(condition, cases, defaultCase, createMetadataFromContext(ctx));
-        this.currentExpression = node;
+        this.currentExpression = new SwitchExpression(condition, cases, defaultCase, createMetadataFromContext(ctx));
         return null;
     }
 
     @Override
     public Void visitSwitchCaseClause(JsoniqParser.SwitchCaseClauseContext ctx) {
-        SwitchCaseExpression node;
         Expression condition, returnExpression;
         // TODO multiple case expressions?
         this.visitExprSingle(ctx.cond.get(0));
         condition = this.currentExpression;
         this.visitExprSingle(ctx.ret);
         returnExpression = this.currentExpression;
-        node = new SwitchCaseExpression(condition, returnExpression, createMetadataFromContext(ctx));
-        this.currentExpression = node;
+        this.currentExpression = new SwitchCaseExpression(condition, returnExpression, createMetadataFromContext(ctx));
         return null;
     }
     // endregion
@@ -1220,7 +1171,6 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
     // region quantified
     @Override
     public Void visitTypeSwitchExpr(JsoniqParser.TypeSwitchExprContext ctx) {
-        TypeSwitchExpression node;
         Expression condition, defaultCase;
         this.visitExpr(ctx.cond);
         condition = this.currentExpression;
@@ -1236,14 +1186,18 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
         }
         this.visitExprSingle(ctx.def);
         defaultCase = this.currentExpression;
-        node = new TypeSwitchExpression(condition, cases, defaultCase, varRefDefault, createMetadataFromContext(ctx));
-        this.currentExpression = node;
+        this.currentExpression = new TypeSwitchExpression(
+                condition,
+                cases,
+                defaultCase,
+                varRefDefault,
+                createMetadataFromContext(ctx)
+        );
         return null;
     }
 
     @Override
     public Void visitCaseClause(JsoniqParser.CaseClauseContext ctx) {
-        TypeSwitchCaseExpression node;
         Expression returnExpression;
 
         VariableReferenceExpression var = null;
@@ -1260,8 +1214,12 @@ public class JsoniqExpressionTreeVisitor extends org.rumbledb.parser.JsoniqBaseV
         }
         this.visitExprSingle(ctx.ret);
         returnExpression = this.currentExpression;
-        node = new TypeSwitchCaseExpression(var, union, returnExpression, createMetadataFromContext(ctx));
-        this.currentExpression = node;
+        this.currentExpression = new TypeSwitchCaseExpression(
+                var,
+                union,
+                returnExpression,
+                createMetadataFromContext(ctx)
+        );
         return null;
     }
 
