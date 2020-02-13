@@ -33,7 +33,7 @@ public class StringConcatExpression extends NaryExpressionBase {
         super(mainExpression, rhs, Operator.CONCAT, metadata);
     }
 
-    public StringConcatExpression(RangeExpression mainExpression, ExceptionMetadata metadata) {
+    public StringConcatExpression(Expression mainExpression, ExceptionMetadata metadata) {
         super(mainExpression, metadata);
     }
 
