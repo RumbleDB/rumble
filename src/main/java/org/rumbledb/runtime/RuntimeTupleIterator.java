@@ -142,7 +142,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
      * The intent is that the result of this method is forwarded to the child clause in getDataFrame() so it can
      * optimize some values away.
      * 
-     * @parentProjection the projection needed by the parent clause.
+     * @param parentProjection the projection needed by the parent clause.
      * @return the projection needed by this clause.
      */
     public abstract Map<String, DynamicContext.VariableDependency> getProjection(

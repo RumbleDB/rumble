@@ -75,7 +75,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
      * 
      * @param iterator has to be opened before calling this function
      * @param position the context position, or null if none
-     * @return
+     * @return the effective boolean value.
      */
     public static boolean getEffectiveBooleanValueOrCheckPosition(RuntimeIterator iterator, Item position) {
         if (iterator.hasNext()) {

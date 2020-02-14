@@ -47,7 +47,7 @@ public class ForClauseSerializeClosure implements Function<Item, Row> {
     }
 
     /**
-     * @param item
+     * @param item the item to serialize.
      * @return Row object, containing byte array of a singleton list containing the given item
      */
     @Override

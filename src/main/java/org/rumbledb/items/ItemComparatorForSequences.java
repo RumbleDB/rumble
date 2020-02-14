@@ -36,7 +36,7 @@ public class ItemComparatorForSequences implements Comparator<Item>, Serializabl
      * It compares 2 atomic items (non-null)
      * Non-atomics and nulls throw an exception
      *
-     * @return -1 if v1 < v2; 0 if v1 == v2; 1 if v1 > v2;
+     * @return -1 if v1 &lt; v2; 0 if v1 == v2; 1 if v1 &gt; v2;
      */
     public int compare(Item v1, Item v2) {
         int result;
