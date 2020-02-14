@@ -22,9 +22,9 @@ package org.rumbledb.expressions.operational;
 
 
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.operational.base.NaryExpressionBase;
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.Arrays;
 import java.util.List;
@@ -38,10 +38,6 @@ public class MultiplicativeExpression extends NaryExpressionBase {
         Operator.MOD,
         Operator.IDIV };
 
-
-    public MultiplicativeExpression(Expression mainExpression, ExceptionMetadata metadata) {
-        super(mainExpression, metadata);
-    }
 
     public MultiplicativeExpression(
             Expression mainExpression,

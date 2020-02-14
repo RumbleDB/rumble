@@ -24,10 +24,11 @@ package iq;
 import iq.base.AnnotationsTestsBase;
 import org.junit.Assert;
 import org.junit.Test;
+import org.rumbledb.compiler.TranslationVisitor;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.parser.JsoniqBaseVisitor;
-import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
+
 import sparksoniq.semantics.types.ItemTypes;
 
 import java.io.File;
@@ -100,7 +101,7 @@ public class FrontendTests extends AnnotationsTestsBase {
         initializeTests(semanticTestsDirectory);
         for (File testFile : this.testFiles) {
             System.err.println(counter++ + " : " + testFile);
-            JsoniqExpressionTreeVisitor visitor = new JsoniqExpressionTreeVisitor();
+            TranslationVisitor visitor = new TranslationVisitor();
             testAnnotations(testFile.getAbsolutePath(), visitor);
             if (Arrays.asList(manualSemanticChecksFiles).contains(testFile.getName()))
                 testVariableTypes(testFile, visitor);
@@ -183,7 +184,7 @@ public class FrontendTests extends AnnotationsTestsBase {
      * }
      */
 
-    private void testVariableTypes(File testFile, JsoniqExpressionTreeVisitor visitor) {
+    private void testVariableTypes(File testFile, TranslationVisitor visitor) {
 
         List<Node> vars = visitor.getMainModule()
             .getDescendantsMatching(

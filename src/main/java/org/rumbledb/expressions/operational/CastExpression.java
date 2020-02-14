@@ -1,29 +1,18 @@
 package org.rumbledb.expressions.operational;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.flowr.FlworVarSingleType;
 import org.rumbledb.expressions.operational.base.UnaryExpressionBase;
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 public class CastExpression extends UnaryExpressionBase {
 
     private FlworVarSingleType singleType;
 
-    public CastExpression(Expression mainExpression, ExceptionMetadata metadata) {
-        super(mainExpression, metadata);
-        this.isActive = false;
-    }
-
     public CastExpression(Expression mainExpression, FlworVarSingleType singleType, ExceptionMetadata metadata) {
-        super(mainExpression, Operator.CAST, true, metadata);
+        super(mainExpression, Operator.CAST, metadata);
         this.singleType = singleType;
-    }
-
-
-    @Override
-    public boolean isActive() {
-        return this.isActive;
     }
 
     @Override

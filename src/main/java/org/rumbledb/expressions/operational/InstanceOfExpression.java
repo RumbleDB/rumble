@@ -21,37 +21,27 @@
 package org.rumbledb.expressions.operational;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.flowr.FlworVarSequenceType;
 import org.rumbledb.expressions.operational.base.UnaryExpressionBase;
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 
 public class InstanceOfExpression extends UnaryExpressionBase {
 
     private FlworVarSequenceType sequenceType;
 
-    public InstanceOfExpression(Expression mainExpression, ExceptionMetadata metadata) {
-        super(mainExpression, metadata);
-        this.isActive = false;
-    }
-
     public InstanceOfExpression(
             Expression mainExpression,
             FlworVarSequenceType sequenceType,
             ExceptionMetadata metadata
     ) {
-        super(mainExpression, Operator.INSTANCE_OF, true, metadata);
+        super(mainExpression, Operator.INSTANCE_OF, metadata);
         this.sequenceType = sequenceType;
     }
 
     public FlworVarSequenceType getsequenceType() {
         return this.sequenceType;
-    }
-
-    @Override
-    public boolean isActive() {
-        return this.isActive;
     }
 
     @Override

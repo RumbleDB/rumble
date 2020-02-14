@@ -22,19 +22,15 @@ package org.rumbledb.expressions.operational;
 
 
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.operational.base.NaryExpressionBase;
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.List;
 
 public class StringConcatExpression extends NaryExpressionBase {
     public StringConcatExpression(Expression mainExpression, List<Expression> rhs, ExceptionMetadata metadata) {
         super(mainExpression, rhs, Operator.CONCAT, metadata);
-    }
-
-    public StringConcatExpression(Expression mainExpression, ExceptionMetadata metadata) {
-        super(mainExpression, metadata);
     }
 
     @Override

@@ -21,16 +21,16 @@
 package org.rumbledb.expressions.operational;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.operational.base.UnaryExpressionBase;
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 
 
 public class NotExpression extends UnaryExpressionBase {
 
-    public NotExpression(Expression mainExpression, boolean isActive, ExceptionMetadata metadata) {
-        super(mainExpression, Operator.NOT, isActive, metadata);
+    public NotExpression(Expression mainExpression, ExceptionMetadata metadata) {
+        super(mainExpression, Operator.NOT, metadata);
     }
 
     @Override
@@ -41,8 +41,7 @@ public class NotExpression extends UnaryExpressionBase {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(notExpr ";
-        if (this.isActive())
-            result += "not ";
+        result += "not ";
         result += this.mainExpression.serializationString(true);
         result += ")";
         return result;

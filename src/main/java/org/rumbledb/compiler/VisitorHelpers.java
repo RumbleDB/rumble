@@ -1,4 +1,4 @@
-package sparksoniq.semantics.visitor;
+package org.rumbledb.compiler;
 
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.OurBadException;

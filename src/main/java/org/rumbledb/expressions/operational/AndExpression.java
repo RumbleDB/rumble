@@ -21,18 +21,13 @@
 package org.rumbledb.expressions.operational;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.operational.base.NaryExpressionBase;
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.List;
 
 public class AndExpression extends NaryExpressionBase {
-
-    public AndExpression(Expression mainExpression, ExceptionMetadata metadata) {
-        super(mainExpression, metadata);
-
-    }
 
     public AndExpression(
             Expression mainExpression,

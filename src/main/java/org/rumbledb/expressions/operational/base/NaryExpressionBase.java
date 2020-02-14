@@ -30,14 +30,7 @@ import java.util.List;
 
 public abstract class NaryExpressionBase extends OperationalExpressionBase {
 
-
     private List<Expression> rightExpressions;
-
-    public NaryExpressionBase(Expression mainExpression, ExceptionMetadata metadata) {
-        super(mainExpression, Operator.NONE, metadata);
-        this.isActive = false;
-
-    }
 
     public NaryExpressionBase(
             Expression mainExpression,
@@ -47,8 +40,6 @@ public abstract class NaryExpressionBase extends OperationalExpressionBase {
     ) {
         super(mainExpression, op, metadata);
         this.rightExpressions = rhs;
-        if (Operator.NONE != op)
-            this.isActive = true;
     }
 
     public NaryExpressionBase(
@@ -59,7 +50,6 @@ public abstract class NaryExpressionBase extends OperationalExpressionBase {
     ) {
         super(mainExpression, ops, metadata);
         this.rightExpressions = rhs;
-        this.isActive = true;
     }
 
     public List<Expression> getRightExpressions() {
@@ -72,11 +62,6 @@ public abstract class NaryExpressionBase extends OperationalExpressionBase {
 
     public Operator getSingleOperator() {
         return this.singleOperator;
-    }
-
-    @Override
-    public boolean isActive() {
-        return this.isActive;
     }
 
     @Override

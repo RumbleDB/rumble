@@ -21,9 +21,9 @@
 package org.rumbledb.expressions.flowr;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.Collections;
 import java.util.List;

@@ -18,11 +18,12 @@
  *
  */
 
-package sparksoniq.semantics.visitor;
+package org.rumbledb.compiler;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
+import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -615,309 +616,264 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     // region operational
     @Override
     public RuntimeIterator visitAdditiveExpr(AdditiveExpression expression, RuntimeIterator argument) {
-        if (expression.isActive()) {
-            RuntimeIterator left, right;
-            // convert nary to tree of iterators
-            if (expression.getOperators().size() > 1) {
-                right = this.visit(
-                    expression.getRightExpressions().get(expression.getRightExpressions().size() - 1),
-                    argument
-                );
-                AdditiveExpression remainingExpressions = new AdditiveExpression(
-                        expression.getMainExpression(),
-                        expression.getRightExpressions().subList(0, expression.getRightExpressions().size() - 1),
-                        expression.getOperators().subList(0, expression.getOperators().size() - 1),
-                        expression.getMetadata()
-                );
-                remainingExpressions.initHighestExecutionMode();
-                left = this.visit(
-                    remainingExpressions,
-                    argument
-                );
-            } else {
-                left = this.visit(expression.getMainExpression(), argument);
-                right = this.visit(expression.getRightExpressions().get(0), argument);
-            }
-
-            return new AdditiveOperationIterator(
-                    left,
-                    right,
-                    expression.getOperators().get(expression.getOperators().size() - 1),
-                    expression.getHighestExecutionMode(),
+        RuntimeIterator left, right;
+        // convert nary to tree of iterators
+        if (expression.getOperators().size() > 1) {
+            right = this.visit(
+                expression.getRightExpressions().get(expression.getRightExpressions().size() - 1),
+                argument
+            );
+            AdditiveExpression remainingExpressions = new AdditiveExpression(
+                    expression.getMainExpression(),
+                    expression.getRightExpressions().subList(0, expression.getRightExpressions().size() - 1),
+                    expression.getOperators().subList(0, expression.getOperators().size() - 1),
                     expression.getMetadata()
             );
+            remainingExpressions.initHighestExecutionMode();
+            left = this.visit(
+                remainingExpressions,
+                argument
+            );
+        } else {
+            left = this.visit(expression.getMainExpression(), argument);
+            right = this.visit(expression.getRightExpressions().get(0), argument);
         }
-        return defaultAction(expression, argument);
+
+        return new AdditiveOperationIterator(
+                left,
+                right,
+                expression.getOperators().get(expression.getOperators().size() - 1),
+                expression.getHighestExecutionMode(),
+                expression.getMetadata()
+        );
     }
 
     @Override
     public RuntimeIterator visitMultiplicativeExpr(MultiplicativeExpression expression, RuntimeIterator argument) {
-        if (expression.isActive()) {
-            RuntimeIterator left, right;
-            // convert nary to tree of iterators
-            if (expression.getOperators().size() > 1) {
-                right = this.visit(
-                    expression.getRightExpressions().get(expression.getRightExpressions().size() - 1),
-                    argument
-                );
-                MultiplicativeExpression remainingExpressions = new MultiplicativeExpression(
-                        expression.getMainExpression(),
-                        expression.getRightExpressions().subList(0, expression.getRightExpressions().size() - 1),
-                        expression.getOperators().subList(0, expression.getOperators().size() - 1),
-                        expression.getMetadata()
-                );
-                remainingExpressions.initHighestExecutionMode();
-                left = this.visit(
-                    remainingExpressions,
-                    argument
-                );
-            } else {
-                left = this.visit(expression.getMainExpression(), argument);
-                right = this.visit(expression.getRightExpressions().get(0), argument);
-            }
-
-            return new MultiplicativeOperationIterator(
-                    left,
-                    right,
-                    expression.getOperators().get(expression.getOperators().size() - 1),
-                    expression.getHighestExecutionMode(),
+        RuntimeIterator left, right;
+        // convert nary to tree of iterators
+        if (expression.getOperators().size() > 1) {
+            right = this.visit(
+                expression.getRightExpressions().get(expression.getRightExpressions().size() - 1),
+                argument
+            );
+            MultiplicativeExpression remainingExpressions = new MultiplicativeExpression(
+                    expression.getMainExpression(),
+                    expression.getRightExpressions().subList(0, expression.getRightExpressions().size() - 1),
+                    expression.getOperators().subList(0, expression.getOperators().size() - 1),
                     expression.getMetadata()
             );
+            remainingExpressions.initHighestExecutionMode();
+            left = this.visit(
+                remainingExpressions,
+                argument
+            );
+        } else {
+            left = this.visit(expression.getMainExpression(), argument);
+            right = this.visit(expression.getRightExpressions().get(0), argument);
         }
-        return defaultAction(expression, argument);
+
+        return new MultiplicativeOperationIterator(
+                left,
+                right,
+                expression.getOperators().get(expression.getOperators().size() - 1),
+                expression.getHighestExecutionMode(),
+                expression.getMetadata()
+        );
     }
 
     @Override
     public RuntimeIterator visitAndExpr(AndExpression expression, RuntimeIterator argument) {
-        if (expression.isActive()) {
-            RuntimeIterator left, right;
-            // convert nary to tree of iterators
-            if (expression.getRightExpressions().size() > 1) {
-                right = this.visit(
-                    expression.getRightExpressions().get(expression.getRightExpressions().size() - 1),
-                    argument
-                );
-                AndExpression remainingExpressiongs = new AndExpression(
-                        expression.getMainExpression(),
-                        expression.getRightExpressions().subList(0, expression.getRightExpressions().size() - 1),
-                        expression.getMetadata()
-                );
-                remainingExpressiongs.initHighestExecutionMode();
-                left = this.visit(
-                    remainingExpressiongs,
-                    argument
-                );
-            } else {
-                left = this.visit(expression.getMainExpression(), argument);
-                right = this.visit(expression.getRightExpressions().get(0), argument);
-            }
-
-            return new AndOperationIterator(
-                    left,
-                    right,
-                    expression.getHighestExecutionMode(),
+        RuntimeIterator left, right;
+        // convert nary to tree of iterators
+        if (expression.getRightExpressions().size() > 1) {
+            right = this.visit(
+                expression.getRightExpressions().get(expression.getRightExpressions().size() - 1),
+                argument
+            );
+            AndExpression remainingExpressiongs = new AndExpression(
+                    expression.getMainExpression(),
+                    expression.getRightExpressions().subList(0, expression.getRightExpressions().size() - 1),
                     expression.getMetadata()
             );
+            remainingExpressiongs.initHighestExecutionMode();
+            left = this.visit(
+                remainingExpressiongs,
+                argument
+            );
+        } else {
+            left = this.visit(expression.getMainExpression(), argument);
+            right = this.visit(expression.getRightExpressions().get(0), argument);
         }
-        return defaultAction(expression, argument);
+
+        return new AndOperationIterator(
+                left,
+                right,
+                expression.getHighestExecutionMode(),
+                expression.getMetadata()
+        );
     }
 
     @Override
     public RuntimeIterator visitOrExpr(OrExpression expression, RuntimeIterator argument) {
-        if (expression.isActive()) {
-            RuntimeIterator left, right;
-            // convert nary to tree of iterators
-            if (expression.getRightExpressions().size() > 1) {
-                right = this.visit(
-                    expression.getRightExpressions().get(expression.getRightExpressions().size() - 1),
-                    argument
-                );
-                OrExpression remainingExpressions = new OrExpression(
-                        expression.getMainExpression(),
-                        expression.getRightExpressions()
-                            .subList(0, expression.getRightExpressions().size() - 1),
-                        expression.getMetadata()
-                );
-                remainingExpressions.initHighestExecutionMode();
-                left = this.visit(
-                    remainingExpressions,
-                    argument
-                );
-            } else {
-                left = this.visit(expression.getMainExpression(), argument);
-                right = this.visit(expression.getRightExpressions().get(0), argument);
-            }
-
-            return new OrOperationIterator(
-                    left,
-                    right,
-                    expression.getHighestExecutionMode(),
+        RuntimeIterator left, right;
+        // convert nary to tree of iterators
+        if (expression.getRightExpressions().size() > 1) {
+            right = this.visit(
+                expression.getRightExpressions().get(expression.getRightExpressions().size() - 1),
+                argument
+            );
+            OrExpression remainingExpressions = new OrExpression(
+                    expression.getMainExpression(),
+                    expression.getRightExpressions()
+                        .subList(0, expression.getRightExpressions().size() - 1),
                     expression.getMetadata()
             );
+            remainingExpressions.initHighestExecutionMode();
+            left = this.visit(
+                remainingExpressions,
+                argument
+            );
+        } else {
+            left = this.visit(expression.getMainExpression(), argument);
+            right = this.visit(expression.getRightExpressions().get(0), argument);
         }
-        return defaultAction(expression, argument);
+
+        return new OrOperationIterator(
+                left,
+                right,
+                expression.getHighestExecutionMode(),
+                expression.getMetadata()
+        );
     }
 
     @Override
     public RuntimeIterator visitNotExpr(NotExpression expression, RuntimeIterator argument) {
-        if (expression.isActive()) {
-            return new NotOperationIterator(
-                    this.visit(expression.getMainExpression(), argument),
-                    expression.getHighestExecutionMode(),
-                    expression.getMetadata()
-            );
-        }
-        return defaultAction(expression, argument);
+        return new NotOperationIterator(
+                this.visit(expression.getMainExpression(), argument),
+                expression.getHighestExecutionMode(),
+                expression.getMetadata()
+        );
     }
 
     @Override
     public RuntimeIterator visitUnaryExpr(UnaryExpression expression, RuntimeIterator argument) {
-        if (expression.isActive()) {
-            // compute +- final result
-            int result = 1;
-            for (OperationalExpressionBase.Operator op : expression.getOperators()) {
-                if (op == OperationalExpressionBase.Operator.MINUS) {
-                    result *= -1;
-                }
+        // compute +- final result
+        int result = 1;
+        for (OperationalExpressionBase.Operator op : expression.getOperators()) {
+            if (op == OperationalExpressionBase.Operator.MINUS) {
+                result *= -1;
             }
-            return new UnaryOperationIterator(
-                    this.visit(expression.getMainExpression(), argument),
-                    result == -1 ? OperationalExpressionBase.Operator.MINUS : OperationalExpressionBase.Operator.PLUS,
-                    expression.getHighestExecutionMode(),
-                    expression.getMetadata()
-            );
         }
-        return defaultAction(expression, argument);
+        return new UnaryOperationIterator(
+                this.visit(expression.getMainExpression(), argument),
+                result == -1 ? OperationalExpressionBase.Operator.MINUS : OperationalExpressionBase.Operator.PLUS,
+                expression.getHighestExecutionMode(),
+                expression.getMetadata()
+        );
     }
 
     @Override
     public RuntimeIterator visitRangeExpr(RangeExpression expression, RuntimeIterator argument) {
-        if (expression.isActive()) {
-            RuntimeIterator left = this.visit(expression.getMainExpression(), argument);
-            RuntimeIterator right = this.visit(expression.getRightExpression(), argument);
-            return new RangeOperationIterator(
-                    left,
-                    right,
-                    expression.getHighestExecutionMode(),
-                    expression.getMetadata()
-            );
-        } else {
-            return defaultAction(expression, argument);
-        }
+        RuntimeIterator left = this.visit(expression.getMainExpression(), argument);
+        RuntimeIterator right = this.visit(expression.getRightExpression(), argument);
+        return new RangeOperationIterator(
+                left,
+                right,
+                expression.getHighestExecutionMode(),
+                expression.getMetadata()
+        );
     }
 
     @Override
     public RuntimeIterator visitComparisonExpr(ComparisonExpression expression, RuntimeIterator argument) {
-        if (expression.isActive()) {
-            RuntimeIterator left = this.visit(expression.getMainExpression(), argument);
-            RuntimeIterator right = this.visit(expression.getRightExpression(), argument);
-            return new ComparisonOperationIterator(
-                    left,
-                    right,
-                    expression.getOperator(),
-                    expression.getHighestExecutionMode(),
-                    expression.getMetadata()
-            );
-        } else {
-            return defaultAction(expression, argument);
-        }
+        RuntimeIterator left = this.visit(expression.getMainExpression(), argument);
+        RuntimeIterator right = this.visit(expression.getRightExpression(), argument);
+        return new ComparisonOperationIterator(
+                left,
+                right,
+                expression.getOperator(),
+                expression.getHighestExecutionMode(),
+                expression.getMetadata()
+        );
     }
 
     @Override
     public RuntimeIterator visitStringConcatExpr(StringConcatExpression expression, RuntimeIterator argument) {
-        if (expression.isActive()) {
-            RuntimeIterator left, right;
-            // convert nary to tree of iterators
-            if (expression.getRightExpressions().size() > 1) {
-                right = this.visit(
-                    expression.getRightExpressions().get(expression.getRightExpressions().size() - 1),
-                    argument
-                );
-                StringConcatExpression remainingExpressions = new StringConcatExpression(
-                        expression.getMainExpression(),
-                        expression.getRightExpressions()
-                            .subList(0, expression.getRightExpressions().size() - 1),
-                        expression.getMetadata()
-                );
-                remainingExpressions.initHighestExecutionMode();
-                left = this.visit(
-                    remainingExpressions,
-                    argument
-                );
-            } else {
-                left = this.visit(expression.getMainExpression(), argument);
-                right = this.visit(expression.getRightExpressions().get(0), argument);
-            }
-
-            return new StringConcatIterator(
-                    left,
-                    right,
-                    expression.getHighestExecutionMode(),
+        RuntimeIterator left, right;
+        // convert nary to tree of iterators
+        if (expression.getRightExpressions().size() > 1) {
+            right = this.visit(
+                expression.getRightExpressions().get(expression.getRightExpressions().size() - 1),
+                argument
+            );
+            StringConcatExpression remainingExpressions = new StringConcatExpression(
+                    expression.getMainExpression(),
+                    expression.getRightExpressions()
+                        .subList(0, expression.getRightExpressions().size() - 1),
                     expression.getMetadata()
             );
+            remainingExpressions.initHighestExecutionMode();
+            left = this.visit(
+                remainingExpressions,
+                argument
+            );
+        } else {
+            left = this.visit(expression.getMainExpression(), argument);
+            right = this.visit(expression.getRightExpressions().get(0), argument);
         }
-        return defaultAction(expression, argument);
+
+        return new StringConcatIterator(
+                left,
+                right,
+                expression.getHighestExecutionMode(),
+                expression.getMetadata()
+        );
     }
 
     @Override
     public RuntimeIterator visitInstanceOfExpression(InstanceOfExpression expression, RuntimeIterator argument) {
-        if (expression.isActive()) {
-            RuntimeIterator childExpression = this.visit(expression.getMainExpression(), argument);
-            return new InstanceOfIterator(
-                    childExpression,
-                    expression.getsequenceType().getSequence(),
-                    expression.getHighestExecutionMode(),
-                    expression.getMetadata()
-            );
-        } else {
-            return defaultAction(expression, argument);
-        }
+        RuntimeIterator childExpression = this.visit(expression.getMainExpression(), argument);
+        return new InstanceOfIterator(
+                childExpression,
+                expression.getsequenceType().getSequence(),
+                expression.getHighestExecutionMode(),
+                expression.getMetadata()
+        );
     }
 
     @Override
     public RuntimeIterator visitTreatExpression(TreatExpression expression, RuntimeIterator argument) {
-        if (expression.isActive()) {
-            RuntimeIterator childExpression = this.visit(expression.getMainExpression(), argument);
-            return new TreatIterator(
-                    childExpression,
-                    expression.getsequenceType().getSequence(),
-                    true,
-                    expression.getHighestExecutionMode(),
-                    expression.getMetadata()
-            );
-        } else {
-            return defaultAction(expression, argument);
-        }
+        RuntimeIterator childExpression = this.visit(expression.getMainExpression(), argument);
+        return new TreatIterator(
+                childExpression,
+                expression.getsequenceType().getSequence(),
+                true,
+                expression.getHighestExecutionMode(),
+                expression.getMetadata()
+        );
     }
 
     @Override
     public RuntimeIterator visitCastableExpression(CastableExpression expression, RuntimeIterator argument) {
-        if (expression.isActive()) {
-            RuntimeIterator childExpression = this.visit(expression.getMainExpression(), argument);
-            return new CastableIterator(
-                    childExpression,
-                    expression.getAtomicType().getSingleType(),
-                    expression.getHighestExecutionMode(),
-                    expression.getMetadata()
-            );
-        } else {
-            return defaultAction(expression, argument);
-        }
+        RuntimeIterator childExpression = this.visit(expression.getMainExpression(), argument);
+        return new CastableIterator(
+                childExpression,
+                expression.getAtomicType().getSingleType(),
+                expression.getHighestExecutionMode(),
+                expression.getMetadata()
+        );
     }
 
     @Override
     public RuntimeIterator visitCastExpression(CastExpression expression, RuntimeIterator argument) {
-        if (expression.isActive()) {
-            RuntimeIterator childExpression = this.visit(expression.getMainExpression(), argument);
-            return new CastIterator(
-                    childExpression,
-                    expression.getFlworVarSingleType().getSingleType(),
-                    expression.getHighestExecutionMode(),
-                    expression.getMetadata()
-            );
-        } else {
-            return defaultAction(expression, argument);
-        }
+        RuntimeIterator childExpression = this.visit(expression.getMainExpression(), argument);
+        return new CastIterator(
+                childExpression,
+                expression.getFlworVarSingleType().getSingleType(),
+                expression.getHighestExecutionMode(),
+                expression.getMetadata()
+        );
     }
     // endregion
 

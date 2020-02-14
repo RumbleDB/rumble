@@ -18,10 +18,8 @@
  *
  */
 
-package sparksoniq.semantics.visitor;
+package org.rumbledb.expressions;
 
-import org.rumbledb.expressions.CommaExpression;
-import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.control.IfExpression;
 import org.rumbledb.expressions.control.SwitchCaseExpression;
 import org.rumbledb.expressions.control.SwitchExpression;

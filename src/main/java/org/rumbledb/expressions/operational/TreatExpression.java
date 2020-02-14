@@ -1,29 +1,24 @@
 package org.rumbledb.expressions.operational;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.flowr.FlworVarSequenceType;
 import org.rumbledb.expressions.operational.base.UnaryExpressionBase;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.types.SequenceType;
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 
 public class TreatExpression extends UnaryExpressionBase {
 
     private FlworVarSequenceType sequenceType;
 
-    public TreatExpression(Expression mainExpression, ExceptionMetadata metadata) {
-        super(mainExpression, metadata);
-        this.isActive = false;
-    }
-
     public TreatExpression(
             Expression mainExpression,
             FlworVarSequenceType sequenceType,
             ExceptionMetadata metadata
     ) {
-        super(mainExpression, Operator.TREAT, true, metadata);
+        super(mainExpression, Operator.TREAT, metadata);
         this.sequenceType = sequenceType;
     }
 
@@ -33,9 +28,6 @@ public class TreatExpression extends UnaryExpressionBase {
 
     @Override
     public void initHighestExecutionMode() {
-        if (bypassCurrentExpressionForExecutionModeOperations()) {
-            return;
-        }
         SequenceType sequenceType = this.sequenceType.getSequence();
         this.highestExecutionMode = calculateIsRDDFromSequenceTypeAndExpression(sequenceType, this.mainExpression);
     }

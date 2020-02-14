@@ -20,8 +20,8 @@
 
 package utils;
 
+import org.rumbledb.compiler.TranslationVisitor;
 import org.rumbledb.parser.JsoniqParser;
-import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
 
 import java.util.Arrays;
 
@@ -177,7 +177,7 @@ public class AstSerialization {
         "stringLiteral" };
 
     public static boolean checkSerialization(
-            JsoniqExpressionTreeVisitor visitor,
+            TranslationVisitor visitor,
             JsoniqParser.MainModuleContext context
     ) {
 

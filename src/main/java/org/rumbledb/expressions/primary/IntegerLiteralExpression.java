@@ -22,7 +22,7 @@ package org.rumbledb.expressions.primary;
 
 
 import org.rumbledb.exceptions.ExceptionMetadata;
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
+import org.rumbledb.expressions.AbstractNodeVisitor;
 
 public class IntegerLiteralExpression extends PrimaryExpression {
 
