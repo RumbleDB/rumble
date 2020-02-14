@@ -25,6 +25,8 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.Assert;
+import org.rumbledb.compiler.TranslationVisitor;
+import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.SemanticException;
@@ -33,10 +35,9 @@ import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.parser.JsoniqBaseVisitor;
 import org.rumbledb.parser.JsoniqLexer;
 import org.rumbledb.parser.JsoniqParser;
-import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
+
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
-import sparksoniq.semantics.visitor.VisitorHelpers;
 import utils.FileManager;
 import utils.annotations.AnnotationParseException;
 import utils.annotations.AnnotationProcessor;
@@ -78,8 +79,8 @@ public class AnnotationsTestsBase {
             Functions.clearUserDefinedFunctions(); // clear UDFs between each test run
 
             // generate static context and runtime iterators
-            if (visitor instanceof JsoniqExpressionTreeVisitor) {
-                JsoniqExpressionTreeVisitor completeVisitor = ((JsoniqExpressionTreeVisitor) visitor);
+            if (visitor instanceof TranslationVisitor) {
+                TranslationVisitor completeVisitor = ((TranslationVisitor) visitor);
                 MainModule mainModule = completeVisitor.getMainModule();
                 VisitorHelpers.populateStaticContext(mainModule);
                 runtimeIterator = VisitorHelpers.generateRuntimeIterator(mainModule);

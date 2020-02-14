@@ -32,12 +32,6 @@ public abstract class BinaryExpressionBase extends OperationalExpressionBase {
 
     private Expression rightExpression;
 
-    public BinaryExpressionBase(Expression mainExpression, ExceptionMetadata metadata) {
-        super(mainExpression, Operator.NONE, metadata);
-        this.isActive = false;
-
-    }
-
     public BinaryExpressionBase(
             Expression mainExpression,
             Expression rhs,
@@ -46,17 +40,10 @@ public abstract class BinaryExpressionBase extends OperationalExpressionBase {
     ) {
         super(mainExpression, op, metadata);
         this.rightExpression = rhs;
-        if (Operator.NONE != op && rhs != null)
-            this.isActive = true;
     }
 
     public Expression getRightExpression() {
         return this.rightExpression;
-    }
-
-    @Override
-    public boolean isActive() {
-        return this.isActive;
     }
 
     public Operator getOperator() {

@@ -22,19 +22,14 @@ package org.rumbledb.expressions.operational;
 
 
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.operational.base.NaryExpressionBase;
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.List;
 
 
 public class OrExpression extends NaryExpressionBase {
-
-    public OrExpression(Expression mainExpression, ExceptionMetadata metadata) {
-        super(mainExpression, metadata);
-
-    }
 
     public OrExpression(
             Expression mainExpression,

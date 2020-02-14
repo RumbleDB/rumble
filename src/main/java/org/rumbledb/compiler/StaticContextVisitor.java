@@ -18,9 +18,10 @@
  *
  */
 
-package sparksoniq.semantics.visitor;
+package org.rumbledb.compiler;
 
 import org.rumbledb.exceptions.UndeclaredVariableException;
+import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.control.TypeSwitchCaseExpression;

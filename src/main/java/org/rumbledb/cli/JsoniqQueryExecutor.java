@@ -30,6 +30,8 @@ import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.Path;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
+import org.rumbledb.compiler.TranslationVisitor;
+import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.config.SparksoniqRuntimeConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -37,10 +39,9 @@ import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.parser.JsoniqLexer;
 import org.rumbledb.parser.JsoniqParser;
-import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
+
 import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.semantics.visitor.VisitorHelpers;
 import sparksoniq.spark.SparkSessionManager;
 import sparksoniq.utils.FileUtils;
 
@@ -86,7 +87,7 @@ public class JsoniqQueryExecutor {
 
         CharStream charStream = CharStreams.fromFileName(queryFile);
         long startTime = System.currentTimeMillis();
-        JsoniqExpressionTreeVisitor visitor = this.parse(new JsoniqLexer(charStream));
+        TranslationVisitor visitor = this.parse(new JsoniqLexer(charStream));
         generateStaticContext(visitor.getMainModule());
         if (this.configuration.isPrintIteratorTree()) {
             System.out.println(visitor.getMainModule().serializationString(true));
@@ -121,7 +122,7 @@ public class JsoniqQueryExecutor {
     public void run(String queryFile, String outputPath) throws IOException {
         JsoniqLexer lexer = getInputSource(queryFile);
         long startTime = System.currentTimeMillis();
-        JsoniqExpressionTreeVisitor visitor = this.parse(lexer);
+        TranslationVisitor visitor = this.parse(lexer);
         generateStaticContext(visitor.getMainModule());
         RuntimeIterator result = generateRuntimeIterators(visitor.getMainModule());
         // collect output in memory and write to filesystem from java
@@ -177,7 +178,7 @@ public class JsoniqQueryExecutor {
     public String runInteractive(java.nio.file.Path queryFile) throws IOException {
         // create temp file
         JsoniqLexer lexer = getInputSource(queryFile.toString());
-        JsoniqExpressionTreeVisitor visitor = this.parse(lexer);
+        TranslationVisitor visitor = this.parse(lexer);
         generateStaticContext(visitor.getMainModule());
         RuntimeIterator runtimeIterator = generateRuntimeIterators(visitor.getMainModule());
         // execute locally for simple expressions
@@ -212,10 +213,10 @@ public class JsoniqQueryExecutor {
         throw new RuntimeException("Unknown url protocol");
     }
 
-    private JsoniqExpressionTreeVisitor parse(JsoniqLexer lexer) {
+    private TranslationVisitor parse(JsoniqLexer lexer) {
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
-        JsoniqExpressionTreeVisitor visitor = new JsoniqExpressionTreeVisitor();
+        TranslationVisitor visitor = new TranslationVisitor();
         try {
             // TODO Handle module extras
             JsoniqParser.ModuleContext module = parser.module();

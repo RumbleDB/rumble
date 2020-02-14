@@ -23,6 +23,7 @@ package org.rumbledb.expressions.operational.base;
 import org.antlr.v4.runtime.Token;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import sparksoniq.jsoniq.ExecutionMode;
@@ -61,23 +62,13 @@ public abstract class OperationalExpressionBase extends Expression {
         this.multipleOperators = ops;
     }
 
-    protected boolean bypassCurrentExpressionForExecutionModeOperations() {
-        return !isActive();
-    }
-
     @Override
     public void initHighestExecutionMode() {
-        if (bypassCurrentExpressionForExecutionModeOperations()) {
-            return;
-        }
         super.initHighestExecutionMode();
     }
 
     @Override
     public ExecutionMode getHighestExecutionMode(boolean ignoreUnsetError) {
-        if (bypassCurrentExpressionForExecutionModeOperations()) {
-            return this.mainExpression.getHighestExecutionMode(ignoreUnsetError);
-        }
         return super.getHighestExecutionMode(ignoreUnsetError);
     }
 
@@ -144,7 +135,7 @@ public abstract class OperationalExpressionBase extends Expression {
                 return Operator.CAST;
         }
 
-        return Operator.NONE;
+        throw new OurBadException("Operator not recognized.");
     }
 
     public static String getStringFromOperator(Operator operator) {
@@ -170,8 +161,6 @@ public abstract class OperationalExpressionBase extends Expression {
                 return operator.toString().toLowerCase();
         }
     }
-
-    public abstract boolean isActive();
 
     public void validateOperators(List<Operator> validOps, List<Operator> ops) {
         for (Operator op : ops)
@@ -302,9 +291,7 @@ public abstract class OperationalExpressionBase extends Expression {
         COMMA,
         TREAT,
         CASTABLE,
-        CAST,
-
-        NONE;
+        CAST;
 
         public Item apply(Item left, Item right) {
             return null;

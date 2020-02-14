@@ -22,9 +22,9 @@ package org.rumbledb.expressions.operational;
 
 
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.operational.base.UnaryExpressionBase;
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.Arrays;
 import java.util.List;
@@ -35,25 +35,14 @@ public class UnaryExpression extends UnaryExpressionBase {
     public static final Operator[] operators = new Operator[] { Operator.PLUS, Operator.MINUS };
     private Expression mainExpression;
 
-    public UnaryExpression(Expression mainExpression, ExceptionMetadata metadata) {
-        super(mainExpression, metadata);
-        this.mainExpression = mainExpression;
-        this.isActive = false;
-    }
-
     public UnaryExpression(Expression mainExpression, List<Operator> ops, ExceptionMetadata metadata) {
-        super(mainExpression, ops, ops != null && !ops.isEmpty(), metadata);
+        super(mainExpression, ops, metadata);
         this.validateOperators(Arrays.asList(operators), ops);
         this.mainExpression = mainExpression;
     }
 
     public Expression getMainExpression() {
         return this.mainExpression;
-    }
-
-    @Override
-    public boolean isActive() {
-        return this.isActive;
     }
 
     @Override

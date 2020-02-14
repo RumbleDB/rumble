@@ -21,9 +21,9 @@
 package org.rumbledb.expressions.operational;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.operational.base.BinaryExpressionBase;
-import sparksoniq.semantics.visitor.AbstractNodeVisitor;
 
 import java.util.Arrays;
 
@@ -43,10 +43,6 @@ public class ComparisonExpression extends BinaryExpressionBase {
         Operator.GC_LE,
         Operator.GC_LT };
 
-
-    public ComparisonExpression(Expression mainExpression, ExceptionMetadata metadata) {
-        super(mainExpression, metadata);
-    }
 
     public ComparisonExpression(
             Expression mainExpression,
