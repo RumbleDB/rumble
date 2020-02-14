@@ -33,20 +33,20 @@ import java.util.List;
 public class MainModule extends Expression {
 
     private final Prolog prolog;
-    private final CommaExpression commaExpression;
+    private final Expression expression;
 
-    public MainModule(Prolog prolog, CommaExpression commaExpression, ExceptionMetadata metadata) {
+    public MainModule(Prolog prolog, Expression commaExpression, ExceptionMetadata metadata) {
         super(metadata);
         this.prolog = prolog;
-        this.commaExpression = commaExpression;
+        this.expression = commaExpression;
     }
 
     public Prolog getProlog() {
         return this.prolog;
     }
 
-    public CommaExpression getCommaExpression() {
-        return this.commaExpression;
+    public Expression getExpression() {
+        return this.expression;
     }
 
     @Override
@@ -55,8 +55,8 @@ public class MainModule extends Expression {
         if (this.prolog != null) {
             result.add(this.prolog);
         }
-        if (this.commaExpression != null) {
-            result.add(this.commaExpression);
+        if (this.expression != null) {
+            result.add(this.expression);
         }
         return result;
     }
@@ -70,7 +70,7 @@ public class MainModule extends Expression {
     public String serializationString(boolean prefix) {
         String result = "(mainModule ";
         result += " (prolog " + this.prolog.serializationString(false) + "), ";
-        result += " (expr " + this.commaExpression.serializationString(false) + ") ";
+        result += " (expr " + this.expression.serializationString(false) + ") ";
         result += ")";
         return result;
     }

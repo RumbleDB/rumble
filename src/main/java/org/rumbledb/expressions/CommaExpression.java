@@ -37,6 +37,12 @@ public class CommaExpression extends Expression {
         this.expressions = expressions;
     }
 
+    // Empty sequence
+    public CommaExpression(ExceptionMetadata metadata) {
+        super(metadata);
+        this.expressions = new ArrayList<>();
+    }
+
     public List<Expression> getExpressions() {
         return this.expressions;
     }

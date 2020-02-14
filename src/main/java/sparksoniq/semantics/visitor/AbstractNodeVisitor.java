@@ -71,7 +71,6 @@ import org.rumbledb.expressions.primary.IntegerLiteralExpression;
 import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
-import org.rumbledb.expressions.primary.ParenthesizedExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
@@ -200,10 +199,6 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitFunctionCall(FunctionCallExpression expression, T argument) {
-        return defaultAction(expression, argument);
-    }
-
-    public T visitParenthesizedExpression(ParenthesizedExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
