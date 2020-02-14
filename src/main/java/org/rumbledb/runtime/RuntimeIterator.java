@@ -141,7 +141,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
      * Multiple atomic values throw an exception.
      *
      * @param iterator has to be opened before calling this function
-     * @return
+     * @return the effective boolean value.
      */
     public static boolean getEffectiveBooleanValue(RuntimeIterator iterator) {
         return getEffectiveBooleanValueOrCheckPosition(iterator, null);
