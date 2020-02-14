@@ -506,7 +506,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
         List<Expression> rhs = new ArrayList<>();
         this.visitNotExpr(ctx.main_expr);
         if (!(ctx.rhs == null) && !ctx.rhs.isEmpty()) {
-            mainExpression = (NotExpression) this.currentExpression;
+            mainExpression = this.currentExpression;
             for (JsoniqParser.NotExprContext child : ctx.rhs) {
                 this.visitNotExpr(child);
                 rhs.add(this.currentExpression);
@@ -885,7 +885,6 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
 
     @Override
     public Void visitArrayConstructor(JsoniqParser.ArrayConstructorContext ctx) {
-        ArrayConstructorExpression node;
         Expression content;
         if (ctx.expr() == null)
             this.currentExpression = new ArrayConstructorExpression(createMetadataFromContext(ctx));
@@ -956,7 +955,6 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
 
     @Override
     public Void visitSingleType(JsoniqParser.SingleTypeContext ctx) {
-        FlworVarSingleType node;
         if (ctx.item == null)
             this.currentExpression = new FlworVarSingleType(createMetadataFromContext(ctx));
         else {
@@ -1052,7 +1050,6 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
                 mostGeneralSequenceType,
                 createMetadataFromContext(ctx)
         );
-        CommaExpression fnBody;
         String paramName;
         FlworVarSequenceType paramType;
         if (ctx.paramList() != null) {
