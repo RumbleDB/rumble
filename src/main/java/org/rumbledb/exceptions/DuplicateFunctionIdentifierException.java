@@ -21,7 +21,7 @@
 package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCodes;
-import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
+import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 
 public class DuplicateFunctionIdentifierException extends SparksoniqRuntimeException {
 

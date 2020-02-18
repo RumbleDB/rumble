@@ -22,7 +22,7 @@ package org.rumbledb.items.parsing;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
-import sparksoniq.jsoniq.item.ItemFactory;
+import org.rumbledb.items.ItemFactory;
 
 import java.util.Iterator;
 

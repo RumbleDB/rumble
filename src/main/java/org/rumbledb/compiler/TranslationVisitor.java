@@ -86,9 +86,9 @@ import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
 import org.rumbledb.parser.JsoniqParser;
+import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 
 import sparksoniq.jsoniq.compiler.ValueTypeHandler;
-import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;

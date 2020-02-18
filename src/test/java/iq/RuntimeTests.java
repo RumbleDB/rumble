@@ -31,8 +31,8 @@ import org.junit.runners.Parameterized;
 import org.rumbledb.api.Item;
 import org.rumbledb.compiler.TranslationVisitor;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.runtime.RuntimeIterator;
 
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkSessionManager;
 import utils.FileManager;

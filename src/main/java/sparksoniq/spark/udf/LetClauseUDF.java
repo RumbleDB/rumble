@@ -25,9 +25,10 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.sql.api.java.UDF2;
 import org.rumbledb.api.Item;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.RuntimeIterator;
+
 import scala.collection.mutable.WrappedArray;
-import sparksoniq.jsoniq.item.ItemFactory;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.DataFrameUtils;
 

@@ -1,7 +1,8 @@
 package org.rumbledb.api;
 
 import org.apache.spark.api.java.JavaRDD;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
+import org.rumbledb.runtime.RuntimeIterator;
+
 import sparksoniq.semantics.DynamicContext;
 
 /**

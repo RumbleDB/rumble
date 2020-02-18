@@ -12,8 +12,8 @@ import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.parser.JsoniqLexer;
 import org.rumbledb.parser.JsoniqParser;
+import org.rumbledb.runtime.RuntimeIterator;
 
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.spark.SparkSessionManager;
 
 /**

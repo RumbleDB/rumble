@@ -26,13 +26,14 @@ import org.apache.spark.sql.api.java.UDF2;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flowr.expression.OrderByClauseAnnotatedChildIterator;
+
 import scala.collection.mutable.WrappedArray;
-import sparksoniq.jsoniq.item.ItemFactory;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.spark.DataFrameUtils;
-import sparksoniq.spark.iterator.flowr.expression.OrderByClauseAnnotatedChildIterator;
 
 import java.io.IOException;
 import java.util.ArrayList;

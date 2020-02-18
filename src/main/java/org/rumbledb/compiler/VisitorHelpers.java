@@ -3,10 +3,11 @@ package org.rumbledb.compiler;
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.functions.base.FunctionIdentifier;
+import org.rumbledb.runtime.functions.base.Functions;
+
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
-import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 
 public class VisitorHelpers {
 

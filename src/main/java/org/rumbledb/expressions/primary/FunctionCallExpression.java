@@ -27,11 +27,12 @@ import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.runtime.functions.base.BuiltinFunction;
+import org.rumbledb.runtime.functions.base.FunctionIdentifier;
+import org.rumbledb.runtime.functions.base.Functions;
+import org.rumbledb.runtime.functions.base.BuiltinFunction.BuiltinFunctionExecutionMode;
+
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.jsoniq.runtime.iterator.functions.base.BuiltinFunction;
-import sparksoniq.jsoniq.runtime.iterator.functions.base.BuiltinFunction.BuiltinFunctionExecutionMode;
-import sparksoniq.jsoniq.runtime.iterator.functions.base.FunctionIdentifier;
-import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 
 import java.util.Arrays;
 import java.util.Collections;
