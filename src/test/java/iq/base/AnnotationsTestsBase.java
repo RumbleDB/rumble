@@ -35,9 +35,9 @@ import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.parser.JsoniqBaseVisitor;
 import org.rumbledb.parser.JsoniqLexer;
 import org.rumbledb.parser.JsoniqParser;
+import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.functions.base.Functions;
 
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
 import utils.FileManager;
 import utils.annotations.AnnotationParseException;
 import utils.annotations.AnnotationProcessor;

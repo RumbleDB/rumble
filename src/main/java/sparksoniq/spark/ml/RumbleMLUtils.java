@@ -8,8 +8,9 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.OurBadException;
-import sparksoniq.jsoniq.item.ArrayItem;
-import sparksoniq.jsoniq.item.AtomicItem;
+import org.rumbledb.items.ArrayItem;
+import org.rumbledb.items.AtomicItem;
+
 import sparksoniq.semantics.types.AtomicTypes;
 
 import java.lang.reflect.InvocationTargetException;

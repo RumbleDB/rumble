@@ -21,7 +21,7 @@
 package sparksoniq.jsoniq.tuple;
 
 import org.rumbledb.expressions.flowr.OrderByClauseExpr;
-import sparksoniq.spark.iterator.flowr.expression.OrderByClauseAnnotatedChildIterator;
+import org.rumbledb.runtime.flowr.expression.OrderByClauseAnnotatedChildIterator;
 
 import java.io.Serializable;
 import java.util.Comparator;
