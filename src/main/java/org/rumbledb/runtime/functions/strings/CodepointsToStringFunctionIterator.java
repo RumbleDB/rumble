@@ -71,6 +71,7 @@ public class CodepointsToStringFunctionIterator extends LocalFunctionCallIterato
     }
 
     private static boolean isValidCodePoint(int codepoint) {
+        /* Checks if the codepoints are within the ranges allowed for in the XML 1.1 specification. */
         return 1 <= codepoint && codepoint <= 55295 ||
                 57344 <= codepoint && codepoint <= 65533 ||
                 65536 <= codepoint && codepoint <= 1114111;
