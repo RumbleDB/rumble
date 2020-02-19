@@ -23,6 +23,7 @@ package org.rumbledb.errorcodes;
 public class ErrorCodes {
 
     public static final String InvalidLexicalValueErrorCode = "FOCA0002";
+    public static final String CodepointNotValidErrorCode = "FOCH0001";
 
     public static final String CannotRetrieveResourceErrorCode = "FODC0002";
 
