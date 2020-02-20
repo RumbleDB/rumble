@@ -132,6 +132,7 @@ import org.rumbledb.runtime.functions.strings.StartsWithFunctionIterator;
 import org.rumbledb.runtime.functions.strings.StringFunctionIterator;
 import org.rumbledb.runtime.functions.strings.StringJoinFunctionIterator;
 import org.rumbledb.runtime.functions.strings.CodepointsToStringFunctionIterator;
+import org.rumbledb.runtime.functions.strings.StringToCodepointsFunctionIterator;
 import org.rumbledb.runtime.functions.strings.StringLengthFunctionIterator;
 import org.rumbledb.runtime.functions.strings.SubstringAfterFunctionIterator;
 import org.rumbledb.runtime.functions.strings.SubstringBeforeFunctionIterator;
@@ -337,6 +338,7 @@ public class Functions {
 
         builtInFunctions.put(string_function.getIdentifier(), string_function);
         builtInFunctions.put(codepoints_to_string.getIdentifier(), codepoints_to_string);
+        builtInFunctions.put(string_to_codepoints.getIdentifier(), string_to_codepoints);
         builtInFunctions.put(substring2.getIdentifier(), substring2);
         builtInFunctions.put(substring3.getIdentifier(), substring3);
         builtInFunctions.put(substring_before.getIdentifier(), substring_before);
@@ -1378,6 +1380,16 @@ public class Functions {
             "string",
             CodepointsToStringFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+        /**
+         * function that converts a string to codepoints
+         */
+        static final BuiltinFunction string_to_codepoints = createBuiltinFunction(
+                "string-to-codepoints",
+                "string?",
+                "integer*",
+                StringToCodepointsFunctionIterator.class,
+                BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns substrings
