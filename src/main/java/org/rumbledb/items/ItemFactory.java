@@ -66,10 +66,6 @@ public class ItemFactory {
         return new DateTimeItem(new DateTime(), true);
     }
 
-    public Item createCurrentDateTimeItem() {
-        return new DateTimeItem(new DateTime(), true);
-    }
-
     public Item createDateTimeItem(DateTime dt, boolean hasTimeZone) {
         return new DateTimeItem(dt, hasTimeZone);
     }
@@ -82,10 +78,6 @@ public class ItemFactory {
         return new DateItem(new DateTime(), true);
     }
 
-    public Item createCurrentDateItem() {
-        return new DateItem(new DateTime(), true);
-    }
-
     public Item createDateItem(DateTime dt, boolean hasTimeZone) {
         return new DateItem(dt, hasTimeZone);
     }
@@ -94,10 +86,6 @@ public class ItemFactory {
         return new DateItem(s);
     }
     
-    public Item createCurrentTimeItem() {
-        return new TimeItem(new DateTime(), true);
-    }
-
     public Item createCurrentTimeItem() {
         return new TimeItem(new DateTime(), true);
     }
