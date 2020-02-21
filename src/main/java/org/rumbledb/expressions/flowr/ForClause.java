@@ -28,7 +28,7 @@ import org.rumbledb.expressions.Node;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ForClause extends FlworClause {
+public class ForClause extends Clause {
 
 
     private final List<ForClauseVar> forVariables;
@@ -50,7 +50,7 @@ public class ForClause extends FlworClause {
     }
 
     @Override
-    public void setPreviousClause(FlworClause previousClause) {
+    public void setPreviousClause(Clause previousClause) {
         super.setPreviousClause(previousClause);
         // assign the previous clause of the ForClause as the first variable definition's previous
         this.forVariables.get(0).previousClause = this.previousClause;

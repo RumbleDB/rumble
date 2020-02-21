@@ -27,7 +27,7 @@ import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.control.TypeSwitchCaseExpression;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
 import org.rumbledb.expressions.flowr.CountClause;
-import org.rumbledb.expressions.flowr.FlworClause;
+import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.FlworExpression;
 import org.rumbledb.expressions.flowr.FlworVarDecl;
 import org.rumbledb.expressions.flowr.ForClauseVar;
@@ -157,7 +157,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitFlowrExpression(FlworExpression expression, StaticContext argument) {
         StaticContext result = this.visit(expression.getStartClause(), argument);
-        for (FlworClause clause : expression.getContentClauses()) {
+        for (Clause clause : expression.getContentClauses()) {
             result = this.visit(clause, result);
         }
 

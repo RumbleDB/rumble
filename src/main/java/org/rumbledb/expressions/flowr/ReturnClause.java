@@ -29,7 +29,7 @@ import sparksoniq.jsoniq.ExecutionMode;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ReturnClause extends FlworClause {
+public class ReturnClause extends Clause {
 
 
     private final Expression returnExpr;

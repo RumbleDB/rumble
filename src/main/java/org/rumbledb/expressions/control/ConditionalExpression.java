@@ -29,45 +29,60 @@ import org.rumbledb.expressions.Node;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SwitchCaseExpression extends Expression {
+public class ConditionalExpression extends Expression {
 
-    private final Expression returnExpression;
-    private final Expression condition;
+    private final Expression conditionExpression;
+    private final Expression thenExpression;
+    private final Expression elseExpression;
 
-    public SwitchCaseExpression(
+    public ConditionalExpression(
             Expression condition,
-            Expression returnExpression,
+            Expression branch,
+            Expression elseBranch,
             ExceptionMetadata metadataFromContext
     ) {
         super(metadataFromContext);
-        this.condition = condition;
-        this.returnExpression = returnExpression;
+        this.conditionExpression = condition;
+        this.thenExpression = branch;
+        this.elseExpression = elseBranch;
+
+    }
+
+    public Expression getElseBranch() {
+        return this.elseExpression;
+    }
+
+    public Expression getCondition() {
+        return this.conditionExpression;
+    }
+
+    public Expression getBranch() {
+        return this.thenExpression;
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        result.add(this.condition);
-        result.add(this.returnExpression);
+        result.add(this.conditionExpression);
+        result.add(this.thenExpression);
+        result.add(this.elseExpression);
         return result;
-    }
-
-    public Expression getReturnExpression() {
-        return this.returnExpression;
-    }
-
-    public Expression getCondition() {
-        return this.condition;
     }
 
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        return visitor.visitSwitchCaseExpression(this, argument);
+        return visitor.visitIfExpression(this, argument);
     }
 
     @Override
-    // TODO implement serialization for switch expr
     public String serializationString(boolean prefix) {
-        return "";
+        String result = "(ifExpr if ( ";
+        result += this.conditionExpression.serializationString(prefix);
+        result += " ) then ";
+        result += this.thenExpression.serializationString(true);
+        result += ") else ";
+        result += this.elseExpression.serializationString(true);
+        result += "))";
+        return result;
     }
 }

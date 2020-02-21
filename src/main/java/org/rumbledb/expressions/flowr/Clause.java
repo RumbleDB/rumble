@@ -27,13 +27,13 @@ import org.rumbledb.expressions.Node;
  * GRAMMAR:flowrExpression
  */
 
-public abstract class FlworClause extends Node {
+public abstract class Clause extends Node {
 
-    protected FlworClause previousClause;
+    protected Clause previousClause;
     protected FLWOR_CLAUSES clauseType;
 
 
-    public FlworClause(FLWOR_CLAUSES clauseType, ExceptionMetadata metadata) {
+    public Clause(FLWOR_CLAUSES clauseType, ExceptionMetadata metadata) {
         super(metadata);
         this.clauseType = clauseType;
     }
@@ -42,11 +42,11 @@ public abstract class FlworClause extends Node {
         return this.clauseType;
     }
 
-    public FlworClause getPreviousClause() {
+    public Clause getPreviousClause() {
         return this.previousClause;
     }
 
-    public void setPreviousClause(FlworClause previousClause) {
+    public void setPreviousClause(Clause previousClause) {
         this.previousClause = previousClause;
     }
 
