@@ -62,6 +62,10 @@ public class ItemFactory {
         return new DayTimeDurationItem(p);
     }
 
+    public Item createCurrentDateTimeItem() {
+        return new DateTimeItem(new DateTime(), true);
+    }
+
     public Item createDateTimeItem(DateTime dt, boolean hasTimeZone) {
         return new DateTimeItem(dt, hasTimeZone);
     }
@@ -70,12 +74,20 @@ public class ItemFactory {
         return new DateTimeItem(s);
     }
 
+    public Item createCurrentDateItem() {
+        return new DateItem(new DateTime(), true);
+    }
+
     public Item createDateItem(DateTime dt, boolean hasTimeZone) {
         return new DateItem(dt, hasTimeZone);
     }
 
     public Item createDateItem(String s) {
         return new DateItem(s);
+    }
+
+    public Item createCurrentTimeItem() {
+        return new TimeItem(new DateTime(), true);
     }
 
     public Item createTimeItem(DateTime dt, boolean hasTimeZone) {

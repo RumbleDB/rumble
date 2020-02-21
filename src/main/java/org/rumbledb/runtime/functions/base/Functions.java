@@ -37,6 +37,9 @@ import org.rumbledb.runtime.functions.binaries.HexBinaryFunctionIterator;
 import org.rumbledb.runtime.functions.booleans.BooleanFunctionIterator;
 import org.rumbledb.runtime.functions.context.LastFunctionIterator;
 import org.rumbledb.runtime.functions.context.PositionFunctionIterator;
+import org.rumbledb.runtime.functions.datetime.CurrentDateFunctionIterator;
+import org.rumbledb.runtime.functions.datetime.CurrentDateTimeFunctionIterator;
+import org.rumbledb.runtime.functions.datetime.CurrentTimeFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.DateFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.DateTimeFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.TimeFunctionIterator;
@@ -364,6 +367,7 @@ public class Functions {
         builtInFunctions.put(seconds_from_duration.getIdentifier(), seconds_from_duration);
 
         builtInFunctions.put(dateTime.getIdentifier(), dateTime);
+        builtInFunctions.put(current_dateTime.getIdentifier(), current_dateTime);
         builtInFunctions.put(year_from_dateTime.getIdentifier(), year_from_dateTime);
         builtInFunctions.put(month_from_dateTime.getIdentifier(), month_from_dateTime);
         builtInFunctions.put(day_from_dateTime.getIdentifier(), day_from_dateTime);
@@ -375,6 +379,7 @@ public class Functions {
         builtInFunctions.put(adjust_dateTime_to_timezone2.getIdentifier(), adjust_dateTime_to_timezone2);
 
         builtInFunctions.put(date.getIdentifier(), date);
+        builtInFunctions.put(current_date.getIdentifier(), current_date);
         builtInFunctions.put(year_from_date.getIdentifier(), year_from_date);
         builtInFunctions.put(month_from_date.getIdentifier(), month_from_date);
         builtInFunctions.put(day_from_date.getIdentifier(), day_from_date);
@@ -383,6 +388,7 @@ public class Functions {
         builtInFunctions.put(adjust_date_to_timezone2.getIdentifier(), adjust_date_to_timezone2);
 
         builtInFunctions.put(time.getIdentifier(), time);
+        builtInFunctions.put(current_time.getIdentifier(), current_time);
         builtInFunctions.put(hours_from_time.getIdentifier(), hours_from_time);
         builtInFunctions.put(minutes_from_time.getIdentifier(), minutes_from_time);
         builtInFunctions.put(seconds_from_time.getIdentifier(), seconds_from_time);
@@ -1561,7 +1567,6 @@ public class Functions {
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
 
-
         /**
          * function that returns the dateTime item from the supplied string
          */
@@ -1572,7 +1577,15 @@ public class Functions {
             DateTimeFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
-
+        /**
+         * function that returns the current dateTime item
+         */
+        static final BuiltinFunction current_dateTime = createBuiltinFunction(
+            "current-dateTime",
+            "dateTime?",
+            CurrentDateTimeFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
         /**
          * function that returns the year from a dateTime
          */
@@ -1677,6 +1690,15 @@ public class Functions {
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
+         * function that returns the current date item
+         */
+        static final BuiltinFunction current_date = createBuiltinFunction(
+            "current-date",
+            "date?",
+            CurrentDateFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+        /**
          * function that returns the year from a date
          */
         static final BuiltinFunction year_from_date = createBuiltinFunction(
@@ -1745,6 +1767,15 @@ public class Functions {
             "string?",
             "time?",
             TimeFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+        /**
+         * function that returns the current time item
+         */
+        static final BuiltinFunction current_time = createBuiltinFunction(
+            "current-time",
+            "time?",
+            CurrentTimeFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
