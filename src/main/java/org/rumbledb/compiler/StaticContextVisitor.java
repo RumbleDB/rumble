@@ -291,7 +291,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                 );
             }
             this.visit(c.getReturnExpression(), caseContext);
-            // return the given context unchanged as defined variables go out of scope
         }
 
         String defaultCaseVariableName = expression.getDefaultVariableName();
