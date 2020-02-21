@@ -90,7 +90,6 @@ import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import sparksoniq.jsoniq.compiler.ValueTypeHandler;
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
 
 import java.util.ArrayList;

@@ -35,7 +35,8 @@ public class TreatExpression extends UnaryExpressionBase {
             Expression expression
     ) {
         if (
-            sequenceType.getArity() != SequenceType.Arity.One
+            !sequenceType.isEmptySequence()
+                && sequenceType.getArity() != SequenceType.Arity.One
                 && sequenceType.getArity() != SequenceType.Arity.OneOrZero
                 && expression.getHighestExecutionMode().isRDD()
         ) {
@@ -53,7 +54,7 @@ public class TreatExpression extends UnaryExpressionBase {
     public String serializationString(boolean prefix) {
         String result = "(treatExpr ";
         result += this.mainExpression.serializationString(true);
-        result += this.sequenceType != null ? " treat as " + this.sequenceType.toString() : "";
+        result += " treat as " + this.sequenceType.toString();
         result += ")";
         return result;
     }
