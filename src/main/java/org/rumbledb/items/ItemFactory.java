@@ -61,6 +61,10 @@ public class ItemFactory {
     public Item createDayTimeDurationItem(Period p) {
         return new DayTimeDurationItem(p);
     }
+    
+    public Item createCurrentDateTimeItem() {
+        return new DateTimeItem(new DateTime(), true);
+    }
 
     public Item createCurrentDateTimeItem() {
         return new DateTimeItem(new DateTime(), true);
@@ -73,6 +77,10 @@ public class ItemFactory {
     public Item createDateTimeItem(String s) {
         return new DateTimeItem(s);
     }
+    
+    public Item createCurrentDateItem() {
+        return new DateItem(new DateTime(), true);
+    }
 
     public Item createCurrentDateItem() {
         return new DateItem(new DateTime(), true);
@@ -84,6 +92,10 @@ public class ItemFactory {
 
     public Item createDateItem(String s) {
         return new DateItem(s);
+    }
+    
+    public Item createCurrentTimeItem() {
+        return new TimeItem(new DateTime(), true);
     }
 
     public Item createCurrentTimeItem() {
