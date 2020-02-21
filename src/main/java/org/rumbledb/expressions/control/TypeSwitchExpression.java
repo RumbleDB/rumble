@@ -51,9 +51,8 @@ public class TypeSwitchExpression extends Expression {
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         result.add(this.testCondition);
-        for(TypeswitchCase c : cases)
-        {
-        	result.addAll(c.getAllExpressions());
+        for (TypeswitchCase c : cases) {
+            result.add(c.getReturnExpression());
         }
         result.add(this.defaultExpression);
         return result;
@@ -65,8 +64,20 @@ public class TypeSwitchExpression extends Expression {
     }
 
     @Override
-    // TODO implement serialization for switch expr
     public String serializationString(boolean prefix) {
-        return "";
+        StringBuilder result = new StringBuilder();
+        result.append("(TypeswitchExpression switch ");
+        result.append(this.testCondition.serializationString(false));
+        for (TypeswitchCase c : this.cases) {
+            result.append("case ");
+            result.append(c.getVariableName());
+            result.append(" ");
+            result.append("return ");
+            result.append(c.getReturnExpression().serializationString(false));
+        }
+        result.append(" default ");
+        result.append(this.defaultExpression.serializationString(false));
+        result.append(")");
+        return result.toString();
     }
 }

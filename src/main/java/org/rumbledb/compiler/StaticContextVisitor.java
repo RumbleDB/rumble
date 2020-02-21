@@ -277,21 +277,20 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitTypeSwitchExpression(TypeSwitchExpression expression, StaticContext argument) {
         this.visit(expression.getTestCondition(), argument);
-        for(TypeswitchCase c : expression.getCases())
-        {
-	        StaticContext caseContext = new StaticContext(argument);
-	        String variableName = c.getVariableName();
-	        if (variableName != null) {
-	            caseContext.addVariable(
-	            	variableName,
-	                null,
-	                expression.getMetadata(),
-	                ExecutionMode.LOCAL
-	            );
-	        }
-	        this.visit(c.getReturnExpression(), caseContext);
-	        // return the given context unchanged as defined variables go out of scope
-	        return argument;
+        for (TypeswitchCase c : expression.getCases()) {
+            StaticContext caseContext = new StaticContext(argument);
+            String variableName = c.getVariableName();
+            if (variableName != null) {
+                System.out.println("Found variable " + variableName);
+                caseContext.addVariable(
+                    variableName,
+                    null,
+                    expression.getMetadata(),
+                    ExecutionMode.LOCAL
+                );
+            }
+            this.visit(c.getReturnExpression(), caseContext);
+            // return the given context unchanged as defined variables go out of scope
         }
 
         String defaultCaseVariableName = expression.getDefaultVariableName();
@@ -301,7 +300,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             // add variable to child context to visit default return expression
             StaticContext defaultCaseStaticContext = new StaticContext(argument);
             defaultCaseStaticContext.addVariable(
-            	defaultCaseVariableName,
+                defaultCaseVariableName,
                 null,
                 expression.getMetadata(),
                 ExecutionMode.LOCAL

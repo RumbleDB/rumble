@@ -5,12 +5,12 @@ import org.rumbledb.runtime.RuntimeIterator;
 
 import java.util.List;
 
-public class TypeSwitchCase {
+public class TypeSwitchRuntimeIteratorCase {
     private final String variableName;
     private final List<FlworVarSequenceType> sequenceTypeUnion;
     private final RuntimeIterator returnIterator;
 
-    public TypeSwitchCase(
+    public TypeSwitchRuntimeIteratorCase(
             String variableName,
             List<FlworVarSequenceType> sequenceTypeUnion,
             RuntimeIterator returnIterator
@@ -20,7 +20,7 @@ public class TypeSwitchCase {
         this.returnIterator = returnIterator;
     }
 
-    public TypeSwitchCase(String variableName, RuntimeIterator returnIterator) {
+    public TypeSwitchRuntimeIteratorCase(String variableName, RuntimeIterator returnIterator) {
         this.variableName = variableName;
         this.sequenceTypeUnion = null;
         this.returnIterator = returnIterator;

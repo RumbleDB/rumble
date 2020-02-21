@@ -26,6 +26,7 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import sparksoniq.jsoniq.ExecutionMode;
+import sparksoniq.semantics.types.SequenceType;
 
 
 
@@ -33,7 +34,7 @@ public class LetClauseVar extends FlworVarDecl {
 
     public LetClauseVar(
             VariableReferenceExpression variableReferenceExpression,
-            FlworVarSequenceType sequenceType,
+            SequenceType sequenceType,
             Expression expression,
             ExceptionMetadata metadataFromContext
     ) {
@@ -62,7 +63,7 @@ public class LetClauseVar extends FlworVarDecl {
     public String serializationString(boolean prefix) {
         String result = "(letVar " + this.variableReferenceExpression.serializationString(false) + " ";
         if (this.asSequenceType != null)
-            result += "as " + this.asSequenceType.serializationString(true) + " ";
+            result += "as " + this.asSequenceType.toString() + " ";
         result += ":= " + this.expression.serializationString(true);
         result += "))";
         return result;

@@ -29,6 +29,8 @@ import org.rumbledb.expressions.flowr.FlworVarSequenceType;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.runtime.functions.base.Functions;
 
+import sparksoniq.semantics.types.SequenceType;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -36,14 +38,14 @@ import java.util.Map;
 public class InlineFunctionExpression extends PrimaryExpression {
 
     private final String name;
-    private final Map<String, FlworVarSequenceType> params;
-    private final FlworVarSequenceType returnType;
+    private final Map<String, SequenceType> params;
+    private final SequenceType returnType;
     private final Expression body;
 
     public InlineFunctionExpression(
             String name,
-            Map<String, FlworVarSequenceType> params,
-            FlworVarSequenceType returnType,
+            Map<String, SequenceType> params,
+            SequenceType returnType,
             Expression body,
             ExceptionMetadata metadata
     ) {
@@ -58,11 +60,11 @@ public class InlineFunctionExpression extends PrimaryExpression {
         return this.name;
     }
 
-    public Map<String, FlworVarSequenceType> getParams() {
+    public Map<String, SequenceType> getParams() {
         return this.params;
     }
 
-    public FlworVarSequenceType getReturnType() {
+    public SequenceType getReturnType() {
         return this.returnType;
     }
 

@@ -59,50 +59,6 @@ public class FlworVarSequenceType extends Expression {
         this.sequence = sequenceType;
     }
 
-    public static ItemTypes getItemType(String text) {
-        text = text.toLowerCase();
-        switch (text) {
-            case "object":
-                return ItemTypes.ObjectItem;
-            case "atomic":
-                return ItemTypes.AtomicItem;
-            case "string":
-                return ItemTypes.StringItem;
-            case "integer":
-                return ItemTypes.IntegerItem;
-            case "decimal":
-                return ItemTypes.DecimalItem;
-            case "double":
-                return ItemTypes.DoubleItem;
-            case "boolean":
-                return ItemTypes.BooleanItem;
-            case "null":
-                return ItemTypes.NullItem;
-            case "array":
-                return ItemTypes.ArrayItem;
-            case "json-item":
-                return ItemTypes.JSONItem;
-            case "duration":
-                return ItemTypes.DurationItem;
-            case "yearmonthduration":
-                return ItemTypes.YearMonthDurationItem;
-            case "daytimeduration":
-                return ItemTypes.DayTimeDurationItem;
-            case "datetime":
-                return ItemTypes.DateTimeItem;
-            case "date":
-                return ItemTypes.DateItem;
-            case "time":
-                return ItemTypes.TimeItem;
-            case "hexbinary":
-                return ItemTypes.HexBinaryItem;
-            case "base64binary":
-                return ItemTypes.Base64BinaryItem;
-
-            default:
-                return ItemTypes.Item;
-        }
-    }
 
     public boolean isEmpty() {
         return this.isEmpty;

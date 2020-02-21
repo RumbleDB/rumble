@@ -39,7 +39,7 @@ public class ForClauseVar extends FlworVarDecl {
 
     public ForClauseVar(
             VariableReferenceExpression variableReferenceExpression,
-            FlworVarSequenceType sequenceType,
+            SequenceType sequenceType,
             boolean emptyFlag,
             VariableReferenceExpression positionalVariableReferenceExpression,
             Expression expression,
@@ -53,10 +53,9 @@ public class ForClauseVar extends FlworVarDecl {
         // because TreatIterator is wrapping the whole assignment expression,
         // meaning there is not one TreatIterator for each variable we loop over.
         if (sequenceType != null)
-            this.asSequenceType = new FlworVarSequenceType(
-                    sequenceType.getSequence().getItemType().getType(),
-                    SequenceType.Arity.ZeroOrMore,
-                    metadataFromContext
+            this.asSequenceType = new SequenceType(
+                    sequenceType.getItemType(),
+                    SequenceType.Arity.ZeroOrMore
             );
     }
 

@@ -4,6 +4,8 @@ package org.rumbledb.expressions.control;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.flowr.FlworVarSequenceType;
 
+import sparksoniq.semantics.types.SequenceType;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,12 +17,12 @@ import java.util.List;
 public class TypeswitchCase {
 
     private String variableName;
-    private List<FlworVarSequenceType> union = new ArrayList<>();
+    private List<SequenceType> union = new ArrayList<>();
     private final Expression returnExpression;
 
     public TypeswitchCase(
             String variableName,
-            List<FlworVarSequenceType> union,
+            List<SequenceType> union,
             Expression returnExpression
     ) {
         this.variableName = variableName;
@@ -32,19 +34,12 @@ public class TypeswitchCase {
         return this.variableName;
     }
 
-    public List<FlworVarSequenceType> getUnion() {
+    public List<SequenceType> getUnion() {
         return this.union;
     }
 
     public Expression getReturnExpression() {
         return this.returnExpression;
-    }
-
-    public List<Expression> getAllExpressions() {
-        List<Expression> result = new ArrayList<>();
-        if (this.returnExpression != null)
-            result.add(this.returnExpression);
-        return result;
     }
 
 }

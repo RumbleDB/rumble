@@ -23,6 +23,8 @@ package sparksoniq.semantics.types;
 
 import java.io.Serializable;
 
+import org.rumbledb.exceptions.OurBadException;
+
 public class ItemType implements Serializable {
 
 
@@ -36,6 +38,52 @@ public class ItemType implements Serializable {
         this.type = type;
 
     }
+    
+    public ItemType(String text) {
+        text = text.toLowerCase();
+        switch (text) {
+            case "object":
+            	this.type = ItemTypes.ObjectItem;
+            case "atomic":
+            	this.type = ItemTypes.AtomicItem;
+            case "string":
+            	this.type = ItemTypes.StringItem;
+            case "integer":
+            	this.type = ItemTypes.IntegerItem;
+            case "decimal":
+            	this.type = ItemTypes.DecimalItem;
+            case "double":
+            	this.type = ItemTypes.DoubleItem;
+            case "boolean":
+            	this.type = ItemTypes.BooleanItem;
+            case "null":
+            	this.type = ItemTypes.NullItem;
+            case "array":
+            	this.type = ItemTypes.ArrayItem;
+            case "json-item":
+            	this.type = ItemTypes.JSONItem;
+            case "duration":
+            	this.type = ItemTypes.DurationItem;
+            case "yearmonthduration":
+            	this.type = ItemTypes.YearMonthDurationItem;
+            case "daytimeduration":
+            	this.type = ItemTypes.DayTimeDurationItem;
+            case "datetime":
+            	this.type = ItemTypes.DateTimeItem;
+            case "date":
+            	this.type = ItemTypes.DateItem;
+            case "time":
+            	this.type = ItemTypes.TimeItem;
+            case "hexbinary":
+            	this.type = ItemTypes.HexBinaryItem;
+            case "base64binary":
+            	this.type = ItemTypes.Base64BinaryItem;
+
+            default:
+            	throw new OurBadException("Type unrecognized: " + text);
+        }
+    }
+
 
     public ItemTypes getType() {
         return this.type;

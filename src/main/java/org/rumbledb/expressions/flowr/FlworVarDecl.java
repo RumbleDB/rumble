@@ -37,7 +37,7 @@ public abstract class FlworVarDecl extends Clause {
     protected Expression expression;
 
     // asSequence is null by default if the type of the variable in the for/let/groupBy clause is not specified.
-    protected FlworVarSequenceType asSequenceType;
+    protected SequenceType asSequenceType;
 
     // Holds whether the variable will be stored in materialized(local) or native/spark(RDD or DF) format in a tuple
     protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
@@ -49,7 +49,7 @@ public abstract class FlworVarDecl extends Clause {
     public FlworVarDecl(
             FLWOR_CLAUSES forVar,
             VariableReferenceExpression variableReferenceExpression,
-            FlworVarSequenceType sequenceType,
+            SequenceType sequenceType,
             Expression expression,
             ExceptionMetadata metadata
     ) {
@@ -64,7 +64,7 @@ public abstract class FlworVarDecl extends Clause {
         if (this.asSequenceType == null)
             this.variableReferenceExpression.setType(new SequenceType());
         else
-            this.variableReferenceExpression.setType(this.asSequenceType.getSequence());
+            this.variableReferenceExpression.setType(this.asSequenceType);
     }
 
     public VariableReferenceExpression getVariableReference() {
@@ -75,7 +75,7 @@ public abstract class FlworVarDecl extends Clause {
         return this.expression;
     }
 
-    public FlworVarSequenceType getAsSequence() {
+    public SequenceType getAsSequence() {
         return this.asSequenceType;
     }
 
@@ -94,8 +94,6 @@ public abstract class FlworVarDecl extends Clause {
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         result.add(this.variableReferenceExpression);
-        if (this.asSequenceType != null)
-            result.add(this.asSequenceType);
         if (this.expression != null)
             result.add(this.expression);
         return result;

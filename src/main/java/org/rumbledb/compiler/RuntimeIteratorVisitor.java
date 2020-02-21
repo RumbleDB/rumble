@@ -87,8 +87,8 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.control.IfRuntimeIterator;
 import org.rumbledb.runtime.control.SwitchRuntimeIterator;
-import org.rumbledb.runtime.control.TypeSwitchCase;
 import org.rumbledb.runtime.control.TypeSwitchRuntimeIterator;
+import org.rumbledb.runtime.control.TypeSwitchRuntimeIteratorCase;
 import org.rumbledb.runtime.flowr.CountClauseSparkIterator;
 import org.rumbledb.runtime.flowr.ForClauseSparkIterator;
 import org.rumbledb.runtime.flowr.GroupByClauseSparkIterator;
@@ -214,14 +214,14 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         if (clause instanceof ForClause) {
             for (ForClauseVar var : ((ForClause) clause).getForVariables()) {
                 RuntimeIterator assignmentIterator = this.visit(var.getExpression(), argument);
-                if (var.getAsSequence() != null && var.getAsSequence().getSequence() != null) {
+                if (var.getAsSequence() != null && var.getAsSequence() != null) {
                     ExecutionMode executionMode = TreatExpression.calculateIsRDDFromSequenceTypeAndExpression(
-                        var.getAsSequence().getSequence(),
+                        var.getAsSequence(),
                         var.getExpression()
                     );
                     assignmentIterator = new TreatIterator(
                             assignmentIterator,
-                            var.getAsSequence().getSequence(),
+                            var.getAsSequence(),
                             false,
                             executionMode,
                             clause.getMetadata()
@@ -239,14 +239,14 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         } else if (clause instanceof LetClause) {
             for (LetClauseVar var : ((LetClause) clause).getLetVariables()) {
                 RuntimeIterator assignmentIterator = this.visit(var.getExpression(), argument);
-                if (var.getAsSequence() != null && var.getAsSequence().getSequence() != null) {
+                if (var.getAsSequence() != null && var.getAsSequence() != null) {
                     ExecutionMode executionMode = TreatExpression.calculateIsRDDFromSequenceTypeAndExpression(
-                        var.getAsSequence().getSequence(),
+                        var.getAsSequence(),
                         var.getExpression()
                     );
                     assignmentIterator = new TreatIterator(
                             assignmentIterator,
-                            var.getAsSequence().getSequence(),
+                            var.getAsSequence(),
                             false,
                             executionMode,
                             clause.getMetadata()
@@ -268,14 +268,14 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 RuntimeIterator groupByExpressionIterator = null;
                 if (groupByExpression != null) {
                     groupByExpressionIterator = this.visit(groupByExpression, argument);
-                    if (var.getAsSequence() != null && var.getAsSequence().getSequence() != null) {
+                    if (var.getAsSequence() != null && var.getAsSequence() != null) {
                         ExecutionMode executionMode = TreatExpression.calculateIsRDDFromSequenceTypeAndExpression(
-                            var.getAsSequence().getSequence(),
+                            var.getAsSequence(),
                             groupByExpression
                         );
                         groupByExpressionIterator = new TreatIterator(
                                 groupByExpressionIterator,
-                                var.getAsSequence().getSequence(),
+                                var.getAsSequence(),
                                 false,
                                 executionMode,
                                 clause.getMetadata()
@@ -476,10 +476,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     @Override
     public RuntimeIterator visitFunctionDeclaration(InlineFunctionExpression expression, RuntimeIterator argument) {
         Map<String, SequenceType> paramNameToSequenceTypes = new LinkedHashMap<>();
-        for (Map.Entry<String, FlworVarSequenceType> paramEntry : expression.getParams().entrySet()) {
-            paramNameToSequenceTypes.put(paramEntry.getKey(), paramEntry.getValue().getSequence());
+        for (Map.Entry<String, SequenceType> paramEntry : expression.getParams().entrySet()) {
+            paramNameToSequenceTypes.put(paramEntry.getKey(), paramEntry.getValue());
         }
-        SequenceType returnType = expression.getReturnType().getSequence();
+        SequenceType returnType = expression.getReturnType();
         RuntimeIterator bodyIterator = this.visit(expression.getBody(), argument);
         FunctionItem function = new FunctionItem(
                 expression.getName(),
@@ -922,12 +922,11 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     public RuntimeIterator visitSwitchExpression(SwitchExpression expression, RuntimeIterator argument) {
         Map<RuntimeIterator, RuntimeIterator> cases = new LinkedHashMap<>();
         for (SwitchCase caseExpression : expression.getCases()) {
-        	RuntimeIterator caseExpr = this.visit(caseExpression.getReturnExpression(), argument);
-        	for(Expression conditionExpr : caseExpression.getConditionExpressions())
-        	{
-        		RuntimeIterator condition = this.visit(conditionExpr, argument);
-	            cases.put( condition, caseExpr );
-        	}
+            RuntimeIterator caseExpr = this.visit(caseExpression.getReturnExpression(), argument);
+            for (Expression conditionExpr : caseExpression.getConditionExpressions()) {
+                RuntimeIterator condition = this.visit(conditionExpr, argument);
+                cases.put(condition, caseExpr);
+            }
         }
         return new SwitchRuntimeIterator(
                 this.visit(expression.getTestCondition(), argument),
@@ -941,19 +940,19 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitTypeSwitchExpression(TypeSwitchExpression expression, RuntimeIterator argument) {
-        List<TypeSwitchCase> cases = new ArrayList<>();
+        List<TypeSwitchRuntimeIteratorCase> cases = new ArrayList<>();
         for (TypeswitchCase caseExpression : expression.getCases()) {
             cases.add(
-                new TypeSwitchCase(
-                		caseExpression.getVariableName(),
+                new TypeSwitchRuntimeIteratorCase(
+                        caseExpression.getVariableName(),
                         caseExpression.getUnion(),
                         this.visit(caseExpression.getReturnExpression(), argument)
                 )
             );
         }
 
-        TypeSwitchCase defaultCase = new TypeSwitchCase(
-        		expression.getDefaultVariableName(),
+        TypeSwitchRuntimeIteratorCase defaultCase = new TypeSwitchRuntimeIteratorCase(
+                expression.getDefaultVariableName(),
                 this.visit(expression.getDefaultExpression(), argument)
         );
 
