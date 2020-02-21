@@ -30,7 +30,7 @@ import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchCase;
 import org.rumbledb.expressions.control.SwitchExpression;
-import org.rumbledb.expressions.control.TypeSwitchCaseExpression;
+import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
 import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.Clause;
@@ -908,7 +908,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     // region control
     @Override
-    public RuntimeIterator visitIfExpression(ConditionalExpression expression, RuntimeIterator argument) {
+    public RuntimeIterator visitConditionalExpression(ConditionalExpression expression, RuntimeIterator argument) {
         return new IfRuntimeIterator(
                 this.visit(expression.getCondition(), argument),
                 this.visit(expression.getBranch(), argument),
@@ -942,27 +942,18 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     @Override
     public RuntimeIterator visitTypeSwitchExpression(TypeSwitchExpression expression, RuntimeIterator argument) {
         List<TypeSwitchCase> cases = new ArrayList<>();
-        for (TypeSwitchCaseExpression caseExpression : expression.getCases()) {
-            String caseVariableName = null;
-            if (caseExpression.getVariableReference() != null) {
-                caseVariableName = caseExpression.getVariableReference().getVariableName();
-            }
+        for (TypeswitchCase caseExpression : expression.getCases()) {
             cases.add(
                 new TypeSwitchCase(
-                        caseVariableName,
+                		caseExpression.getVariableName(),
                         caseExpression.getUnion(),
                         this.visit(caseExpression.getReturnExpression(), argument)
                 )
             );
         }
 
-        TypeSwitchCase defaultCase;
-        String defaultCaseVariableName = null;
-        if (expression.getDefaultVariableReferenceExpression() != null) {
-            defaultCaseVariableName = expression.getDefaultVariableReferenceExpression().getVariableName();
-        }
-        defaultCase = new TypeSwitchCase(
-                defaultCaseVariableName,
+        TypeSwitchCase defaultCase = new TypeSwitchCase(
+        		expression.getDefaultVariableName(),
                 this.visit(expression.getDefaultExpression(), argument)
         );
 

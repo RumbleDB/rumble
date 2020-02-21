@@ -5,7 +5,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.primary.VariableReferenceExpression;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,15 +12,15 @@ import java.util.List;
 public class TypeSwitchExpression extends Expression {
 
     private final Expression testCondition;
-    private final List<TypeSwitchCaseExpression> cases;
+    private final List<TypeswitchCase> cases;
     private final Expression defaultExpression;
-    private final VariableReferenceExpression defaultVariableReferenceExpression;
+    private final String defaultVariableName;
 
     public TypeSwitchExpression(
             Expression testCondition,
-            List<TypeSwitchCaseExpression> cases,
+            List<TypeswitchCase> cases,
             Expression defaultExpression,
-            VariableReferenceExpression defaultVariableReferenceExpression,
+            String defaultVariableName,
             ExceptionMetadata metadataFromContext
     ) {
 
@@ -29,14 +28,14 @@ public class TypeSwitchExpression extends Expression {
         this.testCondition = testCondition;
         this.cases = cases;
         this.defaultExpression = defaultExpression;
-        this.defaultVariableReferenceExpression = defaultVariableReferenceExpression;
+        this.defaultVariableName = defaultVariableName;
     }
 
     public Expression getTestCondition() {
         return this.testCondition;
     }
 
-    public List<TypeSwitchCaseExpression> getCases() {
+    public List<TypeswitchCase> getCases() {
         return this.cases;
     }
 
@@ -44,18 +43,19 @@ public class TypeSwitchExpression extends Expression {
         return this.defaultExpression;
     }
 
-    public VariableReferenceExpression getDefaultVariableReferenceExpression() {
-        return this.defaultVariableReferenceExpression;
+    public String getDefaultVariableName() {
+        return this.defaultVariableName;
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         result.add(this.testCondition);
-        result.addAll(this.cases);
+        for(TypeswitchCase c : cases)
+        {
+        	result.addAll(c.getAllExpressions());
+        }
         result.add(this.defaultExpression);
-        if (this.defaultVariableReferenceExpression != null)
-            result.add(this.defaultVariableReferenceExpression);
         return result;
     }
 

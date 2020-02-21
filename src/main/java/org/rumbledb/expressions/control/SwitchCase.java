@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * This is a helper class that organizes the children expressions of a child expression.
+ * This is a helper class that organizes the children expressions of a switch expression.
  * From a tree perspective, all expressions in there are considered
  * to be direct children of the SwitchExpression.
  */
