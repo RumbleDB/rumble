@@ -848,7 +848,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
                     this.visitExprSingle(currentPair.lhs);
                     keys.add(this.currentExpression);
                 } else {
-                	keys.add(new StringLiteralExpression(currentPair.name.getText(), createMetadataFromContext(ctx)));
+                    keys.add(new StringLiteralExpression(currentPair.name.getText(), createMetadataFromContext(ctx)));
                 }
                 this.visitExprSingle(currentPair.rhs);
                 values.add(this.currentExpression);
@@ -1092,7 +1092,12 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
         branch = this.currentExpression;
         this.visitExprSingle(ctx.else_branch);
         else_branch = this.currentExpression;
-        this.currentExpression = new ConditionalExpression(condition, branch, else_branch, createMetadataFromContext(ctx));
+        this.currentExpression = new ConditionalExpression(
+                condition,
+                branch,
+                else_branch,
+                createMetadataFromContext(ctx)
+        );
         return null;
     }
 
@@ -1103,11 +1108,10 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
         condition = this.currentExpression;
         List<SwitchCase> cases = new ArrayList<>();
         for (JsoniqParser.SwitchCaseClauseContext expr : ctx.cases) {
-        	List<Expression> conditionExpressions = new ArrayList<>();
-            for (int i = 0; i < expr.cond.size(); ++i)
-            {
-            	this.visitExprSingle(expr.cond.get(i));
-            	conditionExpressions.add(this.currentExpression);
+            List<Expression> conditionExpressions = new ArrayList<>();
+            for (int i = 0; i < expr.cond.size(); ++i) {
+                this.visitExprSingle(expr.cond.get(i));
+                conditionExpressions.add(this.currentExpression);
             }
             this.visitExprSingle(expr.ret);
             SwitchCase c = new SwitchCase(conditionExpressions, this.currentExpression);
