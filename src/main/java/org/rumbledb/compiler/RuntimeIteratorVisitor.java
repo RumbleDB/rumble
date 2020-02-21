@@ -922,12 +922,11 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     public RuntimeIterator visitSwitchExpression(SwitchExpression expression, RuntimeIterator argument) {
         Map<RuntimeIterator, RuntimeIterator> cases = new LinkedHashMap<>();
         for (SwitchCase caseExpression : expression.getCases()) {
-        	RuntimeIterator caseExpr = this.visit(caseExpression.getReturnExpression(), argument);
-        	for(Expression conditionExpr : caseExpression.getConditionExpressions())
-        	{
-        		RuntimeIterator condition = this.visit(conditionExpr, argument);
-	            cases.put( condition, caseExpr );
-        	}
+            RuntimeIterator caseExpr = this.visit(caseExpression.getReturnExpression(), argument);
+            for (Expression conditionExpr : caseExpression.getConditionExpressions()) {
+                RuntimeIterator condition = this.visit(conditionExpr, argument);
+                cases.put(condition, caseExpr);
+            }
         }
         return new SwitchRuntimeIterator(
                 this.visit(expression.getTestCondition(), argument),
@@ -945,7 +944,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         for (TypeswitchCase caseExpression : expression.getCases()) {
             cases.add(
                 new TypeSwitchRuntimeIteratorCase(
-                		caseExpression.getVariableName(),
+                        caseExpression.getVariableName(),
                         caseExpression.getUnion(),
                         this.visit(caseExpression.getReturnExpression(), argument)
                 )
@@ -953,7 +952,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         }
 
         TypeSwitchRuntimeIteratorCase defaultCase = new TypeSwitchRuntimeIteratorCase(
-        		expression.getDefaultVariableName(),
+                expression.getDefaultVariableName(),
                 this.visit(expression.getDefaultExpression(), argument)
         );
 

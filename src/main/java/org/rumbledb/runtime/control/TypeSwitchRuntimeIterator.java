@@ -70,7 +70,11 @@ public class TypeSwitchRuntimeIterator extends LocalRuntimeIterator {
         initializeIterator(this.testField, this.cases, this.defaultCase);
     }
 
-    private void initializeIterator(RuntimeIterator test, List<TypeSwitchRuntimeIteratorCase> cases, TypeSwitchRuntimeIteratorCase defaultCase) {
+    private void initializeIterator(
+            RuntimeIterator test,
+            List<TypeSwitchRuntimeIteratorCase> cases,
+            TypeSwitchRuntimeIteratorCase defaultCase
+    ) {
 
         this.testValue = test.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
 

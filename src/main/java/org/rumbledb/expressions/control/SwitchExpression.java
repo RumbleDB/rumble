@@ -63,9 +63,8 @@ public class SwitchExpression extends Expression {
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         result.add(this.testCondition);
-        for(SwitchCase c : this.cases)
-        {
-        	result.addAll(c.getAllExpressions());
+        for (SwitchCase c : this.cases) {
+            result.addAll(c.getAllExpressions());
         }
         result.add(this.defaultExpression);
         return result;
@@ -81,16 +80,14 @@ public class SwitchExpression extends Expression {
         StringBuilder result = new StringBuilder();
         result.append("(SwitchExpression switch ");
         result.append(this.testCondition.serializationString(false));
-        for(SwitchCase c : this.cases)
-        {
-        	for(Expression e : c.getConditionExpressions())
-        	{
-        		result.append("case ");
-        		result.append(e.serializationString(false));
-        		result.append(" ");
-        	}
-    		result.append("return ");
-    		result.append(c.getReturnExpression().serializationString(false));
+        for (SwitchCase c : this.cases) {
+            for (Expression e : c.getConditionExpressions()) {
+                result.append("case ");
+                result.append(e.serializationString(false));
+                result.append(" ");
+            }
+            result.append("return ");
+            result.append(c.getReturnExpression().serializationString(false));
         }
         result.append(" default ");
         result.append(this.defaultExpression.serializationString(false));

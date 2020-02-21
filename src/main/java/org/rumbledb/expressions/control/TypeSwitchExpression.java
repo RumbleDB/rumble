@@ -51,9 +51,8 @@ public class TypeSwitchExpression extends Expression {
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         result.add(this.testCondition);
-        for(TypeswitchCase c : cases)
-        {
-        	result.addAll(c.getAllExpressions());
+        for (TypeswitchCase c : cases) {
+            result.addAll(c.getAllExpressions());
         }
         result.add(this.defaultExpression);
         return result;
