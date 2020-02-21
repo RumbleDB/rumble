@@ -133,6 +133,7 @@ import org.rumbledb.runtime.functions.strings.StringFunctionIterator;
 import org.rumbledb.runtime.functions.strings.StringJoinFunctionIterator;
 import org.rumbledb.runtime.functions.strings.CodepointsToStringFunctionIterator;
 import org.rumbledb.runtime.functions.strings.StringToCodepointsFunctionIterator;
+import org.rumbledb.runtime.functions.strings.ReplaceFunctionIterator;
 import org.rumbledb.runtime.functions.strings.StringLengthFunctionIterator;
 import org.rumbledb.runtime.functions.strings.SubstringAfterFunctionIterator;
 import org.rumbledb.runtime.functions.strings.SubstringBeforeFunctionIterator;
@@ -339,6 +340,7 @@ public class Functions {
         builtInFunctions.put(string_function.getIdentifier(), string_function);
         builtInFunctions.put(codepoints_to_string.getIdentifier(), codepoints_to_string);
         builtInFunctions.put(string_to_codepoints.getIdentifier(), string_to_codepoints);
+        builtInFunctions.put(replace.getIdentifier(), replace);
         builtInFunctions.put(substring2.getIdentifier(), substring2);
         builtInFunctions.put(substring3.getIdentifier(), substring3);
         builtInFunctions.put(substring_before.getIdentifier(), substring_before);
@@ -1408,6 +1410,18 @@ public class Functions {
             "string",
             StringJoinFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+        /**
+         * function that replaces parts of a string according to a regex expression
+         */
+        static final BuiltinFunction replace = createBuiltinFunction(
+                "replace",
+                "string?",
+                "string",
+                "string",
+                "string",
+                ReplaceFunctionIterator.class,
+                BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the string length
