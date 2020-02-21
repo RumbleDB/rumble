@@ -1140,8 +1140,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
             List<FlworVarSequenceType> union = new ArrayList<>();
             String variableName = null;
             if (expr.var_ref != null) {
-                this.visitVarRef(expr.var_ref);
-                variableName = expr.var_ref.getText();
+                variableName = expr.var_ref.name.getText();
             }
             if (expr.union != null && !expr.union.isEmpty()) {
                 for (JsoniqParser.SequenceTypeContext sequenceType : expr.union) {
@@ -1160,8 +1159,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
         }
         String defaultVariableName = null;
         if (ctx.var_ref != null) {
-            this.visitVarRef(ctx.var_ref);
-            defaultVariableName = ctx.var_ref.getText();
+            defaultVariableName = ctx.var_ref.name.getText();
         }
         this.visitExprSingle(ctx.def);
         defaultCase = this.currentExpression;
