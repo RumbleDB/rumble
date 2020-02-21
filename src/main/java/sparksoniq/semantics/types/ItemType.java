@@ -96,7 +96,9 @@ public class ItemType implements Serializable {
             case "base64binary":
                 this.type = ItemTypes.Base64BinaryItem;
                 return;
-
+            case "item":
+                this.type = ItemTypes.Item;
+                return;
             default:
                 throw new OurBadException("Type unrecognized: " + text);
         }

@@ -911,7 +911,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
     @Override
     public Void visitSequenceType(JsoniqParser.SequenceTypeContext ctx) {
         if (ctx.item == null)
-            this.currentSequenceType = new SequenceType(new ItemType(ItemTypes.Item), SequenceType.Arity.ZeroOrMore);
+            this.currentSequenceType = SequenceType.mostGeneralSequenceType;
         else {
             ItemType itemType = new ItemType(ctx.item.getText());
             if (ctx.question.size() > 0)
@@ -930,7 +930,10 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
                         SequenceType.Arity.OneOrMore
                 );
             else
-                this.currentSequenceType = SequenceType.mostGeneralSequenceType;
+                this.currentSequenceType = new SequenceType(
+                        itemType,
+                        SequenceType.Arity.One
+                );
         }
         return null;
     }
