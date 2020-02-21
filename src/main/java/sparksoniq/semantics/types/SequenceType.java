@@ -90,6 +90,9 @@ public class SequenceType implements Serializable {
         if (this.isEmptySequence) {
             return sequenceType.isEmptySequence();
         }
+        if (sequenceType.isEmptySequence()) {
+            return false;
+        }
         return this.getItemType().equals(sequenceType.getItemType()) && this.getArity().equals(sequenceType.getArity());
     }
 
