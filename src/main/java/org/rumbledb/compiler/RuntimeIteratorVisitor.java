@@ -35,7 +35,6 @@ import org.rumbledb.expressions.control.TypeSwitchExpression;
 import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.FlworExpression;
-import org.rumbledb.expressions.flowr.FlworVarSequenceType;
 import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.ForClauseVar;
 import org.rumbledb.expressions.flowr.GroupByClause;
@@ -214,14 +213,14 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         if (clause instanceof ForClause) {
             for (ForClauseVar var : ((ForClause) clause).getForVariables()) {
                 RuntimeIterator assignmentIterator = this.visit(var.getExpression(), argument);
-                if (var.getAsSequence() != null && var.getAsSequence() != null) {
+                if (var.getSequenceType() != null && var.getSequenceType() != null) {
                     ExecutionMode executionMode = TreatExpression.calculateIsRDDFromSequenceTypeAndExpression(
-                        var.getAsSequence(),
+                        var.getSequenceType(),
                         var.getExpression()
                     );
                     assignmentIterator = new TreatIterator(
                             assignmentIterator,
-                            var.getAsSequence(),
+                            var.getSequenceType(),
                             false,
                             executionMode,
                             clause.getMetadata()
@@ -239,14 +238,14 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         } else if (clause instanceof LetClause) {
             for (LetClauseVar var : ((LetClause) clause).getLetVariables()) {
                 RuntimeIterator assignmentIterator = this.visit(var.getExpression(), argument);
-                if (var.getAsSequence() != null && var.getAsSequence() != null) {
+                if (var.getSequenceType() != null && var.getSequenceType() != null) {
                     ExecutionMode executionMode = TreatExpression.calculateIsRDDFromSequenceTypeAndExpression(
-                        var.getAsSequence(),
+                        var.getSequenceType(),
                         var.getExpression()
                     );
                     assignmentIterator = new TreatIterator(
                             assignmentIterator,
-                            var.getAsSequence(),
+                            var.getSequenceType(),
                             false,
                             executionMode,
                             clause.getMetadata()
@@ -268,14 +267,14 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 RuntimeIterator groupByExpressionIterator = null;
                 if (groupByExpression != null) {
                     groupByExpressionIterator = this.visit(groupByExpression, argument);
-                    if (var.getAsSequence() != null && var.getAsSequence() != null) {
+                    if (var.getSequenceType() != null && var.getSequenceType() != null) {
                         ExecutionMode executionMode = TreatExpression.calculateIsRDDFromSequenceTypeAndExpression(
-                            var.getAsSequence(),
+                            var.getSequenceType(),
                             groupByExpression
                         );
                         groupByExpressionIterator = new TreatIterator(
                                 groupByExpressionIterator,
-                                var.getAsSequence(),
+                                var.getSequenceType(),
                                 false,
                                 executionMode,
                                 clause.getMetadata()
@@ -837,7 +836,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator childExpression = this.visit(expression.getMainExpression(), argument);
         return new InstanceOfIterator(
                 childExpression,
-                expression.getsequenceType().getSequence(),
+                expression.getsequenceType(),
                 expression.getHighestExecutionMode(),
                 expression.getMetadata()
         );
@@ -848,7 +847,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator childExpression = this.visit(expression.getMainExpression(), argument);
         return new TreatIterator(
                 childExpression,
-                expression.getsequenceType().getSequence(),
+                expression.getsequenceType(),
                 true,
                 expression.getHighestExecutionMode(),
                 expression.getMetadata()

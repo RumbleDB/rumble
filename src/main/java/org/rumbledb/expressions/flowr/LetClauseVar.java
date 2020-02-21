@@ -62,8 +62,8 @@ public class LetClauseVar extends FlworVarDecl {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(letVar " + this.variableReferenceExpression.serializationString(false) + " ";
-        if (this.asSequenceType != null)
-            result += "as " + this.asSequenceType.toString() + " ";
+        if (this.sequenceType != null)
+            result += "as " + this.sequenceType.toString() + " ";
         result += ":= " + this.expression.serializationString(true);
         result += "))";
         return result;

@@ -25,7 +25,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.flowr.FlworVarSequenceType;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.runtime.functions.base.Functions;
 
@@ -104,18 +103,18 @@ public class InlineFunctionExpression extends PrimaryExpression {
         String result = "(functionDeclaration ";
         result += this.name;
         result += " (paramList (";
-        for (Map.Entry<String, FlworVarSequenceType> entry : this.params.entrySet()) {
+        for (Map.Entry<String, SequenceType> entry : this.params.entrySet()) {
             result += "param (";
             result += "NCName "
                 + entry.getKey()
                 + " sequenceType "
-                + entry.getValue().serializationString(false)
+                + entry.getValue().toString()
                 + ") , ";
         }
         result = result.substring(0, result.length() - 1); // remove last comma
         result += "))";
 
-        result += " (sequenceType ( " + this.returnType.serializationString(false) + "))";
+        result += " (sequenceType ( " + this.returnType.toString() + "))";
 
         result += " (expr (" + this.body.serializationString(false) + "))";
 

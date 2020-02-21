@@ -130,7 +130,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             .forEach(
                 (paramName, flworVarSequenceType) -> functionDeclarationContext.addVariable(
                     paramName,
-                    flworVarSequenceType.getSequence(),
+                    flworVarSequenceType,
                     expression.getMetadata(),
                     ExecutionMode.LOCAL // static udf currently supports materialized(local) params, not RDDs or DFs
                 )
@@ -226,9 +226,9 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     private StaticContext visitFlowrVarDeclaration(FlworVarDecl expression, StaticContext argument) {
         StaticContext result = new StaticContext(argument);
         // TODO for now we only suppot as/default, no inference, flags
-        SequenceType type = expression.getAsSequence() == null
+        SequenceType type = expression.getSequenceType() == null
             ? new SequenceType()
-            : expression.getAsSequence().getSequence();
+            : expression.getSequenceType();
         result.addVariable(
             expression.getVariableReference().getVariableName(),
             type,

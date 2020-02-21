@@ -643,13 +643,13 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
     @Override
     public Void visitTreatExpr(JsoniqParser.TreatExprContext ctx) {
         Expression mainExpression;
-        FlworVarSequenceType sequenceType;
+        SequenceType sequenceType;
         this.visitCastableExpr(ctx.main_expr);
         if (ctx.seq != null && !ctx.seq.isEmpty()) {
             mainExpression = this.currentExpression;
             JsoniqParser.SequenceTypeContext child = ctx.seq;
             this.visitSequenceType(child);
-            sequenceType = (FlworVarSequenceType) this.currentExpression;
+            sequenceType = this.currentSequenceType;
             this.currentExpression = new TreatExpression(mainExpression, sequenceType, createMetadataFromContext(ctx));
         }
         return null;
@@ -913,27 +913,21 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
         if (ctx.item == null)
             this.currentSequenceType = new SequenceType(new ItemType(ItemTypes.Item), SequenceType.Arity.ZeroOrMore);
         else {
-            ItemTypes item = SequenceType.getItemType(ctx.item.getText());
+            ItemType itemType = new ItemType(ctx.item.getText());
             if (ctx.question.size() > 0)
-                this.currentExpression = new FlworVarSequenceType(
-                        item,
-                        SequenceType.Arity.OneOrZero,
-                        createMetadataFromContext(ctx)
-                );
+                this.currentSequenceType = new SequenceType(
+                		itemType,
+                        SequenceType.Arity.OneOrZero);
             else if (ctx.star.size() > 0)
-                this.currentExpression = new FlworVarSequenceType(
-                        item,
-                        SequenceType.Arity.ZeroOrMore,
-                        createMetadataFromContext(ctx)
-                );
+                this.currentSequenceType = new SequenceType(
+                		itemType,
+                        SequenceType.Arity.ZeroOrMore );
             else if (ctx.plus.size() > 0)
-                this.currentExpression = new FlworVarSequenceType(
-                        item,
-                        SequenceType.Arity.OneOrMore,
-                        createMetadataFromContext(ctx)
-                );
+                this.currentSequenceType = new SequenceType(
+                		itemType,
+                        SequenceType.Arity.OneOrMore);
             else
-                this.currentExpression = new FlworVarSequenceType(item, createMetadataFromContext(ctx));
+                this.currentSequenceType = SequenceType.mostGeneralSequenceType;
         }
         return null;
     }
@@ -1030,20 +1024,14 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
 
     @Override
     public Void visitInlineFunctionExpr(JsoniqParser.InlineFunctionExprContext ctx) {
-        Map<String, FlworVarSequenceType> fnParams = new LinkedHashMap<>();
-        FlworVarSequenceType fnReturnType = new FlworVarSequenceType(
-                mostGeneralSequenceType,
-                createMetadataFromContext(ctx)
-        );
+        Map<String, SequenceType> fnParams = new LinkedHashMap<>();
+        SequenceType fnReturnType = SequenceType.mostGeneralSequenceType;
         String paramName;
-        FlworVarSequenceType paramType;
+        SequenceType paramType;
         if (ctx.paramList() != null) {
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
                 paramName = param.NCName().getText();
-                paramType = new FlworVarSequenceType(
-                        mostGeneralSequenceType,
-                        createMetadataFromContext(ctx)
-                );
+                paramType = SequenceType.mostGeneralSequenceType;
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
                             "inline-function`",
@@ -1053,7 +1041,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
                 }
                 if (param.sequenceType() != null) {
                     this.visitSequenceType(param.sequenceType());
-                    paramType = (FlworVarSequenceType) this.currentExpression;
+                    paramType = this.currentSequenceType;
                 }
                 fnParams.put(paramName, paramType);
             }
@@ -1061,7 +1049,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
 
         if (ctx.return_type != null) {
             this.visitSequenceType(ctx.return_type);
-            fnReturnType = (FlworVarSequenceType) this.currentExpression;
+            fnReturnType = this.currentSequenceType;
         }
 
         this.visitExpr(ctx.fn_body);
@@ -1202,7 +1190,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
                 new QuantifiedExpressionVar(
                         varRef,
                         varExpression,
-                        (sequenceType == null ? null : sequenceType.getSequence()),
+                        sequenceType,
                         createMetadataFromContext(ctx)
                 )
             );

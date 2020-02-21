@@ -2,7 +2,6 @@ package org.rumbledb.expressions.control;
 
 
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.flowr.FlworVarSequenceType;
 
 import sparksoniq.semantics.types.SequenceType;
 

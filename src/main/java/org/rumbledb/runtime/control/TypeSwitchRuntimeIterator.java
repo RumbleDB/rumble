@@ -3,12 +3,12 @@ package org.rumbledb.runtime.control;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.flowr.FlworVarSequenceType;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.semantics.types.SequenceType;
 
 import java.util.Collections;
 import java.util.List;
@@ -99,8 +99,8 @@ public class TypeSwitchRuntimeIterator extends LocalRuntimeIterator {
     }
 
     private boolean testTypeMatch(TypeSwitchRuntimeIteratorCase typeSwitchCase) {
-        for (FlworVarSequenceType sequenceType : typeSwitchCase.getSequenceTypeUnion()) {
-            if (this.testValue != null && this.testValue.isTypeOf(sequenceType.getSequence().getItemType())) {
+        for (SequenceType sequenceType : typeSwitchCase.getSequenceTypeUnion()) {
+            if (this.testValue != null && this.testValue.isTypeOf(sequenceType.getItemType())) {
                 if (typeSwitchCase.getVariableName() != null) {
                     this.currentDynamicContextForLocalExecution.addVariableValue(
                         typeSwitchCase.getVariableName(),
