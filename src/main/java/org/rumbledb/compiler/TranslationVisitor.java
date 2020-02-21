@@ -916,16 +916,19 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
             ItemType itemType = new ItemType(ctx.item.getText());
             if (ctx.question.size() > 0)
                 this.currentSequenceType = new SequenceType(
-                		itemType,
-                        SequenceType.Arity.OneOrZero);
+                        itemType,
+                        SequenceType.Arity.OneOrZero
+                );
             else if (ctx.star.size() > 0)
                 this.currentSequenceType = new SequenceType(
-                		itemType,
-                        SequenceType.Arity.ZeroOrMore );
+                        itemType,
+                        SequenceType.Arity.ZeroOrMore
+                );
             else if (ctx.plus.size() > 0)
                 this.currentSequenceType = new SequenceType(
-                		itemType,
-                        SequenceType.Arity.OneOrMore);
+                        itemType,
+                        SequenceType.Arity.OneOrMore
+                );
             else
                 this.currentSequenceType = SequenceType.mostGeneralSequenceType;
         }
