@@ -281,7 +281,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             StaticContext caseContext = new StaticContext(argument);
             String variableName = c.getVariableName();
             if (variableName != null) {
-                System.out.println("Found variable " + variableName);
                 caseContext.addVariable(
                     variableName,
                     null,
