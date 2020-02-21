@@ -22,6 +22,8 @@ package sparksoniq.semantics.types;
 
 import java.io.Serializable;
 
+import org.rumbledb.exceptions.OurBadException;
+
 public class SequenceType implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -34,6 +36,8 @@ public class SequenceType implements Serializable {
             Arity.ZeroOrMore
     );
 
+    public final static SequenceType emptySequence = new SequenceType();
+
 
     public SequenceType(ItemType itemType, Arity arity) {
         this.itemType = itemType;
@@ -45,9 +49,9 @@ public class SequenceType implements Serializable {
         this.arity = Arity.One;
     }
 
-    public SequenceType() {
-        this.itemType = new ItemType(ItemTypes.Item);
-        this.arity = Arity.ZeroOrMore;
+    private SequenceType() {
+        this.itemType = null;
+        this.arity = null;
         this.isEmptySequence = true;
     }
 
@@ -56,14 +60,23 @@ public class SequenceType implements Serializable {
     }
 
     public ItemType getItemType() {
+        if (this.isEmptySequence) {
+            throw new OurBadException("Empty sequence type has no item");
+        }
         return this.itemType;
     }
 
     public Arity getArity() {
+        if (this.isEmptySequence) {
+            throw new OurBadException("Empty sequence type has no arity");
+        }
         return this.arity;
     }
 
     public boolean isSubtypeOf(SequenceType superType) {
+        if (this.isEmptySequence) {
+            return this.arity == Arity.OneOrZero || this.arity == Arity.ZeroOrMore;
+        }
         return this.itemType.isSubtypeOf(superType.getItemType())
             &&
             this.arity == superType.arity;
@@ -74,6 +87,9 @@ public class SequenceType implements Serializable {
         if (!(o instanceof SequenceType))
             return false;
         SequenceType sequenceType = (SequenceType) o;
+        if (this.isEmptySequence) {
+            return sequenceType.isEmptySequence();
+        }
         return this.getItemType().equals(sequenceType.getItemType()) && this.getArity().equals(sequenceType.getArity());
     }
 

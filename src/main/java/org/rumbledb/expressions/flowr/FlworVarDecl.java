@@ -62,7 +62,7 @@ public abstract class FlworVarDecl extends Clause {
 
         // TODO add type inference?
         if (this.sequenceType == null)
-            this.variableReferenceExpression.setType(new SequenceType());
+            this.variableReferenceExpression.setType(SequenceType.emptySequence);
         else
             this.variableReferenceExpression.setType(this.sequenceType);
     }
