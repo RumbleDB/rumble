@@ -72,8 +72,14 @@ public class ReplaceFunctionIterator extends LocalFunctionCallIterator {
                     .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
             String replacement = replacementStringItem.getStringValue();
 
-            String result = stringItem.getStringValue().replaceAll(pattern, replacement);
+            String input;
+            if (stringItem == null) {
+                input = "";
+            } else {
+                input = stringItem.getStringValue();
+            }
 
+            String result = input.replaceAll(pattern, replacement);
             return ItemFactory.getInstance().createStringItem(result);
         } else
             throw new IteratorFlowException(
