@@ -129,6 +129,7 @@ import org.rumbledb.runtime.functions.strings.EndsWithFunctionIterator;
 import org.rumbledb.runtime.functions.strings.MatchesFunctionIterator;
 import org.rumbledb.runtime.functions.strings.NormalizeSpaceFunctionIterator;
 import org.rumbledb.runtime.functions.strings.StartsWithFunctionIterator;
+import org.rumbledb.runtime.functions.strings.LowerCaseFunctionIterator;
 import org.rumbledb.runtime.functions.strings.StringFunctionIterator;
 import org.rumbledb.runtime.functions.strings.StringJoinFunctionIterator;
 import org.rumbledb.runtime.functions.strings.CodepointsToStringFunctionIterator;
@@ -354,6 +355,7 @@ public class Functions {
         builtInFunctions.put(string_length.getIdentifier(), string_length);
         builtInFunctions.put(tokenize1.getIdentifier(), tokenize1);
         builtInFunctions.put(tokenize2.getIdentifier(), tokenize2);
+        builtInFunctions.put(lower_case.getIdentifier(), lower_case);
         builtInFunctions.put(starts_with.getIdentifier(), starts_with);
         builtInFunctions.put(matches.getIdentifier(), matches);
         builtInFunctions.put(contains.getIdentifier(), contains);
@@ -1450,6 +1452,16 @@ public class Functions {
             "string*",
             TokenizeFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+        /**
+         * function that turns all upper-case characters to lower-case
+         */
+        static final BuiltinFunction lower_case = createBuiltinFunction(
+                "lower-case",
+                "string?",
+                "string",
+                LowerCaseFunctionIterator.class,
+                BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that checks whether a string ends with a substring
