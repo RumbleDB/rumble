@@ -87,7 +87,7 @@ public class TranslateFunctionIterator extends LocalFunctionCallIterator {
             
         } else
             throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " replace function",
+                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " translate function",
                     getMetadata()
             );
     }
