@@ -123,24 +123,7 @@ import org.rumbledb.runtime.functions.sequences.general.TailFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.value.DeepEqualFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.value.DistinctValuesFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.value.IndexOfFunctionIterator;
-import org.rumbledb.runtime.functions.strings.ConcatFunctionIterator;
-import org.rumbledb.runtime.functions.strings.ContainsFunctionIterator;
-import org.rumbledb.runtime.functions.strings.EndsWithFunctionIterator;
-import org.rumbledb.runtime.functions.strings.MatchesFunctionIterator;
-import org.rumbledb.runtime.functions.strings.NormalizeSpaceFunctionIterator;
-import org.rumbledb.runtime.functions.strings.StartsWithFunctionIterator;
-import org.rumbledb.runtime.functions.strings.LowerCaseFunctionIterator;
-import org.rumbledb.runtime.functions.strings.UpperCaseFunctionIterator;
-import org.rumbledb.runtime.functions.strings.StringFunctionIterator;
-import org.rumbledb.runtime.functions.strings.StringJoinFunctionIterator;
-import org.rumbledb.runtime.functions.strings.CodepointsToStringFunctionIterator;
-import org.rumbledb.runtime.functions.strings.StringToCodepointsFunctionIterator;
-import org.rumbledb.runtime.functions.strings.ReplaceFunctionIterator;
-import org.rumbledb.runtime.functions.strings.StringLengthFunctionIterator;
-import org.rumbledb.runtime.functions.strings.SubstringAfterFunctionIterator;
-import org.rumbledb.runtime.functions.strings.SubstringBeforeFunctionIterator;
-import org.rumbledb.runtime.functions.strings.SubstringFunctionIterator;
-import org.rumbledb.runtime.functions.strings.TokenizeFunctionIterator;
+import org.rumbledb.runtime.functions.strings.*;
 import org.rumbledb.runtime.operational.TypePromotionIterator;
 
 import sparksoniq.jsoniq.ExecutionMode;
@@ -358,6 +341,7 @@ public class Functions {
         builtInFunctions.put(tokenize2.getIdentifier(), tokenize2);
         builtInFunctions.put(lower_case.getIdentifier(), lower_case);
         builtInFunctions.put(upper_case.getIdentifier(), upper_case);
+        builtInFunctions.put(translate.getIdentifier(), translate);
         builtInFunctions.put(starts_with.getIdentifier(), starts_with);
         builtInFunctions.put(matches.getIdentifier(), matches);
         builtInFunctions.put(contains.getIdentifier(), contains);
@@ -1473,6 +1457,18 @@ public class Functions {
                 "string?",
                 "string",
                 UpperCaseFunctionIterator.class,
+                BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+        /**
+         * function that turns all upper-case characters to upper-case
+         */
+        static final BuiltinFunction translate = createBuiltinFunction(
+                "translate",
+                "string?",
+                "string",
+                "string",
+                "string",
+                TranslateFunctionIterator.class,
                 BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
