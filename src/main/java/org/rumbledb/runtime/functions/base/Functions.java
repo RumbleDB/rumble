@@ -342,6 +342,7 @@ public class Functions {
         builtInFunctions.put(lower_case.getIdentifier(), lower_case);
         builtInFunctions.put(upper_case.getIdentifier(), upper_case);
         builtInFunctions.put(translate.getIdentifier(), translate);
+        builtInFunctions.put(codepoint_equal.getIdentifier(), codepoint_equal);
         builtInFunctions.put(starts_with.getIdentifier(), starts_with);
         builtInFunctions.put(matches.getIdentifier(), matches);
         builtInFunctions.put(contains.getIdentifier(), contains);
@@ -1379,6 +1380,17 @@ public class Functions {
                 "string?",
                 "integer*",
                 StringToCodepointsFunctionIterator.class,
+                BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+        /**
+         * function that compares Strings codepoint-by-codepoint
+         */
+        static final BuiltinFunction codepoint_equal = createBuiltinFunction(
+                "codepoint-equal",
+                "string?",
+                "string?",
+                "boolean",
+                CodepointEqualFunctionIterator.class,
                 BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
