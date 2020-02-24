@@ -31,7 +31,7 @@ import sparksoniq.semantics.types.SequenceType;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class FlworVarDecl extends FlworClause {
+public abstract class FlworVarDecl extends Clause {
 
     protected VariableReferenceExpression variableReferenceExpression;
     protected Expression expression;

@@ -29,7 +29,7 @@ import sparksoniq.jsoniq.ExecutionMode;
 import java.util.ArrayList;
 import java.util.List;
 
-public class OrderByClauseExpr extends FlworClause {
+public class OrderByClauseExpr extends Clause {
     private final Expression expression;
     private final boolean ascending;
     private final EMPTY_ORDER emptyOrder;

@@ -24,16 +24,18 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Node;
 
 /**
- * GRAMMAR:flowrExpression
+ * This is a clause, which is a component of a FLWOR expression.
+ * 
+ * Clauses, unlike expressions, return tuple streams.
+ * 
  */
+public abstract class Clause extends Node {
 
-public abstract class FlworClause extends Node {
-
-    protected FlworClause previousClause;
+    protected Clause previousClause;
     protected FLWOR_CLAUSES clauseType;
 
 
-    public FlworClause(FLWOR_CLAUSES clauseType, ExceptionMetadata metadata) {
+    public Clause(FLWOR_CLAUSES clauseType, ExceptionMetadata metadata) {
         super(metadata);
         this.clauseType = clauseType;
     }
@@ -42,11 +44,11 @@ public abstract class FlworClause extends Node {
         return this.clauseType;
     }
 
-    public FlworClause getPreviousClause() {
+    public Clause getPreviousClause() {
         return this.previousClause;
     }
 
-    public void setPreviousClause(FlworClause previousClause) {
+    public void setPreviousClause(Clause previousClause) {
         this.previousClause = previousClause;
     }
 

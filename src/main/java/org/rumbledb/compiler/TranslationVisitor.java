@@ -32,13 +32,13 @@ import org.rumbledb.exceptions.SparksoniqRuntimeException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.control.IfExpression;
-import org.rumbledb.expressions.control.SwitchCaseExpression;
+import org.rumbledb.expressions.control.ConditionalExpression;
+import org.rumbledb.expressions.control.SwitchCase;
 import org.rumbledb.expressions.control.SwitchExpression;
 import org.rumbledb.expressions.control.TypeSwitchCaseExpression;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
 import org.rumbledb.expressions.flowr.CountClause;
-import org.rumbledb.expressions.flowr.FlworClause;
+import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.FlworExpression;
 import org.rumbledb.expressions.flowr.FlworVarSequenceType;
 import org.rumbledb.expressions.flowr.FlworVarSingleType;
@@ -101,15 +101,18 @@ import java.util.Map;
 import static sparksoniq.semantics.types.SequenceType.mostGeneralSequenceType;
 
 
-// used to build AST, will override methods
+/**
+ * Translation is the phase in which the Abstract Syntax Tree is transformed
+ * into an Expression Tree, which is a JSONiq intermediate representation.
+ * 
+ * @author Stefan Irimescu, Can Berker Cikis, Ghislain Fourny, Andrea Rinaldi
+ *
+ */
 public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Void> {
 
     private MainModule mainModule;
-
     private Expression currentExpression;
-    private Expression otherCurrentExpression;
-
-    private FlworClause currentFlworClause;
+    private Clause currentClause;
 
 
     public TranslationVisitor() {
@@ -248,39 +251,40 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
     // TODO [EXPRVISITOR] count
     @Override
     public Void visitFlowrExpr(JsoniqParser.FlowrExprContext ctx) {
-        FlworClause startClause, childClause;
-        List<FlworClause> contentClauses = new ArrayList<>();
+        Clause startClause;
+        Clause childClause;
+        List<Clause> contentClauses = new ArrayList<>();
         ReturnClause returnClause;
         // check the start clause, for or let
         if (ctx.start_for == null) {
             this.visitLetClause(ctx.start_let);
-            startClause = this.currentFlworClause;
+            startClause = this.currentClause;
         } else {
             this.visitForClause(ctx.start_for);
-            startClause = this.currentFlworClause;
+            startClause = this.currentClause;
         }
 
         // exclude return + returnExpr
-        FlworClause previousFLWORClause = startClause;
+        Clause previousFLWORClause = startClause;
         for (ParseTree child : ctx.children.subList(1, ctx.children.size() - 2)) {
             if (child instanceof JsoniqParser.ForClauseContext) {
                 this.visitForClause((JsoniqParser.ForClauseContext) child);
-                childClause = this.currentFlworClause;
+                childClause = this.currentClause;
             } else if (child instanceof JsoniqParser.LetClauseContext) {
                 this.visitLetClause((JsoniqParser.LetClauseContext) child);
-                childClause = this.currentFlworClause;
+                childClause = this.currentClause;
             } else if (child instanceof JsoniqParser.WhereClauseContext) {
                 this.visitWhereClause((JsoniqParser.WhereClauseContext) child);
-                childClause = this.currentFlworClause;
+                childClause = this.currentClause;
             } else if (child instanceof JsoniqParser.GroupByClauseContext) {
                 this.visitGroupByClause((JsoniqParser.GroupByClauseContext) child);
-                childClause = this.currentFlworClause;
+                childClause = this.currentClause;
             } else if (child instanceof JsoniqParser.OrderByClauseContext) {
                 this.visitOrderByClause((JsoniqParser.OrderByClauseContext) child);
-                childClause = this.currentFlworClause;
+                childClause = this.currentClause;
             } else if (child instanceof JsoniqParser.CountClauseContext) {
                 this.visitCountClause((JsoniqParser.CountClauseContext) child);
-                childClause = this.currentFlworClause;
+                childClause = this.currentClause;
             } else
                 throw new UnsupportedFeatureException(
                         "FLOWR clause not implemented yet",
@@ -318,11 +322,11 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
         ForClauseVar child;
         for (JsoniqParser.ForVarContext var : ctx.vars) {
             this.visitForVar(var);
-            child = (ForClauseVar) this.currentFlworClause;
+            child = (ForClauseVar) this.currentClause;
             vars.add(child);
         }
 
-        this.currentFlworClause = new ForClause(vars, createMetadataFromContext(ctx));
+        this.currentClause = new ForClause(vars, createMetadataFromContext(ctx));
         return null;
     }
 
@@ -346,7 +350,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
         this.visitExprSingle(ctx.ex);
         expr = this.currentExpression;
 
-        this.currentFlworClause = new ForClauseVar(var, seq, emptyFlag, atVarRef, expr, createMetadataFromContext(ctx));
+        this.currentClause = new ForClauseVar(var, seq, emptyFlag, atVarRef, expr, createMetadataFromContext(ctx));
         return null;
     }
 
@@ -356,11 +360,11 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
         LetClauseVar child;
         for (JsoniqParser.LetVarContext var : ctx.vars) {
             this.visitLetVar(var);
-            child = (LetClauseVar) this.currentFlworClause;
+            child = (LetClauseVar) this.currentClause;
             vars.add(child);
         }
 
-        this.currentFlworClause = new LetClause(vars, createMetadataFromContext(ctx));
+        this.currentClause = new LetClause(vars, createMetadataFromContext(ctx));
         return null;
     }
 
@@ -378,7 +382,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
         this.visitExprSingle(ctx.ex);
         expr = this.currentExpression;
 
-        this.currentFlworClause = new LetClauseVar(var, seq, expr, createMetadataFromContext(ctx));
+        this.currentClause = new LetClauseVar(var, seq, expr, createMetadataFromContext(ctx));
         return null;
     }
 
@@ -388,10 +392,10 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
         GroupByClauseVar child;
         for (JsoniqParser.GroupByVarContext var : ctx.vars) {
             this.visitGroupByVar(var);
-            child = (GroupByClauseVar) this.currentFlworClause;
+            child = (GroupByClauseVar) this.currentClause;
             vars.add(child);
         }
-        this.currentFlworClause = new GroupByClause(vars, createMetadataFromContext(ctx));
+        this.currentClause = new GroupByClause(vars, createMetadataFromContext(ctx));
         return null;
 
     }
@@ -403,12 +407,12 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
         OrderByClauseExpr child;
         for (JsoniqParser.OrderByExprContext var : ctx.orderByExpr()) {
             this.visitOrderByExpr(var);
-            child = (OrderByClauseExpr) this.currentFlworClause;
+            child = (OrderByClauseExpr) this.currentClause;
             exprs.add(child);
         }
         if (ctx.stb != null && !ctx.stb.getText().isEmpty())
             stable = true;
-        this.currentFlworClause = new OrderByClause(exprs, stable, createMetadataFromContext(ctx));
+        this.currentClause = new OrderByClause(exprs, stable, createMetadataFromContext(ctx));
         return null;
 
     }
@@ -428,7 +432,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
             empty_order = OrderByClauseExpr.EMPTY_ORDER.FIRST;
         this.visitExprSingle(ctx.exprSingle());
         Expression expression = this.currentExpression;
-        this.currentFlworClause = new OrderByClauseExpr(
+        this.currentClause = new OrderByClauseExpr(
                 expression,
                 ascending,
                 uri,
@@ -460,7 +464,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
         if (ctx.uri != null)
             uri = ctx.uri.getText();
 
-        this.currentFlworClause = new GroupByClauseVar(var, seq, expr, uri, createMetadataFromContext(ctx));
+        this.currentClause = new GroupByClauseVar(var, seq, expr, uri, createMetadataFromContext(ctx));
         return null;
     }
 
@@ -469,7 +473,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
         Expression expr;
         this.visitExprSingle(ctx.exprSingle());
         expr = this.currentExpression;
-        this.currentFlworClause = new WhereClause(expr, createMetadataFromContext(ctx));
+        this.currentClause = new WhereClause(expr, createMetadataFromContext(ctx));
         return null;
     }
 
@@ -478,7 +482,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
         VariableReferenceExpression child;
         this.visitVarRef(ctx.varRef());
         child = (VariableReferenceExpression) this.currentExpression;
-        this.currentFlworClause = new CountClause(child, createMetadataFromContext(ctx));
+        this.currentClause = new CountClause(child, createMetadataFromContext(ctx));
         return null;
     }
     // endregion
@@ -847,9 +851,14 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
             List<Expression> keys = new ArrayList<>();
             List<Expression> values = new ArrayList<>();
             for (JsoniqParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
-                this.visitPairConstructor(currentPair);
-                keys.add(this.currentExpression);
-                values.add(this.otherCurrentExpression);
+                if (currentPair.lhs != null) {
+                    this.visitExprSingle(currentPair.lhs);
+                    keys.add(this.currentExpression);
+                } else {
+                    keys.add(new StringLiteralExpression(currentPair.name.getText(), createMetadataFromContext(ctx)));
+                }
+                this.visitExprSingle(currentPair.rhs);
+                values.add(this.currentExpression);
             }
             this.currentExpression = new ObjectConstructorExpression(keys, values, createMetadataFromContext(ctx));
         } else {
@@ -863,24 +872,6 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
         }
 
         return null;
-    }
-
-    // TODO[EXPRVISITOR]? not supported in Pair constructor
-    @Override
-    public Void visitPairConstructor(JsoniqParser.PairConstructorContext ctx) {
-        Expression rhs, lhs;
-        this.visitExprSingle(ctx.rhs);
-        rhs = this.currentExpression;
-        if (ctx.lhs != null) {
-            this.visitExprSingle(ctx.lhs);
-            lhs = this.currentExpression;
-        } else {
-            lhs = new StringLiteralExpression(ctx.name.getText(), createMetadataFromContext(ctx));
-        }
-        this.currentExpression = lhs;
-        this.otherCurrentExpression = rhs;
-        return null;
-
     }
 
     @Override
@@ -1102,7 +1093,12 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
         branch = this.currentExpression;
         this.visitExprSingle(ctx.else_branch);
         else_branch = this.currentExpression;
-        this.currentExpression = new IfExpression(condition, branch, else_branch, createMetadataFromContext(ctx));
+        this.currentExpression = new ConditionalExpression(
+                condition,
+                branch,
+                else_branch,
+                createMetadataFromContext(ctx)
+        );
         return null;
     }
 
@@ -1111,26 +1107,20 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
         Expression condition, defaultCase;
         this.visitExpr(ctx.cond);
         condition = this.currentExpression;
-        List<SwitchCaseExpression> cases = new ArrayList<>();
+        List<SwitchCase> cases = new ArrayList<>();
         for (JsoniqParser.SwitchCaseClauseContext expr : ctx.cases) {
-            this.visitSwitchCaseClause(expr);
-            cases.add((SwitchCaseExpression) this.currentExpression);
+            List<Expression> conditionExpressions = new ArrayList<>();
+            for (int i = 0; i < expr.cond.size(); ++i) {
+                this.visitExprSingle(expr.cond.get(i));
+                conditionExpressions.add(this.currentExpression);
+            }
+            this.visitExprSingle(expr.ret);
+            SwitchCase c = new SwitchCase(conditionExpressions, this.currentExpression);
+            cases.add(c);
         }
         this.visitExprSingle(ctx.def);
         defaultCase = this.currentExpression;
         this.currentExpression = new SwitchExpression(condition, cases, defaultCase, createMetadataFromContext(ctx));
-        return null;
-    }
-
-    @Override
-    public Void visitSwitchCaseClause(JsoniqParser.SwitchCaseClauseContext ctx) {
-        Expression condition, returnExpression;
-        // TODO multiple case expressions?
-        this.visitExprSingle(ctx.cond.get(0));
-        condition = this.currentExpression;
-        this.visitExprSingle(ctx.ret);
-        returnExpression = this.currentExpression;
-        this.currentExpression = new SwitchCaseExpression(condition, returnExpression, createMetadataFromContext(ctx));
         return null;
     }
     // endregion
