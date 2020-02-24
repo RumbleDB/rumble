@@ -28,6 +28,15 @@ public class TypeswitchCase {
         this.returnExpression = returnExpression;
     }
 
+    // for default
+    public TypeswitchCase(
+            String variableName,
+            Expression returnExpression
+    ) {
+        this.variableName = variableName;
+        this.returnExpression = returnExpression;
+    }
+
     public String getVariableName() {
         return this.variableName;
     }

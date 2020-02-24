@@ -13,22 +13,19 @@ public class TypeSwitchExpression extends Expression {
 
     private final Expression testCondition;
     private final List<TypeswitchCase> cases;
-    private final Expression defaultExpression;
-    private final String defaultVariableName;
+    private final TypeswitchCase defaultCase;
 
     public TypeSwitchExpression(
             Expression testCondition,
             List<TypeswitchCase> cases,
-            Expression defaultExpression,
-            String defaultVariableName,
+            TypeswitchCase defaultCase,
             ExceptionMetadata metadataFromContext
     ) {
 
         super(metadataFromContext);
         this.testCondition = testCondition;
         this.cases = cases;
-        this.defaultExpression = defaultExpression;
-        this.defaultVariableName = defaultVariableName;
+        this.defaultCase = defaultCase;
     }
 
     public Expression getTestCondition() {
@@ -39,12 +36,8 @@ public class TypeSwitchExpression extends Expression {
         return this.cases;
     }
 
-    public Expression getDefaultExpression() {
-        return this.defaultExpression;
-    }
-
-    public String getDefaultVariableName() {
-        return this.defaultVariableName;
+    public TypeswitchCase getDefaultCase() {
+        return this.defaultCase;
     }
 
     @Override
@@ -54,7 +47,7 @@ public class TypeSwitchExpression extends Expression {
         for (TypeswitchCase c : cases) {
             result.addAll(c.getAllExpressions());
         }
-        result.add(this.defaultExpression);
+        result.add(this.defaultCase.getReturnExpression());
         return result;
     }
 

@@ -1162,15 +1162,9 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
         this.currentExpression = new TypeSwitchExpression(
                 condition,
                 cases,
-                defaultCase,
-                defaultVariableName,
+                new TypeswitchCase(defaultVariableName, defaultCase),
                 createMetadataFromContext(ctx)
         );
-        return null;
-    }
-
-    @Override
-    public Void visitCaseClause(JsoniqParser.CaseClauseContext ctx) {
         return null;
     }
 

@@ -952,8 +952,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         }
 
         TypeSwitchRuntimeIteratorCase defaultCase = new TypeSwitchRuntimeIteratorCase(
-                expression.getDefaultVariableName(),
-                this.visit(expression.getDefaultExpression(), argument)
+                expression.getDefaultCase().getVariableName(),
+                this.visit(expression.getDefaultCase().getReturnExpression(), argument)
         );
 
         return new TypeSwitchRuntimeIterator(

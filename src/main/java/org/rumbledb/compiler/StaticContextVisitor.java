@@ -291,9 +291,9 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             this.visit(c.getReturnExpression(), caseContext);
         }
 
-        String defaultCaseVariableName = expression.getDefaultVariableName();
+        String defaultCaseVariableName = expression.getDefaultCase().getVariableName();
         if (defaultCaseVariableName == null) {
-            this.visit(expression.getDefaultExpression(), argument);
+            this.visit(expression.getDefaultCase().getReturnExpression(), argument);
         } else {
             // add variable to child context to visit default return expression
             StaticContext defaultCaseStaticContext = new StaticContext(argument);
@@ -303,7 +303,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                 expression.getMetadata(),
                 ExecutionMode.LOCAL
             );
-            this.visit(expression.getDefaultExpression(), defaultCaseStaticContext);
+            this.visit(expression.getDefaultCase().getReturnExpression(), defaultCaseStaticContext);
         }
         expression.initHighestExecutionMode();
         // return the given context unchanged as defined variables go out of scope
