@@ -13,26 +13,26 @@ import sparksoniq.semantics.DynamicContext;
 import java.util.Collections;
 import java.util.List;
 
-public class TypeSwitchRuntimeIterator extends LocalRuntimeIterator {
+public class TypeswitchRuntimeIterator extends LocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator testField;
-    private final List<TypeSwitchRuntimeIteratorCase> cases;
-    private final TypeSwitchRuntimeIteratorCase defaultCase;
+    private final List<TypeswitchRuntimeIteratorCase> cases;
+    private final TypeswitchRuntimeIteratorCase defaultCase;
     private RuntimeIterator matchingIterator = null;
     private Item testValue;
 
 
-    public TypeSwitchRuntimeIterator(
+    public TypeswitchRuntimeIterator(
             RuntimeIterator test,
-            List<TypeSwitchRuntimeIteratorCase> cases,
-            TypeSwitchRuntimeIteratorCase defaultCase,
+            List<TypeswitchRuntimeIteratorCase> cases,
+            TypeswitchRuntimeIteratorCase defaultCase,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
     ) {
         super(null, executionMode, iteratorMetadata);
         this.children.add(test);
-        for (TypeSwitchRuntimeIteratorCase typeSwitchCase : cases) {
+        for (TypeswitchRuntimeIteratorCase typeSwitchCase : cases) {
             this.children.add(typeSwitchCase.getReturnIterator());
         }
         this.children.add(defaultCase.getReturnIterator());
@@ -72,13 +72,13 @@ public class TypeSwitchRuntimeIterator extends LocalRuntimeIterator {
 
     private void initializeIterator(
             RuntimeIterator test,
-            List<TypeSwitchRuntimeIteratorCase> cases,
-            TypeSwitchRuntimeIteratorCase defaultCase
+            List<TypeswitchRuntimeIteratorCase> cases,
+            TypeswitchRuntimeIteratorCase defaultCase
     ) {
 
         this.testValue = test.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
 
-        for (TypeSwitchRuntimeIteratorCase typeSwitchCase : cases) {
+        for (TypeswitchRuntimeIteratorCase typeSwitchCase : cases) {
             if (testTypeMatch(typeSwitchCase))
                 break;
         }
@@ -98,7 +98,7 @@ public class TypeSwitchRuntimeIterator extends LocalRuntimeIterator {
         this.matchingIterator.close();
     }
 
-    private boolean testTypeMatch(TypeSwitchRuntimeIteratorCase typeSwitchCase) {
+    private boolean testTypeMatch(TypeswitchRuntimeIteratorCase typeSwitchCase) {
         for (FlworVarSequenceType sequenceType : typeSwitchCase.getSequenceTypeUnion()) {
             if (this.testValue != null && this.testValue.isTypeOf(sequenceType.getSequence().getItemType())) {
                 if (typeSwitchCase.getVariableName() != null) {
