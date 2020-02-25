@@ -184,6 +184,8 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
                 if (param.sequenceType() != null) {
                     this.visitSequenceType(param.sequenceType());
                     paramType = this.currentSequenceType;
+                } else {
+                    paramType = SequenceType.mostGeneralSequenceType;
                 }
                 fnParams.put(paramName, paramType);
             }
@@ -192,6 +194,8 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
         if (ctx.return_type != null) {
             this.visitSequenceType(ctx.return_type);
             fnReturnType = this.currentSequenceType;
+        } else {
+            fnReturnType = SequenceType.mostGeneralSequenceType;
         }
 
         this.visitExpr(ctx.fn_body);
@@ -452,6 +456,8 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
         if (ctx.seq != null) {
             this.visitSequenceType(ctx.seq);
             seq = this.currentSequenceType;
+        } else {
+            seq = SequenceType.mostGeneralSequenceType;
         }
 
         if (ctx.ex != null) {
@@ -1049,6 +1055,8 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
                 if (param.sequenceType() != null) {
                     this.visitSequenceType(param.sequenceType());
                     paramType = this.currentSequenceType;
+                } else {
+                    paramType = SequenceType.mostGeneralSequenceType;
                 }
                 fnParams.put(paramName, paramType);
             }
@@ -1178,6 +1186,8 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
             if (currentVariable.sequenceType() != null) {
                 this.visitSequenceType(currentVariable.sequenceType());
                 sequenceType = this.currentSequenceType;
+            } else {
+                sequenceType = SequenceType.mostGeneralSequenceType;
             }
 
             this.visitExprSingle(currentVariable.exprSingle());
