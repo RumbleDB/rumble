@@ -75,7 +75,7 @@ public class SequenceType implements Serializable {
 
     public boolean isSubtypeOf(SequenceType superType) {
         if (this.isEmptySequence) {
-            return this.arity == Arity.OneOrZero || this.arity == Arity.ZeroOrMore;
+            return superType.arity == Arity.OneOrZero || superType.arity == Arity.ZeroOrMore;
         }
         return this.itemType.isSubtypeOf(superType.getItemType())
             &&
@@ -83,10 +83,10 @@ public class SequenceType implements Serializable {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (!(o instanceof SequenceType))
+    public boolean equals(Object other) {
+        if (!(other instanceof SequenceType))
             return false;
-        SequenceType sequenceType = (SequenceType) o;
+        SequenceType sequenceType = (SequenceType) other;
         if (this.isEmptySequence) {
             return sequenceType.isEmptySequence();
         }
