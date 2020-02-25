@@ -28,7 +28,7 @@ import java.util.List;
 
 /**
  * This is a helper class that organizes the children expressions of a switch expression.
- * From a tree perspective, all expressions in there are considered
+ * From a tree perspective, all expressions in this class are considered
  * to be direct children of the SwitchExpression.
  */
 public class SwitchCase {

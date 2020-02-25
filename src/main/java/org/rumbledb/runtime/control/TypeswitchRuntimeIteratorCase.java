@@ -6,12 +6,12 @@ import sparksoniq.semantics.types.SequenceType;
 
 import java.util.List;
 
-public class TypeSwitchRuntimeIteratorCase {
+public class TypeswitchRuntimeIteratorCase {
     private final String variableName;
     private final List<SequenceType> sequenceTypeUnion;
     private final RuntimeIterator returnIterator;
 
-    public TypeSwitchRuntimeIteratorCase(
+    public TypeswitchRuntimeIteratorCase(
             String variableName,
             List<SequenceType> sequenceTypeUnion,
             RuntimeIterator returnIterator
@@ -21,7 +21,7 @@ public class TypeSwitchRuntimeIteratorCase {
         this.returnIterator = returnIterator;
     }
 
-    public TypeSwitchRuntimeIteratorCase(String variableName, RuntimeIterator returnIterator) {
+    public TypeswitchRuntimeIteratorCase(String variableName, RuntimeIterator returnIterator) {
         this.variableName = variableName;
         this.sequenceTypeUnion = null;
         this.returnIterator = returnIterator;

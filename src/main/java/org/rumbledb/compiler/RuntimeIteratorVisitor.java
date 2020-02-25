@@ -86,8 +86,8 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.control.IfRuntimeIterator;
 import org.rumbledb.runtime.control.SwitchRuntimeIterator;
-import org.rumbledb.runtime.control.TypeSwitchRuntimeIterator;
-import org.rumbledb.runtime.control.TypeSwitchRuntimeIteratorCase;
+import org.rumbledb.runtime.control.TypeswitchRuntimeIterator;
+import org.rumbledb.runtime.control.TypeswitchRuntimeIteratorCase;
 import org.rumbledb.runtime.flowr.CountClauseSparkIterator;
 import org.rumbledb.runtime.flowr.ForClauseSparkIterator;
 import org.rumbledb.runtime.flowr.GroupByClauseSparkIterator;
@@ -939,10 +939,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitTypeSwitchExpression(TypeSwitchExpression expression, RuntimeIterator argument) {
-        List<TypeSwitchRuntimeIteratorCase> cases = new ArrayList<>();
+        List<TypeswitchRuntimeIteratorCase> cases = new ArrayList<>();
         for (TypeswitchCase caseExpression : expression.getCases()) {
             cases.add(
-                new TypeSwitchRuntimeIteratorCase(
+                new TypeswitchRuntimeIteratorCase(
                         caseExpression.getVariableName(),
                         caseExpression.getUnion(),
                         this.visit(caseExpression.getReturnExpression(), argument)
@@ -950,12 +950,12 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             );
         }
 
-        TypeSwitchRuntimeIteratorCase defaultCase = new TypeSwitchRuntimeIteratorCase(
-                expression.getDefaultVariableName(),
-                this.visit(expression.getDefaultExpression(), argument)
+        TypeswitchRuntimeIteratorCase defaultCase = new TypeswitchRuntimeIteratorCase(
+                expression.getDefaultCase().getVariableName(),
+                this.visit(expression.getDefaultCase().getReturnExpression(), argument)
         );
 
-        return new TypeSwitchRuntimeIterator(
+        return new TypeswitchRuntimeIterator(
                 this.visit(expression.getTestCondition(), argument),
                 cases,
                 defaultCase,

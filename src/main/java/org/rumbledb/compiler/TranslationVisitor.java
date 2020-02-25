@@ -100,7 +100,13 @@ import java.util.Map;
 import static sparksoniq.semantics.types.SequenceType.mostGeneralSequenceType;
 
 
-// used to build AST, will override methods
+/**
+ * Translation is the phase in which the Abstract Syntax Tree is transformed
+ * into an Expression Tree, which is a JSONiq intermediate representation.
+ * 
+ * @author Stefan Irimescu, Can Berker Cikis, Ghislain Fourny, Andrea Rinaldi
+ *
+ */
 public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Void> {
 
     private MainModule mainModule;
@@ -239,7 +245,8 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
     // TODO [EXPRVISITOR] count
     @Override
     public Void visitFlowrExpr(JsoniqParser.FlowrExprContext ctx) {
-        Clause startClause, childClause;
+        Clause startClause;
+        Clause childClause;
         List<Clause> contentClauses = new ArrayList<>();
         ReturnClause returnClause;
         // check the start clause, for or let
@@ -862,12 +869,6 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
     }
 
     @Override
-    public Void visitPairConstructor(JsoniqParser.PairConstructorContext ctx) {
-        return null;
-
-    }
-
-    @Override
     public Void visitArrayConstructor(JsoniqParser.ArrayConstructorContext ctx) {
         Expression content;
         if (ctx.expr() == null)
@@ -1107,11 +1108,6 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
         this.currentExpression = new SwitchExpression(condition, cases, defaultCase, createMetadataFromContext(ctx));
         return null;
     }
-
-    @Override
-    public Void visitSwitchCaseClause(JsoniqParser.SwitchCaseClauseContext ctx) {
-        return null;
-    }
     // endregion
 
     // region quantified
@@ -1151,15 +1147,9 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
         this.currentExpression = new TypeSwitchExpression(
                 condition,
                 cases,
-                defaultCase,
-                defaultVariableName,
+                new TypeswitchCase(defaultVariableName, defaultCase),
                 createMetadataFromContext(ctx)
         );
-        return null;
-    }
-
-    @Override
-    public Void visitCaseClause(JsoniqParser.CaseClauseContext ctx) {
         return null;
     }
 
