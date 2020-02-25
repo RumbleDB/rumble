@@ -99,16 +99,18 @@ public class TypeswitchRuntimeIterator extends LocalRuntimeIterator {
     }
 
     private boolean testTypeMatch(TypeswitchRuntimeIteratorCase typeSwitchCase) {
-        for (FlworVarSequenceType sequenceType : typeSwitchCase.getSequenceTypeUnion()) {
-            if (this.testValue != null && this.testValue.isTypeOf(sequenceType.getSequence().getItemType())) {
-                if (typeSwitchCase.getVariableName() != null) {
-                    this.currentDynamicContextForLocalExecution.addVariableValue(
-                        typeSwitchCase.getVariableName(),
-                        Collections.singletonList(this.testValue)
-                    );
+        if (typeSwitchCase.getSequenceTypeUnion() != null) {
+            for (FlworVarSequenceType sequenceType : typeSwitchCase.getSequenceTypeUnion()) {
+                if (this.testValue != null && this.testValue.isTypeOf(sequenceType.getSequence().getItemType())) {
+                    if (typeSwitchCase.getVariableName() != null) {
+                        this.currentDynamicContextForLocalExecution.addVariableValue(
+                            typeSwitchCase.getVariableName(),
+                            Collections.singletonList(this.testValue)
+                        );
+                    }
+                    this.matchingIterator = typeSwitchCase.getReturnIterator();
+                    return true;
                 }
-                this.matchingIterator = typeSwitchCase.getReturnIterator();
-                return true;
             }
         }
         return false;
