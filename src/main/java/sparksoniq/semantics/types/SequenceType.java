@@ -124,4 +124,14 @@ public class SequenceType implements Serializable {
 
         public abstract String getSymbol();
     }
+
+    @Override
+    public String toString() {
+        if (this.isEmptySequence)
+            return "()";
+        StringBuilder result = new StringBuilder();
+        result.append(this.getItemType().toString());
+        result.append(this.arity.getSymbol());
+        return result.toString();
+    }
 }

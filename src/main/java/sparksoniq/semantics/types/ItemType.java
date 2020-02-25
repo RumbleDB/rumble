@@ -145,4 +145,36 @@ public class ItemType implements Serializable {
         ItemType itemType = (ItemType) o;
         return this.getType().equals(itemType.getType());
     }
+
+
+    @Override
+    public String toString() {
+        switch (type) {
+            case Item:
+                return "item";
+            case IntegerItem:
+                return "integer";
+            case DecimalItem:
+                return "decimal";
+            case DoubleItem:
+                return "double";
+            case AtomicItem:
+                return "atomic";
+            case StringItem:
+                return "string";
+            case BooleanItem:
+                return "boolean";
+            case NullItem:
+                return "null";
+
+            case JSONItem:
+                return "json-item";
+            case ArrayItem:
+                return "array";
+            case ObjectItem:
+                return "object";
+            default:
+                return "item";
+        }
+    }
 }
