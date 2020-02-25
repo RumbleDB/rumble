@@ -71,7 +71,7 @@ public class ConditionalExpression extends Expression {
 
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        return visitor.visitIfExpression(this, argument);
+        return visitor.visitConditionalExpression(this, argument);
     }
 
     @Override

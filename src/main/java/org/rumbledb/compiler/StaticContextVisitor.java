@@ -24,7 +24,7 @@ import org.rumbledb.exceptions.UndeclaredVariableException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.control.TypeSwitchCaseExpression;
+import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
 import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.Clause;
@@ -277,40 +277,34 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitTypeSwitchExpression(TypeSwitchExpression expression, StaticContext argument) {
         this.visit(expression.getTestCondition(), argument);
-        expression.getCases().forEach(typeSwitchCaseExpression -> this.visit(typeSwitchCaseExpression, argument));
+        for (TypeswitchCase c : expression.getCases()) {
+            StaticContext caseContext = new StaticContext(argument);
+            String variableName = c.getVariableName();
+            if (variableName != null) {
+                caseContext.addVariable(
+                    variableName,
+                    null,
+                    expression.getMetadata(),
+                    ExecutionMode.LOCAL
+                );
+            }
+            this.visit(c.getReturnExpression(), caseContext);
+        }
 
-        VariableReferenceExpression defaultCaseVariableReference = expression.getDefaultVariableReferenceExpression();
-        if (defaultCaseVariableReference == null) {
-            this.visit(expression.getDefaultExpression(), argument);
+        String defaultCaseVariableName = expression.getDefaultCase().getVariableName();
+        if (defaultCaseVariableName == null) {
+            this.visit(expression.getDefaultCase().getReturnExpression(), argument);
         } else {
             // add variable to child context to visit default return expression
             StaticContext defaultCaseStaticContext = new StaticContext(argument);
             defaultCaseStaticContext.addVariable(
-                defaultCaseVariableReference.getVariableName(),
+                defaultCaseVariableName,
                 null,
                 expression.getMetadata(),
                 ExecutionMode.LOCAL
             );
-            this.visit(expression.getDefaultExpression(), defaultCaseStaticContext);
+            this.visit(expression.getDefaultCase().getReturnExpression(), defaultCaseStaticContext);
         }
-        expression.initHighestExecutionMode();
-        // return the given context unchanged as defined variables go out of scope
-        return argument;
-    }
-
-    @Override
-    public StaticContext visitTypeSwitchCaseExpression(TypeSwitchCaseExpression expression, StaticContext argument) {
-        StaticContext caseContext = new StaticContext(argument);
-        VariableReferenceExpression variableReference = expression.getVariableReference();
-        if (variableReference != null) {
-            caseContext.addVariable(
-                variableReference.getVariableName(),
-                null,
-                expression.getMetadata(),
-                ExecutionMode.LOCAL
-            );
-        }
-        this.visit(expression.getReturnExpression(), caseContext);
         expression.initHighestExecutionMode();
         // return the given context unchanged as defined variables go out of scope
         return argument;

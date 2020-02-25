@@ -35,7 +35,7 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchCase;
 import org.rumbledb.expressions.control.SwitchExpression;
-import org.rumbledb.expressions.control.TypeSwitchCaseExpression;
+import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
 import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.Clause;
@@ -1131,50 +1131,38 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
         Expression condition, defaultCase;
         this.visitExpr(ctx.cond);
         condition = this.currentExpression;
-        List<TypeSwitchCaseExpression> cases = new ArrayList<>();
+        List<TypeswitchCase> cases = new ArrayList<>();
         for (JsoniqParser.CaseClauseContext expr : ctx.cses) {
-            this.visitCaseClause(expr);
-            cases.add((TypeSwitchCaseExpression) this.currentExpression);
+            List<FlworVarSequenceType> union = new ArrayList<>();
+            String variableName = null;
+            if (expr.var_ref != null) {
+                variableName = expr.var_ref.name.getText();
+            }
+            if (expr.union != null && !expr.union.isEmpty()) {
+                for (JsoniqParser.SequenceTypeContext sequenceType : expr.union) {
+                    this.visitSequenceType(sequenceType);
+                    union.add((FlworVarSequenceType) this.currentExpression);
+                }
+            }
+            this.visitExprSingle(expr.ret);
+            cases.add(
+                new TypeswitchCase(
+                        variableName,
+                        union,
+                        this.currentExpression
+                )
+            );
         }
-        VariableReferenceExpression varRefDefault = null;
+        String defaultVariableName = null;
         if (ctx.var_ref != null) {
-            this.visitVarRef(ctx.var_ref);
-            varRefDefault = (VariableReferenceExpression) this.currentExpression;
+            defaultVariableName = ctx.var_ref.name.getText();
         }
         this.visitExprSingle(ctx.def);
         defaultCase = this.currentExpression;
         this.currentExpression = new TypeSwitchExpression(
                 condition,
                 cases,
-                defaultCase,
-                varRefDefault,
-                createMetadataFromContext(ctx)
-        );
-        return null;
-    }
-
-    @Override
-    public Void visitCaseClause(JsoniqParser.CaseClauseContext ctx) {
-        Expression returnExpression;
-
-        VariableReferenceExpression var = null;
-        List<FlworVarSequenceType> union = new ArrayList<>();
-        if (ctx.var_ref != null) {
-            this.visitVarRef(ctx.var_ref);
-            var = (VariableReferenceExpression) this.currentExpression;
-        }
-        if (ctx.union != null && !ctx.union.isEmpty()) {
-            for (JsoniqParser.SequenceTypeContext sequenceType : ctx.union) {
-                this.visitSequenceType(sequenceType);
-                union.add((FlworVarSequenceType) this.currentExpression);
-            }
-        }
-        this.visitExprSingle(ctx.ret);
-        returnExpression = this.currentExpression;
-        this.currentExpression = new TypeSwitchCaseExpression(
-                var,
-                union,
-                returnExpression,
+                new TypeswitchCase(defaultVariableName, defaultCase),
                 createMetadataFromContext(ctx)
         );
         return null;
