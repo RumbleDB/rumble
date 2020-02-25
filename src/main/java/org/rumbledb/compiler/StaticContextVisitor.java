@@ -227,7 +227,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         StaticContext result = new StaticContext(argument);
         // TODO for now we only suppot as/default, no inference, flags
         SequenceType type = expression.getSequenceType() == null
-            ? SequenceType.mostGeneralSequenceType
+            ? SequenceType.emptySequence
             : expression.getSequenceType();
         result.addVariable(
             expression.getVariableReference().getVariableName(),
@@ -263,7 +263,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         // create a child context, add the variable and return it
         StaticContext result = new StaticContext(argument);
         SequenceType type = expression.getSequenceType() == null
-            ? SequenceType.mostGeneralSequenceType
+            ? SequenceType.emptySequence
             : expression.getSequenceType();
         result.addVariable(
             expression.getVariableReference().getVariableName(),
