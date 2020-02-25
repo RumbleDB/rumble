@@ -104,8 +104,8 @@ public class TypeswitchRuntimeIterator extends LocalRuntimeIterator {
                 if (this.testValue != null && this.testValue.isTypeOf(sequenceType.getItemType())) {
                     if (typeSwitchCase.getVariableName() != null) {
                         this.currentDynamicContextForLocalExecution.addVariableValue(
-                                typeSwitchCase.getVariableName(),
-                                Collections.singletonList(this.testValue)
+                            typeSwitchCase.getVariableName(),
+                            Collections.singletonList(this.testValue)
                         );
                     }
                     this.matchingIterator = typeSwitchCase.getReturnIterator();
