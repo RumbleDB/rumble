@@ -15,7 +15,7 @@ import java.util.List;
 public class TypeswitchCase {
 
     private String variableName;
-    private List<FlworVarSequenceType> union = new ArrayList<>();
+    private List<FlworVarSequenceType> union = null;
     private final Expression returnExpression;
 
     public TypeswitchCase(
@@ -24,11 +24,10 @@ public class TypeswitchCase {
             Expression returnExpression
     ) {
         this.variableName = variableName;
-        this.union.addAll(union);
+        union = new ArrayList<>(union);
         this.returnExpression = returnExpression;
     }
 
-    // for default
     public TypeswitchCase(
             String variableName,
             Expression returnExpression
