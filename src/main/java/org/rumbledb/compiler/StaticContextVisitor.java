@@ -128,9 +128,9 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         StaticContext functionDeclarationContext = new StaticContext(argument);
         expression.getParams()
             .forEach(
-                (paramName, flworVarSequenceType) -> functionDeclarationContext.addVariable(
+                (paramName, sequenceType) -> functionDeclarationContext.addVariable(
                     paramName,
-                    flworVarSequenceType,
+                    sequenceType,
                     expression.getMetadata(),
                     ExecutionMode.LOCAL // static udf currently supports materialized(local) params, not RDDs or DFs
                 )

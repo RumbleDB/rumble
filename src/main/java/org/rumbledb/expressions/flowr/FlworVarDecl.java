@@ -58,13 +58,12 @@ public abstract class FlworVarDecl extends Clause {
             throw new IllegalArgumentException("Flowr var decls cannot be empty");
         this.variableReferenceExpression = variableReferenceExpression;
         this.sequenceType = sequenceType;
+        if (this.sequenceType == null) {
+            throw new OurBadException("A sequence type cannot be null");
+        }
         this.expression = expression;
 
-        // TODO add type inference?
-        if (this.sequenceType == null)
-            this.variableReferenceExpression.setType(SequenceType.emptySequence);
-        else
-            this.variableReferenceExpression.setType(this.sequenceType);
+        this.variableReferenceExpression.setType(this.sequenceType);
     }
 
     public VariableReferenceExpression getVariableReference() {

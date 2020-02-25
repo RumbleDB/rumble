@@ -335,6 +335,8 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
         if (ctx.seq != null) {
             this.visitSequenceType(ctx.seq);
             seq = this.currentSequenceType;
+        } else {
+            seq = SequenceType.mostGeneralSequenceType;
         }
         emptyFlag = (ctx.flag != null);
         if (ctx.at != null) {
@@ -372,6 +374,8 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
         if (ctx.seq != null) {
             this.visitSequenceType(ctx.seq);
             seq = this.currentSequenceType;
+        } else {
+            seq = SequenceType.mostGeneralSequenceType;
         }
         this.visitExprSingle(ctx.ex);
         expr = this.currentExpression;

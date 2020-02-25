@@ -204,9 +204,7 @@ public class FrontendTests extends AnnotationsTestsBase {
             );
         js.forEach(
             j -> Assert.assertTrue(
-                ((VariableReferenceExpression) j).getType().isEmptySequence()
-                    ||
-                    ((VariableReferenceExpression) j).getType().getItemType().getType().equals(ItemTypes.Item)
+                ((VariableReferenceExpression) j).getType().getItemType().getType().equals(ItemTypes.Item)
                     ||
                     ((VariableReferenceExpression) j).getType().getItemType().getType().equals(ItemTypes.StringItem)
             )
