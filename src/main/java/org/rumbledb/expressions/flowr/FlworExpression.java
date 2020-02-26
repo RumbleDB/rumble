@@ -32,13 +32,13 @@ import java.util.List;
 
 public class FlworExpression extends Expression {
 
-    private FlworClause startClause;
-    private List<FlworClause> contentClauses;
+    private Clause startClause;
+    private List<Clause> contentClauses;
     private ReturnClause returnClause;
 
     public FlworExpression(
-            FlworClause startClause,
-            List<FlworClause> containingClauses,
+            Clause startClause,
+            List<Clause> containingClauses,
             ReturnClause returnClause,
             ExceptionMetadata metadata
     ) {
@@ -55,15 +55,15 @@ public class FlworExpression extends Expression {
         setReturnClause(returnClause);
     }
 
-    public FlworClause getStartClause() {
+    public Clause getStartClause() {
         return this.startClause;
     }
 
-    public List<FlworClause> getContentClauses() {
+    public List<Clause> getContentClauses() {
         return this.contentClauses;
     }
 
-    private void setContentClauses(List<FlworClause> contentClauses) {
+    private void setContentClauses(List<Clause> contentClauses) {
         this.contentClauses = new ArrayList<>();
         this.contentClauses.addAll(contentClauses);
     }
@@ -109,14 +109,14 @@ public class FlworExpression extends Expression {
     public String serializationString(boolean prefix) {
         String result = "(flowrExpr ";
         result += this.startClause.serializationString(true) + " ";
-        for (FlworClause clause : this.contentClauses)
+        for (Clause clause : this.contentClauses)
             result += clause.serializationString(true) + " ";
         result += this.returnClause.serializationString(true);
         result += "))";
         return result;
     }
 
-    private void setStartClause(FlworClause startClause) {
+    private void setStartClause(Clause startClause) {
         this.startClause = startClause;
     }
 

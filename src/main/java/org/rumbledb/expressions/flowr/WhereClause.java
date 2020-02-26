@@ -29,7 +29,7 @@ import org.rumbledb.expressions.Node;
 import java.util.ArrayList;
 import java.util.List;
 
-public class WhereClause extends FlworClause {
+public class WhereClause extends Clause {
 
     private final Expression whereExpression;
 

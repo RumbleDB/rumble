@@ -28,7 +28,7 @@ import org.rumbledb.expressions.Node;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LetClause extends FlworClause {
+public class LetClause extends Clause {
 
     private final List<LetClauseVar> letVars;
 
@@ -49,7 +49,7 @@ public class LetClause extends FlworClause {
     }
 
     @Override
-    public void setPreviousClause(FlworClause previousClause) {
+    public void setPreviousClause(Clause previousClause) {
         super.setPreviousClause(previousClause);
         // assign the previous clause of the LetClause as the first variable definition's previous
         this.letVars.get(0).previousClause = this.previousClause;

@@ -32,12 +32,12 @@ import java.util.List;
 public class SwitchExpression extends Expression {
 
     private final Expression testCondition;
-    private final List<SwitchCaseExpression> cases;
+    private final List<SwitchCase> cases;
     private final Expression defaultExpression;
 
     public SwitchExpression(
             Expression testCondition,
-            List<SwitchCaseExpression> cases,
+            List<SwitchCase> cases,
             Expression defaultExpression,
             ExceptionMetadata metadataFromContext
     ) {
@@ -51,7 +51,7 @@ public class SwitchExpression extends Expression {
         return this.testCondition;
     }
 
-    public List<SwitchCaseExpression> getCases() {
+    public List<SwitchCase> getCases() {
         return this.cases;
     }
 
@@ -63,7 +63,9 @@ public class SwitchExpression extends Expression {
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         result.add(this.testCondition);
-        result.addAll(this.cases);
+        for (SwitchCase c : this.cases) {
+            result.addAll(c.getAllExpressions());
+        }
         result.add(this.defaultExpression);
         return result;
     }
@@ -74,8 +76,22 @@ public class SwitchExpression extends Expression {
     }
 
     @Override
-    // TODO implement serialization for switch expr
     public String serializationString(boolean prefix) {
-        return "";
+        StringBuilder result = new StringBuilder();
+        result.append("(SwitchExpression switch ");
+        result.append(this.testCondition.serializationString(false));
+        for (SwitchCase c : this.cases) {
+            for (Expression e : c.getConditionExpressions()) {
+                result.append("case ");
+                result.append(e.serializationString(false));
+                result.append(" ");
+            }
+            result.append("return ");
+            result.append(c.getReturnExpression().serializationString(false));
+        }
+        result.append(" default ");
+        result.append(this.defaultExpression.serializationString(false));
+        result.append(")");
+        return result.toString();
     }
 }

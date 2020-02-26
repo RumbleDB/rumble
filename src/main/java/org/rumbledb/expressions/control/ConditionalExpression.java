@@ -29,60 +29,59 @@ import org.rumbledb.expressions.Node;
 import java.util.ArrayList;
 import java.util.List;
 
-public class IfExpression extends Expression {
+public class ConditionalExpression extends Expression {
 
-    private final Expression elseBranch;
-    private final Expression condition;
-    private final Expression branch;
+    private final Expression conditionExpression;
+    private final Expression thenExpression;
+    private final Expression elseExpression;
 
-    public IfExpression(
+    public ConditionalExpression(
             Expression condition,
             Expression branch,
             Expression elseBranch,
             ExceptionMetadata metadataFromContext
     ) {
         super(metadataFromContext);
-        this.condition = condition;
-        this.branch = branch;
-        this.elseBranch = elseBranch;
+        this.conditionExpression = condition;
+        this.thenExpression = branch;
+        this.elseExpression = elseBranch;
 
     }
 
     public Expression getElseBranch() {
-        return this.elseBranch;
+        return this.elseExpression;
     }
 
     public Expression getCondition() {
-        return this.condition;
+        return this.conditionExpression;
     }
 
     public Expression getBranch() {
-        return this.branch;
+        return this.thenExpression;
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        result.add(this.condition);
-        result.add(this.branch);
-        if (this.elseBranch != null)
-            result.add(this.elseBranch);
+        result.add(this.conditionExpression);
+        result.add(this.thenExpression);
+        result.add(this.elseExpression);
         return result;
     }
 
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        return visitor.visitIfExpression(this, argument);
+        return visitor.visitConditionalExpression(this, argument);
     }
 
     @Override
     public String serializationString(boolean prefix) {
         String result = "(ifExpr if ( ";
-        result += this.condition.serializationString(prefix);
+        result += this.conditionExpression.serializationString(prefix);
         result += " ) then ";
-        result += this.branch.serializationString(true);
+        result += this.thenExpression.serializationString(true);
         result += ") else ";
-        result += this.elseBranch.serializationString(true);
+        result += this.elseExpression.serializationString(true);
         result += "))";
         return result;
     }

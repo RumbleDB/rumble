@@ -20,10 +20,10 @@
 
 package org.rumbledb.expressions;
 
-import org.rumbledb.expressions.control.IfExpression;
-import org.rumbledb.expressions.control.SwitchCaseExpression;
+import org.rumbledb.expressions.control.ConditionalExpression;
+import org.rumbledb.expressions.control.SwitchCase;
 import org.rumbledb.expressions.control.SwitchExpression;
-import org.rumbledb.expressions.control.TypeSwitchCaseExpression;
+import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
 import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.FlworExpression;
@@ -299,7 +299,7 @@ public abstract class AbstractNodeVisitor<T> {
     // endregion
 
     // region control
-    public T visitIfExpression(IfExpression expression, T argument) {
+    public T visitConditionalExpression(ConditionalExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
@@ -307,16 +307,8 @@ public abstract class AbstractNodeVisitor<T> {
         return defaultAction(expression, argument);
     }
 
-    public T visitSwitchCaseExpression(SwitchCaseExpression expression, T argument) {
-        return defaultAction(expression, argument);
-    }
-    // endregion
-
     public T visitTypeSwitchExpression(TypeSwitchExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
-    public T visitTypeSwitchCaseExpression(TypeSwitchCaseExpression expression, T argument) {
-        return defaultAction(expression, argument);
-    }
 }

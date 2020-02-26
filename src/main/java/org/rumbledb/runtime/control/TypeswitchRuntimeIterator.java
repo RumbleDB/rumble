@@ -13,26 +13,26 @@ import sparksoniq.semantics.DynamicContext;
 import java.util.Collections;
 import java.util.List;
 
-public class TypeSwitchRuntimeIterator extends LocalRuntimeIterator {
+public class TypeswitchRuntimeIterator extends LocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator testField;
-    private final List<TypeSwitchCase> cases;
-    private final TypeSwitchCase defaultCase;
+    private final List<TypeswitchRuntimeIteratorCase> cases;
+    private final TypeswitchRuntimeIteratorCase defaultCase;
     private RuntimeIterator matchingIterator = null;
     private Item testValue;
 
 
-    public TypeSwitchRuntimeIterator(
+    public TypeswitchRuntimeIterator(
             RuntimeIterator test,
-            List<TypeSwitchCase> cases,
-            TypeSwitchCase defaultCase,
+            List<TypeswitchRuntimeIteratorCase> cases,
+            TypeswitchRuntimeIteratorCase defaultCase,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
     ) {
         super(null, executionMode, iteratorMetadata);
         this.children.add(test);
-        for (TypeSwitchCase typeSwitchCase : cases) {
+        for (TypeswitchRuntimeIteratorCase typeSwitchCase : cases) {
             this.children.add(typeSwitchCase.getReturnIterator());
         }
         this.children.add(defaultCase.getReturnIterator());
@@ -70,11 +70,15 @@ public class TypeSwitchRuntimeIterator extends LocalRuntimeIterator {
         initializeIterator(this.testField, this.cases, this.defaultCase);
     }
 
-    private void initializeIterator(RuntimeIterator test, List<TypeSwitchCase> cases, TypeSwitchCase defaultCase) {
+    private void initializeIterator(
+            RuntimeIterator test,
+            List<TypeswitchRuntimeIteratorCase> cases,
+            TypeswitchRuntimeIteratorCase defaultCase
+    ) {
 
         this.testValue = test.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
 
-        for (TypeSwitchCase typeSwitchCase : cases) {
+        for (TypeswitchRuntimeIteratorCase typeSwitchCase : cases) {
             if (testTypeMatch(typeSwitchCase))
                 break;
         }
@@ -94,17 +98,19 @@ public class TypeSwitchRuntimeIterator extends LocalRuntimeIterator {
         this.matchingIterator.close();
     }
 
-    private boolean testTypeMatch(TypeSwitchCase typeSwitchCase) {
-        for (FlworVarSequenceType sequenceType : typeSwitchCase.getSequenceTypeUnion()) {
-            if (this.testValue != null && this.testValue.isTypeOf(sequenceType.getSequence().getItemType())) {
-                if (typeSwitchCase.getVariableName() != null) {
-                    this.currentDynamicContextForLocalExecution.addVariableValue(
-                        typeSwitchCase.getVariableName(),
-                        Collections.singletonList(this.testValue)
-                    );
+    private boolean testTypeMatch(TypeswitchRuntimeIteratorCase typeSwitchCase) {
+        if (typeSwitchCase.getSequenceTypeUnion() != null) {
+            for (FlworVarSequenceType sequenceType : typeSwitchCase.getSequenceTypeUnion()) {
+                if (this.testValue != null && this.testValue.isTypeOf(sequenceType.getSequence().getItemType())) {
+                    if (typeSwitchCase.getVariableName() != null) {
+                        this.currentDynamicContextForLocalExecution.addVariableValue(
+                            typeSwitchCase.getVariableName(),
+                            Collections.singletonList(this.testValue)
+                        );
+                    }
+                    this.matchingIterator = typeSwitchCase.getReturnIterator();
+                    return true;
                 }
-                this.matchingIterator = typeSwitchCase.getReturnIterator();
-                return true;
             }
         }
         return false;

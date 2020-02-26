@@ -21,33 +21,32 @@
 package org.rumbledb.expressions.control;
 
 
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.Node;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class SwitchCaseExpression extends Expression {
+/**
+ * This is a helper class that organizes the children expressions of a switch expression.
+ * From a tree perspective, all expressions in this class are considered
+ * to be direct children of the SwitchExpression.
+ */
+public class SwitchCase {
 
+    private final List<Expression> conditionExpressions;
     private final Expression returnExpression;
-    private final Expression condition;
 
-    public SwitchCaseExpression(
-            Expression condition,
-            Expression returnExpression,
-            ExceptionMetadata metadataFromContext
+    public SwitchCase(
+            List<Expression> conditionExpressions,
+            Expression returnExpression
     ) {
-        super(metadataFromContext);
-        this.condition = condition;
+        this.conditionExpressions = conditionExpressions;
         this.returnExpression = returnExpression;
     }
 
-    @Override
-    public List<Node> getChildren() {
-        List<Node> result = new ArrayList<>();
-        result.add(this.condition);
+    public List<Expression> getAllExpressions() {
+        List<Expression> result = new ArrayList<>();
+        result.addAll(this.conditionExpressions);
         result.add(this.returnExpression);
         return result;
     }
@@ -56,18 +55,8 @@ public class SwitchCaseExpression extends Expression {
         return this.returnExpression;
     }
 
-    public Expression getCondition() {
-        return this.condition;
+    public List<Expression> getConditionExpressions() {
+        return this.conditionExpressions;
     }
 
-    @Override
-    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        return visitor.visitSwitchCaseExpression(this, argument);
-    }
-
-    @Override
-    // TODO implement serialization for switch expr
-    public String serializationString(boolean prefix) {
-        return "";
-    }
 }

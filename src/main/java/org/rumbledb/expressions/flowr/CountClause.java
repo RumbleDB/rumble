@@ -29,7 +29,7 @@ import java.util.Collections;
 import java.util.List;
 
 
-public class CountClause extends FlworClause {
+public class CountClause extends Clause {
     private VariableReferenceExpression countClauseVar;
 
     public CountClause(VariableReferenceExpression countClauseVar, ExceptionMetadata metadata) {

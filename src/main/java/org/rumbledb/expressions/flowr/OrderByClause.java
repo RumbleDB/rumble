@@ -29,7 +29,7 @@ import org.rumbledb.expressions.Node;
 import java.util.ArrayList;
 import java.util.List;
 
-public class OrderByClause extends FlworClause {
+public class OrderByClause extends Clause {
 
 
     private final List<OrderByClauseExpr> expressions;

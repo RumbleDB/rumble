@@ -28,7 +28,7 @@ import org.rumbledb.expressions.Node;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GroupByClause extends FlworClause {
+public class GroupByClause extends Clause {
 
     private final List<GroupByClauseVar> groupVars;
 
