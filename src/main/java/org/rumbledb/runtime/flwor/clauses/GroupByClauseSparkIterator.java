@@ -43,9 +43,9 @@ import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
-import sparksoniq.spark.udf.GroupClauseCreateColumnsUDF;
-import sparksoniq.spark.udf.GroupClauseSerializeAggregateResultsUDF;
-import sparksoniq.spark.udf.LetClauseUDF;
+import org.rumbledb.runtime.flwor.udfs.GroupClauseCreateColumnsUDF;
+import org.rumbledb.runtime.flwor.udfs.GroupClauseSerializeAggregateResultsUDF;
+import org.rumbledb.runtime.flwor.udfs.LetClauseUDF;
 
 import java.util.ArrayList;
 import java.util.Arrays;

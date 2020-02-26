@@ -37,7 +37,7 @@ import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
-import sparksoniq.spark.udf.CountClauseSerializeUDF;
+import org.rumbledb.runtime.flwor.udfs.CountClauseSerializeUDF;
 
 import java.util.ArrayList;
 import java.util.Arrays;

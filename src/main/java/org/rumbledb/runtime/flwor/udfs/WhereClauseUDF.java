@@ -18,12 +18,12 @@
  *
  */
 
-package sparksoniq.spark.udf;
+package org.rumbledb.runtime.flwor.udfs;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.sql.api.java.UDF2;
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -37,51 +37,49 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class ForClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, List<byte[]>> {
-    /**
-     *
-     */
+public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, Boolean> {
     private static final long serialVersionUID = 1L;
-    private Map<String, List<String>> columnNamesByType;
     private RuntimeIterator expression;
+    private Map<String, DynamicContext.VariableDependency> dependencies;
+
+    private Map<String, List<String>> columnNamesByType;
+
     private List<List<Item>> deserializedParams;
     private List<Item> longParams;
     private DynamicContext context;
-    private List<Item> nextResult;
-    private List<byte[]> results;
+    private DynamicContext parentContext;
 
     private transient Kryo kryo;
-    private transient Output output;
     private transient Input input;
 
-    public ForClauseUDF(
+    public WhereClauseUDF(
             RuntimeIterator expression,
             DynamicContext context,
+            StructType inputSchema,
             Map<String, List<String>> columnNamesByType
     ) {
         this.expression = expression;
-        this.columnNamesByType = columnNamesByType;
 
         this.deserializedParams = new ArrayList<>();
         this.longParams = new ArrayList<>();
-
-        this.context = new DynamicContext(context);
-        this.nextResult = new ArrayList<>();
-        this.results = new ArrayList<>();
+        this.parentContext = context;
+        this.context = new DynamicContext(this.parentContext);
 
         this.kryo = new Kryo();
         this.kryo.setReferences(false);
         FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
-        this.output = new Output(128, -1);
         this.input = new Input();
+
+        this.columnNamesByType = columnNamesByType;
+        this.dependencies = this.expression.getVariableDependencies();
+
     }
 
 
     @Override
-    public List<byte[]> call(WrappedArray<byte[]> wrappedParameters, WrappedArray<Long> wrappedParametersLong) {
+    public Boolean call(WrappedArray<byte[]> wrappedParameters, WrappedArray<Long> wrappedParametersLong) {
         this.deserializedParams.clear();
         this.context.removeAllVariables();
-        this.results.clear();
 
         FlworDataFrameUtils.deserializeWrappedParameters(
             wrappedParameters,
@@ -108,15 +106,9 @@ public class ForClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
 
         // apply expression in the dynamic context
         this.expression.open(this.context);
-        while (this.expression.hasNext()) {
-            this.nextResult.clear();
-            Item nextItem = this.expression.next();
-            this.nextResult.add(nextItem);
-            this.results.add(FlworDataFrameUtils.serializeItemList(this.nextResult, this.kryo, this.output));
-        }
+        boolean result = RuntimeIterator.getEffectiveBooleanValue(this.expression);
         this.expression.close();
-
-        return this.results;
+        return result;
     }
 
     private void readObject(java.io.ObjectInputStream in)
@@ -127,7 +119,6 @@ public class ForClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
         this.kryo = new Kryo();
         this.kryo.setReferences(false);
         FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
-        this.output = new Output(128, -1);
         this.input = new Input();
     }
 }

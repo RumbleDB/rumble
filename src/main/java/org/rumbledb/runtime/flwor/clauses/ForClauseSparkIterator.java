@@ -39,7 +39,7 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import sparksoniq.spark.SparkSessionManager;
-import sparksoniq.spark.udf.ForClauseUDF;
+import org.rumbledb.runtime.flwor.udfs.ForClauseUDF;
 
 import java.util.ArrayList;
 import java.util.Arrays;
