@@ -52,11 +52,10 @@ public class ForClauseVar extends FlworVarDecl {
         // If the sequenceType is specified, we have to "extend" its arity to *
         // because TreatIterator is wrapping the whole assignment expression,
         // meaning there is not one TreatIterator for each variable we loop over.
-        if (sequenceType != null)
-            this.sequenceType = new SequenceType(
-                    sequenceType.getItemType(),
-                    SequenceType.Arity.ZeroOrMore
-            );
+        this.sequenceType = new SequenceType(
+                sequenceType.getItemType(),
+                SequenceType.Arity.ZeroOrMore
+        );
     }
 
     public boolean allowsEmpty() {

@@ -65,16 +65,18 @@ public class InstanceOfIterator extends UnaryOperationBaseIterator {
                 this.child.close();
                 this.hasNext = false;
 
-                if (isInvalidArity(items.size()))
-                    return ItemFactory.getInstance().createBooleanItem(false);
-
                 if (!this.sequenceType.isEmptySequence()) {
+                    if (isInvalidArity(items.size()))
+                        return ItemFactory.getInstance().createBooleanItem(false);
+
                     ItemType itemType = this.sequenceType.getItemType();
                     for (Item item : items) {
                         if (!item.isTypeOf(itemType)) {
                             return ItemFactory.getInstance().createBooleanItem(false);
                         }
                     }
+                } else {
+                    return ItemFactory.getInstance().createBooleanItem(items.size() == 0);
                 }
                 return ItemFactory.getInstance().createBooleanItem(true);
             } else {
@@ -95,7 +97,6 @@ public class InstanceOfIterator extends UnaryOperationBaseIterator {
         return (numOfItems != 0 && this.sequenceType.isEmptySequence())
             ||
             (numOfItems == 0
-                && !this.sequenceType.isEmptySequence()
                 && (this.sequenceType.getArity() == SequenceType.Arity.One
                     ||
                     this.sequenceType.getArity() == SequenceType.Arity.OneOrMore))

@@ -658,14 +658,12 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
 
     @Override
     public Void visitTreatExpr(JsoniqParser.TreatExprContext ctx) {
-        Expression mainExpression;
-        SequenceType sequenceType;
         this.visitCastableExpr(ctx.main_expr);
         if (ctx.seq != null && !ctx.seq.isEmpty()) {
-            mainExpression = this.currentExpression;
+            Expression mainExpression = this.currentExpression;
             JsoniqParser.SequenceTypeContext child = ctx.seq;
             this.visitSequenceType(child);
-            sequenceType = this.currentSequenceType;
+            SequenceType sequenceType = this.currentSequenceType;
             this.currentExpression = new TreatExpression(mainExpression, sequenceType, createMetadataFromContext(ctx));
         }
         return null;
