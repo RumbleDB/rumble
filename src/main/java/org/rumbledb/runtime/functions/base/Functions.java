@@ -141,6 +141,7 @@ import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
+import sparksoniq.spark.ml.AnnotateFunctionIterator;
 import sparksoniq.spark.ml.GetEstimatorFunctionIterator;
 import sparksoniq.spark.ml.GetTransformerFunctionIterator;
 
@@ -166,6 +167,7 @@ import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.adjust
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.adjust_date_to_timezone2;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.adjust_time_to_timezone1;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.adjust_time_to_timezone2;
+import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.annotate;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.asin;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.atan;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.atan2;
@@ -335,6 +337,7 @@ public class Functions {
 
         sequenceTypes.put("object", new SequenceType(itemTypes.get("object"), SequenceType.Arity.One));
         sequenceTypes.put("object+", new SequenceType(itemTypes.get("object"), SequenceType.Arity.OneOrMore));
+        sequenceTypes.put("object*", new SequenceType(itemTypes.get("object"), SequenceType.Arity.ZeroOrMore));
 
         sequenceTypes.put("array?", new SequenceType(itemTypes.get("array"), SequenceType.Arity.OneOrZero));
 
@@ -532,6 +535,7 @@ public class Functions {
 
         builtInFunctions.put(get_transformer.getIdentifier(), get_transformer);
         builtInFunctions.put(get_estimator.getIdentifier(), get_estimator);
+        builtInFunctions.put(annotate.getIdentifier(), annotate);
     }
 
     static {
@@ -2102,6 +2106,18 @@ public class Functions {
             "item",
             GetEstimatorFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+
+        /**
+         * function converts given RDD or local data to a DataFrame using a schema
+         */
+        static final BuiltinFunction annotate = createBuiltinFunction(
+            "annotate",
+            "object*",
+            "object",
+            "item*", // TODO: revert back to ObjectItem when TypePromotoionIter. has DF implementation
+            AnnotateFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
         );
     }
 }

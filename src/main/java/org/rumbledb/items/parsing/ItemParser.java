@@ -28,6 +28,7 @@ import org.apache.spark.ml.linalg.SparseVector;
 import org.apache.spark.ml.linalg.Vector;
 import org.apache.spark.ml.linalg.VectorUDT;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
@@ -271,5 +272,41 @@ public class ItemParser implements Serializable {
         } else {
             throw new RuntimeException("DataFrame type unsupported: " + fieldType.json());
         }
+    }
+
+    public static List<Row> getRowsFromItems(List<Item> items) {
+        List<Row> rows = new ArrayList<>();
+        for (Item item : items) {
+            Row row = getRowFromItem(item);
+            rows.add(row);
+        }
+        return rows;
+    }
+
+    public static Row getRowFromItem(Item item) {
+        Object[] columns = new Object[item.getKeys().size()];
+        for (int i = 0; i < item.getValues().size(); i++) {
+            Item value = item.getValues().get(i);
+            if (value.isBoolean()) {
+                columns[i] = value.getBooleanValue();
+            } else if (value.isInteger()) {
+                columns[i] = value.getIntegerValue();
+            } else if (value.isDouble()) {
+                columns[i] = value.getDoubleValue();
+            } else if (value.isDecimal()) {
+                columns[i] = value.castToDoubleValue();
+            } else if (value.isString()) {
+                columns[i] = value.getStringValue();
+            } else if (value.isNull()) {
+                columns[i] = null;
+            } else if (value.isDate()) {
+                columns[i] = new Date(value.getDateTimeValue().getMillis());
+            } else if (value.isDateTime()) {
+                columns[i] = new Timestamp(value.getDateTimeValue().getMillis());
+            } else {
+                throw new OurBadException("Unexpected item type found while generating rows.");
+            }
+        }
+        return RowFactory.create(columns);
     }
 }

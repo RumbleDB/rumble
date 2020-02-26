@@ -1,8 +1,8 @@
 (:JIQS: ShouldRun; Output="" :)
 let $tokenizer := get-transformer("Tokenizer")
 let $hashingTF := get-transformer("HashingTF")
-let $data := (structured-json-file("./src/main/resources/queries/rumbleML/sample-ml-numeric-data.json"))
-let $intermediate := $tokenizer($data, {"inputCol": "values", "outputCol": "output"})
+let $data := structured-json-file("./src/main/resources/queries/rumbleML/sample-ml-string-data.json")
+let $intermediate := $tokenizer($data, {"inputCol": "sentence", "outputCol": "output"})
 return $hashingTF($intermediate, {"inputCol": "output", "numFeatures": 2})
 
 (: transformer chaining is not supported atm - RDD needs to be converted into DF prior to transformer.transform() call:)

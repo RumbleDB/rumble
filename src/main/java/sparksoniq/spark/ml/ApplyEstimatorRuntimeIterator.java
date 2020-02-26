@@ -9,6 +9,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidRumbleMLParamException;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.MLNotADataFrameException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.LocalRuntimeIterator;
@@ -79,9 +80,24 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
     }
 
     private Dataset<Row> getInputDataset(DynamicContext context) {
-        return context.getDataFrameVariableValue(
-            GetEstimatorFunctionIterator.estimatorFunctionParameterNames.get(0),
-            getMetadata()
+        String estimatorInputVariableName = GetEstimatorFunctionIterator.estimatorFunctionParameterNames.get(0);
+
+        if (!context.contains(estimatorInputVariableName)) {
+            throw new OurBadException("Estimator's input data is not available in the dynamic context");
+        }
+
+        if (context.isDataFrame(estimatorInputVariableName, getMetadata())) {
+            return context.getDataFrameVariableValue(
+                estimatorInputVariableName,
+                getMetadata()
+            );
+        }
+
+        throw new MLNotADataFrameException(
+                "Estimators operate on DataFrames. "
+                    +
+                    "Please consider using 'annotate' built-in function to generate a DataFrame.",
+                getMetadata()
         );
     }
 
