@@ -18,7 +18,7 @@
  *
  */
 
-package sparksoniq.spark;
+package org.rumbledb.runtime.flwor;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
@@ -73,7 +73,7 @@ import static org.apache.spark.sql.functions.spark_partition_id;
 import static org.apache.spark.sql.functions.sum;
 import static org.apache.spark.sql.functions.udf;
 
-public class DataFrameUtils {
+public class FlworDataFrameUtils {
 
     private static ThreadLocal<byte[]> lastBytesCache = ThreadLocal.withInitial(() -> null);
 
@@ -185,8 +185,8 @@ public class DataFrameUtils {
     public static String getUDFParameters(
             Map<String, List<String>> columnNamesByType
     ) {
-        String udfBinarySQL = DataFrameUtils.getSQL(columnNamesByType.get("byte[]"), false);
-        String udfLongSQL = DataFrameUtils.getSQL(columnNamesByType.get("Long"), false);
+        String udfBinarySQL = FlworDataFrameUtils.getSQL(columnNamesByType.get("byte[]"), false);
+        String udfLongSQL = FlworDataFrameUtils.getSQL(columnNamesByType.get("Long"), false);
 
         return String.format(
             "array(%s), array(%s)",

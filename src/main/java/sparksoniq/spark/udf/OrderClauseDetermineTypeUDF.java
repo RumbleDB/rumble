@@ -33,7 +33,7 @@ import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.ItemTypes;
-import sparksoniq.spark.DataFrameUtils;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -77,7 +77,7 @@ public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, W
 
         this.kryo = new Kryo();
         this.kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(this.kryo);
+        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
         this.input = new Input();
     }
 
@@ -87,7 +87,7 @@ public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, W
         this.context.removeAllVariables();
         this.result.clear();
 
-        DataFrameUtils.deserializeWrappedParameters(
+        FlworDataFrameUtils.deserializeWrappedParameters(
             wrappedParameters,
             this.deserializedParams,
             this.kryo,
@@ -102,7 +102,7 @@ public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, W
             this.longParams.add(count);
         }
 
-        DataFrameUtils.prepareDynamicContext(
+        FlworDataFrameUtils.prepareDynamicContext(
             this.context,
             this.columnNamesByType.get("byte[]"),
             this.columnNamesByType.get("Long"),
@@ -180,7 +180,7 @@ public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, W
 
         this.kryo = new Kryo();
         this.kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(this.kryo);
+        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
         this.input = new Input();
     }
 }

@@ -44,7 +44,7 @@ import sparksoniq.jsoniq.tuple.FlworKeyComparator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.ItemTypes;
-import sparksoniq.spark.DataFrameUtils;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import sparksoniq.spark.udf.OrderClauseCreateColumnsUDF;
 import sparksoniq.spark.udf.OrderClauseDetermineTypeUDF;
 
@@ -216,8 +216,8 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         }
         StructType inputSchema = df.schema();
 
-        List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema);
-        Map<String, List<String>> UDFcolumnsByType = DataFrameUtils.getColumnNamesByType(
+        List<String> allColumns = FlworDataFrameUtils.getColumnNames(inputSchema);
+        Map<String, List<String>> UDFcolumnsByType = FlworDataFrameUtils.getColumnNamesByType(
             inputSchema,
             -1,
             this.dependencies
@@ -232,7 +232,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             );
 
 
-        String UDFParameters = DataFrameUtils.getUDFParameters(UDFcolumnsByType);
+        String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumnsByType);
 
         df.createOrReplaceTempView("input");
         df.sparkSession().table("input").cache();
@@ -386,7 +386,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                 DataTypes.createStructType(typedFields)
             );
 
-        String selectSQL = DataFrameUtils.getSQL(allColumns, true);
+        String selectSQL = FlworDataFrameUtils.getSQL(allColumns, true);
         String projectSQL = selectSQL.substring(0, selectSQL.length() - 1); // remove trailing comma
 
         return df.sparkSession()

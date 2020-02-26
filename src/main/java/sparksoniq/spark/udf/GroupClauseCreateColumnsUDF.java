@@ -33,7 +33,7 @@ import org.rumbledb.runtime.primary.VariableReferenceIterator;
 
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.spark.DataFrameUtils;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -71,7 +71,7 @@ public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
 
         this.kryo = new Kryo();
         this.kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(this.kryo);
+        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
         this.input = new Input();
     }
 
@@ -80,7 +80,7 @@ public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
         this.deserializedParams.clear();
         this.results.clear();
 
-        DataFrameUtils.deserializeWrappedParameters(
+        FlworDataFrameUtils.deserializeWrappedParameters(
             wrappedParameters,
             this.deserializedParams,
             this.kryo,
@@ -205,7 +205,7 @@ public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
 
         this.kryo = new Kryo();
         this.kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(this.kryo);
+        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
         this.input = new Input();
     }
 }

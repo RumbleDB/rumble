@@ -36,7 +36,7 @@ import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.spark.DataFrameUtils;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import sparksoniq.spark.udf.CountClauseSerializeUDF;
 
 import java.util.ArrayList;
@@ -120,11 +120,11 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
         StructType inputSchema = df.schema();
         int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(this.variableName);
 
-        List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
+        List<String> allColumns = FlworDataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
 
-        String selectSQL = DataFrameUtils.getSQL(allColumns, true);
+        String selectSQL = FlworDataFrameUtils.getSQL(allColumns, true);
 
-        Dataset<Row> dfWithIndex = DataFrameUtils.zipWithIndex(df, 1L, this.variableName);
+        Dataset<Row> dfWithIndex = FlworDataFrameUtils.zipWithIndex(df, 1L, this.variableName);
 
         df.sparkSession()
             .udf()

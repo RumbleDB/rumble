@@ -26,7 +26,7 @@ import org.apache.spark.sql.api.java.UDF1;
 import org.rumbledb.api.Item;
 import org.rumbledb.items.IntegerItem;
 
-import sparksoniq.spark.DataFrameUtils;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -47,7 +47,7 @@ public class CountClauseSerializeUDF implements UDF1<Long, byte[]> {
 
         this.kryo = new Kryo();
         this.kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(this.kryo);
+        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
         this.output = new Output(128, -1);
     }
 
@@ -56,7 +56,7 @@ public class CountClauseSerializeUDF implements UDF1<Long, byte[]> {
         this.nextResult.clear();
         this.nextResult.add(new IntegerItem(countIndex.intValue()));
 
-        return DataFrameUtils.serializeItemList(this.nextResult, this.kryo, this.output);
+        return FlworDataFrameUtils.serializeItemList(this.nextResult, this.kryo, this.output);
     }
 
     private void readObject(java.io.ObjectInputStream in)
@@ -66,7 +66,7 @@ public class CountClauseSerializeUDF implements UDF1<Long, byte[]> {
 
         this.kryo = new Kryo();
         this.kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(this.kryo);
+        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
         this.output = new Output(128, -1);
     }
 }

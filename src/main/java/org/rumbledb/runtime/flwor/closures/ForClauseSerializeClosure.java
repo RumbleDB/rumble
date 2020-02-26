@@ -26,7 +26,7 @@ import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.rumbledb.api.Item;
-import sparksoniq.spark.DataFrameUtils;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -42,7 +42,7 @@ public class ForClauseSerializeClosure implements Function<Item, Row> {
     public ForClauseSerializeClosure() {
         this.kryo = new Kryo();
         this.kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(this.kryo);
+        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
         this.output = new Output(128, -1);
     }
 
@@ -55,7 +55,7 @@ public class ForClauseSerializeClosure implements Function<Item, Row> {
         List<Item> itemList = new ArrayList<>();
         itemList.add(item);
 
-        return RowFactory.create((Object) DataFrameUtils.serializeItemList(itemList, this.kryo, this.output));
+        return RowFactory.create((Object) FlworDataFrameUtils.serializeItemList(itemList, this.kryo, this.output));
     }
 
     private void readObject(java.io.ObjectInputStream in)
@@ -65,7 +65,7 @@ public class ForClauseSerializeClosure implements Function<Item, Row> {
 
         this.kryo = new Kryo();
         this.kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(this.kryo);
+        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
         this.output = new Output(128, -1);
     }
 }

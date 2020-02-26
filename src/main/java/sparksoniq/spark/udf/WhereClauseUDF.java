@@ -30,7 +30,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.spark.DataFrameUtils;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -67,7 +67,7 @@ public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<L
 
         this.kryo = new Kryo();
         this.kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(this.kryo);
+        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
         this.input = new Input();
 
         this.columnNamesByType = columnNamesByType;
@@ -81,7 +81,7 @@ public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<L
         this.deserializedParams.clear();
         this.context.removeAllVariables();
 
-        DataFrameUtils.deserializeWrappedParameters(
+        FlworDataFrameUtils.deserializeWrappedParameters(
             wrappedParameters,
             this.deserializedParams,
             this.kryo,
@@ -96,7 +96,7 @@ public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<L
             this.longParams.add(count);
         }
 
-        DataFrameUtils.prepareDynamicContext(
+        FlworDataFrameUtils.prepareDynamicContext(
             this.context,
             this.columnNamesByType.get("byte[]"),
             this.columnNamesByType.get("Long"),
@@ -118,7 +118,7 @@ public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<L
 
         this.kryo = new Kryo();
         this.kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(this.kryo);
+        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
         this.input = new Input();
     }
 }

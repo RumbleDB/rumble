@@ -35,7 +35,7 @@ import org.rumbledb.runtime.RuntimeTupleIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.spark.DataFrameUtils;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import sparksoniq.spark.udf.LetClauseUDF;
 
 import java.util.ArrayList;
@@ -163,8 +163,8 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
             int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(this.variableName);
 
-            List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
-            Map<String, List<String>> UDFcolumnsByType = DataFrameUtils.getColumnNamesByType(
+            List<String> allColumns = FlworDataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
+            Map<String, List<String>> UDFcolumnsByType = FlworDataFrameUtils.getColumnNamesByType(
                 inputSchema,
                 -1,
                 this.dependencies
@@ -178,8 +178,8 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                     DataTypes.BinaryType
                 );
 
-            String selectSQL = DataFrameUtils.getSQL(allColumns, true);
-            String UDFParameters = DataFrameUtils.getUDFParameters(UDFcolumnsByType);
+            String selectSQL = FlworDataFrameUtils.getSQL(allColumns, true);
+            String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumnsByType);
 
             df.createOrReplaceTempView("input");
             df = df.sparkSession()
