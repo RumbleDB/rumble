@@ -68,34 +68,17 @@ public class StringToCodepointsFunctionIterator extends LocalFunctionCallIterato
     public void setNextResult() {
         if (this.input == null) {
             // Getting first parameter
-            RuntimeIterator stringIterator = this.children.get(0);
-            stringIterator.open(this.currentDynamicContextForLocalExecution);
-            if (!stringIterator.hasNext()) {
+            Item stringItem = this.children.get(0)
+                    .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+
+            if (stringItem == null) {
                 this.hasNext = false;
-                stringIterator.close();
                 return;
             }
-            this.input = null;
-            Item stringItem = stringIterator.next();
-            if (stringIterator.hasNext())
-                throw new UnexpectedTypeException(
-                        "Parameter of string-to-codepoints must be a string or the empty sequence.",
-                        getMetadata()
-                );
-            stringIterator.close();
-            if (!stringItem.isString())
-                throw new UnexpectedTypeException(
-                        "Parameter of string-to-codepoints must be a string or the empty sequence.",
-                        getMetadata()
-                );
-            try {
-                this.input = stringItem.getStringValue();
-                stringIterator.close();
-            } catch (Exception e) {
-                throw new UnexpectedTypeException(
-                        "Parameter of string-to-codepoints must be a string or the empty sequence.",
-                        getMetadata()
-                );
+            this.input = stringItem.getStringValue();
+            if (this.input.equals("")) {
+                this.hasNext = false;
+                return;
             }
 
             this.currentPosition = 0;
