@@ -18,7 +18,7 @@
  *
  */
 
-package org.rumbledb.runtime.flowr;
+package org.rumbledb.runtime.flwor.clauses;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -36,7 +36,7 @@ import org.rumbledb.exceptions.SparksoniqRuntimeException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
-import org.rumbledb.runtime.flowr.expression.OrderByClauseAnnotatedChildIterator;
+import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.tuple.FlworKey;

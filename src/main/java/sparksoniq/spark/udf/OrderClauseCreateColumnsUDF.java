@@ -32,7 +32,7 @@ import org.rumbledb.expressions.flowr.OrderByClauseExpr;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.NullItem;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.flowr.expression.OrderByClauseAnnotatedChildIterator;
+import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.semantics.DynamicContext;

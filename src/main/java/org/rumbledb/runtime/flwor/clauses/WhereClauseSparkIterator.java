@@ -18,7 +18,7 @@
  *
  */
 
-package org.rumbledb.runtime.flowr;
+package org.rumbledb.runtime.flwor.clauses;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
