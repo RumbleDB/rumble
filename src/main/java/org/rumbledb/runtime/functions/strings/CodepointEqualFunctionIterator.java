@@ -70,9 +70,9 @@ public class CodepointEqualFunctionIterator extends LocalFunctionCallIterator {
     public void setNextResult() {
         if (this.input1 == null || this.input2 == null) {
             Item operandOneItem = this.children.get(0)
-                    .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
             Item operandTwoItem = this.children.get(1)
-                    .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
             if (operandOneItem == null || operandTwoItem == null) {
                 this.hasNext = false;
                 return;
