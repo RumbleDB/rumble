@@ -534,6 +534,22 @@ tokenize("aa;bb;cc;dd", ";")
 
 returns ("aa", "bb", "cc", "dd")
 
+### replace
+
+```
+replace("abracadabra", "bra", "*")
+```
+
+returns "a\*cada\*"
+
+```
+replace("abracadabra", "a(.)", "a$1$1")
+```
+
+returns "abbraccaddabbra"
+
+_Note_: the pattern argument is parsed as a Java regexp pattern, which may differ from W3C-specified patterns.
+
 ## Context functions
 
 ### position

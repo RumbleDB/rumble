@@ -32,6 +32,7 @@ import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 import java.util.regex.PatternSyntaxException;
 
 public class ReplaceFunctionIterator extends LocalFunctionCallIterator {
@@ -56,16 +57,17 @@ public class ReplaceFunctionIterator extends LocalFunctionCallIterator {
             Item patternStringItem = this.children.get(1)
                 .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
             String pattern = patternStringItem.getStringValue();
-            if ("".matches(pattern)) {
-                throw new MatchesEmptyStringException("'" + pattern + "' matches empty string",
-                        getMetadata());
-            }
+
+            Pattern p;
             try {
-                Pattern.compile(pattern);
+                p = Pattern.compile(pattern);
             } catch (PatternSyntaxException e) {
                 throw new InvalidRegexPatternException(e.getDescription(),
                         getMetadata());
-                //TODO: Figure out why exception isn't being properly caught.
+            }
+            if ("".matches(pattern)) {
+                throw new MatchesEmptyStringException("'" + pattern + "' matches empty string",
+                        getMetadata());
             }
 
             Item replacementStringItem = this.children.get(2)
@@ -79,8 +81,8 @@ public class ReplaceFunctionIterator extends LocalFunctionCallIterator {
                 input = stringItem.getStringValue();
             }
 
-            String result = input.replaceAll(pattern, replacement);
-            return ItemFactory.getInstance().createStringItem(result);
+            Matcher m = p.matcher(input);
+            return ItemFactory.getInstance().createStringItem(m.replaceAll(replacement));
         } else
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " replace function",
