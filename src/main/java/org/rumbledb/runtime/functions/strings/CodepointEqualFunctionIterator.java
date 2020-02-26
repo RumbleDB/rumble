@@ -27,12 +27,16 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.ExecutionMode;
+import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
 
 public class CodepointEqualFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
+    private String input1;
+    private String input2;
+    private Item nextResult;
 
     public CodepointEqualFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -43,27 +47,42 @@ public class CodepointEqualFunctionIterator extends LocalFunctionCallIterator {
     }
 
     @Override
+    public void open(DynamicContext context) {
+        super.open(context);
+        this.input1 = null;
+        this.input2 = null;
+        setNextResult();
+    }
+
+    @Override
     public Item next() {
         if (this.hasNext) {
-            this.hasNext = false;
-            Item operandOneItem = this.children.get(0)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-            Item operandTwoItem = this.children.get(1)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-
-            if (operandOneItem == null || operandTwoItem == null) {
-                return null;
-            }
-
-            String operandOne = operandOneItem.getStringValue();
-            String operandTwo = operandTwoItem.getStringValue();
-
-            return ItemFactory.getInstance().createBooleanItem(operandOne.equals(operandTwo));
-
+            Item result = this.nextResult;
+            setNextResult();
+            return result;
         } else
             throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " replace function",
+                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " codepoint-equal function",
                     getMetadata()
             );
+    }
+
+    public void setNextResult() {
+        if (this.input1 == null || this.input2 == null) {
+            Item operandOneItem = this.children.get(0)
+                    .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+            Item operandTwoItem = this.children.get(1)
+                    .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+            if (operandOneItem == null || operandTwoItem == null) {
+                this.hasNext = false;
+                return;
+            }
+            this.hasNext = true;
+            this.input1 = operandOneItem.getStringValue();
+            this.input2 = operandTwoItem.getStringValue();
+            this.nextResult = ItemFactory.getInstance().createBooleanItem(this.input1.equals(this.input2));
+        } else {
+            this.hasNext = false;
+        }
     }
 }

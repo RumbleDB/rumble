@@ -1408,7 +1408,7 @@ public class Functions {
             "codepoint-equal",
             "string?",
             "string?",
-            "boolean",
+            "item?",
             CodepointEqualFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
