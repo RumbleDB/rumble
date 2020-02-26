@@ -1395,22 +1395,22 @@ public class Functions {
          * function that converts a string to codepoints
          */
         static final BuiltinFunction string_to_codepoints = createBuiltinFunction(
-                "string-to-codepoints",
-                "string?",
-                "integer*",
-                StringToCodepointsFunctionIterator.class,
-                BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            "string-to-codepoints",
+            "string?",
+            "integer*",
+            StringToCodepointsFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that compares Strings codepoint-by-codepoint
          */
         static final BuiltinFunction codepoint_equal = createBuiltinFunction(
-                "codepoint-equal",
-                "string?",
-                "string?",
-                "boolean",
-                CodepointEqualFunctionIterator.class,
-                BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            "codepoint-equal",
+            "string?",
+            "string?",
+            "boolean",
+            CodepointEqualFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns substrings
@@ -1434,13 +1434,13 @@ public class Functions {
          * function that replaces parts of a string according to a regex expression
          */
         static final BuiltinFunction replace = createBuiltinFunction(
-                "replace",
-                "string?",
-                "string",
-                "string",
-                "string",
-                ReplaceFunctionIterator.class,
-                BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            "replace",
+            "string?",
+            "string",
+            "string",
+            "string",
+            ReplaceFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that returns the string length
@@ -1474,33 +1474,33 @@ public class Functions {
          * function that turns all upper-case characters to lower-case
          */
         static final BuiltinFunction lower_case = createBuiltinFunction(
-                "lower-case",
-                "string?",
-                "string",
-                LowerCaseFunctionIterator.class,
-                BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            "lower-case",
+            "string?",
+            "string",
+            LowerCaseFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that turns all upper-case characters to upper-case
          */
         static final BuiltinFunction upper_case = createBuiltinFunction(
-                "upper-case",
-                "string?",
-                "string",
-                UpperCaseFunctionIterator.class,
-                BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            "upper-case",
+            "string?",
+            "string",
+            UpperCaseFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that turns all upper-case characters to upper-case
          */
         static final BuiltinFunction translate = createBuiltinFunction(
-                "translate",
-                "string?",
-                "string",
-                "string",
-                "string",
-                TranslateFunctionIterator.class,
-                BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            "translate",
+            "string?",
+            "string",
+            "string",
+            "string",
+            TranslateFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that checks whether a string ends with a substring

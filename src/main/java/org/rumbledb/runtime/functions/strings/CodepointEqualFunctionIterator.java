@@ -47,9 +47,9 @@ public class CodepointEqualFunctionIterator extends LocalFunctionCallIterator {
         if (this.hasNext) {
             this.hasNext = false;
             Item operandOneItem = this.children.get(0)
-                    .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
             Item operandTwoItem = this.children.get(1)
-                    .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
 
             if (operandOneItem == null || operandTwoItem == null) {
                 return null;
@@ -59,7 +59,7 @@ public class CodepointEqualFunctionIterator extends LocalFunctionCallIterator {
             String operandTwo = operandTwoItem.getStringValue();
 
             return ItemFactory.getInstance().createBooleanItem(operandOne.equals(operandTwo));
-            
+
         } else
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " replace function",

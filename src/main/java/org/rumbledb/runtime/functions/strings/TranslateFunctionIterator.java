@@ -49,11 +49,11 @@ public class TranslateFunctionIterator extends LocalFunctionCallIterator {
         if (this.hasNext) {
             this.hasNext = false;
             Item inputItem = this.children.get(0)
-                    .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
             Item mapStringItem = this.children.get(1)
-                    .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
             Item transStringItem = this.children.get(2)
-                    .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
 
             if (inputItem == null) {
                 return ItemFactory.getInstance().createStringItem("");
@@ -81,10 +81,11 @@ public class TranslateFunctionIterator extends LocalFunctionCallIterator {
                     }
                     return s;
                 })
-                .map(String::valueOf).collect(Collectors.joining());
+                .map(String::valueOf)
+                .collect(Collectors.joining());
 
             return ItemFactory.getInstance().createStringItem(output);
-            
+
         } else
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " translate function",

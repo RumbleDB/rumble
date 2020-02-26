@@ -47,7 +47,7 @@ public class LowerCaseFunctionIterator extends LocalFunctionCallIterator {
         if (this.hasNext) {
             this.hasNext = false;
             Item stringItem = this.children.get(0)
-                    .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
 
             if (stringItem == null) {
                 return ItemFactory.getInstance().createStringItem("");
@@ -55,7 +55,7 @@ public class LowerCaseFunctionIterator extends LocalFunctionCallIterator {
                 String input = stringItem.getStringValue();
                 return ItemFactory.getInstance().createStringItem(input.toLowerCase());
             }
-            
+
         } else
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " replace function",

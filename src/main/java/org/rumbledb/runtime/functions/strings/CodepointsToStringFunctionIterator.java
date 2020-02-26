@@ -52,12 +52,15 @@ public class CodepointsToStringFunctionIterator extends LocalFunctionCallIterato
             StringBuilder stringBuilder = new StringBuilder();
             for (Item item : codepoints) {
                 if (!(item.isInteger())) {
-                    throw new UnexpectedTypeException("Integer item expected",
-                            this.children.get(0).getMetadata());
-                }
-                else if (!(isValidCodePoint(item.getIntegerValue()))) {
-                    throw new CodepointNotValidException("Non-XML-conformant codepoint: " + item.getIntegerValue(),
-                            this.children.get(0).getMetadata());
+                    throw new UnexpectedTypeException(
+                            "Integer item expected",
+                            this.children.get(0).getMetadata()
+                    );
+                } else if (!(isValidCodePoint(item.getIntegerValue()))) {
+                    throw new CodepointNotValidException(
+                            "Non-XML-conformant codepoint: " + item.getIntegerValue(),
+                            this.children.get(0).getMetadata()
+                    );
                 }
                 stringBuilder.appendCodePoint(item.getIntegerValue());
             }
@@ -72,8 +75,10 @@ public class CodepointsToStringFunctionIterator extends LocalFunctionCallIterato
 
     private static boolean isValidCodePoint(int codepoint) {
         /* Checks if the codepoints are within the ranges allowed for in the XML 1.1 specification. */
-        return 1 <= codepoint && codepoint <= 55295 ||
-                57344 <= codepoint && codepoint <= 65533 ||
-                65536 <= codepoint && codepoint <= 1114111;
+        return 1 <= codepoint && codepoint <= 55295
+            ||
+            57344 <= codepoint && codepoint <= 65533
+            ||
+            65536 <= codepoint && codepoint <= 1114111;
     }
 }

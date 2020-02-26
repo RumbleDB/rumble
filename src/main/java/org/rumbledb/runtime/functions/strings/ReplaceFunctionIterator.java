@@ -52,7 +52,7 @@ public class ReplaceFunctionIterator extends LocalFunctionCallIterator {
         if (this.hasNext) {
             this.hasNext = false;
             Item stringItem = this.children.get(0)
-                    .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
 
             Item patternStringItem = this.children.get(1)
                 .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
@@ -62,16 +62,20 @@ public class ReplaceFunctionIterator extends LocalFunctionCallIterator {
             try {
                 p = Pattern.compile(pattern);
             } catch (PatternSyntaxException e) {
-                throw new InvalidRegexPatternException(e.getDescription(),
-                        getMetadata());
+                throw new InvalidRegexPatternException(
+                        e.getDescription(),
+                        getMetadata()
+                );
             }
             if ("".matches(pattern)) {
-                throw new MatchesEmptyStringException("'" + pattern + "' matches empty string",
-                        getMetadata());
+                throw new MatchesEmptyStringException(
+                        "'" + pattern + "' matches empty string",
+                        getMetadata()
+                );
             }
 
             Item replacementStringItem = this.children.get(2)
-                    .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
             String replacement = replacementStringItem.getStringValue();
 
             String input;
