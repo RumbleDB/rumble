@@ -258,6 +258,10 @@ public class FlworDataFrameUtils {
      * @param inputSchema schema specifies the columns to be used in the query
      * @param duplicateVariableIndex enables skipping a variable
      * @param trailingComma boolean field to have a trailing comma
+     * @param serializerUdfName
+     * @param groupbyVariableNames
+     * @param dependencies
+     * @param columnNamesByType
      * @return comma separated variables to be used in spark SQL
      */
     public static String getGroupbyProjectSQL(
@@ -409,7 +413,7 @@ public class FlworDataFrameUtils {
      * @param df - df to perform the operation on
      * @param offset - starting offset for the first index
      * @param indexName - name of the index column
-     * @return returns Dataset<Row> with the added 'indexName' column containing indices
+     * @return returns DataFrame with the added 'indexName' column containing indices
      */
     public static Dataset<Row> zipWithIndex(Dataset<Row> df, Long offset, String indexName) {
         Dataset<Row> dfWithPartitionId = df
