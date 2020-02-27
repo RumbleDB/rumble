@@ -34,7 +34,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ForClauseLocalToRowClosure implements Function<Item, Row> {
+public class ForClauseLocalTupleToRowClosure implements Function<Item, Row> {
 
     private static final long serialVersionUID = 1L;
 
@@ -44,7 +44,7 @@ public class ForClauseLocalToRowClosure implements Function<Item, Row> {
     private transient Kryo kryo;
     private transient Output output;
 
-    public ForClauseLocalToRowClosure(FlworTuple inputTuple, ExceptionMetadata metadata) {
+    public ForClauseLocalTupleToRowClosure(FlworTuple inputTuple, ExceptionMetadata metadata) {
         this.inputTuple = inputTuple;
         this.metadata = metadata;
         this.kryo = new Kryo();

@@ -32,9 +32,8 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
-import org.rumbledb.runtime.flwor.closures.ForClauseLocalToRowClosure;
+import org.rumbledb.runtime.flwor.closures.ForClauseLocalTupleToRowClosure;
 import org.rumbledb.runtime.flwor.closures.ForClauseSerializeClosure;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
@@ -262,27 +261,21 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         Dataset<Row> df = null;
         this.child.open(context);
         this.tupleContext = new DynamicContext(context); // assign current context as parent
+        StructType schema = null;
         while (this.child.hasNext()) {
             this.inputTuple = this.child.next();
             this.tupleContext.removeAllVariables(); // clear the previous variables
             this.tupleContext.setBindingsFromTuple(this.inputTuple, getMetadata()); // assign new variables from new
                                                                                     // tuple
-
             JavaRDD<Item> expressionRDD = this.assignmentIterator.getRDD(this.tupleContext);
 
-            // TODO - Optimization: Iterate schema creation only once
-            Set<String> oldColumnNames = this.inputTuple.getLocalKeys();
-            List<String> newColumnNames = new ArrayList<>(oldColumnNames);
-
-            newColumnNames.add(this.variableName);
-            List<StructField> fields = new ArrayList<>();
-            for (String columnName : newColumnNames) {
-                StructField field = DataTypes.createStructField(columnName, DataTypes.BinaryType, true);
-                fields.add(field);
+            if (schema == null) {
+                schema = generateSchema();
             }
-            StructType schema = DataTypes.createStructType(fields);
 
-            JavaRDD<Row> rowRDD = expressionRDD.map(new ForClauseLocalToRowClosure(this.inputTuple, getMetadata()));
+            JavaRDD<Row> rowRDD = expressionRDD.map(
+                new ForClauseLocalTupleToRowClosure(this.inputTuple, getMetadata())
+            );
 
             if (df == null) {
                 df = SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
@@ -292,6 +285,20 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         }
         this.child.close();
         return df;
+    }
+
+    private StructType generateSchema() {
+        Set<String> oldColumnNames = this.inputTuple.getLocalKeys();
+        List<String> newColumnNames = new ArrayList<>(oldColumnNames);
+        newColumnNames.add(this.variableName);
+
+        List<StructField> fields = new ArrayList<>();
+        for (String columnName : newColumnNames) {
+            // all columns store items serialized to binary format
+            StructField field = DataTypes.createStructField(columnName, DataTypes.BinaryType, true);
+            fields.add(field);
+        }
+        return DataTypes.createStructType(fields);
     }
 
     private Dataset<Row> getDataFrameFromRDDExpression(DynamicContext context) {
