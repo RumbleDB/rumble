@@ -4,3 +4,5 @@ lower-case("ABCDE"),
 lower-case("abcde"),
 lower-case("ABc!D"),
 lower-case("123456")
+
+(: general tests :)
