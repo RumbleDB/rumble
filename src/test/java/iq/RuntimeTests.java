@@ -94,7 +94,7 @@ public class RuntimeTests extends AnnotationsTestsBase {
     public void testRuntimeIterators() throws Throwable {
         System.err.println(AnnotationsTestsBase.counter++ + " : " + this._testFile);
         TranslationVisitor visitor = new TranslationVisitor();
-        testAnnotations(this._testFile.getAbsolutePath(), visitor);
+        testAnnotations(this._testFile.getAbsolutePath());
     }
 
     @Override

@@ -22,6 +22,7 @@ package org.rumbledb.expressions.module;
 
 
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -29,15 +30,18 @@ import org.rumbledb.expressions.Node;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainModule extends Expression {
+public class MainModule extends Node {
 
     private final Prolog prolog;
     private final Expression expression;
 
-    public MainModule(Prolog prolog, Expression commaExpression, ExceptionMetadata metadata) {
+    public MainModule(Prolog prolog, Expression expression, ExceptionMetadata metadata) {
         super(metadata);
         this.prolog = prolog;
-        this.expression = commaExpression;
+        if (expression == null) {
+            throw new OurBadException("The main prolog must have a non-null expression");
+        }
+        this.expression = expression;
     }
 
     public Prolog getProlog() {
@@ -54,9 +58,7 @@ public class MainModule extends Expression {
         if (this.prolog != null) {
             result.add(this.prolog);
         }
-        if (this.expression != null) {
-            result.add(this.expression);
-        }
+        result.add(this.expression);
         return result;
     }
 

@@ -10,6 +10,7 @@ import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.expressions.Expression;
+import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.parser.JsoniqLexer;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -52,11 +53,12 @@ public class Rumble {
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
         TranslationVisitor visitor = new TranslationVisitor();
+        MainModule mainModule = null;
         try {
             // TODO Handle module extras
             JsoniqParser.ModuleContext module = parser.module();
             JsoniqParser.MainModuleContext main = module.main;
-            visitor.visit(main);
+            mainModule = (MainModule) visitor.visit(main);
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
                     lexer.getText(),
@@ -68,10 +70,9 @@ public class Rumble {
             e.initCause(ex);
             throw e;
         }
-        Expression expression = visitor.getMainModule();
-        VisitorHelpers.populateStaticContext(expression);
+        VisitorHelpers.populateStaticContext(mainModule);
 
-        RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(expression);
+        RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(mainModule);
         return new SequenceOfItems(iterator);
     }
 }

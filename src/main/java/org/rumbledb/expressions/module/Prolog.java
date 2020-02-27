@@ -23,14 +23,13 @@ package org.rumbledb.expressions.module;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
-import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class Prolog extends Expression {
+public class Prolog extends Node {
 
     private final List<InlineFunctionExpression> functionDeclarations;
 

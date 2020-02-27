@@ -37,6 +37,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.expressions.Expression;
+import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.parser.JsoniqLexer;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -87,12 +88,12 @@ public class JsoniqQueryExecutor {
 
         CharStream charStream = CharStreams.fromFileName(queryFile);
         long startTime = System.currentTimeMillis();
-        TranslationVisitor visitor = this.parse(new JsoniqLexer(charStream));
-        generateStaticContext(visitor.getMainModule());
+        MainModule mainModule = this.parse(new JsoniqLexer(charStream));
+        generateStaticContext(mainModule);
         if (this.configuration.isPrintIteratorTree()) {
-            System.out.println(visitor.getMainModule().serializationString(true));
+            System.out.println(mainModule.serializationString(true));
         }
-        RuntimeIterator result = generateRuntimeIterators(visitor.getMainModule());
+        RuntimeIterator result = generateRuntimeIterators(mainModule);
         if (this.configuration.isPrintIteratorTree()) {
             StringBuffer sb = new StringBuffer();
             result.print(sb, 0);
@@ -122,9 +123,9 @@ public class JsoniqQueryExecutor {
     public void run(String queryFile, String outputPath) throws IOException {
         JsoniqLexer lexer = getInputSource(queryFile);
         long startTime = System.currentTimeMillis();
-        TranslationVisitor visitor = this.parse(lexer);
-        generateStaticContext(visitor.getMainModule());
-        RuntimeIterator result = generateRuntimeIterators(visitor.getMainModule());
+        MainModule mainModule = this.parse(lexer);
+        generateStaticContext(mainModule);
+        RuntimeIterator result = generateRuntimeIterators(mainModule);
         // collect output in memory and write to filesystem from java
         if (this.useLocalOutputLog) {
             String output = runIterators(result);
@@ -178,9 +179,9 @@ public class JsoniqQueryExecutor {
     public String runInteractive(java.nio.file.Path queryFile) throws IOException {
         // create temp file
         JsoniqLexer lexer = getInputSource(queryFile.toString());
-        TranslationVisitor visitor = this.parse(lexer);
-        generateStaticContext(visitor.getMainModule());
-        RuntimeIterator runtimeIterator = generateRuntimeIterators(visitor.getMainModule());
+        MainModule mainModule = this.parse(lexer);
+        generateStaticContext(mainModule);
+        RuntimeIterator runtimeIterator = generateRuntimeIterators(mainModule);
         // execute locally for simple expressions
         if (!runtimeIterator.isRDD()) {
             String localOutput = this.runIterators(runtimeIterator);
@@ -213,7 +214,7 @@ public class JsoniqQueryExecutor {
         throw new RuntimeException("Unknown url protocol");
     }
 
-    private TranslationVisitor parse(JsoniqLexer lexer) {
+    private MainModule parse(JsoniqLexer lexer) {
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
         TranslationVisitor visitor = new TranslationVisitor();
@@ -221,7 +222,7 @@ public class JsoniqQueryExecutor {
             // TODO Handle module extras
             JsoniqParser.ModuleContext module = parser.module();
             JsoniqParser.MainModuleContext main = module.main;
-            visitor.visit(main);
+            return (MainModule) visitor.visit(main);
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
                     lexer.getText(),
@@ -233,15 +234,14 @@ public class JsoniqQueryExecutor {
             e.initCause(ex);
             throw e;
         }
-        return visitor;
     }
 
-    private void generateStaticContext(Expression expression) {
-        VisitorHelpers.populateStaticContext(expression);
+    private void generateStaticContext(MainModule mainModule) {
+        VisitorHelpers.populateStaticContext(mainModule);
     }
 
-    private RuntimeIterator generateRuntimeIterators(Expression expression) {
-        return VisitorHelpers.generateRuntimeIterator(expression);
+    private RuntimeIterator generateRuntimeIterators(MainModule mainModule) {
+        return VisitorHelpers.generateRuntimeIterator(mainModule);
     }
 
     protected String runIterators(RuntimeIterator iterator) {
