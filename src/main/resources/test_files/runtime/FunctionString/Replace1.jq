@@ -9,3 +9,5 @@ replace("AAAA", "B+", "b"),
 replace("AAAA", "A+?", "b"),
 replace("darted", "^(.*?)d(.*)$", "$1c$2"),
 replace("created", "created", "")
+
+(: general tests :)

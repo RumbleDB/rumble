@@ -1,5 +1,5 @@
-(:JIQS: ShouldRun; Output="(, true, , true)" :)
-replace("", "bruh", "*"),
-replace("", "bruh", "*") instance of string,
-replace((), "bruh", "*"),
-replace((), "bruh", "*") instance of string
+(:JIQS: ShouldRun; Output="(, )" :)
+replace("", ".+", "*"),
+replace((), ".+", "*")
+
+(: the empty sequence and the zero-length string result in the zero-length string :)
