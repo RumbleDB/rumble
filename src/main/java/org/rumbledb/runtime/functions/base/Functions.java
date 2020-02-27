@@ -123,19 +123,26 @@ import org.rumbledb.runtime.functions.sequences.general.TailFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.value.DeepEqualFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.value.DistinctValuesFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.value.IndexOfFunctionIterator;
+import org.rumbledb.runtime.functions.strings.CodepointEqualFunctionIterator;
+import org.rumbledb.runtime.functions.strings.CodepointsToStringFunctionIterator;
 import org.rumbledb.runtime.functions.strings.ConcatFunctionIterator;
 import org.rumbledb.runtime.functions.strings.ContainsFunctionIterator;
 import org.rumbledb.runtime.functions.strings.EndsWithFunctionIterator;
+import org.rumbledb.runtime.functions.strings.LowerCaseFunctionIterator;
 import org.rumbledb.runtime.functions.strings.MatchesFunctionIterator;
 import org.rumbledb.runtime.functions.strings.NormalizeSpaceFunctionIterator;
+import org.rumbledb.runtime.functions.strings.ReplaceFunctionIterator;
 import org.rumbledb.runtime.functions.strings.StartsWithFunctionIterator;
 import org.rumbledb.runtime.functions.strings.StringFunctionIterator;
 import org.rumbledb.runtime.functions.strings.StringJoinFunctionIterator;
 import org.rumbledb.runtime.functions.strings.StringLengthFunctionIterator;
+import org.rumbledb.runtime.functions.strings.StringToCodepointsFunctionIterator;
 import org.rumbledb.runtime.functions.strings.SubstringAfterFunctionIterator;
 import org.rumbledb.runtime.functions.strings.SubstringBeforeFunctionIterator;
 import org.rumbledb.runtime.functions.strings.SubstringFunctionIterator;
 import org.rumbledb.runtime.functions.strings.TokenizeFunctionIterator;
+import org.rumbledb.runtime.functions.strings.TranslateFunctionIterator;
+import org.rumbledb.runtime.functions.strings.UpperCaseFunctionIterator;
 import org.rumbledb.runtime.operational.TypePromotionIterator;
 
 import sparksoniq.jsoniq.ExecutionMode;
@@ -233,6 +240,7 @@ public class Functions {
         sequenceTypes.put("double?", new SequenceType(itemTypes.get("double"), SequenceType.Arity.OneOrZero));
 
         sequenceTypes.put("boolean", new SequenceType(itemTypes.get("boolean"), SequenceType.Arity.One));
+        sequenceTypes.put("boolean?", new SequenceType(itemTypes.get("boolean"), SequenceType.Arity.OneOrZero));
 
         sequenceTypes.put("duration?", new SequenceType(itemTypes.get("duration"), SequenceType.Arity.OneOrZero));
 
@@ -335,6 +343,9 @@ public class Functions {
         builtInFunctions.put(atan2.getIdentifier(), atan2);
 
         builtInFunctions.put(string_function.getIdentifier(), string_function);
+        builtInFunctions.put(codepoints_to_string.getIdentifier(), codepoints_to_string);
+        builtInFunctions.put(string_to_codepoints.getIdentifier(), string_to_codepoints);
+        builtInFunctions.put(replace.getIdentifier(), replace);
         builtInFunctions.put(substring2.getIdentifier(), substring2);
         builtInFunctions.put(substring3.getIdentifier(), substring3);
         builtInFunctions.put(substring_before.getIdentifier(), substring_before);
@@ -348,6 +359,10 @@ public class Functions {
         builtInFunctions.put(string_length.getIdentifier(), string_length);
         builtInFunctions.put(tokenize1.getIdentifier(), tokenize1);
         builtInFunctions.put(tokenize2.getIdentifier(), tokenize2);
+        builtInFunctions.put(lower_case.getIdentifier(), lower_case);
+        builtInFunctions.put(upper_case.getIdentifier(), upper_case);
+        builtInFunctions.put(translate.getIdentifier(), translate);
+        builtInFunctions.put(codepoint_equal.getIdentifier(), codepoint_equal);
         builtInFunctions.put(starts_with.getIdentifier(), starts_with);
         builtInFunctions.put(matches.getIdentifier(), matches);
         builtInFunctions.put(contains.getIdentifier(), contains);
@@ -1368,6 +1383,37 @@ public class Functions {
                     BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
             );
         /**
+         * function that converts codepoints to a string
+         */
+        static final BuiltinFunction codepoints_to_string = createBuiltinFunction(
+            "codepoints-to-string",
+            "integer*",
+            "string",
+            CodepointsToStringFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+        /**
+         * function that converts a string to codepoints
+         */
+        static final BuiltinFunction string_to_codepoints = createBuiltinFunction(
+            "string-to-codepoints",
+            "string?",
+            "integer*",
+            StringToCodepointsFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+        /**
+         * function that compares Strings codepoint-by-codepoint
+         */
+        static final BuiltinFunction codepoint_equal = createBuiltinFunction(
+            "codepoint-equal",
+            "string?",
+            "string?",
+            "boolean?",
+            CodepointEqualFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+        /**
          * function that returns substrings
          */
         static final BuiltinFunction string_join1 = createBuiltinFunction(
@@ -1383,6 +1429,18 @@ public class Functions {
             "string",
             "string",
             StringJoinFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+        /**
+         * function that replaces parts of a string according to a regex expression
+         */
+        static final BuiltinFunction replace = createBuiltinFunction(
+            "replace",
+            "string?",
+            "string",
+            "string",
+            "string",
+            ReplaceFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
@@ -1411,6 +1469,38 @@ public class Functions {
             "string",
             "string*",
             TokenizeFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+        /**
+         * function that turns all upper-case characters to lower-case
+         */
+        static final BuiltinFunction lower_case = createBuiltinFunction(
+            "lower-case",
+            "string?",
+            "string",
+            LowerCaseFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+        /**
+         * function that turns all upper-case characters to upper-case
+         */
+        static final BuiltinFunction upper_case = createBuiltinFunction(
+            "upper-case",
+            "string?",
+            "string",
+            UpperCaseFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+        /**
+         * function that turns all upper-case characters to upper-case
+         */
+        static final BuiltinFunction translate = createBuiltinFunction(
+            "translate",
+            "string?",
+            "string",
+            "string",
+            "string",
+            TranslateFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
