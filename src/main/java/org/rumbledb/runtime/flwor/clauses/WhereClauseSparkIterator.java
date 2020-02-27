@@ -18,7 +18,7 @@
  *
  */
 
-package org.rumbledb.runtime.flowr;
+package org.rumbledb.runtime.flwor.clauses;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -34,8 +34,8 @@ import org.rumbledb.runtime.RuntimeTupleIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.spark.DataFrameUtils;
-import sparksoniq.spark.udf.WhereClauseUDF;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.udfs.WhereClauseUDF;
 
 import java.util.HashSet;
 import java.util.List;
@@ -132,7 +132,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         Dataset<Row> df = this.child.getDataFrame(context, getProjection(parentProjection));
         StructType inputSchema = df.schema();
 
-        Map<String, List<String>> UDFcolumnsByType = DataFrameUtils.getColumnNamesByType(
+        Map<String, List<String>> UDFcolumnsByType = FlworDataFrameUtils.getColumnNamesByType(
             inputSchema,
             -1,
             this.dependencies
@@ -146,7 +146,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                 DataTypes.BooleanType
             );
 
-        String UDFParameters = DataFrameUtils.getUDFParameters(UDFcolumnsByType);
+        String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumnsByType);
 
         df.createOrReplaceTempView("input");
         df = df.sparkSession()

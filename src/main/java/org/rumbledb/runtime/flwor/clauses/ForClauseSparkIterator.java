@@ -18,7 +18,7 @@
  *
  */
 
-package org.rumbledb.runtime.flowr;
+package org.rumbledb.runtime.flwor.clauses;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
@@ -32,15 +32,14 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
-import org.rumbledb.runtime.flwor.closures.ForClauseLocalToRowClosure;
+import org.rumbledb.runtime.flwor.closures.ForClauseLocalTupleToRowClosure;
 import org.rumbledb.runtime.flwor.closures.ForClauseSerializeClosure;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.spark.DataFrameUtils;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import sparksoniq.spark.SparkSessionManager;
-import sparksoniq.spark.udf.ForClauseUDF;
+import org.rumbledb.runtime.flwor.udfs.ForClauseUDF;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -195,7 +194,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 Dataset<Row> inputDF = this.child.getDataFrame(context, getProjection(parentProjection));
                 StructType inputSchema = inputDF.schema();
                 int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(this.variableName);
-                List<String> columnsToSelect = DataFrameUtils.getColumnNames(
+                List<String> columnsToSelect = FlworDataFrameUtils.getColumnNames(
                     inputSchema,
                     duplicateVariableIndex,
                     null
@@ -206,7 +205,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 } else {
                     columnsToSelect.add(expressionDFTableName + "`.`" + this.variableName);
                 }
-                String selectSQL = DataFrameUtils.getSQL(columnsToSelect, false);
+                String selectSQL = FlworDataFrameUtils.getSQL(columnsToSelect, false);
 
                 inputDF.createOrReplaceTempView(inputDFTableName);
                 expressionDF.createOrReplaceTempView(expressionDFTableName);
@@ -226,8 +225,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             Dataset<Row> df = this.child.getDataFrame(context, getProjection(parentProjection));
             StructType inputSchema = df.schema();
             int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(this.variableName);
-            List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
-            Map<String, List<String>> UDFcolumnsByType = DataFrameUtils.getColumnNamesByType(
+            List<String> allColumns = FlworDataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
+            Map<String, List<String>> UDFcolumnsByType = FlworDataFrameUtils.getColumnNamesByType(
                 inputSchema,
                 -1,
                 this.dependencies
@@ -241,8 +240,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     DataTypes.createArrayType(DataTypes.BinaryType)
                 );
 
-            String selectSQL = DataFrameUtils.getSQL(allColumns, true);
-            String UDFParameters = DataFrameUtils.getUDFParameters(UDFcolumnsByType);
+            String selectSQL = FlworDataFrameUtils.getSQL(allColumns, true);
+            String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumnsByType);
 
             df.createOrReplaceTempView("input");
             df = df.sparkSession()
@@ -262,27 +261,21 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         Dataset<Row> df = null;
         this.child.open(context);
         this.tupleContext = new DynamicContext(context); // assign current context as parent
+        StructType schema = null;
         while (this.child.hasNext()) {
             this.inputTuple = this.child.next();
             this.tupleContext.removeAllVariables(); // clear the previous variables
             this.tupleContext.setBindingsFromTuple(this.inputTuple, getMetadata()); // assign new variables from new
                                                                                     // tuple
-
             JavaRDD<Item> expressionRDD = this.assignmentIterator.getRDD(this.tupleContext);
 
-            // TODO - Optimization: Iterate schema creation only once
-            Set<String> oldColumnNames = this.inputTuple.getLocalKeys();
-            List<String> newColumnNames = new ArrayList<>(oldColumnNames);
-
-            newColumnNames.add(this.variableName);
-            List<StructField> fields = new ArrayList<>();
-            for (String columnName : newColumnNames) {
-                StructField field = DataTypes.createStructField(columnName, DataTypes.BinaryType, true);
-                fields.add(field);
+            if (schema == null) {
+                schema = generateSchema();
             }
-            StructType schema = DataTypes.createStructType(fields);
 
-            JavaRDD<Row> rowRDD = expressionRDD.map(new ForClauseLocalToRowClosure(this.inputTuple, getMetadata()));
+            JavaRDD<Row> rowRDD = expressionRDD.map(
+                new ForClauseLocalTupleToRowClosure(this.inputTuple, getMetadata())
+            );
 
             if (df == null) {
                 df = SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
@@ -292,6 +285,20 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         }
         this.child.close();
         return df;
+    }
+
+    private StructType generateSchema() {
+        Set<String> oldColumnNames = this.inputTuple.getLocalKeys();
+        List<String> newColumnNames = new ArrayList<>(oldColumnNames);
+        newColumnNames.add(this.variableName);
+
+        List<StructField> fields = new ArrayList<>();
+        for (String columnName : newColumnNames) {
+            // all columns store items serialized to binary format
+            StructField field = DataTypes.createStructField(columnName, DataTypes.BinaryType, true);
+            fields.add(field);
+        }
+        return DataTypes.createStructType(fields);
     }
 
     private Dataset<Row> getDataFrameFromRDDExpression(DynamicContext context) {

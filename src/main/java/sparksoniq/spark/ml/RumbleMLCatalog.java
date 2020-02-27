@@ -1199,28 +1199,40 @@ public class RumbleMLCatalog {
 
     public static String getEstimatorFullClassName(String name, ExceptionMetadata metadata) {
         if (!estimatorFullClassNames.containsKey(name)) {
-            throw new UnrecognizedRumbleMLClassReferenceException(name, metadata);
+            throw new UnrecognizedRumbleMLClassReferenceException(
+                    "Unrecognized RumbleML class; Make sure \"" + name + "\" is a valid estimator of RumbleML API.",
+                    metadata
+            );
         }
         return estimatorFullClassNames.get(name);
     }
 
     public static String getTransformerFullClassName(String name, ExceptionMetadata metadata) {
         if (!transformerFullClassNames.containsKey(name)) {
-            throw new UnrecognizedRumbleMLClassReferenceException(name, metadata);
+            throw new UnrecognizedRumbleMLClassReferenceException(
+                    "Unrecognized RumbleML class; Make sure \"" + name + "\" is a valid transformer of RumbleML API.",
+                    metadata
+            );
         }
         return transformerFullClassNames.get(name);
     }
 
     public static List<String> getEstimatorParams(String name, ExceptionMetadata metadata) {
         if (!estimatorParams.containsKey(name)) {
-            throw new UnrecognizedRumbleMLClassReferenceException(name, metadata);
+            throw new UnrecognizedRumbleMLClassReferenceException(
+                    "Unrecognized RumbleML class; Make sure \"" + name + "\" is a valid estimator of RumbleML API.",
+                    metadata
+            );
         }
         return estimatorParams.get(name);
     }
 
     public static List<String> getTransformerParams(String name, ExceptionMetadata metadata) {
         if (!transformerParams.containsKey(name)) {
-            throw new UnrecognizedRumbleMLClassReferenceException(name, metadata);
+            throw new UnrecognizedRumbleMLClassReferenceException(
+                    "Unrecognized RumbleML class; Make sure \"" + name + "\" is a valid transformer of RumbleML API.",
+                    metadata
+            );
         }
         return transformerParams.get(name);
     }
@@ -1231,7 +1243,12 @@ public class RumbleMLCatalog {
             ExceptionMetadata metadata
     ) {
         if (!transformerParams.containsKey(transformerShortName)) {
-            throw new UnrecognizedRumbleMLClassReferenceException(transformerShortName, metadata);
+            throw new UnrecognizedRumbleMLClassReferenceException(
+                    "Unrecognized RumbleML class; Make sure \""
+                        + transformerShortName
+                        + "\" is a valid transformer of RumbleML API.",
+                    metadata
+            );
         }
         if (!transformerParams.get(transformerShortName).contains(paramName)) {
             throw new UnrecognizedRumbleMLParamReferenceException(
@@ -1251,7 +1268,12 @@ public class RumbleMLCatalog {
             ExceptionMetadata metadata
     ) {
         if (!estimatorParams.containsKey(estimatorName)) {
-            throw new UnrecognizedRumbleMLClassReferenceException(estimatorName, metadata);
+            throw new UnrecognizedRumbleMLClassReferenceException(
+                    "Unrecognized RumbleML class; Make sure \""
+                        + estimatorName
+                        + "\" is a valid estimator of RumbleML API.",
+                    metadata
+            );
         }
         if (!estimatorParams.get(estimatorName).contains(paramName)) {
             throw new UnrecognizedRumbleMLParamReferenceException(

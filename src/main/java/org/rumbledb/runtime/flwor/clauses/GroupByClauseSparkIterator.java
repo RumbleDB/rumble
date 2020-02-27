@@ -18,7 +18,7 @@
  *
  */
 
-package org.rumbledb.runtime.flowr;
+package org.rumbledb.runtime.flwor.clauses;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -35,17 +35,17 @@ import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
-import org.rumbledb.runtime.flowr.expression.GroupByClauseSparkIteratorExpression;
+import org.rumbledb.runtime.flwor.expression.GroupByClauseSparkIteratorExpression;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.spark.DataFrameUtils;
-import sparksoniq.spark.udf.GroupClauseCreateColumnsUDF;
-import sparksoniq.spark.udf.GroupClauseSerializeAggregateResultsUDF;
-import sparksoniq.spark.udf.LetClauseUDF;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.udfs.GroupClauseCreateColumnsUDF;
+import org.rumbledb.runtime.flwor.udfs.GroupClauseSerializeAggregateResultsUDF;
+import org.rumbledb.runtime.flwor.udfs.LetClauseUDF;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -256,8 +256,8 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 RuntimeIterator newVariableExpression = expression.getExpression();
                 int duplicateVariableIndex = columnNames.indexOf(newVariableName);
 
-                List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
-                Map<String, List<String>> UDFcolumnsByType = DataFrameUtils.getColumnNamesByType(
+                List<String> allColumns = FlworDataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
+                Map<String, List<String>> UDFcolumnsByType = FlworDataFrameUtils.getColumnNamesByType(
                     inputSchema,
                     -1,
                     this.dependencies
@@ -271,8 +271,8 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                         DataTypes.BinaryType
                     );
 
-                String selectSQL = DataFrameUtils.getSQL(allColumns, true);
-                String UDFParameters = DataFrameUtils.getUDFParameters(UDFcolumnsByType);
+                String selectSQL = FlworDataFrameUtils.getSQL(allColumns, true);
+                String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumnsByType);
 
                 df.createOrReplaceTempView("input");
                 df = df.sparkSession()
@@ -335,8 +335,8 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 DataTypes.BinaryType
             );
 
-        List<String> allColumns = DataFrameUtils.getColumnNames(inputSchema);
-        Map<String, List<String>> UDFcolumnsByType = DataFrameUtils.getColumnNamesByType(
+        List<String> allColumns = FlworDataFrameUtils.getColumnNames(inputSchema);
+        Map<String, List<String>> UDFcolumnsByType = FlworDataFrameUtils.getColumnNamesByType(
             inputSchema,
             -1,
             groupingVariables
@@ -350,9 +350,9 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 DataTypes.createStructType(typedFields)
             );
 
-        String selectSQL = DataFrameUtils.getSQL(allColumns, true);
+        String selectSQL = FlworDataFrameUtils.getSQL(allColumns, true);
 
-        String UDFParameters = DataFrameUtils.getUDFParameters(UDFcolumnsByType);
+        String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumnsByType);
 
         String createColumnsSQL = String.format(
             "select %s createGroupingColumns(%s) as `%s` from input",
@@ -365,7 +365,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         for (VariableReferenceIterator variableAccessExpression : variableAccessExpressions) {
             groupbyVariableNames.add(variableAccessExpression.getVariableName());
         }
-        String projectSQL = DataFrameUtils.getGroupbyProjectSQL(
+        String projectSQL = FlworDataFrameUtils.getGroupbyProjectSQL(
             inputSchema,
             -1,
             false,
