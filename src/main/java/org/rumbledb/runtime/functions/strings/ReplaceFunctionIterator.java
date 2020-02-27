@@ -25,6 +25,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidRegexPatternException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MatchesEmptyStringException;
+import org.rumbledb.exceptions.InvalidReplacementStringException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
@@ -77,6 +78,12 @@ public class ReplaceFunctionIterator extends LocalFunctionCallIterator {
             Item replacementStringItem = this.children.get(2)
                 .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
             String replacement = replacementStringItem.getStringValue();
+            if (!(checkReplacementStringForValidity(replacement))) {
+                throw new InvalidReplacementStringException(
+                        "'" + replacement + "' contains a disallowed sequence of characters",
+                        getMetadata()
+                );
+            }
 
             String input;
             if (stringItem == null) {
@@ -92,5 +99,27 @@ public class ReplaceFunctionIterator extends LocalFunctionCallIterator {
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " replace function",
                     getMetadata()
             );
+    }
+
+    private static boolean checkReplacementStringForValidity(String repl) {
+        int i = 0;
+        Pattern p = Pattern.compile("\\d");
+
+        while (i < repl.length()) {
+            if (repl.charAt(i) == '\\') {
+                if ((!(repl.charAt(i + 1) == '\\')) && (!(repl.charAt(i + 1) == '$'))) {
+                    return false;
+                }
+                i += 2;
+            } else if (repl.charAt(i) == '$') {
+                if ((i + 1 >= repl.length()) || !(p.matcher(String.valueOf(repl.charAt(i + 1))).matches())) {
+                    return false;
+                }
+                i += 2;
+            } else {
+                i++;
+            }
+        }
+        return true;
     }
 }
