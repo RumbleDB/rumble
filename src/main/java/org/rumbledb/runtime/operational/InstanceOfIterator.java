@@ -65,19 +65,21 @@ public class InstanceOfIterator extends UnaryOperationBaseIterator {
                 this.child.close();
                 this.hasNext = false;
 
-                if (!this.sequenceType.isEmptySequence()) {
-                    if (isInvalidArity(items.size()))
-                        return ItemFactory.getInstance().createBooleanItem(false);
-
-                    ItemType itemType = this.sequenceType.getItemType();
-                    for (Item item : items) {
-                        if (!item.isTypeOf(itemType)) {
-                            return ItemFactory.getInstance().createBooleanItem(false);
-                        }
-                    }
-                } else {
+                if (this.sequenceType.isEmptySequence()) {
                     return ItemFactory.getInstance().createBooleanItem(items.size() == 0);
                 }
+
+                if (isInvalidArity(items.size())) {
+                    return ItemFactory.getInstance().createBooleanItem(false);
+                }
+
+                ItemType itemType = this.sequenceType.getItemType();
+                for (Item item : items) {
+                    if (!item.isTypeOf(itemType)) {
+                        return ItemFactory.getInstance().createBooleanItem(false);
+                    }
+                }
+
                 return ItemFactory.getInstance().createBooleanItem(true);
             } else {
                 JavaRDD<Item> childRDD = this.child.getRDD(this.currentDynamicContextForLocalExecution);
