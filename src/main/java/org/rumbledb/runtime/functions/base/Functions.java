@@ -240,6 +240,7 @@ public class Functions {
         sequenceTypes.put("double?", new SequenceType(itemTypes.get("double"), SequenceType.Arity.OneOrZero));
 
         sequenceTypes.put("boolean", new SequenceType(itemTypes.get("boolean"), SequenceType.Arity.One));
+        sequenceTypes.put("boolean?", new SequenceType(itemTypes.get("boolean"), SequenceType.Arity.OneOrZero));
 
         sequenceTypes.put("duration?", new SequenceType(itemTypes.get("duration"), SequenceType.Arity.OneOrZero));
 
@@ -1408,7 +1409,7 @@ public class Functions {
             "codepoint-equal",
             "string?",
             "string?",
-            "item?",
+            "boolean?",
             CodepointEqualFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
