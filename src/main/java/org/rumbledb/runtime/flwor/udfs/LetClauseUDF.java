@@ -18,44 +18,45 @@
  *
  */
 
-package sparksoniq.spark.udf;
+package org.rumbledb.runtime.flwor.udfs;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.sql.api.java.UDF2;
-import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.spark.DataFrameUtils;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, Boolean> {
+public class LetClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, byte[]> {
+
     private static final long serialVersionUID = 1L;
     private RuntimeIterator expression;
-    private Map<String, DynamicContext.VariableDependency> dependencies;
 
     private Map<String, List<String>> columnNamesByType;
 
     private List<List<Item>> deserializedParams;
     private List<Item> longParams;
-    private DynamicContext context;
     private DynamicContext parentContext;
+    private DynamicContext context;
+    private List<Item> nextResult;
 
     private transient Kryo kryo;
+    private transient Output output;
     private transient Input input;
 
-    public WhereClauseUDF(
+    public LetClauseUDF(
             RuntimeIterator expression,
             DynamicContext context,
-            StructType inputSchema,
             Map<String, List<String>> columnNamesByType
     ) {
         this.expression = expression;
@@ -64,24 +65,26 @@ public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<L
         this.longParams = new ArrayList<>();
         this.parentContext = context;
         this.context = new DynamicContext(this.parentContext);
+        this.nextResult = new ArrayList<>();
 
         this.kryo = new Kryo();
         this.kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(this.kryo);
+        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
+        this.output = new Output(128, -1);
         this.input = new Input();
 
         this.columnNamesByType = columnNamesByType;
-        this.dependencies = this.expression.getVariableDependencies();
-
     }
 
 
     @Override
-    public Boolean call(WrappedArray<byte[]> wrappedParameters, WrappedArray<Long> wrappedParametersLong) {
+    public byte[] call(WrappedArray<byte[]> wrappedParameters, WrappedArray<Long> wrappedParametersLong) {
         this.deserializedParams.clear();
+        this.longParams.clear();
         this.context.removeAllVariables();
+        this.nextResult.clear();
 
-        DataFrameUtils.deserializeWrappedParameters(
+        FlworDataFrameUtils.deserializeWrappedParameters(
             wrappedParameters,
             this.deserializedParams,
             this.kryo,
@@ -96,7 +99,7 @@ public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<L
             this.longParams.add(count);
         }
 
-        DataFrameUtils.prepareDynamicContext(
+        FlworDataFrameUtils.prepareDynamicContext(
             this.context,
             this.columnNamesByType.get("byte[]"),
             this.columnNamesByType.get("Long"),
@@ -106,9 +109,13 @@ public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<L
 
         // apply expression in the dynamic context
         this.expression.open(this.context);
-        boolean result = RuntimeIterator.getEffectiveBooleanValue(this.expression);
+        while (this.expression.hasNext()) {
+            Item nextItem = this.expression.next();
+            this.nextResult.add(nextItem);
+        }
         this.expression.close();
-        return result;
+
+        return FlworDataFrameUtils.serializeItemList(this.nextResult, this.kryo, this.output);
     }
 
     private void readObject(java.io.ObjectInputStream in)
@@ -118,7 +125,9 @@ public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<L
 
         this.kryo = new Kryo();
         this.kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(this.kryo);
+        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
+        this.output = new Output(128, -1);
         this.input = new Input();
     }
+
 }

@@ -28,7 +28,7 @@ import org.apache.spark.sql.RowFactory;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.jsoniq.tuple.FlworTuple;
-import sparksoniq.spark.DataFrameUtils;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -49,7 +49,7 @@ public class ForClauseLocalTupleToRowClosure implements Function<Item, Row> {
         this.metadata = metadata;
         this.kryo = new Kryo();
         this.kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(this.kryo);
+        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
         this.output = new Output(128, -1);
     }
 
@@ -65,7 +65,7 @@ public class ForClauseLocalTupleToRowClosure implements Function<Item, Row> {
 
         List<byte[]> serializedRowColumns = new ArrayList<>();
         for (List<Item> column : rowColumns) {
-            serializedRowColumns.add(DataFrameUtils.serializeItemList(column, this.kryo, this.output));
+            serializedRowColumns.add(FlworDataFrameUtils.serializeItemList(column, this.kryo, this.output));
         }
 
         return RowFactory.create(serializedRowColumns.toArray());
@@ -78,7 +78,7 @@ public class ForClauseLocalTupleToRowClosure implements Function<Item, Row> {
 
         this.kryo = new Kryo();
         this.kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(this.kryo);
+        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
         this.output = new Output(128, -1);
     }
 }

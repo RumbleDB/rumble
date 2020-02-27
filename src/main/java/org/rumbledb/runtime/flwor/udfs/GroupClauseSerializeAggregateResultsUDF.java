@@ -18,7 +18,7 @@
  *
  */
 
-package sparksoniq.spark.udf;
+package org.rumbledb.runtime.flwor.udfs;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
@@ -26,7 +26,7 @@ import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.sql.api.java.UDF1;
 import org.rumbledb.api.Item;
 import scala.collection.mutable.WrappedArray;
-import sparksoniq.spark.DataFrameUtils;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -49,7 +49,7 @@ public class GroupClauseSerializeAggregateResultsUDF implements UDF1<WrappedArra
 
         this.kryo = new Kryo();
         this.kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(this.kryo);
+        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
         this.output = new Output(128, -1);
         this.input = new Input();
     }
@@ -58,7 +58,7 @@ public class GroupClauseSerializeAggregateResultsUDF implements UDF1<WrappedArra
     public byte[] call(WrappedArray<byte[]> wrappedParameters) {
         this.nextResult.clear();
         this.deserializedParams.clear();
-        DataFrameUtils.deserializeWrappedParameters(
+        FlworDataFrameUtils.deserializeWrappedParameters(
             wrappedParameters,
             this.deserializedParams,
             this.kryo,
@@ -68,7 +68,7 @@ public class GroupClauseSerializeAggregateResultsUDF implements UDF1<WrappedArra
         for (List<Item> deserializedParam : this.deserializedParams) {
             this.nextResult.addAll(deserializedParam);
         }
-        return DataFrameUtils.serializeItemList(this.nextResult, this.kryo, this.output);
+        return FlworDataFrameUtils.serializeItemList(this.nextResult, this.kryo, this.output);
     }
 
     private void readObject(java.io.ObjectInputStream in)
@@ -78,7 +78,7 @@ public class GroupClauseSerializeAggregateResultsUDF implements UDF1<WrappedArra
 
         this.kryo = new Kryo();
         this.kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(this.kryo);
+        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
         this.output = new Output(128, -1);
         this.input = new Input();
     }
