@@ -36,7 +36,6 @@ public abstract class FlworVarDecl extends Clause {
     protected VariableReferenceExpression variableReferenceExpression;
     protected Expression expression;
 
-    // asSequence is never null.
     protected SequenceType sequenceType;
 
     // Holds whether the variable will be stored in materialized(local) or native/spark(RDD or DF) format in a tuple
