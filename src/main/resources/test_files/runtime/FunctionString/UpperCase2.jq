@@ -1,4 +1,5 @@
-(:JIQS: ShouldRun; Output="(true, , true)" :)
-upper-case(()) instance of string,
-upper-case(""),
-upper-case("") instance of string
+(:JIQS: ShouldRun; Output="(, )" :)
+upper-case(()),
+upper-case("")
+
+(: The empty sequence and zero-length string returns the zero-length string :)
