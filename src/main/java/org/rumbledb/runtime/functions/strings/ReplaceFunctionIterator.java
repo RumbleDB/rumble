@@ -106,12 +106,12 @@ public class ReplaceFunctionIterator extends LocalFunctionCallIterator {
         Pattern p = Pattern.compile("\\d");
 
         while (i < repl.length()) {
-            if (repl.charAt(i) == '\\') {
+            if (repl.charAt(i) == '\\') { // '\' must be followed by another '\' or '$'
                 if ((!(repl.charAt(i + 1) == '\\')) && (!(repl.charAt(i + 1) == '$'))) {
                     return false;
                 }
                 i += 2;
-            } else if (repl.charAt(i) == '$') {
+            } else if (repl.charAt(i) == '$') { // '$' must always be followed by a digit
                 if ((i + 1 >= repl.length()) || !(p.matcher(String.valueOf(repl.charAt(i + 1))).matches())) {
                     return false;
                 }
