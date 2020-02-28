@@ -1694,11 +1694,11 @@ public class Functions {
          * function that that returns the double representation of the input string or number
          */
         static final BuiltinFunction number = createBuiltinFunction(
-                "number",
-                "atomic?",
-                "double",
-                NumberFunctionIterator.class,
-                BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            "number",
+            "atomic?",
+            "double",
+            NumberFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
 
         /**
