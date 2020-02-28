@@ -26,12 +26,9 @@ public class UnrecognizedRumbleMLClassReferenceException extends SparksoniqRunti
 
     private static final long serialVersionUID = 1L;
 
-    public UnrecognizedRumbleMLClassReferenceException(String name, ExceptionMetadata metadata) {
+    public UnrecognizedRumbleMLClassReferenceException(String message, ExceptionMetadata metadata) {
         super(
-            "Unrecognized RumbleML class; Make sure \""
-                +
-                name
-                + "\" is a valid component of RumbleML API.",
+            message,
             ErrorCodes.UnrecognizedRumbleMLClassReferenceErrorCode,
             metadata
         );

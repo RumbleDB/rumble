@@ -14,61 +14,61 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
+ * Author: Stefan Irimescu
  *
  */
 
-package sparksoniq.spark.udf;
+package org.rumbledb.runtime.flwor.closures;
 
 import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import org.apache.spark.sql.api.java.UDF1;
+import org.apache.spark.api.java.function.Function;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.RowFactory;
 import org.rumbledb.api.Item;
-import scala.collection.mutable.WrappedArray;
-import sparksoniq.spark.DataFrameUtils;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import sparksoniq.jsoniq.tuple.FlworTuple;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GroupClauseSerializeAggregateResultsUDF implements UDF1<WrappedArray<byte[]>, byte[]> {
-
+public class ForClauseLocalTupleToRowClosure implements Function<Item, Row> {
 
     private static final long serialVersionUID = 1L;
-    private List<Item> nextResult;
-    private List<List<Item>> deserializedParams;
+
+    private final FlworTuple inputTuple;
+    private final ExceptionMetadata metadata;
 
     private transient Kryo kryo;
     private transient Output output;
-    private transient Input input;
 
-    public GroupClauseSerializeAggregateResultsUDF() {
-        this.nextResult = new ArrayList<>();
-        this.deserializedParams = new ArrayList<>();
-
+    public ForClauseLocalTupleToRowClosure(FlworTuple inputTuple, ExceptionMetadata metadata) {
+        this.inputTuple = inputTuple;
+        this.metadata = metadata;
         this.kryo = new Kryo();
         this.kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(this.kryo);
+        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
         this.output = new Output(128, -1);
-        this.input = new Input();
     }
 
     @Override
-    public byte[] call(WrappedArray<byte[]> wrappedParameters) {
-        this.nextResult.clear();
-        this.deserializedParams.clear();
-        DataFrameUtils.deserializeWrappedParameters(
-            wrappedParameters,
-            this.deserializedParams,
-            this.kryo,
-            this.input
-        );
+    public Row call(Item item) {
+        List<List<Item>> rowColumns = new ArrayList<>();
+        this.inputTuple.getLocalKeys()
+            .forEach(key -> rowColumns.add(this.inputTuple.getLocalValue(key, this.metadata)));
 
-        for (List<Item> deserializedParam : this.deserializedParams) {
-            this.nextResult.addAll(deserializedParam);
+        List<Item> itemList = new ArrayList<>();
+        itemList.add(item);
+        rowColumns.add(itemList);
+
+        List<byte[]> serializedRowColumns = new ArrayList<>();
+        for (List<Item> column : rowColumns) {
+            serializedRowColumns.add(FlworDataFrameUtils.serializeItemList(column, this.kryo, this.output));
         }
-        return DataFrameUtils.serializeItemList(this.nextResult, this.kryo, this.output);
+
+        return RowFactory.create(serializedRowColumns.toArray());
     }
 
     private void readObject(java.io.ObjectInputStream in)
@@ -78,8 +78,7 @@ public class GroupClauseSerializeAggregateResultsUDF implements UDF1<WrappedArra
 
         this.kryo = new Kryo();
         this.kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(this.kryo);
+        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
         this.output = new Output(128, -1);
-        this.input = new Input();
     }
 }
