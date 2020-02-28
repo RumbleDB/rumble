@@ -18,7 +18,7 @@
  *
  */
 
-package sparksoniq.spark;
+package org.rumbledb.runtime.flwor;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
@@ -73,7 +73,7 @@ import static org.apache.spark.sql.functions.spark_partition_id;
 import static org.apache.spark.sql.functions.sum;
 import static org.apache.spark.sql.functions.udf;
 
-public class DataFrameUtils {
+public class FlworDataFrameUtils {
 
     private static ThreadLocal<byte[]> lastBytesCache = ThreadLocal.withInitial(() -> null);
 
@@ -185,8 +185,8 @@ public class DataFrameUtils {
     public static String getUDFParameters(
             Map<String, List<String>> columnNamesByType
     ) {
-        String udfBinarySQL = DataFrameUtils.getSQL(columnNamesByType.get("byte[]"), false);
-        String udfLongSQL = DataFrameUtils.getSQL(columnNamesByType.get("Long"), false);
+        String udfBinarySQL = FlworDataFrameUtils.getSQL(columnNamesByType.get("byte[]"), false);
+        String udfLongSQL = FlworDataFrameUtils.getSQL(columnNamesByType.get("Long"), false);
 
         return String.format(
             "array(%s), array(%s)",
@@ -258,6 +258,10 @@ public class DataFrameUtils {
      * @param inputSchema schema specifies the columns to be used in the query
      * @param duplicateVariableIndex enables skipping a variable
      * @param trailingComma boolean field to have a trailing comma
+     * @param serializerUdfName
+     * @param groupbyVariableNames
+     * @param dependencies
+     * @param columnNamesByType
      * @return comma separated variables to be used in spark SQL
      */
     public static String getGroupbyProjectSQL(
@@ -409,7 +413,7 @@ public class DataFrameUtils {
      * @param df - df to perform the operation on
      * @param offset - starting offset for the first index
      * @param indexName - name of the index column
-     * @return returns Dataset<Row> with the added 'indexName' column containing indices
+     * @return returns DataFrame with the added 'indexName' column containing indices
      */
     public static Dataset<Row> zipWithIndex(Dataset<Row> df, Long offset, String indexName) {
         Dataset<Row> dfWithPartitionId = df

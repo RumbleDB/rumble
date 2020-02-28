@@ -18,7 +18,7 @@
  *
  */
 
-package sparksoniq.spark.udf;
+package org.rumbledb.runtime.flwor.udfs;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
@@ -30,61 +30,60 @@ import org.rumbledb.runtime.RuntimeIterator;
 
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.spark.DataFrameUtils;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class LetClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, byte[]> {
-
+public class ForClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, List<byte[]>> {
+    /**
+     *
+     */
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator expression;
-
     private Map<String, List<String>> columnNamesByType;
-
+    private RuntimeIterator expression;
     private List<List<Item>> deserializedParams;
     private List<Item> longParams;
-    private DynamicContext parentContext;
     private DynamicContext context;
     private List<Item> nextResult;
+    private List<byte[]> results;
 
     private transient Kryo kryo;
     private transient Output output;
     private transient Input input;
 
-    public LetClauseUDF(
+    public ForClauseUDF(
             RuntimeIterator expression,
             DynamicContext context,
             Map<String, List<String>> columnNamesByType
     ) {
         this.expression = expression;
+        this.columnNamesByType = columnNamesByType;
 
         this.deserializedParams = new ArrayList<>();
         this.longParams = new ArrayList<>();
-        this.parentContext = context;
-        this.context = new DynamicContext(this.parentContext);
+
+        this.context = new DynamicContext(context);
         this.nextResult = new ArrayList<>();
+        this.results = new ArrayList<>();
 
         this.kryo = new Kryo();
         this.kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(this.kryo);
+        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
         this.output = new Output(128, -1);
         this.input = new Input();
-
-        this.columnNamesByType = columnNamesByType;
     }
 
 
     @Override
-    public byte[] call(WrappedArray<byte[]> wrappedParameters, WrappedArray<Long> wrappedParametersLong) {
+    public List<byte[]> call(WrappedArray<byte[]> wrappedParameters, WrappedArray<Long> wrappedParametersLong) {
         this.deserializedParams.clear();
-        this.longParams.clear();
         this.context.removeAllVariables();
-        this.nextResult.clear();
+        this.results.clear();
 
-        DataFrameUtils.deserializeWrappedParameters(
+        FlworDataFrameUtils.deserializeWrappedParameters(
             wrappedParameters,
             this.deserializedParams,
             this.kryo,
@@ -99,7 +98,7 @@ public class LetClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
             this.longParams.add(count);
         }
 
-        DataFrameUtils.prepareDynamicContext(
+        FlworDataFrameUtils.prepareDynamicContext(
             this.context,
             this.columnNamesByType.get("byte[]"),
             this.columnNamesByType.get("Long"),
@@ -110,12 +109,14 @@ public class LetClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
         // apply expression in the dynamic context
         this.expression.open(this.context);
         while (this.expression.hasNext()) {
+            this.nextResult.clear();
             Item nextItem = this.expression.next();
             this.nextResult.add(nextItem);
+            this.results.add(FlworDataFrameUtils.serializeItemList(this.nextResult, this.kryo, this.output));
         }
         this.expression.close();
 
-        return DataFrameUtils.serializeItemList(this.nextResult, this.kryo, this.output);
+        return this.results;
     }
 
     private void readObject(java.io.ObjectInputStream in)
@@ -125,9 +126,8 @@ public class LetClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
 
         this.kryo = new Kryo();
         this.kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(this.kryo);
+        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
         this.output = new Output(128, -1);
         this.input = new Input();
     }
-
 }

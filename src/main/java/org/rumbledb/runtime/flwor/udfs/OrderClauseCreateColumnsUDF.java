@@ -18,7 +18,7 @@
  *
  */
 
-package sparksoniq.spark.udf;
+package org.rumbledb.runtime.flwor.udfs;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
@@ -32,12 +32,12 @@ import org.rumbledb.expressions.flowr.OrderByClauseExpr;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.NullItem;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.flowr.expression.OrderByClauseAnnotatedChildIterator;
+import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.ItemTypes;
-import sparksoniq.spark.DataFrameUtils;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -86,7 +86,7 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
 
         this.kryo = new Kryo();
         this.kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(this.kryo);
+        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
         this.input = new Input();
     }
 
@@ -96,7 +96,7 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
         this.context.removeAllVariables();
         this.results.clear();
 
-        DataFrameUtils.deserializeWrappedParameters(
+        FlworDataFrameUtils.deserializeWrappedParameters(
             wrappedParameters,
             this.deserializedParams,
             this.kryo,
@@ -111,7 +111,7 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
             this.longParams.add(count);
         }
 
-        DataFrameUtils.prepareDynamicContext(
+        FlworDataFrameUtils.prepareDynamicContext(
             this.context,
             this.columnNamesByType.get("byte[]"),
             this.columnNamesByType.get("Long"),
@@ -213,7 +213,7 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
 
         this.kryo = new Kryo();
         this.kryo.setReferences(false);
-        DataFrameUtils.registerKryoClassesKryo(this.kryo);
+        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
         this.input = new Input();
     }
 }

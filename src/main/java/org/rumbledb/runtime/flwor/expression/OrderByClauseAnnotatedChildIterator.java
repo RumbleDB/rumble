@@ -18,42 +18,48 @@
  *
  */
 
-package org.rumbledb.runtime.flowr.expression;
+package org.rumbledb.runtime.flwor.expression;
 
-
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.flowr.OrderByClauseExpr;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.primary.VariableReferenceIterator;
 
 import java.io.Serializable;
 
-public class GroupByClauseSparkIteratorExpression implements Serializable {
-
+public class OrderByClauseAnnotatedChildIterator implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private final VariableReferenceIterator variableReference;
-    private final RuntimeIterator expression;
-    private final ExceptionMetadata iteratorMetadata;
+    private final RuntimeIterator iterator;
+    private final boolean ascending;
+    private final String uri;
+    private final OrderByClauseExpr.EMPTY_ORDER emptyOrder;
 
-    public GroupByClauseSparkIteratorExpression(
-            RuntimeIterator expression,
-            VariableReferenceIterator variable,
-            ExceptionMetadata iteratorMetadata
+
+    public OrderByClauseAnnotatedChildIterator(
+            RuntimeIterator iterator,
+            boolean ascending,
+            String uri,
+            OrderByClauseExpr.EMPTY_ORDER empty_order
     ) {
-        this.expression = expression;
-        this.variableReference = variable;
-        this.iteratorMetadata = iteratorMetadata;
+        this.iterator = iterator;
+        this.ascending = ascending;
+        this.uri = uri;
+        this.emptyOrder = empty_order;
     }
 
-    public VariableReferenceIterator getVariableReference() {
-        return this.variableReference;
+    public RuntimeIterator getIterator() {
+        return this.iterator;
     }
 
-    public ExceptionMetadata getIteratorMetadata() {
-        return this.iteratorMetadata;
+    public boolean isAscending() {
+        return this.ascending;
     }
 
-    public RuntimeIterator getExpression() {
-        return this.expression;
+    public String getUri() {
+        return this.uri;
     }
+
+    public OrderByClauseExpr.EMPTY_ORDER getEmptyOrder() {
+        return this.emptyOrder;
+    }
+
 }
