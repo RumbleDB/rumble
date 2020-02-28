@@ -536,6 +536,8 @@ returns ("aa", "bb", "cc", "dd")
 
 ### replace
 
+Regular expression matching and replacing. The semantics of regular expressions are those of Java's Pattern class.
+
 ```
 replace("abracadabra", "bra", "*")
 ```
@@ -548,7 +550,67 @@ replace("abracadabra", "a(.)", "a$1$1")
 
 returns "abbraccaddabbra"
 
-_Note_: the pattern argument is parsed as a Java regexp pattern, which may differ from W3C-specified patterns.
+### translate
+
+```
+translate("bar","abc","ABC")
+```
+returns "BAr"
+
+```
+translate("--aaa--","abc-","ABC")
+```
+returns "AAA"
+
+### codepoint-equal
+
+```
+codepoint-equal("abcd", "abcd")
+```
+returns true
+
+```
+codepoint-equal("", ())
+```
+returns ()
+
+### string-to-codepoint
+
+```
+string-to-codepoints("Thérèse")
+```
+returns (84, 104, 233, 114, 232, 115, 101)
+
+```
+string-to-codepoints("")
+```
+returns ()
+
+### codepoints-to-string
+
+```
+codepoints-to-string((2309, 2358, 2378, 2325))
+```
+returns "अशॊक"
+
+```
+codepoints-to-string(())
+```
+returns ""
+
+### upper-case
+
+```
+upper-case("abCd0")
+```
+returns "ABCD0"
+
+### lower-case
+
+```
+lower-case("ABc!D")
+```
+returns "abc!d"
 
 ## Context functions
 
