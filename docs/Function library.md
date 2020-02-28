@@ -362,6 +362,22 @@ log(100)
 log10(100)
 ```
 
+### number
+
+```
+number("15")
+```
+returns 15 as a double
+
+```
+number("foo")
+```
+returns NaN as a double
+
+```
+number(15)
+```
+returns 15 as a double
 
 ### pow
 
