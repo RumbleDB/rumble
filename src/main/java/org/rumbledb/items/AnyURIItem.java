@@ -180,7 +180,7 @@ public class AnyURIItem extends AtomicItem {
 
     @Override
     public void write(Kryo kryo, Output output) {
-
+        output.writeString(this.serialize());
     }
 
     @Override
