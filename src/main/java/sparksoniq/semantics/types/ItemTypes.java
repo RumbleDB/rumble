@@ -42,6 +42,8 @@ public enum ItemTypes {
     DateItem,
     TimeItem,
 
+    AnyURIItem,
+
     HexBinaryItem,
     Base64BinaryItem,
 
