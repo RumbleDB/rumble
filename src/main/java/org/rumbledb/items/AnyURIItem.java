@@ -32,6 +32,7 @@ import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
+import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -88,7 +89,49 @@ public class AnyURIItem extends AtomicItem {
 
     @Override
     public Item castAs(AtomicTypes itemType) {
-        return this;
+        switch (itemType) {
+            case BooleanItem:
+                return ItemFactory.getInstance().createBooleanItem(Boolean.parseBoolean(this.getStringValue()));
+            case DoubleItem:
+                return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(this.getStringValue()));
+            case DecimalItem:
+                return ItemFactory.getInstance().createDecimalItem(new BigDecimal(this.getStringValue()));
+            case IntegerItem:
+                return ItemFactory.getInstance().createIntegerItem(Integer.parseInt(this.getStringValue()));
+            case NullItem:
+                return ItemFactory.getInstance().createNullItem();
+            case DurationItem:
+                return ItemFactory.getInstance()
+                        .createDurationItem(
+                                DurationItem.getDurationFromString(this.getStringValue(), AtomicTypes.DurationItem)
+                        );
+            case YearMonthDurationItem:
+                return ItemFactory.getInstance()
+                        .createYearMonthDurationItem(
+                                DurationItem.getDurationFromString(this.getStringValue(), AtomicTypes.YearMonthDurationItem)
+                        );
+            case DayTimeDurationItem:
+                return ItemFactory.getInstance()
+                        .createDayTimeDurationItem(
+                                DurationItem.getDurationFromString(this.getStringValue(), AtomicTypes.DayTimeDurationItem)
+                        );
+            case DateTimeItem:
+                return ItemFactory.getInstance().createDateTimeItem(this.getStringValue());
+            case DateItem:
+                return ItemFactory.getInstance().createDateItem(this.getStringValue());
+            case TimeItem:
+                return ItemFactory.getInstance().createTimeItem(this.getStringValue());
+            case HexBinaryItem:
+                return ItemFactory.getInstance().createHexBinaryItem(this.getStringValue());
+            case Base64BinaryItem:
+                return ItemFactory.getInstance().createBase64BinaryItem(this.getStringValue());
+            case StringItem:
+                return ItemFactory.getInstance().createStringItem(this.getStringValue());
+            case AnyURIItem:
+                return this;
+            default:
+                throw new ClassCastException();
+        }
     }
 
     @Override
@@ -106,7 +149,7 @@ public class AnyURIItem extends AtomicItem {
                 Double.parseDouble(this.getStringValue());
             } else if (itemType == AtomicTypes.NullItem) {
                 return isNullLiteral(this.getStringValue());
-            } else if (itemType == AtomicTypes.DurationItem) {
+            } else if (itgetDurationFromStringemType == AtomicTypes.DurationItem) {
                 DurationItem.getDurationFromString(this.getStringValue(), AtomicTypes.DurationItem);
             } else if (itemType == AtomicTypes.YearMonthDurationItem) {
                 DurationItem.getDurationFromString(this.getStringValue(), AtomicTypes.YearMonthDurationItem);
