@@ -75,7 +75,7 @@ public class AnyURIItem extends AtomicItem {
 
     @Override
     public int compareTo(Item other) {
-
+        return other.isNull() ? 1 : this.getStringValue().compareTo(other.getStringValue());
     }
 
     @Override
