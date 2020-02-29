@@ -185,7 +185,7 @@ public class AnyURIItem extends AtomicItem {
 
     @Override
     public void read(Kryo kryo, Input input) {
-
+        this.value = kryo.readObject(input, URI.class);
     }
 
     @Override
