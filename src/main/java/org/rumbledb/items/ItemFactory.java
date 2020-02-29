@@ -6,7 +6,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.math.BigDecimal;
-import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
@@ -87,7 +86,7 @@ public class ItemFactory {
         return new TimeItem(s);
     }
 
-    public Item createAnyURIItem(URI s) {
+    public Item createAnyURIItem(String s) {
         return new AnyURIItem(s);
     }
 
