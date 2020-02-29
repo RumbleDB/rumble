@@ -33,6 +33,7 @@ import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 
 public class AnyURIItem extends AtomicItem {
 
@@ -49,9 +50,69 @@ public class AnyURIItem extends AtomicItem {
         this.value = value;
     }
 
+    @Override
+    public String getStringValue() {
+        return this.getValue().toString();
+    }
+
+    @Override
+    public boolean getEffectiveBooleanValue() {
+        return !this.getStringValue().isEmpty();
+    }
+
+    @Override
+    public boolean equals(Object otherItem) {
+        if (!(otherItem instanceof Item)) {
+            return false;
+        }
+        Item o = (Item) otherItem;
+        if (!o.isAnyURI()) {
+            return false;
+        }
+        return (getStringValue().equals(o.getStringValue()));
+    }
+
+    @Override
+    public int compareTo(Item other) {
+
+    }
+
+    @Override
+    public int hashCode() {
+        return this.getValue().hashCode();
+    }
+
     public URI getValue() {
         return this.value;
     }
 
+    @Override
+    public Item castAs(AtomicTypes itemType) {
+        return this;
+    }
 
+    @Override
+    public boolean isCastableAs(AtomicTypes itemType) {
+        return true;
+    }
+
+    @Override
+    public String serialize() {
+        return null;
+    }
+
+    @Override
+    public void write(Kryo kryo, Output output) {
+
+    }
+
+    @Override
+    public void read(Kryo kryo, Input input) {
+
+    }
+
+    @Override
+    public boolean isAnyURI() {
+        return true;
+    }
 }
