@@ -93,6 +93,40 @@ public class AnyURIItem extends AtomicItem {
 
     @Override
     public boolean isCastableAs(AtomicTypes itemType) {
+        if (itemType == AtomicTypes.AnyURIItem || itemType == AtomicTypes.StringItem)
+            return true;
+        try {
+            if (itemType == AtomicTypes.IntegerItem) {
+                Integer.parseInt(this.getStringValue());
+            } else if (itemType == AtomicTypes.DecimalItem) {
+                if (this.getStringValue().contains("e") || this.getStringValue().contains("E"))
+                    return false;
+                Float.parseFloat(this.getStringValue());
+            } else if (itemType == AtomicTypes.DoubleItem) {
+                Double.parseDouble(this.getStringValue());
+            } else if (itemType == AtomicTypes.NullItem) {
+                return isNullLiteral(this.getStringValue());
+            } else if (itemType == AtomicTypes.DurationItem) {
+                DurationItem.getDurationFromString(this.getStringValue(), AtomicTypes.DurationItem);
+            } else if (itemType == AtomicTypes.YearMonthDurationItem) {
+                DurationItem.getDurationFromString(this.getStringValue(), AtomicTypes.YearMonthDurationItem);
+            } else if (itemType == AtomicTypes.DayTimeDurationItem) {
+                DurationItem.getDurationFromString(this.getStringValue(), AtomicTypes.DayTimeDurationItem);
+            } else if (itemType == AtomicTypes.DateTimeItem) {
+                DateTimeItem.parseDateTime(this.getStringValue(), AtomicTypes.DateTimeItem);
+            } else if (itemType == AtomicTypes.DateItem) {
+                DateTimeItem.parseDateTime(this.getStringValue(), AtomicTypes.DateItem);
+            } else if (itemType == AtomicTypes.TimeItem) {
+                DateTimeItem.parseDateTime(this.getStringValue(), AtomicTypes.TimeItem);
+            } else if (itemType == AtomicTypes.HexBinaryItem) {
+                HexBinaryItem.parseHexBinaryString(this.getStringValue());
+            } else if (itemType == AtomicTypes.Base64BinaryItem) {
+                Base64BinaryItem.parseBase64BinaryString(this.getStringValue());
+            } else
+                return isBooleanLiteral(this.getStringValue());
+        } catch (UnsupportedOperationException | IllegalArgumentException e) {
+            return false;
+        }
         return true;
     }
 
@@ -114,5 +148,13 @@ public class AnyURIItem extends AtomicItem {
     @Override
     public boolean isAnyURI() {
         return true;
+    }
+
+    private boolean isBooleanLiteral(String value) {
+        return "true".equals(value) || "false".equals(value);
+    }
+
+    private boolean isNullLiteral(String value) {
+        return "null".equals(value);
     }
 }
