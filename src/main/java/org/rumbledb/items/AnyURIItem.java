@@ -23,6 +23,8 @@ package org.rumbledb.items;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Hex;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -46,9 +48,19 @@ public class AnyURIItem extends AtomicItem {
         super();
     }
 
-    public AnyURIItem(URI value) {
+    public AnyURIItem(String value) {
         super();
-        this.value = value;
+        this.value = parseAnyURIString(value);
+    }
+
+    static URI parseAnyURIString(String anyURIString) throws IllegalArgumentException {
+        if (anyURIString == null)
+            throw new IllegalArgumentException();
+        try {
+            return new URI(anyURIString);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException(e.getMessage());
+        }
     }
 
     @Override
