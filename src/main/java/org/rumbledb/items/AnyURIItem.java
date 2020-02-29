@@ -175,7 +175,7 @@ public class AnyURIItem extends AtomicItem {
 
     @Override
     public String serialize() {
-        return null;
+        return this.getStringValue();
     }
 
     @Override
@@ -191,6 +191,11 @@ public class AnyURIItem extends AtomicItem {
     @Override
     public boolean isAnyURI() {
         return true;
+    }
+
+    @Override
+    public boolean isTypeOf(ItemType type) {
+        return type.getType().equals(ItemTypes.AnyURIItem) || super.isTypeOf(type);
     }
 
     private boolean isBooleanLiteral(String value) {
