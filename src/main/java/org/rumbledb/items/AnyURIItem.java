@@ -149,7 +149,7 @@ public class AnyURIItem extends AtomicItem {
                 Double.parseDouble(this.getStringValue());
             } else if (itemType == AtomicTypes.NullItem) {
                 return isNullLiteral(this.getStringValue());
-            } else if (itgetDurationFromStringemType == AtomicTypes.DurationItem) {
+            } else if (itemType == AtomicTypes.DurationItem) {
                 DurationItem.getDurationFromString(this.getStringValue(), AtomicTypes.DurationItem);
             } else if (itemType == AtomicTypes.YearMonthDurationItem) {
                 DurationItem.getDurationFromString(this.getStringValue(), AtomicTypes.YearMonthDurationItem);
