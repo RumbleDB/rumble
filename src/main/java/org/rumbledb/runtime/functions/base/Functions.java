@@ -104,6 +104,7 @@ import org.rumbledb.runtime.functions.object.ObjectKeysFunctionIterator;
 import org.rumbledb.runtime.functions.object.ObjectProjectFunctionIterator;
 import org.rumbledb.runtime.functions.object.ObjectRemoveKeysFunctionIterator;
 import org.rumbledb.runtime.functions.object.ObjectValuesFunctionIterator;
+import org.rumbledb.runtime.functions.resources.AnyURIFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.aggregate.AvgFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.aggregate.CountFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.aggregate.MaxFunctionIterator;
@@ -174,6 +175,7 @@ import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.adjust
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.adjust_date_to_timezone2;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.adjust_time_to_timezone1;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.adjust_time_to_timezone2;
+import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.anyURI;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.asin;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.atan;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.atan2;
@@ -332,6 +334,8 @@ public class Functions {
         itemTypes.put("date", new ItemType(ItemTypes.DateItem));
         itemTypes.put("time", new ItemType(ItemTypes.TimeItem));
 
+        itemTypes.put("anyURI", new ItemType(ItemTypes.AnyURIItem));
+
         itemTypes.put("hexBinary", new ItemType(ItemTypes.HexBinaryItem));
         itemTypes.put("base64Binary", new ItemType(ItemTypes.Base64BinaryItem));
 
@@ -389,6 +393,8 @@ public class Functions {
         sequenceTypes.put("date?", new SequenceType(itemTypes.get("date"), SequenceType.Arity.OneOrZero));
 
         sequenceTypes.put("time?", new SequenceType(itemTypes.get("time"), SequenceType.Arity.OneOrZero));
+
+        sequenceTypes.put("anyURI?", new SequenceType(itemTypes.get("anyURI"), SequenceType.Arity.OneOrZero));
 
         sequenceTypes.put("hexBinary?", new SequenceType(itemTypes.get("hexBinary"), SequenceType.Arity.OneOrZero));
 
@@ -534,6 +540,8 @@ public class Functions {
         builtInFunctions.put(timezone_from_time.getIdentifier(), timezone_from_time);
         builtInFunctions.put(adjust_time_to_timezone1.getIdentifier(), adjust_time_to_timezone1);
         builtInFunctions.put(adjust_time_to_timezone2.getIdentifier(), adjust_time_to_timezone2);
+
+        builtInFunctions.put(anyURI.getIdentifier(), anyURI);
 
         builtInFunctions.put(hexBinary.getIdentifier(), hexBinary);
         builtInFunctions.put(base64Binary.getIdentifier(), base64Binary);
@@ -2024,6 +2032,17 @@ public class Functions {
             "time?",
             AdjustTimeToTimezone.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+
+        /**
+         * function that returns the time item from the supplied string
+         */
+        static final BuiltinFunction anyURI = createBuiltinFunction(
+                "anyURI",
+                "string?",
+                "anyURI?",
+                AnyURIFunctionIterator.class,
+                BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
 
         /**
