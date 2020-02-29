@@ -17,6 +17,8 @@ public enum AtomicTypes {
     DateItem,
     TimeItem,
 
+    AnyURIItem,
+
     HexBinaryItem,
     Base64BinaryItem,
 
