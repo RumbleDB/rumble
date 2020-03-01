@@ -67,6 +67,7 @@ import org.rumbledb.runtime.functions.durations.components.MinutesFromDurationFu
 import org.rumbledb.runtime.functions.durations.components.MonthsFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.SecondsFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.YearsFromDurationFunctionIterator;
+import org.rumbledb.runtime.functions.input.CSVFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.JsonFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.LibSVMFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.ParallelizeFunctionIterator;
@@ -187,6 +188,7 @@ import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.concat
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.contains;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.cos;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.count;
+import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.csv_file;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.date;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.dateTime;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.dayTimeDuration;
@@ -418,6 +420,7 @@ public class Functions {
         builtInFunctions.put(parallelizeFunction1.getIdentifier(), parallelizeFunction1);
         builtInFunctions.put(parallelizeFunction2.getIdentifier(), parallelizeFunction2);
         builtInFunctions.put(parquet_file.getIdentifier(), parquet_file);
+        builtInFunctions.put(csv_file.getIdentifier(), csv_file);
 
         builtInFunctions.put(count.getIdentifier(), count);
         builtInFunctions.put(boolean_function.getIdentifier(), boolean_function);
@@ -965,6 +968,17 @@ public class Functions {
             ParquetFileFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
         );
+        /**
+         * function that parses a csv file
+         */
+        static final BuiltinFunction csv_file = createBuiltinFunction(
+                "csv-file",
+                "string?",
+                "item*",
+                CSVFileFunctionIterator.class,
+                BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
+        );
+
         /**
          * function that returns the length of a sequence
          */
