@@ -16,13 +16,13 @@ import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
 
-public class FormatDateFunctionIterator extends LocalFunctionCallIterator {
+public class FormatTimeFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
-    private Item valueDateItem = null;
+    private Item valueTimeItem = null;
     private Item pictureStringItem = null;
 
-    public FormatDateFunctionIterator(
+    public FormatTimeFunctionIterator(
             List<RuntimeIterator> arguments,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
@@ -35,11 +35,7 @@ public class FormatDateFunctionIterator extends LocalFunctionCallIterator {
         if (this.hasNext) {
             this.hasNext = false;
             try {
-                if (this.valueDateItem.isNull()) {
-                    return this.valueDateItem;
-                }
-
-                DateTime dateValue = this.valueDateItem.getDateTimeValue();
+                DateTime timeValue = this.valueTimeItem.getDateTimeValue();
                 String pictureString = this.pictureStringItem.getStringValue();
                 StringBuilder sb = new StringBuilder();
 
@@ -47,27 +43,21 @@ public class FormatDateFunctionIterator extends LocalFunctionCallIterator {
                 for (int i = 0; i < pictureString.length(); ++i) {
                     if (variableMarker) {
                         switch (pictureString.charAt(i)) {
-                            case 'Y':
-                                sb.append(dateValue.getYear());
+                            case 'H':
+                                sb.append(timeValue.getHourOfDay());
                                 break;
-                            case 'M':
-                                sb.append(dateValue.getMonthOfYear());
+                            case 'm':
+                                sb.append(timeValue.getMinuteOfHour());
                                 break;
-                            case 'D':
-                                sb.append(dateValue.getDayOfMonth());
-                                break;
-                            case 'd':
-                                sb.append(dateValue.getDayOfYear());
-                                break;
-                            case 'F':
-                                sb.append(dateValue.getDayOfWeek());
+                            case 's':
+                                sb.append(timeValue.getSecondOfMinute());
                                 break;
                             default:
                                 String message = String.format(
                                     "\"%s\": a component specifier refers to components"
                                         + "that are not available in the %s type",
                                     this.pictureStringItem.serialize(),
-                                    "date"
+                                    "time"
                                 );
                                 throw new ComponentSpecifierNotAvailableException(message, getMetadata());
                         }
@@ -91,14 +81,14 @@ public class FormatDateFunctionIterator extends LocalFunctionCallIterator {
             } catch (UnsupportedOperationException | IllegalArgumentException e) {
                 String message = String.format(
                     "\"%s\": not castable to type %s",
-                    this.valueDateItem.serialize(),
-                    "date"
+                    this.valueTimeItem.serialize(),
+                    "time"
                 );
                 throw new CastException(message, getMetadata());
             }
         } else
             throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " format-date function",
+                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " format-time function",
                     getMetadata()
             );
     }
@@ -106,10 +96,10 @@ public class FormatDateFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        this.valueDateItem = this.children.get(0)
+        this.valueTimeItem = this.children.get(0)
             .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
         this.pictureStringItem = this.children.get(1)
             .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.valueDateItem != null && this.pictureStringItem != null;
+        this.hasNext = this.valueTimeItem != null && this.pictureStringItem != null;
     }
 }

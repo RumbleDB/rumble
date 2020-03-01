@@ -25,7 +25,7 @@ public class ErrorCodes {
     public static final String InvalidLexicalValueErrorCode = "FOCA0002";
 
     public static final String CannotRetrieveResourceErrorCode = "FODC0002";
-    
+
     public static final String IncorrectSyntaxFormatDateTimeErrorCode = "FOFD1340";
     public static final String ComponentSpecifierNotAvailableErrorCode = "FOFD1350";
 
