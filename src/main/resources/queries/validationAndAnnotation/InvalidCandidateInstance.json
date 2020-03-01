@@ -1,0 +1,2 @@
+{"first": "James", "last": "Kirk", "picture": "af88", "birthDate": "2001-02-10", "maritalStatus": null}
+{"picture": "bf98", "birthDate": "1999-12-31", "otherFieldObject": { "hello": "world!", "nullField": null}}

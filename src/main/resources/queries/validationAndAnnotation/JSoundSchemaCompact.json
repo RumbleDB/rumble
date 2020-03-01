@@ -1,0 +1,10 @@
+{
+  "dateOrDateTime": "date|dateTime",
+  "targetType": {
+    "first!": "string",
+    "last": "string=N/A",
+    "@picture": "hexBinary",
+    "birthDate": "dateOrDateTime",
+    "maritalStatus?": "string"
+  }
+}
