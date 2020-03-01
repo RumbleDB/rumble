@@ -42,6 +42,7 @@ import org.rumbledb.runtime.functions.datetime.CurrentDateTimeFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.CurrentTimeFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.DateFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.DateTimeFunctionIterator;
+import org.rumbledb.runtime.functions.datetime.FormatDateFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.TimeFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.components.AdjustDateTimeToTimezone;
 import org.rumbledb.runtime.functions.datetime.components.AdjustDateToTimezone;
@@ -380,6 +381,7 @@ public class Functions {
 
         builtInFunctions.put(date.getIdentifier(), date);
         builtInFunctions.put(current_date.getIdentifier(), current_date);
+        builtInFunctions.put(format_date.getIdentifier(), format_date);
         builtInFunctions.put(year_from_date.getIdentifier(), year_from_date);
         builtInFunctions.put(month_from_date.getIdentifier(), month_from_date);
         builtInFunctions.put(day_from_date.getIdentifier(), day_from_date);
@@ -1696,6 +1698,17 @@ public class Functions {
             "current-date",
             "date?",
             CurrentDateFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+        /**
+         * function that returns a string containing a date value formated for display
+         */
+        static final BuiltinFunction format_date = createBuiltinFunction(
+            "format-date",
+            "date?",
+            "string",
+            "string?",
+            FormatDateFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
