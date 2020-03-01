@@ -21,6 +21,7 @@
 package org.rumbledb.runtime.functions.input;
 
 import org.apache.spark.sql.AnalysisException;
+import org.apache.spark.sql.DataFrameReader;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
@@ -52,12 +53,20 @@ public class CSVFileFunctionIterator extends DataFrameRuntimeIterator {
                 .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
         String url = stringItem.getStringValue();
         try {
-            return SparkSessionManager.getInstance()
-                .getOrCreateSession()
-                .read()
-//                .option("header", "true")
-//                .option("inferSchema", "true")
-                .csv(url);
+            DataFrameReader dfr = SparkSessionManager.getInstance().getOrCreateSession().read();
+            if (this.children.size() > 1) {
+                Item headerBooleanItem = this.children.get(1)
+                        .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+                boolean header = headerBooleanItem.getBooleanValue();
+                dfr = dfr.option("header", header);
+            }
+            if (this.children.size() > 2) {
+                Item inferSchemaBooleanItem = this.children.get(2)
+                        .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+                boolean inferSchema = inferSchemaBooleanItem.getBooleanValue();
+                dfr = dfr.option("inferSchema", inferSchema);
+            }
+            return dfr.csv(url);
         } catch (Exception e) {
             if (e instanceof AnalysisException) {
                 throw new CannotRetrieveResourceException("File " + url + " not found.", getMetadata());
