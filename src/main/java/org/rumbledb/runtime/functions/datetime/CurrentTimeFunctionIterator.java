@@ -29,7 +29,7 @@ public class CurrentTimeFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this.hasNext) {
             this.hasNext = false;
-            return new TimeItem(new DateTime(), true);
+            return ItemFactory.getInstance().createTimeItem(new DateTime(), true);
         } else
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " current-time function",
