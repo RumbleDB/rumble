@@ -30,7 +30,7 @@ public class RumbleMLUtils {
             String paramName = paramMapItem.getKeys().get(paramIndex);
             Item paramValue = paramMapItem.getValues().get(paramIndex);
 
-            RumbleMLCatalog.validateParameterForTransformer(transformerShortName, paramName, metadata);
+            RumbleMLCatalog.validateTransformerParameterByName(transformerShortName, paramName, metadata);
             String paramJavaTypeName = RumbleMLCatalog.getParamJavaTypeName(paramName, metadata);
 
             Object paramValueInJava = convertParamItemToJava(paramName, paramValue, paramJavaTypeName, metadata);
@@ -67,7 +67,7 @@ public class RumbleMLUtils {
             String paramName = paramMapItem.getKeys().get(paramIndex);
             Item paramValue = paramMapItem.getValues().get(paramIndex);
 
-            RumbleMLCatalog.validateParameterForEstimator(estimatorShortName, paramName, metadata);
+            RumbleMLCatalog.validateEstimatorParameterByName(estimatorShortName, paramName, metadata);
             String paramJavaTypeName = RumbleMLCatalog.getParamJavaTypeName(paramName, metadata);
 
             Object paramValueInJava = convertParamItemToJava(paramName, paramValue, paramJavaTypeName, metadata);
