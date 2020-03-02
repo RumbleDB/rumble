@@ -32,8 +32,10 @@ public class ErrorCodes {
     public static final String OneOrMoreErrorCode = "FORG0004";
     public static final String ExactlyOneErrorCode = "FORG0005";
     public static final String InvalidArgumentType = "FORG0006";
-    public static final String MatchesEmptyStringErrorCode = "FORX0003";
     public static final String InvalidRegexPatternErrorCode = "FORX0002";
+    public static final String MatchesEmptyStringErrorCode = "FORX0003";
+    public static final String InvalidReplacementStringErrorCode = "FORX0004";
+
 
 
     public static final String DuplicatePairNameErrorCode = "JNDY0003";
