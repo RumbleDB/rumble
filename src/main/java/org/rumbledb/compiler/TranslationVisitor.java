@@ -867,6 +867,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     public Node visitArgument(JsoniqParser.ArgumentContext ctx) {
         if (ctx.exprSingle() != null) {
             return this.visitExprSingle(ctx.exprSingle());
+        }
         return null;
     }
 
