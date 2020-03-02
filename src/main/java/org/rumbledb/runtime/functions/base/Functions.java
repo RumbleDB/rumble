@@ -83,6 +83,7 @@ import org.rumbledb.runtime.functions.numerics.IntegerFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.PiFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.RoundFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.RoundHalfToEvenFunctionIterator;
+import org.rumbledb.runtime.functions.numerics.NumberFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.exponential.Exp10FunctionIterator;
 import org.rumbledb.runtime.functions.numerics.exponential.ExpFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.exponential.Log10FunctionIterator;
@@ -164,6 +165,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.abs;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.accumulate;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.acos;
@@ -240,6 +242,7 @@ import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.month_
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.months_from_duration;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.normalize_space;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.null_function;
+import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.number;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.one_or_more;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.parallelizeFunction1;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.parallelizeFunction2;
@@ -496,6 +499,7 @@ public class Functions {
         builtInFunctions.put(matches.getIdentifier(), matches);
         builtInFunctions.put(contains.getIdentifier(), contains);
         builtInFunctions.put(normalize_space.getIdentifier(), normalize_space);
+        builtInFunctions.put(number.getIdentifier(), number);
 
         builtInFunctions.put(duration.getIdentifier(), duration);
         builtInFunctions.put(dayTimeDuration.getIdentifier(), dayTimeDuration);
@@ -1684,6 +1688,16 @@ public class Functions {
             "string?",
             "string",
             NormalizeSpaceFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+        /**
+         * function that that returns the double representation of the input string or number
+         */
+        static final BuiltinFunction number = createBuiltinFunction(
+            "number",
+            "atomic?",
+            "double",
+            NumberFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
 
