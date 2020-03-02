@@ -32,7 +32,7 @@ public class TreatIterator extends HybridRuntimeIterator {
 
     private Item nextResult;
     private Item currentResult;
-    private int childIndex;
+    private int resultCount;
 
     public TreatIterator(
             RuntimeIterator iterator,
@@ -45,8 +45,10 @@ public class TreatIterator extends HybridRuntimeIterator {
         this.iterator = iterator;
         this.sequenceType = sequenceType;
         this.shouldThrowTreatException = shouldThrowTreatException;
-        this.itemType = this.sequenceType.getItemType();
-        this.sequenceTypeName = ItemTypes.getItemTypeName(this.itemType.getType().toString());
+        if (!this.sequenceType.isEmptySequence()) {
+            this.itemType = this.sequenceType.getItemType();
+            this.sequenceTypeName = ItemTypes.getItemTypeName(this.itemType.getType().toString());
+        }
     }
 
     @Override
@@ -56,7 +58,7 @@ public class TreatIterator extends HybridRuntimeIterator {
 
     @Override
     public void resetLocal(DynamicContext context) {
-        this.childIndex = 0;
+        this.resultCount = 0;
         this.iterator.reset(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
@@ -68,7 +70,7 @@ public class TreatIterator extends HybridRuntimeIterator {
 
     @Override
     public void openLocal() {
-        this.childIndex = 0;
+        this.resultCount = 0;
         this.iterator.open(this.currentDynamicContextForLocalExecution);
         this.setNextResult();
     }
@@ -99,18 +101,18 @@ public class TreatIterator extends HybridRuntimeIterator {
                 this.nextResult = this.iterator.next();
             }
             if (this.nextResult != null)
-                this.childIndex++;
+                this.resultCount++;
         } else {
             this.iterator.close();
-            checkEmptySequence(this.childIndex);
+            checkEmptySequence(this.resultCount);
         }
 
         this.hasNext = this.nextResult != null;
         if (!hasNext())
             return;
 
-        checkTreatAsEmptySequence(this.childIndex);
-        checkMoreThanOneItemSequence(this.childIndex);
+        checkTreatAsEmptySequence(this.resultCount);
+        checkMoreThanOneItemSequence(this.resultCount);
         if (!this.nextResult.isTypeOf(this.itemType)) {
             String message = ItemTypes.getItemTypeName(this.nextResult.getClass().getSimpleName())
                 + " cannot be treated as type "
@@ -136,6 +138,7 @@ public class TreatIterator extends HybridRuntimeIterator {
     private void checkEmptySequence(int size) {
         if (
             size == 0
+                && !this.sequenceType.isEmptySequence()
                 && (this.sequenceType.getArity() == SequenceType.Arity.One
                     ||
                     this.sequenceType.getArity() == SequenceType.Arity.OneOrMore)

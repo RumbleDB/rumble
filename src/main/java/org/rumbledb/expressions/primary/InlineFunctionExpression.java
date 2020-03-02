@@ -25,9 +25,10 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.flowr.FlworVarSequenceType;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.runtime.functions.base.Functions;
+
+import sparksoniq.semantics.types.SequenceType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,14 +37,14 @@ import java.util.Map;
 public class InlineFunctionExpression extends PrimaryExpression {
 
     private final String name;
-    private final Map<String, FlworVarSequenceType> params;
-    private final FlworVarSequenceType returnType;
+    private final Map<String, SequenceType> params;
+    private final SequenceType returnType;
     private final Expression body;
 
     public InlineFunctionExpression(
             String name,
-            Map<String, FlworVarSequenceType> params,
-            FlworVarSequenceType returnType,
+            Map<String, SequenceType> params,
+            SequenceType returnType,
             Expression body,
             ExceptionMetadata metadata
     ) {
@@ -58,11 +59,11 @@ public class InlineFunctionExpression extends PrimaryExpression {
         return this.name;
     }
 
-    public Map<String, FlworVarSequenceType> getParams() {
+    public Map<String, SequenceType> getParams() {
         return this.params;
     }
 
-    public FlworVarSequenceType getReturnType() {
+    public SequenceType getReturnType() {
         return this.returnType;
     }
 
@@ -102,18 +103,18 @@ public class InlineFunctionExpression extends PrimaryExpression {
         String result = "(functionDeclaration ";
         result += this.name;
         result += " (paramList (";
-        for (Map.Entry<String, FlworVarSequenceType> entry : this.params.entrySet()) {
+        for (Map.Entry<String, SequenceType> entry : this.params.entrySet()) {
             result += "param (";
             result += "NCName "
                 + entry.getKey()
                 + " sequenceType "
-                + entry.getValue().serializationString(false)
+                + entry.getValue().toString()
                 + ") , ";
         }
         result = result.substring(0, result.length() - 1); // remove last comma
         result += "))";
 
-        result += " (sequenceType ( " + this.returnType.serializationString(false) + "))";
+        result += " (sequenceType ( " + this.returnType.toString() + "))";
 
         result += " (expr (" + this.body.serializationString(false) + "))";
 

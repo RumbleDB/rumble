@@ -39,7 +39,7 @@ public class ForClauseVar extends FlworVarDecl {
 
     public ForClauseVar(
             VariableReferenceExpression variableReferenceExpression,
-            FlworVarSequenceType sequenceType,
+            SequenceType sequenceType,
             boolean emptyFlag,
             VariableReferenceExpression positionalVariableReferenceExpression,
             Expression expression,
@@ -52,12 +52,10 @@ public class ForClauseVar extends FlworVarDecl {
         // If the sequenceType is specified, we have to "extend" its arity to *
         // because TreatIterator is wrapping the whole assignment expression,
         // meaning there is not one TreatIterator for each variable we loop over.
-        if (sequenceType != null)
-            this.asSequenceType = new FlworVarSequenceType(
-                    sequenceType.getSequence().getItemType().getType(),
-                    SequenceType.Arity.ZeroOrMore,
-                    metadataFromContext
-            );
+        this.sequenceType = new SequenceType(
+                sequenceType.getItemType(),
+                SequenceType.Arity.ZeroOrMore
+        );
     }
 
     public boolean allowsEmpty() {
@@ -96,8 +94,8 @@ public class ForClauseVar extends FlworVarDecl {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(forVar " + this.variableReferenceExpression.serializationString(false) + " ";
-        if (this.asSequenceType != null)
-            result += "as " + this.asSequenceType.serializationString(true) + " ";
+        if (this.sequenceType != null)
+            result += "as " + this.sequenceType.toString() + " ";
         if (this.allowEmpty)
             result += "allowing empty ";
         if (this.positionalVariableReferenceExpression != null)

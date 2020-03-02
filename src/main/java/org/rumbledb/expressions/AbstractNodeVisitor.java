@@ -21,9 +21,7 @@
 package org.rumbledb.expressions;
 
 import org.rumbledb.expressions.control.ConditionalExpression;
-import org.rumbledb.expressions.control.SwitchCase;
 import org.rumbledb.expressions.control.SwitchExpression;
-import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
 import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.FlworExpression;

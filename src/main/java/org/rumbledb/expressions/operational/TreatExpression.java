@@ -3,7 +3,6 @@ package org.rumbledb.expressions.operational;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.flowr.FlworVarSequenceType;
 import org.rumbledb.expressions.operational.base.UnaryExpressionBase;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.types.SequenceType;
@@ -11,24 +10,23 @@ import sparksoniq.semantics.types.SequenceType;
 
 public class TreatExpression extends UnaryExpressionBase {
 
-    private FlworVarSequenceType sequenceType;
+    private SequenceType sequenceType;
 
     public TreatExpression(
             Expression mainExpression,
-            FlworVarSequenceType sequenceType,
+            SequenceType sequenceType,
             ExceptionMetadata metadata
     ) {
         super(mainExpression, Operator.TREAT, metadata);
         this.sequenceType = sequenceType;
     }
 
-    public FlworVarSequenceType getsequenceType() {
+    public SequenceType getsequenceType() {
         return this.sequenceType;
     }
 
     @Override
     public void initHighestExecutionMode() {
-        SequenceType sequenceType = this.sequenceType.getSequence();
         this.highestExecutionMode = calculateIsRDDFromSequenceTypeAndExpression(sequenceType, this.mainExpression);
     }
 
@@ -37,7 +35,8 @@ public class TreatExpression extends UnaryExpressionBase {
             Expression expression
     ) {
         if (
-            sequenceType.getArity() != SequenceType.Arity.One
+            !sequenceType.isEmptySequence()
+                && sequenceType.getArity() != SequenceType.Arity.One
                 && sequenceType.getArity() != SequenceType.Arity.OneOrZero
                 && expression.getHighestExecutionMode().isRDD()
         ) {
@@ -55,7 +54,7 @@ public class TreatExpression extends UnaryExpressionBase {
     public String serializationString(boolean prefix) {
         String result = "(treatExpr ";
         result += this.mainExpression.serializationString(true);
-        result += this.sequenceType != null ? " treat as " + this.sequenceType.serializationString(prefix) : "";
+        result += " treat as " + this.sequenceType.toString();
         result += ")";
         return result;
     }

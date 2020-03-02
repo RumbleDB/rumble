@@ -1,18 +1,19 @@
 package org.rumbledb.runtime.control;
 
-import org.rumbledb.expressions.flowr.FlworVarSequenceType;
 import org.rumbledb.runtime.RuntimeIterator;
+
+import sparksoniq.semantics.types.SequenceType;
 
 import java.util.List;
 
 public class TypeswitchRuntimeIteratorCase {
     private final String variableName;
-    private final List<FlworVarSequenceType> sequenceTypeUnion;
+    private final List<SequenceType> sequenceTypeUnion;
     private final RuntimeIterator returnIterator;
 
     public TypeswitchRuntimeIteratorCase(
             String variableName,
-            List<FlworVarSequenceType> sequenceTypeUnion,
+            List<SequenceType> sequenceTypeUnion,
             RuntimeIterator returnIterator
     ) {
         this.variableName = variableName;
@@ -30,7 +31,7 @@ public class TypeswitchRuntimeIteratorCase {
         return this.variableName;
     }
 
-    List<FlworVarSequenceType> getSequenceTypeUnion() {
+    List<SequenceType> getSequenceTypeUnion() {
         return this.sequenceTypeUnion;
     }
 

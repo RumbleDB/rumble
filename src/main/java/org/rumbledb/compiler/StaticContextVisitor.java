@@ -128,9 +128,9 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         StaticContext functionDeclarationContext = new StaticContext(argument);
         expression.getParams()
             .forEach(
-                (paramName, flworVarSequenceType) -> functionDeclarationContext.addVariable(
+                (paramName, sequenceType) -> functionDeclarationContext.addVariable(
                     paramName,
-                    flworVarSequenceType.getSequence(),
+                    sequenceType,
                     expression.getMetadata(),
                     ExecutionMode.LOCAL // static udf currently supports materialized(local) params, not RDDs or DFs
                 )
@@ -226,12 +226,9 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     private StaticContext visitFlowrVarDeclaration(FlworVarDecl expression, StaticContext argument) {
         StaticContext result = new StaticContext(argument);
         // TODO for now we only suppot as/default, no inference, flags
-        SequenceType type = expression.getAsSequence() == null
-            ? new SequenceType()
-            : expression.getAsSequence().getSequence();
         result.addVariable(
             expression.getVariableReference().getVariableName(),
-            type,
+            expression.getSequenceType(),
             expression.getMetadata(),
             expression.getVariableHighestStorageMode()
         );
@@ -262,10 +259,9 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
         // create a child context, add the variable and return it
         StaticContext result = new StaticContext(argument);
-        SequenceType type = expression.getSequenceType() == null ? new SequenceType() : expression.getSequenceType();
         result.addVariable(
             expression.getVariableReference().getVariableName(),
-            type,
+            expression.getSequenceType(),
             expression.getMetadata(),
             ExecutionMode.LOCAL
         );

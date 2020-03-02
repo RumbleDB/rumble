@@ -65,8 +65,13 @@ public class InstanceOfIterator extends UnaryOperationBaseIterator {
                 this.child.close();
                 this.hasNext = false;
 
-                if (isInvalidArity(items.size()))
+                if (this.sequenceType.isEmptySequence()) {
+                    return ItemFactory.getInstance().createBooleanItem(items.size() == 0);
+                }
+
+                if (isInvalidArity(items.size())) {
                     return ItemFactory.getInstance().createBooleanItem(false);
+                }
 
                 ItemType itemType = this.sequenceType.getItemType();
                 for (Item item : items) {
@@ -74,6 +79,7 @@ public class InstanceOfIterator extends UnaryOperationBaseIterator {
                         return ItemFactory.getInstance().createBooleanItem(false);
                     }
                 }
+
                 return ItemFactory.getInstance().createBooleanItem(true);
             } else {
                 JavaRDD<Item> childRDD = this.child.getRDD(this.currentDynamicContextForLocalExecution);
