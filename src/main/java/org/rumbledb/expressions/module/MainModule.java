@@ -39,7 +39,7 @@ public class MainModule extends Node {
         super(metadata);
         this.prolog = prolog;
         if (expression == null) {
-            throw new OurBadException("The main prolog must have a non-null expression");
+            throw new OurBadException("The main module must have a non-null expression");
         }
         this.expression = expression;
     }

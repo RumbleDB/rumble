@@ -9,7 +9,6 @@ import org.rumbledb.compiler.TranslationVisitor;
 import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ParsingException;
-import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.parser.JsoniqLexer;
 import org.rumbledb.parser.JsoniqParser;

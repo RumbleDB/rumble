@@ -36,7 +36,6 @@ import org.rumbledb.config.SparksoniqRuntimeConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
-import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.parser.JsoniqLexer;
 import org.rumbledb.parser.JsoniqParser;

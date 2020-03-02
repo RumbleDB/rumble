@@ -20,7 +20,6 @@
 
 package utils;
 
-import org.rumbledb.compiler.TranslationVisitor;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.parser.JsoniqParser;
 

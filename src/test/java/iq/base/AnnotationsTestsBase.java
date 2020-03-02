@@ -32,7 +32,6 @@ import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.exceptions.SparksoniqRuntimeException;
 import org.rumbledb.expressions.module.MainModule;
-import org.rumbledb.parser.JsoniqBaseVisitor;
 import org.rumbledb.parser.JsoniqLexer;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -93,7 +92,6 @@ public class AnnotationsTestsBase {
                 return null;
             } else {
                 System.out.println(errorOutput);
-                Assert.assertTrue(true);
                 return null;
             }
 
