@@ -773,8 +773,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitArrayConstructor(JsoniqParser.ArrayConstructorContext ctx) {
-        if (ctx.expr() == null)
-        {
+        if (ctx.expr() == null) {
             return new ArrayConstructorExpression(createMetadataFromContext(ctx));
         }
         Expression content = (Expression) this.visitExpr(ctx.expr());
@@ -783,8 +782,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitParenthesizedExpr(JsoniqParser.ParenthesizedExprContext ctx) {
-        if (ctx.expr() == null)
-        {
+        if (ctx.expr() == null) {
             return new CommaExpression(createMetadataFromContext(ctx));
         }
         return this.visitExpr(ctx.expr());
@@ -813,16 +811,16 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                     SequenceType.Arity.OneOrZero
             );
         if (ctx.star.size() > 0)
-        	return new SequenceType(
+            return new SequenceType(
                     itemType,
                     SequenceType.Arity.ZeroOrMore
             );
         if (ctx.plus.size() > 0)
-        	return new SequenceType(
+            return new SequenceType(
                     itemType,
                     SequenceType.Arity.OneOrMore
             );
-        	return new SequenceType(itemType);
+        return new SequenceType(itemType);
     }
 
     @Override
