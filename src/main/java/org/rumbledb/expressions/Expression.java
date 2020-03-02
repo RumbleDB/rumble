@@ -26,10 +26,10 @@ import sparksoniq.semantics.StaticContext;
 /**
  * An expression is the first-class citizen in JSONiq syntax. Any expression
  * returns a sequence of items.
- * 
+ *
  * Expressions form a tree, but this tree may contain other nodes, such as clauses
  * and function declarations.
- * 
+ *
  * An expression is associated with a static context containing information such as
  * the in-scope variables.
  */

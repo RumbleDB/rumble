@@ -10,7 +10,6 @@ import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ArrayItem;
 import org.rumbledb.items.AtomicItem;
-
 import sparksoniq.semantics.types.AtomicTypes;
 
 import java.lang.reflect.InvocationTargetException;

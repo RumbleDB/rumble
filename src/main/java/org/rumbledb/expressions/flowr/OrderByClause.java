@@ -37,8 +37,9 @@ public class OrderByClause extends Clause {
 
     public OrderByClause(List<OrderByClauseExpr> exprs, boolean stable, ExceptionMetadata metadata) {
         super(FLWOR_CLAUSES.ORDER_BY, metadata);
-        if (exprs == null || exprs.isEmpty())
+        if (exprs == null || exprs.isEmpty()) {
             throw new SemanticException("Group clause must have at least one variable", metadata);
+        }
         this.expressions = exprs;
         this.isStable = stable;
     }
@@ -47,8 +48,9 @@ public class OrderByClause extends Clause {
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         this.expressions.forEach(e -> {
-            if (e != null)
+            if (e != null) {
                 result.add(e);
+            }
         });
         return result;
     }
@@ -61,9 +63,10 @@ public class OrderByClause extends Clause {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(orderByClause order by ";
-        for (OrderByClauseExpr var : this.expressions)
+        for (OrderByClauseExpr var : this.expressions) {
             result += var.serializationString(true)
                 + (this.expressions.indexOf(var) < this.expressions.size() - 1 ? " , " : "");
+        }
         result += ")";
         return result;
     }

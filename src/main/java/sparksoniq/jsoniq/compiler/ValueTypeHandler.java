@@ -54,10 +54,12 @@ public class ValueTypeHandler {
 
     // TODO think of beter way to distinguish numeric literals
     private static PrimaryExpression getNumericLiteral(String token, ExceptionMetadata metadataFromContext) {
-        if (!token.contains(".") && !token.contains("e") && !token.contains("E"))
+        if (!token.contains(".") && !token.contains("e") && !token.contains("E")) {
             return new IntegerLiteralExpression(Integer.parseInt(token), metadataFromContext);
-        if (!token.contains("e") && !token.contains("E"))
+        }
+        if (!token.contains("e") && !token.contains("E")) {
             return new DecimalLiteralExpression(new BigDecimal(token), metadataFromContext);
+        }
         return new DoubleLiteralExpression(Double.parseDouble(token), metadataFromContext);
 
     }

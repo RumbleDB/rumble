@@ -21,9 +21,9 @@
 package sparksoniq.semantics.types;
 
 
-import java.io.Serializable;
-
 import org.rumbledb.exceptions.OurBadException;
+
+import java.io.Serializable;
 
 public class ItemType implements Serializable {
 
@@ -110,16 +110,18 @@ public class ItemType implements Serializable {
     }
 
     public boolean isSubtypeOf(ItemType superType) {
-        if (superType.getType() == ItemTypes.Item)
+        if (superType.getType() == ItemTypes.Item) {
             return true;
+        }
         if (superType.getType() == ItemTypes.JSONItem) {
             if (
                 this.type == ItemTypes.ObjectItem
                     || this.type == ItemTypes.ArrayItem
                     || this.type == ItemTypes.JSONItem
                     || this.type == ItemTypes.NullItem
-            )
+            ) {
                 return true;
+            }
             return false;
         }
 
@@ -130,8 +132,9 @@ public class ItemType implements Serializable {
                     || this.type == ItemTypes.DecimalItem
                     || this.type == ItemTypes.DoubleItem
                     || this.type == ItemTypes.BooleanItem
-            )
+            ) {
                 return true;
+            }
             return false;
         }
 
@@ -140,8 +143,9 @@ public class ItemType implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof ItemType))
+        if (!(o instanceof ItemType)) {
             return false;
+        }
         ItemType itemType = (ItemType) o;
         return this.getType().equals(itemType.getType());
     }

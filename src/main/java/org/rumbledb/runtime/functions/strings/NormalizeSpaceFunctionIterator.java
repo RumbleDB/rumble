@@ -27,7 +27,6 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.List;
@@ -57,10 +56,11 @@ public class NormalizeSpaceFunctionIterator extends LocalFunctionCallIterator {
             }
 
             return ItemFactory.getInstance().createStringItem(StringUtils.normalizeSpace(stringItem.getStringValue()));
-        } else
+        } else {
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " normalize-space function",
                     getMetadata()
             );
+        }
     }
 }

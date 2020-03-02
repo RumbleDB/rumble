@@ -63,11 +63,12 @@ public class ComparisonExpression extends BinaryExpressionBase {
     public String serializationString(boolean prefix) {
         String result = "(comparisonExpr ";
         result += this.mainExpression.serializationString(true);
-        if (this.getRightExpression() != null)
+        if (this.getRightExpression() != null) {
             result += " "
                 + this.getOperator().toString().toLowerCase()
                 + " "
                 + this.getRightExpression().serializationString(true);
+        }
         result += ")";
         return result;
     }

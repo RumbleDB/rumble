@@ -50,8 +50,9 @@ public class WhereClause extends Clause {
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        if (this.whereExpression != null)
+        if (this.whereExpression != null) {
             result.add(this.whereExpression);
+        }
         return result;
     }
 

@@ -29,7 +29,6 @@ import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.types.SequenceType;
 
 
-
 public class LetClauseVar extends FlworVarDecl {
 
     public LetClauseVar(
@@ -62,8 +61,9 @@ public class LetClauseVar extends FlworVarDecl {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(letVar " + this.variableReferenceExpression.serializationString(false) + " ";
-        if (this.sequenceType != null)
+        if (this.sequenceType != null) {
             result += "as " + this.sequenceType.toString() + " ";
+        }
         result += ":= " + this.expression.serializationString(true);
         result += "))";
         return result;

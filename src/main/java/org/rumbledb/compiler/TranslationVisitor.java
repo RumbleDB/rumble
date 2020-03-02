@@ -36,10 +36,10 @@ import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchCase;
 import org.rumbledb.expressions.control.SwitchExpression;
-import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
-import org.rumbledb.expressions.flowr.CountClause;
+import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.flowr.Clause;
+import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.FlworExpression;
 import org.rumbledb.expressions.flowr.FlworVarSingleType;
 import org.rumbledb.expressions.flowr.ForClause;
@@ -87,7 +87,6 @@ import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
-
 import sparksoniq.jsoniq.compiler.ValueTypeHandler;
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemType;
@@ -104,9 +103,8 @@ import static sparksoniq.semantics.types.SequenceType.mostGeneralSequenceType;
 /**
  * Translation is the phase in which the Abstract Syntax Tree is transformed
  * into an Expression Tree, which is a JSONiq intermediate representation.
- * 
- * @author Stefan Irimescu, Can Berker Cikis, Ghislain Fourny, Andrea Rinaldi
  *
+ * @author Stefan Irimescu, Can Berker Cikis, Ghislain Fourny, Andrea Rinaldi
  */
 public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Node> {
 
@@ -117,8 +115,9 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     // region module
     @Override
     public Node visitModule(JsoniqParser.ModuleContext ctx) {
-        if (!(ctx.vers == null) && !ctx.vers.isEmpty() && !ctx.vers.getText().trim().equals("1.0"))
+        if (!(ctx.vers == null) && !ctx.vers.isEmpty() && !ctx.vers.getText().trim().equals("1.0")) {
             throw new JsoniqVersionException(createMetadataFromContext(ctx));
+        }
         return this.visitMainModule(ctx.mainModule());
     }
 
@@ -209,18 +208,24 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     @Override
     public Node visitExprSingle(JsoniqParser.ExprSingleContext ctx) {
         ParseTree content = ctx.children.get(0);
-        if (content instanceof JsoniqParser.OrExprContext)
+        if (content instanceof JsoniqParser.OrExprContext) {
             return this.visitOrExpr((JsoniqParser.OrExprContext) content);
-        if (content instanceof JsoniqParser.FlowrExprContext)
+        }
+        if (content instanceof JsoniqParser.FlowrExprContext) {
             return this.visitFlowrExpr((JsoniqParser.FlowrExprContext) content);
-        if (content instanceof JsoniqParser.IfExprContext)
+        }
+        if (content instanceof JsoniqParser.IfExprContext) {
             return this.visitIfExpr((JsoniqParser.IfExprContext) content);
-        if (content instanceof JsoniqParser.QuantifiedExprContext)
+        }
+        if (content instanceof JsoniqParser.QuantifiedExprContext) {
             return this.visitQuantifiedExpr((JsoniqParser.QuantifiedExprContext) content);
-        if (content instanceof JsoniqParser.SwitchExprContext)
+        }
+        if (content instanceof JsoniqParser.SwitchExprContext) {
             return this.visitSwitchExpr((JsoniqParser.SwitchExprContext) content);
-        if (content instanceof JsoniqParser.TypeSwitchExprContext)
+        }
+        if (content instanceof JsoniqParser.TypeSwitchExprContext) {
             return this.visitTypeSwitchExpr((JsoniqParser.TypeSwitchExprContext) content);
+        }
         throw new OurBadException("Unrecognized ExprSingle.");
     }
     // endregion
@@ -255,11 +260,12 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 childClause = (Clause) this.visitOrderByClause((JsoniqParser.OrderByClauseContext) child);
             } else if (child instanceof JsoniqParser.CountClauseContext) {
                 childClause = (Clause) this.visitCountClause((JsoniqParser.CountClauseContext) child);
-            } else
+            } else {
                 throw new UnsupportedFeatureException(
                         "FLOWR clause not implemented yet",
                         createMetadataFromContext(ctx)
                 );
+            }
             childClause.setPreviousClause(previousFLWORClause);
             previousFLWORClause = childClause;
             contentClauses.add(childClause);
@@ -364,24 +370,29 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             child = (OrderByClauseExpr) this.visitOrderByExpr(var);
             exprs.add(child);
         }
-        if (ctx.stb != null && !ctx.stb.getText().isEmpty())
+        if (ctx.stb != null && !ctx.stb.getText().isEmpty()) {
             stable = true;
+        }
         return new OrderByClause(exprs, stable, createMetadataFromContext(ctx));
     }
 
     @Override
     public Node visitOrderByExpr(JsoniqParser.OrderByExprContext ctx) {
         boolean ascending = true;
-        if (ctx.desc != null && !ctx.desc.getText().isEmpty())
+        if (ctx.desc != null && !ctx.desc.getText().isEmpty()) {
             ascending = false;
+        }
         String uri = null;
-        if (ctx.uriLiteral() != null)
+        if (ctx.uriLiteral() != null) {
             uri = ctx.uriLiteral().getText();
+        }
         OrderByClauseExpr.EMPTY_ORDER empty_order = OrderByClauseExpr.EMPTY_ORDER.NONE;
-        if (ctx.gr != null && !ctx.gr.getText().isEmpty())
+        if (ctx.gr != null && !ctx.gr.getText().isEmpty()) {
             empty_order = OrderByClauseExpr.EMPTY_ORDER.LAST;
-        if (ctx.ls != null && !ctx.ls.getText().isEmpty())
+        }
+        if (ctx.ls != null && !ctx.ls.getText().isEmpty()) {
             empty_order = OrderByClauseExpr.EMPTY_ORDER.FIRST;
+        }
         Expression expression = (Expression) this.visitExprSingle(ctx.exprSingle());
         return new OrderByClauseExpr(
                 expression,
@@ -410,8 +421,9 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             expr = (Expression) this.visitExprSingle(ctx.ex);
         }
 
-        if (ctx.uri != null)
+        if (ctx.uri != null) {
             uri = ctx.uri.getText();
+        }
 
         return new GroupByClauseVar(var, seq, expr, uri, createMetadataFromContext(ctx));
     }
@@ -791,8 +803,9 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     @Override
     public Node visitVarRef(JsoniqParser.VarRefContext ctx) {
         String name = ctx.name.getText();
-        if (ctx.ns != null)
+        if (ctx.ns != null) {
             name = name + ":" + ctx.ns.getText();
+        }
         return new VariableReferenceExpression(name, createMetadataFromContext(ctx));
     }
 
@@ -802,47 +815,55 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     }
 
     public SequenceType processSequenceType(JsoniqParser.SequenceTypeContext ctx) {
-        if (ctx.item == null)
+        if (ctx.item == null) {
             return SequenceType.emptySequence;
+        }
         ItemType itemType = new ItemType(ctx.item.getText());
-        if (ctx.question.size() > 0)
+        if (ctx.question.size() > 0) {
             return new SequenceType(
                     itemType,
                     SequenceType.Arity.OneOrZero
             );
-        if (ctx.star.size() > 0)
+        }
+        if (ctx.star.size() > 0) {
             return new SequenceType(
                     itemType,
                     SequenceType.Arity.ZeroOrMore
             );
-        if (ctx.plus.size() > 0)
+        }
+        if (ctx.plus.size() > 0) {
             return new SequenceType(
                     itemType,
                     SequenceType.Arity.OneOrMore
             );
+        }
         return new SequenceType(itemType);
     }
 
     @Override
     public Node visitSingleType(JsoniqParser.SingleTypeContext ctx) {
-        if (ctx.item == null)
+        if (ctx.item == null) {
             return new FlworVarSingleType(createMetadataFromContext(ctx));
+        }
 
         AtomicTypes item = FlworVarSingleType.getAtomicType(ctx.item.getText());
-        if (ctx.question.size() > 0)
+        if (ctx.question.size() > 0) {
             return new FlworVarSingleType(item, true, createMetadataFromContext(ctx));
+        }
         return new FlworVarSingleType(item, createMetadataFromContext(ctx));
     }
 
     @Override
     public Node visitFunctionCall(JsoniqParser.FunctionCallContext ctx) {
         String name;
-        if (ctx.fn_name != null)
+        if (ctx.fn_name != null) {
             name = ctx.fn_name.getText();
-        else
+        } else {
             name = ctx.kw.getText();
-        if (ctx.ns != null)
+        }
+        if (ctx.ns != null) {
             name = name + ":" + ctx.ns.getText();
+        }
         return new FunctionCallExpression(
                 name,
                 getArgumentsFromArgumentListContext(ctx.argumentList()),
@@ -1020,10 +1041,11 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         List<QuantifiedExpressionVar> vars = new ArrayList<>();
         QuantifiedExpression.QuantifiedOperators operator;
         Expression expression = (Expression) this.visitExprSingle(ctx.exprSingle());
-        if (ctx.ev == null)
+        if (ctx.ev == null) {
             operator = QuantifiedExpression.QuantifiedOperators.SOME;
-        else
+        } else {
             operator = QuantifiedExpression.QuantifiedOperators.EVERY;
+        }
         for (JsoniqParser.QuantifiedExprVarContext currentVariable : ctx.vars) {
             VariableReferenceExpression varRef;
             Expression varExpression;

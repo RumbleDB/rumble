@@ -70,8 +70,9 @@ public class ObjectConstructorExpression extends PrimaryExpression {
         if (!this.isMergedConstructor) {
             result.addAll(this.keys);
             result.addAll(this.values);
-        } else
+        } else {
             result.add(this.childExpression);
+        }
         return result;
     }
 

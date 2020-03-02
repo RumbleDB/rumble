@@ -35,7 +35,6 @@ import org.rumbledb.runtime.operational.ComparisonOperationIterator;
 import org.rumbledb.runtime.operational.NotOperationIterator;
 import org.rumbledb.runtime.operational.OrOperationIterator;
 import org.rumbledb.runtime.primary.BooleanRuntimeIterator;
-
 import scala.Tuple2;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
@@ -140,8 +139,9 @@ public class PredicateIterator extends HybridRuntimeIterator {
             List<Item> currentItems = new ArrayList<>();
             currentItems.add(item);
             this.filterDynamicContext.addVariableValue("$$", currentItems);
-            if (this.mustMaintainPosition)
+            if (this.mustMaintainPosition) {
                 this.filterDynamicContext.setPosition(++this.position);
+            }
 
             this.filter.open(this.filterDynamicContext);
             Item fil = null;

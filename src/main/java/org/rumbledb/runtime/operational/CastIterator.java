@@ -8,7 +8,6 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.items.AtomicItem;
 import org.rumbledb.runtime.RuntimeIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.ItemTypes;
@@ -57,8 +56,9 @@ public class CastIterator extends UnaryOperationIterator {
             Item item = items.get(0);
             String itemType = ItemTypes.getItemTypeName(item.getClass().getSimpleName());
 
-            if (itemType.equals(targetType))
+            if (itemType.equals(targetType)) {
                 return item;
+            }
 
             String message = String.format(
                 "\"%s\": value of type %s is not castable to type %s",
@@ -78,17 +78,19 @@ public class CastIterator extends UnaryOperationIterator {
 
             }
             throw new CastException(message, getMetadata());
-        } else
+        } else {
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
+        }
     }
 
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        if (!this.child.hasNext() && !this.singleType.getZeroOrOne())
+        if (!this.child.hasNext() && !this.singleType.getZeroOrOne()) {
             throw new UnexpectedTypeException(
                     " Empty sequence can not be cast to type with quantifier '1'",
                     getMetadata()
             );
+        }
     }
 }

@@ -40,7 +40,6 @@ import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.parser.JsoniqLexer;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.runtime.RuntimeIterator;
-
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkSessionManager;
 import sparksoniq.utils.FileUtils;
@@ -136,8 +135,9 @@ public class JsoniqQueryExecutor {
             stream.close();
             // else write from Spark RDD
         } else {
-            if (!result.isRDD())
+            if (!result.isRDD()) {
                 throw new OurBadException("Could not find any RDD iterators in executor");
+            }
             JavaRDD<Item> rdd = result.getRDD(new DynamicContext());
             JavaRDD<String> output = rdd.map(o -> o.serialize());
             output.saveAsTextFile(outputPath);
@@ -193,8 +193,9 @@ public class JsoniqQueryExecutor {
     private JsoniqLexer getInputSource(String arg) throws IOException {
         arg = arg.trim();
         // return embedded file
-        if (arg.isEmpty())
+        if (arg.isEmpty()) {
             new JsoniqLexer(CharStreams.fromStream(Main.class.getResourceAsStream("/queries/runQuery.iq")));
+        }
         if (arg.startsWith("file://") || arg.startsWith("/")) {
             return new JsoniqLexer(CharStreams.fromFileName(arg));
         }
@@ -257,9 +258,9 @@ public class JsoniqQueryExecutor {
             return "";
         }
         String singleOutput = result.serialize();
-        if (!iterator.hasNext())
+        if (!iterator.hasNext()) {
             return singleOutput;
-        else {
+        } else {
             int itemCount = 0;
             StringBuilder sb = new StringBuilder();
             sb.append(result.serialize());

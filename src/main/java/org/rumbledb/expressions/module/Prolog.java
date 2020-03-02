@@ -45,11 +45,13 @@ public class Prolog extends Node {
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        if (this.functionDeclarations != null)
+        if (this.functionDeclarations != null) {
             this.functionDeclarations.forEach(e -> {
-                if (e != null)
+                if (e != null) {
                     result.add(e);
+                }
             });
+        }
         return result;
     }
 

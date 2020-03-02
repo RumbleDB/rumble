@@ -62,11 +62,13 @@ public class QuantifiedExpression extends Expression {
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        if (this.variables != null)
+        if (this.variables != null) {
             this.variables.forEach(e -> {
-                if (e != null)
+                if (e != null) {
                     result.add(e);
+                }
             });
+        }
         result.add(this.expression);
         return result;
     }

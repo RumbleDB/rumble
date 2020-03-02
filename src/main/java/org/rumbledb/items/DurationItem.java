@@ -232,11 +232,13 @@ public class DurationItem extends AtomicItem {
     public static Period getDurationFromString(String duration, AtomicTypes durationType)
             throws UnsupportedOperationException,
                 IllegalArgumentException {
-        if (durationType == null || !checkInvalidDurationFormat(duration, durationType))
+        if (durationType == null || !checkInvalidDurationFormat(duration, durationType)) {
             throw new IllegalArgumentException();
+        }
         boolean isNegative = duration.charAt(0) == '-';
-        if (isNegative)
+        if (isNegative) {
             duration = duration.substring(1);
+        }
         PeriodFormatter pf = getPeriodFormatter(durationType);
         Period period = Period.parse(duration, pf);
         return isNegative
@@ -246,8 +248,9 @@ public class DurationItem extends AtomicItem {
 
     @Override
     public int compareTo(Item other) {
-        if (other.isNull())
+        if (other.isNull()) {
             return 1;
+        }
         Instant now = new Instant();
         if (other.isDuration()) {
             return this.getDurationValue().toDurationFrom(now).compareTo(other.getDurationValue().toDurationFrom(now));
@@ -273,8 +276,9 @@ public class DurationItem extends AtomicItem {
                     metadata
             );
         }
-        if (other.isNull())
+        if (other.isNull()) {
             return operator.apply(this, other);
+        }
         switch (operator) {
             case VC_EQ:
             case GC_EQ:

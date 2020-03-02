@@ -49,11 +49,13 @@ public class CommaExpression extends Expression {
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        if (this.expressions != null)
+        if (this.expressions != null) {
             this.expressions.forEach(e -> {
-                if (e != null)
+                if (e != null) {
                     result.add(e);
+                }
             });
+        }
         return result;
     }
 

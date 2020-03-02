@@ -10,7 +10,6 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.AtomicItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.AtomicTypes;
@@ -50,8 +49,9 @@ public class IntegerFunctionIterator extends LocalFunctionCallIterator {
                     ": value of type "
                     + ItemTypes.getItemTypeName(this.item.getClass().getSimpleName())
                     + " is not castable to type integer.";
-                if (atomicItem.isNull())
+                if (atomicItem.isNull()) {
                     throw new InvalidLexicalValueException(message, getMetadata());
+                }
                 if (atomicItem.isCastableAs(AtomicTypes.IntegerItem)) {
                     try {
                         return atomicItem.castAs(AtomicTypes.IntegerItem);
@@ -70,11 +70,12 @@ public class IntegerFunctionIterator extends LocalFunctionCallIterator {
                 );
                 throw new CastException(message, getMetadata());
             }
-        } else
+        } else {
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " integer function",
                     getMetadata()
             );
+        }
     }
 
     @Override

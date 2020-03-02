@@ -27,7 +27,6 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.runtime.functions.base.Functions;
-
 import sparksoniq.semantics.types.SequenceType;
 
 import java.util.ArrayList;

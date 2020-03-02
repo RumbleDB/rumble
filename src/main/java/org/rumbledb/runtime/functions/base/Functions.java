@@ -325,6 +325,7 @@ public class Functions {
     }
 
     private static final Map<String, SequenceType> sequenceTypes;
+
     static {
         sequenceTypes = new HashMap<>();
         sequenceTypes.put("item", new SequenceType(itemTypes.get("item"), SequenceType.Arity.One));
@@ -1785,7 +1786,6 @@ public class Functions {
             AdjustDateTimeToTimezone.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
-
 
 
         /**

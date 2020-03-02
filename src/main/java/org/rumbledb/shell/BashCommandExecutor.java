@@ -37,11 +37,12 @@ public class BashCommandExecutor {
         StringBuilder out = new StringBuilder();
         BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()));
         String line = null, previous = null;
-        while ((line = br.readLine()) != null)
+        while ((line = br.readLine()) != null) {
             if (!line.equals(previous)) {
                 previous = line;
                 out.append(line).append('\n');
             }
+        }
 
         // Check result
         if (process.waitFor() == 0) {

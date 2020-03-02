@@ -67,8 +67,9 @@ public class Base64BinaryItem extends AtomicItem {
     }
 
     static byte[] parseBase64BinaryString(String base64BinaryString) throws IllegalArgumentException {
-        if (base64BinaryString == null || !checkInvalidBase64BinaryFormat(base64BinaryString))
+        if (base64BinaryString == null || !checkInvalidBase64BinaryFormat(base64BinaryString)) {
             throw new IllegalArgumentException();
+        }
         return DatatypeConverter.parseBase64Binary(base64BinaryString);
     }
 
@@ -124,8 +125,9 @@ public class Base64BinaryItem extends AtomicItem {
 
     @Override
     public int compareTo(Item other) {
-        if (other.isNull())
+        if (other.isNull()) {
             return 1;
+        }
         if (other.isBase64Binary()) {
             return this.serializeValue().compareTo(Arrays.toString(other.getBinaryValue()));
         }
@@ -150,8 +152,9 @@ public class Base64BinaryItem extends AtomicItem {
                     metadata
             );
         }
-        if (other.isNull())
+        if (other.isNull()) {
             return operator.apply(this, other);
+        }
         switch (operator) {
             case VC_EQ:
             case GC_EQ:

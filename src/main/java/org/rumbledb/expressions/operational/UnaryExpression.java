@@ -54,8 +54,9 @@ public class UnaryExpression extends UnaryExpressionBase {
     public String serializationString(boolean prefix) {
         String result = "(unaryExpr ";
         if (this.multipleOperators != null && this.multipleOperators.size() > 0) {
-            for (Operator op : this.multipleOperators)
+            for (Operator op : this.multipleOperators) {
                 result += getStringFromOperator(op) + " ";
+            }
         }
         result += this.mainExpression.serializationString(true);
         result += ")";

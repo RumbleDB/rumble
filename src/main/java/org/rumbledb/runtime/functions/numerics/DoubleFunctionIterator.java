@@ -10,7 +10,6 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.AtomicItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.AtomicTypes;
@@ -49,8 +48,9 @@ public class DoubleFunctionIterator extends LocalFunctionCallIterator {
                     ": value of type "
                     + ItemTypes.getItemTypeName(this.item.getClass().getSimpleName())
                     + " is not castable to type double.";
-                if (atomicItem.isNull())
+                if (atomicItem.isNull()) {
                     throw new InvalidLexicalValueException(message, getMetadata());
+                }
                 if (atomicItem.isCastableAs(AtomicTypes.DoubleItem)) {
                     try {
                         return atomicItem.castAs(AtomicTypes.DoubleItem);
@@ -69,11 +69,12 @@ public class DoubleFunctionIterator extends LocalFunctionCallIterator {
                 );
                 throw new CastException(message, getMetadata());
             }
-        } else
+        } else {
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " double function",
                     getMetadata()
             );
+        }
     }
 
     @Override

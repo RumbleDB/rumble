@@ -30,7 +30,6 @@ import org.rumbledb.expressions.operational.base.OperationalExpressionBase.Opera
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.operational.base.BinaryOperationBaseIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 
@@ -83,10 +82,12 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
                 // fetch all values and perform comparison
                 ArrayList<Item> left = new ArrayList<>();
                 ArrayList<Item> right = new ArrayList<>();
-                while (this.leftIterator.hasNext())
+                while (this.leftIterator.hasNext()) {
                     left.add(this.leftIterator.next());
-                while (this.rightIterator.hasNext())
+                }
+                while (this.rightIterator.hasNext()) {
                     right.add(this.rightIterator.next());
+                }
 
                 this.leftIterator.close();
                 this.rightIterator.close();
@@ -145,8 +146,9 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
         for (Item l : left) {
             for (Item r : right) {
                 Item result = comparePair(l, r);
-                if (result.getBooleanValue())
+                if (result.getBooleanValue()) {
                     return result;
+                }
             }
         }
         return ItemFactory.getInstance().createBooleanItem(false);
@@ -173,8 +175,9 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
 
         if (left.isAtomic()) {
             Item comparisonResult = left.compareItem(right, this.operator, getMetadata());
-            if (comparisonResult != null)
+            if (comparisonResult != null) {
                 return comparisonResult;
+            }
             throw new IteratorFlowException("Unrecognized operator found", getMetadata());
         } else {
             throw new IteratorFlowException("Invalid comparison expression", getMetadata());
