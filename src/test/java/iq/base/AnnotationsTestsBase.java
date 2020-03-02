@@ -64,7 +64,6 @@ public class AnnotationsTestsBase {
      */
     protected MainModule testAnnotations(String path)
             throws IOException {
-        JsoniqParser.MainModuleContext context = null;
         RuntimeIterator runtimeIterator = null;
         try {
             this.currentAnnotation = AnnotationProcessor.readAnnotation(new FileReader(path));
@@ -72,9 +71,9 @@ public class AnnotationsTestsBase {
             e.printStackTrace();
             Assert.fail();
         }
-
+        MainModule mainModule = null;
         try {
-            MainModule mainModule = this.parse(path);
+            mainModule = this.parse(path);
             Functions.clearUserDefinedFunctions(); // clear UDFs between each test run
 
             VisitorHelpers.populateStaticContext(mainModule);
@@ -89,10 +88,10 @@ public class AnnotationsTestsBase {
             );
             if (this.currentAnnotation.shouldParse()) {
                 Assert.fail("Program did not parse when expected to.\nError output: " + errorOutput + "\n");
-                return null;
+                return mainModule;
             } else {
                 System.out.println(errorOutput);
-                return null;
+                return mainModule;
             }
 
             // SEMANTIC
@@ -106,11 +105,11 @@ public class AnnotationsTestsBase {
             try {
                 if (this.currentAnnotation.shouldCompile()) {
                     Assert.fail("Program did not compile when expected to.\nError output: " + errorOutput + "\n");
-                    return null;
+                    return mainModule;
                 } else {
                     System.out.println(errorOutput);
                     Assert.assertTrue(true);
-                    return null;
+                    return mainModule;
                 }
             } catch (Exception ex) {
             }
@@ -126,11 +125,11 @@ public class AnnotationsTestsBase {
             try {
                 if (this.currentAnnotation.shouldRun()) {
                     Assert.fail("Program did not run when expected to.\nError output: " + errorOutput + "\n");
-                    return null;
+                    return mainModule;
                 } else {
                     System.out.println(errorOutput);
                     Assert.assertTrue(true);
-                    return null;
+                    return mainModule;
                 }
             } catch (Exception ex) {
             }
@@ -139,14 +138,14 @@ public class AnnotationsTestsBase {
         try {
             if (!this.currentAnnotation.shouldCompile()) {
                 Assert.fail("Program compiled when not expected to.\n");
-                return null;
+                return mainModule;
             }
         } catch (Exception ex) {
         }
 
         if (!this.currentAnnotation.shouldParse()) {
             Assert.fail("Program parsed when not expected to.\n");
-            return null;
+            return mainModule;
         }
 
         // PROGRAM SHOULD RUN
@@ -177,13 +176,13 @@ public class AnnotationsTestsBase {
                         this.currentAnnotation.getErrorCode(),
                         this.currentAnnotation.getErrorMetadata()
                     );
-                    return null;
+                    return mainModule;
                 }
 
                 Assert.fail("Program executed when not expected to");
             }
         }
-        return null;
+        return mainModule;
     }
 
     private MainModule parse(String path) throws IOException {
@@ -201,8 +200,8 @@ public class AnnotationsTestsBase {
 
             JsoniqParser.ModuleContext module = parser.module();
             JsoniqParser.MainModuleContext main = module.main;
-            return (MainModule) new TranslationVisitor().visit(main);
-
+            MainModule mainModule = (MainModule) new TranslationVisitor().visit(main);
+            return mainModule;
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
                     lexer.getText(),
