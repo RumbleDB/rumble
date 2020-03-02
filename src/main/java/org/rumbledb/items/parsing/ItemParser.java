@@ -243,13 +243,15 @@ public class ItemParser implements Serializable {
             } else if (vector instanceof SparseVector) {
                 // a sparse vector is mapped to a Rumble object where keys are indices of the non-0 values in the vector
                 SparseVector sparseVector = (SparseVector) vector;
-                List<String> keyList = new ArrayList<>();
-                List<Item> valueList = new ArrayList<>();
-                for (int index : sparseVector.indices()) {
-                    keyList.add(String.valueOf(index));
-                    valueList.add(ItemFactory.getInstance().createDoubleItem(sparseVector.values()[index]));
+                List<String> objectKeyList = new ArrayList<>();
+                List<Item> objectValueList = new ArrayList<>();
+                int[] vectorIndices = sparseVector.indices();
+                double[] vectorValues = sparseVector.values();
+                for (int j = 0; j < vectorIndices.length; j++) {
+                    objectKeyList.add(String.valueOf(vectorIndices[j]));
+                    objectValueList.add(ItemFactory.getInstance().createDoubleItem(vectorValues[j]));
                 }
-                values.add(ItemFactory.getInstance().createObjectItem(keyList, valueList, metadata));
+                values.add(ItemFactory.getInstance().createObjectItem(objectKeyList, objectValueList, metadata));
             } else {
                 throw new OurBadException("Unexpected program state reached while converting vectorUDT to rumble item");
             }
