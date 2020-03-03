@@ -7,6 +7,7 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidRumbleMLParamException;
+import org.rumbledb.exceptions.MLNotADataFrameException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import sparksoniq.jsoniq.ExecutionMode;
@@ -60,9 +61,24 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
     }
 
     private Dataset<Row> getInputDataset(DynamicContext context) {
-        return context.getDataFrameVariableValue(
-            GetTransformerFunctionIterator.transformerParameterNames.get(0),
-            getMetadata()
+        String transformerInputVariableName = GetTransformerFunctionIterator.transformerParameterNames.get(0);
+
+        if (!context.contains(transformerInputVariableName)) {
+            throw new OurBadException("Transformer's input data is not available in the dynamic context");
+        }
+
+        if (context.isDataFrame(transformerInputVariableName, getMetadata())) {
+            return context.getDataFrameVariableValue(
+                transformerInputVariableName,
+                getMetadata()
+            );
+        }
+
+        throw new MLNotADataFrameException(
+                "Transformers operate on DataFrames. "
+                    +
+                    "Please consider using 'annotate' built-in function to generate a DataFrame.",
+                getMetadata()
         );
     }
 

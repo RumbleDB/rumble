@@ -212,7 +212,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         if (clause instanceof ForClause) {
             for (ForClauseVar var : ((ForClause) clause).getForVariables()) {
                 RuntimeIterator assignmentIterator = this.visit(var.getExpression(), argument);
-                if (var.getSequenceType() != null) {
+                if (var.getSequenceType() != SequenceType.mostGeneralSequenceType) {
                     ExecutionMode executionMode = TreatExpression.calculateIsRDDFromSequenceTypeAndExpression(
                         var.getSequenceType(),
                         var.getExpression()
@@ -237,7 +237,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         } else if (clause instanceof LetClause) {
             for (LetClauseVar var : ((LetClause) clause).getLetVariables()) {
                 RuntimeIterator assignmentIterator = this.visit(var.getExpression(), argument);
-                if (var.getSequenceType() != null) {
+                if (var.getSequenceType() != SequenceType.mostGeneralSequenceType) {
                     ExecutionMode executionMode = TreatExpression.calculateIsRDDFromSequenceTypeAndExpression(
                         var.getSequenceType(),
                         var.getExpression()
@@ -266,7 +266,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 RuntimeIterator groupByExpressionIterator = null;
                 if (groupByExpression != null) {
                     groupByExpressionIterator = this.visit(groupByExpression, argument);
-                    if (var.getSequenceType() != null) {
+                    if (var.getSequenceType() != SequenceType.mostGeneralSequenceType) {
                         ExecutionMode executionMode = TreatExpression.calculateIsRDDFromSequenceTypeAndExpression(
                             var.getSequenceType(),
                             groupByExpression
