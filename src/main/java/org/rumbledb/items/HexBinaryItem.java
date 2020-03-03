@@ -11,9 +11,8 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-import sparksoniq.semantics.types.AtomicTypes;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypes;
 
 import java.util.Arrays;
 import java.util.regex.Pattern;
@@ -83,17 +82,17 @@ public class HexBinaryItem extends AtomicItem {
     }
 
     @Override
-    public boolean isCastableAs(AtomicTypes itemType) {
-        return itemType.equals(AtomicTypes.HexBinaryItem)
+    public boolean isCastableAs(ItemType itemType) {
+        return itemType.getType() == ItemTypes.HexBinaryItem
             ||
-            itemType.equals(AtomicTypes.Base64BinaryItem)
+            itemType.getType() == ItemTypes.Base64BinaryItem
             ||
-            itemType.equals(AtomicTypes.StringItem);
+            itemType.getType() == ItemTypes.StringItem;
     }
 
     @Override
-    public Item castAs(AtomicTypes itemType) {
-        switch (itemType) {
+    public Item castAs(ItemType itemType) {
+        switch (itemType.getType()) {
             case HexBinaryItem:
                 return this;
             case StringItem:

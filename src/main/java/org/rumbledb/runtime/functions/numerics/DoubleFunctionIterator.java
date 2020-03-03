@@ -10,10 +10,11 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.AtomicItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypes;
+
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.semantics.types.AtomicTypes;
-import sparksoniq.semantics.types.ItemTypes;
 
 import java.util.List;
 
@@ -51,9 +52,9 @@ public class DoubleFunctionIterator extends LocalFunctionCallIterator {
                 if (atomicItem.isNull()) {
                     throw new InvalidLexicalValueException(message, getMetadata());
                 }
-                if (atomicItem.isCastableAs(AtomicTypes.DoubleItem)) {
+                if (atomicItem.isCastableAs(ItemType.doubleItem)) {
                     try {
-                        return atomicItem.castAs(AtomicTypes.DoubleItem);
+                        return atomicItem.castAs(ItemType.doubleItem);
                     } catch (ClassCastException e) {
                         throw new UnexpectedTypeException(message, getMetadata());
                     }

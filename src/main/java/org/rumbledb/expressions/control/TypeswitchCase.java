@@ -2,7 +2,7 @@ package org.rumbledb.expressions.control;
 
 
 import org.rumbledb.expressions.Expression;
-import sparksoniq.semantics.types.SequenceType;
+import org.rumbledb.types.SequenceType;
 
 import java.util.ArrayList;
 import java.util.List;

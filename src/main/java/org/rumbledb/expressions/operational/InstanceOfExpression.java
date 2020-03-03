@@ -24,7 +24,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.operational.base.UnaryExpressionBase;
-import sparksoniq.semantics.types.SequenceType;
+import org.rumbledb.types.SequenceType;
 
 
 public class InstanceOfExpression extends UnaryExpressionBase {

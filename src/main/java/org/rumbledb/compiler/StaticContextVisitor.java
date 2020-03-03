@@ -38,11 +38,11 @@ import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.StaticContext;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
-import sparksoniq.semantics.types.SequenceType;
 
 public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
@@ -176,7 +176,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         if (expression.getPositionalVariableReference() != null) {
             result.addVariable(
                 expression.getPositionalVariableReference().getVariableName(),
-                new SequenceType(new ItemType(ItemTypes.IntegerItem)),
+                new SequenceType(ItemType.integerItem),
                 expression.getMetadata(),
                 ExecutionMode.LOCAL
             );
@@ -215,7 +215,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         StaticContext result = new StaticContext(argument);
         result.addVariable(
             expression.getCountVariable().getVariableName(),
-            new SequenceType(new ItemType(ItemTypes.IntegerItem), SequenceType.Arity.One),
+            new SequenceType(ItemType.integerItem, SequenceType.Arity.One),
             expression.getMetadata(),
             ExecutionMode.LOCAL
         );

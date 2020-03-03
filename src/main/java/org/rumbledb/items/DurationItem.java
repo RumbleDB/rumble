@@ -15,9 +15,8 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-import sparksoniq.semantics.types.AtomicTypes;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypes;
 
 import java.util.regex.Pattern;
 
@@ -127,19 +126,19 @@ public class DurationItem extends AtomicItem {
     }
 
     @Override
-    public boolean isCastableAs(AtomicTypes itemType) {
-        return itemType.equals(AtomicTypes.DurationItem)
+    public boolean isCastableAs(ItemType itemType) {
+        return itemType.getType() == ItemTypes.DurationItem
             ||
-            itemType.equals(AtomicTypes.YearMonthDurationItem)
+            itemType.getType() == ItemTypes.YearMonthDurationItem
             ||
-            itemType.equals(AtomicTypes.DayTimeDurationItem)
+            itemType.getType() == ItemTypes.DayTimeDurationItem
             ||
-            itemType.equals(AtomicTypes.StringItem);
+            itemType.getType() == ItemTypes.StringItem;
     }
 
     @Override
-    public Item castAs(AtomicTypes itemType) {
-        switch (itemType) {
+    public Item castAs(ItemType itemType) {
+        switch (itemType.getType()) {
             case DurationItem:
                 return this;
             case YearMonthDurationItem:
@@ -168,13 +167,13 @@ public class DurationItem extends AtomicItem {
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this.value = getDurationFromString(input.readString(), AtomicTypes.DurationItem).normalizedStandard(
+        this.value = getDurationFromString(input.readString(), ItemTypes.DurationItem).normalizedStandard(
             PeriodType.yearMonthDayTime()
         );
         this.isNegative = this.value.toString().contains("-");
     }
 
-    private static PeriodFormatter getPeriodFormatter(AtomicTypes durationType) {
+    private static PeriodFormatter getPeriodFormatter(ItemTypes durationType) {
         switch (durationType) {
             case DurationItem:
                 return ISOPeriodFormat.standard();
@@ -202,7 +201,7 @@ public class DurationItem extends AtomicItem {
         }
     }
 
-    private static PeriodType getPeriodType(AtomicTypes durationType) {
+    private static PeriodType getPeriodType(ItemTypes durationType) {
         switch (durationType) {
             case DurationItem:
                 return PeriodType.yearMonthDayTime();
@@ -217,7 +216,7 @@ public class DurationItem extends AtomicItem {
         }
     }
 
-    private static boolean checkInvalidDurationFormat(String duration, AtomicTypes durationType) {
+    private static boolean checkInvalidDurationFormat(String duration, ItemTypes durationType) {
         switch (durationType) {
             case DurationItem:
                 return durationPattern.matcher(duration).matches();
@@ -229,7 +228,7 @@ public class DurationItem extends AtomicItem {
         return false;
     }
 
-    public static Period getDurationFromString(String duration, AtomicTypes durationType)
+    public static Period getDurationFromString(String duration, ItemTypes durationType)
             throws UnsupportedOperationException,
                 IllegalArgumentException {
         if (durationType == null || !checkInvalidDurationFormat(duration, durationType)) {

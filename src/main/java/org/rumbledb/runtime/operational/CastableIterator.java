@@ -9,10 +9,11 @@ import org.rumbledb.items.AtomicItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.types.ItemTypes;
+import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
+
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.types.AtomicTypes;
-import sparksoniq.semantics.types.ItemTypes;
-import sparksoniq.semantics.types.SingleType;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,12 +22,12 @@ import java.util.List;
 
 public class CastableIterator extends LocalRuntimeIterator {
     private static final long serialVersionUID = 1L;
-    private final SingleType singleType;
+    private final SequenceType singleType;
     protected final RuntimeIterator child;
 
     public CastableIterator(
             RuntimeIterator child,
-            SingleType singleType,
+            SequenceType singleType,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
     ) {
@@ -52,7 +53,7 @@ public class CastableIterator extends LocalRuntimeIterator {
             this.hasNext = false;
 
             if (items.isEmpty()) {
-                return ItemFactory.getInstance().createBooleanItem(this.singleType.getZeroOrOne());
+                return ItemFactory.getInstance().createBooleanItem(this.singleType.getArity().equals(Arity.OneOrZero));
             }
 
             if (items.size() != 1 || items.get(0) == null) {
@@ -61,14 +62,14 @@ public class CastableIterator extends LocalRuntimeIterator {
 
             AtomicItem atomicItem = checkInvalidCastable(items.get(0), getMetadata(), this.singleType);
 
-            return ItemFactory.getInstance().createBooleanItem(atomicItem.isCastableAs(this.singleType.getType()));
+            return ItemFactory.getInstance().createBooleanItem(atomicItem.isCastableAs(this.singleType.getItemType()));
         } else {
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
         }
     }
 
-    static AtomicItem checkInvalidCastable(Item item, ExceptionMetadata metadata, SingleType singleType) {
-        if (singleType.getType() == AtomicTypes.AtomicItem) {
+    static AtomicItem checkInvalidCastable(Item item, ExceptionMetadata metadata, SequenceType type) {
+        if (type.getItemType().getType().equals(ItemTypes.AtomicItem)) {
             throw new CastableException("\"atomic\": invalid type for \"cast\" or \"castable\" expression", metadata);
         }
         AtomicItem atomicItem;

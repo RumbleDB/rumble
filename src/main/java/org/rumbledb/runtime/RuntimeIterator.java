@@ -32,9 +32,10 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.types.ItemTypes;
+
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.semantics.types.ItemTypes;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;

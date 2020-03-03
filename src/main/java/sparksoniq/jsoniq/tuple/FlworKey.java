@@ -27,7 +27,7 @@ import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SparksoniqRuntimeException;
-import sparksoniq.semantics.types.ItemTypes;
+import org.rumbledb.types.ItemTypes;
 
 import java.util.ArrayList;
 import java.util.List;

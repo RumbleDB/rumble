@@ -10,7 +10,7 @@ import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ArrayItem;
 import org.rumbledb.items.AtomicItem;
-import sparksoniq.semantics.types.AtomicTypes;
+import org.rumbledb.types.ItemType;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -159,15 +159,15 @@ public class RumbleMLUtils {
     private static Object convertRumbleAtomicToJava(AtomicItem atomicItem, String javaTypeName) {
         switch (javaTypeName) {
             case "boolean":
-                return atomicItem.castAs(AtomicTypes.BooleanItem).getBooleanValue();
+                return atomicItem.castAs(ItemType.booleanItem).getBooleanValue();
             case "String":
-                return atomicItem.castAs(AtomicTypes.StringItem).getStringValue();
+                return atomicItem.castAs(ItemType.stringItem).getStringValue();
             case "int":
-                return atomicItem.castAs(AtomicTypes.IntegerItem).getIntegerValue();
+                return atomicItem.castAs(ItemType.integerItem).getIntegerValue();
             case "double":
-                return atomicItem.castAs(AtomicTypes.DoubleItem).getDoubleValue();
+                return atomicItem.castAs(ItemType.doubleItem).getDoubleValue();
             case "long":
-                return (long) atomicItem.castAs(AtomicTypes.DoubleItem).getDoubleValue();
+                return (long) atomicItem.castAs(ItemType.doubleItem).getDoubleValue();
             default:
                 throw new OurBadException(
                         "Unrecognized Java type name found \""

@@ -9,9 +9,8 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-import sparksoniq.semantics.types.AtomicTypes;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypes;
 
 import java.math.BigDecimal;
 
@@ -56,26 +55,26 @@ public class DayTimeDurationItem extends DurationItem {
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this.value = getDurationFromString(input.readString(), AtomicTypes.DayTimeDurationItem).normalizedStandard(
+        this.value = getDurationFromString(input.readString(), ItemTypes.DayTimeDurationItem).normalizedStandard(
             PeriodType.dayTime()
         );
         this.isNegative = this.value.toString().contains("-");
     }
 
     @Override
-    public boolean isCastableAs(AtomicTypes itemType) {
-        return itemType.equals(AtomicTypes.DayTimeDurationItem)
+    public boolean isCastableAs(ItemType itemType) {
+        return itemType.getType() == ItemTypes.DayTimeDurationItem
             ||
-            itemType.equals(AtomicTypes.YearMonthDurationItem)
+            itemType.getType() == ItemTypes.YearMonthDurationItem
             ||
-            itemType.equals(AtomicTypes.DurationItem)
+            itemType.getType() == ItemTypes.DurationItem
             ||
-            itemType.equals(AtomicTypes.StringItem);
+            itemType.getType() == ItemTypes.StringItem;
     }
 
     @Override
-    public Item castAs(AtomicTypes itemType) {
-        switch (itemType) {
+    public Item castAs(ItemType itemType) {
+        switch (itemType.getType()) {
             case DurationItem:
                 return ItemFactory.getInstance().createDurationItem(this.getValue());
             case DayTimeDurationItem:

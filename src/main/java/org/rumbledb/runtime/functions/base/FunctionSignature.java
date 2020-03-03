@@ -20,10 +20,10 @@
 
 package org.rumbledb.runtime.functions.base;
 
-import sparksoniq.semantics.types.SequenceType;
-
 import java.io.Serializable;
 import java.util.List;
+
+import org.rumbledb.types.SequenceType;
 
 public class FunctionSignature implements Serializable {
     private List<SequenceType> parameterTypes;
