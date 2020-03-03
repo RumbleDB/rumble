@@ -8,7 +8,6 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.flowr.FlworVarSingleType;
-import org.rumbledb.expressions.operational.base.OperationalExpressionBase.Operator;
 
 public class CastableExpression extends Expression {
 
@@ -17,6 +16,7 @@ public class CastableExpression extends Expression {
 
     public CastableExpression(Expression mainExpression, FlworVarSingleType atomicType, ExceptionMetadata metadata) {
         super(metadata);
+        this.mainExpression = mainExpression;
         this.atomicType = atomicType;
     }
 
