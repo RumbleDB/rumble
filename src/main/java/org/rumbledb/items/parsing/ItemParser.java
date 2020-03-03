@@ -39,7 +39,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SparksoniqRuntimeException;
 import org.rumbledb.items.ItemFactory;
-
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.IOException;
@@ -58,8 +57,9 @@ public class ItemParser implements Serializable {
 
     public static Item getItemFromObject(JsonIterator object, ExceptionMetadata metadata) {
         try {
-            if (object.whatIsNext().equals(ValueType.STRING))
+            if (object.whatIsNext().equals(ValueType.STRING)) {
                 return ItemFactory.getInstance().createStringItem(object.readString());
+            }
             if (object.whatIsNext().equals(ValueType.NUMBER)) {
                 String number = object.readNumberAsString();
                 if (number.contains("E") || number.contains("e")) {
@@ -74,8 +74,9 @@ public class ItemParser implements Serializable {
                     return ItemFactory.getInstance().createDecimalItem(new BigDecimal(number));
                 }
             }
-            if (object.whatIsNext().equals(ValueType.BOOLEAN))
+            if (object.whatIsNext().equals(ValueType.BOOLEAN)) {
                 return ItemFactory.getInstance().createBooleanItem(object.readBoolean());
+            }
             if (object.whatIsNext().equals(ValueType.ARRAY)) {
                 List<Item> values = new ArrayList<>();
                 while (object.readArray()) {
@@ -136,96 +137,108 @@ public class ItemParser implements Serializable {
             values.add(ItemFactory.getInstance().createNullItem());
         } else if (fieldType.equals(DataTypes.StringType)) {
             String s;
-            if (row != null)
+            if (row != null) {
                 s = row.getString(i);
-            else
+            } else {
                 s = (String) o;
+            }
             values.add(ItemFactory.getInstance().createStringItem(s));
         } else if (fieldType.equals(DataTypes.BooleanType)) {
             boolean b;
-            if (row != null)
+            if (row != null) {
                 b = row.getBoolean(i);
-            else
+            } else {
                 b = (Boolean) o;
+            }
             values.add(ItemFactory.getInstance().createBooleanItem(b));
         } else if (fieldType.equals(DataTypes.DoubleType)) {
             double value;
-            if (row != null)
+            if (row != null) {
                 value = row.getDouble(i);
-            else
+            } else {
                 value = (Double) o;
+            }
             values.add(ItemFactory.getInstance().createDoubleItem(value));
         } else if (fieldType.equals(DataTypes.IntegerType)) {
             int value;
-            if (row != null)
+            if (row != null) {
                 value = row.getInt(i);
-            else
+            } else {
                 value = (Integer) o;
+            }
             values.add(ItemFactory.getInstance().createIntegerItem(value));
         } else if (fieldType.equals(DataTypes.FloatType)) {
             float value;
-            if (row != null)
+            if (row != null) {
                 value = row.getFloat(i);
-            else
+            } else {
                 value = (Float) o;
+            }
             values.add(ItemFactory.getInstance().createDoubleItem(value));
         } else if (fieldType.equals(DataTypes.LongType)) {
             BigDecimal value;
-            if (row != null)
+            if (row != null) {
                 value = new BigDecimal(row.getLong(i));
-            else
+            } else {
                 value = new BigDecimal((Long) o);
+            }
             values.add(ItemFactory.getInstance().createDecimalItem(value));
         } else if (fieldType.equals(DataTypes.NullType)) {
             values.add(ItemFactory.getInstance().createNullItem());
         } else if (fieldType.equals(DataTypes.ShortType)) {
             short value;
-            if (row != null)
+            if (row != null) {
                 value = row.getShort(i);
-            else
+            } else {
                 value = (Short) o;
+            }
             values.add(ItemFactory.getInstance().createIntegerItem(value));
         } else if (fieldType.equals(DataTypes.TimestampType)) {
             Timestamp value;
-            if (row != null)
+            if (row != null) {
                 value = row.getTimestamp(i);
-            else
+            } else {
                 value = (Timestamp) o;
+            }
             Instant instant = value.toInstant();
             DateTime dt = new DateTime(instant);
             values.add(ItemFactory.getInstance().createDateTimeItem(dt, false));
         } else if (fieldType.equals(DataTypes.DateType)) {
             Date value;
-            if (row != null)
+            if (row != null) {
                 value = row.getDate(i);
-            else
+            } else {
                 value = (Date) o;
+            }
             Instant instant = value.toInstant();
             DateTime dt = new DateTime(instant);
             values.add(ItemFactory.getInstance().createDateItem(dt, false));
         } else if (fieldType.equals(DataTypes.BinaryType)) {
             byte[] value;
-            if (row != null)
+            if (row != null) {
                 value = (byte[]) row.get(i);
-            else
+            } else {
                 value = (byte[]) o;
+            }
             values.add(ItemFactory.getInstance().createHexBinaryItem(Hex.encodeHexString(value)));
         } else if (fieldType instanceof StructType) {
             Row value;
-            if (row != null)
+            if (row != null) {
                 value = row.getStruct(i);
-            else
+            } else {
                 value = (Row) o;
+            }
             values.add(getItemFromRow(value, metadata));
         } else if (fieldType instanceof ArrayType) {
             ArrayType arrayType = (ArrayType) fieldType;
             DataType dataType = arrayType.elementType();
             List<Item> members = new ArrayList<>();
             List<Object> objects;
-            if (row != null)
+            if (row != null) {
                 objects = row.getList(i);
-            else
+            } else {
                 objects = (List<Object>) o;
+            }
             for (Object object : objects) {
                 addValue(null, 0, object, dataType, members, metadata);
             }

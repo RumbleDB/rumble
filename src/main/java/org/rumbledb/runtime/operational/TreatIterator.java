@@ -10,7 +10,6 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.TreatAsClosure;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.ItemType;
@@ -81,8 +80,9 @@ public class TreatIterator extends HybridRuntimeIterator {
             this.currentResult = this.nextResult;
             setNextResult();
             return this.currentResult;
-        } else
+        } else {
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
+        }
     }
 
     private void setNextResult() {
@@ -100,16 +100,18 @@ public class TreatIterator extends HybridRuntimeIterator {
             } else {
                 this.nextResult = this.iterator.next();
             }
-            if (this.nextResult != null)
+            if (this.nextResult != null) {
                 this.resultCount++;
+            }
         } else {
             this.iterator.close();
             checkEmptySequence(this.resultCount);
         }
 
         this.hasNext = this.nextResult != null;
-        if (!hasNext())
+        if (!hasNext()) {
             return;
+        }
 
         checkTreatAsEmptySequence(this.resultCount);
         checkMoreThanOneItemSequence(this.resultCount);
@@ -128,8 +130,9 @@ public class TreatIterator extends HybridRuntimeIterator {
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.iterator.getRDD(dynamicContext);
 
-        if (this.sequenceType.getArity() != SequenceType.Arity.ZeroOrMore)
+        if (this.sequenceType.getArity() != SequenceType.Arity.ZeroOrMore) {
             checkEmptySequence(childRDD.take(2).size());
+        }
 
         Function<Item, Boolean> transformation = new TreatAsClosure(this.sequenceType, getMetadata());
         return childRDD.filter(transformation);

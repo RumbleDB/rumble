@@ -34,8 +34,9 @@ public class GroupByClause extends Clause {
 
     public GroupByClause(List<GroupByClauseVar> vars, ExceptionMetadata metadata) {
         super(FLWOR_CLAUSES.GROUP_BY, metadata);
-        if (vars == null || vars.isEmpty())
+        if (vars == null || vars.isEmpty()) {
             throw new SemanticException("Group clause must have at least one variable", metadata);
+        }
         this.groupVars = vars;
     }
 
@@ -47,8 +48,9 @@ public class GroupByClause extends Clause {
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         this.groupVars.forEach(e -> {
-            if (e != null)
+            if (e != null) {
                 result.add(e);
+            }
         });
         return result;
     }
@@ -61,9 +63,10 @@ public class GroupByClause extends Clause {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(groupByClause group by ";
-        for (GroupByClauseVar var : this.groupVars)
+        for (GroupByClauseVar var : this.groupVars) {
             result += var.serializationString(true)
                 + (this.groupVars.indexOf(var) < this.groupVars.size() - 1 ? " , " : "");
+        }
         result += ")";
         return result;
     }

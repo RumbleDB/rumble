@@ -167,43 +167,52 @@ public class IntegerItem extends AtomicItem {
 
     @Override
     public Item add(Item other) {
-        if (other.isDouble())
+        if (other.isDouble()) {
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() + other.getDoubleValue());
-        if (other.isDecimal())
+        }
+        if (other.isDecimal()) {
             return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue().add(other.getDecimalValue()));
+        }
         return ItemFactory.getInstance().createIntegerItem(this.getIntegerValue() + other.castToIntegerValue());
     }
 
     @Override
     public Item subtract(Item other) {
-        if (other.isDouble())
+        if (other.isDouble()) {
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() - other.getDoubleValue());
-        if (other.isDecimal())
+        }
+        if (other.isDecimal()) {
             return ItemFactory.getInstance()
                 .createDecimalItem(this.castToDecimalValue().subtract(other.getDecimalValue()));
+        }
         return ItemFactory.getInstance().createIntegerItem(this.getIntegerValue() - other.castToIntegerValue());
     }
 
     @Override
     public Item multiply(Item other) {
-        if (other.isDouble())
+        if (other.isDouble()) {
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() * other.getDoubleValue());
-        if (other.isDecimal())
+        }
+        if (other.isDecimal()) {
             return ItemFactory.getInstance()
                 .createDecimalItem(this.castToDecimalValue().multiply(other.getDecimalValue()));
-        if (other.isYearMonthDuration())
+        }
+        if (other.isYearMonthDuration()) {
             return ItemFactory.getInstance()
                 .createYearMonthDurationItem(other.getDurationValue().multipliedBy(this.getIntegerValue()));
-        if (other.isDayTimeDuration())
+        }
+        if (other.isDayTimeDuration()) {
             return ItemFactory.getInstance()
                 .createDayTimeDurationItem(other.getDurationValue().multipliedBy(this.getIntegerValue()));
+        }
         return ItemFactory.getInstance().createIntegerItem(this.getIntegerValue() * other.castToIntegerValue());
     }
 
     @Override
     public Item divide(Item other) {
-        if (other.isDouble())
+        if (other.isDouble()) {
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() / other.getDoubleValue());
+        }
         BigDecimal bdResult = this.castToDecimalValue()
             .divide(other.castToDecimalValue(), 10, BigDecimal.ROUND_HALF_UP);
         if (bdResult.stripTrailingZeros().scale() <= 0) {
@@ -215,11 +224,13 @@ public class IntegerItem extends AtomicItem {
 
     @Override
     public Item modulo(Item other) {
-        if (other.isDouble())
+        if (other.isDouble()) {
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() % other.getDoubleValue());
-        if (other.isDecimal())
+        }
+        if (other.isDecimal()) {
             return ItemFactory.getInstance()
                 .createDecimalItem(this.castToDecimalValue().remainder(other.getDecimalValue()));
+        }
         return ItemFactory.getInstance().createIntegerItem(this.getIntegerValue() % other.castToIntegerValue());
     }
 

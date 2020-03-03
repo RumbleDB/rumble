@@ -43,9 +43,11 @@ public class OrExpression extends NaryExpressionBase {
     public String serializationString(boolean prefix) {
         String result = (prefix ? "(exprSingle " : "") + "(orExpr ";
         result += this.mainExpression.serializationString(true);
-        if (this.getRightExpressions() != null && this.getRightExpressions().size() > 0)
-            for (Expression expr : this.getRightExpressions())
+        if (this.getRightExpressions() != null && this.getRightExpressions().size() > 0) {
+            for (Expression expr : this.getRightExpressions()) {
                 result += " or " + expr.serializationString(true);
+            }
+        }
         result += ")";
         return result;
     }

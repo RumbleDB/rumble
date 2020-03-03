@@ -53,8 +53,9 @@ public abstract class FlworVarDecl extends Clause {
             ExceptionMetadata metadata
     ) {
         this(forVar, metadata);
-        if (variableReferenceExpression == null)
+        if (variableReferenceExpression == null) {
             throw new IllegalArgumentException("Flowr var decls cannot be empty");
+        }
         this.variableReferenceExpression = variableReferenceExpression;
         this.sequenceType = sequenceType;
         if (this.sequenceType == null) {
@@ -92,8 +93,9 @@ public abstract class FlworVarDecl extends Clause {
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         result.add(this.variableReferenceExpression);
-        if (this.expression != null)
+        if (this.expression != null) {
             result.add(this.expression);
+        }
         return result;
     }
 }

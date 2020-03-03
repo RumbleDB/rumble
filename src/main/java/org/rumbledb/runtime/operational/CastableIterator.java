@@ -10,7 +10,6 @@ import org.rumbledb.items.AtomicItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.operational.base.UnaryOperationBaseIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemTypes;
@@ -50,17 +49,20 @@ public class CastableIterator extends UnaryOperationBaseIterator {
             this.child.close();
             this.hasNext = false;
 
-            if (items.isEmpty())
+            if (items.isEmpty()) {
                 return ItemFactory.getInstance().createBooleanItem(this.singleType.getZeroOrOne());
+            }
 
-            if (items.size() != 1 || items.get(0) == null)
+            if (items.size() != 1 || items.get(0) == null) {
                 return ItemFactory.getInstance().createBooleanItem(false);
+            }
 
             AtomicItem atomicItem = checkInvalidCastable(items.get(0), getMetadata(), this.singleType);
 
             return ItemFactory.getInstance().createBooleanItem(atomicItem.isCastableAs(this.singleType.getType()));
-        } else
+        } else {
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
+        }
     }
 
     static AtomicItem checkInvalidCastable(Item item, ExceptionMetadata metadata, SingleType singleType) {

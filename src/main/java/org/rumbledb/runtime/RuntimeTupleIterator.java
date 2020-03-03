@@ -61,11 +61,12 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     }
 
     public void open(DynamicContext context) {
-        if (this.isOpen)
+        if (this.isOpen) {
             throw new IteratorFlowException(
                     "Runtime tuple iterator cannot be opened twice" + ", this: " + this.toString(),
                     getMetadata()
             );
+        }
         this.isOpen = true;
         this.hasNext = true;
         this.currentDynamicContext = context;
@@ -141,7 +142,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
      * Builds the DataFrame projection that this clause needs to receive from its child clause.
      * The intent is that the result of this method is forwarded to the child clause in getDataFrame() so it can
      * optimize some values away.
-     * 
+     *
      * @param parentProjection the projection needed by the parent clause.
      * @return the projection needed by this clause.
      */
@@ -152,7 +153,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     /**
      * Variable dependencies are variables that MUST be provided by the parent clause in the dynamic context
      * for successful execution of this clause.
-     * 
+     *
      * These variables are:
      * 1. All variables that the expression of the clause depends on (recursive call of getVariableDependencies on the
      * expression)
@@ -160,7 +161,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
      * getVariablesBoundInCurrentFLWORExpression), because those are provided in the Tuples
      * 3. Plus (recursively calling getVariableDependencies) all the Variable Dependencies of the child clause if it
      * exists.
-     * 
+     *
      * @return a map of variable names to dependencies (FULL, COUNT, ...) that this clause needs to obtain from the
      *         dynamic context.
      */
@@ -175,7 +176,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
      * Returns the variables bound in descendant (previous) clauses of the current FLWOR.
      * These variables can be removed from the dependencies of expressions in ascendent (subsequent) clauses,
      * because their values are provided in the tuples rather than the dynamic context object.
-     * 
+     *
      * @return the set of variable names that are bound by descendant clauses.
      */
     public Set<String> getVariablesBoundInCurrentFLWORExpression() {

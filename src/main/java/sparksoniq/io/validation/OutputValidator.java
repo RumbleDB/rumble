@@ -75,18 +75,21 @@ public class OutputValidator {
 
             }
 
-            if (success)
+            if (success) {
                 System.out.println("OK");
+            }
 
 
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
             try {
-                if (zorbaReader != null)
+                if (zorbaReader != null) {
                     zorbaReader.close();
-                if (outputReader != null)
+                }
+                if (outputReader != null) {
                     outputReader.close();
+                }
                 merge.delete();
             } catch (IOException ex) {
                 ex.printStackTrace();

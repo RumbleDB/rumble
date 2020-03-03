@@ -27,7 +27,6 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.List;
@@ -84,7 +83,8 @@ public class ATan2FunctionIterator extends LocalFunctionCallIterator {
                         getMetadata()
                 );
             }
-        } else
+        } else {
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " atan2 function", getMetadata());
+        }
     }
 }

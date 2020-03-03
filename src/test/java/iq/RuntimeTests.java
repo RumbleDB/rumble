@@ -51,10 +51,10 @@ public class RuntimeTests extends AnnotationsTestsBase {
                 "/src/main/resources/test_files/runtime"
     );
     protected static List<File> _testFiles = new ArrayList<>();
-    protected final File _testFile;
+    protected final File testFile;
 
     public RuntimeTests(File testFile) {
-        this._testFile = testFile;
+        this.testFile = testFile;
     }
 
     public static void readFileList(File dir) {
@@ -92,9 +92,9 @@ public class RuntimeTests extends AnnotationsTestsBase {
 
     @Test(timeout = 1000000)
     public void testRuntimeIterators() throws Throwable {
-        System.err.println(AnnotationsTestsBase.counter++ + " : " + this._testFile);
+        System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
         TranslationVisitor visitor = new TranslationVisitor();
-        testAnnotations(this._testFile.getAbsolutePath(), visitor);
+        testAnnotations(this.testFile.getAbsolutePath());
     }
 
     @Override

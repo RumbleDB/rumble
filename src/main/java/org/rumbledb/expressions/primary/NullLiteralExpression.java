@@ -25,7 +25,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 
 
-
 public class NullLiteralExpression extends PrimaryExpression {
 
     public NullLiteralExpression(ExceptionMetadata metadata) {

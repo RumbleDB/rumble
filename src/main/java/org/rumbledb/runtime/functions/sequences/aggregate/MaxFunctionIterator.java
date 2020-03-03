@@ -29,7 +29,6 @@ import org.rumbledb.items.ItemComparatorForSequences;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 
@@ -90,11 +89,12 @@ public class MaxFunctionIterator extends LocalFunctionCallIterator {
                     );
                 }
             }
-        } else
+        } else {
             throw new IteratorFlowException(
                     FLOW_EXCEPTION_MESSAGE + "MAX function",
                     getMetadata()
             );
+        }
     }
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {

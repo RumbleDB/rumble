@@ -39,7 +39,6 @@ import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.StringItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
-
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
@@ -66,8 +65,9 @@ public class SparkSessionManager {
     }
 
     public static SparkSessionManager getInstance() {
-        if (instance == null)
+        if (instance == null) {
             instance = new SparkSessionManager();
+        }
         return instance;
     }
 
@@ -127,8 +127,9 @@ public class SparkSessionManager {
     }
 
     public void initializeConfigurationAndSession(SparkConf conf, boolean setAppName) {
-        if (setAppName)
+        if (setAppName) {
             conf.setAppName(APP_NAME);
+        }
         this.configuration = conf;
         initializeKryoSerialization();
         initialize();

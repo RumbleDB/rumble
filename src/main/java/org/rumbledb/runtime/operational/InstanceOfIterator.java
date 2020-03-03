@@ -29,7 +29,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.InstanceOfClosure;
 import org.rumbledb.runtime.operational.base.UnaryOperationBaseIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.SequenceType;
@@ -60,8 +59,9 @@ public class InstanceOfIterator extends UnaryOperationBaseIterator {
                 List<Item> items = new ArrayList<>();
                 this.child.open(this.currentDynamicContextForLocalExecution);
 
-                while (this.child.hasNext())
+                while (this.child.hasNext()) {
                     items.add(this.child.next());
+                }
                 this.child.close();
                 this.hasNext = false;
 
@@ -85,14 +85,16 @@ public class InstanceOfIterator extends UnaryOperationBaseIterator {
                 JavaRDD<Item> childRDD = this.child.getRDD(this.currentDynamicContextForLocalExecution);
                 this.hasNext = false;
 
-                if (isInvalidArity(childRDD.take(2).size()))
+                if (isInvalidArity(childRDD.take(2).size())) {
                     return ItemFactory.getInstance().createBooleanItem(false);
+                }
 
                 JavaRDD<Item> result = childRDD.filter(new InstanceOfClosure(this.sequenceType.getItemType()));
                 return ItemFactory.getInstance().createBooleanItem(result.isEmpty());
             }
-        } else
+        } else {
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
+        }
     }
 
     private boolean isInvalidArity(long numOfItems) {

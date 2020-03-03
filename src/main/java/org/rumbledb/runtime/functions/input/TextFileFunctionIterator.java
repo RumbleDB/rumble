@@ -27,7 +27,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.parsing.StringToStringItemMapper;
 import org.rumbledb.runtime.RDDRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkSessionManager;
@@ -57,11 +56,11 @@ public class TextFileFunctionIterator extends RDDRuntimeIterator {
             throw new CannotRetrieveResourceException("File " + url + " not found.", getMetadata());
         }
 
-        if (this.children.size() == 1)
+        if (this.children.size() == 1) {
             strings = SparkSessionManager.getInstance()
                 .getJavaSparkContext()
                 .textFile(url);
-        else {
+        } else {
             RuntimeIterator partitionsIterator = this.children.get(1);
             partitionsIterator.open(this.currentDynamicContextForLocalExecution);
             strings = SparkSessionManager.getInstance()

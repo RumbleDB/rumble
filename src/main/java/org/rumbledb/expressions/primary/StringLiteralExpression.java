@@ -25,7 +25,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 
 
-
 public class StringLiteralExpression extends PrimaryExpression {
 
     private String value;

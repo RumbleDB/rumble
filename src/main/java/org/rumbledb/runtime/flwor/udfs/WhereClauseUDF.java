@@ -27,10 +27,9 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
-
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.semantics.DynamicContext;
-import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;

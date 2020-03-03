@@ -29,11 +29,10 @@ import org.joda.time.Instant;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
-
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.semantics.DynamicContext;
-import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;

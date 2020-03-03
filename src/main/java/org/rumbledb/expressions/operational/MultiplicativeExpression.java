@@ -53,13 +53,15 @@ public class MultiplicativeExpression extends NaryExpressionBase {
     public String serializationString(boolean prefix) {
         String result = "(multiplicativeExpr ";
         result += this.mainExpression.serializationString(true);
-        if (this.getRightExpressions() != null && this.getRightExpressions().size() > 0)
-            for (Expression expr : this.getRightExpressions())
+        if (this.getRightExpressions() != null && this.getRightExpressions().size() > 0) {
+            for (Expression expr : this.getRightExpressions()) {
                 result += " "
                     +
                     getStringFromOperator(this.multipleOperators.get(this.getRightExpressions().indexOf(expr)))
                     + " "
                     + expr.serializationString(true);
+            }
+        }
         result += ")";
         return result;
     }

@@ -27,7 +27,6 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.items.ItemFactory;
-
 import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.ArrayList;
@@ -164,14 +163,17 @@ public abstract class OperationalExpressionBase extends Expression {
     }
 
     public void validateOperators(List<Operator> validOps, List<Operator> ops) {
-        for (Operator op : ops)
-            if (!validOps.contains(op))
+        for (Operator op : ops) {
+            if (!validOps.contains(op)) {
                 throw new IllegalArgumentException("Operational operators exception");
+            }
+        }
     }
 
     public void validateOperator(List<Operator> validOps, Operator op) {
-        if (!validOps.contains(op))
+        if (!validOps.contains(op)) {
             throw new IllegalArgumentException("Operational operators exception");
+        }
     }
 
     public Expression getMainExpression() {
@@ -181,8 +183,9 @@ public abstract class OperationalExpressionBase extends Expression {
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        if (this.mainExpression != null)
+        if (this.mainExpression != null) {
             result.add(this.mainExpression);
+        }
         return result;
     }
 

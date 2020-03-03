@@ -24,7 +24,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
 import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.ArrayList;
@@ -42,8 +41,9 @@ public class DynamicFunctionCallExpression extends PostfixExpression {
     ) {
         super(mainExpression, metadata);
         this.arguments = arguments;
-        if (this.arguments == null)
+        if (this.arguments == null) {
             this.arguments = new ArrayList<>();
+        }
     }
 
     public List<Expression> getArguments() {

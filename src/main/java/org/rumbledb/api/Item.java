@@ -36,18 +36,18 @@ import java.util.List;
 
 /**
  * An instance of this class is an item in the JSONiq data model.
- * 
+ *
  * JSONiq manipulates sequences of items.
- * 
+ *
  * An item can be structured or atomic.
- * 
+ *
  * Structured items include objects and arrays. Objects are mappings from strings (keys) to items. Arrays are ordered
  * lists of items.
- * 
+ *
  * Atomic items have a lexical value and a type. Currently, Rumble only supports strings, numbers, booleans and null.
- * 
+ *
  * Numbers can be decimals, integers or doubles.
- * 
+ *
  * This class provides methods to identify what kind of item the instance is, and to access its properties.
  *
  * @author Ghislain Fourny, Stefan Irimescu, Can Berker Cikis
@@ -73,7 +73,7 @@ public abstract class Item implements SerializableItem {
 
     /**
      * Casts the item to a double value.
-     * 
+     *
      * @return the double value.
      */
     public double castToDoubleValue() {
@@ -82,7 +82,7 @@ public abstract class Item implements SerializableItem {
 
     /**
      * Casts the item to a decimal value.
-     * 
+     *
      * @return the BigDecimal value.
      */
     public BigDecimal castToDecimalValue() {
@@ -91,7 +91,7 @@ public abstract class Item implements SerializableItem {
 
     /**
      * Casts the item to an integer value.
-     * 
+     *
      * @return the int value.
      */
     public int castToIntegerValue() {
@@ -100,7 +100,7 @@ public abstract class Item implements SerializableItem {
 
     /**
      * Returns the effective boolean value of the item, if atomic.
-     * 
+     *
      * @return the effective boolean value.
      */
     public abstract boolean getEffectiveBooleanValue();
@@ -114,14 +114,15 @@ public abstract class Item implements SerializableItem {
      * @return -1 if this &lt; other; 0 if this == other; 1 if this &gt; other;
      */
     public int compareTo(Item other) {
-        if (other.isNull())
+        if (other.isNull()) {
             return 1;
+        }
         return this.serialize().compareTo(other.serialize());
     }
 
     /**
      * Function that compare two items according to the operator defined for the comparison.
-     * 
+     *
      * @param other another Item
      * @param operator the operator used for the comparison
      * @param metadata Metadata useful for throwing exceptions
@@ -287,7 +288,7 @@ public abstract class Item implements SerializableItem {
 
     /**
      * Please do not use, item type API not publicly released yet.
-     * 
+     *
      * @param type an ItemType.
      * @return true if it matches the item type.
      */
@@ -295,7 +296,7 @@ public abstract class Item implements SerializableItem {
 
     /**
      * Please do not use, item type API not publicly released yet.
-     * 
+     *
      * @param type an ItemType.
      * @return true if the item can be promoted to the type passed in as argument.
      */
@@ -305,12 +306,13 @@ public abstract class Item implements SerializableItem {
 
 
     public Item promoteTo(ItemType type) {
-        if (!this.canBePromotedTo(type))
+        if (!this.canBePromotedTo(type)) {
             throw new RuntimeException(
                     ItemTypes.getItemTypeName(this.getClass().getSimpleName())
                         + " cannot be promoted to type "
                         + ItemTypes.getItemTypeName(type.getType().toString())
             );
+        }
         return this;
     }
 
@@ -388,7 +390,7 @@ public abstract class Item implements SerializableItem {
 
     /**
      * Tests whether the item is an atomic item of type double.
-     * 
+     *
      * @return true if it is an atomic item of type double, false otherwise.
      */
     public boolean isDouble() {
@@ -516,7 +518,7 @@ public abstract class Item implements SerializableItem {
 
     /**
      * Computes a hash code.
-     * 
+     *
      * @return a hash code as an int.
      */
     @Override

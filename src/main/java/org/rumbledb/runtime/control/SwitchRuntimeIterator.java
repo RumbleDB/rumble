@@ -26,7 +26,6 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 
@@ -139,8 +138,9 @@ public class SwitchRuntimeIterator extends LocalRuntimeIterator {
             }
         }
 
-        if (this.matchingIterator == null)
+        if (this.matchingIterator == null) {
             this.matchingIterator = defaultReturn;
+        }
 
         this.matchingIterator.open(this.currentDynamicContextForLocalExecution);
         this.hasNext = this.matchingIterator.hasNext();

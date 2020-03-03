@@ -5,7 +5,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.SequenceType;
@@ -79,8 +78,9 @@ public class TypeswitchRuntimeIterator extends LocalRuntimeIterator {
         this.testValue = test.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
 
         for (TypeswitchRuntimeIteratorCase typeSwitchCase : cases) {
-            if (testTypeMatch(typeSwitchCase))
+            if (testTypeMatch(typeSwitchCase)) {
                 break;
+            }
         }
 
         if (this.matchingIterator == null) {

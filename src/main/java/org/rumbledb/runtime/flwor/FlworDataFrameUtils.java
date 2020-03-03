@@ -52,7 +52,6 @@ import org.rumbledb.items.StringItem;
 import org.rumbledb.items.TimeItem;
 import org.rumbledb.items.YearMonthDurationItem;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
-
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.ItemType;

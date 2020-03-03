@@ -46,10 +46,11 @@ public class SparksoniqRuntimeException extends RuntimeException {
             } catch (IllegalAccessException e) {
                 return true;
             }
-        }))
+        })) {
             this.errorCode = ErrorCodes.RuntimeExceptionErrorCode;
-        else
+        } else {
             this.errorCode = errorCode;
+        }
         this.errorMessage = message;
     }
 
@@ -75,10 +76,11 @@ public class SparksoniqRuntimeException extends RuntimeException {
             } catch (IllegalAccessException e) {
                 return true;
             }
-        }))
+        })) {
             this.errorCode = ErrorCodes.RuntimeExceptionErrorCode;
-        else
+        } else {
             this.errorCode = errorCode;
+        }
         this.metadata = metadata;
         this.errorMessage = message;
     }

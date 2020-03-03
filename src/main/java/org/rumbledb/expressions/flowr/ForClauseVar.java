@@ -81,8 +81,9 @@ public class ForClauseVar extends FlworVarDecl {
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
 
-        if (this.positionalVariableReferenceExpression != null)
+        if (this.positionalVariableReferenceExpression != null) {
             result.add(this.positionalVariableReferenceExpression);
+        }
         return result;
     }
 
@@ -94,12 +95,15 @@ public class ForClauseVar extends FlworVarDecl {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(forVar " + this.variableReferenceExpression.serializationString(false) + " ";
-        if (this.sequenceType != null)
+        if (this.sequenceType != null) {
             result += "as " + this.sequenceType.toString() + " ";
-        if (this.allowEmpty)
+        }
+        if (this.allowEmpty) {
             result += "allowing empty ";
-        if (this.positionalVariableReferenceExpression != null)
+        }
+        if (this.positionalVariableReferenceExpression != null) {
             result += "at " + this.positionalVariableReferenceExpression.serializationString(false) + " ";
+        }
         result += "in " + this.expression.serializationString(true);
         result += "))";
         return result;

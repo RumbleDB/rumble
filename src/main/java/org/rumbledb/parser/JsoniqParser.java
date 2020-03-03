@@ -440,6 +440,7 @@ public class JsoniqParser extends Parser {
      */
     @Deprecated
     public static final String[] tokenNames;
+
     static {
         tokenNames = new String[_SYMBOLIC_NAMES.length];
         for (int i = 0; i < tokenNames.length; i++) {
@@ -526,10 +527,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitModule(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -674,10 +676,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitMainModule(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -726,10 +729,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitLibraryModule(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -832,10 +836,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitProlog(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -955,10 +960,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitDefaultCollationDecl(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -999,10 +1005,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitOrderingModeDecl(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -1022,8 +1029,9 @@ public class JsoniqParser extends Parser {
                 if (!(_la == T__6 || _la == T__7)) {
                     _errHandler.recoverInline(this);
                 } else {
-                    if (_input.LA(1) == Token.EOF)
+                    if (_input.LA(1) == Token.EOF) {
                         matchedEOF = true;
+                    }
                     _errHandler.reportMatch(this);
                     consume();
                 }
@@ -1066,10 +1074,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitEmptyOrderDecl(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -1093,8 +1102,9 @@ public class JsoniqParser extends Parser {
                 if (!(_la == Kgreatest || _la == Kleast)) {
                     _errHandler.recoverInline(this);
                 } else {
-                    if (_input.LA(1) == Token.EOF)
+                    if (_input.LA(1) == Token.EOF) {
                         matchedEOF = true;
+                    }
                     _errHandler.reportMatch(this);
                     consume();
                 }
@@ -1149,10 +1159,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitDecimalFormatDecl(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -1254,10 +1265,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitDfPropertyName(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -1286,8 +1298,9 @@ public class JsoniqParser extends Parser {
                 ) {
                     _errHandler.recoverInline(this);
                 } else {
-                    if (_input.LA(1) == Token.EOF)
+                    if (_input.LA(1) == Token.EOF) {
                         matchedEOF = true;
+                    }
                     _errHandler.reportMatch(this);
                     consume();
                 }
@@ -1330,10 +1343,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitModuleImport(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -1431,10 +1445,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitVarDecl(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -1549,10 +1564,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitFunctionDecl(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -1657,10 +1673,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitParamList(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -1724,10 +1741,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitParam(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -1785,10 +1803,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitExpr(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -1868,10 +1887,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitExprSingle(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -2007,10 +2027,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitFlowrExpr(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -2136,10 +2157,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitForClause(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -2237,10 +2259,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitForVar(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -2331,10 +2354,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitLetClause(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -2410,10 +2434,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitLetVar(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -2473,10 +2498,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitWhereClause(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -2532,10 +2558,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitGroupByClause(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -2623,10 +2650,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitGroupByVar(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -2720,10 +2748,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitOrderByClause(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -2839,10 +2868,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitOrderByExpr(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -2952,10 +2982,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitCountClause(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -3021,10 +3052,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitQuantifiedExpr(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -3120,10 +3152,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitQuantifiedExprVar(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -3208,10 +3241,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitSwitchExpr(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -3298,10 +3332,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitSwitchCaseClause(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -3396,10 +3431,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitTypeSwitchExpr(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -3507,10 +3543,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitCaseClause(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -3610,10 +3647,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitIfExpr(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -3678,10 +3716,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitTryCatchExpr(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -3752,10 +3791,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitOrExpr(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -3830,10 +3870,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitAndExpr(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -3900,10 +3941,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitNotExpr(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -3974,10 +4016,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitComparisonExpr(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -4031,8 +4074,9 @@ public class JsoniqParser extends Parser {
                         ) {
                             ((ComparisonExprContext) _localctx)._tset1049 = (Token) _errHandler.recoverInline(this);
                         } else {
-                            if (_input.LA(1) == Token.EOF)
+                            if (_input.LA(1) == Token.EOF) {
                                 matchedEOF = true;
+                            }
                             _errHandler.reportMatch(this);
                             consume();
                         }
@@ -4080,10 +4124,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitStringConcatExpr(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -4154,10 +4199,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitRangeExpr(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -4220,10 +4266,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitAdditiveExpr(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -4252,8 +4299,9 @@ public class JsoniqParser extends Parser {
                                         this
                                     );
                                 } else {
-                                    if (_input.LA(1) == Token.EOF)
+                                    if (_input.LA(1) == Token.EOF) {
                                         matchedEOF = true;
+                                    }
                                     _errHandler.reportMatch(this);
                                     consume();
                                 }
@@ -4311,10 +4359,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitMultiplicativeExpr(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -4348,8 +4397,9 @@ public class JsoniqParser extends Parser {
                                     this
                                 );
                             } else {
-                                if (_input.LA(1) == Token.EOF)
+                                if (_input.LA(1) == Token.EOF) {
                                     matchedEOF = true;
+                                }
                                 _errHandler.reportMatch(this);
                                 consume();
                             }
@@ -4409,10 +4459,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitInstanceOfExpr(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -4479,10 +4530,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitTreatExpr(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -4549,10 +4601,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitCastableExpr(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -4619,10 +4672,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitCastExpr(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -4680,10 +4734,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitUnaryExpr(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -4706,8 +4761,9 @@ public class JsoniqParser extends Parser {
                             if (!(_la == T__45 || _la == T__46)) {
                                 ((UnaryExprContext) _localctx)._tset1303 = (Token) _errHandler.recoverInline(this);
                             } else {
-                                if (_input.LA(1) == Token.EOF)
+                                if (_input.LA(1) == Token.EOF) {
                                     matchedEOF = true;
+                                }
                                 _errHandler.reportMatch(this);
                                 consume();
                             }
@@ -4753,10 +4809,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitSimpleMapExpr(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -4854,10 +4911,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitPostFixExpr(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -4938,10 +4996,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitArrayLookup(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -4984,10 +5043,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitArrayUnboxing(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -5028,10 +5088,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitPredicate(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -5106,10 +5167,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitObjectLookup(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -5287,10 +5349,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitPrimaryExpr(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -5407,10 +5470,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitVarRef(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -5462,10 +5526,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitParenthesizedExpr(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -5590,10 +5655,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitContextItemExpr(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -5632,10 +5698,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitOrderedExpr(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -5680,10 +5747,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitUnorderedExpr(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -5748,10 +5816,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitFunctionCall(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -5938,10 +6007,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitArgumentList(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -6090,10 +6160,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitArgument(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -6220,10 +6291,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitFunctionItemExpr(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -6282,10 +6354,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitNamedFunctionRef(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -6343,10 +6416,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitInlineFunctionExpr(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -6428,10 +6502,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitSequenceType(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -6536,10 +6611,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitObjectConstructor(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -6708,10 +6784,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitItemType(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -6785,10 +6862,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitJSONItemTest(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -6808,8 +6886,9 @@ public class JsoniqParser extends Parser {
                 ) {
                     _errHandler.recoverInline(this);
                 } else {
-                    if (_input.LA(1) == Token.EOF)
+                    if (_input.LA(1) == Token.EOF) {
                         matchedEOF = true;
+                    }
                     _errHandler.reportMatch(this);
                     consume();
                 }
@@ -6836,10 +6915,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitKeyWordString(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -6874,10 +6954,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitKeyWordInteger(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -6912,10 +6993,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitKeyWordDecimal(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -6950,10 +7032,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitKeyWordDouble(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -6988,10 +7071,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitKeyWordBoolean(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -7026,10 +7110,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitKeyWordDuration(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -7064,10 +7149,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitKeyWordYearMonthDuration(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -7102,10 +7188,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitKeyWordDayTimeDuration(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -7140,10 +7227,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitKeyWordHexBinary(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -7178,10 +7266,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitKeyWordBase64Binary(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -7216,10 +7305,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitKeyWordDateTime(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -7254,10 +7344,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitKeyWordDate(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -7292,10 +7383,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitKeyWordTime(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -7382,10 +7474,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitTypesKeywords(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -7507,10 +7600,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitSingleType(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -7563,10 +7657,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitAtomicType(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -7640,10 +7735,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitNCNameOrKeyWord(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -7719,10 +7815,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitPairConstructor(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -7752,8 +7849,9 @@ public class JsoniqParser extends Parser {
                 if (!(_la == T__9 || _la == ArgumentPlaceholder)) {
                     _errHandler.recoverInline(this);
                 } else {
-                    if (_input.LA(1) == Token.EOF)
+                    if (_input.LA(1) == Token.EOF) {
                         matchedEOF = true;
+                    }
                     _errHandler.reportMatch(this);
                     consume();
                 }
@@ -7786,10 +7884,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitArrayConstructor(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -7918,10 +8017,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitUriLiteral(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -7960,10 +8060,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitStringLiteral(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -8170,10 +8271,11 @@ public class JsoniqParser extends Parser {
 
         @Override
         public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-            if (visitor instanceof JsoniqVisitor)
+            if (visitor instanceof JsoniqVisitor) {
                 return ((JsoniqVisitor<? extends T>) visitor).visitKeyWords(this);
-            else
+            } else {
                 return visitor.visitChildren(this);
+            }
         }
     }
 
@@ -8235,8 +8337,9 @@ public class JsoniqParser extends Parser {
                 ) {
                     _errHandler.recoverInline(this);
                 } else {
-                    if (_input.LA(1) == Token.EOF)
+                    if (_input.LA(1) == Token.EOF) {
                         matchedEOF = true;
+                    }
                     _errHandler.reportMatch(this);
                     consume();
                 }
@@ -8927,6 +9030,7 @@ public class JsoniqParser extends Parser {
             "\u033b\u0366\u036a\u036f\u0373\u0377\u037e";
     public static final ATN _ATN =
         new ATNDeserializer().deserialize(_serializedATN.toCharArray());
+
     static {
         _decisionToDFA = new DFA[_ATN.getNumberOfDecisions()];
         for (int i = 0; i < _ATN.getNumberOfDecisions(); i++) {

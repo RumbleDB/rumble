@@ -32,14 +32,14 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.closures.ForClauseLocalTupleToRowClosure;
 import org.rumbledb.runtime.flwor.closures.ForClauseSerializeClosure;
+import org.rumbledb.runtime.flwor.udfs.ForClauseUDF;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
-import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import sparksoniq.spark.SparkSessionManager;
-import org.rumbledb.runtime.flwor.udfs.ForClauseUDF;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -114,7 +114,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             this.inputTuple = this.child.next();
             this.tupleContext.removeAllVariables(); // clear the previous variables
             this.tupleContext.setBindingsFromTuple(this.inputTuple, getMetadata()); // assign new variables from new
-                                                                                    // tuple
+            // tuple
 
             this.assignmentIterator.open(this.tupleContext);
             if (setResultFromExpression()) {
@@ -266,7 +266,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             this.inputTuple = this.child.next();
             this.tupleContext.removeAllVariables(); // clear the previous variables
             this.tupleContext.setBindingsFromTuple(this.inputTuple, getMetadata()); // assign new variables from new
-                                                                                    // tuple
+            // tuple
             JavaRDD<Item> expressionRDD = this.assignmentIterator.getRDD(this.tupleContext);
 
             if (schema == null) {

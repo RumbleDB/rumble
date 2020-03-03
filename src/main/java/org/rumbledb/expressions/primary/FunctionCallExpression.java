@@ -28,10 +28,9 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.runtime.functions.base.BuiltinFunction;
+import org.rumbledb.runtime.functions.base.BuiltinFunction.BuiltinFunctionExecutionMode;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.runtime.functions.base.Functions;
-import org.rumbledb.runtime.functions.base.BuiltinFunction.BuiltinFunctionExecutionMode;
-
 import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.Arrays;
@@ -146,14 +145,16 @@ public class FunctionCallExpression extends PrimaryExpression {
         String result = "(primaryExpr (functionCall ";
         List<String> names = Arrays.asList(this.functionName.split(":"));
         Collections.reverse(names);
-        for (String name : names)
+        for (String name : names) {
             result += name + (names.indexOf(name) < names.size() - 1 ? " : " : " ");
+        }
         result += "(argumentList ( ";
-        for (Expression arg : this.arguments)
+        for (Expression arg : this.arguments) {
             result += "(argument (exprSingle "
                 + arg.serializationString(false)
                 +
                 (this.arguments.indexOf(arg) < this.arguments.size() - 1 ? ")) , " : ")) ");
+        }
         result += "))";
         result += "))";
         return result;

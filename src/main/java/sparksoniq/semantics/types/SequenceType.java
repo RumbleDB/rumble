@@ -20,9 +20,9 @@
 
 package sparksoniq.semantics.types;
 
-import java.io.Serializable;
-
 import org.rumbledb.exceptions.OurBadException;
+
+import java.io.Serializable;
 
 public class SequenceType implements Serializable {
 
@@ -84,8 +84,9 @@ public class SequenceType implements Serializable {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof SequenceType))
+        if (!(other instanceof SequenceType)) {
             return false;
+        }
         SequenceType sequenceType = (SequenceType) other;
         if (this.isEmptySequence) {
             return sequenceType.isEmptySequence();
@@ -127,8 +128,9 @@ public class SequenceType implements Serializable {
 
     @Override
     public String toString() {
-        if (this.isEmptySequence)
+        if (this.isEmptySequence) {
             return "()";
+        }
         StringBuilder result = new StringBuilder();
         result.append(this.getItemType().toString());
         result.append(this.arity.getSymbol());

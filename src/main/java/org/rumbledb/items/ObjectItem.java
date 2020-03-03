@@ -99,29 +99,31 @@ public class ObjectItem extends JsonItem {
     private void checkForDuplicateKeys(List<String> keys, ExceptionMetadata metadata) {
         HashMap<String, Integer> frequencies = new HashMap<>();
         for (String key : keys) {
-            if (frequencies.containsKey(key))
+            if (frequencies.containsKey(key)) {
                 throw new DuplicateObjectKeyException(key, metadata);
-
-            else
+            } else {
                 frequencies.put(key, 1);
+            }
         }
     }
 
     @Override
     public Item getItemByKey(String s) {
-        if (this.keys.contains(s))
+        if (this.keys.contains(s)) {
             return this.values.get(this.keys.indexOf(s));
-        else
+        } else {
             return null;
+        }
     }
 
     @Override
     public void putItemByKey(String s, Item value) {
         this.values.replaceAll(item -> {
-            if (this.values.indexOf(item) == this.keys.indexOf(s))
+            if (this.values.indexOf(item) == this.keys.indexOf(s)) {
                 return value;
-            else
+            } else {
                 return item;
+            }
         });
     }
 
@@ -152,10 +154,11 @@ public class ObjectItem extends JsonItem {
                 sb.append(value.serialize());
             }
 
-            if (i < this.keys.size() - 1)
+            if (i < this.keys.size() - 1) {
                 sb.append(", ");
-            else
+            } else {
                 sb.append(" ");
+            }
         }
         sb.append("}");
         return sb.toString();

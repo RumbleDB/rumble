@@ -9,7 +9,6 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.AtomicItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.AtomicTypes;
@@ -67,11 +66,12 @@ public class StringFunctionIterator extends LocalFunctionCallIterator {
                 );
                 throw new CastException(message, getMetadata());
             }
-        } else
+        } else {
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " string function",
                     getMetadata()
             );
+        }
     }
 
     @Override
