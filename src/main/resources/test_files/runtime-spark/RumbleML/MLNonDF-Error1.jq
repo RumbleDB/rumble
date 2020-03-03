@@ -1,6 +1,6 @@
 (:JIQS: ShouldCrash; ErrorCode="RBML0004"; :)
 let $estimator := get-estimator("KMeans")
-let $rdd-data := json-file("./src/main/resources/queries/rumbleML/sample-ml-age-weight-data.json")
+let $rdd-data := json-file("./src/main/resources/queries/rumbleML/sample-ml-data-age-weight.json")
 return ($estimator(
     $rdd-data,
     {
@@ -8,3 +8,5 @@ return ($estimator(
         "seed": 1
     }
 ))
+
+(: estimators expect a dataframe as the input dataset :)

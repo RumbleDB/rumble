@@ -14,4 +14,4 @@ return {
 }
 
 
-(: libsvm data is also in feature vector form, this operation should be idempotent :)
+(: libsvm data is read into a SparseVector form, applying vectorization to libSVM data should be idempotent :)

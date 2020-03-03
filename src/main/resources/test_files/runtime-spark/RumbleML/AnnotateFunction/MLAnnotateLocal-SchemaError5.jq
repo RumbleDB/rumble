@@ -5,7 +5,7 @@ annotate(
         {"id": 2, "age":  35, "weight": 72.4},
         {"id": 3, "age":  50, "weight": 76.3}
     ),
-    {"id": "int", "age": "str", "weight": "dou"}
+    {"id": "integer", "age": "integer", "weight": "integer"}
 )
 
-(: schema has unexpected types :)
+(: schema has incorrect type  - ClassCastException :)

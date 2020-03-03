@@ -28,7 +28,7 @@ public class DataFrameUtils {
         JavaRDD<Row> rowRDD = itemRDD.map((Function<Item, Row>) item -> ItemParser.getRowFromItem(item));
         try {
             return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
-        } catch (IllegalArgumentException ex) {
+        } catch (ClassCastException | IllegalArgumentException ex) {
             throw new MLInvalidDataFrameSchemaException(ex.getMessage(), metadata);
         }
     }
@@ -43,7 +43,7 @@ public class DataFrameUtils {
         List<Row> rows = ItemParser.getRowsFromItems(items);
         try {
             return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema);
-        } catch (IllegalArgumentException ex) {
+        } catch (ClassCastException | IllegalArgumentException ex) {
             throw new MLInvalidDataFrameSchemaException(ex.getMessage(), metadata);
         }
     }

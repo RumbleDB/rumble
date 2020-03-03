@@ -10,4 +10,4 @@ let $res := $tra(
 )
 return $res
 
-(: estimator's featuresCol does not exist (but integer is correctly converted to string) :)
+(: column given in featuresCol does not exist (but integer is correctly converted to string) :)

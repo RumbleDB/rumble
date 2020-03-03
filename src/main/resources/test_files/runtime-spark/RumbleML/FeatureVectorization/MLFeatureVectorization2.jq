@@ -14,4 +14,4 @@ return {
 }
 
 
-(: featureCol parameter defaults to 'features' column, the column with this default name is vectorized and used :)
+(: featureCol parameter defaults to 'features', the column with this default name is vectorized and used :)
