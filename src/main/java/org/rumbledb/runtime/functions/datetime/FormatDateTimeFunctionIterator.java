@@ -70,7 +70,7 @@ public class FormatDateTimeFunctionIterator extends LocalFunctionCallIterator {
                             default:
                                 String message = String.format(
                                     "\"%s\": a component specifier refers to components"
-                                        + "that are not available in the %s type",
+                                        + " that are not available in the %s type",
                                     this.pictureStringItem.serialize(),
                                     "dateTime"
                                 );
