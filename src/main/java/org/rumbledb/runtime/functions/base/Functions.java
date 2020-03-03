@@ -2115,7 +2115,7 @@ public class Functions {
             "annotate",
             "object*",
             "object",
-            "item*", // TODO: revert back to ObjectItem when TypePromotoionIter. has DF implementation
+            "item*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
             AnnotateFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
         );

@@ -153,7 +153,7 @@ public class ItemType implements Serializable {
 
     @Override
     public String toString() {
-        switch (type) {
+        switch (this.type) {
             case Item:
                 return "item";
             case IntegerItem:
