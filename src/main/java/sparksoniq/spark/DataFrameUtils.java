@@ -27,7 +27,11 @@ public class DataFrameUtils {
         StructType schema = generateSchemaFromSchemaItem(schemaItem, metadata);
         JavaRDD<Row> rowRDD = itemRDD.map((Function<Item, Row>) item -> ItemParser.getRowFromItem(item));
         try {
-            return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
+            Dataset<Row> result = SparkSessionManager.getInstance()
+                .getOrCreateSession()
+                .createDataFrame(rowRDD, schema);
+            result.take(1);
+            return result;
         } catch (ClassCastException | IllegalArgumentException ex) {
             throw new MLInvalidDataFrameSchemaException(ex.getMessage(), metadata);
         }
@@ -42,7 +46,9 @@ public class DataFrameUtils {
         StructType schema = generateSchemaFromSchemaItem(schemaItem, metadata);
         List<Row> rows = ItemParser.getRowsFromItems(items);
         try {
-            return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema);
+            Dataset<Row> result = SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema);
+            result.take(1);
+            return result;
         } catch (ClassCastException | IllegalArgumentException ex) {
             throw new MLInvalidDataFrameSchemaException(ex.getMessage(), metadata);
         }
