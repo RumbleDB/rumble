@@ -560,6 +560,32 @@ time("13:20:00-05:00")
 
 returns 13:20:00-05:00
 
+## Formatting dates and times functions
+
+### format-dateTime
+
+```
+format-dateTime(dateTime("2004-04-12T13:20:00"), "[m]-[H]-[D]-[M]-[Y]")
+```
+
+returns 20-13-12-4-2004
+
+### format-date
+
+```
+format-date(date("2004-04-12"), "[D]-[M]-[Y]")
+```
+
+returns 12-4-2004
+
+### format-time
+
+```
+format-time(time("13:20:00"), "[H]-[m]-[s]")
+```
+
+returns 13-20-0
+
 ## Context functions
 
 ### position
