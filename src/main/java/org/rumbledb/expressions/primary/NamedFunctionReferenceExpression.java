@@ -22,6 +22,7 @@ package org.rumbledb.expressions.primary;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 
@@ -29,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class NamedFunctionReferenceExpression extends PrimaryExpression {
+public class NamedFunctionReferenceExpression extends Expression {
 
     private final FunctionIdentifier identifier;
 
