@@ -534,6 +534,32 @@ tokenize("aa;bb;cc;dd", ";")
 
 returns ("aa", "bb", "cc", "dd")
 
+## Date and time functions
+
+### dateTime
+
+```
+dateTime("2004-04-12T13:20:00+14:00")
+```
+
+returns 2004-04-12T13:20:00+14:00
+
+### date
+
+```
+date("2004-04-12+14:00")
+```
+
+returns 2004-04-12+14:00
+
+### time
+
+```
+time("13:20:00-05:00")
+```
+
+returns 13:20:00-05:00
+
 ## Context functions
 
 ### position
@@ -549,13 +575,39 @@ returns 5
 ```
 (1 to 10)[position() eq last()]
 ```
-returns 10
 
+returns 10
 
 ```
 (1 to 10)[last()]
 ```
+
 returns 10
+
+### current-dateTime
+
+```
+current-dateTime()
+```
+
+returns 2020-02-26T11:22:48.423+01:00
+
+### current-date
+
+```
+current-date()
+```
+
+returns 2020-02-26Europe/Zurich
+
+### current-time
+
+```
+current-time()
+```
+
+returns 11:24:10.064+01:00
+
 
 ## I/O functions
 

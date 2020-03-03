@@ -27,13 +27,13 @@ public class TimeItem extends AtomicItem {
         super();
     }
 
-    TimeItem(DateTime value, boolean hasTimeZone) {
+    public TimeItem(DateTime value, boolean hasTimeZone) {
         super();
         this.value = value;
         this.hasTimeZone = hasTimeZone;
     }
 
-    TimeItem(String dateTimeString) {
+    public TimeItem(String dateTimeString) {
         this.value = DateTimeItem.parseDateTime(dateTimeString, AtomicTypes.TimeItem);
         if (!dateTimeString.endsWith("Z") && this.value.getZone() == DateTimeZone.getDefault()) {
             this.hasTimeZone = false;
