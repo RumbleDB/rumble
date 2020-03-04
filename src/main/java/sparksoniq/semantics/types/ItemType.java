@@ -62,6 +62,7 @@ public class ItemType implements Serializable {
                     || this.type == ItemTypes.DecimalItem
                     || this.type == ItemTypes.DoubleItem
                     || this.type == ItemTypes.BooleanItem
+                    || this.type == ItemTypes.AnyURIItem
             )
                 return true;
             return false;
