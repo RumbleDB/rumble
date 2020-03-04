@@ -25,6 +25,12 @@ An unrecognized parameter is used in query while operating with a Rumble ML clas
 - [RBML0003] - Invalid Rumble ML Param
 Provided parameter does not match the expected type or value for the referenced Rumble ML class.
 
+- [RBML0004] - Input is not a DataFrame
+Provided input of items does not form a DataFrame as expected by RumbleML.
+
+- [RBML0005] - Invalid schema for DataFrame in annotate()
+The provided schema can not be applied to the item data while converting the data to a DataFrame
+
 - [RBST0001] - CLI error. Raised when invalid parameters are supplied at launch.
 
 - [RBST0002] - Unimplemented feature error.

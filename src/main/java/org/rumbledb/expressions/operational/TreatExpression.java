@@ -28,7 +28,7 @@ public class TreatExpression extends UnaryExpressionBase {
 
     @Override
     public void initHighestExecutionMode() {
-        this.highestExecutionMode = calculateIsRDDFromSequenceTypeAndExpression(sequenceType, this.mainExpression);
+        this.highestExecutionMode = calculateIsRDDFromSequenceTypeAndExpression(this.sequenceType, this.mainExpression);
     }
 
     public static ExecutionMode calculateIsRDDFromSequenceTypeAndExpression(
