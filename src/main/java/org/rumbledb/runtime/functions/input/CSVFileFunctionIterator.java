@@ -50,7 +50,7 @@ public class CSVFileFunctionIterator extends DataFrameRuntimeIterator {
     @Override
     public Dataset<Row> getDataFrame(DynamicContext context) {
         Item stringItem = this.children.get(0)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+            .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
         String url = stringItem.getStringValue();
         try {
             DataFrameReader dfr = SparkSessionManager.getInstance().getOrCreateSession().read();
