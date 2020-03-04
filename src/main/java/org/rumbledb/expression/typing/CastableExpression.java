@@ -4,10 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 
 public class CastableExpression extends Expression {
 
@@ -18,6 +20,11 @@ public class CastableExpression extends Expression {
         super(metadata);
         this.mainExpression = mainExpression;
         this.type = type;
+        if (type.getArity() != Arity.OneOrZero && type.getArity() != Arity.One) {
+            throw new OurBadException(
+                    "Castable expressions cannot have an arity of more than one, something went wrong with the parser."
+            );
+        }
     }
 
     @Override
