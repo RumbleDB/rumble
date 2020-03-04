@@ -758,6 +758,24 @@ where $my-object.property eq "some value"
 return $my-json
 ```
 
+### csv-file (Rumble specific)
+
+Parses one or more csv files and returns a sequence of objects. This is also similar to Spark's spark.read.csv()
+
+```
+for $i in csv-file("file.csv")
+where $i._c0 eq "some value"
+return $i
+```
+
+Several files or whole directories can be read with the same pattern syntax as in Spark.
+
+```
+for $i in csv-file("*.csv")
+where $i._c0 eq "some value"
+return $i
+```
+
 ### parallelize (Rumble specific)
 
 This function behaves like the Spark parallelize() you are familiar with and sends a large sequence to the cluster.
