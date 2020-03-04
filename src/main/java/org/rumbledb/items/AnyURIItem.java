@@ -102,41 +102,6 @@ public class AnyURIItem extends AtomicItem {
     @Override
     public Item castAs(AtomicTypes itemType) {
         switch (itemType) {
-            case BooleanItem:
-                return ItemFactory.getInstance().createBooleanItem(Boolean.parseBoolean(this.getStringValue()));
-            case DoubleItem:
-                return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(this.getStringValue()));
-            case DecimalItem:
-                return ItemFactory.getInstance().createDecimalItem(new BigDecimal(this.getStringValue()));
-            case IntegerItem:
-                return ItemFactory.getInstance().createIntegerItem(Integer.parseInt(this.getStringValue()));
-            case NullItem:
-                return ItemFactory.getInstance().createNullItem();
-            case DurationItem:
-                return ItemFactory.getInstance()
-                        .createDurationItem(
-                                DurationItem.getDurationFromString(this.getStringValue(), AtomicTypes.DurationItem)
-                        );
-            case YearMonthDurationItem:
-                return ItemFactory.getInstance()
-                        .createYearMonthDurationItem(
-                                DurationItem.getDurationFromString(this.getStringValue(), AtomicTypes.YearMonthDurationItem)
-                        );
-            case DayTimeDurationItem:
-                return ItemFactory.getInstance()
-                        .createDayTimeDurationItem(
-                                DurationItem.getDurationFromString(this.getStringValue(), AtomicTypes.DayTimeDurationItem)
-                        );
-            case DateTimeItem:
-                return ItemFactory.getInstance().createDateTimeItem(this.getStringValue());
-            case DateItem:
-                return ItemFactory.getInstance().createDateItem(this.getStringValue());
-            case TimeItem:
-                return ItemFactory.getInstance().createTimeItem(this.getStringValue());
-            case HexBinaryItem:
-                return ItemFactory.getInstance().createHexBinaryItem(this.getStringValue());
-            case Base64BinaryItem:
-                return ItemFactory.getInstance().createBase64BinaryItem(this.getStringValue());
             case StringItem:
                 return ItemFactory.getInstance().createStringItem(this.getStringValue());
             case AnyURIItem:
@@ -148,41 +113,7 @@ public class AnyURIItem extends AtomicItem {
 
     @Override
     public boolean isCastableAs(AtomicTypes itemType) {
-        if (itemType == AtomicTypes.AnyURIItem || itemType == AtomicTypes.StringItem)
-            return true;
-        try {
-            if (itemType == AtomicTypes.IntegerItem) {
-                Integer.parseInt(this.getStringValue());
-            } else if (itemType == AtomicTypes.DecimalItem) {
-                if (this.getStringValue().contains("e") || this.getStringValue().contains("E"))
-                    return false;
-                Float.parseFloat(this.getStringValue());
-            } else if (itemType == AtomicTypes.DoubleItem) {
-                Double.parseDouble(this.getStringValue());
-            } else if (itemType == AtomicTypes.NullItem) {
-                return isNullLiteral(this.getStringValue());
-            } else if (itemType == AtomicTypes.DurationItem) {
-                DurationItem.getDurationFromString(this.getStringValue(), AtomicTypes.DurationItem);
-            } else if (itemType == AtomicTypes.YearMonthDurationItem) {
-                DurationItem.getDurationFromString(this.getStringValue(), AtomicTypes.YearMonthDurationItem);
-            } else if (itemType == AtomicTypes.DayTimeDurationItem) {
-                DurationItem.getDurationFromString(this.getStringValue(), AtomicTypes.DayTimeDurationItem);
-            } else if (itemType == AtomicTypes.DateTimeItem) {
-                DateTimeItem.parseDateTime(this.getStringValue(), AtomicTypes.DateTimeItem);
-            } else if (itemType == AtomicTypes.DateItem) {
-                DateTimeItem.parseDateTime(this.getStringValue(), AtomicTypes.DateItem);
-            } else if (itemType == AtomicTypes.TimeItem) {
-                DateTimeItem.parseDateTime(this.getStringValue(), AtomicTypes.TimeItem);
-            } else if (itemType == AtomicTypes.HexBinaryItem) {
-                HexBinaryItem.parseHexBinaryString(this.getStringValue());
-            } else if (itemType == AtomicTypes.Base64BinaryItem) {
-                Base64BinaryItem.parseBase64BinaryString(this.getStringValue());
-            } else
-                return isBooleanLiteral(this.getStringValue());
-        } catch (UnsupportedOperationException | IllegalArgumentException e) {
-            return false;
-        }
-        return true;
+        return (itemType == AtomicTypes.AnyURIItem || itemType == AtomicTypes.StringItem);
     }
 
     @Override
