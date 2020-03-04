@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class ArrayConstructorExpression extends PrimaryExpression {
+public class ArrayConstructorExpression extends Expression {
 
     private Expression expression;
 

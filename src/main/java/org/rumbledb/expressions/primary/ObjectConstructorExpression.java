@@ -29,7 +29,7 @@ import org.rumbledb.expressions.Node;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ObjectConstructorExpression extends PrimaryExpression {
+public class ObjectConstructorExpression extends Expression {
 
     private boolean isMergedConstructor = false;
     private List<Expression> values;

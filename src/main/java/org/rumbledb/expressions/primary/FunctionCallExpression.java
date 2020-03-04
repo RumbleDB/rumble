@@ -38,7 +38,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class FunctionCallExpression extends PrimaryExpression {
+public class FunctionCallExpression extends Expression {
 
     private final String functionName;
     private final List<Expression> arguments; // null for placeholder

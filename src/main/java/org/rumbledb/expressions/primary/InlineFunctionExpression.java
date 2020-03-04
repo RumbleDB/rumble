@@ -33,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class InlineFunctionExpression extends PrimaryExpression {
+public class InlineFunctionExpression extends Expression {
 
     private final String name;
     private final Map<String, SequenceType> params;

@@ -21,10 +21,15 @@
 package org.rumbledb.expressions.primary;
 
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.Expression;
+import org.rumbledb.expressions.Node;
 
-public class IntegerLiteralExpression extends PrimaryExpression {
+public class IntegerLiteralExpression extends Expression {
 
     private int value;
 
@@ -50,5 +55,8 @@ public class IntegerLiteralExpression extends PrimaryExpression {
         return visitor.visitInteger(this, argument);
     }
 
-
+    @Override
+    public List<Node> getChildren() {
+        return new ArrayList<>();
+    }
 }

@@ -62,16 +62,6 @@ public abstract class OperationalExpressionBase extends Expression {
         this.multipleOperators = ops;
     }
 
-    @Override
-    public void initHighestExecutionMode() {
-        super.initHighestExecutionMode();
-    }
-
-    @Override
-    public ExecutionMode getHighestExecutionMode(boolean ignoreUnsetError) {
-        return super.getHighestExecutionMode(ignoreUnsetError);
-    }
-
     public static List<Operator> getOperatorFromOpList(List<Token> ops) {
         List<Operator> result = new ArrayList<>();
         ops.forEach(op -> result.add(getOperatorFromString(op.getText())));
@@ -129,8 +119,6 @@ public abstract class OperationalExpressionBase extends Expression {
                 return Operator.INSTANCE_OF;
             case "TREAT":
                 return Operator.TREAT;
-            case "CASTABLE":
-                return Operator.CASTABLE;
             case "CAST":
                 return Operator.CAST;
         }
@@ -153,8 +141,6 @@ public abstract class OperationalExpressionBase extends Expression {
                 return "instance of";
             case TREAT:
                 return "treat as";
-            case CASTABLE:
-                return "castable as";
             case CAST:
                 return "cast as";
             default:
@@ -294,7 +280,6 @@ public abstract class OperationalExpressionBase extends Expression {
         INSTANCE_OF,
         COMMA,
         TREAT,
-        CASTABLE,
         CAST;
 
         public Item apply(Item left, Item right) {

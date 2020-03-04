@@ -1,17 +1,22 @@
 package org.rumbledb.expressions.operational;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
+import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.flowr.FlworVarSingleType;
-import org.rumbledb.expressions.operational.base.UnaryExpressionBase;
 
-public class CastableExpression extends UnaryExpressionBase {
+public class CastableExpression extends Expression {
 
+    protected Expression mainExpression;
     private FlworVarSingleType atomicType;
 
     public CastableExpression(Expression mainExpression, FlworVarSingleType atomicType, ExceptionMetadata metadata) {
-        super(mainExpression, Operator.CASTABLE, metadata);
+        super(metadata);
+        this.mainExpression = mainExpression;
         this.atomicType = atomicType;
     }
 
@@ -22,14 +27,28 @@ public class CastableExpression extends UnaryExpressionBase {
 
     @Override
     public String serializationString(boolean prefix) {
-        String result = "(castableExpr ";
-        result += this.mainExpression.serializationString(true);
-        result += this.atomicType != null ? " castable as " + this.atomicType.serializationString(prefix) : "";
-        result += ")";
-        return result;
+        StringBuilder result = new StringBuilder();
+        result.append("(castableExpr ");
+        result.append(this.mainExpression.serializationString(true));
+        result.append(this.atomicType != null ? " castable as " + this.atomicType.serializationString(prefix) : "");
+        result.append(")");
+        return result.toString();
     }
 
     public FlworVarSingleType getAtomicType() {
         return this.atomicType;
+    }
+
+    public Expression getMainExpression() {
+        return this.mainExpression;
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        List<Node> result = new ArrayList<>();
+        if (this.mainExpression != null) {
+            result.add(this.mainExpression);
+        }
+        return result;
     }
 }

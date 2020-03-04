@@ -21,10 +21,15 @@
 package org.rumbledb.expressions.primary;
 
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.Expression;
+import org.rumbledb.expressions.Node;
 
-public class DoubleLiteralExpression extends PrimaryExpression {
+public class DoubleLiteralExpression extends Expression {
 
     private double value;
 
@@ -48,5 +53,10 @@ public class DoubleLiteralExpression extends PrimaryExpression {
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitDouble(this, argument);
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        return new ArrayList<>();
     }
 }
