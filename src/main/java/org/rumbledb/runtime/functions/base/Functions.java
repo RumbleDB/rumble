@@ -67,6 +67,7 @@ import org.rumbledb.runtime.functions.durations.components.MinutesFromDurationFu
 import org.rumbledb.runtime.functions.durations.components.MonthsFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.SecondsFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.YearsFromDurationFunctionIterator;
+import org.rumbledb.runtime.functions.input.CSVFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.JsonFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.LibSVMFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.ParallelizeFunctionIterator;
@@ -150,6 +151,7 @@ import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
+import sparksoniq.spark.ml.AnnotateFunctionIterator;
 import sparksoniq.spark.ml.GetEstimatorFunctionIterator;
 import sparksoniq.spark.ml.GetTransformerFunctionIterator;
 
@@ -177,6 +179,7 @@ import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.adjust
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.adjust_time_to_timezone1;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.adjust_time_to_timezone2;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.anyURI;
+import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.annotate;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.asin;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.atan;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.atan2;
@@ -190,6 +193,7 @@ import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.concat
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.contains;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.cos;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.count;
+import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.csv_file;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.date;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.dateTime;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.dayTimeDuration;
@@ -346,6 +350,7 @@ public class Functions {
     }
 
     private static final Map<String, SequenceType> sequenceTypes;
+
     static {
         sequenceTypes = new HashMap<>();
         sequenceTypes.put("item", new SequenceType(itemTypes.get("item"), SequenceType.Arity.One));
@@ -355,6 +360,7 @@ public class Functions {
 
         sequenceTypes.put("object", new SequenceType(itemTypes.get("object"), SequenceType.Arity.One));
         sequenceTypes.put("object+", new SequenceType(itemTypes.get("object"), SequenceType.Arity.OneOrMore));
+        sequenceTypes.put("object*", new SequenceType(itemTypes.get("object"), SequenceType.Arity.ZeroOrMore));
 
         sequenceTypes.put("array?", new SequenceType(itemTypes.get("array"), SequenceType.Arity.OneOrZero));
 
@@ -426,6 +432,7 @@ public class Functions {
         builtInFunctions.put(parallelizeFunction1.getIdentifier(), parallelizeFunction1);
         builtInFunctions.put(parallelizeFunction2.getIdentifier(), parallelizeFunction2);
         builtInFunctions.put(parquet_file.getIdentifier(), parquet_file);
+        builtInFunctions.put(csv_file.getIdentifier(), csv_file);
 
         builtInFunctions.put(count.getIdentifier(), count);
         builtInFunctions.put(boolean_function.getIdentifier(), boolean_function);
@@ -565,6 +572,7 @@ public class Functions {
 
         builtInFunctions.put(get_transformer.getIdentifier(), get_transformer);
         builtInFunctions.put(get_estimator.getIdentifier(), get_estimator);
+        builtInFunctions.put(annotate.getIdentifier(), annotate);
     }
 
     static {
@@ -976,6 +984,17 @@ public class Functions {
             ParquetFileFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
         );
+        /**
+         * function that parses a csv file
+         */
+        static final BuiltinFunction csv_file = createBuiltinFunction(
+            "csv-file",
+            "string",
+            "item*",
+            CSVFileFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
+        );
+
         /**
          * function that returns the length of a sequence
          */
@@ -1906,7 +1925,6 @@ public class Functions {
         );
 
 
-
         /**
          * function that returns the date item from the supplied string
          */
@@ -2232,6 +2250,18 @@ public class Functions {
             "item",
             GetEstimatorFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+
+        /**
+         * function converts given RDD or local data to a DataFrame using a schema
+         */
+        static final BuiltinFunction annotate = createBuiltinFunction(
+            "annotate",
+            "object*",
+            "object",
+            "item*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
+            AnnotateFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
         );
     }
 }

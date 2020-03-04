@@ -23,14 +23,13 @@ package org.rumbledb.expressions.module;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
-import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class Prolog extends Expression {
+public class Prolog extends Node {
 
     private final List<InlineFunctionExpression> functionDeclarations;
 
@@ -46,11 +45,13 @@ public class Prolog extends Expression {
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        if (this.functionDeclarations != null)
+        if (this.functionDeclarations != null) {
             this.functionDeclarations.forEach(e -> {
-                if (e != null)
+                if (e != null) {
                     result.add(e);
+                }
             });
+        }
         return result;
     }
 

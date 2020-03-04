@@ -9,7 +9,6 @@ import org.rumbledb.items.DurationItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.AtomicTypes;
@@ -48,11 +47,12 @@ public class DurationFunctionIterator extends LocalFunctionCallIterator {
                 );
                 throw new CastException(message, getMetadata());
             }
-        } else
+        } else {
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " duration function",
                     getMetadata()
             );
+        }
     }
 
     @Override

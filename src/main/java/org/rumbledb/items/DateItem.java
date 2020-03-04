@@ -116,9 +116,10 @@ public class DateItem extends AtomicItem {
 
     @Override
     public Item add(Item other) {
-        if (other.isYearMonthDuration() || other.isDayTimeDuration())
+        if (other.isYearMonthDuration() || other.isDayTimeDuration()) {
             return ItemFactory.getInstance()
                 .createDateItem(this.getValue().plus(other.getDurationValue()), this.hasTimeZone);
+        }
         throw new ClassCastException();
     }
 
@@ -128,16 +129,18 @@ public class DateItem extends AtomicItem {
             return ItemFactory.getInstance()
                 .createDayTimeDurationItem(new Period(other.getDateTimeValue(), this.getValue(), PeriodType.dayTime()));
         }
-        if (other.isYearMonthDuration() || other.isDayTimeDuration())
+        if (other.isYearMonthDuration() || other.isDayTimeDuration()) {
             return ItemFactory.getInstance()
                 .createDateItem(this.getValue().minus(other.getDurationValue()), this.hasTimeZone);
+        }
         throw new ClassCastException();
     }
 
     @Override
     public int compareTo(Item other) {
-        if (other.isNull())
+        if (other.isNull()) {
             return 1;
+        }
         if (other.isDate()) {
             return this.getValue().compareTo(other.getDateTimeValue());
         }

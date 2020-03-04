@@ -6,7 +6,6 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 
@@ -37,11 +36,12 @@ public class SecondsFromDurationFunctionIterator extends LocalFunctionCallIterat
                             + this.durationItem.getDurationValue().getMillis() * 1.0 / 1000
                     )
                 );
-        } else
+        } else {
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " seconds-from-duration function",
                     getMetadata()
             );
+        }
     }
 
     @Override

@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class ArrayConstructorExpression extends PrimaryExpression {
+public class ArrayConstructorExpression extends Expression {
 
     private Expression expression;
 
@@ -51,8 +51,9 @@ public class ArrayConstructorExpression extends PrimaryExpression {
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        if (this.expression != null)
+        if (this.expression != null) {
             result.add(this.expression);
+        }
         return result;
     }
 

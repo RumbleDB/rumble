@@ -25,9 +25,8 @@ import org.rumbledb.expressions.Node;
 
 /**
  * This is a clause, which is a component of a FLWOR expression.
- * 
+ *
  * Clauses, unlike expressions, return tuple streams.
- * 
  */
 public abstract class Clause extends Node {
 

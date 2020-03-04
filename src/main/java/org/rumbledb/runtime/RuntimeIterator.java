@@ -59,8 +59,9 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         this.isOpen = false;
         this.highestExecutionMode = executionMode;
         this.children = new ArrayList<>();
-        if (children != null && !children.isEmpty())
+        if (children != null && !children.isEmpty()) {
             this.children.addAll(children);
+        }
     }
 
     /**
@@ -72,7 +73,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
      *
      * If the sequence is a single numeric item and a non-null position is supplied, then instead
      * it is checked whether the numeric item is equal to the position.
-     * 
+     *
      * @param iterator has to be opened before calling this function
      * @param position the context position, or null if none
      * @return the effective boolean value.
@@ -81,17 +82,17 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         if (iterator.hasNext()) {
             Item item = iterator.next();
             boolean result;
-            if (item.isBoolean())
+            if (item.isBoolean()) {
                 result = item.getBooleanValue();
-            else if (item.isNumeric()) {
+            } else if (item.isNumeric()) {
                 if (position == null) {
-                    if (item.isInteger())
+                    if (item.isInteger()) {
                         result = item.getIntegerValue() != 0;
-                    else if (item.isDouble())
+                    } else if (item.isDouble()) {
                         result = item.getDoubleValue() != 0;
-                    else if (item.isDecimal())
+                    } else if (item.isDecimal()) {
                         result = !item.getDecimalValue().equals(BigDecimal.ZERO);
-                    else {
+                    } else {
                         throw new OurBadException(
                                 "Unexpected numeric type found while calculating effective boolean value."
                         );
@@ -99,15 +100,15 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 } else {
                     result = item.equals(position);
                 }
-            } else if (item.isNull())
+            } else if (item.isNull()) {
                 result = false;
-            else if (item.isString())
+            } else if (item.isString()) {
                 result = !item.getStringValue().isEmpty();
-            else if (item.isObject())
+            } else if (item.isObject()) {
                 return true;
-            else if (item.isArray())
+            } else if (item.isArray()) {
                 return true;
-            else {
+            } else {
                 throw new InvalidArgumentTypeException(
                         "Effective boolean value not defined for items of type "
                             +
@@ -148,8 +149,9 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     }
 
     public void open(DynamicContext context) {
-        if (this.isOpen)
+        if (this.isOpen) {
             throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
+        }
         this.isOpen = true;
         this.hasNext = true;
         this.currentDynamicContextForLocalExecution = context;
@@ -223,8 +225,9 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     public List<Item> materialize(DynamicContext context) {
         List<Item> result = new ArrayList<>();
         this.open(context);
-        while (this.hasNext())
+        while (this.hasNext()) {
             result.add(this.next());
+        }
         this.close();
         return result;
     }

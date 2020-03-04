@@ -219,15 +219,17 @@ public class DateTimeItem extends AtomicItem {
         String endOfDay = "24:00:00";
         String startOfDay = "00:00:00";
         if (dateTime.contains(endOfDay)) {
-            if (dateTime.indexOf(endOfDay) == 0)
+            if (dateTime.indexOf(endOfDay) == 0) {
                 return startOfDay;
+            }
             int indexOfT = dateTime.indexOf('T');
             if (
                 indexOfT < 1
                     || indexOfT != dateTime.indexOf(endOfDay) - 1
                     || !Character.isDigit(dateTime.charAt(indexOfT - 1))
-            )
+            ) {
                 throw new IllegalArgumentException();
+            }
             int dayValue;
             try {
                 dayValue = Character.getNumericValue(dateTime.charAt(indexOfT - 1));
@@ -246,19 +248,21 @@ public class DateTimeItem extends AtomicItem {
     }
 
     static DateTime parseDateTime(String dateTime, AtomicTypes dateTimeType) throws IllegalArgumentException {
-        if (!checkInvalidDateTimeFormat(dateTime, dateTimeType))
+        if (!checkInvalidDateTimeFormat(dateTime, dateTimeType)) {
             throw new IllegalArgumentException();
+        }
         dateTime = fixEndOfDay(dateTime);
         return DateTime.parse(dateTime, getDateTimeFormatter(dateTimeType));
     }
 
     @Override
     public Item add(Item other) {
-        if (other.isYearMonthDuration() || other.isDayTimeDuration())
+        if (other.isYearMonthDuration() || other.isDayTimeDuration()) {
             return ItemFactory.getInstance()
                 .createDateTimeItem(this.getValue().plus(other.getDurationValue()), this.hasTimeZone);
-        else
+        } else {
             throw new ClassCastException();
+        }
     }
 
     @Override
@@ -267,17 +271,19 @@ public class DateTimeItem extends AtomicItem {
             return ItemFactory.getInstance()
                 .createDayTimeDurationItem(new Period(other.getDateTimeValue(), this.getValue(), PeriodType.dayTime()));
         }
-        if (other.isYearMonthDuration() || other.isDayTimeDuration())
+        if (other.isYearMonthDuration() || other.isDayTimeDuration()) {
             return ItemFactory.getInstance()
                 .createDateTimeItem(this.getValue().minus(other.getDurationValue()), this.hasTimeZone);
-        else
+        } else {
             throw new ClassCastException();
+        }
     }
 
     @Override
     public int compareTo(Item other) {
-        if (other.isNull())
+        if (other.isNull()) {
             return 1;
+        }
         if (other.isDateTime()) {
             return this.getValue().compareTo(other.getDateTimeValue());
         }

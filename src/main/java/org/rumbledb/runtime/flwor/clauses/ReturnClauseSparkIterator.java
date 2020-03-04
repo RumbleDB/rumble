@@ -32,7 +32,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.closures.ReturnFlatMapClosure;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
@@ -95,7 +94,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     protected void openLocal() {
         this.child.open(this.currentDynamicContextForLocalExecution);
         this.tupleContext = new DynamicContext(this.currentDynamicContextForLocalExecution); // assign current context
-                                                                                             // as parent
+        // as parent
         setNextResult();
     }
 

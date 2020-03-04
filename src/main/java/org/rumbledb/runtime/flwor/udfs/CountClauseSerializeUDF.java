@@ -25,7 +25,6 @@ import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.sql.api.java.UDF1;
 import org.rumbledb.api.Item;
 import org.rumbledb.items.IntegerItem;
-
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 
 import java.io.IOException;

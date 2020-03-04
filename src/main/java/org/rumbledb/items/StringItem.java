@@ -140,16 +140,18 @@ public class StringItem extends AtomicItem {
 
     @Override
     public boolean isCastableAs(AtomicTypes itemType) {
-        if (itemType == AtomicTypes.StringItem)
+        if (itemType == AtomicTypes.StringItem) {
             return true;
+        }
         try {
             if (itemType == AtomicTypes.IntegerItem) {
                 Integer.parseInt(this.getValue());
             } else if (itemType == AtomicTypes.AnyURIItem) {
                 AnyURIItem.parseAnyURIString(this.getValue());
             } else if (itemType == AtomicTypes.DecimalItem) {
-                if (this.getValue().contains("e") || this.getValue().contains("E"))
+                if (this.getValue().contains("e") || this.getValue().contains("E")) {
                     return false;
+                }
                 Float.parseFloat(this.getValue());
             } else if (itemType == AtomicTypes.DoubleItem) {
                 Double.parseDouble(this.getValue());
@@ -171,8 +173,9 @@ public class StringItem extends AtomicItem {
                 HexBinaryItem.parseHexBinaryString(this.getValue());
             } else if (itemType == AtomicTypes.Base64BinaryItem) {
                 Base64BinaryItem.parseBase64BinaryString(this.getValue());
-            } else
+            } else {
                 return isBooleanLiteral(this.getValue());
+            }
         } catch (UnsupportedOperationException | IllegalArgumentException e) {
             return false;
         }

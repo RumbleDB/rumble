@@ -26,7 +26,6 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.List;
@@ -56,10 +55,11 @@ public class StringLengthFunctionIterator extends LocalFunctionCallIterator {
             }
 
             return ItemFactory.getInstance().createIntegerItem(stringItem.getStringValue().length());
-        } else
+        } else {
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " string-length function",
                     getMetadata()
             );
+        }
     }
 }

@@ -67,8 +67,9 @@ public class DoubleItem extends AtomicItem {
     }
 
     public BigDecimal castToDecimalValue() {
-        if (Double.isNaN(this.getDoubleValue()) || Double.isInfinite(this.getDoubleValue()))
+        if (Double.isNaN(this.getDoubleValue()) || Double.isInfinite(this.getDoubleValue())) {
             return super.castToDecimalValue();
+        }
         return BigDecimal.valueOf(getDoubleValue());
     }
 
@@ -106,9 +107,9 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public boolean isCastableAs(AtomicTypes itemType) {
-        if (itemType == AtomicTypes.AtomicItem || itemType == AtomicTypes.NullItem)
+        if (itemType == AtomicTypes.AtomicItem || itemType == AtomicTypes.NullItem) {
             return false;
-        else if (itemType == AtomicTypes.DecimalItem) {
+        } else if (itemType == AtomicTypes.DecimalItem) {
             return !Double.isInfinite(this.getValue());
         } else if (itemType == AtomicTypes.IntegerItem) {
             return !(Integer.MAX_VALUE < this.getValue()) && !(Integer.MIN_VALUE > this.getValue());
@@ -118,8 +119,9 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public String serialize() {
-        if (Double.isNaN(this.getDoubleValue()) || Double.isInfinite(this.getDoubleValue()))
+        if (Double.isNaN(this.getDoubleValue()) || Double.isInfinite(this.getDoubleValue())) {
             return String.valueOf(this.getDoubleValue());
+        }
         boolean negativeZero = this.getDoubleValue() == 0 && String.valueOf(this.getDoubleValue()).charAt(0) == ('-');
         String doubleString = String.valueOf(this.castToDecimalValue().stripTrailingZeros().toPlainString());
         return negativeZero ? '-' + doubleString : doubleString;
@@ -179,8 +181,9 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public Item multiply(Item other) {
-        if (other.isYearMonthDuration() || other.isDayTimeDuration())
+        if (other.isYearMonthDuration() || other.isDayTimeDuration()) {
             return other.multiply(this);
+        }
         return ItemFactory.getInstance().createDoubleItem(this.getDoubleValue() * other.castToDoubleValue());
     }
 

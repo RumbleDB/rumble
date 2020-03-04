@@ -18,7 +18,7 @@ public class TreatAsClosure implements Function<Item, Boolean> {
 
     @Override
     public Boolean call(Item input) throws Exception {
-        if (!input.isTypeOf(this.sequenceType.getItemType()))
+        if (!input.isTypeOf(this.sequenceType.getItemType())) {
             throw new TreatException(
                     " "
                         + ItemTypes.getItemTypeName(input.getClass().getSimpleName())
@@ -27,12 +27,14 @@ public class TreatAsClosure implements Function<Item, Boolean> {
                         + this.sequenceType.getArity().getSymbol(),
                     this.metadata
             );
-        if (this.sequenceType.isEmptySequence())
+        }
+        if (this.sequenceType.isEmptySequence()) {
             throw new TreatException(
                     ItemTypes.getItemTypeName(input.getClass().getSimpleName())
                         + " cannot be treated as type empty-sequence()",
                     this.metadata
             );
+        }
         return true;
     }
 }

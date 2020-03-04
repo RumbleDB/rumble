@@ -51,6 +51,8 @@ public class ErrorCodes {
     public static final String UnrecognizedRumbleMLClassReferenceErrorCode = "RBML0001";
     public static final String UnrecognizedRumbleMLParamReferenceErrorCode = "RBML0002";
     public static final String InvalidRumbleMLParamErrorCode = "RBML0003";
+    public static final String MLNotADataFrameErrorCode = "RBML0004";
+    public static final String MLInvalidDataFrameSchemaErrorCode = "RBML0005";
 
 
     public static final String CliErrorCode = "RBST0001";

@@ -14,6 +14,12 @@ import java.util.List;
  * tool
  */
 public class RumbleMLCatalog {
+    public static final String featuresColParamName = "featuresCol";
+    public static final String featuresColParamDefaultValue = "features";
+    public static final String rumbleMLFeatureColumnsJavaTypeName = "String[]";
+    public static final String rumbleMLGeneratedFeatureColumnName = "59992242-914d-4357-bcc8-10b1c134476b";
+
+
     private static final HashMap<String, String> estimatorFullClassNames;
     private static final HashMap<String, String> transformerFullClassNames;
 
@@ -1193,63 +1199,72 @@ public class RumbleMLCatalog {
             )
         );
         transformerParams.put("PipelineModel", new ArrayList<>(Arrays.asList("parent")));
-
-
     }
 
-    public static String getEstimatorFullClassName(String name, ExceptionMetadata metadata) {
+    private static void validateEstimatorByName(String name, ExceptionMetadata metadata) {
         if (!estimatorFullClassNames.containsKey(name)) {
             throw new UnrecognizedRumbleMLClassReferenceException(
                     "Unrecognized RumbleML class; Make sure \"" + name + "\" is a valid estimator of RumbleML API.",
                     metadata
             );
         }
-        return estimatorFullClassNames.get(name);
     }
 
-    public static String getTransformerFullClassName(String name, ExceptionMetadata metadata) {
+    private static void validateTransformerByName(String name, ExceptionMetadata metadata) {
         if (!transformerFullClassNames.containsKey(name)) {
             throw new UnrecognizedRumbleMLClassReferenceException(
                     "Unrecognized RumbleML class; Make sure \"" + name + "\" is a valid transformer of RumbleML API.",
                     metadata
             );
         }
+    }
+
+    public static String getEstimatorFullClassName(String name, ExceptionMetadata metadata) {
+        validateEstimatorByName(name, metadata);
+        return estimatorFullClassNames.get(name);
+    }
+
+    public static String getTransformerFullClassName(String name, ExceptionMetadata metadata) {
+        validateTransformerByName(name, metadata);
         return transformerFullClassNames.get(name);
     }
 
     public static List<String> getEstimatorParams(String name, ExceptionMetadata metadata) {
-        if (!estimatorParams.containsKey(name)) {
-            throw new UnrecognizedRumbleMLClassReferenceException(
-                    "Unrecognized RumbleML class; Make sure \"" + name + "\" is a valid estimator of RumbleML API.",
-                    metadata
-            );
-        }
+        validateEstimatorByName(name, metadata);
         return estimatorParams.get(name);
     }
 
     public static List<String> getTransformerParams(String name, ExceptionMetadata metadata) {
-        if (!transformerParams.containsKey(name)) {
-            throw new UnrecognizedRumbleMLClassReferenceException(
-                    "Unrecognized RumbleML class; Make sure \"" + name + "\" is a valid transformer of RumbleML API.",
-                    metadata
-            );
-        }
+        validateTransformerByName(name, metadata);
         return transformerParams.get(name);
     }
 
-    public static void validateParameterForTransformer(
+    public static void validateEstimatorParameterByName(
+            String estimatorShortName,
+            String paramName,
+            ExceptionMetadata metadata
+    ) {
+        validateEstimatorByName(estimatorShortName, metadata);
+
+        if (!estimatorParams.get(estimatorShortName).contains(paramName)) {
+            throw new UnrecognizedRumbleMLParamReferenceException(
+                    "Make sure \""
+                        + paramName
+                        + "\" is a valid parameter of \""
+                        + estimatorShortName
+                        + "\".",
+                    metadata
+            );
+        }
+    }
+
+    public static void validateTransformerParameterByName(
             String transformerShortName,
             String paramName,
             ExceptionMetadata metadata
     ) {
-        if (!transformerParams.containsKey(transformerShortName)) {
-            throw new UnrecognizedRumbleMLClassReferenceException(
-                    "Unrecognized RumbleML class; Make sure \""
-                        + transformerShortName
-                        + "\" is a valid transformer of RumbleML API.",
-                    metadata
-            );
-        }
+        validateTransformerByName(transformerShortName, metadata);
+
         if (!transformerParams.get(transformerShortName).contains(paramName)) {
             throw new UnrecognizedRumbleMLParamReferenceException(
                     "Make sure \""
@@ -1262,32 +1277,7 @@ public class RumbleMLCatalog {
         }
     }
 
-    public static void validateParameterForEstimator(
-            String estimatorName,
-            String paramName,
-            ExceptionMetadata metadata
-    ) {
-        if (!estimatorParams.containsKey(estimatorName)) {
-            throw new UnrecognizedRumbleMLClassReferenceException(
-                    "Unrecognized RumbleML class; Make sure \""
-                        + estimatorName
-                        + "\" is a valid estimator of RumbleML API.",
-                    metadata
-            );
-        }
-        if (!estimatorParams.get(estimatorName).contains(paramName)) {
-            throw new UnrecognizedRumbleMLParamReferenceException(
-                    "Make sure \""
-                        + paramName
-                        + "\" is a valid parameter of \""
-                        + estimatorName
-                        + "\".",
-                    metadata
-            );
-        }
-    }
-
-    public static String getParamJavaTypeName(String name, ExceptionMetadata metadata) {
+    private static void validateJavaTypeName(String name, ExceptionMetadata metadata) {
         if (!paramJavaTypeNames.containsKey(name)) {
             throw new UnrecognizedRumbleMLParamReferenceException(
                     "Parameter \""
@@ -1296,6 +1286,11 @@ public class RumbleMLCatalog {
                     metadata
             );
         }
+    }
+
+
+    public static String getParamJavaTypeName(String name, ExceptionMetadata metadata) {
+        validateJavaTypeName(name, metadata);
         return paramJavaTypeNames.get(name);
     }
 

@@ -20,6 +20,8 @@
 
 package sparksoniq.semantics.types;
 
+import org.rumbledb.exceptions.OurBadException;
+
 import java.io.Serializable;
 
 public class SequenceType implements Serializable {
@@ -34,6 +36,8 @@ public class SequenceType implements Serializable {
             Arity.ZeroOrMore
     );
 
+    public final static SequenceType emptySequence = new SequenceType();
+
 
     public SequenceType(ItemType itemType, Arity arity) {
         this.itemType = itemType;
@@ -45,9 +49,9 @@ public class SequenceType implements Serializable {
         this.arity = Arity.One;
     }
 
-    public SequenceType() {
-        this.itemType = new ItemType(ItemTypes.Item);
-        this.arity = Arity.ZeroOrMore;
+    private SequenceType() {
+        this.itemType = null;
+        this.arity = null;
         this.isEmptySequence = true;
     }
 
@@ -56,24 +60,40 @@ public class SequenceType implements Serializable {
     }
 
     public ItemType getItemType() {
+        if (this.isEmptySequence) {
+            throw new OurBadException("Empty sequence type has no item");
+        }
         return this.itemType;
     }
 
     public Arity getArity() {
+        if (this.isEmptySequence) {
+            throw new OurBadException("Empty sequence type has no arity");
+        }
         return this.arity;
     }
 
     public boolean isSubtypeOf(SequenceType superType) {
+        if (this.isEmptySequence) {
+            return superType.arity == Arity.OneOrZero || superType.arity == Arity.ZeroOrMore;
+        }
         return this.itemType.isSubtypeOf(superType.getItemType())
             &&
             this.arity == superType.arity;
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (!(o instanceof SequenceType))
+    public boolean equals(Object other) {
+        if (!(other instanceof SequenceType)) {
             return false;
-        SequenceType sequenceType = (SequenceType) o;
+        }
+        SequenceType sequenceType = (SequenceType) other;
+        if (this.isEmptySequence) {
+            return sequenceType.isEmptySequence();
+        }
+        if (sequenceType.isEmptySequence()) {
+            return false;
+        }
         return this.getItemType().equals(sequenceType.getItemType()) && this.getArity().equals(sequenceType.getArity());
     }
 
@@ -104,5 +124,16 @@ public class SequenceType implements Serializable {
         };
 
         public abstract String getSymbol();
+    }
+
+    @Override
+    public String toString() {
+        if (this.isEmptySequence) {
+            return "()";
+        }
+        StringBuilder result = new StringBuilder();
+        result.append(this.getItemType().toString());
+        result.append(this.arity.getSymbol());
+        return result.toString();
     }
 }

@@ -27,7 +27,6 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.items.ItemFactory;
-
 import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.ArrayList;
@@ -61,16 +60,6 @@ public abstract class OperationalExpressionBase extends Expression {
         super(metadata);
         this.mainExpression = mainExpression;
         this.multipleOperators = ops;
-    }
-
-    @Override
-    public void initHighestExecutionMode() {
-        super.initHighestExecutionMode();
-    }
-
-    @Override
-    public ExecutionMode getHighestExecutionMode(boolean ignoreUnsetError) {
-        return super.getHighestExecutionMode(ignoreUnsetError);
     }
 
     public static List<Operator> getOperatorFromOpList(List<Token> ops) {
@@ -130,8 +119,6 @@ public abstract class OperationalExpressionBase extends Expression {
                 return Operator.INSTANCE_OF;
             case "TREAT":
                 return Operator.TREAT;
-            case "CASTABLE":
-                return Operator.CASTABLE;
             case "CAST":
                 return Operator.CAST;
         }
@@ -154,8 +141,6 @@ public abstract class OperationalExpressionBase extends Expression {
                 return "instance of";
             case TREAT:
                 return "treat as";
-            case CASTABLE:
-                return "castable as";
             case CAST:
                 return "cast as";
             default:
@@ -164,14 +149,17 @@ public abstract class OperationalExpressionBase extends Expression {
     }
 
     public void validateOperators(List<Operator> validOps, List<Operator> ops) {
-        for (Operator op : ops)
-            if (!validOps.contains(op))
+        for (Operator op : ops) {
+            if (!validOps.contains(op)) {
                 throw new IllegalArgumentException("Operational operators exception");
+            }
+        }
     }
 
     public void validateOperator(List<Operator> validOps, Operator op) {
-        if (!validOps.contains(op))
+        if (!validOps.contains(op)) {
             throw new IllegalArgumentException("Operational operators exception");
+        }
     }
 
     public Expression getMainExpression() {
@@ -181,8 +169,9 @@ public abstract class OperationalExpressionBase extends Expression {
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        if (this.mainExpression != null)
+        if (this.mainExpression != null) {
             result.add(this.mainExpression);
+        }
         return result;
     }
 
@@ -291,7 +280,6 @@ public abstract class OperationalExpressionBase extends Expression {
         INSTANCE_OF,
         COMMA,
         TREAT,
-        CASTABLE,
         CAST;
 
         public Item apply(Item left, Item right) {

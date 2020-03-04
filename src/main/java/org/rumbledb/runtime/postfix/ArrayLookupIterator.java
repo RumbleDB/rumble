@@ -30,7 +30,6 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ArrayItem;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 
@@ -89,12 +88,13 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
         if (lookupIterator.hasNext()) {
             lookupExpression = lookupIterator.next();
         }
-        if (lookupIterator.hasNext())
+        if (lookupIterator.hasNext()) {
             throw new InvalidSelectorException(
                     "\"Invalid Lookup Key; Array lookup can't be performed with multiple keys: "
                         + lookupExpression.serialize(),
                     getMetadata()
             );
+        }
         if (!lookupExpression.isNumeric()) {
             throw new UnexpectedTypeException(
                     "Type error; Non numeric array lookup for : "

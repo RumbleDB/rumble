@@ -34,74 +34,85 @@ public class SparksoniqRuntimeConfiguration {
 
     public SparksoniqRuntimeConfiguration(String[] args) {
         this.arguments = new HashMap<>();
-        for (int i = 0; i < args.length; i += 2)
-            if (args[i].startsWith(ARGUMENT_PREFIX))
+        for (int i = 0; i < args.length; i += 2) {
+            if (args[i].startsWith(ARGUMENT_PREFIX)) {
                 this.arguments.put(args[i].trim().replace(ARGUMENT_PREFIX, ""), args[i + 1]);
-            else
+            } else {
                 throw new CliException(ARGUMENT_FORMAT_ERROR_MESSAGE);
+            }
+        }
     }
 
     public String getConfigurationArgument(String key) {
-        if (this.arguments.containsKey(key))
+        if (this.arguments.containsKey(key)) {
             return this.arguments.get(key);
-        else
+        } else {
             return null;
+        }
     }
 
     public String getOutputPath() {
-        if (this.arguments.containsKey("output-path"))
+        if (this.arguments.containsKey("output-path")) {
             return this.arguments.get("output-path");
-        else
+        } else {
             return null;
+        }
     }
 
     public boolean getOverwrite() {
-        if (this.arguments.containsKey("overwrite"))
+        if (this.arguments.containsKey("overwrite")) {
             return this.arguments.get("overwrite").equals("yes");
-        else
+        } else {
             return false;
+        }
     }
 
     public boolean getShowErrorInfo() {
-        if (this.arguments.containsKey("show-error-info"))
+        if (this.arguments.containsKey("show-error-info")) {
             return this.arguments.get("show-error-info").equals("yes");
-        else
+        } else {
             return false;
+        }
     }
 
     public String getLogPath() {
-        if (this.arguments.containsKey("log-path"))
+        if (this.arguments.containsKey("log-path")) {
             return this.arguments.get("log-path");
-        else
+        } else {
             return null;
+        }
     }
 
     public String getQueryPath() {
-        if (this.arguments.containsKey("query-path"))
+        if (this.arguments.containsKey("query-path")) {
             return this.arguments.get("query-path");
-        else
+        } else {
             return null;
+        }
     }
 
     public int getResultSizeCap() {
-        if (this.arguments.containsKey("result-size"))
+        if (this.arguments.containsKey("result-size")) {
             return Integer.parseInt(this.arguments.get("result-size"));
-        else
+        } else {
             return 200;
+        }
     }
 
     public boolean isShell() {
-        if (this.arguments.containsKey("shell"))
+        if (this.arguments.containsKey("shell")) {
             return this.arguments.get("shell").equals("yes");
-        else
+        } else {
             return false;
+        }
     }
 
     public boolean isPrintIteratorTree() {
-        if (this.arguments.containsKey("print-iterator-tree"))
+        if (this.arguments.containsKey("print-iterator-tree")) {
             return this.arguments.get("print-iterator-tree").equals("yes");
-        else
+        } else {
             return false;
+        }
     }
 
     public boolean isLocal() {

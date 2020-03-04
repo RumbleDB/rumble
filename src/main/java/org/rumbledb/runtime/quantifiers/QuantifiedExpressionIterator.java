@@ -28,7 +28,6 @@ import org.rumbledb.items.BooleanItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 
@@ -78,10 +77,11 @@ public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
             }
 
             boolean result = this.operator == QuantifiedExpression.QuantifiedOperators.EVERY;
-            for (BooleanItem res : results)
+            for (BooleanItem res : results) {
                 result = this.operator == QuantifiedExpression.QuantifiedOperators.EVERY
                     ? result && res.getBooleanValue()
                     : result || res.getBooleanValue();
+            }
             return ItemFactory.getInstance().createBooleanItem(result);
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "Quantified Expr", getMetadata());

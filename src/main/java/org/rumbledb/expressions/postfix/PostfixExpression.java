@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.postfix;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.Expression;
 
 
@@ -31,6 +32,9 @@ public abstract class PostfixExpression extends Expression {
     public PostfixExpression(Expression mainExpression, ExceptionMetadata metadata) {
         super(metadata);
         this.mainExpression = mainExpression;
+        if (this.mainExpression == null) {
+            throw new OurBadException("Main expression cannot be null in a postfix expression.");
+        }
     }
 
     public Expression getMainExpression() {

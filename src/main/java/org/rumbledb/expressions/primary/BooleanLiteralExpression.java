@@ -21,10 +21,15 @@
 package org.rumbledb.expressions.primary;
 
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.Expression;
+import org.rumbledb.expressions.Node;
 
-public class BooleanLiteralExpression extends PrimaryExpression {
+public class BooleanLiteralExpression extends Expression {
 
     private boolean value;
 
@@ -48,5 +53,10 @@ public class BooleanLiteralExpression extends PrimaryExpression {
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitBoolean(this, argument);
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        return new ArrayList<>();
     }
 }
