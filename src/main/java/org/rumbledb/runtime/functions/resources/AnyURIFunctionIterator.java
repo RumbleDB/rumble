@@ -5,18 +5,20 @@ import org.rumbledb.exceptions.CastException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.AtomicItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.semantics.types.AtomicTypes;
+import sparksoniq.semantics.types.ItemTypes;
 
 import java.util.List;
-import java.net.URI;
 
 public class AnyURIFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
-    private Item anyURIStringItem = null;
+    private Item anyItem = null;
 
     public AnyURIFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -30,18 +32,28 @@ public class AnyURIFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this.hasNext) {
             this.hasNext = false;
-            try {
-                return ItemFactory.getInstance().createAnyURIItem(this.anyURIStringItem.getStringValue());
-            } catch (IllegalArgumentException e) {
-                String message = String.format(
-                    "\"%s\": value of type %s is not castable to type %s",
-                    this.anyURIStringItem.serialize(),
-                    "string",
-                    "anyURI"
-                );
-                throw new CastException(message, getMetadata());
+            AtomicItem atomicItem = (AtomicItem) this.anyItem;
+            String message;
+            if (atomicItem.isAnyURI()) {
+                return atomicItem.castAs(AtomicTypes.AnyURIItem);
+            } else if (atomicItem.isString()) {
+                try {
+                    return ItemFactory.getInstance().createAnyURIItem(atomicItem.getStringValue());
+                } catch (IllegalArgumentException e) {
+                    message = String.format(
+                            "\"%s\": value of type String is not castable to type anyURI",
+                            this.anyItem.serialize()
+                    );
+                    throw new CastException(message, getMetadata());
+                }
             }
-        } else
+            message = String.format(
+                    "\"%s\": value of type %s is not castable to type anyURI",
+                    atomicItem.serialize(),
+                    ItemTypes.getItemTypeName(atomicItem.getClass().getSimpleName())
+            );
+            throw new CastException(message, getMetadata());
+    } else
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " anyURI function",
                     getMetadata()
@@ -52,8 +64,8 @@ public class AnyURIFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        this.anyURIStringItem = this.children.get(0)
+        this.anyItem = this.children.get(0)
             .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.anyURIStringItem != null;
+        this.hasNext = this.anyItem != null;
     }
 }
