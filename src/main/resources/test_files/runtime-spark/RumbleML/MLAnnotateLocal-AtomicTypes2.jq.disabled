@@ -1,0 +1,20 @@
+(:JIQS: ShouldRun; Output="" :)
+annotate(
+    (
+        {"id": 1, "age":  20, "weight": 68.8, "name": "a", "isAlien": null, "isAlive": true, "birthDate": date("2004-04-12"), "birthDateTime": dateTime("2004-04-12T13:20:00")},
+        {"id": 2, "age":  35, "weight": 72.4, "name": "a", "isAlien": null, "isAlive": true, "birthDate": date("2004-04-12"), "birthDateTime": dateTime("2004-04-12T13:20:00")},
+        {"id": 3, "age":  50, "weight": 76.3, "name": "a", "isAlien": null, "isAlive": true, "birthDate": date("2004-04-12"), "birthDateTime": dateTime("2004-04-12T13:20:00")}
+    ),
+    {
+        "id": "integer",
+        "age": "integer",
+        "weight": "double",
+        "name": "string",
+        "isAlien": "null",
+        "isAlive": "boolean",
+        "birthDate": "date",
+        "birthDateTime": "datetime"
+    }
+)
+
+(: disabled due to lack of support for date-related atomic types :)
