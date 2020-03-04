@@ -879,14 +879,14 @@ public class Functions {
          */
         static final BuiltinFunction json_file1 = createBuiltinFunction(
             "json-file",
-            "string?",
+            "string",
             "item*",
             JsonFileFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.RDD
         );
         static final BuiltinFunction json_file2 = createBuiltinFunction(
             "json-file",
-            "string?",
+            "string",
             "integer?",
             "item*",
             JsonFileFunctionIterator.class,
@@ -897,7 +897,7 @@ public class Functions {
          */
         static final BuiltinFunction structured_json_file = createBuiltinFunction(
             "structured-json-file",
-            "string?",
+            "string",
             "item*",
             StructuredJsonFileFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
@@ -907,7 +907,7 @@ public class Functions {
          */
         static final BuiltinFunction libsvm_file = createBuiltinFunction(
             "libsvm-file",
-            "string?",
+            "string",
             "item*",
             LibSVMFileFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
@@ -917,7 +917,7 @@ public class Functions {
          */
         static final BuiltinFunction json_doc = createBuiltinFunction(
             "json-doc",
-            "string?",
+            "string",
             "item*",
             JsonDocFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -927,14 +927,14 @@ public class Functions {
          */
         static final BuiltinFunction text_file1 = createBuiltinFunction(
             "text-file",
-            "string?",
+            "string",
             "item*",
             TextFileFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.RDD
         );
         static final BuiltinFunction text_file2 = createBuiltinFunction(
             "text-file",
-            "string?",
+            "string",
             "integer?",
             "item*",
             TextFileFunctionIterator.class,
@@ -963,7 +963,7 @@ public class Functions {
          */
         static final BuiltinFunction parquet_file = createBuiltinFunction(
             "parquet-file",
-            "string?",
+            "string",
             "item*",
             ParquetFileFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
