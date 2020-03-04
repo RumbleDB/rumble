@@ -55,6 +55,7 @@ public class ItemParser implements Serializable {
 
 
     private static final long serialVersionUID = 1L;
+    private static final DataType vectorType = new VectorUDT();
 
     public static Item getItemFromObject(JsonIterator object, ExceptionMetadata metadata) {
         try {
@@ -272,6 +273,58 @@ public class ItemParser implements Serializable {
         } else {
             throw new RuntimeException("DataFrame type unsupported: " + fieldType.json());
         }
+    }
+
+    public static DataType getDataFrameDataTypeFromItemTypeName(String itemTypeName) {
+        switch (itemTypeName) {
+            case "boolean":
+                return DataTypes.BooleanType;
+            case "integer":
+                return DataTypes.IntegerType;
+            case "double":
+                return DataTypes.DoubleType;
+            case "decimal":
+                return DataTypes.LongType;
+            case "string":
+                return DataTypes.StringType;
+            case "null":
+                return DataTypes.NullType;
+            case "date":
+                return DataTypes.DateType;
+            case "datetime":
+                return DataTypes.TimestampType;
+            case "hexbinary":
+                return DataTypes.BinaryType;
+            case "[\"item\"]":
+                return vectorType;
+            default:
+                throw new IllegalArgumentException("Unexpected item type found: '" + itemTypeName + "'.");
+        }
+    }
+
+    public static String getItemTypeNameFromDataFrameDataType(DataType dataType) {
+        if (DataTypes.BooleanType.equals(dataType)) {
+            return "boolean";
+        } else if (DataTypes.IntegerType.equals(dataType) || DataTypes.ShortType.equals(dataType)) {
+            return "integer";
+        } else if (DataTypes.DoubleType.equals(dataType) || DataTypes.FloatType.equals(dataType)) {
+            return "double";
+        } else if (DataTypes.LongType.equals(dataType)) {
+            return "decimal";
+        } else if (DataTypes.StringType.equals(dataType)) {
+            return "string";
+        } else if (DataTypes.NullType.equals(dataType)) {
+            return "null";
+        } else if (DataTypes.DateType.equals(dataType)) {
+            return "date";
+        } else if (DataTypes.TimestampType.equals(dataType)) {
+            return "datetime";
+        } else if (DataTypes.BinaryType.equals(dataType)) {
+            return "hexbinary";
+        } else if (vectorType.equals(dataType)) {
+            return "[\"item\"]";
+        }
+        throw new OurBadException("Unexpected DataFrame data type found: '" + dataType.toString() + "'.");
     }
 
     public static List<Row> getRowsFromItems(List<Item> items) {
