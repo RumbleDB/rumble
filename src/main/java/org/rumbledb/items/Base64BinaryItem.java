@@ -89,11 +89,11 @@ public class Base64BinaryItem extends AtomicItem {
 
     @Override
     public boolean isCastableAs(ItemType itemType) {
-        return itemType.equals(ItemTypes.Base64BinaryItem)
+        return itemType.getType() == ItemTypes.Base64BinaryItem
             ||
-            itemType.equals(ItemTypes.HexBinaryItem)
+            itemType.getType() == ItemTypes.HexBinaryItem
             ||
-            itemType.equals(ItemTypes.StringItem);
+            itemType.getType() == ItemTypes.StringItem;
     }
 
     @Override

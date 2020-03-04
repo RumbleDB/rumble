@@ -190,15 +190,31 @@ public class ItemType implements Serializable {
                 return "boolean";
             case NullItem:
                 return "null";
-
             case JSONItem:
                 return "json-item";
             case ArrayItem:
                 return "array";
             case ObjectItem:
                 return "object";
-            default:
-                return "item";
+            case Base64BinaryItem:
+                return "base64Binary";
+            case HexBinaryItem:
+                return "hexBinary";
+            case DateItem:
+                return "date";
+            case DateTimeItem:
+                return "dateTime";
+            case DayTimeDurationItem:
+                return "dayTimeDuration";
+            case DurationItem:
+                return "duration";
+            case FunctionItem:
+                return "function(*)";
+            case TimeItem:
+                return "time";
+            case YearMonthDurationItem:
+                return "yearMonthDuration";
         }
+        throw new OurBadException("Unrecognized type.");
     }
 }

@@ -10,6 +10,7 @@ import org.rumbledb.items.AtomicItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.ItemTypes;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
@@ -85,7 +86,7 @@ public class CastIterator extends UnaryOperationIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        if (!this.child.hasNext() && this.sequenceType.isEmptySequence()) {
+        if (!this.hasNext && !this.sequenceType.isEmptySequence() && this.sequenceType.getArity() != Arity.OneOrZero) {
             throw new UnexpectedTypeException(
                     " Empty sequence can not be cast to type with quantifier '1'",
                     getMetadata()
