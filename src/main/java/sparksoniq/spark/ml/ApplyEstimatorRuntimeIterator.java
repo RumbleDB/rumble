@@ -22,10 +22,15 @@ import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 import sparksoniq.semantics.types.SequenceType;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static sparksoniq.spark.ml.RumbleMLCatalog.featuresColParamDefaultValue;
+import static sparksoniq.spark.ml.RumbleMLCatalog.featuresColParamName;
+import static sparksoniq.spark.ml.RumbleMLCatalog.rumbleMLFeatureColumnsJavaTypeName;
+import static sparksoniq.spark.ml.RumbleMLCatalog.rumbleMLGeneratedFeatureColumnName;
 import static sparksoniq.spark.ml.RumbleMLUtils.convertRumbleObjectItemToSparkMLParamMap;
 
 
@@ -55,6 +60,34 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
 
         Dataset<Row> inputDataset = getInputDataset(this.currentDynamicContextForLocalExecution);
         Item paramMapItem = getParamMapItem(this.currentDynamicContextForLocalExecution);
+
+        boolean estimatorExpectsFeaturesColParam = RumbleMLCatalog
+            .getEstimatorParams(this.estimatorShortName, getMetadata())
+            .contains(featuresColParamName);
+
+        if (estimatorExpectsFeaturesColParam) {
+            Object featuresColValue = new String[] { featuresColParamDefaultValue };
+
+            if (paramMapItem.getItemByKey(featuresColParamName) != null) {
+                Item featureColumnsParam = paramMapItem.getItemByKey(featuresColParamName);
+                paramMapItem = RumbleMLUtils.removeParameter(paramMapItem, featuresColParamName, getMetadata());
+
+                featuresColValue = RumbleMLUtils.convertParamItemToJava(
+                    featuresColParamName,
+                    featureColumnsParam,
+                    rumbleMLFeatureColumnsJavaTypeName,
+                    getMetadata()
+                );
+            }
+
+            inputDataset = RumbleMLUtils.generateAndAddFeaturesColumn(
+                inputDataset,
+                featuresColValue,
+                getMetadata()
+            );
+
+            this.setEstimatorFeaturesColFieldToGeneratedColumn();
+        }
 
         ParamMap paramMap = convertRumbleObjectItemToSparkMLParamMap(
             this.estimatorShortName,
@@ -148,5 +181,16 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
                 ),
                 bodyIterator
         );
+    }
+
+    private void setEstimatorFeaturesColFieldToGeneratedColumn() {
+        try {
+            this.estimator
+                .getClass()
+                .getMethod("setFeaturesCol", String.class)
+                .invoke(this.estimator, rumbleMLGeneratedFeatureColumnName);
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            throw new OurBadException("Failed to set featuresCol on the estimator");
+        }
     }
 }

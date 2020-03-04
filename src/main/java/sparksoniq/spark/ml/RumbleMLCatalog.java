@@ -14,6 +14,12 @@ import java.util.List;
  * tool
  */
 public class RumbleMLCatalog {
+    public static final String featuresColParamName = "featuresCol";
+    public static final String featuresColParamDefaultValue = "features";
+    public static final String rumbleMLFeatureColumnsJavaTypeName = "String[]";
+    public static final String rumbleMLGeneratedFeatureColumnName = "59992242-914d-4357-bcc8-10b1c134476b";
+
+
     private static final HashMap<String, String> estimatorFullClassNames;
     private static final HashMap<String, String> transformerFullClassNames;
 

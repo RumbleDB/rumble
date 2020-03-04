@@ -13,8 +13,13 @@ import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
+import static sparksoniq.spark.ml.RumbleMLCatalog.featuresColParamDefaultValue;
+import static sparksoniq.spark.ml.RumbleMLCatalog.featuresColParamName;
+import static sparksoniq.spark.ml.RumbleMLCatalog.rumbleMLFeatureColumnsJavaTypeName;
+import static sparksoniq.spark.ml.RumbleMLCatalog.rumbleMLGeneratedFeatureColumnName;
 import static sparksoniq.spark.ml.RumbleMLUtils.convertRumbleObjectItemToSparkMLParamMap;
 
 
@@ -40,6 +45,43 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
         Dataset<Row> inputDataset = getInputDataset(context);
         Item paramMapItem = getParamMapItem(context);
 
+        boolean transformerExpectsFeaturesColParam = RumbleMLCatalog
+            .getTransformerParams(this.transformerShortName, getMetadata())
+            .contains(featuresColParamName);
+
+        boolean isFeaturesColumnGenerated = false;
+
+        if (transformerExpectsFeaturesColParam) {
+            Object featuresColValue = new String[] { featuresColParamDefaultValue };
+            if (paramMapItem.getItemByKey(featuresColParamName) != null) {
+                RumbleMLCatalog.validateTransformerParameterByName(
+                    this.transformerShortName,
+                    featuresColParamName,
+                    getMetadata()
+                );
+
+                Item featureColumnsParam = paramMapItem.getItemByKey(featuresColParamName);
+                paramMapItem = RumbleMLUtils.removeParameter(paramMapItem, featuresColParamName, getMetadata());
+
+                featuresColValue = RumbleMLUtils.convertParamItemToJava(
+                    featuresColParamName,
+                    featureColumnsParam,
+                    rumbleMLFeatureColumnsJavaTypeName,
+                    getMetadata()
+                );
+            }
+
+            inputDataset = RumbleMLUtils.generateAndAddFeaturesColumn(
+                inputDataset,
+                featuresColValue,
+                getMetadata()
+            );
+            isFeaturesColumnGenerated = true;
+
+            this.setTransformerFeaturesColFieldToGeneratedColumn();
+        }
+
+
         ParamMap paramMap = convertRumbleObjectItemToSparkMLParamMap(
             this.transformerShortName,
             this.transformer,
@@ -48,7 +90,12 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
         );
 
         try {
-            return this.transformer.transform(inputDataset, paramMap);
+            Dataset<Row> result = this.transformer.transform(inputDataset, paramMap);
+            if (transformerExpectsFeaturesColParam && isFeaturesColumnGenerated) {
+                result = result.drop(rumbleMLGeneratedFeatureColumnName);
+            }
+
+            return result;
         } catch (IllegalArgumentException e) {
             throw new InvalidRumbleMLParamException(
                     "Parameter provided to "
@@ -94,5 +141,16 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
             );
         }
         return paramMapItemList.get(0);
+    }
+
+    private void setTransformerFeaturesColFieldToGeneratedColumn() {
+        try {
+            this.transformer
+                .getClass()
+                .getMethod("setFeaturesCol", String.class)
+                .invoke(this.transformer, rumbleMLGeneratedFeatureColumnName);
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            throw new OurBadException("Failed to set featuresCol on the transformer");
+        }
     }
 }
