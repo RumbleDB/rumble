@@ -71,8 +71,6 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
                 );
             }
 
-            // TODO Optimization: Don't generate features column if it is already in feature format (ie. loaded by as
-            // libsvm data)
             inputDataset = RumbleMLUtils.generateAndAddFeaturesColumn(
                 inputDataset,
                 featuresColValue,

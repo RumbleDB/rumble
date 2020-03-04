@@ -80,8 +80,6 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
                 );
             }
 
-            // TODO Optimization: Don't perform if single column is given and it is already feature format (ie. loaded
-            // by as libsvm data)
             inputDataset = RumbleMLUtils.generateAndAddFeaturesColumn(
                 inputDataset,
                 featuresColValue,
