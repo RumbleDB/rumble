@@ -2052,7 +2052,7 @@ public class Functions {
          */
         static final BuiltinFunction anyURI = createBuiltinFunction(
                 "anyURI",
-                "string?",
+                "atomic?",
                 "anyURI?",
                 AnyURIFunctionIterator.class,
                 BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
