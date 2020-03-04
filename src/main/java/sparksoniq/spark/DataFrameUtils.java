@@ -23,9 +23,18 @@ public class DataFrameUtils {
             ObjectItem schemaItem,
             ExceptionMetadata metadata
     ) {
-        validateSchemaAgainstData(schemaItem, (ObjectItem) itemRDD.take(1).get(0), metadata);
+        validateSchemaAgainstAnItem(schemaItem, (ObjectItem) itemRDD.take(1).get(0), metadata);
         StructType schema = generateSchemaFromSchemaItem(schemaItem, metadata);
-        JavaRDD<Row> rowRDD = itemRDD.map((Function<Item, Row>) item -> ItemParser.getRowFromItem(item));
+        JavaRDD<Row> rowRDD = itemRDD.map(
+            new Function<Item, Row>() {
+                private static final long serialVersionUID = 1L;
+
+                @Override
+                public Row call(Item item) {
+                    return ItemParser.getRowFromItem(item);
+                }
+            }
+        );
         try {
             Dataset<Row> result = SparkSessionManager.getInstance()
                 .getOrCreateSession()
@@ -42,7 +51,7 @@ public class DataFrameUtils {
             ObjectItem schemaItem,
             ExceptionMetadata metadata
     ) {
-        validateSchemaAgainstData(schemaItem, (ObjectItem) items.get(0), metadata);
+        validateSchemaAgainstAnItem(schemaItem, (ObjectItem) items.get(0), metadata);
         StructType schema = generateSchemaFromSchemaItem(schemaItem, metadata);
         List<Row> rows = ItemParser.getRowsFromItems(items);
         try {
@@ -54,7 +63,7 @@ public class DataFrameUtils {
         }
     }
 
-    private static void validateSchemaAgainstData(
+    private static void validateSchemaAgainstAnItem(
             ObjectItem schemaItem,
             ObjectItem dataItem,
             ExceptionMetadata metadata
