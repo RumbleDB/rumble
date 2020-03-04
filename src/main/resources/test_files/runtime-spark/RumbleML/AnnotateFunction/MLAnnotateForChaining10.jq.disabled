@@ -3,7 +3,7 @@ let $data := structured-json-file("./src/main/resources/queries/rumbleML/sample-
 
 let $tokenizer := get-transformer("Tokenizer")
 let $intermediate-data := $tokenizer($data, {"inputCol": "sentence", "outputCol": "output"})
-let $df-intermediate-data := annotate($intermediate-data, {"id": "integer", "sentence": "string", "output": "[\"string\"]"})
+let $df-intermediate-data := annotate($intermediate-data, {"id": "integer", "sentence": "string", "output": ["string"]})
 
 let $hashingTF := get-transformer("HashingTF")
 return $hashingTF($df-intermediate-data, {"inputCol": "output", "numFeatures": 2})
