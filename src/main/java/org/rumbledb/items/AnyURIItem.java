@@ -23,18 +23,11 @@ package org.rumbledb.items;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import org.apache.commons.codec.DecoderException;
-import org.apache.commons.codec.binary.Hex;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import sparksoniq.semantics.types.AtomicTypes;
 import sparksoniq.semantics.types.ItemType;
 import sparksoniq.semantics.types.ItemTypes;
 
-import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -139,13 +132,5 @@ public class AnyURIItem extends AtomicItem {
     @Override
     public boolean isTypeOf(ItemType type) {
         return type.getType().equals(ItemTypes.AnyURIItem) || super.isTypeOf(type);
-    }
-
-    private boolean isBooleanLiteral(String value) {
-        return "true".equals(value) || "false".equals(value);
-    }
-
-    private boolean isNullLiteral(String value) {
-        return "null".equals(value);
     }
 }
