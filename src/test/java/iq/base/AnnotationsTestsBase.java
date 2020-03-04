@@ -32,7 +32,6 @@ import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.exceptions.SparksoniqRuntimeException;
 import org.rumbledb.expressions.module.MainModule;
-import org.rumbledb.parser.JsoniqBaseVisitor;
 import org.rumbledb.parser.JsoniqLexer;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -63,9 +62,8 @@ public class AnnotationsTestsBase {
     /**
      * Tests annotations
      */
-    protected JsoniqParser.MainModuleContext testAnnotations(String path, JsoniqBaseVisitor<Void> visitor)
+    protected MainModule testAnnotations(String path)
             throws IOException {
-        JsoniqParser.MainModuleContext context = null;
         RuntimeIterator runtimeIterator = null;
         try {
             this.currentAnnotation = AnnotationProcessor.readAnnotation(new FileReader(path));
@@ -73,18 +71,13 @@ public class AnnotationsTestsBase {
             e.printStackTrace();
             Assert.fail();
         }
-
+        MainModule mainModule = null;
         try {
-            context = this.parse(path, visitor);
+            mainModule = this.parse(path);
             Functions.clearUserDefinedFunctions(); // clear UDFs between each test run
 
-            // generate static context and runtime iterators
-            if (visitor instanceof TranslationVisitor) {
-                TranslationVisitor completeVisitor = ((TranslationVisitor) visitor);
-                MainModule mainModule = completeVisitor.getMainModule();
-                VisitorHelpers.populateStaticContext(mainModule);
-                runtimeIterator = VisitorHelpers.generateRuntimeIterator(mainModule);
-            }
+            VisitorHelpers.populateStaticContext(mainModule);
+            runtimeIterator = VisitorHelpers.generateRuntimeIterator(mainModule);
             // PARSING
         } catch (ParsingException exception) {
             String errorOutput = exception.getMessage();
@@ -95,11 +88,10 @@ public class AnnotationsTestsBase {
             );
             if (this.currentAnnotation.shouldParse()) {
                 Assert.fail("Program did not parse when expected to.\nError output: " + errorOutput + "\n");
-                return context;
+                return mainModule;
             } else {
                 System.out.println(errorOutput);
-                Assert.assertTrue(true);
-                return context;
+                return mainModule;
             }
 
             // SEMANTIC
@@ -113,11 +105,11 @@ public class AnnotationsTestsBase {
             try {
                 if (this.currentAnnotation.shouldCompile()) {
                     Assert.fail("Program did not compile when expected to.\nError output: " + errorOutput + "\n");
-                    return context;
+                    return mainModule;
                 } else {
                     System.out.println(errorOutput);
                     Assert.assertTrue(true);
-                    return context;
+                    return mainModule;
                 }
             } catch (Exception ex) {
             }
@@ -133,11 +125,11 @@ public class AnnotationsTestsBase {
             try {
                 if (this.currentAnnotation.shouldRun()) {
                     Assert.fail("Program did not run when expected to.\nError output: " + errorOutput + "\n");
-                    return context;
+                    return mainModule;
                 } else {
                     System.out.println(errorOutput);
                     Assert.assertTrue(true);
-                    return context;
+                    return mainModule;
                 }
             } catch (Exception ex) {
             }
@@ -146,14 +138,14 @@ public class AnnotationsTestsBase {
         try {
             if (!this.currentAnnotation.shouldCompile()) {
                 Assert.fail("Program compiled when not expected to.\n");
-                return context;
+                return mainModule;
             }
         } catch (Exception ex) {
         }
 
         if (!this.currentAnnotation.shouldParse()) {
             Assert.fail("Program parsed when not expected to.\n");
-            return context;
+            return mainModule;
         }
 
         // PROGRAM SHOULD RUN
@@ -184,16 +176,16 @@ public class AnnotationsTestsBase {
                         this.currentAnnotation.getErrorCode(),
                         this.currentAnnotation.getErrorMetadata()
                     );
-                    return context;
+                    return mainModule;
                 }
 
                 Assert.fail("Program executed when not expected to");
             }
         }
-        return context;
+        return mainModule;
     }
 
-    private JsoniqParser.MainModuleContext parse(String path, JsoniqBaseVisitor<Void> visitor) throws IOException {
+    private MainModule parse(String path) throws IOException {
         JsoniqLexer lexer = new JsoniqLexer(CharStreams.fromFileName(path));
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
@@ -208,10 +200,8 @@ public class AnnotationsTestsBase {
 
             JsoniqParser.ModuleContext module = parser.module();
             JsoniqParser.MainModuleContext main = module.main;
-            visitor.visit(main);
-
-            return main;
-
+            MainModule mainModule = (MainModule) new TranslationVisitor().visit(main);
+            return mainModule;
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
                     lexer.getText(),

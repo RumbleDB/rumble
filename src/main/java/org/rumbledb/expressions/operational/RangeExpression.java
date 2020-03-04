@@ -26,7 +26,6 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.operational.base.BinaryExpressionBase;
 
 
-
 public class RangeExpression extends BinaryExpressionBase {
 
     public RangeExpression(Expression mainExpression, Expression rhs, ExceptionMetadata metadata) {
@@ -42,11 +41,12 @@ public class RangeExpression extends BinaryExpressionBase {
     public String serializationString(boolean prefix) {
         String result = "(rangeExpr ";
         result += this.mainExpression.serializationString(true);
-        if (this.getRightExpression() != null)
+        if (this.getRightExpression() != null) {
             result += " "
                 + this.getOperator().toString().toLowerCase()
                 + " "
                 + this.getRightExpression().serializationString(true);
+        }
         result += ")";
         return result;
     }

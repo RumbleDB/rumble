@@ -20,7 +20,7 @@
 
 package utils;
 
-import org.rumbledb.compiler.TranslationVisitor;
+import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.parser.JsoniqParser;
 
 import java.util.Arrays;
@@ -177,13 +177,13 @@ public class AstSerialization {
         "stringLiteral" };
 
     public static boolean checkSerialization(
-            TranslationVisitor visitor,
+            MainModule mainModule,
             JsoniqParser.MainModuleContext context
     ) {
 
         String antlrSerializedTree = context.expr().toStringTree(Arrays.asList(SERIALIZATION_RULES_PARTIAL));
         antlrSerializedTree = filterNotSupportedFeatures(antlrSerializedTree);
-        String expressionTree = visitor.getMainModule().serializationString(true);
+        String expressionTree = mainModule.serializationString(true);
         boolean isEqual = antlrSerializedTree.equals(expressionTree);
         if (!isEqual)
             System.out.println("Expected :" + antlrSerializedTree + ";ACTUAL: " + expressionTree);

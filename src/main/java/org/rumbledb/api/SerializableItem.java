@@ -27,9 +27,8 @@ import java.io.Serializable;
 
 /**
  * Items support both Java and Kryo serialization.
- * 
- * @author Ghislain Fourny, Stefan Irimescu, Can Berker Cikis
  *
+ * @author Ghislain Fourny, Stefan Irimescu, Can Berker Cikis
  */
 public interface SerializableItem extends Serializable, KryoSerializable {
     String serialize();

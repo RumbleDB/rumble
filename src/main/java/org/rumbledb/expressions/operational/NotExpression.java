@@ -26,7 +26,6 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.operational.base.UnaryExpressionBase;
 
 
-
 public class NotExpression extends UnaryExpressionBase {
 
     public NotExpression(Expression mainExpression, ExceptionMetadata metadata) {

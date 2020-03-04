@@ -18,28 +18,19 @@
  *
  */
 
-package org.rumbledb.expressions.primary;
+package org.rumbledb.exceptions;
 
+import org.rumbledb.errorcodes.ErrorCodes;
 
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.Node;
+public class MLNotADataFrameException extends SparksoniqRuntimeException {
 
-import java.util.ArrayList;
-import java.util.List;
+    private static final long serialVersionUID = 1L;
 
-
-// TODO(NOT IMPLEMENTED): orderedExpr, unorderedExpr
-public abstract class PrimaryExpression extends Expression {
-
-    protected PrimaryExpression(ExceptionMetadata metadata) {
-        super(metadata);
+    public MLNotADataFrameException(String message, ExceptionMetadata metadata) {
+        super(
+            "Invalid Param; " + message,
+            ErrorCodes.MLNotADataFrameErrorCode,
+            metadata
+        );
     }
-
-    // Many primary expressions do not have children.
-    @Override
-    public List<Node> getChildren() {
-        return new ArrayList<>();
-    }
-
 }

@@ -27,7 +27,6 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.operational.base.BinaryOperationBaseIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.semantics.types.ItemTypes;
@@ -64,11 +63,12 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
             this.right = this.rightIterator.next();
             this.checkBinaryOperation(this.left, this.right, this.operator);
             this.hasNext = true;
-            if (this.leftIterator.hasNext() || this.rightIterator.hasNext())
+            if (this.leftIterator.hasNext() || this.rightIterator.hasNext()) {
                 throw new UnexpectedTypeException(
                         "Sequence of more than one item can not be promoted to parameter type atomic of function add()",
                         getMetadata()
                 );
+            }
         }
         this.leftIterator.close();
         this.rightIterator.close();

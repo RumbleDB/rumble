@@ -28,7 +28,6 @@ import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.operational.base.BinaryOperationBaseIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 
 public class StringConcatIterator extends BinaryOperationBaseIterator {
@@ -62,7 +61,7 @@ public class StringConcatIterator extends BinaryOperationBaseIterator {
             } else {
                 right = ItemFactory.getInstance().createStringItem("");
             }
-            if (!(left.isAtomic()) || !(right.isAtomic()))
+            if (!(left.isAtomic()) || !(right.isAtomic())) {
                 throw new UnexpectedTypeException(
                         "String concat expression has arguments that can't be converted to a string "
                             +
@@ -71,6 +70,7 @@ public class StringConcatIterator extends BinaryOperationBaseIterator {
                             + right.serialize(),
                         getMetadata()
                 );
+            }
 
             String leftStringValue = left.serialize();
             String rightStringValue = right.serialize();

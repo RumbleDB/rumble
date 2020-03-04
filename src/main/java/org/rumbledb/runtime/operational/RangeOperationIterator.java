@@ -28,7 +28,6 @@ import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.operational.base.BinaryOperationBaseIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 
@@ -56,8 +55,9 @@ public class RangeOperationIterator extends BinaryOperationBaseIterator {
     @Override
     public Item next() {
         if (this.hasNext) {
-            if (this.index == this.right)
+            if (this.index == this.right) {
                 this.hasNext = false;
+            }
             return ItemFactory.getInstance().createIntegerItem(this.index++);
         }
         throw new IteratorFlowException("Invalid next call in Range Operation", getMetadata());
@@ -78,7 +78,7 @@ public class RangeOperationIterator extends BinaryOperationBaseIterator {
                     || this.rightIterator.hasNext()
                     || !(left.isInteger())
                     || !(right.isInteger())
-            )
+            ) {
                 throw new UnexpectedTypeException(
                         "Range expression has non numeric args "
                             +
@@ -87,6 +87,7 @@ public class RangeOperationIterator extends BinaryOperationBaseIterator {
                             + right.serialize(),
                         getMetadata()
                 );
+            }
             try {
                 this.left = left.castToIntegerValue();
                 this.right = right.castToIntegerValue();

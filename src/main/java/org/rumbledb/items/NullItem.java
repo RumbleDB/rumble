@@ -103,8 +103,9 @@ public class NullItem extends AtomicItem {
 
     @Override
     public int compareTo(Item other) {
-        if (other.isNull())
+        if (other.isNull()) {
             return 0;
+        }
         return -1;
     }
 

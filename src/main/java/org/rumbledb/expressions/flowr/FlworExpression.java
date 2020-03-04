@@ -47,8 +47,9 @@ public class FlworExpression extends Expression {
             startClause.getClauseType() != FLWOR_CLAUSES.FOR
                 &&
                 startClause.getClauseType() != FLWOR_CLAUSES.LET
-        )
+        ) {
             throw new SemanticException("FLOWR clause must starts with a FOR or a LET\n", this.getMetadata());
+        }
 
         setStartClause(startClause);
         setContentClauses(containingClauses);
@@ -91,11 +92,13 @@ public class FlworExpression extends Expression {
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         result.add(this.startClause);
-        if (this.contentClauses != null)
+        if (this.contentClauses != null) {
             this.contentClauses.forEach(e -> {
-                if (e != null)
+                if (e != null) {
                     result.add(e);
+                }
             });
+        }
         result.add(this.returnClause);
         return result;
     }
@@ -109,8 +112,9 @@ public class FlworExpression extends Expression {
     public String serializationString(boolean prefix) {
         String result = "(flowrExpr ";
         result += this.startClause.serializationString(true) + " ";
-        for (Clause clause : this.contentClauses)
+        for (Clause clause : this.contentClauses) {
             result += clause.serializationString(true) + " ";
+        }
         result += this.returnClause.serializationString(true);
         result += "))";
         return result;

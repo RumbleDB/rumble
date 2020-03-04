@@ -6,7 +6,6 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 
@@ -30,11 +29,12 @@ public class YearFromDateTimeFunctionIterator extends LocalFunctionCallIterator 
         if (this.hasNext) {
             this.hasNext = false;
             return ItemFactory.getInstance().createIntegerItem(this.dateTimeItem.getDateTimeValue().getYear());
-        } else
+        } else {
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " year-from-dateTime function",
                     getMetadata()
             );
+        }
     }
 
     @Override

@@ -3,12 +3,11 @@ package org.rumbledb.runtime.control;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.flowr.FlworVarSequenceType;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.semantics.types.SequenceType;
 
 import java.util.Collections;
 import java.util.List;
@@ -79,8 +78,9 @@ public class TypeswitchRuntimeIterator extends LocalRuntimeIterator {
         this.testValue = test.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
 
         for (TypeswitchRuntimeIteratorCase typeSwitchCase : cases) {
-            if (testTypeMatch(typeSwitchCase))
+            if (testTypeMatch(typeSwitchCase)) {
                 break;
+            }
         }
 
         if (this.matchingIterator == null) {
@@ -100,8 +100,8 @@ public class TypeswitchRuntimeIterator extends LocalRuntimeIterator {
 
     private boolean testTypeMatch(TypeswitchRuntimeIteratorCase typeSwitchCase) {
         if (typeSwitchCase.getSequenceTypeUnion() != null) {
-            for (FlworVarSequenceType sequenceType : typeSwitchCase.getSequenceTypeUnion()) {
-                if (this.testValue != null && this.testValue.isTypeOf(sequenceType.getSequence().getItemType())) {
+            for (SequenceType sequenceType : typeSwitchCase.getSequenceTypeUnion()) {
+                if (this.testValue != null && this.testValue.isTypeOf(sequenceType.getItemType())) {
                     if (typeSwitchCase.getVariableName() != null) {
                         this.currentDynamicContextForLocalExecution.addVariableValue(
                             typeSwitchCase.getVariableName(),

@@ -113,27 +113,31 @@ public class TimeItem extends AtomicItem {
 
     @Override
     public Item add(Item other) {
-        if (other.isDayTimeDuration())
+        if (other.isDayTimeDuration()) {
             return ItemFactory.getInstance()
                 .createTimeItem(this.getValue().plus(other.getDurationValue()), this.hasTimeZone);
+        }
         throw new ClassCastException();
     }
 
     @Override
     public Item subtract(Item other) {
-        if (other.isTime())
+        if (other.isTime()) {
             return ItemFactory.getInstance()
                 .createDayTimeDurationItem(new Period(other.getDateTimeValue(), this.getValue(), PeriodType.dayTime()));
-        if (other.isDayTimeDuration())
+        }
+        if (other.isDayTimeDuration()) {
             return ItemFactory.getInstance()
                 .createTimeItem(this.getValue().minus(other.getDurationValue()), this.hasTimeZone);
+        }
         throw new ClassCastException();
     }
 
     @Override
     public int compareTo(Item other) {
-        if (other.isNull())
+        if (other.isNull()) {
             return 1;
+        }
         if (other.isTime()) {
             return this.getValue().compareTo(other.getDateTimeValue());
         }

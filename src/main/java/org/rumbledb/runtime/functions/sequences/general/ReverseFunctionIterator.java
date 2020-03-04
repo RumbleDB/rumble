@@ -25,7 +25,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 
@@ -59,8 +58,9 @@ public class ReverseFunctionIterator extends LocalFunctionCallIterator {
         if (this.results == null || this.results.size() == 0) {
             throw new IteratorFlowException("getResult called on an empty list of results", getMetadata());
         }
-        if (this.currentIndex == this.results.size() - 1)
+        if (this.currentIndex == this.results.size() - 1) {
             this.hasNext = false;
+        }
         return this.results.get(this.currentIndex++);
     }
 

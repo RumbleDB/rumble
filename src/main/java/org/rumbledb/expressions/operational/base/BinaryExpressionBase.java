@@ -54,8 +54,9 @@ public abstract class BinaryExpressionBase extends OperationalExpressionBase {
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         result.add(this.mainExpression);
-        if (this.rightExpression != null)
+        if (this.rightExpression != null) {
             result.add(this.rightExpression);
+        }
         return result;
     }
 }

@@ -26,7 +26,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.RDDRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkSessionManager;
@@ -52,19 +51,21 @@ public class ParallelizeFunctionIterator extends RDDRuntimeIterator {
         List<Item> contents = new ArrayList<>();
         RuntimeIterator sequenceIterator = this.children.get(0);
         sequenceIterator.open(context);
-        while (sequenceIterator.hasNext())
+        while (sequenceIterator.hasNext()) {
             contents.add(sequenceIterator.next());
+        }
         sequenceIterator.close();
         if (this.children.size() == 1) {
             rdd = SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents);
         } else {
             RuntimeIterator partitionsIterator = this.children.get(1);
             partitionsIterator.open(this.currentDynamicContextForLocalExecution);
-            if (!partitionsIterator.hasNext())
+            if (!partitionsIterator.hasNext()) {
                 throw new UnexpectedTypeException(
                         "The second parameter of parallelize must be an integer, but an empty sequence is supplied.",
                         getMetadata()
                 );
+            }
             Item partitions = partitionsIterator.next();
             if (!partitions.isInteger()) {
                 throw new UnexpectedTypeException(
@@ -77,11 +78,12 @@ public class ParallelizeFunctionIterator extends RDDRuntimeIterator {
                     .getJavaSparkContext()
                     .parallelize(contents, partitions.getIntegerValue());
             } catch (Exception e) {
-                if (!partitionsIterator.hasNext())
+                if (!partitionsIterator.hasNext()) {
                     throw new UnexpectedTypeException(
                             "The second parameter of parallelize must be an integer.",
                             getMetadata()
                     );
+                }
             }
             partitionsIterator.close();
         }

@@ -27,8 +27,8 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import sparksoniq.jsoniq.tuple.FlworTuple;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.io.IOException;
 import java.util.ArrayList;

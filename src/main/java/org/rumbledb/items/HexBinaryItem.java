@@ -57,8 +57,9 @@ public class HexBinaryItem extends AtomicItem {
     }
 
     static byte[] parseHexBinaryString(String hexBinaryString) throws IllegalArgumentException {
-        if (hexBinaryString == null || !checkInvalidHexBinaryFormat(hexBinaryString))
+        if (hexBinaryString == null || !checkInvalidHexBinaryFormat(hexBinaryString)) {
             throw new IllegalArgumentException();
+        }
         try {
             return (byte[]) new Hex().decode(hexBinaryString);
         } catch (DecoderException e) {
@@ -118,8 +119,9 @@ public class HexBinaryItem extends AtomicItem {
 
     @Override
     public int compareTo(Item other) {
-        if (other.isNull())
+        if (other.isNull()) {
             return 1;
+        }
         if (other.isHexBinary()) {
             return this.serializeValue().compareTo(Arrays.toString(other.getBinaryValue()));
         }
@@ -144,8 +146,9 @@ public class HexBinaryItem extends AtomicItem {
                     metadata
             );
         }
-        if (other.isNull())
+        if (other.isNull()) {
             return operator.apply(this, other);
+        }
         switch (operator) {
             case VC_EQ:
             case GC_EQ:

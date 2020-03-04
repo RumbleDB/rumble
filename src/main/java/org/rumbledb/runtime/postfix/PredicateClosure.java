@@ -23,7 +23,6 @@ package org.rumbledb.runtime.postfix;
 import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
 import org.rumbledb.runtime.RuntimeIterator;
-
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
