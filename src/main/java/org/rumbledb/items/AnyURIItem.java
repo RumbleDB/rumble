@@ -24,9 +24,8 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
-import sparksoniq.semantics.types.AtomicTypes;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypes;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -98,8 +97,8 @@ public class AnyURIItem extends AtomicItem {
     }
 
     @Override
-    public Item castAs(AtomicTypes itemType) {
-        switch (itemType) {
+    public Item castAs(ItemType itemType) {
+        switch (itemType.getType()) {
             case StringItem:
                 return ItemFactory.getInstance().createStringItem(this.getStringValue());
             case AnyURIItem:
@@ -110,8 +109,8 @@ public class AnyURIItem extends AtomicItem {
     }
 
     @Override
-    public boolean isCastableAs(AtomicTypes itemType) {
-        return (itemType == AtomicTypes.AnyURIItem || itemType == AtomicTypes.StringItem);
+    public boolean isCastableAs(ItemType itemType) {
+        return (itemType.getType() == ItemTypes.AnyURIItem || itemType.getType() == ItemTypes.StringItem);
     }
 
     @Override

@@ -21,8 +21,8 @@
 package org.rumbledb.items;
 
 import org.rumbledb.api.Item;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypes;
 
 public abstract class JsonItem extends Item {
 

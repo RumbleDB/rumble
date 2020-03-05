@@ -28,7 +28,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.types.AtomicTypes;
+import org.rumbledb.types.ItemType;
 
 import java.util.List;
 
@@ -54,9 +54,9 @@ public class NumberFunctionIterator extends LocalFunctionCallIterator {
             }
 
             AtomicItem atomicItem = (AtomicItem) anyItem;
-            if (atomicItem.isCastableAs(AtomicTypes.DoubleItem)) {
+            if (atomicItem.isCastableAs(ItemType.doubleItem)) {
                 try {
-                    return atomicItem.castAs(AtomicTypes.DoubleItem);
+                    return atomicItem.castAs(ItemType.doubleItem);
                 } catch (ClassCastException e) {
                     return ItemFactory.getInstance().createDoubleItem(Double.NaN);
                 }

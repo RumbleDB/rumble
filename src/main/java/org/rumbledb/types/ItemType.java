@@ -18,7 +18,7 @@
  *
  */
 
-package sparksoniq.semantics.types;
+package org.rumbledb.types;
 
 
 import org.rumbledb.exceptions.OurBadException;
@@ -30,11 +30,32 @@ public class ItemType implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private ItemTypes type;
+    public static final ItemType objectItem = new ItemType(ItemTypes.ObjectItem);
+    public static final ItemType atomicItem = new ItemType(ItemTypes.AtomicItem);
+    public static final ItemType stringItem = new ItemType(ItemTypes.StringItem);
+    public static final ItemType integerItem = new ItemType(ItemTypes.IntegerItem);
+    public static final ItemType decimalItem = new ItemType(ItemTypes.DecimalItem);
+    public static final ItemType doubleItem = new ItemType(ItemTypes.DoubleItem);
+    public static final ItemType booleanItem = new ItemType(ItemTypes.BooleanItem);
+    public static final ItemType arrayItem = new ItemType(ItemTypes.ArrayItem);
+    public static final ItemType nullItem = new ItemType(ItemTypes.NullItem);
+    public static final ItemType JSONItem = new ItemType(ItemTypes.JSONItem);
+    public static final ItemType durationItem = new ItemType(ItemTypes.DurationItem);
+    public static final ItemType yearMonthDurationItem = new ItemType(ItemTypes.YearMonthDurationItem);
+    public static final ItemType dayTimeDurationItem = new ItemType(ItemTypes.DayTimeDurationItem);
+    public static final ItemType dateTimeItem = new ItemType(ItemTypes.DateTimeItem);
+    public static final ItemType dateItem = new ItemType(ItemTypes.DateItem);
+    public static final ItemType timeItem = new ItemType(ItemTypes.TimeItem);
+    public static final ItemType anyURIItem = new ItemType(ItemTypes.AnyURIItem);
+    public static final ItemType hexBinaryItem = new ItemType(ItemTypes.HexBinaryItem);
+    public static final ItemType base64BinaryItem = new ItemType(ItemTypes.Base64BinaryItem);
+    public static final ItemType item = new ItemType(ItemTypes.Item);
+    public static final ItemType functionItem = new ItemType(ItemTypes.FunctionItem);
 
     public ItemType() {
     }
 
-    public ItemType(ItemTypes type) {
+    private ItemType(ItemTypes type) {
         this.type = type;
 
     }
@@ -176,15 +197,31 @@ public class ItemType implements Serializable {
                 return "anyuri";
             case NullItem:
                 return "null";
-
             case JSONItem:
                 return "json-item";
             case ArrayItem:
                 return "array";
             case ObjectItem:
                 return "object";
-            default:
-                return "item";
+            case Base64BinaryItem:
+                return "base64Binary";
+            case HexBinaryItem:
+                return "hexBinary";
+            case DateItem:
+                return "date";
+            case DateTimeItem:
+                return "dateTime";
+            case DayTimeDurationItem:
+                return "dayTimeDuration";
+            case DurationItem:
+                return "duration";
+            case FunctionItem:
+                return "function(*)";
+            case TimeItem:
+                return "time";
+            case YearMonthDurationItem:
+                return "yearMonthDuration";
         }
+        throw new OurBadException("Unrecognized type.");
     }
 }

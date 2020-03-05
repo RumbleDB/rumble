@@ -10,11 +10,12 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.TreatAsClosure;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypes;
+import org.rumbledb.types.SequenceType;
+
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
-import sparksoniq.semantics.types.SequenceType;
 
 import java.util.Collections;
 

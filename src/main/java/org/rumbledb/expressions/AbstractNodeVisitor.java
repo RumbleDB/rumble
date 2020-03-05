@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions;
 
+import org.rumbledb.expression.typing.CastableExpression;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchExpression;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
@@ -40,7 +41,6 @@ import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.operational.AdditiveExpression;
 import org.rumbledb.expressions.operational.AndExpression;
 import org.rumbledb.expressions.operational.CastExpression;
-import org.rumbledb.expressions.operational.CastableExpression;
 import org.rumbledb.expressions.operational.ComparisonExpression;
 import org.rumbledb.expressions.operational.InstanceOfExpression;
 import org.rumbledb.expressions.operational.MultiplicativeExpression;

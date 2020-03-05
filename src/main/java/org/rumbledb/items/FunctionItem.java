@@ -32,9 +32,9 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.runtime.functions.base.FunctionSignature;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
-import sparksoniq.semantics.types.SequenceType;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypes;
+import org.rumbledb.types.SequenceType;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

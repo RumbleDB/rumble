@@ -1,7 +1,7 @@
 package org.rumbledb.runtime.control;
 
 import org.rumbledb.runtime.RuntimeIterator;
-import sparksoniq.semantics.types.SequenceType;
+import org.rumbledb.types.SequenceType;
 
 import java.util.List;
 

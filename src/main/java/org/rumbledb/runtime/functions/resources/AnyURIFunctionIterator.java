@@ -10,8 +10,9 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.semantics.types.AtomicTypes;
-import sparksoniq.semantics.types.ItemTypes;
+import org.rumbledb.types.ItemTypes;
+import org.rumbledb.types.ItemType;
+
 
 import java.util.List;
 
@@ -35,7 +36,7 @@ public class AnyURIFunctionIterator extends LocalFunctionCallIterator {
             AtomicItem atomicItem = (AtomicItem) this.anyItem;
             String message;
             if (atomicItem.isAnyURI()) {
-                return atomicItem.castAs(AtomicTypes.AnyURIItem);
+                return atomicItem.castAs(ItemType.anyURIItem);
             } else if (atomicItem.isString()) {
                 try {
                     return ItemFactory.getInstance().createAnyURIItem(atomicItem.getStringValue());
