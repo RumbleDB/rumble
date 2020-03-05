@@ -184,39 +184,34 @@ public class DateTimeItem extends AtomicItem {
     }
 
     private static DateTimeFormatter getDateTimeFormatter(ItemType dateTimeType) {
-    	if(dateTimeType.equals(ItemType.dateTimeItem)) {
-                return ISODateTimeFormat.dateTimeParser().withOffsetParsed();
-    }
-    if(dateTimeType.equals(ItemType.dateItem))
-    {
-                DateTimeParser dtParser = new DateTimeFormatterBuilder().appendOptional(
-                    ((new DateTimeFormatterBuilder()).appendTimeZoneOffset("Z", true, 2, 4).toFormatter()).getParser()
-                ).toParser();
-                return (new DateTimeFormatterBuilder()).append(dateElementParser())
-                    .appendOptional(dtParser)
-                    .toFormatter()
-                    .withOffsetParsed();
-}
-if(dateTimeType.equals(ItemType.timeItem))
-{
-	return ISODateTimeFormat.timeParser().withOffsetParsed();
-}
-                throw new IllegalArgumentException();
+        if (dateTimeType.equals(ItemType.dateTimeItem)) {
+            return ISODateTimeFormat.dateTimeParser().withOffsetParsed();
+        }
+        if (dateTimeType.equals(ItemType.dateItem)) {
+            DateTimeParser dtParser = new DateTimeFormatterBuilder().appendOptional(
+                ((new DateTimeFormatterBuilder()).appendTimeZoneOffset("Z", true, 2, 4).toFormatter()).getParser()
+            ).toParser();
+            return (new DateTimeFormatterBuilder()).append(dateElementParser())
+                .appendOptional(dtParser)
+                .toFormatter()
+                .withOffsetParsed();
+        }
+        if (dateTimeType.equals(ItemType.timeItem)) {
+            return ISODateTimeFormat.timeParser().withOffsetParsed();
+        }
+        throw new IllegalArgumentException();
     }
 
     private static boolean checkInvalidDateTimeFormat(String dateTime, ItemType dateTimeType) {
-    	if(dateTimeType.equals(ItemType.dateTimeItem))
-    	{
-                return dateTimePattern.matcher(dateTime).matches();
-    }
-    if(dateTimeType.equals(ItemType.dateItem))
-    	{
-    	return datePattern.matcher(dateTime).matches();
-    	}
-    	if(dateTimeType.equals(ItemType.timeItem))
-    	{
-    		return timePattern.matcher(dateTime).matches();
-    	}
+        if (dateTimeType.equals(ItemType.dateTimeItem)) {
+            return dateTimePattern.matcher(dateTime).matches();
+        }
+        if (dateTimeType.equals(ItemType.dateItem)) {
+            return datePattern.matcher(dateTime).matches();
+        }
+        if (dateTimeType.equals(ItemType.timeItem)) {
+            return timePattern.matcher(dateTime).matches();
+        }
         return false;
     }
 

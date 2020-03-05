@@ -174,64 +174,58 @@ public class DurationItem extends AtomicItem {
     }
 
     private static PeriodFormatter getPeriodFormatter(ItemType durationType) {
-    	if(durationType.equals(ItemType.durationItem))
-    	{
-    		return ISOPeriodFormat.standard();
-    	}
-    	if(durationType.equals(ItemType.yearMonthDurationItem))
-    	{
-                return new PeriodFormatterBuilder().appendLiteral("P")
-                    .appendYears()
-                    .appendSuffix("Y")
-                    .appendMonths()
-                    .appendSuffix("M")
-                    .toFormatter();
-    	}
+        if (durationType.equals(ItemType.durationItem)) {
+            return ISOPeriodFormat.standard();
+        }
+        if (durationType.equals(ItemType.yearMonthDurationItem)) {
+            return new PeriodFormatterBuilder().appendLiteral("P")
+                .appendYears()
+                .appendSuffix("Y")
+                .appendMonths()
+                .appendSuffix("M")
+                .toFormatter();
+        }
 
-    	if(durationType.equals(ItemType.dayTimeDurationItem))
-    	{
-                return new PeriodFormatterBuilder().appendLiteral("P")
-                    .appendDays()
-                    .appendSuffix("D")
-                    .appendSeparatorIfFieldsAfter("T")
-                    .appendHours()
-                    .appendSuffix("H")
-                    .appendMinutes()
-                    .appendSuffix("M")
-                    .appendSecondsWithOptionalMillis()
-                    .appendSuffix("S")
-                    .toFormatter();
-    	}
-                throw new IllegalArgumentException();
+        if (durationType.equals(ItemType.dayTimeDurationItem)) {
+            return new PeriodFormatterBuilder().appendLiteral("P")
+                .appendDays()
+                .appendSuffix("D")
+                .appendSeparatorIfFieldsAfter("T")
+                .appendHours()
+                .appendSuffix("H")
+                .appendMinutes()
+                .appendSuffix("M")
+                .appendSecondsWithOptionalMillis()
+                .appendSuffix("S")
+                .toFormatter();
+        }
+        throw new IllegalArgumentException();
     }
 
     private static PeriodType getPeriodType(ItemType durationType) {
-    	if(durationType.equals(ItemType.durationItem))
-    	{
-                return PeriodType.yearMonthDayTime();
-    	}
-    	if(durationType.equals(ItemType.yearMonthDurationItem))
-    	{                return PeriodType.forFields(
-                    new DurationFieldType[] { DurationFieldType.years(), DurationFieldType.months() }
-                );
-    	}
-    	if(durationType.equals(ItemType.dayTimeDurationItem))
-    	{                return PeriodType.dayTime();
-    	}
-                throw new IllegalArgumentException();
+        if (durationType.equals(ItemType.durationItem)) {
+            return PeriodType.yearMonthDayTime();
+        }
+        if (durationType.equals(ItemType.yearMonthDurationItem)) {
+            return PeriodType.forFields(
+                new DurationFieldType[] { DurationFieldType.years(), DurationFieldType.months() }
+            );
+        }
+        if (durationType.equals(ItemType.dayTimeDurationItem)) {
+            return PeriodType.dayTime();
+        }
+        throw new IllegalArgumentException();
     }
 
     private static boolean checkInvalidDurationFormat(String duration, ItemType durationType) {
-    	if(durationType.equals(ItemType.durationItem))
-    	{
-                return durationPattern.matcher(duration).matches();
-    	}
-    	if(durationType.equals(ItemType.yearMonthDurationItem))
-    	{
-    	                return yearMonthDurationPattern.matcher(duration).matches();
-    	}
-    	if(durationType.equals(ItemType.dayTimeDurationItem))
-    	{                return dayTimeDurationPattern.matcher(duration).matches();
+        if (durationType.equals(ItemType.durationItem)) {
+            return durationPattern.matcher(duration).matches();
+        }
+        if (durationType.equals(ItemType.yearMonthDurationItem)) {
+            return yearMonthDurationPattern.matcher(duration).matches();
+        }
+        if (durationType.equals(ItemType.dayTimeDurationItem)) {
+            return dayTimeDurationPattern.matcher(duration).matches();
         }
         return false;
     }

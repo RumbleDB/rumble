@@ -217,7 +217,7 @@ public class ItemType implements Serializable {
         }
         throw new OurBadException("Unrecognized type.");
     }
-    
+
     public static String convertClassNameToItemTypeName(String fullTypeName) {
         String itemPostfix = "Item";
         if (!itemPostfix.equals(fullTypeName) && fullTypeName.endsWith("Item")) {

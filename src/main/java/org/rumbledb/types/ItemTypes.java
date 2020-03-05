@@ -49,5 +49,5 @@ enum ItemTypes {
 
     NullItem;
 
-    
+
 }
