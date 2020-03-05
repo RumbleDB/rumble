@@ -562,6 +562,8 @@ returns 13:20:00-05:00
 
 ## Formatting dates and times functions
 
+The functions in this section accept a simplified version of the picture string, in which a variable marker accepts only a component specifier, according to the rules presented in the [XPath functions specification](https://www.w3.org/TR/xpath-functions-30/#rules-for-datetime-formatting).
+
 ### format-dateTime
 
 ```
