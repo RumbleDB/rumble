@@ -64,7 +64,7 @@ public class FlworVarSingleType extends Expression {
                 return AtomicTypes.HexBinaryItem;
             case "base64binary":
                 return AtomicTypes.Base64BinaryItem;
-            case "anyURI":
+            case "anyuri":
                 return AtomicTypes.AnyURIItem;
 
             default:
@@ -118,7 +118,7 @@ public class FlworVarSingleType extends Expression {
             case DurationItem:
                 return "(atomicType duration)";
             case AnyURIItem:
-                return "(atomicType anyURI)";
+                return "(atomicType anyuri)";
             default:
                 return "item";
         }
