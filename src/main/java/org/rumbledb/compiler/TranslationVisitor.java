@@ -593,8 +593,8 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             return mainExpression;
         }
         JsoniqParser.SingleTypeContext child = ctx.single;
-        SequenceType singleType = this.processSingleType(child);
-        return new CastableExpression(mainExpression, singleType, createMetadataFromContext(ctx));
+        SequenceType sequenceType = this.processSingleType(child);
+        return new CastableExpression(mainExpression, sequenceType, createMetadataFromContext(ctx));
     }
 
     @Override

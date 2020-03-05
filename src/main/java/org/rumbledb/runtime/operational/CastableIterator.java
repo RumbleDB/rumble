@@ -22,18 +22,18 @@ import java.util.List;
 
 public class CastableIterator extends LocalRuntimeIterator {
     private static final long serialVersionUID = 1L;
-    private final SequenceType singleType;
+    private final SequenceType sequenceType;
     protected final RuntimeIterator child;
 
     public CastableIterator(
             RuntimeIterator child,
-            SequenceType singleType,
+            SequenceType sequenceType,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
     ) {
         super(Collections.singletonList(child), executionMode, iteratorMetadata);
         this.child = child;
-        this.singleType = singleType;
+        this.sequenceType = sequenceType;
     }
 
     @Override
@@ -53,16 +53,18 @@ public class CastableIterator extends LocalRuntimeIterator {
             this.hasNext = false;
 
             if (items.isEmpty()) {
-                return ItemFactory.getInstance().createBooleanItem(this.singleType.getArity().equals(Arity.OneOrZero));
+                return ItemFactory.getInstance()
+                    .createBooleanItem(this.sequenceType.getArity().equals(Arity.OneOrZero));
             }
 
             if (items.size() != 1 || items.get(0) == null) {
                 return ItemFactory.getInstance().createBooleanItem(false);
             }
 
-            AtomicItem atomicItem = checkInvalidCastable(items.get(0), getMetadata(), this.singleType);
+            AtomicItem atomicItem = checkInvalidCastable(items.get(0), getMetadata(), this.sequenceType);
 
-            return ItemFactory.getInstance().createBooleanItem(atomicItem.isCastableAs(this.singleType.getItemType()));
+            return ItemFactory.getInstance()
+                .createBooleanItem(atomicItem.isCastableAs(this.sequenceType.getItemType()));
         } else {
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
         }
