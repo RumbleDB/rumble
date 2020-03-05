@@ -227,4 +227,36 @@ public class ItemType implements Serializable {
         }
         return fullTypeName;
     }
+
+    enum ItemTypes {
+        Item,
+
+        JSONItem,
+        ObjectItem,
+        ArrayItem,
+
+        AtomicItem,
+        StringItem,
+        IntegerItem,
+        DecimalItem,
+        DoubleItem,
+        BooleanItem,
+
+        DurationItem,
+        YearMonthDurationItem,
+        DayTimeDurationItem,
+
+        DateTimeItem,
+        DateItem,
+        TimeItem,
+
+        HexBinaryItem,
+        Base64BinaryItem,
+
+        FunctionItem,
+
+        NullItem;
+
+
+    }
 }
