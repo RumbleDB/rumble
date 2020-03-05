@@ -9,10 +9,11 @@ import org.rumbledb.items.AtomicItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.types.ItemTypes;
+import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
+
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.types.AtomicTypes;
-import sparksoniq.semantics.types.ItemTypes;
-import sparksoniq.semantics.types.SingleType;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,18 +22,18 @@ import java.util.List;
 
 public class CastableIterator extends LocalRuntimeIterator {
     private static final long serialVersionUID = 1L;
-    private final SingleType singleType;
+    private final SequenceType sequenceType;
     protected final RuntimeIterator child;
 
     public CastableIterator(
             RuntimeIterator child,
-            SingleType singleType,
+            SequenceType sequenceType,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
     ) {
         super(Collections.singletonList(child), executionMode, iteratorMetadata);
         this.child = child;
-        this.singleType = singleType;
+        this.sequenceType = sequenceType;
     }
 
     @Override
@@ -52,23 +53,25 @@ public class CastableIterator extends LocalRuntimeIterator {
             this.hasNext = false;
 
             if (items.isEmpty()) {
-                return ItemFactory.getInstance().createBooleanItem(this.singleType.getZeroOrOne());
+                return ItemFactory.getInstance()
+                    .createBooleanItem(this.sequenceType.getArity().equals(Arity.OneOrZero));
             }
 
             if (items.size() != 1 || items.get(0) == null) {
                 return ItemFactory.getInstance().createBooleanItem(false);
             }
 
-            AtomicItem atomicItem = checkInvalidCastable(items.get(0), getMetadata(), this.singleType);
+            AtomicItem atomicItem = checkInvalidCastable(items.get(0), getMetadata(), this.sequenceType);
 
-            return ItemFactory.getInstance().createBooleanItem(atomicItem.isCastableAs(this.singleType.getType()));
+            return ItemFactory.getInstance()
+                .createBooleanItem(atomicItem.isCastableAs(this.sequenceType.getItemType()));
         } else {
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
         }
     }
 
-    static AtomicItem checkInvalidCastable(Item item, ExceptionMetadata metadata, SingleType singleType) {
-        if (singleType.getType() == AtomicTypes.AtomicItem) {
+    static AtomicItem checkInvalidCastable(Item item, ExceptionMetadata metadata, SequenceType type) {
+        if (type.getItemType().getType().equals(ItemTypes.AtomicItem)) {
             throw new CastableException("\"atomic\": invalid type for \"cast\" or \"castable\" expression", metadata);
         }
         AtomicItem atomicItem;

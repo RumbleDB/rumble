@@ -8,8 +8,8 @@ import com.esotericsoftware.kryo.io.Output;
 import com.esotericsoftware.kryo.util.Pool;
 import org.rumbledb.api.Item;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.SequenceType;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
 
 import java.util.ArrayList;
 

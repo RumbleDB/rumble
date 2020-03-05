@@ -137,10 +137,10 @@ import org.rumbledb.runtime.functions.strings.SubstringBeforeFunctionIterator;
 import org.rumbledb.runtime.functions.strings.SubstringFunctionIterator;
 import org.rumbledb.runtime.functions.strings.TokenizeFunctionIterator;
 import org.rumbledb.runtime.operational.TypePromotionIterator;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
-import sparksoniq.semantics.types.SequenceType;
 import sparksoniq.spark.ml.AnnotateFunctionIterator;
 import sparksoniq.spark.ml.GetEstimatorFunctionIterator;
 import sparksoniq.spark.ml.GetTransformerFunctionIterator;
@@ -283,7 +283,7 @@ import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.year_f
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.year_from_dateTime;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.years_from_duration;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.zero_or_one;
-import static sparksoniq.semantics.types.SequenceType.mostGeneralSequenceType;
+import static org.rumbledb.types.SequenceType.mostGeneralSequenceType;
 
 public class Functions {
     private static final HashMap<FunctionIdentifier, BuiltinFunction> builtInFunctions;
@@ -299,30 +299,30 @@ public class Functions {
 
     static {
         itemTypes = new HashMap<>();
-        itemTypes.put("item", new ItemType(ItemTypes.Item));
+        itemTypes.put("item", ItemType.item);
 
-        itemTypes.put("object", new ItemType(ItemTypes.ObjectItem));
-        itemTypes.put("array", new ItemType(ItemTypes.ArrayItem));
+        itemTypes.put("object", ItemType.objectItem);
+        itemTypes.put("array", ItemType.arrayItem);
 
-        itemTypes.put("atomic", new ItemType(ItemTypes.AtomicItem));
-        itemTypes.put("string", new ItemType(ItemTypes.StringItem));
-        itemTypes.put("integer", new ItemType(ItemTypes.IntegerItem));
-        itemTypes.put("decimal", new ItemType(ItemTypes.DecimalItem));
-        itemTypes.put("double", new ItemType(ItemTypes.DoubleItem));
-        itemTypes.put("boolean", new ItemType(ItemTypes.BooleanItem));
+        itemTypes.put("atomic", ItemType.atomicItem);
+        itemTypes.put("string", ItemType.stringItem);
+        itemTypes.put("integer", ItemType.integerItem);
+        itemTypes.put("decimal", ItemType.decimalItem);
+        itemTypes.put("double", ItemType.doubleItem);
+        itemTypes.put("boolean", ItemType.booleanItem);
 
-        itemTypes.put("duration", new ItemType(ItemTypes.DurationItem));
-        itemTypes.put("yearMonthDuration", new ItemType(ItemTypes.YearMonthDurationItem));
-        itemTypes.put("dayTimeDuration", new ItemType(ItemTypes.DayTimeDurationItem));
+        itemTypes.put("duration", ItemType.durationItem);
+        itemTypes.put("yearMonthDuration", ItemType.yearMonthDurationItem);
+        itemTypes.put("dayTimeDuration", ItemType.dayTimeDurationItem);
 
-        itemTypes.put("dateTime", new ItemType(ItemTypes.DateTimeItem));
-        itemTypes.put("date", new ItemType(ItemTypes.DateItem));
-        itemTypes.put("time", new ItemType(ItemTypes.TimeItem));
+        itemTypes.put("dateTime", ItemType.dateTimeItem);
+        itemTypes.put("date", ItemType.dateItem);
+        itemTypes.put("time", ItemType.timeItem);
 
-        itemTypes.put("hexBinary", new ItemType(ItemTypes.HexBinaryItem));
-        itemTypes.put("base64Binary", new ItemType(ItemTypes.Base64BinaryItem));
+        itemTypes.put("hexBinary", ItemType.hexBinaryItem);
+        itemTypes.put("base64Binary", ItemType.base64BinaryItem);
 
-        itemTypes.put("null", new ItemType(ItemTypes.NullItem));
+        itemTypes.put("null", ItemType.nullItem);
 
     }
 

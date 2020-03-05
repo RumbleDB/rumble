@@ -21,9 +21,8 @@
 package org.rumbledb.items;
 
 import org.rumbledb.api.Item;
-import sparksoniq.semantics.types.AtomicTypes;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypes;
 
 public abstract class AtomicItem extends Item {
 
@@ -45,10 +44,10 @@ public abstract class AtomicItem extends Item {
 
     @Override
     public Item promoteTo(ItemType type) {
-        return this.castAs(AtomicTypes.valueOf(type.getType().toString()));
+        return this.castAs(type);
     }
 
-    public abstract Item castAs(AtomicTypes itemType);
+    public abstract Item castAs(ItemType itemType);
 
-    public abstract boolean isCastableAs(AtomicTypes itemType);
+    public abstract boolean isCastableAs(ItemType itemType);
 }

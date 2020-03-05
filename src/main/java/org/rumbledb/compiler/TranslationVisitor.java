@@ -30,6 +30,7 @@ import org.rumbledb.exceptions.ModuleDeclarationException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SparksoniqRuntimeException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
+import org.rumbledb.expression.typing.CastableExpression;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -41,7 +42,6 @@ import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.FlworExpression;
-import org.rumbledb.expressions.flowr.FlworVarSingleType;
 import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.ForClauseVar;
 import org.rumbledb.expressions.flowr.GroupByClause;
@@ -57,7 +57,6 @@ import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.operational.AdditiveExpression;
 import org.rumbledb.expressions.operational.AndExpression;
 import org.rumbledb.expressions.operational.CastExpression;
-import org.rumbledb.expressions.operational.CastableExpression;
 import org.rumbledb.expressions.operational.ComparisonExpression;
 import org.rumbledb.expressions.operational.InstanceOfExpression;
 import org.rumbledb.expressions.operational.MultiplicativeExpression;
@@ -86,17 +85,17 @@ import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+
 import sparksoniq.jsoniq.compiler.ValueTypeHandler;
-import sparksoniq.semantics.types.AtomicTypes;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.SequenceType;
+
+import static org.rumbledb.types.SequenceType.mostGeneralSequenceType;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import static sparksoniq.semantics.types.SequenceType.mostGeneralSequenceType;
 
 
 /**
@@ -594,8 +593,8 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             return mainExpression;
         }
         JsoniqParser.SingleTypeContext child = ctx.single;
-        FlworVarSingleType singleType = (FlworVarSingleType) this.visitSingleType(child);
-        return new CastableExpression(mainExpression, singleType, createMetadataFromContext(ctx));
+        SequenceType sequenceType = this.processSingleType(child);
+        return new CastableExpression(mainExpression, sequenceType, createMetadataFromContext(ctx));
     }
 
     @Override
@@ -605,8 +604,8 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             return mainExpression;
         }
         JsoniqParser.SingleTypeContext child = ctx.single;
-        FlworVarSingleType singleType = (FlworVarSingleType) this.visitSingleType(child);
-        return new CastExpression(mainExpression, singleType, createMetadataFromContext(ctx));
+        SequenceType type = this.processSingleType(child);
+        return new CastExpression(mainExpression, type, createMetadataFromContext(ctx));
     }
 
     @Override
@@ -839,17 +838,19 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         return new SequenceType(itemType);
     }
 
-    @Override
-    public Node visitSingleType(JsoniqParser.SingleTypeContext ctx) {
+    public SequenceType processSingleType(JsoniqParser.SingleTypeContext ctx) {
         if (ctx.item == null) {
-            return new FlworVarSingleType(createMetadataFromContext(ctx));
+            return SequenceType.emptySequence;
         }
 
-        AtomicTypes item = FlworVarSingleType.getAtomicType(ctx.item.getText());
+        ItemType itemType = new ItemType(ctx.item.getText());
         if (ctx.question.size() > 0) {
-            return new FlworVarSingleType(item, true, createMetadataFromContext(ctx));
+            return new SequenceType(
+                    itemType,
+                    SequenceType.Arity.OneOrZero
+            );
         }
-        return new FlworVarSingleType(item, createMetadataFromContext(ctx));
+        return new SequenceType(itemType);
     }
 
     @Override

@@ -12,9 +12,8 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-import sparksoniq.semantics.types.AtomicTypes;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypes;
 
 
 public class TimeItem extends AtomicItem {
@@ -34,7 +33,7 @@ public class TimeItem extends AtomicItem {
     }
 
     TimeItem(String dateTimeString) {
-        this.value = DateTimeItem.parseDateTime(dateTimeString, AtomicTypes.TimeItem);
+        this.value = DateTimeItem.parseDateTime(dateTimeString, ItemTypes.TimeItem);
         if (!dateTimeString.endsWith("Z") && this.value.getZone() == DateTimeZone.getDefault()) {
             this.hasTimeZone = false;
             this.value = this.value.withZoneRetainFields(DateTimeZone.UTC);
@@ -88,15 +87,15 @@ public class TimeItem extends AtomicItem {
     }
 
     @Override
-    public boolean isCastableAs(AtomicTypes itemType) {
-        return itemType.equals(AtomicTypes.TimeItem)
+    public boolean isCastableAs(ItemType itemType) {
+        return itemType.getType() == ItemTypes.TimeItem
             ||
-            itemType.equals(AtomicTypes.StringItem);
+            itemType.getType() == ItemTypes.StringItem;
     }
 
     @Override
-    public Item castAs(AtomicTypes itemType) {
-        switch (itemType) {
+    public Item castAs(ItemType itemType) {
+        switch (itemType.getType()) {
             case StringItem:
                 return ItemFactory.getInstance().createStringItem(this.serialize());
             case TimeItem:

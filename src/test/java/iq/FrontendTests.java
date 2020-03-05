@@ -27,7 +27,7 @@ import org.junit.Test;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
-import sparksoniq.semantics.types.ItemTypes;
+import org.rumbledb.types.ItemTypes;
 
 import java.io.File;
 import java.util.Arrays;

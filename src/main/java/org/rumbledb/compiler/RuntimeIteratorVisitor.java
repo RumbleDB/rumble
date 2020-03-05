@@ -23,6 +23,7 @@ package org.rumbledb.compiler;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
+import org.rumbledb.expression.typing.CastableExpression;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
@@ -49,7 +50,6 @@ import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.operational.AdditiveExpression;
 import org.rumbledb.expressions.operational.AndExpression;
 import org.rumbledb.expressions.operational.CastExpression;
-import org.rumbledb.expressions.operational.CastableExpression;
 import org.rumbledb.expressions.operational.ComparisonExpression;
 import org.rumbledb.expressions.operational.InstanceOfExpression;
 import org.rumbledb.expressions.operational.MultiplicativeExpression;
@@ -131,8 +131,9 @@ import org.rumbledb.runtime.primary.StringRuntimeIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.runtime.quantifiers.QuantifiedExpressionIterator;
 import org.rumbledb.runtime.quantifiers.QuantifiedExpressionVarIterator;
+import org.rumbledb.types.SequenceType;
+
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.types.SequenceType;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -858,7 +859,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator childExpression = this.visit(expression.getMainExpression(), argument);
         return new CastableIterator(
                 childExpression,
-                expression.getAtomicType().getSingleType(),
+                expression.getSequenceType(),
                 expression.getHighestExecutionMode(),
                 expression.getMetadata()
         );
@@ -869,7 +870,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator childExpression = this.visit(expression.getMainExpression(), argument);
         return new CastIterator(
                 childExpression,
-                expression.getFlworVarSingleType().getSingleType(),
+                expression.getSequenceType(),
                 expression.getHighestExecutionMode(),
                 expression.getMetadata()
         );

@@ -27,9 +27,8 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-import sparksoniq.semantics.types.AtomicTypes;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypes;
 
 import java.math.BigDecimal;
 
@@ -73,8 +72,8 @@ public class BooleanItem extends AtomicItem {
     }
 
     @Override
-    public Item castAs(AtomicTypes itemType) {
-        switch (itemType) {
+    public Item castAs(ItemType itemType) {
+        switch (itemType.getType()) {
             case BooleanItem:
                 return this;
             case DoubleItem:
@@ -91,10 +90,10 @@ public class BooleanItem extends AtomicItem {
     }
 
     @Override
-    public boolean isCastableAs(AtomicTypes itemType) {
-        return itemType != AtomicTypes.AtomicItem
+    public boolean isCastableAs(ItemType itemType) {
+        return itemType.getType() != ItemTypes.AtomicItem
             &&
-            itemType != AtomicTypes.NullItem;
+            itemType.getType() != ItemTypes.NullItem;
     }
 
     @Override

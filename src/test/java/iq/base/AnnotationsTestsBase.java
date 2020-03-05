@@ -158,6 +158,7 @@ public class AnnotationsTestsBase {
                 checkExpectedOutput(this.currentAnnotation.getOutput(), runtimeIterator);
             } catch (SparksoniqRuntimeException exception) {
                 String errorOutput = exception.getMessage();
+                exception.printStackTrace();
                 Assert.fail("Program did not run when expected to.\nError output: " + errorOutput + "\n");
             }
         } else {

@@ -18,7 +18,7 @@
  *
  */
 
-package sparksoniq.semantics.types;
+package org.rumbledb.types;
 
 import org.rumbledb.exceptions.OurBadException;
 
@@ -32,7 +32,7 @@ public class SequenceType implements Serializable {
     private boolean isEmptySequence = false;
 
     public final static SequenceType mostGeneralSequenceType = new SequenceType(
-            new ItemType(ItemTypes.Item),
+            ItemType.item,
             Arity.ZeroOrMore
     );
 

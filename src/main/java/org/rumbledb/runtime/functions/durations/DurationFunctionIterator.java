@@ -9,9 +9,10 @@ import org.rumbledb.items.DurationItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import org.rumbledb.types.ItemTypes;
+
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.semantics.types.AtomicTypes;
 
 import java.util.List;
 
@@ -35,7 +36,7 @@ public class DurationFunctionIterator extends LocalFunctionCallIterator {
             try {
                 Period period = DurationItem.getDurationFromString(
                     this.durationStringItem.getStringValue(),
-                    AtomicTypes.DurationItem
+                    ItemTypes.DurationItem
                 );
                 return ItemFactory.getInstance().createDurationItem(period);
             } catch (UnsupportedOperationException | IllegalArgumentException e) {

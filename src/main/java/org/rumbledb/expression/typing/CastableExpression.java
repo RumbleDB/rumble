@@ -1,23 +1,30 @@
-package org.rumbledb.expressions.operational;
+package org.rumbledb.expression.typing;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.flowr.FlworVarSingleType;
+import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 
 public class CastableExpression extends Expression {
 
     protected Expression mainExpression;
-    private FlworVarSingleType atomicType;
+    private SequenceType type;
 
-    public CastableExpression(Expression mainExpression, FlworVarSingleType atomicType, ExceptionMetadata metadata) {
+    public CastableExpression(Expression mainExpression, SequenceType type, ExceptionMetadata metadata) {
         super(metadata);
         this.mainExpression = mainExpression;
-        this.atomicType = atomicType;
+        this.type = type;
+        if (type.getArity() != Arity.OneOrZero && type.getArity() != Arity.One) {
+            throw new OurBadException(
+                    "Castable expressions cannot have an arity of more than one, something went wrong with the parser."
+            );
+        }
     }
 
     @Override
@@ -30,13 +37,13 @@ public class CastableExpression extends Expression {
         StringBuilder result = new StringBuilder();
         result.append("(castableExpr ");
         result.append(this.mainExpression.serializationString(true));
-        result.append(this.atomicType != null ? " castable as " + this.atomicType.serializationString(prefix) : "");
+        result.append(" castable as " + this.type.toString());
         result.append(")");
         return result.toString();
     }
 
-    public FlworVarSingleType getAtomicType() {
-        return this.atomicType;
+    public SequenceType getSequenceType() {
+        return this.type;
     }
 
     public Expression getMainExpression() {
