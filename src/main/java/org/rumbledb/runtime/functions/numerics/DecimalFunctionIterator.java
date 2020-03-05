@@ -10,10 +10,11 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.AtomicItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypes;
+
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.semantics.types.AtomicTypes;
-import sparksoniq.semantics.types.ItemTypes;
 
 import java.util.List;
 
@@ -51,9 +52,9 @@ public class DecimalFunctionIterator extends LocalFunctionCallIterator {
                 if (atomicItem.isNull()) {
                     throw new InvalidLexicalValueException(message, getMetadata());
                 }
-                if (atomicItem.isCastableAs(AtomicTypes.DecimalItem)) {
+                if (atomicItem.isCastableAs(ItemType.decimalItem)) {
                     try {
-                        return atomicItem.castAs(AtomicTypes.DecimalItem);
+                        return atomicItem.castAs(ItemType.decimalItem);
                     } catch (ClassCastException e) {
                         throw new UnexpectedTypeException(message, getMetadata());
                     }

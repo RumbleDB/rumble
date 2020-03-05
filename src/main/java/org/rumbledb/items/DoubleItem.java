@@ -28,9 +28,8 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-import sparksoniq.semantics.types.AtomicTypes;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypes;
 
 import java.math.BigDecimal;
 
@@ -88,8 +87,8 @@ public class DoubleItem extends AtomicItem {
     }
 
     @Override
-    public Item castAs(AtomicTypes itemType) {
-        switch (itemType) {
+    public Item castAs(ItemType itemType) {
+        switch (itemType.getType()) {
             case BooleanItem:
                 return ItemFactory.getInstance().createBooleanItem(this.getDoubleValue() != 0);
             case DoubleItem:
@@ -106,12 +105,12 @@ public class DoubleItem extends AtomicItem {
     }
 
     @Override
-    public boolean isCastableAs(AtomicTypes itemType) {
-        if (itemType == AtomicTypes.AtomicItem || itemType == AtomicTypes.NullItem) {
+    public boolean isCastableAs(ItemType itemType) {
+        if (itemType.getType() == ItemTypes.AtomicItem || itemType.getType() == ItemTypes.NullItem) {
             return false;
-        } else if (itemType == AtomicTypes.DecimalItem) {
+        } else if (itemType.getType() == ItemTypes.DecimalItem) {
             return !Double.isInfinite(this.getValue());
-        } else if (itemType == AtomicTypes.IntegerItem) {
+        } else if (itemType.getType() == ItemTypes.IntegerItem) {
             return !(Integer.MAX_VALUE < this.getValue()) && !(Integer.MIN_VALUE > this.getValue());
         }
         return true;

@@ -34,16 +34,17 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.runtime.functions.base.FunctionSignature;
 import org.rumbledb.runtime.operational.TypePromotionIterator;
+import org.rumbledb.types.SequenceType;
+
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.semantics.types.SequenceType;
+
+import static org.rumbledb.types.SequenceType.mostGeneralSequenceType;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import static sparksoniq.semantics.types.SequenceType.mostGeneralSequenceType;
 
 public class FunctionItemCallIterator extends HybridRuntimeIterator {
 

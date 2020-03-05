@@ -4,8 +4,8 @@ import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.TreatException;
-import sparksoniq.semantics.types.ItemTypes;
-import sparksoniq.semantics.types.SequenceType;
+import org.rumbledb.types.ItemTypes;
+import org.rumbledb.types.SequenceType;
 
 public class TreatAsClosure implements Function<Item, Boolean> {
     private SequenceType sequenceType;

@@ -25,8 +25,9 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
+import org.rumbledb.types.SequenceType;
+
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.types.SequenceType;
 
 
 public class LetClauseVar extends FlworVarDecl {

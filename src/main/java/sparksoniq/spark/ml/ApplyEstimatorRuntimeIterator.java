@@ -16,11 +16,11 @@ import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.runtime.functions.base.FunctionSignature;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
-import sparksoniq.semantics.types.SequenceType;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
@@ -158,17 +158,17 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
         List<SequenceType> paramTypes = Collections.unmodifiableList(
             Arrays.asList(
                 new SequenceType(
-                        new ItemType(ItemTypes.Item), // TODO: revert back to ObjectItem
+                        ItemType.item, // TODO: revert back to ObjectItem
                         SequenceType.Arity.ZeroOrMore
                 ),
                 new SequenceType(
-                        new ItemType(ItemTypes.ObjectItem),
+                        ItemType.objectItem,
                         SequenceType.Arity.One
                 )
             )
         );
         SequenceType returnType = new SequenceType(
-                new ItemType(ItemTypes.ObjectItem),
+                ItemType.objectItem,
                 SequenceType.Arity.ZeroOrMore
         );
 
