@@ -10,7 +10,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypes;
+import org.rumbledb.types.ItemType;
 
 import java.math.BigDecimal;
 
@@ -55,7 +55,7 @@ public class DayTimeDurationItem extends DurationItem {
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this.value = getDurationFromString(input.readString(), ItemTypes.DayTimeDurationItem).normalizedStandard(
+        this.value = getDurationFromString(input.readString(), ItemType.dayTimeDurationItem).normalizedStandard(
             PeriodType.dayTime()
         );
         this.isNegative = this.value.toString().contains("-");
@@ -96,9 +96,9 @@ public class DayTimeDurationItem extends DurationItem {
         } else if (!other.isDayTimeDuration() && !other.isNull()) {
             throw new UnexpectedTypeException(
                     "\""
-                        + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                        + ItemType.convertClassNameToItemTypeName(this.getClass().getSimpleName())
                         + "\": invalid type: can not compare for equality to type \""
-                        + ItemTypes.getItemTypeName(other.getClass().getSimpleName())
+                        + ItemType.convertClassNameToItemTypeName(other.getClass().getSimpleName())
                         + "\"",
                     metadata
             );

@@ -28,7 +28,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypes;
+import org.rumbledb.types.ItemType;
 
 import java.math.BigDecimal;
 
@@ -101,19 +101,19 @@ public class StringItem extends AtomicItem {
         if (itemType.equals(ItemType.durationItem)) {
             return ItemFactory.getInstance()
                 .createDurationItem(
-                    DurationItem.getDurationFromString(this.getStringValue(), ItemTypes.DurationItem)
+                    DurationItem.getDurationFromString(this.getStringValue(), ItemType.durationItem)
                 );
         }
         if (itemType.equals(ItemType.yearMonthDurationItem)) {
             return ItemFactory.getInstance()
                 .createYearMonthDurationItem(
-                    DurationItem.getDurationFromString(this.getStringValue(), ItemTypes.YearMonthDurationItem)
+                    DurationItem.getDurationFromString(this.getStringValue(), ItemType.yearMonthDurationItem)
                 );
         }
         if (itemType.equals(ItemType.dayTimeDurationItem)) {
             return ItemFactory.getInstance()
                 .createDayTimeDurationItem(
-                    DurationItem.getDurationFromString(this.getStringValue(), ItemTypes.DayTimeDurationItem)
+                    DurationItem.getDurationFromString(this.getStringValue(), ItemType.dayTimeDurationItem)
                 );
         }
         if (itemType.equals(ItemType.dateTimeItem)) {
@@ -164,17 +164,17 @@ public class StringItem extends AtomicItem {
             } else if (itemType.equals(ItemType.nullItem)) {
                 return isNullLiteral(this.getValue());
             } else if (itemType.equals(ItemType.durationItem)) {
-                DurationItem.getDurationFromString(this.value, ItemTypes.DurationItem);
+                DurationItem.getDurationFromString(this.value, ItemType.durationItem);
             } else if (itemType.equals(ItemType.yearMonthDurationItem)) {
-                DurationItem.getDurationFromString(this.getValue(), ItemTypes.YearMonthDurationItem);
+                DurationItem.getDurationFromString(this.getValue(), ItemType.yearMonthDurationItem);
             } else if (itemType.equals(ItemType.dayTimeDurationItem)) {
-                DurationItem.getDurationFromString(this.getValue(), ItemTypes.DayTimeDurationItem);
+                DurationItem.getDurationFromString(this.getValue(), ItemType.dayTimeDurationItem);
             } else if (itemType.equals(ItemType.dateTimeItem)) {
-                DateTimeItem.parseDateTime(this.getValue(), ItemTypes.DateTimeItem);
+                DateTimeItem.parseDateTime(this.getValue(), ItemType.dateTimeItem);
             } else if (itemType.equals(ItemType.dateItem)) {
-                DateTimeItem.parseDateTime(this.getValue(), ItemTypes.DateItem);
+                DateTimeItem.parseDateTime(this.getValue(), ItemType.dateItem);
             } else if (itemType.equals(ItemType.timeItem)) {
-                DateTimeItem.parseDateTime(this.getValue(), ItemTypes.TimeItem);
+                DateTimeItem.parseDateTime(this.getValue(), ItemType.timeItem);
             } else if (itemType.equals(ItemType.hexBinaryItem)) {
                 HexBinaryItem.parseHexBinaryString(this.getValue());
             } else if (itemType.equals(ItemType.base64BinaryItem)) {

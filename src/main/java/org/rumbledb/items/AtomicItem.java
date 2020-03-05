@@ -22,7 +22,7 @@ package org.rumbledb.items;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypes;
+import org.rumbledb.types.ItemType;
 
 public abstract class AtomicItem extends Item {
 

@@ -13,7 +13,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypes;
+import org.rumbledb.types.ItemType;
 
 public class DateItem extends AtomicItem {
 
@@ -32,7 +32,7 @@ public class DateItem extends AtomicItem {
     }
 
     DateItem(String dateTimeString) {
-        this.value = DateTimeItem.parseDateTime(dateTimeString, ItemTypes.DateItem);
+        this.value = DateTimeItem.parseDateTime(dateTimeString, ItemType.dateItem);
         if (!dateTimeString.endsWith("Z") && this.value.getZone() == DateTimeZone.getDefault()) {
             this.hasTimeZone = false;
             this.value = this.value.withZoneRetainFields(DateTimeZone.UTC);
@@ -145,10 +145,10 @@ public class DateItem extends AtomicItem {
         }
         throw new IteratorFlowException(
                 "Cannot compare item of type "
-                    + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                    + ItemType.convertClassNameToItemTypeName(this.getClass().getSimpleName())
                     +
                     " with item of type "
-                    + ItemTypes.getItemTypeName(other.getClass().getSimpleName())
+                    + ItemType.convertClassNameToItemTypeName(other.getClass().getSimpleName())
         );
     }
 
@@ -157,9 +157,9 @@ public class DateItem extends AtomicItem {
         if (!other.isDate() && !other.isNull()) {
             throw new UnexpectedTypeException(
                     "\""
-                        + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                        + ItemType.convertClassNameToItemTypeName(this.getClass().getSimpleName())
                         + "\": invalid type: can not compare for equality to type \""
-                        + ItemTypes.getItemTypeName(other.getClass().getSimpleName())
+                        + ItemType.convertClassNameToItemTypeName(other.getClass().getSimpleName())
                         + "\"",
                     metadata
             );

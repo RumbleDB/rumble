@@ -12,7 +12,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypes;
+import org.rumbledb.types.ItemType;
 
 import javax.xml.bind.DatatypeConverter;
 import java.util.Arrays;
@@ -132,10 +132,10 @@ public class Base64BinaryItem extends AtomicItem {
         }
         throw new IteratorFlowException(
                 "Cannot compare item of type "
-                    + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                    + ItemType.convertClassNameToItemTypeName(this.getClass().getSimpleName())
                     +
                     " with item of type "
-                    + ItemTypes.getItemTypeName(other.getClass().getSimpleName())
+                    + ItemType.convertClassNameToItemTypeName(other.getClass().getSimpleName())
         );
     }
 
@@ -144,9 +144,9 @@ public class Base64BinaryItem extends AtomicItem {
         if (!other.isBase64Binary() && !other.isNull()) {
             throw new UnexpectedTypeException(
                     "\""
-                        + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                        + ItemType.convertClassNameToItemTypeName(this.getClass().getSimpleName())
                         + "\": invalid type: can not compare for equality to type \""
-                        + ItemTypes.getItemTypeName(other.getClass().getSimpleName())
+                        + ItemType.convertClassNameToItemTypeName(other.getClass().getSimpleName())
                         + "\"",
                     metadata
             );
@@ -163,9 +163,9 @@ public class Base64BinaryItem extends AtomicItem {
         }
         throw new UnexpectedTypeException(
                 "\""
-                    + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                    + ItemType.convertClassNameToItemTypeName(this.getClass().getSimpleName())
                     + "\": invalid type: can not compare for equality to type \""
-                    + ItemTypes.getItemTypeName(other.getClass().getSimpleName())
+                    + ItemType.convertClassNameToItemTypeName(other.getClass().getSimpleName())
                     + "\"",
                 metadata
         );

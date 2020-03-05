@@ -20,7 +20,7 @@
 
 package org.rumbledb.types;
 
-public enum ItemTypes {
+enum ItemTypes {
     Item,
 
     JSONItem,
@@ -49,13 +49,5 @@ public enum ItemTypes {
 
     NullItem;
 
-    public static String getItemTypeName(String fullTypeName) {
-        String itemPostfix = "Item";
-        if (!itemPostfix.equals(fullTypeName) && fullTypeName.endsWith("Item")) {
-            return Character.toLowerCase(fullTypeName.charAt(0))
-                +
-                fullTypeName.substring(1, fullTypeName.length() - itemPostfix.length());
-        }
-        return fullTypeName;
-    }
+    
 }

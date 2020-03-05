@@ -11,7 +11,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypes;
+import org.rumbledb.types.ItemType;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -57,7 +57,7 @@ public class YearMonthDurationItem extends DurationItem {
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this.value = getDurationFromString(input.readString(), ItemTypes.YearMonthDurationItem).normalizedStandard(
+        this.value = getDurationFromString(input.readString(), ItemType.yearMonthDurationItem).normalizedStandard(
             yearMonthPeriodType
         );
         this.isNegative = this.value.toString().contains("-");
@@ -98,9 +98,9 @@ public class YearMonthDurationItem extends DurationItem {
         } else if (!other.isYearMonthDuration() && !other.isNull()) {
             throw new UnexpectedTypeException(
                     "\""
-                        + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                        + ItemType.convertClassNameToItemTypeName(this.getClass().getSimpleName())
                         + "\": invalid type: can not compare for equality to type \""
-                        + ItemTypes.getItemTypeName(other.getClass().getSimpleName())
+                        + ItemType.convertClassNameToItemTypeName(other.getClass().getSimpleName())
                         + "\"",
                     metadata
             );

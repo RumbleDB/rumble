@@ -10,7 +10,7 @@ import org.rumbledb.items.AtomicItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypes;
+import org.rumbledb.types.ItemType;
 
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
@@ -37,7 +37,7 @@ public class StringFunctionIterator extends LocalFunctionCallIterator {
             try {
                 if (!this.item.isAtomic()) {
                     throw new StringOfJSONiqItemException(
-                            ItemTypes.getItemTypeName(this.item.getClass().getSimpleName())
+                            ItemType.convertClassNameToItemTypeName(this.item.getClass().getSimpleName())
                                 +
                                 " items do not have string value",
                             getMetadata()
@@ -47,7 +47,7 @@ public class StringFunctionIterator extends LocalFunctionCallIterator {
                 String message = atomicItem.serialize()
                     +
                     ": value of type "
-                    + ItemTypes.getItemTypeName(this.item.getClass().getSimpleName())
+                    + ItemType.convertClassNameToItemTypeName(this.item.getClass().getSimpleName())
                     + " is not castable to type string.";
                 if (atomicItem.isCastableAs(ItemType.stringItem)) {
                     try {

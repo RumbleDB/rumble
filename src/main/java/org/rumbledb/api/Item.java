@@ -26,7 +26,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypes;
+import org.rumbledb.types.ItemType;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -308,9 +308,9 @@ public abstract class Item implements SerializableItem {
     public Item promoteTo(ItemType type) {
         if (!this.canBePromotedTo(type)) {
             throw new RuntimeException(
-                    ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                    ItemType.convertClassNameToItemTypeName(this.getClass().getSimpleName())
                         + " cannot be promoted to type "
-                        + ItemTypes.getItemTypeName(type.toString())
+                        + ItemType.convertClassNameToItemTypeName(type.toString())
             );
         }
         return this;

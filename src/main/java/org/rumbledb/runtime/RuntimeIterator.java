@@ -32,7 +32,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.types.ItemTypes;
+import org.rumbledb.types.ItemType;
 
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
@@ -113,7 +113,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 throw new InvalidArgumentTypeException(
                         "Effective boolean value not defined for items of type "
                             +
-                            ItemTypes.getItemTypeName(item.getClass().getSimpleName()),
+                            ItemType.convertClassNameToItemTypeName(item.getClass().getSimpleName()),
                         iterator.getMetadata()
                 );
             }

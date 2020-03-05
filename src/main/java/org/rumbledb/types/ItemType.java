@@ -130,7 +130,7 @@ public class ItemType implements Serializable {
     }
 
     public boolean isSubtypeOf(ItemType superType) {
-        if (superType.equals(ItemType.item) {
+        if (superType.equals(ItemType.item)) {
             return true;
         }
         if (superType.getType() == ItemTypes.JSONItem) {
@@ -145,7 +145,7 @@ public class ItemType implements Serializable {
             return false;
         }
 
-        if (superType.equals(ItemType.atomicItem) {
+        if (superType.equals(ItemType.atomicItem)) {
             if (
                 this.type == ItemTypes.StringItem
                     || this.type == ItemTypes.IntegerItem
@@ -216,5 +216,15 @@ public class ItemType implements Serializable {
                 return "yearMonthDuration";
         }
         throw new OurBadException("Unrecognized type.");
+    }
+    
+    public static String convertClassNameToItemTypeName(String fullTypeName) {
+        String itemPostfix = "Item";
+        if (!itemPostfix.equals(fullTypeName) && fullTypeName.endsWith("Item")) {
+            return Character.toLowerCase(fullTypeName.charAt(0))
+                +
+                fullTypeName.substring(1, fullTypeName.length() - itemPostfix.length());
+        }
+        return fullTypeName;
     }
 }

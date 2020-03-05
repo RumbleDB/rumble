@@ -17,7 +17,6 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypes;
 
 import java.util.regex.Pattern;
 
@@ -68,7 +67,7 @@ public class DateTimeItem extends AtomicItem {
     }
 
     DateTimeItem(String dateTimeString) {
-        this.value = parseDateTime(dateTimeString, ItemTypes.DateTimeItem);
+        this.value = parseDateTime(dateTimeString, ItemType.dateTimeItem);
         if (!dateTimeString.endsWith("Z") && this.value.getZone() == DateTimeZone.getDefault()) {
             this.hasTimeZone = false;
             this.value = this.value.withZoneRetainFields(DateTimeZone.UTC);
@@ -184,11 +183,12 @@ public class DateTimeItem extends AtomicItem {
         this.value = new DateTime(millis, zone);
     }
 
-    private static DateTimeFormatter getDateTimeFormatter(ItemTypes dateTimeType) {
-        switch (dateTimeType) {
-            case DateTimeItem:
+    private static DateTimeFormatter getDateTimeFormatter(ItemType dateTimeType) {
+    	if(dateTimeType.equals(ItemType.dateTimeItem)) {
                 return ISODateTimeFormat.dateTimeParser().withOffsetParsed();
-            case DateItem:
+    }
+    if(dateTimeType.equals(ItemType.dateItem))
+    {
                 DateTimeParser dtParser = new DateTimeFormatterBuilder().appendOptional(
                     ((new DateTimeFormatterBuilder()).appendTimeZoneOffset("Z", true, 2, 4).toFormatter()).getParser()
                 ).toParser();
@@ -196,23 +196,27 @@ public class DateTimeItem extends AtomicItem {
                     .appendOptional(dtParser)
                     .toFormatter()
                     .withOffsetParsed();
-            case TimeItem:
-                return ISODateTimeFormat.timeParser().withOffsetParsed();
-            default:
+}
+if(dateTimeType.equals(ItemType.timeItem))
+{
+	return ISODateTimeFormat.timeParser().withOffsetParsed();
+}
                 throw new IllegalArgumentException();
-        }
     }
 
-    private static boolean checkInvalidDateTimeFormat(String dateTime, ItemTypes dateTimeType) {
-        switch (dateTimeType) {
-            case DateTimeItem:
+    private static boolean checkInvalidDateTimeFormat(String dateTime, ItemType dateTimeType) {
+    	if(dateTimeType.equals(ItemType.dateTimeItem))
+    	{
                 return dateTimePattern.matcher(dateTime).matches();
-            case DateItem:
-                return datePattern.matcher(dateTime).matches();
-            case TimeItem:
-                return timePattern.matcher(dateTime).matches();
-            default:;
-        }
+    }
+    if(dateTimeType.equals(ItemType.dateItem))
+    	{
+    	return datePattern.matcher(dateTime).matches();
+    	}
+    	if(dateTimeType.equals(ItemType.timeItem))
+    	{
+    		return timePattern.matcher(dateTime).matches();
+    	}
         return false;
     }
 
@@ -248,7 +252,7 @@ public class DateTimeItem extends AtomicItem {
         return dateTime;
     }
 
-    static DateTime parseDateTime(String dateTime, ItemTypes dateTimeType) throws IllegalArgumentException {
+    static DateTime parseDateTime(String dateTime, ItemType dateTimeType) throws IllegalArgumentException {
         if (!checkInvalidDateTimeFormat(dateTime, dateTimeType)) {
             throw new IllegalArgumentException();
         }
@@ -290,10 +294,10 @@ public class DateTimeItem extends AtomicItem {
         }
         throw new IteratorFlowException(
                 "Cannot compare item of type "
-                    + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                    + ItemType.convertClassNameToItemTypeName(this.getClass().getSimpleName())
                     +
                     " with item of type "
-                    + ItemTypes.getItemTypeName(other.getClass().getSimpleName())
+                    + ItemType.convertClassNameToItemTypeName(other.getClass().getSimpleName())
         );
     }
 
@@ -302,9 +306,9 @@ public class DateTimeItem extends AtomicItem {
         if (!other.isDateTime() && !other.isNull()) {
             throw new UnexpectedTypeException(
                     "\""
-                        + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                        + ItemType.convertClassNameToItemTypeName(this.getClass().getSimpleName())
                         + "\": invalid type: can not compare for equality to type \""
-                        + ItemTypes.getItemTypeName(other.getClass().getSimpleName())
+                        + ItemType.convertClassNameToItemTypeName(other.getClass().getSimpleName())
                         + "\"",
                     metadata
             );

@@ -4,7 +4,7 @@ import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.types.ItemTypes;
+import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
 public class TypePromotionClosure implements Function<Item, Item> {
@@ -27,9 +27,9 @@ public class TypePromotionClosure implements Function<Item, Item> {
             throw new UnexpectedTypeException(
                     this.exceptionMessage
                         +
-                        ItemTypes.getItemTypeName(input.getClass().getSimpleName())
+                        ItemType.convertClassNameToItemTypeName(input.getClass().getSimpleName())
                         + " cannot be promoted to type "
-                        + ItemTypes.getItemTypeName(this.sequenceType.getItemType().toString())
+                        + ItemType.convertClassNameToItemTypeName(this.sequenceType.getItemType().toString())
                         + this.sequenceType.getArity().getSymbol(),
                     this.metadata
             );

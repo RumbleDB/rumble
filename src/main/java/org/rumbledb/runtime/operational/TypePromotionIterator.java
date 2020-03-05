@@ -10,7 +10,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.TypePromotionClosure;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypes;
+import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.ExecutionMode;
@@ -43,7 +43,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         this.iterator = iterator;
         this.sequenceType = sequenceType;
         this.itemType = this.sequenceType.getItemType();
-        this.sequenceTypeName = ItemTypes.getItemTypeName(this.itemType.toString());
+        this.sequenceTypeName = ItemType.convertClassNameToItemTypeName(this.itemType.toString());
     }
 
     @Override
@@ -168,7 +168,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         if (!this.nextResult.canBePromotedTo(this.sequenceType.getItemType())) {
             throw new UnexpectedTypeException(
                     this.exceptionMessage
-                        + ItemTypes.getItemTypeName(this.nextResult.getClass().getSimpleName())
+                        + ItemType.convertClassNameToItemTypeName(this.nextResult.getClass().getSimpleName())
                         + " cannot be promoted to type "
                         + this.sequenceTypeName
                         + this.sequenceType.getArity().getSymbol()
