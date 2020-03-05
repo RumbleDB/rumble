@@ -43,7 +43,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         this.iterator = iterator;
         this.sequenceType = sequenceType;
         this.itemType = this.sequenceType.getItemType();
-        this.sequenceTypeName = ItemTypes.getItemTypeName(this.itemType.getType().toString());
+        this.sequenceTypeName = ItemTypes.getItemTypeName(this.itemType.toString());
     }
 
     @Override

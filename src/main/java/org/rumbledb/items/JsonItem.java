@@ -45,6 +45,6 @@ public abstract class JsonItem extends Item {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.getType().equals(ItemTypes.JSONItem) || type.getType().equals(ItemTypes.Item);
+        return type.equals(ItemType.JSONItem) || type.equals(ItemType.item);
     }
 }

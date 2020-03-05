@@ -39,7 +39,7 @@ public abstract class AtomicItem extends Item {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.getType().equals(ItemTypes.AtomicItem) || type.getType().equals(ItemTypes.Item);
+        return type.equals(ItemType.atomicItem) || type.equals(ItemType.item);
     }
 
     @Override

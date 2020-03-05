@@ -47,7 +47,7 @@ public class TreatIterator extends HybridRuntimeIterator {
         this.shouldThrowTreatException = shouldThrowTreatException;
         if (!this.sequenceType.isEmptySequence()) {
             this.itemType = this.sequenceType.getItemType();
-            this.sequenceTypeName = ItemTypes.getItemTypeName(this.itemType.getType().toString());
+            this.sequenceTypeName = ItemTypes.getItemTypeName(this.itemType.toString());
         }
     }
 

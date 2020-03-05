@@ -50,26 +50,25 @@ public class NullItem extends AtomicItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.getType().equals(ItemTypes.NullItem) || super.isTypeOf(type);
+        return type.equals(ItemType.nullItem) || super.isTypeOf(type);
     }
 
     @Override
     public boolean isCastableAs(ItemType itemType) {
-        return itemType.getType() == ItemTypes.NullItem
+        return itemType.equals(ItemType.nullItem)
             ||
-            itemType.getType() == ItemTypes.StringItem;
+            itemType.equals(ItemType.stringItem);
     }
 
     @Override
     public Item castAs(ItemType itemType) {
-        switch (itemType.getType()) {
-            case NullItem:
-                return this;
-            case StringItem:
-                return ItemFactory.getInstance().createStringItem(this.serialize());
-            default:
-                throw new ClassCastException();
+        if (itemType.equals(ItemType.nullItem)) {
+            return this;
         }
+        if (itemType.equals(ItemType.stringItem)) {
+            return ItemFactory.getInstance().createStringItem(this.serialize());
+        }
+        throw new ClassCastException();
     }
 
     @Override

@@ -310,7 +310,7 @@ public abstract class Item implements SerializableItem {
             throw new RuntimeException(
                     ItemTypes.getItemTypeName(this.getClass().getSimpleName())
                         + " cannot be promoted to type "
-                        + ItemTypes.getItemTypeName(type.getType().toString())
+                        + ItemTypes.getItemTypeName(type.toString())
             );
         }
         return this;

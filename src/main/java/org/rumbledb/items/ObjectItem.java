@@ -134,7 +134,7 @@ public class ObjectItem extends JsonItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.getType().equals(ItemTypes.ObjectItem) || super.isTypeOf(type);
+        return type.equals(ItemType.objectItem) || super.isTypeOf(type);
     }
 
     @Override

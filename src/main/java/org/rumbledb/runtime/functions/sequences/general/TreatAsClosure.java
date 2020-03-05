@@ -23,7 +23,7 @@ public class TreatAsClosure implements Function<Item, Boolean> {
                     " "
                         + ItemTypes.getItemTypeName(input.getClass().getSimpleName())
                         + " cannot be treated as type "
-                        + ItemTypes.getItemTypeName(this.sequenceType.getItemType().getType().toString())
+                        + ItemTypes.getItemTypeName(this.sequenceType.getItemType().toString())
                         + this.sequenceType.getArity().getSymbol(),
                     this.metadata
             );

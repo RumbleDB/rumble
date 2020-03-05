@@ -74,7 +74,7 @@ public class Base64BinaryItem extends AtomicItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.getType().equals(ItemTypes.Base64BinaryItem) || super.isTypeOf(type);
+        return type.equals(ItemType.base64BinaryItem) || super.isTypeOf(type);
     }
 
     @Override
@@ -89,25 +89,25 @@ public class Base64BinaryItem extends AtomicItem {
 
     @Override
     public boolean isCastableAs(ItemType itemType) {
-        return itemType.getType() == ItemTypes.Base64BinaryItem
+        return itemType.equals(ItemType.base64BinaryItem)
             ||
-            itemType.getType() == ItemTypes.HexBinaryItem
+            itemType.equals(ItemType.hexBinaryItem)
             ||
-            itemType.getType() == ItemTypes.StringItem;
+            itemType.equals(ItemType.stringItem);
     }
 
     @Override
     public Item castAs(ItemType itemType) {
-        switch (itemType.getType()) {
-            case StringItem:
-                return ItemFactory.getInstance().createStringItem(this.getStringValue());
-            case Base64BinaryItem:
-                return this;
-            case HexBinaryItem:
-                return ItemFactory.getInstance().createHexBinaryItem(Hex.encodeHexString(this.value));
-            default:
-                throw new ClassCastException();
+        if (itemType.equals(ItemType.stringItem)) {
+            return ItemFactory.getInstance().createStringItem(this.getStringValue());
         }
+        if (itemType.equals(ItemType.base64BinaryItem)) {
+            return this;
+        }
+        if (itemType.equals(ItemType.hexBinaryItem)) {
+            return ItemFactory.getInstance().createHexBinaryItem(Hex.encodeHexString(this.value));
+        }
+        throw new ClassCastException();
     }
 
     @Override

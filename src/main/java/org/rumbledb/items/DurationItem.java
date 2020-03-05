@@ -122,34 +122,35 @@ public class DurationItem extends AtomicItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.getType().equals(ItemTypes.DurationItem) || super.isTypeOf(type);
+        return type.equals(ItemType.durationItem) || super.isTypeOf(type);
     }
 
     @Override
     public boolean isCastableAs(ItemType itemType) {
-        return itemType.getType() == ItemTypes.DurationItem
+        return itemType.equals(ItemType.durationItem)
             ||
-            itemType.getType() == ItemTypes.YearMonthDurationItem
+            itemType.equals(ItemType.yearMonthDurationItem)
             ||
-            itemType.getType() == ItemTypes.DayTimeDurationItem
+            itemType.equals(ItemType.dayTimeDurationItem)
             ||
-            itemType.getType() == ItemTypes.StringItem;
+            itemType.equals(ItemType.stringItem);
     }
 
     @Override
     public Item castAs(ItemType itemType) {
-        switch (itemType.getType()) {
-            case DurationItem:
-                return this;
-            case YearMonthDurationItem:
-                return ItemFactory.getInstance().createYearMonthDurationItem(this.getValue());
-            case DayTimeDurationItem:
-                return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue());
-            case StringItem:
-                return ItemFactory.getInstance().createStringItem(this.serialize());
-            default:
-                throw new ClassCastException();
+        if (itemType.equals(ItemType.durationItem)) {
+            return this;
         }
+        if (itemType.equals(ItemType.yearMonthDurationItem)) {
+            return ItemFactory.getInstance().createYearMonthDurationItem(this.getValue());
+        }
+        if (itemType.equals(ItemType.dayTimeDurationItem)) {
+            return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue());
+        }
+        if (itemType.equals(ItemType.stringItem)) {
+            return ItemFactory.getInstance().createStringItem(this.serialize());
+        }
+        throw new ClassCastException();
     }
 
     @Override

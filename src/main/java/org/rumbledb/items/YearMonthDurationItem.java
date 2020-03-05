@@ -52,7 +52,7 @@ public class YearMonthDurationItem extends DurationItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.getType().equals(ItemTypes.YearMonthDurationItem) || super.isTypeOf(type);
+        return type.equals(ItemType.yearMonthDurationItem) || super.isTypeOf(type);
     }
 
     @Override
@@ -65,29 +65,30 @@ public class YearMonthDurationItem extends DurationItem {
 
     @Override
     public boolean isCastableAs(ItemType itemType) {
-        return itemType.getType() == ItemTypes.YearMonthDurationItem
+        return itemType.equals(ItemType.yearMonthDurationItem)
             ||
-            itemType.getType() == ItemTypes.DayTimeDurationItem
+            itemType.equals(ItemType.dayTimeDurationItem)
             ||
-            itemType.getType() == ItemTypes.DurationItem
+            itemType.equals(ItemType.durationItem)
             ||
-            itemType.getType() == ItemTypes.StringItem;
+            itemType.equals(ItemType.stringItem);
     }
 
     @Override
     public Item castAs(ItemType itemType) {
-        switch (itemType.getType()) {
-            case DurationItem:
-                return ItemFactory.getInstance().createDurationItem(this.getValue());
-            case YearMonthDurationItem:
-                return this;
-            case DayTimeDurationItem:
-                return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue());
-            case StringItem:
-                return ItemFactory.getInstance().createStringItem(this.serialize());
-            default:
-                throw new ClassCastException();
+        if (itemType.equals(ItemType.durationItem)) {
+            return ItemFactory.getInstance().createDurationItem(this.getValue());
         }
+        if (itemType.equals(ItemType.yearMonthDurationItem)) {
+            return this;
+        }
+        if (itemType.equals(ItemType.dayTimeDurationItem)) {
+            return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue());
+        }
+        if (itemType.equals(ItemType.stringItem)) {
+            return ItemFactory.getInstance().createStringItem(this.serialize());
+        }
+        throw new ClassCastException();
     }
 
     @Override

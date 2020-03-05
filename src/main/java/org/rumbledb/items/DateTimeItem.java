@@ -106,26 +106,27 @@ public class DateTimeItem extends AtomicItem {
 
     @Override
     public Item castAs(ItemType itemType) {
-        switch (itemType.getType()) {
-            case StringItem:
-                return ItemFactory.getInstance().createStringItem(this.serialize());
-            case DateTimeItem:
-                return this;
-            case DateItem:
-                return ItemFactory.getInstance().createDateItem(this.getDateTimeValue(), this.hasTimeZone);
-            case TimeItem:
-                return ItemFactory.getInstance().createTimeItem(this.getDateTimeValue(), this.hasTimeZone);
-            default:
-                throw new ClassCastException();
+        if (itemType.equals(ItemType.stringItem)) {
+            return ItemFactory.getInstance().createStringItem(this.serialize());
         }
+        if (itemType.equals(ItemType.dateTimeItem)) {
+            return this;
+        }
+        if (itemType.equals(ItemType.dateItem)) {
+            return ItemFactory.getInstance().createDateItem(this.getDateTimeValue(), this.hasTimeZone);
+        }
+        if (itemType.equals(ItemType.timeItem)) {
+            return ItemFactory.getInstance().createTimeItem(this.getDateTimeValue(), this.hasTimeZone);
+        }
+        throw new ClassCastException();
     }
 
     @Override
     public boolean isCastableAs(ItemType itemType) {
-        return itemType.getType() == ItemTypes.DateTimeItem
-            || itemType.getType() == ItemTypes.DateItem
-            || itemType.getType() == ItemTypes.TimeItem
-            || itemType.getType() == ItemTypes.StringItem;
+        return itemType.equals(ItemType.dateTimeItem)
+            || itemType.equals(ItemType.dateItem)
+            || itemType.equals(ItemType.timeItem)
+            || itemType.equals(ItemType.stringItem);
     }
 
     @Override
@@ -152,7 +153,7 @@ public class DateTimeItem extends AtomicItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.getType().equals(ItemTypes.DateTimeItem) || super.isTypeOf(type);
+        return type.equals(ItemType.dateTimeItem) || super.isTypeOf(type);
     }
 
     @Override

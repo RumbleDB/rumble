@@ -81,39 +81,41 @@ public class IntegerItem extends AtomicItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.getType().equals(ItemTypes.IntegerItem)
-            || type.getType().equals(ItemTypes.DecimalItem)
+        return type.equals(ItemType.integerItem)
+            || type.equals(ItemType.decimalItem)
             || super.isTypeOf(type);
     }
 
     @Override
     public boolean canBePromotedTo(ItemType type) {
-        return type.getType().equals(ItemTypes.DoubleItem) || super.canBePromotedTo(type);
+        return type.equals(ItemType.doubleItem) || super.canBePromotedTo(type);
     }
 
     @Override
     public Item castAs(ItemType itemType) {
-        switch (itemType.getType()) {
-            case BooleanItem:
-                return ItemFactory.getInstance().createBooleanItem(this.getIntegerValue() != 0);
-            case DoubleItem:
-                return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue());
-            case DecimalItem:
-                return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue());
-            case IntegerItem:
-                return this;
-            case StringItem:
-                return ItemFactory.getInstance().createStringItem(String.valueOf(this.getIntegerValue()));
-            default:
-                throw new ClassCastException();
+        if (itemType.equals(ItemType.booleanItem)) {
+            return ItemFactory.getInstance().createBooleanItem(this.getIntegerValue() != 0);
         }
+        if (itemType.equals(ItemType.doubleItem)) {
+            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue());
+        }
+        if (itemType.equals(ItemType.decimalItem)) {
+            return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue());
+        }
+        if (itemType.equals(ItemType.integerItem)) {
+            return this;
+        }
+        if (itemType.equals(ItemType.stringItem)) {
+            return ItemFactory.getInstance().createStringItem(String.valueOf(this.getIntegerValue()));
+        }
+        throw new ClassCastException();
     }
 
     @Override
     public boolean isCastableAs(ItemType itemType) {
-        return itemType.getType() != ItemTypes.AtomicItem
+        return !itemType.equals(ItemType.atomicItem)
             &&
-            itemType.getType() != ItemTypes.NullItem;
+            !itemType.equals(ItemType.nullItem);
     }
 
     @Override
