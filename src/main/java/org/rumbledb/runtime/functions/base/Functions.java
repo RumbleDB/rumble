@@ -2069,11 +2069,11 @@ public class Functions {
          * function that returns the time item from the supplied string
          */
         static final BuiltinFunction anyURI = createBuiltinFunction(
-                "anyURI",
-                "atomic?",
-                "anyURI?",
-                AnyURIFunctionIterator.class,
-                BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            "anyURI",
+            "atomic?",
+            "anyURI?",
+            AnyURIFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
 
         /**

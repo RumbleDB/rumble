@@ -41,19 +41,19 @@ public class AnyURIFunctionIterator extends LocalFunctionCallIterator {
                     return ItemFactory.getInstance().createAnyURIItem(atomicItem.getStringValue());
                 } catch (IllegalArgumentException e) {
                     message = String.format(
-                            "\"%s\": value of type String is not castable to type anyURI",
-                            this.anyItem.serialize()
+                        "\"%s\": value of type String is not castable to type anyURI",
+                        this.anyItem.serialize()
                     );
                     throw new CastException(message, getMetadata());
                 }
             }
             message = String.format(
-                    "\"%s\": value of type %s is not castable to type anyURI",
-                    atomicItem.serialize(),
-                    ItemTypes.getItemTypeName(atomicItem.getClass().getSimpleName())
+                "\"%s\": value of type %s is not castable to type anyURI",
+                atomicItem.serialize(),
+                ItemTypes.getItemTypeName(atomicItem.getClass().getSimpleName())
             );
             throw new CastException(message, getMetadata());
-    } else
+        } else
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " anyURI function",
                     getMetadata()
