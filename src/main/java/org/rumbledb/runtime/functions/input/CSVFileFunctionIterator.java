@@ -27,6 +27,8 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.items.ObjectItem;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import sparksoniq.jsoniq.ExecutionMode;
@@ -54,12 +56,37 @@ public class CSVFileFunctionIterator extends DataFrameRuntimeIterator {
         String url = stringItem.getStringValue();
         try {
             DataFrameReader dfr = SparkSessionManager.getInstance().getOrCreateSession().read();
+            if (this.children.size() > 1) {
+                Item optionsObjectItem = this.children.get(1)
+                    .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+                if (optionsObjectItem != null) {
+                    ObjectItem options = (ObjectItem) optionsObjectItem;
+                    List<String> keys = options.getKeys();
+                    List<Item> values = options.getValues();
+                    for (int i = 0; i < options.getKeys().size(); i++) {
+                        Item value = values.get(i);
+                        if (value.isBoolean()) {
+                            dfr.option(keys.get(i), value.getBooleanValue());
+                        } else if (value.isString()) {
+                            dfr.option(keys.get(i), value.getStringValue());
+                        } else if (value.isInteger()) {
+                            dfr.option(keys.get(i), value.getIntegerValue());
+                        } else {
+                            throw new UnexpectedTypeException(
+                                    "Only boolean, string, and long types allowed as parameter values",
+                                    this.getMetadata()
+                            );
+                        }
+                    }
+                }
+            }
             return dfr.csv(url);
         } catch (Exception e) {
             if (e instanceof AnalysisException) {
                 throw new CannotRetrieveResourceException("File " + url + " not found.", getMetadata());
+            } else {
+                throw new UnexpectedTypeException(e.getMessage(), this.getMetadata());
             }
-            throw e;
         }
     }
 }
