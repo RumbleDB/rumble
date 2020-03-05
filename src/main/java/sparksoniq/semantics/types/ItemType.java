@@ -90,6 +90,9 @@ public class ItemType implements Serializable {
             case "time":
                 this.type = ItemTypes.TimeItem;
                 return;
+            case "anyuri":
+                this.type = ItemTypes.AnyURIItem;
+                return;
             case "hexbinary":
                 this.type = ItemTypes.HexBinaryItem;
                 return;
@@ -169,6 +172,8 @@ public class ItemType implements Serializable {
                 return "string";
             case BooleanItem:
                 return "boolean";
+            case AnyURIItem:
+                return "anyuri";
             case NullItem:
                 return "null";
 
