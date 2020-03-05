@@ -24,13 +24,17 @@ package org.rumbledb.expressions.primary;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.Expression;
+import org.rumbledb.expressions.Node;
+import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.types.SequenceType;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
-public class VariableReferenceExpression extends PrimaryExpression implements Serializable {
+public class VariableReferenceExpression extends Expression implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private String name;
@@ -75,5 +79,10 @@ public class VariableReferenceExpression extends PrimaryExpression implements Se
         String result = (prefix ? "(primaryExpr " : "") + "(varRef $ " + this.name;
         result += (prefix ? ")" : "") + ")";
         return result;
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        return new ArrayList<>();
     }
 }

@@ -29,10 +29,10 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.InstanceOfClosure;
 import org.rumbledb.runtime.operational.base.UnaryOperationBaseIterator;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.SequenceType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,13 +60,19 @@ public class InstanceOfIterator extends UnaryOperationBaseIterator {
                 List<Item> items = new ArrayList<>();
                 this.child.open(this.currentDynamicContextForLocalExecution);
 
-                while (this.child.hasNext())
+                while (this.child.hasNext()) {
                     items.add(this.child.next());
+                }
                 this.child.close();
                 this.hasNext = false;
 
-                if (isInvalidArity(items.size()))
+                if (this.sequenceType.isEmptySequence()) {
+                    return ItemFactory.getInstance().createBooleanItem(items.size() == 0);
+                }
+
+                if (isInvalidArity(items.size())) {
                     return ItemFactory.getInstance().createBooleanItem(false);
+                }
 
                 ItemType itemType = this.sequenceType.getItemType();
                 for (Item item : items) {
@@ -74,19 +80,22 @@ public class InstanceOfIterator extends UnaryOperationBaseIterator {
                         return ItemFactory.getInstance().createBooleanItem(false);
                     }
                 }
+
                 return ItemFactory.getInstance().createBooleanItem(true);
             } else {
                 JavaRDD<Item> childRDD = this.child.getRDD(this.currentDynamicContextForLocalExecution);
                 this.hasNext = false;
 
-                if (isInvalidArity(childRDD.take(2).size()))
+                if (isInvalidArity(childRDD.take(2).size())) {
                     return ItemFactory.getInstance().createBooleanItem(false);
+                }
 
                 JavaRDD<Item> result = childRDD.filter(new InstanceOfClosure(this.sequenceType.getItemType()));
                 return ItemFactory.getInstance().createBooleanItem(result.isEmpty());
             }
-        } else
+        } else {
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
+        }
     }
 
     private boolean isInvalidArity(long numOfItems) {

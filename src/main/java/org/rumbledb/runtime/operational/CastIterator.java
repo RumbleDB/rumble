@@ -8,11 +8,12 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.items.AtomicItem;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.types.ItemTypes;
+import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.semantics.types.ItemTypes;
-import sparksoniq.semantics.types.SingleType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,23 +21,21 @@ import java.util.List;
 
 public class CastIterator extends UnaryOperationIterator {
     private static final long serialVersionUID = 1L;
-    private final SingleType singleType;
+    private final SequenceType sequenceType;
 
     public CastIterator(
             RuntimeIterator child,
-            SingleType singleType,
+            SequenceType sequenceType,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
     ) {
         super(child, OperationalExpressionBase.Operator.CAST, executionMode, iteratorMetadata);
-        this.singleType = singleType;
+        this.sequenceType = sequenceType;
     }
 
     @Override
     public Item next() {
         if (this.hasNext) {
-            String targetType = ItemTypes.getItemTypeName(this.singleType.getType().toString());
-
             List<Item> items = new ArrayList<>();
             this.child.open(this.currentDynamicContextForLocalExecution);
             while (this.child.hasNext()) {
@@ -46,7 +45,7 @@ public class CastIterator extends UnaryOperationIterator {
                     this.hasNext = false;
                     throw new UnexpectedTypeException(
                             " Sequence of more than one item can not be treated as type "
-                                + targetType,
+                                + this.sequenceType.toString(),
                             getMetadata()
                     );
                 }
@@ -57,38 +56,41 @@ public class CastIterator extends UnaryOperationIterator {
             Item item = items.get(0);
             String itemType = ItemTypes.getItemTypeName(item.getClass().getSimpleName());
 
-            if (itemType.equals(targetType))
+            if (itemType.equals(this.sequenceType.getItemType().toString())) {
                 return item;
+            }
 
             String message = String.format(
                 "\"%s\": value of type %s is not castable to type %s",
                 item.serialize(),
                 itemType,
-                targetType
+                this.sequenceType.toString()
             );
 
-            AtomicItem atomicItem = CastableIterator.checkInvalidCastable(item, getMetadata(), this.singleType);
+            AtomicItem atomicItem = CastableIterator.checkInvalidCastable(item, getMetadata(), this.sequenceType);
 
-            if (atomicItem.isCastableAs(this.singleType.getType())) {
+            if (atomicItem.isCastableAs(this.sequenceType.getItemType())) {
                 try {
-                    return atomicItem.castAs(this.singleType.getType());
+                    return atomicItem.castAs(this.sequenceType.getItemType());
                 } catch (ClassCastException e) {
                     throw new CastException(message, getMetadata());
                 }
 
             }
             throw new CastException(message, getMetadata());
-        } else
+        } else {
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
+        }
     }
 
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        if (!this.child.hasNext() && !this.singleType.getZeroOrOne())
+        if (!this.hasNext && !this.sequenceType.isEmptySequence() && this.sequenceType.getArity() != Arity.OneOrZero) {
             throw new UnexpectedTypeException(
                     " Empty sequence can not be cast to type with quantifier '1'",
                     getMetadata()
             );
+        }
     }
 }

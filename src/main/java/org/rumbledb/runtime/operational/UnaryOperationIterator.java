@@ -28,7 +28,6 @@ import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.operational.base.UnaryOperationBaseIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 
@@ -58,13 +57,16 @@ public class UnaryOperationIterator extends UnaryOperationBaseIterator {
 
             if (this.operator == OperationalExpressionBase.Operator.MINUS) {
                 if (child.isNumeric()) {
-                    if (child.isInteger())
+                    if (child.isInteger()) {
                         return ItemFactory.getInstance().createIntegerItem(-1 * child.getIntegerValue());
-                    if (child.isDouble())
+                    }
+                    if (child.isDouble()) {
                         return ItemFactory.getInstance().createDoubleItem(-1 * child.getDoubleValue());
-                    if (child.isDecimal())
+                    }
+                    if (child.isDecimal()) {
                         return ItemFactory.getInstance()
                             .createDecimalItem(child.getDecimalValue().multiply(new BigDecimal(-1)));
+                    }
                 }
                 throw new UnexpectedTypeException(
                         "Unary expression has non numeric args "

@@ -52,11 +52,11 @@ import org.rumbledb.items.StringItem;
 import org.rumbledb.items.TimeItem;
 import org.rumbledb.items.YearMonthDurationItem;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
 
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.SequenceType;
 
 import java.util.ArrayList;
 import java.util.Arrays;

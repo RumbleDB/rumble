@@ -23,24 +23,24 @@ package org.rumbledb.expressions.operational;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.flowr.FlworVarSequenceType;
 import org.rumbledb.expressions.operational.base.UnaryExpressionBase;
+import org.rumbledb.types.SequenceType;
 
 
 public class InstanceOfExpression extends UnaryExpressionBase {
 
-    private FlworVarSequenceType sequenceType;
+    private SequenceType sequenceType;
 
     public InstanceOfExpression(
             Expression mainExpression,
-            FlworVarSequenceType sequenceType,
+            SequenceType sequenceType,
             ExceptionMetadata metadata
     ) {
         super(mainExpression, Operator.INSTANCE_OF, metadata);
         this.sequenceType = sequenceType;
     }
 
-    public FlworVarSequenceType getsequenceType() {
+    public SequenceType getsequenceType() {
         return this.sequenceType;
     }
 
@@ -53,7 +53,7 @@ public class InstanceOfExpression extends UnaryExpressionBase {
     public String serializationString(boolean prefix) {
         String result = "(instanceOfExpr ";
         result += this.mainExpression.serializationString(true);
-        result += this.sequenceType != null ? "instance of " + this.sequenceType.serializationString(prefix) : "";
+        result += this.sequenceType != null ? "instance of " + this.sequenceType.toString() : "";
         result += ")";
         return result;
     }

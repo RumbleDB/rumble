@@ -64,11 +64,11 @@ public abstract class Node {
      * This method is used during the static analysis. It is meant to be
      * overridden by subclasses that support higher execution modes. By
      * default, the highest execution mode is assumed to be local.
-     * 
+     *
      * If the mode is unset, which should not happen, an unexpected error will be thrown.
-     * 
+     *
      * When extending this method, make sure to perform a super() call to prevent UNSET accesses.
-     * 
+     *
      * @return the highest execution mode.
      */
     public final ExecutionMode getHighestExecutionMode() {
@@ -82,12 +82,11 @@ public abstract class Node {
      * This method is used during the static analysis. It is meant to be
      * overridden by subclasses that support higher execution modes. By
      * default, the highest execution mode is assumed to be local.
-     * 
+     *
      * When extending this method, make sure to perform a super() call to prevent UNSET accesses.
-     * 
+     *
      * @param ignoreUnsetError if true, then an error is thrown if an UNSET mode is found.
      *        If false, it might silently return UNSET.
-     * 
      * @return the highest execution mode.
      */
     public ExecutionMode getHighestExecutionMode(boolean ignoreUnsetError) {
@@ -99,27 +98,25 @@ public abstract class Node {
 
     /**
      * Accept method for the visitor pattern.
-     * 
+     *
      * @param <T> the type of the objects returned by the visitor.
      * @param visitor the visitor.
      * @param argument the input from the visitor.
-     * 
      * @return the object returned by this visitor
      */
     public abstract <T> T accept(AbstractNodeVisitor<T> visitor, T argument);
 
     /**
      * Serializes the node.
-     * 
+     *
      * @param prefix for indentation purposes.
-     * 
      * @return the serialized node.
      */
     public abstract String serializationString(boolean prefix);
 
     /**
      * Returns all children nodes as a list. The list is new and can be modified at will by the caller.
-     * 
+     *
      * @return the children nodes as a list.
      */
     public abstract List<Node> getChildren();
@@ -127,7 +124,7 @@ public abstract class Node {
     /**
      * For gathering descendant nodes, as a depth-first search. The list is new and can be modified at will by the
      * caller.
-     * 
+     *
      * @return the descendant nodes as a list.
      */
     public final List<Node> getDescendants() {
@@ -141,9 +138,8 @@ public abstract class Node {
 
     /**
      * For gathering descendant nodes that match a predicate. The list is new and can be modified at will by the caller.
-     * 
+     *
      * @param predicate a predicate to filter with.
-     * 
      * @return the descendant nodes as a list.
      */
     public final List<Node> getDescendantsMatching(Predicate<Node> predicate) {
@@ -156,7 +152,7 @@ public abstract class Node {
     /**
      * Access the metadata of the node, i.e., the line and column number.
      * This is used for displaying informative error messages.
-     * 
+     *
      * @return the metadata.
      */
     public ExceptionMetadata getMetadata() {

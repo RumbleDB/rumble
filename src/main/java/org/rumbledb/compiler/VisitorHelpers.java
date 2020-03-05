@@ -6,7 +6,6 @@ import org.rumbledb.expressions.Node;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.runtime.functions.base.Functions;
-
 import sparksoniq.jsoniq.ExecutionMode;
 
 public class VisitorHelpers {

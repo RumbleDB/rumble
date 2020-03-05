@@ -54,8 +54,9 @@ public class ReturnClause extends Clause {
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        if (this.returnExpr != null)
+        if (this.returnExpr != null) {
             result.add(this.returnExpr);
+        }
         return result;
     }
 

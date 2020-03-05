@@ -67,6 +67,7 @@ import org.rumbledb.runtime.functions.durations.components.MinutesFromDurationFu
 import org.rumbledb.runtime.functions.durations.components.MonthsFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.SecondsFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.YearsFromDurationFunctionIterator;
+import org.rumbledb.runtime.functions.input.AnnotateFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.AnnotateFunctionIterator;
 import org.rumbledb.runtime.functions.input.JsonFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.LibSVMFileFunctionIterator;
@@ -74,6 +75,7 @@ import org.rumbledb.runtime.functions.input.ParallelizeFunctionIterator;
 import org.rumbledb.runtime.functions.input.ParquetFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.StructuredJsonFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.TextFileFunctionIterator;
+import org.rumbledb.runtime.functions.input.ValidateFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.ValidateFunctionIterator;
 import org.rumbledb.runtime.functions.io.JsonDocFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.AbsFunctionIterator;
@@ -139,10 +141,10 @@ import org.rumbledb.runtime.functions.strings.SubstringBeforeFunctionIterator;
 import org.rumbledb.runtime.functions.strings.SubstringFunctionIterator;
 import org.rumbledb.runtime.functions.strings.TokenizeFunctionIterator;
 import org.rumbledb.runtime.operational.TypePromotionIterator;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
-import sparksoniq.semantics.types.SequenceType;
 import sparksoniq.spark.ml.GetEstimatorFunctionIterator;
 import sparksoniq.spark.ml.GetTransformerFunctionIterator;
 
@@ -169,6 +171,7 @@ import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.adjust
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.adjust_time_to_timezone1;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.adjust_time_to_timezone2;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.annotate;
+import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.annotateFile;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.asin;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.atan;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.atan2;
@@ -279,13 +282,14 @@ import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.timezo
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.tokenize1;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.tokenize2;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.validate;
+import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.validateFile;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.values;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.yearMonthDuration;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.year_from_date;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.year_from_dateTime;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.years_from_duration;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.zero_or_one;
-import static sparksoniq.semantics.types.SequenceType.mostGeneralSequenceType;
+import static org.rumbledb.types.SequenceType.mostGeneralSequenceType;
 
 public class Functions {
     private static final HashMap<FunctionIdentifier, BuiltinFunction> builtInFunctions;
@@ -301,34 +305,35 @@ public class Functions {
 
     static {
         itemTypes = new HashMap<>();
-        itemTypes.put("item", new ItemType(ItemTypes.Item));
+        itemTypes.put("item", ItemType.item);
 
-        itemTypes.put("object", new ItemType(ItemTypes.ObjectItem));
-        itemTypes.put("array", new ItemType(ItemTypes.ArrayItem));
+        itemTypes.put("object", ItemType.objectItem);
+        itemTypes.put("array", ItemType.arrayItem);
 
-        itemTypes.put("atomic", new ItemType(ItemTypes.AtomicItem));
-        itemTypes.put("string", new ItemType(ItemTypes.StringItem));
-        itemTypes.put("integer", new ItemType(ItemTypes.IntegerItem));
-        itemTypes.put("decimal", new ItemType(ItemTypes.DecimalItem));
-        itemTypes.put("double", new ItemType(ItemTypes.DoubleItem));
-        itemTypes.put("boolean", new ItemType(ItemTypes.BooleanItem));
+        itemTypes.put("atomic", ItemType.atomicItem);
+        itemTypes.put("string", ItemType.stringItem);
+        itemTypes.put("integer", ItemType.integerItem);
+        itemTypes.put("decimal", ItemType.decimalItem);
+        itemTypes.put("double", ItemType.doubleItem);
+        itemTypes.put("boolean", ItemType.booleanItem);
 
-        itemTypes.put("duration", new ItemType(ItemTypes.DurationItem));
-        itemTypes.put("yearMonthDuration", new ItemType(ItemTypes.YearMonthDurationItem));
-        itemTypes.put("dayTimeDuration", new ItemType(ItemTypes.DayTimeDurationItem));
+        itemTypes.put("duration", ItemType.durationItem);
+        itemTypes.put("yearMonthDuration", ItemType.yearMonthDurationItem);
+        itemTypes.put("dayTimeDuration", ItemType.dayTimeDurationItem);
 
-        itemTypes.put("dateTime", new ItemType(ItemTypes.DateTimeItem));
-        itemTypes.put("date", new ItemType(ItemTypes.DateItem));
-        itemTypes.put("time", new ItemType(ItemTypes.TimeItem));
+        itemTypes.put("dateTime", ItemType.dateTimeItem);
+        itemTypes.put("date", ItemType.dateItem);
+        itemTypes.put("time", ItemType.timeItem);
 
-        itemTypes.put("hexBinary", new ItemType(ItemTypes.HexBinaryItem));
-        itemTypes.put("base64Binary", new ItemType(ItemTypes.Base64BinaryItem));
+        itemTypes.put("hexBinary", ItemType.hexBinaryItem);
+        itemTypes.put("base64Binary", ItemType.base64BinaryItem);
 
-        itemTypes.put("null", new ItemType(ItemTypes.NullItem));
+        itemTypes.put("null", ItemType.nullItem);
 
     }
 
     private static final Map<String, SequenceType> sequenceTypes;
+
     static {
         sequenceTypes = new HashMap<>();
         sequenceTypes.put("item", new SequenceType(itemTypes.get("item"), SequenceType.Arity.One));
@@ -338,6 +343,7 @@ public class Functions {
 
         sequenceTypes.put("object", new SequenceType(itemTypes.get("object"), SequenceType.Arity.One));
         sequenceTypes.put("object+", new SequenceType(itemTypes.get("object"), SequenceType.Arity.OneOrMore));
+        sequenceTypes.put("object*", new SequenceType(itemTypes.get("object"), SequenceType.Arity.ZeroOrMore));
 
         sequenceTypes.put("array?", new SequenceType(itemTypes.get("array"), SequenceType.Arity.OneOrZero));
 
@@ -538,7 +544,9 @@ public class Functions {
         builtInFunctions.put(get_estimator.getIdentifier(), get_estimator);
 
         builtInFunctions.put(validate.getIdentifier(), validate);
+        builtInFunctions.put(validateFile.getIdentifier(), validateFile);
         builtInFunctions.put(annotate.getIdentifier(), annotate);
+        builtInFunctions.put(annotateFile.getIdentifier(), annotateFile);
     }
 
     static {
@@ -1823,7 +1831,6 @@ public class Functions {
         );
 
 
-
         /**
          * function that returns the date item from the supplied string
          */
@@ -2146,7 +2153,7 @@ public class Functions {
         static final BuiltinFunction validate = createBuiltinFunction(
             "validate",
             "string",
-            "string",
+            "object",
             "string",
             "boolean?",
             "boolean",
@@ -2155,17 +2162,45 @@ public class Functions {
         );
 
         /**
-         * function anotate json file with types defined in JSound 2.0 schema
+         * function validates json file against JSound 2.0 schema
+         */
+        static final BuiltinFunction validateFile = createBuiltinFunction(
+                "validateFile",
+                "string",
+                "string",
+                "string",
+                "boolean?",
+                "boolean",
+                ValidateFileFunctionIterator.class,
+                BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+
+        /**
+         * function annotates json file with types defined in JSound 2.0 schema
          */
         static final BuiltinFunction annotate = createBuiltinFunction(
             "annotate",
             "string",
-            "string",
+            "object",
             "string",
             "boolean?",
             "string",
             AnnotateFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+
+        /**
+         * function annotates json file with types defined in JSound 2.0 schema
+         */
+        static final BuiltinFunction annotateFile = createBuiltinFunction(
+                "annotateFile",
+                "string",
+                "string",
+                "string",
+                "boolean?",
+                "string",
+                AnnotateFileFunctionIterator.class,
+                BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
     }
 }

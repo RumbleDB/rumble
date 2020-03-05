@@ -68,11 +68,13 @@ public abstract class NaryExpressionBase extends OperationalExpressionBase {
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         result.add(this.mainExpression);
-        if (this.rightExpressions != null)
+        if (this.rightExpressions != null) {
             this.rightExpressions.forEach(e -> {
-                if (e != null)
+                if (e != null) {
                     result.add(e);
+                }
             });
+        }
         return result;
     }
 

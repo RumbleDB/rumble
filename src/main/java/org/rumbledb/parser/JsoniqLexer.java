@@ -457,6 +457,7 @@ public class JsoniqLexer extends Lexer {
      */
     @Deprecated
     public static final String[] tokenNames;
+
     static {
         tokenNames = new String[_SYMBOLIC_NAMES.length];
         for (int i = 0; i < tokenNames.length; i++) {
@@ -1291,6 +1292,7 @@ public class JsoniqLexer extends Lexer {
             "\u045d\u0463\3\2\3\2";
     public static final ATN _ATN =
         new ATNDeserializer().deserialize(_serializedATN.toCharArray());
+
     static {
         _decisionToDFA = new DFA[_ATN.getNumberOfDecisions()];
         for (int i = 0; i < _ATN.getNumberOfDecisions(); i++) {

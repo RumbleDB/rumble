@@ -9,12 +9,12 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.TypePromotionClosure;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypes;
+import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
-import sparksoniq.semantics.types.SequenceType;
 
 import java.util.Collections;
 
@@ -77,8 +77,9 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
             Item currentResult = this.nextResult;
             setNextResult();
             return currentResult;
-        } else
+        } else {
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
+        }
     }
 
     private void setNextResult() {
@@ -92,8 +93,9 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         }
 
         this.hasNext = this.nextResult != null;
-        if (!hasNext())
+        if (!hasNext()) {
             return;
+        }
 
         checkItemsSize(this.childIndex);
         if (!this.nextResult.isTypeOf(this.itemType)) {
@@ -160,9 +162,10 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     }
 
     private void checkTypePromotion() {
-        if (this.nextResult.isFunction())
+        if (this.nextResult.isFunction()) {
             return;
-        if (!this.nextResult.canBePromotedTo(this.sequenceType.getItemType()))
+        }
+        if (!this.nextResult.canBePromotedTo(this.sequenceType.getItemType())) {
             throw new UnexpectedTypeException(
                     this.exceptionMessage
                         + ItemTypes.getItemTypeName(this.nextResult.getClass().getSimpleName())
@@ -172,6 +175,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
                         + ".",
                     getMetadata()
             );
+        }
         this.nextResult = this.nextResult.promoteTo(this.sequenceType.getItemType());
     }
 }

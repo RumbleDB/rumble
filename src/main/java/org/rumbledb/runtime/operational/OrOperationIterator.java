@@ -26,7 +26,6 @@ import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.operational.base.BinaryOperationBaseIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 
 public class OrOperationIterator extends BinaryOperationBaseIterator {

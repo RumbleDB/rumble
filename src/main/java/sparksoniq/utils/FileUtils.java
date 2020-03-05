@@ -39,8 +39,9 @@ public class FileUtils {
     public static java.nio.file.Path writeToFileInCurrentDirectory(String content) throws IOException {
         List<String> lines = Arrays.asList(content);
         String path = JsoniqQueryExecutor.class.getProtectionDomain().getCodeSource().getLocation().getPath();
-        if (path.endsWith(".jar"))
+        if (path.endsWith(".jar")) {
             path = path.substring(0, path.lastIndexOf(Path.SEPARATOR));
+        }
         String decodedPath = URLDecoder.decode(path, "UTF-8");
         java.nio.file.Path file = FileUtils.getUniqueFileName(decodedPath + Path.SEPARATOR + TEMP_QUERY_FILE_NAME);
         Files.write(file, lines, Charset.forName("UTF-8"));

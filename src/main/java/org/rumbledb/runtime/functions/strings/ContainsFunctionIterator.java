@@ -26,7 +26,6 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.List;
@@ -62,10 +61,11 @@ public class ContainsFunctionIterator extends LocalFunctionCallIterator {
                     substringItem.getStringValue()
                 );
             return ItemFactory.getInstance().createBooleanItem(result);
-        } else
+        } else {
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " contains function",
                     getMetadata()
             );
+        }
     }
 }

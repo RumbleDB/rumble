@@ -28,9 +28,8 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-import sparksoniq.semantics.types.AtomicTypes;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypes;
 
 import java.math.BigDecimal;
 
@@ -92,8 +91,8 @@ public class DecimalItem extends AtomicItem {
     }
 
     @Override
-    public Item castAs(AtomicTypes itemType) {
-        switch (itemType) {
+    public Item castAs(ItemType itemType) {
+        switch (itemType.getType()) {
             case BooleanItem:
                 return ItemFactory.getInstance().createBooleanItem(!this.getDecimalValue().equals(BigDecimal.ZERO));
             case DoubleItem:
@@ -110,10 +109,10 @@ public class DecimalItem extends AtomicItem {
     }
 
     @Override
-    public boolean isCastableAs(AtomicTypes itemType) {
-        return itemType != AtomicTypes.AtomicItem
+    public boolean isCastableAs(ItemType itemType) {
+        return itemType.getType() != ItemTypes.AtomicItem
             &&
-            itemType != AtomicTypes.NullItem;
+            itemType.getType() != ItemTypes.NullItem;
     }
 
     @Override
@@ -168,39 +167,45 @@ public class DecimalItem extends AtomicItem {
 
     @Override
     public Item add(Item other) {
-        if (other.isDouble())
+        if (other.isDouble()) {
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() + (other.getDoubleValue()));
+        }
         return ItemFactory.getInstance().createDecimalItem(this.getDecimalValue().add(other.castToDecimalValue()));
     }
 
     @Override
     public Item subtract(Item other) {
-        if (other.isDouble())
+        if (other.isDouble()) {
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() - (other.getDoubleValue()));
+        }
         return ItemFactory.getInstance().createDecimalItem(this.getDecimalValue().subtract(other.castToDecimalValue()));
     }
 
     @Override
     public Item multiply(Item other) {
-        if (other.isDouble())
+        if (other.isDouble()) {
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() * (other.getDoubleValue()));
-        if (other.isYearMonthDuration() || other.isDayTimeDuration())
+        }
+        if (other.isYearMonthDuration() || other.isDayTimeDuration()) {
             return other.multiply(this);
+        }
         return ItemFactory.getInstance().createDecimalItem(this.getDecimalValue().multiply(other.castToDecimalValue()));
     }
 
     @Override
     public Item divide(Item other) {
-        if (other.isDouble())
+        if (other.isDouble()) {
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() / (other.getDoubleValue()));
+        }
         return ItemFactory.getInstance()
             .createDecimalItem(this.getDecimalValue().divide(other.castToDecimalValue(), 10, BigDecimal.ROUND_HALF_UP));
     }
 
     @Override
     public Item modulo(Item other) {
-        if (other.isDouble())
+        if (other.isDouble()) {
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() % (other.getDoubleValue()));
+        }
         return ItemFactory.getInstance()
             .createDecimalItem(this.getDecimalValue().remainder(other.castToDecimalValue()));
     }

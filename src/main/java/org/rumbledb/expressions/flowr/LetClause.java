@@ -34,8 +34,9 @@ public class LetClause extends Clause {
 
     public LetClause(List<LetClauseVar> vars, ExceptionMetadata metadataFromContext) {
         super(FLWOR_CLAUSES.LET, metadataFromContext);
-        if (vars == null || vars.isEmpty())
+        if (vars == null || vars.isEmpty()) {
             throw new SemanticException("Let clause must have at least one variable", metadataFromContext);
+        }
         this.letVars = vars;
 
         // chain letVariables with previousClause relationship
@@ -65,8 +66,9 @@ public class LetClause extends Clause {
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         this.letVars.forEach(e -> {
-            if (e != null)
+            if (e != null) {
                 result.add(e);
+            }
         });
         return result;
     }
@@ -79,9 +81,10 @@ public class LetClause extends Clause {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(letClause let ";
-        for (LetClauseVar var : this.letVars)
+        for (LetClauseVar var : this.letVars) {
             result += var.serializationString(true)
                 + (this.letVars.indexOf(var) < this.letVars.size() - 1 ? " , " : "");
+        }
         result += ")";
         return result;
     }

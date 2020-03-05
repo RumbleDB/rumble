@@ -10,9 +10,8 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-import sparksoniq.semantics.types.AtomicTypes;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypes;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -58,26 +57,26 @@ public class YearMonthDurationItem extends DurationItem {
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this.value = getDurationFromString(input.readString(), AtomicTypes.YearMonthDurationItem).normalizedStandard(
+        this.value = getDurationFromString(input.readString(), ItemTypes.YearMonthDurationItem).normalizedStandard(
             yearMonthPeriodType
         );
         this.isNegative = this.value.toString().contains("-");
     }
 
     @Override
-    public boolean isCastableAs(AtomicTypes itemType) {
-        return itemType.equals(AtomicTypes.YearMonthDurationItem)
+    public boolean isCastableAs(ItemType itemType) {
+        return itemType.getType() == ItemTypes.YearMonthDurationItem
             ||
-            itemType.equals(AtomicTypes.DayTimeDurationItem)
+            itemType.getType() == ItemTypes.DayTimeDurationItem
             ||
-            itemType.equals(AtomicTypes.DurationItem)
+            itemType.getType() == ItemTypes.DurationItem
             ||
-            itemType.equals(AtomicTypes.StringItem);
+            itemType.getType() == ItemTypes.StringItem;
     }
 
     @Override
-    public Item castAs(AtomicTypes itemType) {
-        switch (itemType) {
+    public Item castAs(ItemType itemType) {
+        switch (itemType.getType()) {
             case DurationItem:
                 return ItemFactory.getInstance().createDurationItem(this.getValue());
             case YearMonthDurationItem:
@@ -110,12 +109,14 @@ public class YearMonthDurationItem extends DurationItem {
 
     @Override
     public Item add(Item other) {
-        if (other.isDateTime())
+        if (other.isDateTime()) {
             return ItemFactory.getInstance()
                 .createDateTimeItem(other.getDateTimeValue().plus(this.getValue()), other.hasTimeZone());
-        if (other.isDate())
+        }
+        if (other.isDate()) {
             return ItemFactory.getInstance()
                 .createDateItem(other.getDateTimeValue().plus(this.getValue()), other.hasTimeZone());
+        }
         return ItemFactory.getInstance().createYearMonthDurationItem(this.getValue().plus(other.getDurationValue()));
     }
 

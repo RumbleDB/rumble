@@ -108,16 +108,19 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         if (!isRDD()) {
             return nextLocal();
         }
-        if (!this.isOpen)
+        if (!this.isOpen) {
             throw new IteratorFlowException("Runtime iterator is not open", getMetadata());
+        }
 
-        if (!(this.currentResultIndex <= this.result.size() - 1))
+        if (!(this.currentResultIndex <= this.result.size() - 1)) {
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.getClass().getSimpleName(),
                     getMetadata()
             );
-        if (this.currentResultIndex == this.result.size() - 1)
+        }
+        if (this.currentResultIndex == this.result.size() - 1) {
             this.hasNext = false;
+        }
 
         Item item = this.result.get(this.currentResultIndex);
         this.currentResultIndex++;

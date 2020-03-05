@@ -11,9 +11,8 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-import sparksoniq.semantics.types.AtomicTypes;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypes;
 
 import javax.xml.bind.DatatypeConverter;
 import java.util.Arrays;
@@ -67,8 +66,9 @@ public class Base64BinaryItem extends AtomicItem {
     }
 
     static byte[] parseBase64BinaryString(String base64BinaryString) throws IllegalArgumentException {
-        if (base64BinaryString == null || !checkInvalidBase64BinaryFormat(base64BinaryString))
+        if (base64BinaryString == null || !checkInvalidBase64BinaryFormat(base64BinaryString)) {
             throw new IllegalArgumentException();
+        }
         return DatatypeConverter.parseBase64Binary(base64BinaryString);
     }
 
@@ -88,17 +88,17 @@ public class Base64BinaryItem extends AtomicItem {
     }
 
     @Override
-    public boolean isCastableAs(AtomicTypes itemType) {
-        return itemType.equals(AtomicTypes.Base64BinaryItem)
+    public boolean isCastableAs(ItemType itemType) {
+        return itemType.getType() == ItemTypes.Base64BinaryItem
             ||
-            itemType.equals(AtomicTypes.HexBinaryItem)
+            itemType.getType() == ItemTypes.HexBinaryItem
             ||
-            itemType.equals(AtomicTypes.StringItem);
+            itemType.getType() == ItemTypes.StringItem;
     }
 
     @Override
-    public Item castAs(AtomicTypes itemType) {
-        switch (itemType) {
+    public Item castAs(ItemType itemType) {
+        switch (itemType.getType()) {
             case StringItem:
                 return ItemFactory.getInstance().createStringItem(this.getStringValue());
             case Base64BinaryItem:
@@ -124,8 +124,9 @@ public class Base64BinaryItem extends AtomicItem {
 
     @Override
     public int compareTo(Item other) {
-        if (other.isNull())
+        if (other.isNull()) {
             return 1;
+        }
         if (other.isBase64Binary()) {
             return this.serializeValue().compareTo(Arrays.toString(other.getBinaryValue()));
         }
@@ -150,8 +151,9 @@ public class Base64BinaryItem extends AtomicItem {
                     metadata
             );
         }
-        if (other.isNull())
+        if (other.isNull()) {
             return operator.apply(this, other);
+        }
         switch (operator) {
             case VC_EQ:
             case GC_EQ:

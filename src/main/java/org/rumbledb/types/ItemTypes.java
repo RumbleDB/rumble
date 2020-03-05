@@ -18,7 +18,7 @@
  *
  */
 
-package sparksoniq.semantics.types;
+package org.rumbledb.types;
 
 public enum ItemTypes {
     Item,

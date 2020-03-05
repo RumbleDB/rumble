@@ -15,7 +15,7 @@ import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
     /**
      * Visit a parse tree produced by {@link JsoniqParser#module}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -23,7 +23,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#mainModule}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -31,7 +31,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#libraryModule}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -39,7 +39,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#prolog}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -47,7 +47,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#defaultCollationDecl}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -55,7 +55,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#orderingModeDecl}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -63,7 +63,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#emptyOrderDecl}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -71,7 +71,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#decimalFormatDecl}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -79,7 +79,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#dfPropertyName}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -87,7 +87,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#moduleImport}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -95,7 +95,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#varDecl}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -103,7 +103,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#functionDecl}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -111,7 +111,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#paramList}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -119,7 +119,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#param}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -127,7 +127,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#expr}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -135,7 +135,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#exprSingle}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -143,7 +143,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#flowrExpr}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -151,7 +151,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#forClause}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -159,7 +159,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#forVar}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -167,7 +167,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#letClause}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -175,7 +175,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#letVar}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -183,7 +183,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#whereClause}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -191,7 +191,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#groupByClause}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -199,7 +199,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#groupByVar}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -207,7 +207,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#orderByClause}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -215,7 +215,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#orderByExpr}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -223,7 +223,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#countClause}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -231,7 +231,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#quantifiedExpr}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -239,7 +239,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#quantifiedExprVar}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -247,7 +247,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#switchExpr}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -255,7 +255,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#switchCaseClause}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -263,7 +263,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#typeSwitchExpr}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -271,7 +271,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#caseClause}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -279,7 +279,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#ifExpr}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -287,7 +287,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#tryCatchExpr}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -295,7 +295,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#orExpr}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -303,7 +303,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#andExpr}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -311,7 +311,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#notExpr}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -319,7 +319,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#comparisonExpr}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -327,7 +327,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#stringConcatExpr}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -335,7 +335,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#rangeExpr}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -343,7 +343,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#additiveExpr}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -351,7 +351,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#multiplicativeExpr}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -359,7 +359,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#instanceOfExpr}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -367,7 +367,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#treatExpr}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -375,7 +375,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#castableExpr}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -383,7 +383,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#castExpr}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -391,7 +391,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#unaryExpr}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -399,7 +399,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#simpleMapExpr}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -407,7 +407,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#postFixExpr}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -415,7 +415,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#arrayLookup}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -423,7 +423,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#arrayUnboxing}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -431,7 +431,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#predicate}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -439,7 +439,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#objectLookup}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -447,7 +447,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#primaryExpr}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -455,7 +455,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#varRef}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -463,7 +463,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#parenthesizedExpr}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -471,7 +471,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#contextItemExpr}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -479,7 +479,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#orderedExpr}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -487,7 +487,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#unorderedExpr}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -495,7 +495,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#functionCall}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -503,7 +503,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#argumentList}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -511,7 +511,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#argument}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -519,7 +519,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#functionItemExpr}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -527,7 +527,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#namedFunctionRef}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -535,7 +535,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#inlineFunctionExpr}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -543,7 +543,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#sequenceType}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -551,7 +551,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#objectConstructor}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -559,7 +559,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#itemType}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -567,7 +567,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#jSONItemTest}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -575,7 +575,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#keyWordString}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -583,7 +583,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#keyWordInteger}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -591,7 +591,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#keyWordDecimal}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -599,7 +599,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#keyWordDouble}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -607,7 +607,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#keyWordBoolean}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -615,7 +615,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#keyWordDuration}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -623,7 +623,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#keyWordYearMonthDuration}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -631,7 +631,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#keyWordDayTimeDuration}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -639,7 +639,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#keyWordHexBinary}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -647,7 +647,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#keyWordBase64Binary}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -655,7 +655,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#keyWordDateTime}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -663,7 +663,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#keyWordDate}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -671,7 +671,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#keyWordTime}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -679,7 +679,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#typesKeywords}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -687,7 +687,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#singleType}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -695,7 +695,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#atomicType}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -703,7 +703,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#nCNameOrKeyWord}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -711,7 +711,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#pairConstructor}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -719,7 +719,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#arrayConstructor}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -727,7 +727,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#uriLiteral}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -735,7 +735,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#stringLiteral}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */
@@ -743,7 +743,7 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#keyWords}.
-     * 
+     *
      * @param ctx the parse tree
      * @return the visitor result
      */

@@ -22,8 +22,9 @@ package sparksoniq.semantics;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.SemanticException;
+import org.rumbledb.types.SequenceType;
+
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.types.SequenceType;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -80,9 +81,9 @@ public class StaticContext {
 
     public boolean isInScope(String varName) {
         boolean found = false;
-        if (this.inScopeVariables.containsKey(varName))
+        if (this.inScopeVariables.containsKey(varName)) {
             return true;
-        else {
+        } else {
             StaticContext ancestor = this.parent;
             while (ancestor != null) {
                 found = found || ancestor.getInScopeVariables().containsKey(varName);
@@ -93,9 +94,9 @@ public class StaticContext {
     }
 
     private InScopeVariable getInScopeVariable(String varName) {
-        if (this.inScopeVariables.containsKey(varName))
+        if (this.inScopeVariables.containsKey(varName)) {
             return this.inScopeVariables.get(varName);
-        else {
+        } else {
             StaticContext ancestor = this.parent;
             while (ancestor != null) {
                 if (ancestor.inScopeVariables.containsKey(varName)) {

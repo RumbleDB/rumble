@@ -24,12 +24,10 @@ package iq;
 import iq.base.AnnotationsTestsBase;
 import org.junit.Assert;
 import org.junit.Test;
-import org.rumbledb.compiler.TranslationVisitor;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
-import org.rumbledb.parser.JsoniqBaseVisitor;
-
-import sparksoniq.semantics.types.ItemTypes;
+import org.rumbledb.types.ItemTypes;
 
 import java.io.File;
 import java.util.Arrays;
@@ -66,7 +64,7 @@ public class FrontendTests extends AnnotationsTestsBase {
         for (File testFile : this.testFiles) {
             System.err.println(counter++ + " : " + testFile);
             // FileReader reader = getReaderForFile(testFile.getAbsolutePath());
-            testAnnotations(testFile.getAbsolutePath(), new JsoniqBaseVisitor<Void>());
+            testAnnotations(testFile.getAbsolutePath());
         }
 
     }
@@ -101,10 +99,9 @@ public class FrontendTests extends AnnotationsTestsBase {
         initializeTests(semanticTestsDirectory);
         for (File testFile : this.testFiles) {
             System.err.println(counter++ + " : " + testFile);
-            TranslationVisitor visitor = new TranslationVisitor();
-            testAnnotations(testFile.getAbsolutePath(), visitor);
+            MainModule mainModule = testAnnotations(testFile.getAbsolutePath());
             if (Arrays.asList(manualSemanticChecksFiles).contains(testFile.getName()))
-                testVariableTypes(testFile, visitor);
+                testVariableTypes(testFile, mainModule);
         }
     }
 
@@ -184,9 +181,9 @@ public class FrontendTests extends AnnotationsTestsBase {
      * }
      */
 
-    private void testVariableTypes(File testFile, TranslationVisitor visitor) {
+    private void testVariableTypes(File testFile, MainModule mainModule) {
 
-        List<Node> vars = visitor.getMainModule()
+        List<Node> vars = mainModule
             .getDescendantsMatching(
                 d -> d instanceof VariableReferenceExpression
                     && ((VariableReferenceExpression) d).getVariableName().equals("var")
@@ -197,7 +194,7 @@ public class FrontendTests extends AnnotationsTestsBase {
             )
         );
 
-        List<Node> js = visitor.getMainModule()
+        List<Node> js = mainModule
             .getDescendantsMatching(
                 d -> d instanceof VariableReferenceExpression
                     && ((VariableReferenceExpression) d).getVariableName().equals("j")
@@ -210,7 +207,7 @@ public class FrontendTests extends AnnotationsTestsBase {
             )
         );
 
-        List<Node> internals = visitor.getMainModule()
+        List<Node> internals = mainModule
             .getDescendantsMatching(
                 d -> d instanceof VariableReferenceExpression
                     && ((VariableReferenceExpression) d).getVariableName().equals("internal")
@@ -221,7 +218,7 @@ public class FrontendTests extends AnnotationsTestsBase {
             )
         );
 
-        List<Node> arry = visitor.getMainModule()
+        List<Node> arry = mainModule
             .getDescendantsMatching(
                 d -> d instanceof VariableReferenceExpression
                     && ((VariableReferenceExpression) d).getVariableName().equals("arry")

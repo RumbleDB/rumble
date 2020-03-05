@@ -37,8 +37,9 @@ public class ArrayUnboxingClosure implements FlatMapFunction<Item, Item> {
     }
 
     public Iterator<Item> call(Item arg0) throws Exception {
-        if (!(arg0 instanceof ArrayItem))
+        if (!(arg0 instanceof ArrayItem)) {
             return Collections.emptyIterator();
+        }
         List<Item> results = arg0.getItems();
         return results.iterator();
     }

@@ -90,8 +90,9 @@ public class RumbleJLineShell {
             String result = this.jsoniqQueryExecutor.runInteractive(file);
             output(result);
             long time = System.currentTimeMillis() - startTime;
-            if (this.printTime)
+            if (this.printTime) {
                 output("[EXEC TIME]: " + time);
+            }
             removeQueryFile(file);
         } catch (Exception ex) {
             handleException(ex, this.configuration.getShowErrorInfo());
@@ -155,8 +156,9 @@ public class RumbleJLineShell {
     }
 
     private String getPrompt() {
-        if (isInQuery())
+        if (isInQuery()) {
             return MID_QUERY_PROMPT;
+        }
         return PROMPT;
     }
 

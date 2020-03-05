@@ -24,10 +24,10 @@ import org.rumbledb.exceptions.UndeclaredVariableException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
-import org.rumbledb.expressions.flowr.CountClause;
+import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.flowr.Clause;
+import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.FlworExpression;
 import org.rumbledb.expressions.flowr.FlworVarDecl;
 import org.rumbledb.expressions.flowr.ForClauseVar;
@@ -38,11 +38,11 @@ import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.StaticContext;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
-import sparksoniq.semantics.types.SequenceType;
 
 public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
@@ -128,9 +128,9 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         StaticContext functionDeclarationContext = new StaticContext(argument);
         expression.getParams()
             .forEach(
-                (paramName, flworVarSequenceType) -> functionDeclarationContext.addVariable(
+                (paramName, sequenceType) -> functionDeclarationContext.addVariable(
                     paramName,
-                    flworVarSequenceType.getSequence(),
+                    sequenceType,
                     expression.getMetadata(),
                     ExecutionMode.LOCAL // static udf currently supports materialized(local) params, not RDDs or DFs
                 )
@@ -176,7 +176,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         if (expression.getPositionalVariableReference() != null) {
             result.addVariable(
                 expression.getPositionalVariableReference().getVariableName(),
-                new SequenceType(new ItemType(ItemTypes.IntegerItem)),
+                new SequenceType(ItemType.integerItem),
                 expression.getMetadata(),
                 ExecutionMode.LOCAL
             );
@@ -215,7 +215,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         StaticContext result = new StaticContext(argument);
         result.addVariable(
             expression.getCountVariable().getVariableName(),
-            new SequenceType(new ItemType(ItemTypes.IntegerItem), SequenceType.Arity.One),
+            new SequenceType(ItemType.integerItem, SequenceType.Arity.One),
             expression.getMetadata(),
             ExecutionMode.LOCAL
         );
@@ -226,12 +226,9 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     private StaticContext visitFlowrVarDeclaration(FlworVarDecl expression, StaticContext argument) {
         StaticContext result = new StaticContext(argument);
         // TODO for now we only suppot as/default, no inference, flags
-        SequenceType type = expression.getAsSequence() == null
-            ? new SequenceType()
-            : expression.getAsSequence().getSequence();
         result.addVariable(
             expression.getVariableReference().getVariableName(),
-            type,
+            expression.getSequenceType(),
             expression.getMetadata(),
             expression.getVariableHighestStorageMode()
         );
@@ -262,10 +259,9 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
         // create a child context, add the variable and return it
         StaticContext result = new StaticContext(argument);
-        SequenceType type = expression.getSequenceType() == null ? new SequenceType() : expression.getSequenceType();
         result.addVariable(
             expression.getVariableReference().getVariableName(),
-            type,
+            expression.getSequenceType(),
             expression.getMetadata(),
             ExecutionMode.LOCAL
         );

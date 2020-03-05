@@ -25,8 +25,9 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
+import org.rumbledb.types.SequenceType;
+
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.types.SequenceType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,8 +37,7 @@ public abstract class FlworVarDecl extends Clause {
     protected VariableReferenceExpression variableReferenceExpression;
     protected Expression expression;
 
-    // asSequence is null by default if the type of the variable in the for/let/groupBy clause is not specified.
-    protected FlworVarSequenceType asSequenceType;
+    protected SequenceType sequenceType;
 
     // Holds whether the variable will be stored in materialized(local) or native/spark(RDD or DF) format in a tuple
     protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
@@ -49,22 +49,22 @@ public abstract class FlworVarDecl extends Clause {
     public FlworVarDecl(
             FLWOR_CLAUSES forVar,
             VariableReferenceExpression variableReferenceExpression,
-            FlworVarSequenceType sequenceType,
+            SequenceType sequenceType,
             Expression expression,
             ExceptionMetadata metadata
     ) {
         this(forVar, metadata);
-        if (variableReferenceExpression == null)
+        if (variableReferenceExpression == null) {
             throw new IllegalArgumentException("Flowr var decls cannot be empty");
+        }
         this.variableReferenceExpression = variableReferenceExpression;
-        this.asSequenceType = sequenceType;
+        this.sequenceType = sequenceType;
+        if (this.sequenceType == null) {
+            throw new OurBadException("A sequence type cannot be null");
+        }
         this.expression = expression;
 
-        // TODO add type inference?
-        if (this.asSequenceType == null)
-            this.variableReferenceExpression.setType(new SequenceType());
-        else
-            this.variableReferenceExpression.setType(this.asSequenceType.getSequence());
+        this.variableReferenceExpression.setType(this.sequenceType);
     }
 
     public VariableReferenceExpression getVariableReference() {
@@ -75,8 +75,8 @@ public abstract class FlworVarDecl extends Clause {
         return this.expression;
     }
 
-    public FlworVarSequenceType getAsSequence() {
-        return this.asSequenceType;
+    public SequenceType getSequenceType() {
+        return this.sequenceType;
     }
 
     @Override
@@ -94,10 +94,9 @@ public abstract class FlworVarDecl extends Clause {
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         result.add(this.variableReferenceExpression);
-        if (this.asSequenceType != null)
-            result.add(this.asSequenceType);
-        if (this.expression != null)
+        if (this.expression != null) {
             result.add(this.expression);
+        }
         return result;
     }
 }

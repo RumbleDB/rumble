@@ -27,7 +27,6 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.List;
@@ -59,8 +58,9 @@ public class StringJoinFunctionIterator extends LocalFunctionCallIterator {
 
             StringBuilder stringBuilder = new StringBuilder();
             for (Item item : strings) {
-                if (!(item.isString()))
+                if (!(item.isString())) {
                     throw new UnexpectedTypeException("String item expected", this.children.get(0).getMetadata());
+                }
                 if (!stringBuilder.toString().isEmpty()) {
                     stringBuilder.append(joinString.getStringValue());
                 }
@@ -68,10 +68,11 @@ public class StringJoinFunctionIterator extends LocalFunctionCallIterator {
             }
             this.hasNext = false;
             return ItemFactory.getInstance().createStringItem(stringBuilder.toString());
-        } else
+        } else {
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " string-join function",
                     getMetadata()
             );
+        }
     }
 }

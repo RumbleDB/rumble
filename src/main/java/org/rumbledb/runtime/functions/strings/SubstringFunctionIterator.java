@@ -27,7 +27,6 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.List;
@@ -63,8 +62,9 @@ public class SubstringFunctionIterator extends LocalFunctionCallIterator {
                 );
             }
             int index = (int) Math.round(indexItem.getDoubleValue() - 1);
-            if (index >= stringItem.getStringValue().length())
+            if (index >= stringItem.getStringValue().length()) {
                 return ItemFactory.getInstance().createStringItem("");
+            }
             if (this.children.size() > 2) {
                 Item endIndexItem = this.children.get(2)
                     .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
@@ -75,19 +75,21 @@ public class SubstringFunctionIterator extends LocalFunctionCallIterator {
                     );
                 }
                 double endIndex = sanitizeEndIndex(stringItem, endIndexItem, index);
-                if (endIndex < index)
+                if (endIndex < index) {
                     return ItemFactory.getInstance().createStringItem("");
+                }
                 result = stringItem.getStringValue().substring(Math.max(index, 0), (int) Math.round(endIndex));
             } else {
                 result = stringItem.getStringValue().substring(index);
             }
 
             return ItemFactory.getInstance().createStringItem(result);
-        } else
+        } else {
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " substring function",
                     getMetadata()
             );
+        }
     }
 
     private double sanitizeEndIndex(Item stringItem, Item endIndexItem, int startIndex) {

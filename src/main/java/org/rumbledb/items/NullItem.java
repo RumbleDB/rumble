@@ -26,9 +26,8 @@ import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-import sparksoniq.semantics.types.AtomicTypes;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypes;
 
 public class NullItem extends AtomicItem {
 
@@ -55,15 +54,15 @@ public class NullItem extends AtomicItem {
     }
 
     @Override
-    public boolean isCastableAs(AtomicTypes itemType) {
-        return itemType == AtomicTypes.NullItem
+    public boolean isCastableAs(ItemType itemType) {
+        return itemType.getType() == ItemTypes.NullItem
             ||
-            itemType == AtomicTypes.StringItem;
+            itemType.getType() == ItemTypes.StringItem;
     }
 
     @Override
-    public Item castAs(AtomicTypes itemType) {
-        switch (itemType) {
+    public Item castAs(ItemType itemType) {
+        switch (itemType.getType()) {
             case NullItem:
                 return this;
             case StringItem:
@@ -103,8 +102,9 @@ public class NullItem extends AtomicItem {
 
     @Override
     public int compareTo(Item other) {
-        if (other.isNull())
+        if (other.isNull()) {
             return 0;
+        }
         return -1;
     }
 

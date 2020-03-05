@@ -35,8 +35,9 @@ public class ForClause extends Clause {
 
     public ForClause(List<ForClauseVar> vars, ExceptionMetadata metadataFromContext) {
         super(FLWOR_CLAUSES.FOR, metadataFromContext);
-        if (vars == null || vars.isEmpty())
+        if (vars == null || vars.isEmpty()) {
             throw new SemanticException("For clause must have at least one variable", metadataFromContext);
+        }
         this.forVariables = vars;
 
         // chain forVariables with previousClause relationship
@@ -67,8 +68,9 @@ public class ForClause extends Clause {
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         this.forVariables.forEach(e -> {
-            if (e != null)
+            if (e != null) {
                 result.add(e);
+            }
         });
         return result;
     }
@@ -81,9 +83,10 @@ public class ForClause extends Clause {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(forClause for ";
-        for (ForClauseVar var : this.forVariables)
+        for (ForClauseVar var : this.forVariables) {
             result += var.serializationString(true)
                 + (this.forVariables.indexOf(var) < this.forVariables.size() - 1 ? " , " : "");
+        }
         result += ")";
         return result;
     }

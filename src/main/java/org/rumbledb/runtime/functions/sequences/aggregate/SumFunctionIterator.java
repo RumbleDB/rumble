@@ -29,7 +29,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 
@@ -93,13 +92,14 @@ public class SumFunctionIterator extends LocalFunctionCallIterator {
             }
 
             results.forEach(r -> {
-                if (!r.isNumeric())
+                if (!r.isNumeric()) {
                     throw new InvalidArgumentTypeException(
                             "Sum expression has non numeric args "
                                 +
                                 r.serialize(),
                             getMetadata()
                     );
+                }
             });
             try {
                 // if input is empty sequence and zeroItem is not given 0 is returned
@@ -113,11 +113,12 @@ public class SumFunctionIterator extends LocalFunctionCallIterator {
             } catch (IteratorFlowException e) {
                 throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
             }
-        } else
+        } else {
             throw new IteratorFlowException(
                     FLOW_EXCEPTION_MESSAGE + "SUM function",
                     getMetadata()
             );
+        }
     }
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
