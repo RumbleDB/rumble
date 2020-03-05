@@ -93,6 +93,11 @@ public class AnyURIItem extends AtomicItem {
     }
 
     @Override
+    public boolean canBePromotedTo(ItemType type) {
+        return type.getType().equals(ItemTypes.StringItem);
+    }
+
+    @Override
     public Item castAs(AtomicTypes itemType) {
         switch (itemType) {
             case StringItem:
