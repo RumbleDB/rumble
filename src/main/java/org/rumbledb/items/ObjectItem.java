@@ -28,8 +28,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemType;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

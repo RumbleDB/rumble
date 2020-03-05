@@ -26,8 +26,6 @@ import com.esotericsoftware.kryo.io.Output;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemType;
-
 import java.util.ArrayList;
 import java.util.List;
 

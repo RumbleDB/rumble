@@ -12,8 +12,6 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemType;
-
 import javax.xml.bind.DatatypeConverter;
 import java.util.Arrays;
 import java.util.regex.Pattern;

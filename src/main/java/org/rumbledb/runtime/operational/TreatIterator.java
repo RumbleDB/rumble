@@ -11,7 +11,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.TreatAsClosure;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.ExecutionMode;

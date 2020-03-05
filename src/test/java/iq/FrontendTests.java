@@ -28,8 +28,6 @@ import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemType;
-
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
