@@ -191,7 +191,8 @@ import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.concat
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.contains;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.cos;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.count;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.csv_file;
+import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.csv_file1;
+import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.csv_file2;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.date;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.dateTime;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.dayTimeDuration;
@@ -426,7 +427,8 @@ public class Functions {
         builtInFunctions.put(parallelizeFunction1.getIdentifier(), parallelizeFunction1);
         builtInFunctions.put(parallelizeFunction2.getIdentifier(), parallelizeFunction2);
         builtInFunctions.put(parquet_file.getIdentifier(), parquet_file);
-        builtInFunctions.put(csv_file.getIdentifier(), csv_file);
+        builtInFunctions.put(csv_file1.getIdentifier(), csv_file1);
+        builtInFunctions.put(csv_file2.getIdentifier(), csv_file2);
 
         builtInFunctions.put(count.getIdentifier(), count);
         builtInFunctions.put(boolean_function.getIdentifier(), boolean_function);
@@ -979,12 +981,23 @@ public class Functions {
         /**
          * function that parses a csv file
          */
-        static final BuiltinFunction csv_file = createBuiltinFunction(
+        static final BuiltinFunction csv_file1 = createBuiltinFunction(
             "csv-file",
             "string",
             "item*",
             CSVFileFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
+        );
+        /**
+         * function that parses a csv file
+         */
+        static final BuiltinFunction csv_file2 = createBuiltinFunction(
+                "csv-file",
+                "string",
+                "object",
+                "item*",
+                CSVFileFunctionIterator.class,
+                BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
         );
 
         /**
