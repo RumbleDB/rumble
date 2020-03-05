@@ -560,6 +560,34 @@ time("13:20:00-05:00")
 
 returns 13:20:00-05:00
 
+## Formatting dates and times functions
+
+The functions in this section accept a simplified version of the picture string, in which a variable marker accepts only a component specifier, according to the rules presented in the [XPath functions specification](https://www.w3.org/TR/xpath-functions-30/#rules-for-datetime-formatting).
+
+### format-dateTime
+
+```
+format-dateTime(dateTime("2004-04-12T13:20:00"), "[m]-[H]-[D]-[M]-[Y]")
+```
+
+returns 20-13-12-4-2004
+
+### format-date
+
+```
+format-date(date("2004-04-12"), "[D]-[M]-[Y]")
+```
+
+returns 12-4-2004
+
+### format-time
+
+```
+format-time(time("13:20:00"), "[H]-[m]-[s]")
+```
+
+returns 13-20-0
+
 ## Context functions
 
 ### position

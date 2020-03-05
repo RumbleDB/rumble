@@ -42,6 +42,9 @@ import org.rumbledb.runtime.functions.datetime.CurrentDateTimeFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.CurrentTimeFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.DateFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.DateTimeFunctionIterator;
+import org.rumbledb.runtime.functions.datetime.FormatDateFunctionIterator;
+import org.rumbledb.runtime.functions.datetime.FormatDateTimeFunctionIterator;
+import org.rumbledb.runtime.functions.datetime.FormatTimeFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.TimeFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.components.AdjustDateTimeToTimezone;
 import org.rumbledb.runtime.functions.datetime.components.AdjustDateToTimezone;
@@ -368,6 +371,7 @@ public class Functions {
 
         builtInFunctions.put(dateTime.getIdentifier(), dateTime);
         builtInFunctions.put(current_dateTime.getIdentifier(), current_dateTime);
+        builtInFunctions.put(format_dateTime.getIdentifier(), format_dateTime);
         builtInFunctions.put(year_from_dateTime.getIdentifier(), year_from_dateTime);
         builtInFunctions.put(month_from_dateTime.getIdentifier(), month_from_dateTime);
         builtInFunctions.put(day_from_dateTime.getIdentifier(), day_from_dateTime);
@@ -380,6 +384,7 @@ public class Functions {
 
         builtInFunctions.put(date.getIdentifier(), date);
         builtInFunctions.put(current_date.getIdentifier(), current_date);
+        builtInFunctions.put(format_date.getIdentifier(), format_date);
         builtInFunctions.put(year_from_date.getIdentifier(), year_from_date);
         builtInFunctions.put(month_from_date.getIdentifier(), month_from_date);
         builtInFunctions.put(day_from_date.getIdentifier(), day_from_date);
@@ -389,6 +394,7 @@ public class Functions {
 
         builtInFunctions.put(time.getIdentifier(), time);
         builtInFunctions.put(current_time.getIdentifier(), current_time);
+        builtInFunctions.put(format_time.getIdentifier(), format_time);
         builtInFunctions.put(hours_from_time.getIdentifier(), hours_from_time);
         builtInFunctions.put(minutes_from_time.getIdentifier(), minutes_from_time);
         builtInFunctions.put(seconds_from_time.getIdentifier(), seconds_from_time);
@@ -1587,6 +1593,17 @@ public class Functions {
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
+         * function that returns a string containing a dateTime value formated for display
+         */
+        static final BuiltinFunction format_dateTime = createBuiltinFunction(
+            "format-dateTime",
+            "dateTime?",
+            "string",
+            "string?",
+            FormatDateTimeFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+        /**
          * function that returns the year from a dateTime
          */
         static final BuiltinFunction year_from_dateTime = createBuiltinFunction(
@@ -1699,6 +1716,17 @@ public class Functions {
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
+         * function that returns a string containing a date value formated for display
+         */
+        static final BuiltinFunction format_date = createBuiltinFunction(
+            "format-date",
+            "date?",
+            "string",
+            "string?",
+            FormatDateFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+        /**
          * function that returns the year from a date
          */
         static final BuiltinFunction year_from_date = createBuiltinFunction(
@@ -1776,6 +1804,17 @@ public class Functions {
             "current-time",
             "time?",
             CurrentTimeFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+        /**
+         * function that returns a string containing a time value formated for display
+         */
+        static final BuiltinFunction format_time = createBuiltinFunction(
+            "format-time",
+            "time?",
+            "string",
+            "string?",
+            FormatTimeFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
