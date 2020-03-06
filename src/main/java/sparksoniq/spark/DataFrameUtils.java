@@ -15,6 +15,7 @@ import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.parsing.ItemParser;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class DataFrameUtils {
@@ -23,9 +24,18 @@ public class DataFrameUtils {
             ObjectItem schemaItem,
             ExceptionMetadata metadata
     ) {
-        validateSchemaAgainstData(schemaItem, (ObjectItem) itemRDD.take(1).get(0), metadata);
+        validateSchemaAgainstAnItem(schemaItem, (ObjectItem) itemRDD.take(1).get(0), metadata);
         StructType schema = generateSchemaFromSchemaItem(schemaItem, metadata);
-        JavaRDD<Row> rowRDD = itemRDD.map((Function<Item, Row>) item -> ItemParser.getRowFromItem(item));
+        JavaRDD<Row> rowRDD = itemRDD.map(
+            new Function<Item, Row>() {
+                private static final long serialVersionUID = 1L;
+
+                @Override
+                public Row call(Item item) {
+                    return ItemParser.getRowFromItem(item);
+                }
+            }
+        );
         try {
             Dataset<Row> result = SparkSessionManager.getInstance()
                 .getOrCreateSession()
@@ -42,7 +52,7 @@ public class DataFrameUtils {
             ObjectItem schemaItem,
             ExceptionMetadata metadata
     ) {
-        validateSchemaAgainstData(schemaItem, (ObjectItem) items.get(0), metadata);
+        validateSchemaAgainstAnItem(schemaItem, (ObjectItem) items.get(0), metadata);
         StructType schema = generateSchemaFromSchemaItem(schemaItem, metadata);
         List<Row> rows = ItemParser.getRowsFromItems(items);
         try {
@@ -54,7 +64,7 @@ public class DataFrameUtils {
         }
     }
 
-    private static void validateSchemaAgainstData(
+    private static void validateSchemaAgainstAnItem(
             ObjectItem schemaItem,
             ObjectItem dataItem,
             ExceptionMetadata metadata
@@ -62,15 +72,22 @@ public class DataFrameUtils {
         for (String schemaColumn : schemaItem.getKeys()) {
             if (!dataItem.getKeys().contains(schemaColumn)) {
                 throw new MLInvalidDataFrameSchemaException(
-                        "annotate() schema must fully match the columns of input data",
+                        "annotate() schema must fully match the columns of input data: "
+                            + "missing type information for '"
+                            + schemaColumn
+                            + "' column.",
                         metadata
                 );
             }
         }
+
         for (String dataColumn : dataItem.getKeys()) {
             if (!schemaItem.getKeys().contains(dataColumn)) {
                 throw new MLInvalidDataFrameSchemaException(
-                        "annotate() schema must fully match the columns of input data",
+                        "annotate() schema must fully match the columns of input data: "
+                            + "redundant type information for non-existent column '"
+                            + dataColumn
+                            + "'.",
                         metadata
                 );
             }
@@ -84,39 +101,101 @@ public class DataFrameUtils {
                 String itemTypeName = schemaItem.getItemByKey(columnName).getStringValue();
                 StructField field = DataTypes.createStructField(
                     columnName,
-                    getDataTypeFromItemTypeName(itemTypeName),
+                    ItemParser.getDataFrameDataTypeFromItemTypeName(itemTypeName),
                     true
                 );
                 fields.add(field);
             }
-        } catch (RuntimeException ex) {
+        } catch (IllegalArgumentException ex) {
             throw new MLInvalidDataFrameSchemaException(
-                    "Unexpected item type found in the annotate() schema",
+                    "Schema error in annotate(): " + ex.getMessage(),
                     metadata
             );
         }
         return DataTypes.createStructType(fields);
     }
 
-    private static DataType getDataTypeFromItemTypeName(String itemTypeName) {
-        if (itemTypeName.equals("boolean")) {
-            return DataTypes.BooleanType;
-        } else if (itemTypeName.equals("integer")) {
-            return DataTypes.IntegerType;
-        } else if (itemTypeName.equals("double")) {
-            return DataTypes.DoubleType;
-        } else if (itemTypeName.equals("decimal")) {
-            return DataTypes.DoubleType;
-        } else if (itemTypeName.equals("string")) {
-            return DataTypes.StringType;
-        } else if (itemTypeName.equals("null")) {
-            return DataTypes.NullType;
-        } else if (itemTypeName.equals("date")) {
-            return DataTypes.DateType;
-        } else if (itemTypeName.equals("datetime")) {
-            return DataTypes.TimestampType;
-        } else {
-            throw new RuntimeException("Unexpected item type found.");
+    public static void validateSchemaAgainstDataFrame(
+            ObjectItem schemaItem,
+            StructType dataFrameSchema,
+            ExceptionMetadata metadata
+    ) {
+        for (StructField column : dataFrameSchema.fields()) {
+            final String columnName = column.name();
+            final DataType columnDataType = column.dataType();
+            boolean columnMatched = schemaItem.getKeys().stream().anyMatch(userSchemaColumnName -> {
+                if (!columnName.equals(userSchemaColumnName)) {
+                    return false;
+                }
+
+                String userSchemaColumnTypeName = schemaItem.getItemByKey(userSchemaColumnName).getStringValue();
+                DataType userSchemaColumnDataType;
+                try {
+                    userSchemaColumnDataType = ItemParser.getDataFrameDataTypeFromItemTypeName(
+                        userSchemaColumnTypeName
+                    );
+                } catch (IllegalArgumentException ex) {
+                    throw new MLInvalidDataFrameSchemaException(
+                            "Schema error in annotate(): " + ex.getMessage(),
+                            metadata
+                    );
+                }
+
+                if (isUserTypeApplicable(userSchemaColumnDataType, columnDataType)) {
+                    return true;
+                }
+
+                throw new MLInvalidDataFrameSchemaException(
+                        "annotate() schema must fully match the columns of input data: "
+                            + "expected '"
+                            + ItemParser.getItemTypeNameFromDataFrameDataType(columnDataType)
+                            + "' type for column '"
+                            + columnName
+                            + "', but found '"
+                            + userSchemaColumnTypeName
+                            + "'",
+                        metadata
+                );
+            });
+
+            if (!columnMatched) {
+                throw new MLInvalidDataFrameSchemaException(
+                        "annotate() schema must fully match the columns of input data: "
+                            + "missing type information for '"
+
+                            + columnName
+                            + "' column.",
+                        metadata
+                );
+            }
         }
+
+        for (String userSchemaColumnName : schemaItem.getKeys()) {
+            boolean userColumnMatched = Arrays.stream(dataFrameSchema.fields())
+                .anyMatch(
+                    structField -> userSchemaColumnName.equals(structField.name())
+                );
+
+            if (!userColumnMatched) {
+                throw new MLInvalidDataFrameSchemaException(
+                        "annotate() schema must fully match the columns of input data: "
+                            + "redundant type information for non-existent column '"
+                            + userSchemaColumnName
+                            + "'.",
+
+                        metadata
+                );
+            }
+        }
+    }
+
+    private static boolean isUserTypeApplicable(DataType userSchemaColumnDataType, DataType columnDataType) {
+        return userSchemaColumnDataType.equals(columnDataType)
+            ||
+            (userSchemaColumnDataType.equals(DataTypes.DoubleType) && columnDataType.equals(DataTypes.LongType))
+            ||
+            (userSchemaColumnDataType.equals(DataTypes.DoubleType) && columnDataType.equals(DataTypes.FloatType))
+            ||
+            (userSchemaColumnDataType.equals(DataTypes.IntegerType) && columnDataType.equals(DataTypes.ShortType));
     }
 }
