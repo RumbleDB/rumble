@@ -2251,7 +2251,7 @@ public class Functions {
          */
         static final BuiltinFunction annotate = createBuiltinFunction(
             "annotate",
-            "object*",
+            "item*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
             "object",
             "item*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
             AnnotateFunctionIterator.class,

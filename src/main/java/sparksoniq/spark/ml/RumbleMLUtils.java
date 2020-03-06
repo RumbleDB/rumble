@@ -174,7 +174,7 @@ public class RumbleMLUtils {
             case "double":
                 return atomicItem.castAs(ItemType.doubleItem).getDoubleValue();
             case "long":
-                return (long) atomicItem.castAs(ItemType.doubleItem).getDoubleValue();
+                return atomicItem.castAs(ItemType.decimalItem).getDecimalValue().longValue();
             default:
                 throw new OurBadException(
                         "Unrecognized Java type name found \""
