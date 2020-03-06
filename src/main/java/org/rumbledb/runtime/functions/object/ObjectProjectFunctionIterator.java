@@ -20,13 +20,15 @@
 
 package org.rumbledb.runtime.functions.object;
 
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSelectorException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
@@ -34,13 +36,13 @@ import sparksoniq.semantics.DynamicContext;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ObjectProjectFunctionIterator extends LocalFunctionCallIterator {
-
+public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
     private Item nextResult;
     private List<Item> projectionKeys;
+    private ExceptionMetadata iteratorMetadata;
 
     public ObjectProjectFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -48,15 +50,13 @@ public class ObjectProjectFunctionIterator extends LocalFunctionCallIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(arguments, executionMode, iteratorMetadata);
+        this.iterator = arguments.get(0);
+        this.iteratorMetadata = iteratorMetadata;
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-
-        this.iterator = this.children.get(0);
-        this.iterator.open(context);
-
+    public void openLocal() {
+        this.iterator.open(this.currentDynamicContextForLocalExecution);
         this.projectionKeys = this.children.get(1).materialize(this.currentDynamicContextForLocalExecution);
         if (this.projectionKeys.isEmpty()) {
             throw new InvalidSelectorException(
@@ -69,7 +69,7 @@ public class ObjectProjectFunctionIterator extends LocalFunctionCallIterator {
     }
 
     @Override
-    public Item next() {
+    public Item nextLocal() {
         if (this.hasNext) {
             Item result = this.nextResult; // save the result to be returned
             setNextResult(); // calculate and store the next result
@@ -114,6 +114,40 @@ public class ObjectProjectFunctionIterator extends LocalFunctionCallIterator {
         }
         return ItemFactory.getInstance()
             .createObjectItem(finalKeylist, finalValueList, getMetadata());
+    }
 
+    @Override
+    protected boolean hasNextLocal() {
+        return this.hasNext;
+    }
+
+    @Override
+    protected void resetLocal(DynamicContext context) {
+        this.iterator.open(this.currentDynamicContextForLocalExecution);
+        this.projectionKeys = this.children.get(1).materialize(this.currentDynamicContextForLocalExecution);
+        if (this.projectionKeys.isEmpty()) {
+            throw new InvalidSelectorException(
+                    "Invalid Projection Key; Object projection can't be performed with zero keys: ",
+                    getMetadata()
+            );
+        }
+
+        setNextResult();
+    }
+
+    @Override
+    protected void closeLocal() {
+        this.iterator.close();
+    }
+
+    @Override
+    public JavaRDD<Item> getRDDAux(DynamicContext context) {
+        JavaRDD<Item> childRDD = this.iterator.getRDD(context);
+        this.projectionKeys = this.children.get(1).materialize(this.currentDynamicContextForLocalExecution);
+        FlatMapFunction<Item, Item> transformation = new ObjectProjectClosure(
+                this.projectionKeys,
+                this.iteratorMetadata
+        );
+        return childRDD.flatMap(transformation);
     }
 }
