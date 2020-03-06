@@ -295,7 +295,7 @@ public class ItemParser implements Serializable {
                 return DataTypes.TimestampType;
             case "hexbinary":
                 return DataTypes.BinaryType;
-            case "[\"item\"]":
+            case "object":
                 return vectorType;
             default:
                 throw new IllegalArgumentException("Unexpected item type found: '" + itemTypeName + "'.");
@@ -322,7 +322,7 @@ public class ItemParser implements Serializable {
         } else if (DataTypes.BinaryType.equals(dataType)) {
             return "hexbinary";
         } else if (vectorType.equals(dataType)) {
-            return "[\"item\"]";
+            return "object";
         }
         throw new OurBadException("Unexpected DataFrame data type found: '" + dataType.toString() + "'.");
     }
