@@ -275,7 +275,7 @@ public class ItemParser implements Serializable {
         }
     }
 
-    public static DataType getDataFrameDataTypeFromItemTypeName(String itemTypeName) {
+    public static DataType getDataFrameDataTypeFromItemTypeString(String itemTypeName) {
         switch (itemTypeName) {
             case "boolean":
                 return DataTypes.BooleanType;
@@ -356,6 +356,9 @@ public class ItemParser implements Serializable {
                 columns[i] = new Date(value.getDateTimeValue().getMillis());
             } else if (value.isDateTime()) {
                 columns[i] = new Timestamp(value.getDateTimeValue().getMillis());
+            } else if (value.isArray()) {
+                // TODO: read the contents of array and generate rows with it
+                throw new OurBadException("Array item to row conversion is not yet supported.");
             } else {
                 throw new OurBadException("Unexpected item type found while generating rows.");
             }

@@ -22,8 +22,9 @@ public class DataFrameUtils {
             JavaRDD<Item> itemRDD,
             ObjectItem schemaItem
     ) {
-        validateSchemaAgainstAnItem(schemaItem, (ObjectItem) itemRDD.take(1).get(0));
-        StructType schema = generateSchemaFromSchemaItem(schemaItem);
+        ObjectItem firstDataItem = (ObjectItem) itemRDD.take(1).get(0);
+        validateSchemaAgainstAnItem(schemaItem, firstDataItem);
+        StructType schema = generateDataFrameSchemaFromSchemaItem(schemaItem);
         JavaRDD<Row> rowRDD = itemRDD.map(
             new Function<Item, Row>() {
                 private static final long serialVersionUID = 1L;
@@ -49,8 +50,9 @@ public class DataFrameUtils {
             List<Item> items,
             ObjectItem schemaItem
     ) {
-        validateSchemaAgainstAnItem(schemaItem, (ObjectItem) items.get(0));
-        StructType schema = generateSchemaFromSchemaItem(schemaItem);
+        ObjectItem firstDataItem = (ObjectItem) items.get(0);
+        validateSchemaAgainstAnItem(schemaItem, firstDataItem);
+        StructType schema = generateDataFrameSchemaFromSchemaItem(schemaItem);
         List<Row> rows = ItemParser.getRowsFromItems(items);
         try {
             Dataset<Row> result = SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema);
@@ -88,16 +90,11 @@ public class DataFrameUtils {
         }
     }
 
-    private static StructType generateSchemaFromSchemaItem(ObjectItem schemaItem) {
+    private static StructType generateDataFrameSchemaFromSchemaItem(ObjectItem schemaItem) {
         List<StructField> fields = new ArrayList<>();
         try {
             for (String columnName : schemaItem.getKeys()) {
-                String itemTypeName = schemaItem.getItemByKey(columnName).getStringValue();
-                StructField field = DataTypes.createStructField(
-                    columnName,
-                    ItemParser.getDataFrameDataTypeFromItemTypeName(itemTypeName),
-                    true
-                );
+                StructField field = generateStructFieldFromNameAndItem(columnName, schemaItem.getItemByKey(columnName));
                 fields.add(field);
             }
         } catch (IllegalArgumentException ex) {
@@ -106,6 +103,50 @@ public class DataFrameUtils {
             );
         }
         return DataTypes.createStructType(fields);
+    }
+
+    private static StructField generateStructFieldFromNameAndItem(String columnName, Item item) {
+        DataType type = generateDataTypeFromItem(item);
+        return DataTypes.createStructField(columnName, type, true);
+    }
+
+    private static DataType generateDataTypeFromItem(Item item) {
+        if (item.isArray()) {
+            validateArrayItemInSchema(item);
+            Item arrayContentsTypeItem = item.getItems().get(0);
+            DataType arrayContentsType = generateDataTypeFromItem(arrayContentsTypeItem);
+            return DataTypes.createArrayType(arrayContentsType);
+        }
+
+        if (item.isObject()) {
+            // TODO: implement object support
+            // createStructType(....)
+        }
+
+        if (item.isString()) {
+            String itemTypeName = item.getStringValue();
+            return ItemParser.getDataFrameDataTypeFromItemTypeString(itemTypeName);
+        }
+
+        throw new MLInvalidDataFrameSchemaException(
+                "Schema can only contain arrays, objects or strings: " + item.toString() + " is not accepted"
+        );
+    }
+
+    private static void validateArrayItemInSchema(Item item) {
+        List<Item> arrayTypes = item.getItems();
+        if (arrayTypes.size() == 0) {
+            throw new MLInvalidDataFrameSchemaException(
+                    "Arrays in schema must define a type for their contents."
+            );
+        }
+        if (arrayTypes.size() > 1) {
+            throw new MLInvalidDataFrameSchemaException(
+                    "Arrays in schema can define only a single type for their contents: "
+                        + item.toString()
+                        + " is invalid."
+            );
+        }
     }
 
     public static void validateSchemaAgainstDataFrame(
@@ -123,7 +164,7 @@ public class DataFrameUtils {
                 String userSchemaColumnTypeName = schemaItem.getItemByKey(userSchemaColumnName).getStringValue();
                 DataType userSchemaColumnDataType;
                 try {
-                    userSchemaColumnDataType = ItemParser.getDataFrameDataTypeFromItemTypeName(
+                    userSchemaColumnDataType = ItemParser.getDataFrameDataTypeFromItemTypeString(
                         userSchemaColumnTypeName
                     );
                 } catch (IllegalArgumentException ex) {
