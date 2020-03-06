@@ -51,8 +51,13 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
         schemaIterator.close();
 
         if (inputDataIterator.isDataFrame()) {
-            // TODO: perform type checking and throw exception if it does not match the given dataframe
-            return inputDataIterator.getDataFrame(context);
+            Dataset<Row> inputDataAsDataFrame = inputDataIterator.getDataFrame(context);
+            DataFrameUtils.validateSchemaAgainstDataFrame(
+                schemaItem,
+                inputDataAsDataFrame.schema(),
+                getMetadata()
+            );
+            return inputDataAsDataFrame;
         }
 
         if (inputDataIterator.isRDD()) {
