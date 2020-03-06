@@ -54,39 +54,44 @@ public class CSVFileFunctionIterator extends DataFrameRuntimeIterator {
         Item stringItem = this.children.get(0)
             .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
         String url = stringItem.getStringValue();
+        Item optionsObjectItem;
         try {
             DataFrameReader dfr = SparkSessionManager.getInstance().getOrCreateSession().read();
-            if (this.children.size() > 1) {
-                Item optionsObjectItem = this.children.get(1)
-                    .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-                if (optionsObjectItem != null) {
-                    ObjectItem options = (ObjectItem) optionsObjectItem;
-                    List<String> keys = options.getKeys();
-                    List<Item> values = options.getValues();
-                    for (int i = 0; i < options.getKeys().size(); i++) {
-                        Item value = values.get(i);
-                        if (value.isBoolean()) {
-                            dfr.option(keys.get(i), value.getBooleanValue());
-                        } else if (value.isString()) {
-                            dfr.option(keys.get(i), value.getStringValue());
-                        } else if (value.isInteger()) {
-                            dfr.option(keys.get(i), value.getIntegerValue());
-                        } else {
-                            throw new UnexpectedTypeException(
-                                    "Only boolean, string, and long types allowed as parameter values",
-                                    this.getMetadata()
-                            );
-                        }
+            if (this.children.size() > 1 && ((optionsObjectItem = getObjectValue()) != null)) {
+                ObjectItem options = (ObjectItem) optionsObjectItem;
+                List<String> keys = options.getKeys();
+                List<Item> values = options.getValues();
+                for (int i = 0; i < keys.size(); i++) {
+                    Item value = values.get(i);
+                    if (value.isBoolean()) {
+                        dfr.option(keys.get(i), value.getBooleanValue());
+                    } else if (value.isString()) {
+                        dfr.option(keys.get(i), value.getStringValue());
+                    } else if (value.isInteger()) {
+                        dfr.option(keys.get(i), value.getIntegerValue());
+                    } else if (value.isDecimal()) {
+                        dfr.option(keys.get(i), value.getDecimalValue().doubleValue());
+                    } else if (value.isDouble()) {
+                        dfr.option(keys.get(i), value.getDoubleValue());
+                    } else {
+                        throw new UnexpectedTypeException(
+                                "Only boolean, string, and numeric types allowed as values",
+                                this.getMetadata()
+                        );
                     }
                 }
             }
             return dfr.csv(url);
         } catch (Exception e) {
-            if (e instanceof AnalysisException) {
+            if (e instanceof AnalysisException || e instanceof IllegalArgumentException) {
                 throw new CannotRetrieveResourceException("File " + url + " not found.", getMetadata());
             } else {
                 throw new UnexpectedTypeException(e.getMessage(), this.getMetadata());
             }
         }
+    }
+
+    private Item getObjectValue() {
+        return this.children.get(1).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
     }
 }
