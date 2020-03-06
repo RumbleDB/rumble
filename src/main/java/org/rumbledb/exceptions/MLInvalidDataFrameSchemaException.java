@@ -26,9 +26,16 @@ public class MLInvalidDataFrameSchemaException extends SparksoniqRuntimeExceptio
 
     private static final long serialVersionUID = 1L;
 
+    public MLInvalidDataFrameSchemaException(String message) {
+        super(
+            message,
+            ErrorCodes.MLInvalidDataFrameSchemaErrorCode
+        );
+    }
+
     public MLInvalidDataFrameSchemaException(String message, ExceptionMetadata metadata) {
         super(
-            "Invalid Schema; " + message,
+            message,
             ErrorCodes.MLInvalidDataFrameSchemaErrorCode,
             metadata
         );

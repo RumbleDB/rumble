@@ -5,6 +5,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.MLInvalidDataFrameSchemaException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
@@ -52,21 +53,41 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
 
         if (inputDataIterator.isDataFrame()) {
             Dataset<Row> inputDataAsDataFrame = inputDataIterator.getDataFrame(context);
-            DataFrameUtils.validateSchemaAgainstDataFrame(
-                schemaItem,
-                inputDataAsDataFrame.schema(),
-                getMetadata()
-            );
+            try {
+                DataFrameUtils.validateSchemaAgainstDataFrame(
+                    schemaItem,
+                    inputDataAsDataFrame.schema()
+                );
+            } catch (MLInvalidDataFrameSchemaException ex) {
+                throw new MLInvalidDataFrameSchemaException(
+                        "Schema error in annotate(): " + ex.getJSONiqErrorMessage(),
+                        getMetadata()
+                );
+            }
             return inputDataAsDataFrame;
         }
 
         if (inputDataIterator.isRDD()) {
             JavaRDD<Item> rdd = inputDataIterator.getRDD(context);
-            return DataFrameUtils.convertItemRDDToDataFrame(rdd, schemaItem, getMetadata());
+            try {
+                return DataFrameUtils.convertItemRDDToDataFrame(rdd, schemaItem);
+            } catch (MLInvalidDataFrameSchemaException ex) {
+                throw new MLInvalidDataFrameSchemaException(
+                        "Schema error in annotate(): " + ex.getJSONiqErrorMessage(),
+                        getMetadata()
+                );
+            }
         }
 
-        List<Item> items = inputDataIterator.materialize(context);;
-        return DataFrameUtils.convertLocalItemsToDataFrame(items, schemaItem, getMetadata());
+        List<Item> items = inputDataIterator.materialize(context);
+        try {
+            return DataFrameUtils.convertLocalItemsToDataFrame(items, schemaItem);
+        } catch (MLInvalidDataFrameSchemaException ex) {
+            throw new MLInvalidDataFrameSchemaException(
+                    "Schema error in annotate(): " + ex.getJSONiqErrorMessage(),
+                    getMetadata()
+            );
+        }
     }
 
 }
