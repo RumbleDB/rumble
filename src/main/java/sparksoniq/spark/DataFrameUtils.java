@@ -10,6 +10,7 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.MLInvalidDataFrameSchemaException;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.parsing.ItemParser;
 
@@ -119,8 +120,7 @@ public class DataFrameUtils {
         }
 
         if (item.isObject()) {
-            // TODO: implement object support
-            // createStructType(....)
+            return generateDataFrameSchemaFromSchemaItem((ObjectItem) item);
         }
 
         if (item.isString()) {

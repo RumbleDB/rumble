@@ -359,6 +359,8 @@ public class ItemParser implements Serializable {
             } else if (value.isArray()) {
                 // TODO: read the contents of array and generate rows with it
                 throw new OurBadException("Array item to row conversion is not yet supported.");
+            } else if (value.isObject()) {
+                throw new OurBadException("Object item to row conversion is not yet supported.");
             } else {
                 throw new OurBadException("Unexpected item type found while generating rows.");
             }
