@@ -7,7 +7,7 @@ let $local-data := (
     {"id": 4, "col1": 5.3},
     {"id": 5, "col1": 9.2}
 )
-let $df-data := annotate($local-data, {"id": "integer", "col1": "double"})
+let $df-data := annotate($local-data, {"id": "integer", "col1": "decimal"})
 
 let $tokenizer := get-transformer("Binarizer")
 return $tokenizer($df-data, {"inputCol": "col1", "outputCol": "binarized_col1", "threshold": 5.3})

@@ -8,4 +8,4 @@ annotate(
     {"id": "integer", "age": "integer", "weight": "integer"}
 )
 
-(: schema has incorrect type  - ClassCastException :)
+(: schema has incorrect type :)

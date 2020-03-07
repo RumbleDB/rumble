@@ -26,24 +26,20 @@ public class DataFrameUtils {
         ObjectItem firstDataItem = (ObjectItem) itemRDD.take(1).get(0);
         validateSchemaAgainstAnItem(schemaItem, firstDataItem);
         StructType schema = generateDataFrameSchemaFromSchemaItem(schemaItem);
-        JavaRDD<Row> rowRDD = itemRDD.map(
-            new Function<Item, Row>() {
-                private static final long serialVersionUID = 1L;
-
-                @Override
-                public Row call(Item item) {
-                    return ItemParser.getRowFromItem(item);
-                }
-            }
-        );
         try {
-            Dataset<Row> result = SparkSessionManager.getInstance()
-                .getOrCreateSession()
-                .createDataFrame(rowRDD, schema);
-            result.take(1);
-            return result;
-        } catch (ClassCastException | IllegalArgumentException ex) {
-            throw new MLInvalidDataFrameSchemaException("Error while applying the schema: " + ex.getMessage());
+            JavaRDD<Row> rowRDD = itemRDD.map(
+                    new Function<Item, Row>() {
+                        private static final long serialVersionUID = 1L;
+
+                        @Override
+                        public Row call(Item item) {
+                            return ItemParser.getRowFromItemUsingSchema(item, schema);
+                        }
+                    }
+            );
+            return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
+        } catch (MLInvalidDataFrameSchemaException ex) {
+            throw new MLInvalidDataFrameSchemaException("Error while applying the schema; " + ex.getJSONiqErrorMessage());
         }
     }
 
@@ -54,13 +50,11 @@ public class DataFrameUtils {
         ObjectItem firstDataItem = (ObjectItem) items.get(0);
         validateSchemaAgainstAnItem(schemaItem, firstDataItem);
         StructType schema = generateDataFrameSchemaFromSchemaItem(schemaItem);
-        List<Row> rows = ItemParser.getRowsFromItems(items);
         try {
-            Dataset<Row> result = SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema);
-            result.take(1);
-            return result;
-        } catch (ClassCastException | IllegalArgumentException ex) {
-            throw new MLInvalidDataFrameSchemaException("Error while applying the schema: " + ex.getMessage());
+            List<Row> rows = ItemParser.getRowsFromItemsUsingSchema(items, schema);
+            return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema);
+        } catch (MLInvalidDataFrameSchemaException ex) {
+            throw new MLInvalidDataFrameSchemaException("Error while applying the schema; " + ex.getJSONiqErrorMessage());
         }
     }
 
@@ -100,7 +94,7 @@ public class DataFrameUtils {
             }
         } catch (IllegalArgumentException ex) {
             throw new MLInvalidDataFrameSchemaException(
-                    "Error while applying the schema: " + ex.getMessage()
+                    "Error while applying the schema; " + ex.getMessage()
             );
         }
         return DataTypes.createStructType(fields);
@@ -129,7 +123,7 @@ public class DataFrameUtils {
         }
 
         throw new MLInvalidDataFrameSchemaException(
-                "Schema can only contain arrays, objects or strings: " + item.toString() + " is not accepted"
+                "Schema can only contain arrays, objects or strings: " + item.serialize() + " is not accepted"
         );
     }
 
@@ -143,7 +137,7 @@ public class DataFrameUtils {
         if (arrayTypes.size() > 1) {
             throw new MLInvalidDataFrameSchemaException(
                     "Arrays in schema can define only a single type for their contents: "
-                        + item.toString()
+                        + item.serialize()
                         + " is invalid."
             );
         }
@@ -208,7 +202,7 @@ public class DataFrameUtils {
     private static boolean isUserTypeApplicable(DataType userSchemaColumnDataType, DataType columnDataType) {
         return userSchemaColumnDataType.equals(columnDataType)
             ||
-            (userSchemaColumnDataType.equals(DataTypes.DoubleType) && columnDataType.equals(DataTypes.LongType))
+            (userSchemaColumnDataType.equals(ItemParser.decimalType) && columnDataType.equals(DataTypes.LongType))
             ||
             (userSchemaColumnDataType.equals(DataTypes.DoubleType) && columnDataType.equals(DataTypes.FloatType))
             ||
