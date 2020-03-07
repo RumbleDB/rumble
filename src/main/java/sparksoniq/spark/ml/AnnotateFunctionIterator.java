@@ -54,7 +54,7 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
         if (inputDataIterator.isDataFrame()) {
             Dataset<Row> inputDataAsDataFrame = inputDataIterator.getDataFrame(context);
             try {
-                DataFrameUtils.validateSchemaAgainstDataFrame(
+                DataFrameUtils.validateSchemaItemAgainstDataFrame(
                     schemaItem,
                     inputDataAsDataFrame.schema()
                 );

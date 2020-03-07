@@ -149,31 +149,23 @@ public class DataFrameUtils {
         }
     }
 
-    public static void validateSchemaAgainstDataFrame(
+    public static void validateSchemaItemAgainstDataFrame(
             ObjectItem schemaItem,
             StructType dataFrameSchema
     ) {
+        StructType generatedSchema = generateDataFrameSchemaFromSchemaItem(schemaItem);
         for (StructField column : dataFrameSchema.fields()) {
             final String columnName = column.name();
             final DataType columnDataType = column.dataType();
-            boolean columnMatched = schemaItem.getKeys().stream().anyMatch(userSchemaColumnName -> {
-                if (!columnName.equals(userSchemaColumnName)) {
+
+            boolean columnMatched = Arrays.stream(generatedSchema.fields()).anyMatch(structField -> {
+                String generatedColumnName = structField.name();
+                if (!generatedColumnName.equals(columnName)) {
                     return false;
                 }
 
-                String userSchemaColumnTypeName = schemaItem.getItemByKey(userSchemaColumnName).getStringValue();
-                DataType userSchemaColumnDataType;
-                try {
-                    userSchemaColumnDataType = ItemParser.getDataFrameDataTypeFromItemTypeString(
-                        userSchemaColumnTypeName
-                    );
-                } catch (IllegalArgumentException ex) {
-                    throw new MLInvalidDataFrameSchemaException(
-                            "Error while applying the schema: " + ex.getMessage()
-                    );
-                }
-
-                if (isUserTypeApplicable(userSchemaColumnDataType, columnDataType)) {
+                DataType generatedDataType = structField.dataType();
+                if (isUserTypeApplicable(generatedDataType, columnDataType)) {
                     return true;
                 }
 
@@ -184,7 +176,7 @@ public class DataFrameUtils {
                             + "' type for column '"
                             + columnName
                             + "', but found '"
-                            + userSchemaColumnTypeName
+                            + ItemParser.getItemTypeNameFromDataFrameDataType(generatedDataType)
                             + "'"
                 );
             });
@@ -199,17 +191,14 @@ public class DataFrameUtils {
             }
         }
 
-        for (String userSchemaColumnName : schemaItem.getKeys()) {
-            boolean userColumnMatched = Arrays.stream(dataFrameSchema.fields())
-                .anyMatch(
-                    structField -> userSchemaColumnName.equals(structField.name())
-                );
+        for (String generatedSchemaColumnName : generatedSchema.fieldNames()) {
+            boolean userColumnMatched = Arrays.asList(dataFrameSchema.fieldNames()).contains(generatedSchemaColumnName);
 
             if (!userColumnMatched) {
                 throw new MLInvalidDataFrameSchemaException(
                         "Columns defined in schema must fully match the columns of input data: "
                             + "redundant type information for non-existent column '"
-                            + userSchemaColumnName
+                            + generatedSchemaColumnName
                             + "'."
                 );
             }
