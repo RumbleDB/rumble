@@ -53,7 +53,6 @@ import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class ItemParser implements Serializable {
@@ -414,7 +413,7 @@ public class ItemParser implements Serializable {
             }
             if (dataType.equals(DataTypes.NullType)) {
                 if (!item.isNull()) {
-                    throw new RuntimeException("Item '" + item.serialize() + " is not null");
+                    throw new OurBadException("Item '" + item.serialize() + " is not null");
                 }
                 return null;
             }
@@ -424,9 +423,10 @@ public class ItemParser implements Serializable {
             if (dataType.equals(DataTypes.TimestampType)) {
                 return new Timestamp(item.getDateTimeValue().getMillis());
             }
-        } catch (RuntimeException ex) {
+        } catch (OurBadException ex) {
+            // OurBadExceptions triggered by invalid object accesses here are caused by user's schema
             throw new MLInvalidDataFrameSchemaException(
-                    "Schema does not match the data of object: '" + item.serialize() + "'; " + ex.getMessage()
+                    "Schema does not match the data; " + ex.getJSONiqErrorMessage()
             );
         }
 
