@@ -10,7 +10,6 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.MLInvalidDataFrameSchemaException;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.parsing.ItemParser;
 
@@ -21,40 +20,46 @@ import java.util.List;
 public class DataFrameUtils {
     public static Dataset<Row> convertItemRDDToDataFrame(
             JavaRDD<Item> itemRDD,
-            ObjectItem schemaItem
+            ObjectItem schemaItem,
+            boolean forSparkML
     ) {
         ObjectItem firstDataItem = (ObjectItem) itemRDD.take(1).get(0);
         validateSchemaAgainstAnItem(schemaItem, firstDataItem);
-        StructType schema = generateDataFrameSchemaFromSchemaItem(schemaItem);
+        StructType schema = generateDataFrameSchemaFromSchemaItem(schemaItem, forSparkML);
         try {
             JavaRDD<Row> rowRDD = itemRDD.map(
-                    new Function<Item, Row>() {
-                        private static final long serialVersionUID = 1L;
+                new Function<Item, Row>() {
+                    private static final long serialVersionUID = 1L;
 
-                        @Override
-                        public Row call(Item item) {
-                            return ItemParser.getRowFromItemUsingSchema(item, schema);
-                        }
+                    @Override
+                    public Row call(Item item) {
+                        return ItemParser.getRowFromItemUsingSchema(item, schema, forSparkML);
                     }
+                }
             );
             return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
         } catch (MLInvalidDataFrameSchemaException ex) {
-            throw new MLInvalidDataFrameSchemaException("Error while applying the schema; " + ex.getJSONiqErrorMessage());
+            throw new MLInvalidDataFrameSchemaException(
+                    "Error while applying the schema; " + ex.getJSONiqErrorMessage()
+            );
         }
     }
 
     public static Dataset<Row> convertLocalItemsToDataFrame(
             List<Item> items,
-            ObjectItem schemaItem
+            ObjectItem schemaItem,
+            boolean forSparkML
     ) {
         ObjectItem firstDataItem = (ObjectItem) items.get(0);
         validateSchemaAgainstAnItem(schemaItem, firstDataItem);
-        StructType schema = generateDataFrameSchemaFromSchemaItem(schemaItem);
+        StructType schema = generateDataFrameSchemaFromSchemaItem(schemaItem, forSparkML);
         try {
-            List<Row> rows = ItemParser.getRowsFromItemsUsingSchema(items, schema);
+            List<Row> rows = ItemParser.getRowsFromItemsUsingSchema(items, schema, forSparkML);
             return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema);
         } catch (MLInvalidDataFrameSchemaException ex) {
-            throw new MLInvalidDataFrameSchemaException("Error while applying the schema; " + ex.getJSONiqErrorMessage());
+            throw new MLInvalidDataFrameSchemaException(
+                    "Error while applying the schema; " + ex.getJSONiqErrorMessage()
+            );
         }
     }
 
@@ -85,11 +90,15 @@ public class DataFrameUtils {
         }
     }
 
-    private static StructType generateDataFrameSchemaFromSchemaItem(ObjectItem schemaItem) {
+    private static StructType generateDataFrameSchemaFromSchemaItem(ObjectItem schemaItem, boolean forSparkML) {
         List<StructField> fields = new ArrayList<>();
         try {
             for (String columnName : schemaItem.getKeys()) {
-                StructField field = generateStructFieldFromNameAndItem(columnName, schemaItem.getItemByKey(columnName));
+                StructField field = generateStructFieldFromNameAndItem(
+                    columnName,
+                    schemaItem.getItemByKey(columnName),
+                    forSparkML
+                );
                 fields.add(field);
             }
         } catch (IllegalArgumentException ex) {
@@ -100,26 +109,26 @@ public class DataFrameUtils {
         return DataTypes.createStructType(fields);
     }
 
-    private static StructField generateStructFieldFromNameAndItem(String columnName, Item item) {
-        DataType type = generateDataTypeFromItem(item);
+    private static StructField generateStructFieldFromNameAndItem(String columnName, Item item, boolean forSparkML) {
+        DataType type = generateDataTypeFromItem(item, forSparkML);
         return DataTypes.createStructField(columnName, type, true);
     }
 
-    private static DataType generateDataTypeFromItem(Item item) {
+    private static DataType generateDataTypeFromItem(Item item, boolean forSparkML) {
         if (item.isArray()) {
             validateArrayItemInSchema(item);
             Item arrayContentsTypeItem = item.getItems().get(0);
-            DataType arrayContentsType = generateDataTypeFromItem(arrayContentsTypeItem);
+            DataType arrayContentsType = generateDataTypeFromItem(arrayContentsTypeItem, forSparkML);
             return DataTypes.createArrayType(arrayContentsType);
         }
 
         if (item.isObject()) {
-            return generateDataFrameSchemaFromSchemaItem((ObjectItem) item);
+            return generateDataFrameSchemaFromSchemaItem((ObjectItem) item, forSparkML);
         }
 
         if (item.isString()) {
             String itemTypeName = item.getStringValue();
-            return ItemParser.getDataFrameDataTypeFromItemTypeString(itemTypeName);
+            return ItemParser.getDataFrameDataTypeFromItemTypeName(itemTypeName, forSparkML);
         }
 
         throw new MLInvalidDataFrameSchemaException(
@@ -145,9 +154,10 @@ public class DataFrameUtils {
 
     public static void validateSchemaItemAgainstDataFrame(
             ObjectItem schemaItem,
-            StructType dataFrameSchema
+            StructType dataFrameSchema,
+            boolean forSparkML
     ) {
-        StructType generatedSchema = generateDataFrameSchemaFromSchemaItem(schemaItem);
+        StructType generatedSchema = generateDataFrameSchemaFromSchemaItem(schemaItem, forSparkML);
         for (StructField column : dataFrameSchema.fields()) {
             final String columnName = column.name();
             final DataType columnDataType = column.dataType();
@@ -159,7 +169,7 @@ public class DataFrameUtils {
                 }
 
                 DataType generatedDataType = structField.dataType();
-                if (isUserTypeApplicable(generatedDataType, columnDataType)) {
+                if (isUserTypeApplicable(generatedDataType, columnDataType, forSparkML)) {
                     return true;
                 }
 
@@ -199,10 +209,18 @@ public class DataFrameUtils {
         }
     }
 
-    private static boolean isUserTypeApplicable(DataType userSchemaColumnDataType, DataType columnDataType) {
+    private static boolean isUserTypeApplicable(
+            DataType userSchemaColumnDataType,
+            DataType columnDataType,
+            boolean forSparkML
+    ) {
         return userSchemaColumnDataType.equals(columnDataType)
             ||
             (userSchemaColumnDataType.equals(ItemParser.decimalType) && columnDataType.equals(DataTypes.LongType))
+            ||
+            (forSparkML
+                && userSchemaColumnDataType.equals(DataTypes.DoubleType)
+                && columnDataType.equals(DataTypes.LongType))
             ||
             (userSchemaColumnDataType.equals(DataTypes.DoubleType) && columnDataType.equals(DataTypes.FloatType))
             ||

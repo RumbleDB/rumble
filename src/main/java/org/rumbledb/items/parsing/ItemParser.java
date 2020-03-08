@@ -58,7 +58,7 @@ public class ItemParser implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private static final DataType vectorType = new VectorUDT();
-    public static final DataType decimalType = new DecimalType(30,15); // 30 and 15 are arbitrary
+    public static final DataType decimalType = new DecimalType(30, 15); // 30 and 15 are arbitrary
 
     public static Item getItemFromObject(JsonIterator object, ExceptionMetadata metadata) {
         try {
@@ -286,7 +286,7 @@ public class ItemParser implements Serializable {
         }
     }
 
-    public static DataType getDataFrameDataTypeFromItemTypeString(String itemTypeName) {
+    public static DataType getDataFrameDataTypeFromItemTypeName(String itemTypeName, boolean forSparkML) {
         switch (itemTypeName) {
             case "boolean":
                 return DataTypes.BooleanType;
@@ -295,6 +295,9 @@ public class ItemParser implements Serializable {
             case "double":
                 return DataTypes.DoubleType;
             case "decimal":
+                if (forSparkML) {
+                    return DataTypes.DoubleType;
+                }
                 return decimalType;
             case "string":
                 return DataTypes.StringType;
@@ -338,16 +341,16 @@ public class ItemParser implements Serializable {
         throw new OurBadException("Unexpected DataFrame data type found: '" + dataType.toString() + "'.");
     }
 
-    public static List<Row> getRowsFromItemsUsingSchema(List<Item> items, StructType schema) {
+    public static List<Row> getRowsFromItemsUsingSchema(List<Item> items, StructType schema, boolean forSparkML) {
         List<Row> rows = new ArrayList<>();
         for (Item item : items) {
-            Row row = getRowFromItemUsingSchema(item, schema);
+            Row row = getRowFromItemUsingSchema(item, schema, forSparkML);
             rows.add(row);
         }
         return rows;
     }
 
-    public static Row getRowFromItemUsingSchema(Item item, StructType schema) {
+    public static Row getRowFromItemUsingSchema(Item item, StructType schema, boolean forSparkML) {
         Object[] rowColumns = new Object[schema.fields().length];
         for (int fieldIndex = 0; fieldIndex < schema.fields().length; fieldIndex++) {
             StructField field = schema.fields()[fieldIndex];
@@ -355,15 +358,22 @@ public class ItemParser implements Serializable {
             DataType fieldDataType = field.dataType();
             Item columnValue = item.getItemByKey(fieldName);
             if (columnValue == null) {
-                throw new MLInvalidDataFrameSchemaException("Missing field '" + fieldName + "' in object '" + item.serialize() + "'.");
+                throw new MLInvalidDataFrameSchemaException(
+                        "Missing field '" + fieldName + "' in object '" + item.serialize() + "'."
+                );
             }
             try {
                 if (fieldDataType.equals(DataTypes.BooleanType)) {
                     rowColumns[fieldIndex] = columnValue.getBooleanValue();
-                } else if (fieldDataType.equals(DataTypes.IntegerType)) {      // TODO: shall we be more lenient and cast numerics to one another?
+                } else if (fieldDataType.equals(DataTypes.IntegerType)) { // TODO: shall we be more lenient and cast
+                                                                          // numerics to one another?
                     rowColumns[fieldIndex] = columnValue.getIntegerValue();
                 } else if (fieldDataType.equals(DataTypes.DoubleType)) {
-                    rowColumns[fieldIndex] = columnValue.getDoubleValue();
+                    if (forSparkML && columnValue.isDecimal()) {
+                        rowColumns[fieldIndex] = columnValue.getDecimalValue().doubleValue();
+                    } else {
+                        rowColumns[fieldIndex] = columnValue.getDoubleValue();
+                    }
                 } else if (fieldDataType.equals(decimalType)) {
                     rowColumns[fieldIndex] = columnValue.getDecimalValue();
                 } else if (fieldDataType.equals(DataTypes.StringType)) {
@@ -383,7 +393,9 @@ public class ItemParser implements Serializable {
                 } else if (fieldDataType instanceof StructType) {
                     throw new OurBadException("Object item to row conversion is not yet supported.");
                 } else {
-                    throw new IllegalArgumentException("Unexpected item type found for field: '" + fieldName + "' while generating rows.");
+                    throw new IllegalArgumentException(
+                            "Unexpected item type found for field: '" + fieldName + "' while generating rows."
+                    );
                 }
             } catch (RuntimeException ex) {
                 throw new MLInvalidDataFrameSchemaException(
