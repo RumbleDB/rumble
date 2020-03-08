@@ -42,15 +42,18 @@ import org.rumbledb.exceptions.MLInvalidDataFrameSchemaException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SparksoniqRuntimeException;
 import org.rumbledb.items.ItemFactory;
+import scala.collection.mutable.WrappedArray;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class ItemParser implements Serializable {
@@ -246,14 +249,17 @@ public class ItemParser implements Serializable {
             ArrayType arrayType = (ArrayType) fieldType;
             DataType dataType = arrayType.elementType();
             List<Item> members = new ArrayList<>();
-            List<Object> objects;
             if (row != null) {
-                objects = row.getList(i);
+                List<Object> objects = row.getList(i);
+                for (Object object : objects) {
+                    addValue(null, 0, object, dataType, members, metadata);
+                }
             } else {
-                objects = (List<Object>) o;
-            }
-            for (Object object : objects) {
-                addValue(null, 0, object, dataType, members, metadata);
+                Object arrayObject = ((WrappedArray) o).array();
+                for (int index = 0; index < Array.getLength(arrayObject); index++) {
+                    Object value = Array.get(arrayObject, index);
+                    addValue(null, 0, value, dataType, members, metadata);
+                }
             }
             values.add(ItemFactory.getInstance().createArrayItem(members));
         } else if (fieldType instanceof VectorUDT) {
@@ -354,56 +360,78 @@ public class ItemParser implements Serializable {
         Object[] rowColumns = new Object[schema.fields().length];
         for (int fieldIndex = 0; fieldIndex < schema.fields().length; fieldIndex++) {
             StructField field = schema.fields()[fieldIndex];
-            String fieldName = field.name();
-            DataType fieldDataType = field.dataType();
-            Item columnValue = item.getItemByKey(fieldName);
-            if (columnValue == null) {
-                throw new MLInvalidDataFrameSchemaException(
-                        "Missing field '" + fieldName + "' in object '" + item.serialize() + "'."
-                );
-            }
-            try {
-                if (fieldDataType.equals(DataTypes.BooleanType)) {
-                    rowColumns[fieldIndex] = columnValue.getBooleanValue();
-                } else if (fieldDataType.equals(DataTypes.IntegerType)) { // TODO: shall we be more lenient and cast
-                                                                          // numerics to one another?
-                    rowColumns[fieldIndex] = columnValue.getIntegerValue();
-                } else if (fieldDataType.equals(DataTypes.DoubleType)) {
-                    if (forSparkML && columnValue.isDecimal()) {
-                        rowColumns[fieldIndex] = columnValue.getDecimalValue().doubleValue();
-                    } else {
-                        rowColumns[fieldIndex] = columnValue.getDoubleValue();
-                    }
-                } else if (fieldDataType.equals(decimalType)) {
-                    rowColumns[fieldIndex] = columnValue.getDecimalValue();
-                } else if (fieldDataType.equals(DataTypes.StringType)) {
-                    rowColumns[fieldIndex] = columnValue.getStringValue();
-                } else if (fieldDataType.equals(DataTypes.NullType)) {
-                    if (!columnValue.isNull()) {
-                        throw new RuntimeException("Item '" + columnValue.serialize() + " is not null");
-                    }
-                    rowColumns[fieldIndex] = null;
-                } else if (fieldDataType.equals(DataTypes.DateType)) {
-                    rowColumns[fieldIndex] = new Date(columnValue.getDateTimeValue().getMillis());
-                } else if (fieldDataType.equals(DataTypes.TimestampType)) {
-                    rowColumns[fieldIndex] = new Timestamp(columnValue.getDateTimeValue().getMillis());
-                } else if (fieldDataType instanceof ArrayType) {
-                    // TODO: read the contents of array and generate rows with it
-                    throw new OurBadException("Array item to row conversion is not yet supported.");
-                } else if (fieldDataType instanceof StructType) {
-                    throw new OurBadException("Object item to row conversion is not yet supported.");
-                } else {
-                    throw new IllegalArgumentException(
-                            "Unexpected item type found for field: '" + fieldName + "' while generating rows."
-                    );
+            Object rowColumn = getRowColumnFromItemUsingSchemaField(item, field, forSparkML);
+            rowColumns[fieldIndex] = rowColumn;
+        }
+        return RowFactory.create(rowColumns);
+    }
+
+    private static Object getRowColumnFromItemUsingSchemaField(Item item, StructField field, boolean forSparkML) {
+        String fieldName = field.name();
+        DataType fieldDataType = field.dataType();
+        Item columnValueItem = item.getItemByKey(fieldName);
+        if (columnValueItem == null) {
+            throw new MLInvalidDataFrameSchemaException(
+                    "Missing field '" + fieldName + "' in object '" + item.serialize() + "'."
+            );
+        }
+        return getRowColumnFromItemUsingDataType(columnValueItem, fieldDataType, forSparkML);
+    }
+
+    private static Object getRowColumnFromItemUsingDataType(Item item, DataType dataType, boolean forSparkML) {
+        try {
+            if (dataType instanceof ArrayType) {
+                List<Object> arrayContents = new ArrayList<>();
+                DataType elementType = ((ArrayType) dataType).elementType();
+                for (Item arrayItem : item.getItems()) {
+                    arrayContents.add(getRowColumnFromItemUsingDataType(arrayItem, elementType, forSparkML));
                 }
-            } catch (RuntimeException ex) {
-                throw new MLInvalidDataFrameSchemaException(
-                        "Schema does not match the data of object: '" + item.serialize() + "'; " + ex.getMessage()
-                );
+                return arrayContents;
             }
+
+            if (dataType instanceof StructType) {
+                return getRowFromItemUsingSchema(item, (StructType) dataType, forSparkML);
+            }
+
+            if (dataType.equals(DataTypes.BooleanType)) {
+                return item.getBooleanValue();
+            }
+            // TODO: shall we be more lenient and cast numerics to one another?
+            if (dataType.equals(DataTypes.IntegerType)) {
+                return item.getIntegerValue();
+            }
+            if (dataType.equals(DataTypes.DoubleType)) {
+                if (forSparkML && item.isDecimal()) {
+                    return item.getDecimalValue().doubleValue();
+                }
+                return item.getDoubleValue();
+            }
+            if (dataType.equals(decimalType)) {
+                return item.getDecimalValue();
+            }
+            if (dataType.equals(DataTypes.StringType)) {
+                return item.getStringValue();
+            }
+            if (dataType.equals(DataTypes.NullType)) {
+                if (!item.isNull()) {
+                    throw new RuntimeException("Item '" + item.serialize() + " is not null");
+                }
+                return null;
+            }
+            if (dataType.equals(DataTypes.DateType)) {
+                return new Date(item.getDateTimeValue().getMillis());
+            }
+            if (dataType.equals(DataTypes.TimestampType)) {
+                return new Timestamp(item.getDateTimeValue().getMillis());
+            }
+        } catch (RuntimeException ex) {
+            throw new MLInvalidDataFrameSchemaException(
+                    "Schema does not match the data of object: '" + item.serialize() + "'; " + ex.getMessage()
+            );
         }
 
-        return RowFactory.create(rowColumns);
+        throw new OurBadException(
+                "Unhandled item type found while generating rows: '" + dataType + "' ."
+        );
     }
 }
