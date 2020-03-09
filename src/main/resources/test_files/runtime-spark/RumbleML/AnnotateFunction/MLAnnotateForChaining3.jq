@@ -1,28 +1,11 @@
-(:JIQS: ShouldRun; Output="({ "id" : 0, "col1" : 6, "binarized_col1" : 1, "prediction" : 1 }, { "id" : 1, "col1" : 3, "binarized_col1" : 0, "prediction" : 0 }, { "id" : 2, "col1" : 4, "binarized_col1" : 0, "prediction" : 0 }, { "id" : 3, "col1" : 4.5, "binarized_col1" : 0, "prediction" : 0 }, { "id" : 4, "col1" : 5.3, "binarized_col1" : 1, "prediction" : 1 }, { "id" : 5, "col1" : 9.2, "binarized_col1" : 1, "prediction" : 1 })" :)
-let $local-data := (
-    {"id": 0, "col1": 6.0},
-    {"id": 1, "col1": 3.0},
-    {"id": 2, "col1": 4.0},
-    {"id": 3, "col1": 4.5},
-    {"id": 4, "col1": 5.3},
-    {"id": 5, "col1": 9.2}
-)
-let $df-data := annotate($local-data, {"id": "integer", "col1": "decimal"})
+(:JIQS: ShouldRun; Output="({ "id" : 1, "sentence" : "Hi I heard about Spark", "tokenized" : [ "hi", "i", "heard", "about", "spark" ], "hashingTF" : { "0" : 1, "1" : 4 } }, { "id" : 2, "sentence" : "I wish Java could use case classes", "tokenized" : [ "i", "wish", "java", "could", "use", "case", "classes" ], "hashingTF" : { "0" : 1, "1" : 6 } }, { "id" : 3, "sentence" : "Logistic regression models are neat", "tokenized" : [ "logistic", "regression", "models", "are", "neat" ], "hashingTF" : { "0" : 3, "1" : 2 } })" :)
+let $data := structured-json-file("./src/main/resources/queries/rumbleML/sample-ml-data-sentence.json")
 
-let $tokenizer := get-transformer("Binarizer")
-let $intermediate-data := $tokenizer($df-data, {"inputCol": "col1", "outputCol": "binarized_col1", "threshold": 5.0})
-let $df-intermediate-data := annotate($intermediate-data, {"id": "integer", "col1": "double", "binarized_col1": "double"})
+let $tokenizer := get-transformer("Tokenizer")
+let $intermediate-data := $tokenizer($data, {"inputCol": "sentence", "outputCol": "tokenized"})
+let $df-intermediate-data := annotate($intermediate-data, {"id": "decimal", "sentence": "string", "tokenized": ["string"]})
 
-let $est := get-estimator("KMeans")
-let $tra := $est(
-    $df-intermediate-data,
-    {"featuresCol": ["binarized_col1"]}
-)
+let $hashingTF := get-transformer("HashingTF")
+return $hashingTF($df-intermediate-data, {"inputCol": "tokenized", "outputCol": "hashingTF", "numFeatures": 2})
 
-for $i in $tra(
-    $df-intermediate-data,
-    {"featuresCol": ["binarized_col1"]}
-)
-return $i
-
-(: process data by chaining a transformer followed by a full estimator execution :)
+(: chain two different transformers together :)
