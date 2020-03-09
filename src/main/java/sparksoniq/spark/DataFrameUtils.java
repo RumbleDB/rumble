@@ -21,11 +21,10 @@ import java.util.List;
 public class DataFrameUtils {
     public static Dataset<Row> convertItemRDDToDataFrame(
             JavaRDD<Item> itemRDD,
-            ObjectItem schemaItem,
-            ExceptionMetadata metadata
+            ObjectItem schemaItem
     ) {
-        validateSchemaAgainstAnItem(schemaItem, (ObjectItem) itemRDD.take(1).get(0), metadata);
-        StructType schema = generateSchemaFromSchemaItem(schemaItem, metadata);
+        validateSchemaAgainstAnItem(schemaItem, (ObjectItem) itemRDD.take(1).get(0));
+        StructType schema = generateSchemaFromSchemaItem(schemaItem);
         JavaRDD<Row> rowRDD = itemRDD.map(
             new Function<Item, Row>() {
                 private static final long serialVersionUID = 1L;
@@ -43,40 +42,37 @@ public class DataFrameUtils {
             result.take(1);
             return result;
         } catch (ClassCastException | IllegalArgumentException ex) {
-            throw new MLInvalidDataFrameSchemaException(ex.getMessage(), metadata);
+            throw new MLInvalidDataFrameSchemaException("Error while applying the schema: " + ex.getMessage());
         }
     }
 
     public static Dataset<Row> convertLocalItemsToDataFrame(
             List<Item> items,
-            ObjectItem schemaItem,
-            ExceptionMetadata metadata
+            ObjectItem schemaItem
     ) {
-        validateSchemaAgainstAnItem(schemaItem, (ObjectItem) items.get(0), metadata);
-        StructType schema = generateSchemaFromSchemaItem(schemaItem, metadata);
+        validateSchemaAgainstAnItem(schemaItem, (ObjectItem) items.get(0));
+        StructType schema = generateSchemaFromSchemaItem(schemaItem);
         List<Row> rows = ItemParser.getRowsFromItems(items);
         try {
             Dataset<Row> result = SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema);
             result.take(1);
             return result;
         } catch (ClassCastException | IllegalArgumentException ex) {
-            throw new MLInvalidDataFrameSchemaException(ex.getMessage(), metadata);
+            throw new MLInvalidDataFrameSchemaException("Error while applying the schema: " + ex.getMessage());
         }
     }
 
     private static void validateSchemaAgainstAnItem(
             ObjectItem schemaItem,
-            ObjectItem dataItem,
-            ExceptionMetadata metadata
+            ObjectItem dataItem
     ) {
         for (String schemaColumn : schemaItem.getKeys()) {
             if (!dataItem.getKeys().contains(schemaColumn)) {
                 throw new MLInvalidDataFrameSchemaException(
-                        "annotate() schema must fully match the columns of input data: "
+                        "Columns defined in schema must fully match the columns of input data: "
                             + "missing type information for '"
                             + schemaColumn
-                            + "' column.",
-                        metadata
+                            + "' column."
                 );
             }
         }
@@ -84,17 +80,16 @@ public class DataFrameUtils {
         for (String dataColumn : dataItem.getKeys()) {
             if (!schemaItem.getKeys().contains(dataColumn)) {
                 throw new MLInvalidDataFrameSchemaException(
-                        "annotate() schema must fully match the columns of input data: "
+                        "Columns defined in schema must fully match the columns of input data: "
                             + "redundant type information for non-existent column '"
                             + dataColumn
-                            + "'.",
-                        metadata
+                            + "'."
                 );
             }
         }
     }
 
-    private static StructType generateSchemaFromSchemaItem(ObjectItem schemaItem, ExceptionMetadata metadata) {
+    private static StructType generateSchemaFromSchemaItem(ObjectItem schemaItem) {
         List<StructField> fields = new ArrayList<>();
         try {
             for (String columnName : schemaItem.getKeys()) {
@@ -108,8 +103,7 @@ public class DataFrameUtils {
             }
         } catch (IllegalArgumentException ex) {
             throw new MLInvalidDataFrameSchemaException(
-                    "Schema error in annotate(): " + ex.getMessage(),
-                    metadata
+                    "Error while applying the schema: " + ex.getMessage()
             );
         }
         return DataTypes.createStructType(fields);
@@ -117,8 +111,7 @@ public class DataFrameUtils {
 
     public static void validateSchemaAgainstDataFrame(
             ObjectItem schemaItem,
-            StructType dataFrameSchema,
-            ExceptionMetadata metadata
+            StructType dataFrameSchema
     ) {
         for (StructField column : dataFrameSchema.fields()) {
             final String columnName = column.name();
@@ -136,8 +129,7 @@ public class DataFrameUtils {
                     );
                 } catch (IllegalArgumentException ex) {
                     throw new MLInvalidDataFrameSchemaException(
-                            "Schema error in annotate(): " + ex.getMessage(),
-                            metadata
+                            "Error while applying the schema: " + ex.getMessage()
                     );
                 }
 
@@ -146,26 +138,23 @@ public class DataFrameUtils {
                 }
 
                 throw new MLInvalidDataFrameSchemaException(
-                        "annotate() schema must fully match the columns of input data: "
+                        "Columns defined in schema must fully match the columns of input data: "
                             + "expected '"
                             + ItemParser.getItemTypeNameFromDataFrameDataType(columnDataType)
                             + "' type for column '"
                             + columnName
                             + "', but found '"
                             + userSchemaColumnTypeName
-                            + "'",
-                        metadata
+                            + "'"
                 );
             });
 
             if (!columnMatched) {
                 throw new MLInvalidDataFrameSchemaException(
-                        "annotate() schema must fully match the columns of input data: "
+                        "Columns defined in schema must fully match the columns of input data: "
                             + "missing type information for '"
-
                             + columnName
-                            + "' column.",
-                        metadata
+                            + "' column."
                 );
             }
         }
@@ -178,12 +167,10 @@ public class DataFrameUtils {
 
             if (!userColumnMatched) {
                 throw new MLInvalidDataFrameSchemaException(
-                        "annotate() schema must fully match the columns of input data: "
+                        "Columns defined in schema must fully match the columns of input data: "
                             + "redundant type information for non-existent column '"
                             + userSchemaColumnName
-                            + "'.",
-
-                        metadata
+                            + "'."
                 );
             }
         }
