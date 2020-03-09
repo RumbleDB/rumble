@@ -776,6 +776,14 @@ where $i._c0 eq "some value"
 return $i
 ```
 
+Options can be given in the form of a JSON object. All available options can be found in the [Spark documentation](https://spark.apache.org/docs/latest/api/java/org/apache/spark/sql/DataFrameReader.html#csv-java.lang.String...-)
+
+```
+for $i in csv-file("file.csv", {"header": true, "inferSchema": true})
+where $i.key eq "some value"
+return $i
+```
+
 ### parallelize (Rumble specific)
 
 This function behaves like the Spark parallelize() you are familiar with and sends a large sequence to the cluster.

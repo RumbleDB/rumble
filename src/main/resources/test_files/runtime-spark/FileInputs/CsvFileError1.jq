@@ -1,2 +1,2 @@
 (:JIQS: ShouldCrash; ErrorCode="FODC0002":)
-csv-file("./in_the_city_of_kansas.csv")
+csv-file("./file_does_not_exist.csv")
