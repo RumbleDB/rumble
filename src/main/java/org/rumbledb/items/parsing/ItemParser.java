@@ -291,7 +291,7 @@ public class ItemParser implements Serializable {
         }
     }
 
-    public static DataType getDataFrameDataTypeFromItemTypeName(String itemTypeName, boolean forSparkML) {
+    public static DataType getDataFrameDataTypeFromItemTypeName(String itemTypeName) {
         switch (itemTypeName) {
             case "boolean":
                 return DataTypes.BooleanType;
@@ -300,9 +300,6 @@ public class ItemParser implements Serializable {
             case "double":
                 return DataTypes.DoubleType;
             case "decimal":
-                if (forSparkML) {
-                    return DataTypes.DoubleType;
-                }
                 return decimalType;
             case "string":
                 return DataTypes.StringType;
@@ -346,26 +343,26 @@ public class ItemParser implements Serializable {
         throw new OurBadException("Unexpected DataFrame data type found: '" + dataType.toString() + "'.");
     }
 
-    public static List<Row> getRowsFromItemsUsingSchema(List<Item> items, StructType schema, boolean forSparkML) {
+    public static List<Row> getRowsFromItemsUsingSchema(List<Item> items, StructType schema) {
         List<Row> rows = new ArrayList<>();
         for (Item item : items) {
-            Row row = getRowFromItemUsingSchema(item, schema, forSparkML);
+            Row row = getRowFromItemUsingSchema(item, schema);
             rows.add(row);
         }
         return rows;
     }
 
-    public static Row getRowFromItemUsingSchema(Item item, StructType schema, boolean forSparkML) {
+    public static Row getRowFromItemUsingSchema(Item item, StructType schema) {
         Object[] rowColumns = new Object[schema.fields().length];
         for (int fieldIndex = 0; fieldIndex < schema.fields().length; fieldIndex++) {
             StructField field = schema.fields()[fieldIndex];
-            Object rowColumn = getRowColumnFromItemUsingSchemaField(item, field, forSparkML);
+            Object rowColumn = getRowColumnFromItemUsingSchemaField(item, field);
             rowColumns[fieldIndex] = rowColumn;
         }
         return RowFactory.create(rowColumns);
     }
 
-    private static Object getRowColumnFromItemUsingSchemaField(Item item, StructField field, boolean forSparkML) {
+    private static Object getRowColumnFromItemUsingSchemaField(Item item, StructField field) {
         String fieldName = field.name();
         DataType fieldDataType = field.dataType();
         Item columnValueItem = item.getItemByKey(fieldName);
@@ -374,35 +371,31 @@ public class ItemParser implements Serializable {
                     "Missing field '" + fieldName + "' in object '" + item.serialize() + "'."
             );
         }
-        return getRowColumnFromItemUsingDataType(columnValueItem, fieldDataType, forSparkML);
+        return getRowColumnFromItemUsingDataType(columnValueItem, fieldDataType);
     }
 
-    private static Object getRowColumnFromItemUsingDataType(Item item, DataType dataType, boolean forSparkML) {
+    private static Object getRowColumnFromItemUsingDataType(Item item, DataType dataType) {
         try {
             if (dataType instanceof ArrayType) {
                 List<Object> arrayContents = new ArrayList<>();
                 DataType elementType = ((ArrayType) dataType).elementType();
                 for (Item arrayItem : item.getItems()) {
-                    arrayContents.add(getRowColumnFromItemUsingDataType(arrayItem, elementType, forSparkML));
+                    arrayContents.add(getRowColumnFromItemUsingDataType(arrayItem, elementType));
                 }
                 return arrayContents;
             }
 
             if (dataType instanceof StructType) {
-                return getRowFromItemUsingSchema(item, (StructType) dataType, forSparkML);
+                return getRowFromItemUsingSchema(item, (StructType) dataType);
             }
 
             if (dataType.equals(DataTypes.BooleanType)) {
                 return item.getBooleanValue();
             }
-            // TODO: shall we be more lenient and cast numerics to one another?
             if (dataType.equals(DataTypes.IntegerType)) {
                 return item.getIntegerValue();
             }
             if (dataType.equals(DataTypes.DoubleType)) {
-                if (forSparkML && item.isDecimal()) {
-                    return item.getDecimalValue().doubleValue();
-                }
                 return item.getDoubleValue();
             }
             if (dataType.equals(decimalType)) {

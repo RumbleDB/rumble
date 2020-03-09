@@ -20,12 +20,11 @@ import java.util.List;
 public class DataFrameUtils {
     public static Dataset<Row> convertItemRDDToDataFrame(
             JavaRDD<Item> itemRDD,
-            ObjectItem schemaItem,
-            boolean forSparkML
+            ObjectItem schemaItem
     ) {
         ObjectItem firstDataItem = (ObjectItem) itemRDD.take(1).get(0);
         validateSchemaAgainstAnItem(schemaItem, firstDataItem);
-        StructType schema = generateDataFrameSchemaFromSchemaItem(schemaItem, forSparkML);
+        StructType schema = generateDataFrameSchemaFromSchemaItem(schemaItem);
         try {
             JavaRDD<Row> rowRDD = itemRDD.map(
                 new Function<Item, Row>() {
@@ -33,7 +32,7 @@ public class DataFrameUtils {
 
                     @Override
                     public Row call(Item item) {
-                        return ItemParser.getRowFromItemUsingSchema(item, schema, forSparkML);
+                        return ItemParser.getRowFromItemUsingSchema(item, schema);
                     }
                 }
             );
@@ -47,14 +46,13 @@ public class DataFrameUtils {
 
     public static Dataset<Row> convertLocalItemsToDataFrame(
             List<Item> items,
-            ObjectItem schemaItem,
-            boolean forSparkML
+            ObjectItem schemaItem
     ) {
         ObjectItem firstDataItem = (ObjectItem) items.get(0);
         validateSchemaAgainstAnItem(schemaItem, firstDataItem);
-        StructType schema = generateDataFrameSchemaFromSchemaItem(schemaItem, forSparkML);
+        StructType schema = generateDataFrameSchemaFromSchemaItem(schemaItem);
         try {
-            List<Row> rows = ItemParser.getRowsFromItemsUsingSchema(items, schema, forSparkML);
+            List<Row> rows = ItemParser.getRowsFromItemsUsingSchema(items, schema);
             return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema);
         } catch (MLInvalidDataFrameSchemaException ex) {
             throw new MLInvalidDataFrameSchemaException(
@@ -90,14 +88,13 @@ public class DataFrameUtils {
         }
     }
 
-    private static StructType generateDataFrameSchemaFromSchemaItem(ObjectItem schemaItem, boolean forSparkML) {
+    private static StructType generateDataFrameSchemaFromSchemaItem(ObjectItem schemaItem) {
         List<StructField> fields = new ArrayList<>();
         try {
             for (String columnName : schemaItem.getKeys()) {
                 StructField field = generateStructFieldFromNameAndItem(
                     columnName,
-                    schemaItem.getItemByKey(columnName),
-                    forSparkML
+                    schemaItem.getItemByKey(columnName)
                 );
                 fields.add(field);
             }
@@ -109,26 +106,26 @@ public class DataFrameUtils {
         return DataTypes.createStructType(fields);
     }
 
-    private static StructField generateStructFieldFromNameAndItem(String columnName, Item item, boolean forSparkML) {
-        DataType type = generateDataTypeFromItem(item, forSparkML);
+    private static StructField generateStructFieldFromNameAndItem(String columnName, Item item) {
+        DataType type = generateDataTypeFromItem(item);
         return DataTypes.createStructField(columnName, type, true);
     }
 
-    private static DataType generateDataTypeFromItem(Item item, boolean forSparkML) {
+    private static DataType generateDataTypeFromItem(Item item) {
         if (item.isArray()) {
             validateArrayItemInSchema(item);
             Item arrayContentsTypeItem = item.getItems().get(0);
-            DataType arrayContentsType = generateDataTypeFromItem(arrayContentsTypeItem, forSparkML);
+            DataType arrayContentsType = generateDataTypeFromItem(arrayContentsTypeItem);
             return DataTypes.createArrayType(arrayContentsType);
         }
 
         if (item.isObject()) {
-            return generateDataFrameSchemaFromSchemaItem((ObjectItem) item, forSparkML);
+            return generateDataFrameSchemaFromSchemaItem((ObjectItem) item);
         }
 
         if (item.isString()) {
             String itemTypeName = item.getStringValue();
-            return ItemParser.getDataFrameDataTypeFromItemTypeName(itemTypeName, forSparkML);
+            return ItemParser.getDataFrameDataTypeFromItemTypeName(itemTypeName);
         }
 
         throw new MLInvalidDataFrameSchemaException(
@@ -154,10 +151,9 @@ public class DataFrameUtils {
 
     public static void validateSchemaItemAgainstDataFrame(
             ObjectItem schemaItem,
-            StructType dataFrameSchema,
-            boolean forSparkML
+            StructType dataFrameSchema
     ) {
-        StructType generatedSchema = generateDataFrameSchemaFromSchemaItem(schemaItem, forSparkML);
+        StructType generatedSchema = generateDataFrameSchemaFromSchemaItem(schemaItem);
         for (StructField column : dataFrameSchema.fields()) {
             final String columnName = column.name();
             final DataType columnDataType = column.dataType();
@@ -169,7 +165,7 @@ public class DataFrameUtils {
                 }
 
                 DataType generatedDataType = structField.dataType();
-                if (isUserTypeApplicable(generatedDataType, columnDataType, forSparkML)) {
+                if (isUserTypeApplicable(generatedDataType, columnDataType)) {
                     return true;
                 }
 
@@ -211,16 +207,11 @@ public class DataFrameUtils {
 
     private static boolean isUserTypeApplicable(
             DataType userSchemaColumnDataType,
-            DataType columnDataType,
-            boolean forSparkML
+            DataType columnDataType
     ) {
         return userSchemaColumnDataType.equals(columnDataType)
             ||
             (userSchemaColumnDataType.equals(ItemParser.decimalType) && columnDataType.equals(DataTypes.LongType))
-            ||
-            (forSparkML
-                && userSchemaColumnDataType.equals(DataTypes.DoubleType)
-                && columnDataType.equals(DataTypes.LongType))
             ||
             (userSchemaColumnDataType.equals(DataTypes.DoubleType) && columnDataType.equals(DataTypes.FloatType))
             ||

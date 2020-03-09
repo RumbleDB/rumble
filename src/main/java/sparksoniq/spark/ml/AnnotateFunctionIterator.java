@@ -56,8 +56,7 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
             try {
                 DataFrameUtils.validateSchemaItemAgainstDataFrame(
                     schemaItem,
-                    inputDataAsDataFrame.schema(),
-                    true
+                    inputDataAsDataFrame.schema()
                 );
             } catch (MLInvalidDataFrameSchemaException ex) {
                 throw new MLInvalidDataFrameSchemaException(
@@ -71,7 +70,7 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
         if (inputDataIterator.isRDD()) {
             JavaRDD<Item> rdd = inputDataIterator.getRDD(context);
             try {
-                return DataFrameUtils.convertItemRDDToDataFrame(rdd, schemaItem, true);
+                return DataFrameUtils.convertItemRDDToDataFrame(rdd, schemaItem);
             } catch (MLInvalidDataFrameSchemaException ex) {
                 throw new MLInvalidDataFrameSchemaException(
                         "Schema error in annotate(); " + ex.getJSONiqErrorMessage(),
@@ -82,7 +81,7 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
 
         List<Item> items = inputDataIterator.materialize(context);
         try {
-            return DataFrameUtils.convertLocalItemsToDataFrame(items, schemaItem, true);
+            return DataFrameUtils.convertLocalItemsToDataFrame(items, schemaItem);
         } catch (MLInvalidDataFrameSchemaException ex) {
             throw new MLInvalidDataFrameSchemaException(
                     "Schema error in annotate(); " + ex.getJSONiqErrorMessage(),
