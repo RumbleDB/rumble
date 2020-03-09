@@ -83,7 +83,7 @@ public class CastableIterator extends LocalRuntimeIterator {
                 "Can not atomize an %1$s item: an %1$s has probably been passed where "
                     +
                     "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
-                ItemType.convertClassNameToItemTypeName(item.getClass().getSimpleName())
+                item.getDynamicType().toString()
             );
             throw new NonAtomicKeyException(message, metadata);
         }

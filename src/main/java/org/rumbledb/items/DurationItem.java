@@ -258,10 +258,10 @@ public class DurationItem extends AtomicItem {
         }
         throw new IteratorFlowException(
                 "Cannot compare item of type "
-                    + ItemType.convertClassNameToItemTypeName(this.getClass().getSimpleName())
+                    + this.getDynamicType().toString()
                     +
                     " with item of type "
-                    + ItemType.convertClassNameToItemTypeName(other.getClass().getSimpleName())
+                    + other.getDynamicType().toString()
         );
     }
 
@@ -270,9 +270,9 @@ public class DurationItem extends AtomicItem {
         if (!other.isDuration() && !other.isNull()) {
             throw new UnexpectedTypeException(
                     "\""
-                        + ItemType.convertClassNameToItemTypeName(this.getClass().getSimpleName())
+                        + this.getDynamicType().toString()
                         + "\": invalid type: can not compare for equality to type \""
-                        + ItemType.convertClassNameToItemTypeName(other.getClass().getSimpleName())
+                        + other.getDynamicType().toString()
                         + "\"",
                     metadata
             );
@@ -289,9 +289,9 @@ public class DurationItem extends AtomicItem {
         }
         throw new UnexpectedTypeException(
                 "\""
-                    + ItemType.convertClassNameToItemTypeName(this.getClass().getSimpleName())
+                    + this.getDynamicType().toString()
                     + "\": invalid type: can not compare for equality to type \""
-                    + ItemType.convertClassNameToItemTypeName(other.getClass().getSimpleName())
+                    + other.getDynamicType().toString()
                     + "\"",
                 metadata
         );

@@ -190,7 +190,7 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
                                 "Invalid sort key: cannot compare item of type "
                                     + typeName
                                     + " with item of type "
-                                    + ItemType.convertClassNameToItemTypeName(nextItem.getClass().getSimpleName())
+                                    + nextItem.getDynamicType().toString()
                                     + "."
                         );
                     }

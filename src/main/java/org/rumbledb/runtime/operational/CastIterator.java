@@ -54,7 +54,7 @@ public class CastIterator extends UnaryOperationIterator {
             this.hasNext = false;
 
             Item item = items.get(0);
-            String itemType = ItemType.convertClassNameToItemTypeName(item.getClass().getSimpleName());
+            String itemType = item.getDynamicType().toString();
 
             if (itemType.equals(this.sequenceType.getItemType().toString())) {
                 return item;

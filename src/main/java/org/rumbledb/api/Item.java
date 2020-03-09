@@ -306,7 +306,7 @@ public abstract class Item implements SerializableItem {
     public Item promoteTo(ItemType type) {
         if (!this.canBePromotedTo(type)) {
             throw new RuntimeException(
-                    ItemType.convertClassNameToItemTypeName(this.getClass().getSimpleName())
+                    this.getDynamicType().toString()
                         + " cannot be promoted to type "
                         + type.toString()
             );

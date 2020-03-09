@@ -110,9 +110,9 @@ public class FlworKey implements KryoSerializable {
                 } catch (RuntimeException e) {
                     throw new SparksoniqRuntimeException(
                             "Invalid sort key: cannot compare item of type "
-                                + ItemType.convertClassNameToItemTypeName(comparisonItem.getClass().getSimpleName())
+                                + comparisonItem.getDynamicType().toString()
                                 + " with item of type "
-                                + ItemType.convertClassNameToItemTypeName(currentItem.getClass().getSimpleName())
+                                + currentItem.getDynamicType().toString()
                                 + "."
                     );
                 }

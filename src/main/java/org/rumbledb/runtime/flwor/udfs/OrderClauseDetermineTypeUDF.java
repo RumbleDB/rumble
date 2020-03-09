@@ -157,7 +157,7 @@ public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, W
                         expressionWithIterator.getIterator().getMetadata()
                 );
             } else if (this.nextItem.isBinary()) {
-                String itemType = ItemType.convertClassNameToItemTypeName(this.nextItem.getClass().getSimpleName());
+                String itemType = this.nextItem.getDynamicType().toString();
                 throw new UnexpectedTypeException(
                         "\""
                             + itemType

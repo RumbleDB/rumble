@@ -21,16 +21,16 @@ public class TreatAsClosure implements Function<Item, Boolean> {
         if (!input.isTypeOf(this.sequenceType.getItemType())) {
             throw new TreatException(
                     " "
-                        + ItemType.convertClassNameToItemTypeName(input.getClass().getSimpleName())
+                        + input.getDynamicType().toString()
                         + " cannot be treated as type "
-                        + ItemType.convertClassNameToItemTypeName(this.sequenceType.getItemType().toString())
+                        + this.sequenceType.getItemType().toString()
                         + this.sequenceType.getArity().getSymbol(),
                     this.metadata
             );
         }
         if (this.sequenceType.isEmptySequence()) {
             throw new TreatException(
-                    ItemType.convertClassNameToItemTypeName(input.getClass().getSimpleName())
+                    input.getDynamicType().toString()
                         + " cannot be treated as type empty-sequence()",
                     this.metadata
             );

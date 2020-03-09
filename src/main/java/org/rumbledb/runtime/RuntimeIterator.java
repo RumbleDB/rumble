@@ -113,7 +113,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 throw new InvalidArgumentTypeException(
                         "Effective boolean value not defined for items of type "
                             +
-                            ItemType.convertClassNameToItemTypeName(item.getClass().getSimpleName()),
+                            item.getDynamicType().toString(),
                         iterator.getMetadata()
                 );
             }

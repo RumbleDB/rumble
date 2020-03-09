@@ -37,7 +37,7 @@ public class DoubleFunctionIterator extends LocalFunctionCallIterator {
                 if (!this.item.isAtomic()) {
                     String message = String.format(
                         "Can not atomize an %1$s item: an %1$s has probably been passed where an atomic value is expected.",
-                        ItemType.convertClassNameToItemTypeName(this.item.getClass().getSimpleName())
+                        this.item.getDynamicType().toString()
                     );
                     throw new NonAtomicKeyException(message, getMetadata());
                 }
@@ -45,7 +45,7 @@ public class DoubleFunctionIterator extends LocalFunctionCallIterator {
                 String message = atomicItem.serialize()
                     +
                     ": value of type "
-                    + ItemType.convertClassNameToItemTypeName(this.item.getClass().getSimpleName())
+                    + this.item.getDynamicType().toString()
                     + " is not castable to type double.";
                 if (atomicItem.isNull()) {
                     throw new InvalidLexicalValueException(message, getMetadata());

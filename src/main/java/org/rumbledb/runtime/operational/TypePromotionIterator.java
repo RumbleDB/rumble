@@ -42,7 +42,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         this.iterator = iterator;
         this.sequenceType = sequenceType;
         this.itemType = this.sequenceType.getItemType();
-        this.sequenceTypeName = ItemType.convertClassNameToItemTypeName(this.itemType.toString());
+        this.sequenceTypeName = this.itemType.toString();
     }
 
     @Override
@@ -167,7 +167,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         if (!this.nextResult.canBePromotedTo(this.sequenceType.getItemType())) {
             throw new UnexpectedTypeException(
                     this.exceptionMessage
-                        + ItemType.convertClassNameToItemTypeName(this.nextResult.getClass().getSimpleName())
+                        + this.nextResult.getDynamicType().toString()
                         + " cannot be promoted to type "
                         + this.sequenceTypeName
                         + this.sequenceType.getArity().getSymbol()

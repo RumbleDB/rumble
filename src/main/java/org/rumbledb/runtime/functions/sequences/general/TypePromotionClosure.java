@@ -27,9 +27,9 @@ public class TypePromotionClosure implements Function<Item, Item> {
             throw new UnexpectedTypeException(
                     this.exceptionMessage
                         +
-                        ItemType.convertClassNameToItemTypeName(input.getClass().getSimpleName())
+                        input.getDynamicType().toString()
                         + " cannot be promoted to type "
-                        + ItemType.convertClassNameToItemTypeName(this.sequenceType.getItemType().toString())
+                        + this.sequenceType.getItemType().toString()
                         + this.sequenceType.getArity().getSymbol(),
                     this.metadata
             );

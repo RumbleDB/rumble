@@ -60,7 +60,7 @@ public abstract class BinaryOperationBaseIterator extends LocalRuntimeIterator {
                 "Can not atomize an %1$s item: an %1$s has probably been passed where "
                     +
                     "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
-                ItemType.convertClassNameToItemTypeName(left.getClass().getSimpleName())
+                left.getDynamicType().toString()
             );
             throw new NonAtomicKeyException(message, getMetadata());
         }
@@ -69,7 +69,7 @@ public abstract class BinaryOperationBaseIterator extends LocalRuntimeIterator {
                 "Can not atomize an %1$s item: an %1$s has probably been passed where "
                     +
                     "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
-                ItemType.convertClassNameToItemTypeName(right.getClass().getSimpleName())
+                right.getDynamicType().toString()
             );
             throw new NonAtomicKeyException(message, getMetadata());
         }
@@ -85,9 +85,9 @@ public abstract class BinaryOperationBaseIterator extends LocalRuntimeIterator {
                     " \""
                         + operator.name().toLowerCase()
                         + "\": operation not possible with parameters of type \""
-                        + ItemType.convertClassNameToItemTypeName(left.getClass().getSimpleName())
+                        + left.getDynamicType().toString()
                         + "\" and \""
-                        + ItemType.convertClassNameToItemTypeName(right.getClass().getSimpleName())
+                        + right.getDynamicType().toString()
                         + "\"",
                     getMetadata()
             );

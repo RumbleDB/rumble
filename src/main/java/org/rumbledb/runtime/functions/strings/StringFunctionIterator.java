@@ -35,7 +35,7 @@ public class StringFunctionIterator extends LocalFunctionCallIterator {
             try {
                 if (!this.item.isAtomic()) {
                     throw new StringOfJSONiqItemException(
-                            ItemType.convertClassNameToItemTypeName(this.item.getClass().getSimpleName())
+                            this.item.getDynamicType().toString()
                                 +
                                 " items do not have string value",
                             getMetadata()
@@ -45,7 +45,7 @@ public class StringFunctionIterator extends LocalFunctionCallIterator {
                 String message = atomicItem.serialize()
                     +
                     ": value of type "
-                    + ItemType.convertClassNameToItemTypeName(this.item.getClass().getSimpleName())
+                    + this.item.getDynamicType().toString()
                     + " is not castable to type string.";
                 if (atomicItem.isCastableAs(ItemType.stringItem)) {
                     try {

@@ -96,9 +96,9 @@ public class YearMonthDurationItem extends DurationItem {
         } else if (!other.isYearMonthDuration() && !other.isNull()) {
             throw new UnexpectedTypeException(
                     "\""
-                        + ItemType.convertClassNameToItemTypeName(this.getClass().getSimpleName())
+                        + this.getDynamicType().toString()
                         + "\": invalid type: can not compare for equality to type \""
-                        + ItemType.convertClassNameToItemTypeName(other.getClass().getSimpleName())
+                        + other.getDynamicType().toString()
                         + "\"",
                     metadata
             );

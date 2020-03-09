@@ -289,10 +289,10 @@ public class DateTimeItem extends AtomicItem {
         }
         throw new IteratorFlowException(
                 "Cannot compare item of type "
-                    + ItemType.convertClassNameToItemTypeName(this.getClass().getSimpleName())
+                    + this.getDynamicType().toString()
                     +
                     " with item of type "
-                    + ItemType.convertClassNameToItemTypeName(other.getClass().getSimpleName())
+                    + other.getDynamicType().toString()
         );
     }
 
@@ -301,9 +301,9 @@ public class DateTimeItem extends AtomicItem {
         if (!other.isDateTime() && !other.isNull()) {
             throw new UnexpectedTypeException(
                     "\""
-                        + ItemType.convertClassNameToItemTypeName(this.getClass().getSimpleName())
+                        + this.getDynamicType().toString()
                         + "\": invalid type: can not compare for equality to type \""
-                        + ItemType.convertClassNameToItemTypeName(other.getClass().getSimpleName())
+                        + other.getDynamicType().toString()
                         + "\"",
                     metadata
             );

@@ -68,9 +68,9 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
                         " \""
                             + this.operator.name().toLowerCase()
                             + "\": operation not possible with parameters of type \""
-                            + ItemType.convertClassNameToItemTypeName(this.left.getClass().getSimpleName())
+                            + this.left.getDynamicType().toString()
                             + "\" and \""
-                            + ItemType.convertClassNameToItemTypeName(this.right.getClass().getSimpleName())
+                            + this.right.getDynamicType().toString()
                             + "\"",
                         getMetadata()
                 );

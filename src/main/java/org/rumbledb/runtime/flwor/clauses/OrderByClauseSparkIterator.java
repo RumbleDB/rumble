@@ -161,9 +161,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                             );
                         }
                         if (resultItem.isBinary()) {
-                            String itemType = ItemType.convertClassNameToItemTypeName(
-                                resultItem.getClass().getSimpleName()
-                            );
+                            String itemType = resultItem.getDynamicType().toString();
                             throw new UnexpectedTypeException(
                                     "\""
                                         + itemType
