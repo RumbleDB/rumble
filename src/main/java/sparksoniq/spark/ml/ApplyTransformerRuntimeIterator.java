@@ -97,13 +97,13 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
 
             return result;
         } catch (IllegalArgumentException e) {
-            if (e.getMessage().equals("Data type DecimalType(30,15) is not supported.")) {
+            if (e.getMessage().matches(".*DecimalType.*is not supported.*")) {
                 throw new InvalidRumbleMLParamException(
                         "Parameter provided to "
-                                + this.transformerShortName
-                                + " causes the following error: "
-                                + "Transformer can not operate on data of decimal type given in inputCol. "
-                                + "Please try converting the data to double type (eg. with annotate() function). ",
+                            + this.transformerShortName
+                            + " causes the following error: "
+                            + "Transformer can not operate on data of decimal type given in inputCol. "
+                            + "Please try converting the data to double type (eg. with annotate() function). ",
                         getMetadata()
                 );
             }
