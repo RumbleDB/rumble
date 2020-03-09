@@ -119,6 +119,8 @@ public class StringItem extends AtomicItem {
                 return ItemFactory.getInstance().createHexBinaryItem(this.getStringValue());
             case Base64BinaryItem:
                 return ItemFactory.getInstance().createBase64BinaryItem(this.getStringValue());
+            case AnyURIItem:
+                return ItemFactory.getInstance().createAnyURIItem(this.getStringValue());
             case StringItem:
                 return this;
             default:
@@ -143,6 +145,8 @@ public class StringItem extends AtomicItem {
         try {
             if (itemType.getType() == ItemTypes.IntegerItem) {
                 Integer.parseInt(this.getValue());
+            } else if (itemType.getType() == ItemTypes.AnyURIItem) {
+                AnyURIItem.parseAnyURIString(this.getValue());
             } else if (itemType.getType() == ItemTypes.DecimalItem) {
                 if (this.getValue().contains("e") || this.getValue().contains("E")) {
                     return false;

@@ -46,6 +46,7 @@ public class ItemType implements Serializable {
     public static final ItemType dateTimeItem = new ItemType(ItemTypes.DateTimeItem);
     public static final ItemType dateItem = new ItemType(ItemTypes.DateItem);
     public static final ItemType timeItem = new ItemType(ItemTypes.TimeItem);
+    public static final ItemType anyURIItem = new ItemType(ItemTypes.AnyURIItem);
     public static final ItemType hexBinaryItem = new ItemType(ItemTypes.HexBinaryItem);
     public static final ItemType base64BinaryItem = new ItemType(ItemTypes.Base64BinaryItem);
     public static final ItemType item = new ItemType(ItemTypes.Item);
@@ -110,6 +111,9 @@ public class ItemType implements Serializable {
             case "time":
                 this.type = ItemTypes.TimeItem;
                 return;
+            case "anyuri":
+                this.type = ItemTypes.AnyURIItem;
+                return;
             case "hexbinary":
                 this.type = ItemTypes.HexBinaryItem;
                 return;
@@ -152,6 +156,7 @@ public class ItemType implements Serializable {
                     || this.type == ItemTypes.DecimalItem
                     || this.type == ItemTypes.DoubleItem
                     || this.type == ItemTypes.BooleanItem
+                    || this.type == ItemTypes.AnyURIItem
             ) {
                 return true;
             }
@@ -188,6 +193,8 @@ public class ItemType implements Serializable {
                 return "string";
             case BooleanItem:
                 return "boolean";
+            case AnyURIItem:
+                return "anyuri";
             case NullItem:
                 return "null";
             case JSONItem:
