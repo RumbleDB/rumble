@@ -134,4 +134,9 @@ public class ArrayItem extends JsonItem {
         }
         return result;
     }
+
+    @Override
+    public ItemType getDynamicType() {
+        return ItemType.arrayItem;
+    }
 }

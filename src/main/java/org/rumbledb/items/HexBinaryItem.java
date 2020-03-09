@@ -189,4 +189,9 @@ public class HexBinaryItem extends AtomicItem {
         this.value = input.readBytes(bytesLength);
         this.stringValue = Hex.encodeHexString(this.value);
     }
+
+    @Override
+    public ItemType getDynamicType() {
+        return ItemType.hexBinaryItem;
+    }
 }

@@ -232,4 +232,9 @@ public class FunctionItem extends Item {
             );
         }
     }
+
+    @Override
+    public ItemType getDynamicType() {
+        return ItemType.functionItem;
+    }
 }

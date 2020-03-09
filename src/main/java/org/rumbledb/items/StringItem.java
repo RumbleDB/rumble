@@ -234,4 +234,9 @@ public class StringItem extends AtomicItem {
         }
         return operator.apply(this, other);
     }
+
+    @Override
+    public ItemType getDynamicType() {
+        return ItemType.stringItem;
+    }
 }

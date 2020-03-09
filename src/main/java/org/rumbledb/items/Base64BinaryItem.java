@@ -195,4 +195,9 @@ public class Base64BinaryItem extends AtomicItem {
         this.value = input.readBytes(bytesLength);
         this.stringValue = StringUtils.chomp(Base64.encodeBase64String(this.value));
     }
+
+    @Override
+    public ItemType getDynamicType() {
+        return ItemType.base64BinaryItem;
+    }
 }

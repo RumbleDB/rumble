@@ -237,4 +237,9 @@ public class IntegerItem extends AtomicItem {
     public Item idivide(Item other) {
         return ItemFactory.getInstance().createIntegerItem(this.getIntegerValue() / other.castToIntegerValue());
     }
+
+    @Override
+    public ItemType getDynamicType() {
+        return ItemType.integerItem;
+    }
 }

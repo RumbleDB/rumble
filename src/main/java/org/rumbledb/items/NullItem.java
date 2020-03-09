@@ -110,4 +110,9 @@ public class NullItem extends AtomicItem {
     public Item compareItem(Item other, OperationalExpressionBase.Operator operator, ExceptionMetadata metadata) {
         return operator.apply(this, other);
     }
+
+    @Override
+    public ItemType getDynamicType() {
+        return ItemType.nullItem;
+    }
 }

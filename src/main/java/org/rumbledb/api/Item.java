@@ -308,7 +308,7 @@ public abstract class Item implements SerializableItem {
             throw new RuntimeException(
                     ItemType.convertClassNameToItemTypeName(this.getClass().getSimpleName())
                         + " cannot be promoted to type "
-                        + ItemType.convertClassNameToItemTypeName(type.toString())
+                        + type.toString()
             );
         }
         return this;
@@ -544,6 +544,15 @@ public abstract class Item implements SerializableItem {
     }
 
     public Item idivide(Item other) {
+        throw new UnsupportedOperationException("Operation not defined");
+    }
+
+    /**
+     * Returns the dynamic type of the item (for error message purposes).
+     * 
+     * @return the dynamic type as an item type.
+     */
+    public ItemType getDynamicType() {
         throw new UnsupportedOperationException("Operation not defined");
     }
 }

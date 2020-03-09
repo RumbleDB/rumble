@@ -145,4 +145,9 @@ public class BooleanItem extends AtomicItem {
         }
         return operator.apply(this, other);
     }
+
+    @Override
+    public ItemType getDynamicType() {
+        return ItemType.booleanItem;
+    }
 }

@@ -296,4 +296,9 @@ public class DurationItem extends AtomicItem {
                 metadata
         );
     }
+
+    @Override
+    public ItemType getDynamicType() {
+        return ItemType.durationItem;
+    }
 }

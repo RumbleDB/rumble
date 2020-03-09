@@ -186,4 +186,9 @@ public class TimeItem extends AtomicItem {
         DateTimeZone zone = DateTimeZone.forID(input.readString());
         this.value = new DateTime(millis, zone);
     }
+
+    @Override
+    public ItemType getDynamicType() {
+        return ItemType.timeItem;
+    }
 }

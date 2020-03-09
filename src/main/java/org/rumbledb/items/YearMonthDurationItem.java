@@ -151,4 +151,9 @@ public class YearMonthDurationItem extends DurationItem {
         return ItemFactory.getInstance()
             .createYearMonthDurationItem(new Period().withMonths(totalMonths).withPeriodType(yearMonthPeriodType));
     }
+
+    @Override
+    public ItemType getDynamicType() {
+        return ItemType.yearMonthDurationItem;
+    }
 }

@@ -213,4 +213,9 @@ public class ObjectItem extends JsonItem {
         return result;
     }
 
+    @Override
+    public ItemType getDynamicType() {
+        return ItemType.objectItem;
+    }
+
 }

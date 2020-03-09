@@ -159,4 +159,9 @@ public class DayTimeDurationItem extends DurationItem {
             .longValue();
         return ItemFactory.getInstance().createDayTimeDurationItem(new Period(durationResult, PeriodType.dayTime()));
     }
+
+    @Override
+    public ItemType getDynamicType() {
+        return ItemType.dayTimeDurationItem;
+    }
 }

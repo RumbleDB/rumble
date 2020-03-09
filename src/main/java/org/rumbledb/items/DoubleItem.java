@@ -200,4 +200,9 @@ public class DoubleItem extends AtomicItem {
     public Item idivide(Item other) {
         return ItemFactory.getInstance().createIntegerItem((int) (this.getDoubleValue() / other.castToDoubleValue()));
     }
+
+    @Override
+    public ItemType getDynamicType() {
+        return ItemType.doubleItem;
+    }
 }

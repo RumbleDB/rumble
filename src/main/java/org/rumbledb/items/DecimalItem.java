@@ -217,4 +217,9 @@ public class DecimalItem extends AtomicItem {
                 this.getDecimalValue().divideToIntegralValue(other.castToDecimalValue()).intValueExact()
             );
     }
+
+    @Override
+    public ItemType getDynamicType() {
+        return ItemType.decimalItem;
+    }
 }
