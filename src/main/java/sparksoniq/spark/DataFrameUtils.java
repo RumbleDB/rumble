@@ -69,7 +69,7 @@ public class DataFrameUtils {
             if (!dataItem.getKeys().contains(schemaColumn)) {
                 throw new MLInvalidDataFrameSchemaException(
                         "Columns defined in schema must fully match the columns of input data: "
-                            + "missing type information for '"
+                            + "redundant type information for non-existent column '"
                             + schemaColumn
                             + "' column."
                 );
@@ -80,7 +80,7 @@ public class DataFrameUtils {
             if (!schemaItem.getKeys().contains(dataColumn)) {
                 throw new MLInvalidDataFrameSchemaException(
                         "Columns defined in schema must fully match the columns of input data: "
-                            + "redundant type information for non-existent column '"
+                            + "missing type information for '"
                             + dataColumn
                             + "'."
                 );

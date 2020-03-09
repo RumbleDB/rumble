@@ -393,13 +393,13 @@ public class ItemParser implements Serializable {
                 return item.getBooleanValue();
             }
             if (dataType.equals(DataTypes.IntegerType)) {
-                return item.getIntegerValue();
+                return item.castToIntegerValue();
             }
             if (dataType.equals(DataTypes.DoubleType)) {
-                return item.getDoubleValue();
+                return item.castToDoubleValue();
             }
             if (dataType.equals(decimalType)) {
-                return item.getDecimalValue();
+                return item.castToDecimalValue();
             }
             if (dataType.equals(DataTypes.StringType)) {
                 return item.getStringValue();
