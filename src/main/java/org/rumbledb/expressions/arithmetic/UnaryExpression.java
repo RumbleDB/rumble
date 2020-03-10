@@ -22,6 +22,7 @@ package org.rumbledb.expressions.arithmetic;
 
 
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -37,8 +38,11 @@ public class UnaryExpression extends Expression {
 
     public UnaryExpression(Expression mainExpression, boolean negated, ExceptionMetadata metadata) {
         super(metadata);
-        this.negated = negated;
+        if (mainExpression == null) {
+            throw new OurBadException("Expression cannot be null.");
+        }
         this.mainExpression = mainExpression;
+        this.negated = negated;
     }
 
     @Override
