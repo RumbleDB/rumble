@@ -14,7 +14,7 @@ import sparksoniq.jsoniq.ExecutionMode;
 
 public class TreatExpression extends Expression {
 
-	private Expression mainExpression;
+    private Expression mainExpression;
     private SequenceType sequenceType;
 
     public TreatExpression(

@@ -13,7 +13,7 @@ import org.rumbledb.types.SequenceType.Arity;
 
 public class CastExpression extends Expression {
 
-	protected Expression mainExpression;
+    private Expression mainExpression;
     private SequenceType sequenceType;
 
     public CastExpression(Expression mainExpression, SequenceType sequenceType, ExceptionMetadata metadata) {

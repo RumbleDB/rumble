@@ -34,8 +34,6 @@ import org.rumbledb.items.NullItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
-import org.rumbledb.types.ItemType;
-
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.semantics.DynamicContext;
 

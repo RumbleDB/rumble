@@ -32,7 +32,7 @@ import org.rumbledb.types.SequenceType;
 
 public class InstanceOfExpression extends Expression {
 
-	private Expression mainExpression;
+    private Expression mainExpression;
     private SequenceType sequenceType;
 
     public InstanceOfExpression(

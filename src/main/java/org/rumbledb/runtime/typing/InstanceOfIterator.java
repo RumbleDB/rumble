@@ -24,12 +24,10 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.InstanceOfClosure;
-import org.rumbledb.runtime.operational.base.UnaryOperationBaseIterator;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
@@ -52,8 +50,8 @@ public class InstanceOfIterator extends LocalRuntimeIterator {
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
     ) {
-    	super(Collections.singletonList(child), executionMode, iteratorMetadata);
-    	this.child = child;
+        super(Collections.singletonList(child), executionMode, iteratorMetadata);
+        this.child = child;
         this.sequenceType = sequenceType;
     }
 

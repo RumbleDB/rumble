@@ -18,18 +18,23 @@
  *
  */
 
-package org.rumbledb.expressions.operational;
+package org.rumbledb.expressions.logic;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.operational.base.UnaryExpressionBase;
+import org.rumbledb.expressions.Node;
 
 
-public class NotExpression extends UnaryExpressionBase {
+public class NotExpression extends Expression {
+
+    private Expression mainExpression;
 
     public NotExpression(Expression mainExpression, ExceptionMetadata metadata) {
-        super(mainExpression, Operator.NOT, metadata);
+        super(metadata);
     }
 
     @Override
@@ -43,6 +48,19 @@ public class NotExpression extends UnaryExpressionBase {
         result += "not ";
         result += this.mainExpression.serializationString(true);
         result += ")";
+        return result;
+    }
+
+    public Expression getMainExpression() {
+        return this.mainExpression;
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        List<Node> result = new ArrayList<>();
+        if (this.mainExpression != null) {
+            result.add(this.mainExpression);
+        }
         return result;
     }
 

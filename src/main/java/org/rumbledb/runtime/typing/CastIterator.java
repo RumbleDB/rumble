@@ -30,8 +30,8 @@ public class CastIterator extends LocalRuntimeIterator {
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
     ) {
-    	super(Collections.singletonList(child), executionMode, iteratorMetadata);
-    	this.child = child;
+        super(Collections.singletonList(child), executionMode, iteratorMetadata);
+        this.child = child;
         this.sequenceType = sequenceType;
     }
 
