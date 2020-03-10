@@ -1,16 +1,20 @@
-package org.rumbledb.expressions.operational;
+package org.rumbledb.expressions.typing;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.operational.base.UnaryExpressionBase;
+import org.rumbledb.expressions.Node;
 import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.ExecutionMode;
 
 
-public class TreatExpression extends UnaryExpressionBase {
+public class TreatExpression extends Expression {
 
+	private Expression mainExpression;
     private SequenceType sequenceType;
 
     public TreatExpression(
@@ -18,7 +22,7 @@ public class TreatExpression extends UnaryExpressionBase {
             SequenceType sequenceType,
             ExceptionMetadata metadata
     ) {
-        super(mainExpression, Operator.TREAT, metadata);
+        super(metadata);
         this.sequenceType = sequenceType;
     }
 
@@ -57,6 +61,23 @@ public class TreatExpression extends UnaryExpressionBase {
         result += this.mainExpression.serializationString(true);
         result += " treat as " + this.sequenceType.toString();
         result += ")";
+        return result;
+    }
+
+    public SequenceType getSequenceType() {
+        return this.sequenceType;
+    }
+
+    public Expression getMainExpression() {
+        return this.mainExpression;
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        List<Node> result = new ArrayList<>();
+        if (this.mainExpression != null) {
+            result.add(this.mainExpression);
+        }
         return result;
     }
 

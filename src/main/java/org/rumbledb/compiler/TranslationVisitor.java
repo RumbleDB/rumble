@@ -30,7 +30,6 @@ import org.rumbledb.exceptions.ModuleDeclarationException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SparksoniqRuntimeException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
-import org.rumbledb.expression.typing.CastableExpression;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -56,15 +55,12 @@ import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.operational.AdditiveExpression;
 import org.rumbledb.expressions.operational.AndExpression;
-import org.rumbledb.expressions.operational.CastExpression;
 import org.rumbledb.expressions.operational.ComparisonExpression;
-import org.rumbledb.expressions.operational.InstanceOfExpression;
 import org.rumbledb.expressions.operational.MultiplicativeExpression;
 import org.rumbledb.expressions.operational.NotExpression;
 import org.rumbledb.expressions.operational.OrExpression;
 import org.rumbledb.expressions.operational.RangeExpression;
 import org.rumbledb.expressions.operational.StringConcatExpression;
-import org.rumbledb.expressions.operational.TreatExpression;
 import org.rumbledb.expressions.operational.UnaryExpression;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.expressions.postfix.ArrayLookupExpression;
@@ -83,6 +79,10 @@ import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
+import org.rumbledb.expressions.typing.CastExpression;
+import org.rumbledb.expressions.typing.CastableExpression;
+import org.rumbledb.expressions.typing.InstanceOfExpression;
+import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.types.ItemType;
@@ -607,8 +607,8 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             return mainExpression;
         }
         JsoniqParser.SingleTypeContext child = ctx.single;
-        SequenceType type = this.processSingleType(child);
-        return new CastExpression(mainExpression, type, createMetadataFromContext(ctx));
+        SequenceType sequenceType = this.processSingleType(child);
+        return new CastExpression(mainExpression, sequenceType, createMetadataFromContext(ctx));
     }
 
     @Override

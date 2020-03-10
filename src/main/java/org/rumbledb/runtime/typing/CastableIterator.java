@@ -1,4 +1,4 @@
-package org.rumbledb.runtime.operational;
+package org.rumbledb.runtime.typing;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CastableException;
@@ -22,8 +22,8 @@ import java.util.List;
 
 public class CastableIterator extends LocalRuntimeIterator {
     private static final long serialVersionUID = 1L;
+    private final RuntimeIterator child;
     private final SequenceType sequenceType;
-    protected final RuntimeIterator child;
 
     public CastableIterator(
             RuntimeIterator child,
