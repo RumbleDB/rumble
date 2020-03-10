@@ -10,8 +10,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypes;
-
 import java.math.BigDecimal;
 
 public class DayTimeDurationItem extends DurationItem {
@@ -50,12 +48,12 @@ public class DayTimeDurationItem extends DurationItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.getType().equals(ItemTypes.DayTimeDurationItem) || super.isTypeOf(type);
+        return type.equals(ItemType.dayTimeDurationItem) || super.isTypeOf(type);
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this.value = getDurationFromString(input.readString(), ItemTypes.DayTimeDurationItem).normalizedStandard(
+        this.value = getDurationFromString(input.readString(), ItemType.dayTimeDurationItem).normalizedStandard(
             PeriodType.dayTime()
         );
         this.isNegative = this.value.toString().contains("-");
@@ -63,29 +61,30 @@ public class DayTimeDurationItem extends DurationItem {
 
     @Override
     public boolean isCastableAs(ItemType itemType) {
-        return itemType.getType() == ItemTypes.DayTimeDurationItem
+        return itemType.equals(ItemType.dayTimeDurationItem)
             ||
-            itemType.getType() == ItemTypes.YearMonthDurationItem
+            itemType.equals(ItemType.yearMonthDurationItem)
             ||
-            itemType.getType() == ItemTypes.DurationItem
+            itemType.equals(ItemType.durationItem)
             ||
-            itemType.getType() == ItemTypes.StringItem;
+            itemType.equals(ItemType.stringItem);
     }
 
     @Override
     public Item castAs(ItemType itemType) {
-        switch (itemType.getType()) {
-            case DurationItem:
-                return ItemFactory.getInstance().createDurationItem(this.getValue());
-            case DayTimeDurationItem:
-                return this;
-            case YearMonthDurationItem:
-                return ItemFactory.getInstance().createYearMonthDurationItem(this.getValue());
-            case StringItem:
-                return ItemFactory.getInstance().createStringItem(this.serialize());
-            default:
-                throw new ClassCastException();
+        if (itemType.equals(ItemType.durationItem)) {
+            return ItemFactory.getInstance().createDurationItem(this.getValue());
         }
+        if (itemType.equals(ItemType.dayTimeDurationItem)) {
+            return this;
+        }
+        if (itemType.equals(ItemType.yearMonthDurationItem)) {
+            return ItemFactory.getInstance().createYearMonthDurationItem(this.getValue());
+        }
+        if (itemType.equals(ItemType.stringItem)) {
+            return ItemFactory.getInstance().createStringItem(this.serialize());
+        }
+        throw new ClassCastException();
     }
 
     @Override
@@ -95,9 +94,9 @@ public class DayTimeDurationItem extends DurationItem {
         } else if (!other.isDayTimeDuration() && !other.isNull()) {
             throw new UnexpectedTypeException(
                     "\""
-                        + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                        + this.getDynamicType().toString()
                         + "\": invalid type: can not compare for equality to type \""
-                        + ItemTypes.getItemTypeName(other.getClass().getSimpleName())
+                        + other.getDynamicType().toString()
                         + "\"",
                     metadata
             );
@@ -159,5 +158,10 @@ public class DayTimeDurationItem extends DurationItem {
         long durationResult = (BigDecimal.valueOf(durationInMillis)).divide(otherBd, 16, BigDecimal.ROUND_HALF_UP)
             .longValue();
         return ItemFactory.getInstance().createDayTimeDurationItem(new Period(durationResult, PeriodType.dayTime()));
+    }
+
+    @Override
+    public ItemType getDynamicType() {
+        return ItemType.dayTimeDurationItem;
     }
 }

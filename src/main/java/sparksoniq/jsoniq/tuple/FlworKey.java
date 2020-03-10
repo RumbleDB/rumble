@@ -27,7 +27,7 @@ import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SparksoniqRuntimeException;
-import org.rumbledb.types.ItemTypes;
+import org.rumbledb.types.ItemType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -110,9 +110,9 @@ public class FlworKey implements KryoSerializable {
                 } catch (RuntimeException e) {
                     throw new SparksoniqRuntimeException(
                             "Invalid sort key: cannot compare item of type "
-                                + ItemTypes.getItemTypeName(comparisonItem.getClass().getSimpleName())
+                                + comparisonItem.getDynamicType().toString()
                                 + " with item of type "
-                                + ItemTypes.getItemTypeName(currentItem.getClass().getSimpleName())
+                                + currentItem.getDynamicType().toString()
                                 + "."
                     );
                 }

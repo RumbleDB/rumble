@@ -11,7 +11,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.TreatAsClosure;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypes;
 import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.ExecutionMode;
@@ -47,7 +46,7 @@ public class TreatIterator extends HybridRuntimeIterator {
         this.shouldThrowTreatException = shouldThrowTreatException;
         if (!this.sequenceType.isEmptySequence()) {
             this.itemType = this.sequenceType.getItemType();
-            this.sequenceTypeName = ItemTypes.getItemTypeName(this.itemType.getType().toString());
+            this.sequenceTypeName = this.itemType.toString();
         }
     }
 
@@ -117,7 +116,7 @@ public class TreatIterator extends HybridRuntimeIterator {
         checkTreatAsEmptySequence(this.resultCount);
         checkMoreThanOneItemSequence(this.resultCount);
         if (!this.nextResult.isTypeOf(this.itemType)) {
-            String message = ItemTypes.getItemTypeName(this.nextResult.getClass().getSimpleName())
+            String message = this.nextResult.getDynamicType().toString()
                 + " cannot be treated as type "
                 + this.sequenceTypeName
                 + this.sequenceType.getArity().getSymbol();
@@ -158,7 +157,7 @@ public class TreatIterator extends HybridRuntimeIterator {
 
     private void checkTreatAsEmptySequence(int size) {
         if (size > 0 && this.sequenceType.isEmptySequence()) {
-            String message = ItemTypes.getItemTypeName(this.nextResult.getClass().getSimpleName())
+            String message = this.nextResult.getDynamicType().toString()
                 + " cannot be treated as type empty-sequence()";
             throw this.shouldThrowTreatException
                 ? new TreatException(message, getMetadata())

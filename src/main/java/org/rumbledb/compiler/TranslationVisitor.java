@@ -200,6 +200,9 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             expressions.add((Expression) this.visitExprSingle(expr));
 
         }
+        if (expressions.size() == 1) {
+            return expressions.get(0);
+        }
         return new CommaExpression(expressions, createMetadataFromContext(ctx));
     }
 

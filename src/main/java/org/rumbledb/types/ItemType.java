@@ -129,12 +129,12 @@ public class ItemType implements Serializable {
     }
 
 
-    public ItemTypes getType() {
+    private ItemTypes getType() {
         return this.type;
     }
 
     public boolean isSubtypeOf(ItemType superType) {
-        if (superType.getType() == ItemTypes.Item) {
+        if (superType.equals(ItemType.item)) {
             return true;
         }
         if (superType.getType() == ItemTypes.JSONItem) {
@@ -149,7 +149,7 @@ public class ItemType implements Serializable {
             return false;
         }
 
-        if (superType.getType() == ItemTypes.AtomicItem) {
+        if (superType.equals(ItemType.atomicItem)) {
             if (
                 this.type == ItemTypes.StringItem
                     || this.type == ItemTypes.IntegerItem
@@ -194,7 +194,7 @@ public class ItemType implements Serializable {
             case BooleanItem:
                 return "boolean";
             case AnyURIItem:
-                return "anyuri";
+                return "anyURI";
             case NullItem:
                 return "null";
             case JSONItem:
@@ -223,5 +223,39 @@ public class ItemType implements Serializable {
                 return "yearMonthDuration";
         }
         throw new OurBadException("Unrecognized type.");
+    }
+
+    private enum ItemTypes {
+        Item,
+
+        JSONItem,
+        ObjectItem,
+        ArrayItem,
+
+        AtomicItem,
+        StringItem,
+        IntegerItem,
+        DecimalItem,
+        DoubleItem,
+        BooleanItem,
+
+        DurationItem,
+        YearMonthDurationItem,
+        DayTimeDurationItem,
+
+        DateTimeItem,
+        DateItem,
+        TimeItem,
+
+        AnyURIItem,
+
+        HexBinaryItem,
+        Base64BinaryItem,
+
+        FunctionItem,
+
+        NullItem;
+
+
     }
 }

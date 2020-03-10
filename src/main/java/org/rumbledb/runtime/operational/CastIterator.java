@@ -8,7 +8,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.items.AtomicItem;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.types.ItemTypes;
+import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
@@ -54,7 +54,7 @@ public class CastIterator extends UnaryOperationIterator {
             this.hasNext = false;
 
             Item item = items.get(0);
-            String itemType = ItemTypes.getItemTypeName(item.getClass().getSimpleName());
+            String itemType = item.getDynamicType().toString();
 
             if (itemType.equals(this.sequenceType.getItemType().toString())) {
                 return item;

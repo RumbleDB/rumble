@@ -29,8 +29,6 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypes;
-
 import java.math.BigDecimal;
 
 public class DoubleItem extends AtomicItem {
@@ -83,34 +81,36 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.getType().equals(ItemTypes.DoubleItem) || super.isTypeOf(type);
+        return type.equals(ItemType.doubleItem) || super.isTypeOf(type);
     }
 
     @Override
     public Item castAs(ItemType itemType) {
-        switch (itemType.getType()) {
-            case BooleanItem:
-                return ItemFactory.getInstance().createBooleanItem(this.getDoubleValue() != 0);
-            case DoubleItem:
-                return this;
-            case DecimalItem:
-                return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue());
-            case IntegerItem:
-                return ItemFactory.getInstance().createIntegerItem(this.castToIntegerValue());
-            case StringItem:
-                return ItemFactory.getInstance().createStringItem(String.valueOf(this.getDoubleValue()));
-            default:
-                throw new ClassCastException();
+        if (itemType.equals(ItemType.booleanItem)) {
+            return ItemFactory.getInstance().createBooleanItem(this.getDoubleValue() != 0);
         }
+        if (itemType.equals(ItemType.doubleItem)) {
+            return this;
+        }
+        if (itemType.equals(ItemType.decimalItem)) {
+            return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue());
+        }
+        if (itemType.equals(ItemType.integerItem)) {
+            return ItemFactory.getInstance().createIntegerItem(this.castToIntegerValue());
+        }
+        if (itemType.equals(ItemType.stringItem)) {
+            return ItemFactory.getInstance().createStringItem(String.valueOf(this.getDoubleValue()));
+        }
+        throw new ClassCastException();
     }
 
     @Override
     public boolean isCastableAs(ItemType itemType) {
-        if (itemType.getType() == ItemTypes.AtomicItem || itemType.getType() == ItemTypes.NullItem) {
+        if (itemType.equals(ItemType.atomicItem) || itemType.equals(ItemType.nullItem)) {
             return false;
-        } else if (itemType.getType() == ItemTypes.DecimalItem) {
+        } else if (itemType.equals(ItemType.decimalItem)) {
             return !Double.isInfinite(this.getValue());
-        } else if (itemType.getType() == ItemTypes.IntegerItem) {
+        } else if (itemType.equals(ItemType.integerItem)) {
             return !(Integer.MAX_VALUE < this.getValue()) && !(Integer.MIN_VALUE > this.getValue());
         }
         return true;
@@ -199,5 +199,10 @@ public class DoubleItem extends AtomicItem {
     @Override
     public Item idivide(Item other) {
         return ItemFactory.getInstance().createIntegerItem((int) (this.getDoubleValue() / other.castToDoubleValue()));
+    }
+
+    @Override
+    public ItemType getDynamicType() {
+        return ItemType.doubleItem;
     }
 }

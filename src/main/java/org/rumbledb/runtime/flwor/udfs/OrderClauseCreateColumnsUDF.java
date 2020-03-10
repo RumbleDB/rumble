@@ -34,7 +34,7 @@ import org.rumbledb.items.NullItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
-import org.rumbledb.types.ItemTypes;
+import org.rumbledb.types.ItemType;
 
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.semantics.DynamicContext;
@@ -190,7 +190,7 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
                                 "Invalid sort key: cannot compare item of type "
                                     + typeName
                                     + " with item of type "
-                                    + ItemTypes.getItemTypeName(nextItem.getClass().getSimpleName())
+                                    + nextItem.getDynamicType().toString()
                                     + "."
                         );
                     }

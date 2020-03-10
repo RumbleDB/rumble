@@ -33,7 +33,6 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.runtime.functions.base.FunctionSignature;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypes;
 import org.rumbledb.types.SequenceType;
 
 import java.io.ByteArrayInputStream;
@@ -163,7 +162,7 @@ public class FunctionItem extends Item {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.getType().equals(ItemTypes.FunctionItem) || type.getType().equals(ItemTypes.Item);
+        return type.equals(ItemType.functionItem) || type.equals(ItemType.item);
     }
 
     @Override
@@ -232,5 +231,10 @@ public class FunctionItem extends Item {
                     "Error converting functionItem-bodyRuntimeIterator to functionItem:" + e.getMessage()
             );
         }
+    }
+
+    @Override
+    public ItemType getDynamicType() {
+        return ItemType.functionItem;
     }
 }
