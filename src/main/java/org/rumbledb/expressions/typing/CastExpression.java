@@ -1,6 +1,6 @@
 package org.rumbledb.expressions.typing;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -50,10 +50,6 @@ public class CastExpression extends Expression {
 
     @Override
     public List<Node> getChildren() {
-        List<Node> result = new ArrayList<>();
-        if (this.mainExpression != null) {
-            result.add(this.mainExpression);
-        }
-        return result;
+        return Collections.singletonList(this.mainExpression);
     }
 }
