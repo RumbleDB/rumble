@@ -39,7 +39,6 @@ public class CastIterator extends LocalRuntimeIterator {
     public Item next() {
         if (this.hasNext) {
             List<Item> items = new ArrayList<>();
-            this.child.open(this.currentDynamicContextForLocalExecution);
             while (this.child.hasNext()) {
                 items.add(this.child.next());
                 if (items.size() > 1) {
@@ -88,6 +87,8 @@ public class CastIterator extends LocalRuntimeIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
+        this.child.open(context);
+        this.hasNext = child.hasNext();
         if (!this.hasNext && !this.sequenceType.isEmptySequence() && this.sequenceType.getArity() != Arity.OneOrZero) {
             throw new UnexpectedTypeException(
                     " Empty sequence can not be cast to type with quantifier '1'",
