@@ -47,15 +47,15 @@ import org.rumbledb.expressions.flowr.LetClauseVar;
 import org.rumbledb.expressions.flowr.OrderByClause;
 import org.rumbledb.expressions.flowr.OrderByClauseExpr;
 import org.rumbledb.expressions.flowr.WhereClause;
+import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
+import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.operational.AdditiveExpression;
-import org.rumbledb.expressions.operational.AndExpression;
 import org.rumbledb.expressions.operational.ComparisonExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.operational.MultiplicativeExpression;
-import org.rumbledb.expressions.operational.OrExpression;
 import org.rumbledb.expressions.operational.RangeExpression;
 import org.rumbledb.expressions.operational.StringConcatExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
@@ -684,27 +684,16 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitAndExpr(AndExpression expression, RuntimeIterator argument) {
-        RuntimeIterator left, right;
-        // convert nary to tree of iterators
-        if (expression.getRightExpressions().size() > 1) {
-            right = this.visit(
-                expression.getRightExpressions().get(expression.getRightExpressions().size() - 1),
+    	Expression leftExpression = (Expression) expression.getChildren().get(0);
+    	Expression rightExpression = (Expression) expression.getChildren().get(1);
+        RuntimeIterator left = this.visit(
+                leftExpression,
                 argument
             );
-            AndExpression remainingExpressiongs = new AndExpression(
-                    expression.getMainExpression(),
-                    expression.getRightExpressions().subList(0, expression.getRightExpressions().size() - 1),
-                    expression.getMetadata()
-            );
-            remainingExpressiongs.initHighestExecutionMode();
-            left = this.visit(
-                remainingExpressiongs,
+        RuntimeIterator right = this.visit(
+                rightExpression,
                 argument
             );
-        } else {
-            left = this.visit(expression.getMainExpression(), argument);
-            right = this.visit(expression.getRightExpressions().get(0), argument);
-        }
 
         return new AndOperationIterator(
                 left,
@@ -716,28 +705,16 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitOrExpr(OrExpression expression, RuntimeIterator argument) {
-        RuntimeIterator left, right;
-        // convert nary to tree of iterators
-        if (expression.getRightExpressions().size() > 1) {
-            right = this.visit(
-                expression.getRightExpressions().get(expression.getRightExpressions().size() - 1),
+    	Expression leftExpression = (Expression) expression.getChildren().get(0);
+    	Expression rightExpression = (Expression) expression.getChildren().get(1);
+        RuntimeIterator left = this.visit(
+                leftExpression,
                 argument
             );
-            OrExpression remainingExpressions = new OrExpression(
-                    expression.getMainExpression(),
-                    expression.getRightExpressions()
-                        .subList(0, expression.getRightExpressions().size() - 1),
-                    expression.getMetadata()
-            );
-            remainingExpressions.initHighestExecutionMode();
-            left = this.visit(
-                remainingExpressions,
+        RuntimeIterator right = this.visit(
+                rightExpression,
                 argument
             );
-        } else {
-            left = this.visit(expression.getMainExpression(), argument);
-            right = this.visit(expression.getRightExpressions().get(0), argument);
-        }
 
         return new OrOperationIterator(
                 left,
