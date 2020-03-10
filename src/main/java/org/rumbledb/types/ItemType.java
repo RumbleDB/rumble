@@ -218,7 +218,7 @@ public class ItemType implements Serializable {
         throw new OurBadException("Unrecognized type.");
     }
 
-    enum ItemTypes {
+    private enum ItemTypes {
         Item,
 
         JSONItem,
