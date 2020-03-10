@@ -27,7 +27,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypes;
 
 public class NullItem extends AtomicItem {
 
@@ -50,26 +49,25 @@ public class NullItem extends AtomicItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.getType().equals(ItemTypes.NullItem) || super.isTypeOf(type);
+        return type.equals(ItemType.nullItem) || super.isTypeOf(type);
     }
 
     @Override
     public boolean isCastableAs(ItemType itemType) {
-        return itemType.getType() == ItemTypes.NullItem
+        return itemType.equals(ItemType.nullItem)
             ||
-            itemType.getType() == ItemTypes.StringItem;
+            itemType.equals(ItemType.stringItem);
     }
 
     @Override
     public Item castAs(ItemType itemType) {
-        switch (itemType.getType()) {
-            case NullItem:
-                return this;
-            case StringItem:
-                return ItemFactory.getInstance().createStringItem(this.serialize());
-            default:
-                throw new ClassCastException();
+        if (itemType.equals(ItemType.nullItem)) {
+            return this;
         }
+        if (itemType.equals(ItemType.stringItem)) {
+            return ItemFactory.getInstance().createStringItem(this.serialize());
+        }
+        throw new ClassCastException();
     }
 
     @Override
@@ -111,5 +109,10 @@ public class NullItem extends AtomicItem {
     @Override
     public Item compareItem(Item other, OperationalExpressionBase.Operator operator, ExceptionMetadata metadata) {
         return operator.apply(this, other);
+    }
+
+    @Override
+    public ItemType getDynamicType() {
+        return ItemType.nullItem;
     }
 }

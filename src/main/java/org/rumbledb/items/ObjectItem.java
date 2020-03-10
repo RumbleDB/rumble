@@ -28,8 +28,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypes;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -134,7 +132,7 @@ public class ObjectItem extends JsonItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.getType().equals(ItemTypes.ObjectItem) || super.isTypeOf(type);
+        return type.equals(ItemType.objectItem) || super.isTypeOf(type);
     }
 
     @Override
@@ -213,6 +211,11 @@ public class ObjectItem extends JsonItem {
             result += getItemByKey(s).hashCode();
         }
         return result;
+    }
+
+    @Override
+    public ItemType getDynamicType() {
+        return ItemType.objectItem;
     }
 
 }

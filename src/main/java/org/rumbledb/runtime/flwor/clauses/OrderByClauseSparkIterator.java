@@ -40,7 +40,7 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 import org.rumbledb.runtime.flwor.udfs.OrderClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.OrderClauseDetermineTypeUDF;
-import org.rumbledb.types.ItemTypes;
+import org.rumbledb.types.ItemType;
 
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.tuple.FlworKey;
@@ -161,7 +161,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                             );
                         }
                         if (resultItem.isBinary()) {
-                            String itemType = ItemTypes.getItemTypeName(resultItem.getClass().getSimpleName());
+                            String itemType = resultItem.getDynamicType().toString();
                             throw new UnexpectedTypeException(
                                     "\""
                                         + itemType
