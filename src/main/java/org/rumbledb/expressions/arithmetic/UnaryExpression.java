@@ -18,7 +18,7 @@
  *
  */
 
-package org.rumbledb.expressions.operational;
+package org.rumbledb.expressions.arithmetic;
 
 
 import org.rumbledb.exceptions.ExceptionMetadata;

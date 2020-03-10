@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions;
 
+import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchExpression;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
@@ -45,7 +46,6 @@ import org.rumbledb.expressions.operational.MultiplicativeExpression;
 import org.rumbledb.expressions.operational.OrExpression;
 import org.rumbledb.expressions.operational.RangeExpression;
 import org.rumbledb.expressions.operational.StringConcatExpression;
-import org.rumbledb.expressions.operational.UnaryExpression;
 import org.rumbledb.expressions.postfix.ArrayLookupExpression;
 import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
