@@ -371,7 +371,16 @@ public class ItemParser implements Serializable {
                     "Missing field '" + fieldName + "' in object '" + item.serialize() + "'."
             );
         }
-        return getRowColumnFromItemUsingDataType(columnValueItem, fieldDataType);
+        try {
+            return getRowColumnFromItemUsingDataType(columnValueItem, fieldDataType);
+        } catch (MLInvalidDataFrameSchemaException ex) {
+            throw new MLInvalidDataFrameSchemaException(
+                    "Data does not fit to the given schema in field '"
+                        + fieldName
+                        + "'; "
+                        + ex.getJSONiqErrorMessage()
+            );
+        }
     }
 
     private static Object getRowColumnFromItemUsingDataType(Item item, DataType dataType) {
@@ -417,10 +426,8 @@ public class ItemParser implements Serializable {
                 return new Timestamp(item.getDateTimeValue().getMillis());
             }
         } catch (OurBadException ex) {
-            // OurBadExceptions triggered by invalid object accesses here are caused by user's schema
-            throw new MLInvalidDataFrameSchemaException(
-                    "Schema does not match the data; " + ex.getJSONiqErrorMessage()
-            );
+            // OurBadExceptions triggered by invalid use of value getters here are caused by user's schema
+            throw new MLInvalidDataFrameSchemaException(ex.getJSONiqErrorMessage());
         }
 
         throw new OurBadException(

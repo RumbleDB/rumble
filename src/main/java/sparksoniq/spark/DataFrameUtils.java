@@ -25,23 +25,17 @@ public class DataFrameUtils {
         ObjectItem firstDataItem = (ObjectItem) itemRDD.take(1).get(0);
         validateSchemaAgainstAnItem(schemaItem, firstDataItem);
         StructType schema = generateDataFrameSchemaFromSchemaItem(schemaItem);
-        try {
-            JavaRDD<Row> rowRDD = itemRDD.map(
-                new Function<Item, Row>() {
-                    private static final long serialVersionUID = 1L;
+        JavaRDD<Row> rowRDD = itemRDD.map(
+            new Function<Item, Row>() {
+                private static final long serialVersionUID = 1L;
 
-                    @Override
-                    public Row call(Item item) {
-                        return ItemParser.getRowFromItemUsingSchema(item, schema);
-                    }
+                @Override
+                public Row call(Item item) {
+                    return ItemParser.getRowFromItemUsingSchema(item, schema);
                 }
-            );
-            return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
-        } catch (MLInvalidDataFrameSchemaException ex) {
-            throw new MLInvalidDataFrameSchemaException(
-                    "Error while applying the schema; " + ex.getJSONiqErrorMessage()
-            );
-        }
+            }
+        );
+        return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
     }
 
     public static Dataset<Row> convertLocalItemsToDataFrame(
@@ -51,14 +45,8 @@ public class DataFrameUtils {
         ObjectItem firstDataItem = (ObjectItem) items.get(0);
         validateSchemaAgainstAnItem(schemaItem, firstDataItem);
         StructType schema = generateDataFrameSchemaFromSchemaItem(schemaItem);
-        try {
-            List<Row> rows = ItemParser.getRowsFromItemsUsingSchema(items, schema);
-            return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema);
-        } catch (MLInvalidDataFrameSchemaException ex) {
-            throw new MLInvalidDataFrameSchemaException(
-                    "Error while applying the schema; " + ex.getJSONiqErrorMessage()
-            );
-        }
+        List<Row> rows = ItemParser.getRowsFromItemsUsingSchema(items, schema);
+        return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema);
     }
 
     private static void validateSchemaAgainstAnItem(
@@ -68,8 +56,8 @@ public class DataFrameUtils {
         for (String schemaColumn : schemaItem.getKeys()) {
             if (!dataItem.getKeys().contains(schemaColumn)) {
                 throw new MLInvalidDataFrameSchemaException(
-                        "Columns defined in schema must fully match the columns of input data: "
-                            + "redundant type information for non-existent column '"
+                        "Fields defined in schema must fully match the fields of input data: "
+                            + "redundant type information for non-existent field '"
                             + schemaColumn
                             + "' column."
                 );
@@ -79,10 +67,10 @@ public class DataFrameUtils {
         for (String dataColumn : dataItem.getKeys()) {
             if (!schemaItem.getKeys().contains(dataColumn)) {
                 throw new MLInvalidDataFrameSchemaException(
-                        "Columns defined in schema must fully match the columns of input data: "
+                        "Fields defined in schema must fully match the fields of input data: "
                             + "missing type information for '"
                             + dataColumn
-                            + "'."
+                            + "' field."
                 );
             }
         }
@@ -170,10 +158,10 @@ public class DataFrameUtils {
                 }
 
                 throw new MLInvalidDataFrameSchemaException(
-                        "Columns defined in schema must fully match the columns of input data: "
+                        "Fields defined in schema must fully match the fields of input data: "
                             + "expected '"
                             + ItemParser.getItemTypeNameFromDataFrameDataType(columnDataType)
-                            + "' type for column '"
+                            + "' type for field '"
                             + columnName
                             + "', but found '"
                             + ItemParser.getItemTypeNameFromDataFrameDataType(generatedDataType)
@@ -183,10 +171,10 @@ public class DataFrameUtils {
 
             if (!columnMatched) {
                 throw new MLInvalidDataFrameSchemaException(
-                        "Columns defined in schema must fully match the columns of input data: "
+                        "Fields defined in schema must fully match the fields of input data: "
                             + "missing type information for '"
                             + columnName
-                            + "' column."
+                            + "' field."
                 );
             }
         }
@@ -196,8 +184,8 @@ public class DataFrameUtils {
 
             if (!userColumnMatched) {
                 throw new MLInvalidDataFrameSchemaException(
-                        "Columns defined in schema must fully match the columns of input data: "
-                            + "redundant type information for non-existent column '"
+                        "Fields defined in schema must fully match the fields of input data: "
+                            + "redundant type information for non-existent field '"
                             + generatedSchemaColumnName
                             + "'."
                 );
