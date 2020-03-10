@@ -617,9 +617,10 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         if (ctx.op == null || ctx.op.isEmpty()) {
             return mainExpression;
         }
+        boolean negated = !ctx.op.isEmpty() && ctx.op.get(0).getText().contentEquals("-");
         return new UnaryExpression(
                 mainExpression,
-                OperationalExpressionBase.getOperatorFromOpList(ctx.op),
+                negated,
                 createMetadataFromContext(ctx)
         );
     }

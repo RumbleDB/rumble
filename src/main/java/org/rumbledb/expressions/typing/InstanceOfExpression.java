@@ -41,6 +41,7 @@ public class InstanceOfExpression extends Expression {
             ExceptionMetadata metadata
     ) {
         super(metadata);
+        this.mainExpression = mainExpression;
         this.sequenceType = sequenceType;
     }
 

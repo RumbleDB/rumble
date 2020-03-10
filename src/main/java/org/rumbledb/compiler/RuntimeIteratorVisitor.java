@@ -760,14 +760,9 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     public RuntimeIterator visitUnaryExpr(UnaryExpression expression, RuntimeIterator argument) {
         // compute +- final result
         int result = 1;
-        for (OperationalExpressionBase.Operator op : expression.getOperators()) {
-            if (op == OperationalExpressionBase.Operator.MINUS) {
-                result *= -1;
-            }
-        }
         return new UnaryOperationIterator(
                 this.visit(expression.getMainExpression(), argument),
-                result == -1 ? OperationalExpressionBase.Operator.MINUS : OperationalExpressionBase.Operator.PLUS,
+                expression.isNegated(),
                 expression.getHighestExecutionMode(),
                 expression.getMetadata()
         );

@@ -20,6 +20,9 @@ public class CastableExpression extends Expression {
         super(metadata);
         this.mainExpression = mainExpression;
         this.sequenceType = type;
+        if (mainExpression == null) {
+            throw new OurBadException("Expression cannot be null.");
+        }
         if (type.getArity() != Arity.OneOrZero && type.getArity() != Arity.One) {
             throw new OurBadException(
                     "Castable expressions cannot have an arity of more than one, something went wrong with the parser."

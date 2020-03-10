@@ -24,25 +24,21 @@ package org.rumbledb.expressions.operational;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.operational.base.UnaryExpressionBase;
+import org.rumbledb.expressions.Node;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 
-public class UnaryExpression extends UnaryExpressionBase {
+public class UnaryExpression extends Expression {
 
-    public static final Operator[] operators = new Operator[] { Operator.PLUS, Operator.MINUS };
+    private boolean negated;
     private Expression mainExpression;
 
-    public UnaryExpression(Expression mainExpression, List<Operator> ops, ExceptionMetadata metadata) {
-        super(mainExpression, ops, metadata);
-        this.validateOperators(Arrays.asList(operators), ops);
+    public UnaryExpression(Expression mainExpression, boolean negated, ExceptionMetadata metadata) {
+        super(metadata);
+        this.negated = negated;
         this.mainExpression = mainExpression;
-    }
-
-    public Expression getMainExpression() {
-        return this.mainExpression;
     }
 
     @Override
@@ -53,13 +49,22 @@ public class UnaryExpression extends UnaryExpressionBase {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(unaryExpr ";
-        if (this.multipleOperators != null && this.multipleOperators.size() > 0) {
-            for (Operator op : this.multipleOperators) {
-                result += getStringFromOperator(op) + " ";
-            }
-        }
+        result += this.negated ? "-(" : "+(";
         result += this.mainExpression.serializationString(true);
         result += ")";
         return result;
+    }
+
+    public Expression getMainExpression() {
+        return this.mainExpression;
+    }
+
+    public boolean isNegated() {
+        return this.negated;
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        return Collections.singletonList(this.mainExpression);
     }
 }

@@ -18,6 +18,10 @@ public class CastExpression extends Expression {
 
     public CastExpression(Expression mainExpression, SequenceType sequenceType, ExceptionMetadata metadata) {
         super(metadata);
+        if (mainExpression == null) {
+            throw new OurBadException("Expression cannot be null.");
+        }
+        this.mainExpression = mainExpression;
         this.sequenceType = sequenceType;
         if (sequenceType.getArity() != Arity.OneOrZero && sequenceType.getArity() != Arity.One) {
             throw new OurBadException(
