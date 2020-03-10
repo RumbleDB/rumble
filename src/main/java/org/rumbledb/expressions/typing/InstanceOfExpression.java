@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -41,6 +42,9 @@ public class InstanceOfExpression extends Expression {
             ExceptionMetadata metadata
     ) {
         super(metadata);
+        if (mainExpression == null) {
+            throw new OurBadException("Expression cannot be null.");
+        }
         this.mainExpression = mainExpression;
         this.sequenceType = sequenceType;
     }
