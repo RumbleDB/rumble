@@ -32,15 +32,15 @@ import sparksoniq.jsoniq.ExecutionMode;
 public class NotOperationIterator extends LocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-	private final RuntimeIterator child;
+    private final RuntimeIterator child;
 
     public NotOperationIterator(
             RuntimeIterator child,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
     ) {
-    	super(Collections.singletonList(child), executionMode, iteratorMetadata);
-    	this.child = child;
+        super(Collections.singletonList(child), executionMode, iteratorMetadata);
+        this.child = child;
     }
 
     @Override

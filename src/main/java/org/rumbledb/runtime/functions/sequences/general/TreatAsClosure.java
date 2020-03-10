@@ -9,6 +9,7 @@ import org.rumbledb.types.SequenceType;
 public class TreatAsClosure implements Function<Item, Boolean> {
     private SequenceType sequenceType;
     private ExceptionMetadata metadata;
+    private static final long serialVersionUID = 1L;
 
     public TreatAsClosure(SequenceType sequenceType, ExceptionMetadata metadata) {
         this.sequenceType = sequenceType;

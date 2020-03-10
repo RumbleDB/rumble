@@ -10,6 +10,7 @@ public class TypePromotionClosure implements Function<Item, Item> {
     private String exceptionMessage;
     private SequenceType sequenceType;
     private ExceptionMetadata metadata;
+    private static final long serialVersionUID = 1L;
 
     public TypePromotionClosure(String exceptionMessage, SequenceType sequenceType, ExceptionMetadata metadata) {
         this.exceptionMessage = exceptionMessage;
