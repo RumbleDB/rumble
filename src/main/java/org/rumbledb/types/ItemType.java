@@ -36,13 +36,13 @@ public enum ItemType {
     nullItem("null"),
     JSONItem("json-item"),
     durationItem("duration"),
-    yearMonthDurationItem("yearmonthduration"),
-    dayTimeDurationItem("daytimeduration"),
-    dateTimeItem("datetime"),
+    yearMonthDurationItem("yearMonthDuration"),
+    dayTimeDurationItem("dayTimeDuration"),
+    dateTimeItem("dateTime"),
     dateItem("date"),
     timeItem("time"),
-    hexBinaryItem("hexbinary"),
-    base64BinaryItem("base64binary"),
+    hexBinaryItem("hexBinary"),
+    base64BinaryItem("base64Binary"),
     item("item"),
     functionItem("function");
 
@@ -52,8 +52,11 @@ public enum ItemType {
         this.name = name;
     }
 
+    public String getName() {
+        return name;
+    }
+
     public static ItemType getItemTypeByName(String name) {
-        name = name.toLowerCase();
         if (name.equals(objectItem.name)) {
             return objectItem;
         }
