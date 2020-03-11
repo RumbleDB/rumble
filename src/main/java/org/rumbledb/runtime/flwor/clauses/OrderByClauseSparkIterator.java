@@ -40,6 +40,7 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 import org.rumbledb.runtime.flwor.udfs.OrderClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.OrderClauseDetermineTypeUDF;
+import org.rumbledb.types.ItemType;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworKeyComparator;
@@ -53,6 +54,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+
+import static org.rumbledb.items.parsing.ItemParser.decimalType;
 
 public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
@@ -307,35 +310,32 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
             // create fields for the given value types
             columnName = columnIndex + "-valueField";
-            switch (columnTypeString) {
-                case "boolean":
-                    columnType = DataTypes.BooleanType;
-                    break;
-                case "string":
-                    columnType = DataTypes.StringType;
-                    break;
-                case "integer":
-                    columnType = DataTypes.IntegerType;
-                    break;
-                case "double":
-                    columnType = DataTypes.DoubleType;
-                    break;
-                case "decimal":
-                    columnType = DataTypes.createDecimalType();
-                    break;
-                case "duration":
-                case "yearMonthDuration":
-                case "dayTimeDuration":
-                case "dateTime":
-                case "date":
-                case "time":
-                    columnType = DataTypes.LongType;
-                    break;
-                default:
-                    throw new SparksoniqRuntimeException(
-                            "Unexpected ordering type found while determining UDF return type."
-                    );
+            if (columnTypeString.equals(ItemType.booleanItem.getName())) {
+                columnType = DataTypes.BooleanType;
+            } else if (columnTypeString.equals(ItemType.stringItem.getName())) {
+                columnType = DataTypes.StringType;
+            } else if (columnTypeString.equals(ItemType.integerItem.getName())) {
+                columnType = DataTypes.IntegerType;
+            } else if (columnTypeString.equals(ItemType.doubleItem.getName())) {
+                columnType = DataTypes.DoubleType;
+            } else if (columnTypeString.equals(ItemType.decimalItem.getName())) {
+                columnType = decimalType;
+                // columnType = DataTypes.createDecimalType();
+            } else if (
+                columnTypeString.equals(ItemType.durationItem.getName())
+                    || columnTypeString.equals(ItemType.yearMonthDurationItem.getName())
+                    || columnTypeString.equals(ItemType.dayTimeDurationItem.getName())
+                    || columnTypeString.equals(ItemType.dateTimeItem.getName())
+                    || columnTypeString.equals(ItemType.dateItem.getName())
+                    || columnTypeString.equals(ItemType.timeItem.getName())
+            ) {
+                columnType = DataTypes.LongType;
+            } else {
+                throw new SparksoniqRuntimeException(
+                        "Unexpected ordering type found while determining UDF return type."
+                );
             }
+
             typedFields.add(DataTypes.createStructField(columnName, columnType, true));
 
             OrderByClauseAnnotatedChildIterator expressionWithIterator = this.expressionsWithIterator.get(columnIndex);
