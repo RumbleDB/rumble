@@ -42,6 +42,7 @@ import org.rumbledb.exceptions.MLInvalidDataFrameSchemaException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SparksoniqRuntimeException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.types.ItemType;
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -292,51 +293,58 @@ public class ItemParser implements Serializable {
     }
 
     public static DataType getDataFrameDataTypeFromItemTypeName(String itemTypeName) {
-        switch (itemTypeName) {
-            case "boolean":
-                return DataTypes.BooleanType;
-            case "integer":
-                return DataTypes.IntegerType;
-            case "double":
-                return DataTypes.DoubleType;
-            case "decimal":
-                return decimalType;
-            case "string":
-                return DataTypes.StringType;
-            case "null":
-                return DataTypes.NullType;
-            case "date":
-                return DataTypes.DateType;
-            case "datetime":
-                return DataTypes.TimestampType;
-            case "hexbinary":
-                return DataTypes.BinaryType;
-            case "object":
-                return vectorType;
-            default:
-                throw new IllegalArgumentException("Unexpected item type found: '" + itemTypeName + "'.");
+        if (itemTypeName.equals(ItemType.booleanItem.getName())) {
+            return DataTypes.BooleanType;
         }
+        if (itemTypeName.equals(ItemType.integerItem.getName())) {
+            return DataTypes.IntegerType;
+        }
+        if (itemTypeName.equals(ItemType.doubleItem.getName())) {
+            return DataTypes.DoubleType;
+        }
+        if (itemTypeName.equals(ItemType.decimalItem.getName())) {
+            return decimalType;
+        }
+        if (itemTypeName.equals(ItemType.stringItem.getName())) {
+            return DataTypes.StringType;
+        }
+        if (itemTypeName.equals(ItemType.nullItem.getName())) {
+            return DataTypes.NullType;
+        }
+        if (itemTypeName.equals(ItemType.dateItem.getName())) {
+            return DataTypes.DateType;
+        }
+        if (itemTypeName.equals(ItemType.dateTimeItem.getName())) {
+            return DataTypes.TimestampType;
+        }
+        if (itemTypeName.equals(ItemType.hexBinaryItem.getName())) {
+            return DataTypes.BinaryType;
+        }
+        if (itemTypeName.equals("object")) {
+            return vectorType;
+        }
+        throw new IllegalArgumentException("Unexpected item type found: '" + itemTypeName + "'.");
     }
 
     public static String getItemTypeNameFromDataFrameDataType(DataType dataType) {
         if (DataTypes.BooleanType.equals(dataType)) {
-            return "boolean";
+            return ItemType.booleanItem.getName();
         } else if (DataTypes.IntegerType.equals(dataType) || DataTypes.ShortType.equals(dataType)) {
-            return "integer";
+            return ItemType.integerItem.getName();
         } else if (DataTypes.DoubleType.equals(dataType) || DataTypes.FloatType.equals(dataType)) {
-            return "double";
+            return ItemType.doubleItem.getName();
         } else if (dataType.equals(decimalType) || DataTypes.LongType.equals(dataType)) {
-            return "decimal";
+            return ItemType.decimalItem.getName();
         } else if (DataTypes.StringType.equals(dataType)) {
-            return "string";
+            return ItemType.stringItem.getName();
         } else if (DataTypes.NullType.equals(dataType)) {
-            return "null";
+            return ItemType.nullItem.getName();
         } else if (DataTypes.DateType.equals(dataType)) {
-            return "date";
+            return ItemType.dateItem.getName();
         } else if (DataTypes.TimestampType.equals(dataType)) {
-            return "datetime";
+            return ItemType.dateTimeItem.getName();
         } else if (DataTypes.BinaryType.equals(dataType)) {
-            return "hexbinary";
+            return ItemType.hexBinaryItem.getName();
         } else if (vectorType.equals(dataType)) {
             return "object";
         }
