@@ -1,16 +1,21 @@
-package org.rumbledb.expressions.operational;
+package org.rumbledb.expressions.typing;
+
+import java.util.Collections;
+import java.util.List;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.operational.base.UnaryExpressionBase;
+import org.rumbledb.expressions.Node;
 import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.ExecutionMode;
 
 
-public class TreatExpression extends UnaryExpressionBase {
+public class TreatExpression extends Expression {
 
+    private Expression mainExpression;
     private SequenceType sequenceType;
 
     public TreatExpression(
@@ -18,7 +23,11 @@ public class TreatExpression extends UnaryExpressionBase {
             SequenceType sequenceType,
             ExceptionMetadata metadata
     ) {
-        super(mainExpression, Operator.TREAT, metadata);
+        super(metadata);
+        if (mainExpression == null) {
+            throw new OurBadException("Expression cannot be null.");
+        }
+        this.mainExpression = mainExpression;
         this.sequenceType = sequenceType;
     }
 
@@ -58,6 +67,19 @@ public class TreatExpression extends UnaryExpressionBase {
         result += " treat as " + this.sequenceType.toString();
         result += ")";
         return result;
+    }
+
+    public SequenceType getSequenceType() {
+        return this.sequenceType;
+    }
+
+    public Expression getMainExpression() {
+        return this.mainExpression;
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        return Collections.singletonList(this.mainExpression);
     }
 
 }

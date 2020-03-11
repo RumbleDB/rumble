@@ -25,6 +25,7 @@ import java.io.Serializable;
 public class FunctionIdentifier implements Serializable {
     private int arity;
     private String name;
+    private static final long serialVersionUID = 1L;
 
     public FunctionIdentifier() {
     }

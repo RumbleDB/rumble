@@ -23,11 +23,13 @@ package org.rumbledb.compiler;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
-import org.rumbledb.expression.typing.CastableExpression;
+import org.rumbledb.expressions.typing.CastExpression;
+import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchCase;
 import org.rumbledb.expressions.control.SwitchExpression;
@@ -45,20 +47,18 @@ import org.rumbledb.expressions.flowr.LetClauseVar;
 import org.rumbledb.expressions.flowr.OrderByClause;
 import org.rumbledb.expressions.flowr.OrderByClauseExpr;
 import org.rumbledb.expressions.flowr.WhereClause;
+import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.operational.AdditiveExpression;
 import org.rumbledb.expressions.operational.AndExpression;
-import org.rumbledb.expressions.operational.CastExpression;
 import org.rumbledb.expressions.operational.ComparisonExpression;
-import org.rumbledb.expressions.operational.InstanceOfExpression;
+import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.operational.MultiplicativeExpression;
-import org.rumbledb.expressions.operational.NotExpression;
 import org.rumbledb.expressions.operational.OrExpression;
 import org.rumbledb.expressions.operational.RangeExpression;
 import org.rumbledb.expressions.operational.StringConcatExpression;
-import org.rumbledb.expressions.operational.TreatExpression;
-import org.rumbledb.expressions.operational.UnaryExpression;
+import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.expressions.postfix.ArrayLookupExpression;
 import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
@@ -104,16 +104,16 @@ import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.runtime.functions.base.Functions;
 import org.rumbledb.runtime.operational.AdditiveOperationIterator;
 import org.rumbledb.runtime.operational.AndOperationIterator;
-import org.rumbledb.runtime.operational.CastIterator;
-import org.rumbledb.runtime.operational.CastableIterator;
+import org.rumbledb.runtime.typing.CastIterator;
+import org.rumbledb.runtime.typing.CastableIterator;
 import org.rumbledb.runtime.operational.ComparisonOperationIterator;
-import org.rumbledb.runtime.operational.InstanceOfIterator;
+import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.runtime.operational.MultiplicativeOperationIterator;
 import org.rumbledb.runtime.operational.NotOperationIterator;
 import org.rumbledb.runtime.operational.OrOperationIterator;
 import org.rumbledb.runtime.operational.RangeOperationIterator;
 import org.rumbledb.runtime.operational.StringConcatIterator;
-import org.rumbledb.runtime.operational.TreatIterator;
+import org.rumbledb.runtime.typing.TreatIterator;
 import org.rumbledb.runtime.operational.UnaryOperationIterator;
 import org.rumbledb.runtime.postfix.ArrayLookupIterator;
 import org.rumbledb.runtime.postfix.ArrayUnboxingIterator;
@@ -759,15 +759,9 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     @Override
     public RuntimeIterator visitUnaryExpr(UnaryExpression expression, RuntimeIterator argument) {
         // compute +- final result
-        int result = 1;
-        for (OperationalExpressionBase.Operator op : expression.getOperators()) {
-            if (op == OperationalExpressionBase.Operator.MINUS) {
-                result *= -1;
-            }
-        }
         return new UnaryOperationIterator(
                 this.visit(expression.getMainExpression(), argument),
-                result == -1 ? OperationalExpressionBase.Operator.MINUS : OperationalExpressionBase.Operator.PLUS,
+                expression.isNegated(),
                 expression.getHighestExecutionMode(),
                 expression.getMetadata()
         );
@@ -836,7 +830,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator childExpression = this.visit(expression.getMainExpression(), argument);
         return new InstanceOfIterator(
                 childExpression,
-                expression.getsequenceType(),
+                expression.getSequenceType(),
                 expression.getHighestExecutionMode(),
                 expression.getMetadata()
         );
