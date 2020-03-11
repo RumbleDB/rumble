@@ -736,7 +736,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     @Override
     public RuntimeIterator visitUnaryExpr(UnaryExpression expression, RuntimeIterator argument) {
         // compute +- final result
-        int result = 1;
         return new UnaryOperationIterator(
                 this.visit(expression.getMainExpression(), argument),
                 expression.isNegated(),
