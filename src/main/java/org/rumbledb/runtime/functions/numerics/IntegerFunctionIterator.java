@@ -11,8 +11,6 @@ import org.rumbledb.items.AtomicItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypes;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 
@@ -39,7 +37,7 @@ public class IntegerFunctionIterator extends LocalFunctionCallIterator {
                 if (!this.item.isAtomic()) {
                     String message = String.format(
                         "Can not atomize an %1$s item: an %1$s has probably been passed where an atomic value is expected.",
-                        ItemTypes.getItemTypeName(this.item.getClass().getSimpleName())
+                        this.item.getDynamicType().toString()
                     );
                     throw new NonAtomicKeyException(message, getMetadata());
                 }
@@ -48,7 +46,7 @@ public class IntegerFunctionIterator extends LocalFunctionCallIterator {
                 String message = atomicItem.serialize()
                     +
                     ": value of type "
-                    + ItemTypes.getItemTypeName(this.item.getClass().getSimpleName())
+                    + this.item.getDynamicType().toString()
                     + " is not castable to type integer.";
                 if (atomicItem.isNull()) {
                     throw new InvalidLexicalValueException(message, getMetadata());

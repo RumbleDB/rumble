@@ -11,8 +11,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypes;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
@@ -52,12 +50,12 @@ public class YearMonthDurationItem extends DurationItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.getType().equals(ItemTypes.YearMonthDurationItem) || super.isTypeOf(type);
+        return type.equals(ItemType.yearMonthDurationItem) || super.isTypeOf(type);
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this.value = getDurationFromString(input.readString(), ItemTypes.YearMonthDurationItem).normalizedStandard(
+        this.value = getDurationFromString(input.readString(), ItemType.yearMonthDurationItem).normalizedStandard(
             yearMonthPeriodType
         );
         this.isNegative = this.value.toString().contains("-");
@@ -65,29 +63,30 @@ public class YearMonthDurationItem extends DurationItem {
 
     @Override
     public boolean isCastableAs(ItemType itemType) {
-        return itemType.getType() == ItemTypes.YearMonthDurationItem
+        return itemType.equals(ItemType.yearMonthDurationItem)
             ||
-            itemType.getType() == ItemTypes.DayTimeDurationItem
+            itemType.equals(ItemType.dayTimeDurationItem)
             ||
-            itemType.getType() == ItemTypes.DurationItem
+            itemType.equals(ItemType.durationItem)
             ||
-            itemType.getType() == ItemTypes.StringItem;
+            itemType.equals(ItemType.stringItem);
     }
 
     @Override
     public Item castAs(ItemType itemType) {
-        switch (itemType.getType()) {
-            case DurationItem:
-                return ItemFactory.getInstance().createDurationItem(this.getValue());
-            case YearMonthDurationItem:
-                return this;
-            case DayTimeDurationItem:
-                return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue());
-            case StringItem:
-                return ItemFactory.getInstance().createStringItem(this.serialize());
-            default:
-                throw new ClassCastException();
+        if (itemType.equals(ItemType.durationItem)) {
+            return ItemFactory.getInstance().createDurationItem(this.getValue());
         }
+        if (itemType.equals(ItemType.yearMonthDurationItem)) {
+            return this;
+        }
+        if (itemType.equals(ItemType.dayTimeDurationItem)) {
+            return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue());
+        }
+        if (itemType.equals(ItemType.stringItem)) {
+            return ItemFactory.getInstance().createStringItem(this.serialize());
+        }
+        throw new ClassCastException();
     }
 
     @Override
@@ -97,9 +96,9 @@ public class YearMonthDurationItem extends DurationItem {
         } else if (!other.isYearMonthDuration() && !other.isNull()) {
             throw new UnexpectedTypeException(
                     "\""
-                        + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                        + this.getDynamicType().toString()
                         + "\": invalid type: can not compare for equality to type \""
-                        + ItemTypes.getItemTypeName(other.getClass().getSimpleName())
+                        + other.getDynamicType().toString()
                         + "\"",
                     metadata
             );
@@ -151,5 +150,10 @@ public class YearMonthDurationItem extends DurationItem {
             .intValue();
         return ItemFactory.getInstance()
             .createYearMonthDurationItem(new Period().withMonths(totalMonths).withPeriodType(yearMonthPeriodType));
+    }
+
+    @Override
+    public ItemType getDynamicType() {
+        return ItemType.yearMonthDurationItem;
     }
 }

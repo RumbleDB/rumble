@@ -27,7 +27,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.types.ItemTypes;
+import org.rumbledb.types.ItemType;
 
 import sparksoniq.jsoniq.ExecutionMode;
 
@@ -60,7 +60,7 @@ public abstract class BinaryOperationBaseIterator extends LocalRuntimeIterator {
                 "Can not atomize an %1$s item: an %1$s has probably been passed where "
                     +
                     "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
-                ItemTypes.getItemTypeName(left.getClass().getSimpleName())
+                left.getDynamicType().toString()
             );
             throw new NonAtomicKeyException(message, getMetadata());
         }
@@ -69,7 +69,7 @@ public abstract class BinaryOperationBaseIterator extends LocalRuntimeIterator {
                 "Can not atomize an %1$s item: an %1$s has probably been passed where "
                     +
                     "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
-                ItemTypes.getItemTypeName(right.getClass().getSimpleName())
+                right.getDynamicType().toString()
             );
             throw new NonAtomicKeyException(message, getMetadata());
         }
@@ -85,9 +85,9 @@ public abstract class BinaryOperationBaseIterator extends LocalRuntimeIterator {
                     " \""
                         + operator.name().toLowerCase()
                         + "\": operation not possible with parameters of type \""
-                        + ItemTypes.getItemTypeName(left.getClass().getSimpleName())
+                        + left.getDynamicType().toString()
                         + "\" and \""
-                        + ItemTypes.getItemTypeName(right.getClass().getSimpleName())
+                        + right.getDynamicType().toString()
                         + "\"",
                     getMetadata()
             );

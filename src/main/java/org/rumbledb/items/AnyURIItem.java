@@ -93,24 +93,23 @@ public class AnyURIItem extends AtomicItem {
 
     @Override
     public boolean canBePromotedTo(ItemType type) {
-        return type.getType().equals(ItemTypes.StringItem);
+        return type.equals(ItemType.stringItem);
     }
 
     @Override
     public Item castAs(ItemType itemType) {
-        switch (itemType.getType()) {
-            case StringItem:
-                return ItemFactory.getInstance().createStringItem(this.getStringValue());
-            case AnyURIItem:
-                return this;
-            default:
-                throw new ClassCastException();
+        if (itemType.equals(ItemType.stringItem)) {
+            return ItemFactory.getInstance().createStringItem(this.getStringValue());
         }
+        if (itemType.equals(ItemType.anyURIItem)) {
+            return this;
+        }
+        throw new ClassCastException();
     }
 
     @Override
     public boolean isCastableAs(ItemType itemType) {
-        return (itemType.getType() == ItemTypes.AnyURIItem || itemType.getType() == ItemTypes.StringItem);
+        return (itemType.equals(ItemType.anyURIItem) || itemType.equals(ItemType.stringItem));
     }
 
     @Override
@@ -135,6 +134,11 @@ public class AnyURIItem extends AtomicItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.getType().equals(ItemTypes.AnyURIItem) || super.isTypeOf(type);
+        return type.equals(ItemType.anyURIItem) || super.isTypeOf(type);
+    }
+
+    @Override
+    public ItemType getDynamicType() {
+        return ItemType.anyURIItem;
     }
 }

@@ -28,8 +28,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypes;
-
 import java.math.BigDecimal;
 
 public class BooleanItem extends AtomicItem {
@@ -68,32 +66,34 @@ public class BooleanItem extends AtomicItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.getType().equals(ItemTypes.BooleanItem) || super.isTypeOf(type);
+        return type.equals(ItemType.booleanItem) || super.isTypeOf(type);
     }
 
     @Override
     public Item castAs(ItemType itemType) {
-        switch (itemType.getType()) {
-            case BooleanItem:
-                return this;
-            case DoubleItem:
-                return ItemFactory.getInstance().createDoubleItem(this.hashCode());
-            case DecimalItem:
-                return ItemFactory.getInstance().createDecimalItem(BigDecimal.valueOf(this.hashCode()));
-            case IntegerItem:
-                return ItemFactory.getInstance().createIntegerItem(this.hashCode());
-            case StringItem:
-                return ItemFactory.getInstance().createStringItem(String.valueOf(this.getBooleanValue()));
-            default:
-                throw new ClassCastException();
+        if (itemType.equals(ItemType.booleanItem)) {
+            return this;
         }
+        if (itemType.equals(ItemType.doubleItem)) {
+            return ItemFactory.getInstance().createDoubleItem(this.hashCode());
+        }
+        if (itemType.equals(ItemType.decimalItem)) {
+            return ItemFactory.getInstance().createDecimalItem(BigDecimal.valueOf(this.hashCode()));
+        }
+        if (itemType.equals(ItemType.integerItem)) {
+            return ItemFactory.getInstance().createIntegerItem(this.hashCode());
+        }
+        if (itemType.equals(ItemType.stringItem)) {
+            return ItemFactory.getInstance().createStringItem(String.valueOf(this.getBooleanValue()));
+        }
+        throw new ClassCastException();
     }
 
     @Override
     public boolean isCastableAs(ItemType itemType) {
-        return itemType.getType() != ItemTypes.AtomicItem
+        return !itemType.equals(ItemType.atomicItem)
             &&
-            itemType.getType() != ItemTypes.NullItem;
+            !itemType.equals(ItemType.nullItem);
     }
 
     @Override
@@ -144,5 +144,10 @@ public class BooleanItem extends AtomicItem {
             );
         }
         return operator.apply(this, other);
+    }
+
+    @Override
+    public ItemType getDynamicType() {
+        return ItemType.booleanItem;
     }
 }

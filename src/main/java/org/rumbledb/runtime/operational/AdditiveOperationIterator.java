@@ -27,7 +27,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.operational.base.BinaryOperationBaseIterator;
-import org.rumbledb.types.ItemTypes;
+import org.rumbledb.types.ItemType;
 
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
@@ -68,9 +68,9 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
                         " \""
                             + this.operator.name().toLowerCase()
                             + "\": operation not possible with parameters of type \""
-                            + ItemTypes.getItemTypeName(this.left.getClass().getSimpleName())
+                            + this.left.getDynamicType().toString()
                             + "\" and \""
-                            + ItemTypes.getItemTypeName(this.right.getClass().getSimpleName())
+                            + this.right.getDynamicType().toString()
                             + "\"",
                         getMetadata()
                 );

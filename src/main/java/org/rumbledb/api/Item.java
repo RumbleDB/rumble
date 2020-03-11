@@ -26,8 +26,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypes;
-
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -308,9 +306,9 @@ public abstract class Item implements SerializableItem {
     public Item promoteTo(ItemType type) {
         if (!this.canBePromotedTo(type)) {
             throw new RuntimeException(
-                    ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                    this.getDynamicType().toString()
                         + " cannot be promoted to type "
-                        + ItemTypes.getItemTypeName(type.getType().toString())
+                        + type.toString()
             );
         }
         return this;
@@ -555,6 +553,15 @@ public abstract class Item implements SerializableItem {
     }
 
     public Item idivide(Item other) {
+        throw new UnsupportedOperationException("Operation not defined");
+    }
+
+    /**
+     * Returns the dynamic type of the item (for error message purposes).
+     * 
+     * @return the dynamic type as an item type.
+     */
+    public ItemType getDynamicType() {
         throw new UnsupportedOperationException("Operation not defined");
     }
 }
