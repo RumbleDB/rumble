@@ -684,16 +684,16 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitAndExpr(AndExpression expression, RuntimeIterator argument) {
-    	Expression leftExpression = (Expression) expression.getChildren().get(0);
-    	Expression rightExpression = (Expression) expression.getChildren().get(1);
+        Expression leftExpression = (Expression) expression.getChildren().get(0);
+        Expression rightExpression = (Expression) expression.getChildren().get(1);
         RuntimeIterator left = this.visit(
-                leftExpression,
-                argument
-            );
+            leftExpression,
+            argument
+        );
         RuntimeIterator right = this.visit(
-                rightExpression,
-                argument
-            );
+            rightExpression,
+            argument
+        );
 
         return new AndOperationIterator(
                 left,
@@ -705,16 +705,16 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitOrExpr(OrExpression expression, RuntimeIterator argument) {
-    	Expression leftExpression = (Expression) expression.getChildren().get(0);
-    	Expression rightExpression = (Expression) expression.getChildren().get(1);
+        Expression leftExpression = (Expression) expression.getChildren().get(0);
+        Expression rightExpression = (Expression) expression.getChildren().get(1);
         RuntimeIterator left = this.visit(
-                leftExpression,
-                argument
-            );
+            leftExpression,
+            argument
+        );
         RuntimeIterator right = this.visit(
-                rightExpression,
-                argument
-            );
+            rightExpression,
+            argument
+        );
 
         return new OrOperationIterator(
                 left,

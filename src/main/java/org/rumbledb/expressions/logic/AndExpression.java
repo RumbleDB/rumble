@@ -29,8 +29,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AndExpression extends Expression {
-	private Expression leftExpression;
-	private Expression rightExpression;
+    private Expression leftExpression;
+    private Expression rightExpression;
 
     public AndExpression(
             Expression leftExpression,
@@ -59,9 +59,9 @@ public class AndExpression extends Expression {
 
     @Override
     public List<Node> getChildren() {
-    	List<Node> result = new ArrayList<>();
-    	result.add(leftExpression);
-    	result.add(rightExpression);
+        List<Node> result = new ArrayList<>();
+        result.add(leftExpression);
+        result.add(rightExpression);
         return result;
     }
 

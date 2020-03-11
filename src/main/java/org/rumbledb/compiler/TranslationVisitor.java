@@ -445,12 +445,12 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     // region operational
     @Override
     public Node visitOrExpr(JsoniqParser.OrExprContext ctx) {
-    	Expression result = (Expression) this.visitAndExpr(ctx.main_expr);
+        Expression result = (Expression) this.visitAndExpr(ctx.main_expr);
         if (ctx.rhs == null || ctx.rhs.isEmpty()) {
             return result;
         }
         for (JsoniqParser.AndExprContext child : ctx.rhs) {
-        	Expression rightExpression = (Expression) this.visitAndExpr(child);
+            Expression rightExpression = (Expression) this.visitAndExpr(child);
             result = new OrExpression(result, rightExpression, createMetadataFromContext(ctx));
         }
         return result;
