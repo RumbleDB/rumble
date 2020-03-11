@@ -52,7 +52,7 @@ public abstract class BinaryOperationBaseIterator extends LocalRuntimeIterator {
         this.operator = operator;
     }
 
-    protected void checkBinaryOperation(Item left, Item right, OperationalExpressionBase.Operator operator) {
+    public static void checkBinaryOperation(Item left, Item right, String sign, ExceptionMetadata metadata) {
         if (!left.isAtomic()) {
             String message = String.format(
                 "Can not atomize an %1$s item: an %1$s has probably been passed where "
@@ -60,7 +60,7 @@ public abstract class BinaryOperationBaseIterator extends LocalRuntimeIterator {
                     "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
                 left.getDynamicType().toString()
             );
-            throw new NonAtomicKeyException(message, getMetadata());
+            throw new NonAtomicKeyException(message, metadata);
         }
         if (!right.isAtomic()) {
             String message = String.format(
@@ -69,7 +69,7 @@ public abstract class BinaryOperationBaseIterator extends LocalRuntimeIterator {
                     "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
                 right.getDynamicType().toString()
             );
-            throw new NonAtomicKeyException(message, getMetadata());
+            throw new NonAtomicKeyException(message, metadata);
         }
         if (
             (!left.isNumeric() && !left.isYearMonthDuration() && !left.isDayTimeDuration() && !left.hasDateTime())
@@ -81,13 +81,13 @@ public abstract class BinaryOperationBaseIterator extends LocalRuntimeIterator {
         ) {
             throw new UnexpectedTypeException(
                     " \""
-                        + operator.name().toLowerCase()
+                        + sign
                         + "\": operation not possible with parameters of type \""
                         + left.getDynamicType().toString()
                         + "\" and \""
                         + right.getDynamicType().toString()
                         + "\"",
-                    getMetadata()
+                    metadata
             );
         }
     }

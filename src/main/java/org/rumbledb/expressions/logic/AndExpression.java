@@ -25,7 +25,7 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class AndExpression extends Expression {
@@ -59,10 +59,7 @@ public class AndExpression extends Expression {
 
     @Override
     public List<Node> getChildren() {
-        List<Node> result = new ArrayList<>();
-        result.add(leftExpression);
-        result.add(rightExpression);
-        return result;
+        return Arrays.asList(leftExpression, rightExpression);
     }
 
 

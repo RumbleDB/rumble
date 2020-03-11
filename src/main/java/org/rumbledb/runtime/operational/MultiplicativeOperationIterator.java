@@ -60,7 +60,12 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
         } else {
             this.left = this.leftIterator.next();
             this.right = this.rightIterator.next();
-            this.checkBinaryOperation(this.left, this.right, this.operator);
+            BinaryOperationBaseIterator.checkBinaryOperation(
+                this.left,
+                this.right,
+                this.operator.name().toString(),
+                getMetadata()
+            );
             this.hasNext = true;
             if (this.leftIterator.hasNext() || this.rightIterator.hasNext()) {
                 throw new UnexpectedTypeException(

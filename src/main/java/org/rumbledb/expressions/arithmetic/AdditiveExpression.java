@@ -18,29 +18,32 @@
  *
  */
 
-package org.rumbledb.expressions.operational;
+package org.rumbledb.expressions.arithmetic;
 
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.operational.base.NaryExpressionBase;
+import org.rumbledb.expressions.Node;
 
 import java.util.Arrays;
 import java.util.List;
 
-public class AdditiveExpression extends NaryExpressionBase {
-
-    public static final Operator[] operators = new Operator[] { Operator.PLUS, Operator.MINUS };
+public class AdditiveExpression extends Expression {
+    private Expression leftExpression;
+    private Expression rightExpression;
+    private boolean isMinus;
 
     public AdditiveExpression(
-            Expression mainExpression,
-            List<Expression> rhs,
-            List<Operator> ops,
+            Expression leftExpression,
+            Expression rightExpression,
+            boolean isMinus,
             ExceptionMetadata metadata
     ) {
-        super(mainExpression, rhs, ops, metadata);
-        validateOperators(Arrays.asList(operators), ops);
+        super(metadata);
+        this.leftExpression = leftExpression;
+        this.rightExpression = rightExpression;
+        this.isMinus = isMinus;
     }
 
     @Override
@@ -51,18 +54,20 @@ public class AdditiveExpression extends NaryExpressionBase {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(additiveExpr ";
-        result += this.mainExpression.serializationString(true);
-        if (this.getRightExpressions() != null && this.getRightExpressions().size() > 0) {
-            for (Expression expr : this.getRightExpressions()) {
-                result += " "
-                    +
-                    getStringFromOperator(this.multipleOperators.get(this.getRightExpressions().indexOf(expr)))
-                    + " "
-                    + expr.serializationString(true);
-            }
-        }
+        result += this.getChildren().get(0).serializationString(true);
+        result += this.isMinus ? " - " : " +  ";
+        result += this.getChildren().get(1).serializationString(true);
         result += ")";
         return result;
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        return Arrays.asList(leftExpression, rightExpression);
+    }
+
+    public boolean isMinus() {
+        return this.isMinus;
     }
 
 }
