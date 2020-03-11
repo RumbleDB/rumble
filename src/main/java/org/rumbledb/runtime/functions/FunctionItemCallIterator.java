@@ -120,7 +120,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                     TypePromotionIterator typePromotionIterator = new TypePromotionIterator(
                             this.functionArguments.get(i),
                             this.functionItem.getSignature().getParameterTypes().get(i),
-                            "Invalid argument for " + this.functionItem.getIdentifier().getName() + "function. ",
+                            "Invalid argument for " + this.functionItem.getIdentifier().getName() + " function. ",
                             this.functionArguments.get(i).getHighestExecutionMode(),
                             getMetadata()
                     );
