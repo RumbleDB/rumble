@@ -50,13 +50,13 @@ import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
+import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.operational.AdditiveExpression;
 import org.rumbledb.expressions.operational.ComparisonExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.operational.MultiplicativeExpression;
-import org.rumbledb.expressions.operational.RangeExpression;
 import org.rumbledb.expressions.operational.StringConcatExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
@@ -746,8 +746,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitRangeExpr(RangeExpression expression, RuntimeIterator argument) {
-        RuntimeIterator left = this.visit(expression.getMainExpression(), argument);
-        RuntimeIterator right = this.visit(expression.getRightExpression(), argument);
+        RuntimeIterator left = this.visit(expression.getChildren().get(0), argument);
+        RuntimeIterator right = this.visit(expression.getChildren().get(1), argument);
         return new RangeOperationIterator(
                 left,
                 right,

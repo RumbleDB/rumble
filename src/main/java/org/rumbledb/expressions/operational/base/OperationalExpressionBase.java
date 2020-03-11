@@ -109,8 +109,6 @@ public abstract class OperationalExpressionBase extends Expression {
             case "MOD":
                 return Operator.MOD;
 
-            case "TO":
-                return Operator.TO;
             case "||":
                 return Operator.CONCAT;
         }
@@ -257,7 +255,6 @@ public abstract class OperationalExpressionBase extends Expression {
         MOD,
         IDIV,
 
-        TO,
         CONCAT;
 
         public Item apply(Item left, Item right) {

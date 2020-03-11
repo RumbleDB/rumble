@@ -18,18 +18,26 @@
  *
  */
 
-package org.rumbledb.expressions.operational;
+package org.rumbledb.expressions.miscellaneous;
+
+import java.util.Arrays;
+import java.util.List;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.operational.base.BinaryExpressionBase;
+import org.rumbledb.expressions.Node;
 
 
-public class RangeExpression extends BinaryExpressionBase {
+public class RangeExpression extends Expression {
 
-    public RangeExpression(Expression mainExpression, Expression rhs, ExceptionMetadata metadata) {
-        super(mainExpression, rhs, Operator.TO, metadata);
+    private Expression leftExpression;
+    private Expression rightExpression;
+
+    public RangeExpression(Expression leftExpression, Expression rightExpression, ExceptionMetadata metadata) {
+        super(metadata);
+        this.leftExpression = leftExpression;
+        this.rightExpression = rightExpression;
     }
 
     @Override
@@ -40,14 +48,15 @@ public class RangeExpression extends BinaryExpressionBase {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(rangeExpr ";
-        result += this.mainExpression.serializationString(true);
-        if (this.getRightExpression() != null) {
-            result += " "
-                + this.getOperator().toString().toLowerCase()
-                + " "
-                + this.getRightExpression().serializationString(true);
-        }
+        result += this.getChildren().get(0).serializationString(true);
+        result += " to  ";
+        result += this.getChildren().get(1).serializationString(true);
         result += ")";
         return result;
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        return Arrays.asList(leftExpression, rightExpression);
     }
 }
