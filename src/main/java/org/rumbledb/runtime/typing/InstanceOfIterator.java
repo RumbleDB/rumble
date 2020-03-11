@@ -18,38 +18,40 @@
  *
  */
 
-package org.rumbledb.runtime.operational;
+package org.rumbledb.runtime.typing;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.InstanceOfClosure;
-import org.rumbledb.runtime.operational.base.UnaryOperationBaseIterator;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 
-public class InstanceOfIterator extends UnaryOperationBaseIterator {
+public class InstanceOfIterator extends LocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
+    private final RuntimeIterator child;
     private final SequenceType sequenceType;
 
     public InstanceOfIterator(
-            RuntimeIterator iterator,
+            RuntimeIterator child,
             SequenceType sequenceType,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
     ) {
-        super(iterator, OperationalExpressionBase.Operator.INSTANCE_OF, executionMode, iteratorMetadata);
+        super(Collections.singletonList(child), executionMode, iteratorMetadata);
+        this.child = child;
         this.sequenceType = sequenceType;
     }
 

@@ -113,12 +113,6 @@ public abstract class OperationalExpressionBase extends Expression {
                 return Operator.TO;
             case "||":
                 return Operator.CONCAT;
-            case "INSTANCE OF":
-                return Operator.INSTANCE_OF;
-            case "TREAT":
-                return Operator.TREAT;
-            case "CAST":
-                return Operator.CAST;
         }
 
         throw new OurBadException("Operator not recognized.");
@@ -135,12 +129,6 @@ public abstract class OperationalExpressionBase extends Expression {
                 return "*";
             case CONCAT:
                 return "||";
-            case INSTANCE_OF:
-                return "instance of";
-            case TREAT:
-                return "treat as";
-            case CAST:
-                return "cast as";
             default:
                 return operator.toString().toLowerCase();
         }
@@ -176,7 +164,6 @@ public abstract class OperationalExpressionBase extends Expression {
     public enum Operator {
         OR,
         AND,
-        NOT,
 
         // Value Comparison -- 0 or 1 item with compatible types are compared
         VC_EQ {
@@ -274,11 +261,7 @@ public abstract class OperationalExpressionBase extends Expression {
         IDIV,
 
         TO,
-        CONCAT,
-        INSTANCE_OF,
-        COMMA,
-        TREAT,
-        CAST;
+        CONCAT;
 
         public Item apply(Item left, Item right) {
             return null;

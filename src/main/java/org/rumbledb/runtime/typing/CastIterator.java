@@ -1,14 +1,13 @@
-package org.rumbledb.runtime.operational;
+package org.rumbledb.runtime.typing;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CastException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.items.AtomicItem;
+import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
@@ -16,11 +15,13 @@ import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 
-public class CastIterator extends UnaryOperationIterator {
+public class CastIterator extends LocalRuntimeIterator {
     private static final long serialVersionUID = 1L;
+    private final RuntimeIterator child;
     private final SequenceType sequenceType;
 
     public CastIterator(
@@ -29,7 +30,8 @@ public class CastIterator extends UnaryOperationIterator {
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
     ) {
-        super(child, OperationalExpressionBase.Operator.CAST, executionMode, iteratorMetadata);
+        super(Collections.singletonList(child), executionMode, iteratorMetadata);
+        this.child = child;
         this.sequenceType = sequenceType;
     }
 
@@ -37,7 +39,6 @@ public class CastIterator extends UnaryOperationIterator {
     public Item next() {
         if (this.hasNext) {
             List<Item> items = new ArrayList<>();
-            this.child.open(this.currentDynamicContextForLocalExecution);
             while (this.child.hasNext()) {
                 items.add(this.child.next());
                 if (items.size() > 1) {
@@ -86,6 +87,8 @@ public class CastIterator extends UnaryOperationIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
+        this.child.open(context);
+        this.hasNext = child.hasNext();
         if (!this.hasNext && !this.sequenceType.isEmptySequence() && this.sequenceType.getArity() != Arity.OneOrZero) {
             throw new UnexpectedTypeException(
                     " Empty sequence can not be cast to type with quantifier '1'",

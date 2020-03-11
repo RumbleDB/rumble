@@ -24,27 +24,30 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.operational.base.UnaryOperationBaseIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 
-public class UnaryOperationIterator extends UnaryOperationBaseIterator {
+public class UnaryOperationIterator extends LocalRuntimeIterator {
 
-
+    private boolean negated;
+    private final RuntimeIterator child;
     private static final long serialVersionUID = 1L;
 
     public UnaryOperationIterator(
             RuntimeIterator child,
-            OperationalExpressionBase.Operator operator,
+            boolean negated,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
     ) {
-        super(child, operator, executionMode, iteratorMetadata);
+        super(Collections.singletonList(child), executionMode, iteratorMetadata);
+        this.child = child;
+        this.negated = negated;
     }
 
     @Override
@@ -55,7 +58,7 @@ public class UnaryOperationIterator extends UnaryOperationBaseIterator {
             Item child = this.child.next();
             this.child.close();
 
-            if (this.operator == OperationalExpressionBase.Operator.MINUS) {
+            if (this.negated) {
                 if (child.isNumeric()) {
                     if (child.isInteger()) {
                         return ItemFactory.getInstance().createIntegerItem(-1 * child.getIntegerValue());

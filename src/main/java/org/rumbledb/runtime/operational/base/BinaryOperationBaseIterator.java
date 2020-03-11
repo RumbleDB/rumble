@@ -27,8 +27,6 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.types.ItemType;
-
 import sparksoniq.jsoniq.ExecutionMode;
 
 public abstract class BinaryOperationBaseIterator extends LocalRuntimeIterator {

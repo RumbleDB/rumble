@@ -1,4 +1,4 @@
-package org.rumbledb.runtime.operational;
+package org.rumbledb.runtime.typing;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;

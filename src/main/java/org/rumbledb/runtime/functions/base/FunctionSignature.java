@@ -28,6 +28,7 @@ import org.rumbledb.types.SequenceType;
 public class FunctionSignature implements Serializable {
     private List<SequenceType> parameterTypes;
     private SequenceType returnType;
+    private static final long serialVersionUID = 1L;
 
     public FunctionSignature(
             List<SequenceType> parameterTypes,
