@@ -21,6 +21,7 @@
 package org.rumbledb.runtime.functions.sequences.general;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.Function2;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -29,6 +30,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 
+import java.util.Iterator;
 import java.util.List;
 
 public class TailFunctionIterator extends HybridRuntimeIterator {
@@ -44,11 +46,7 @@ public class TailFunctionIterator extends HybridRuntimeIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(parameters, executionMode, iteratorMetadata);
-    }
-
-    @Override
-    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
-        return null;
+        this.iterator = this.children.get(0);
     }
 
     @Override
@@ -63,7 +61,6 @@ public class TailFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public void openLocal() {
-        this.iterator = this.children.get(0);
         this.iterator.open(this.currentDynamicContextForLocalExecution);
 
         if (!this.iterator.hasNext()) {
@@ -111,4 +108,13 @@ public class TailFunctionIterator extends HybridRuntimeIterator {
         }
     }
 
+    @Override
+    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
+        JavaRDD<Item> childRDD = this.iterator.getRDD(context);
+        if (!childRDD.isEmpty()) {
+            Function2<Integer, Iterator<Item>, Iterator<Item>> filter = new RemoveFirstItemClosure();
+            return childRDD.mapPartitionsWithIndex(filter, false);
+        }
+        return childRDD;
+    }
 }
