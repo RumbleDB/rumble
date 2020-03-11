@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.postfix;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -30,8 +31,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class DynamicFunctionCallExpression extends PostfixExpression {
+public class DynamicFunctionCallExpression extends Expression {
 
+    private Expression mainExpression;
     private List<Expression> arguments;
 
     public DynamicFunctionCallExpression(
@@ -39,7 +41,11 @@ public class DynamicFunctionCallExpression extends PostfixExpression {
             List<Expression> arguments,
             ExceptionMetadata metadata
     ) {
-        super(mainExpression, metadata);
+        super(metadata);
+        if (mainExpression == null) {
+            throw new OurBadException("Main expression cannot be null in a postfix expression.");
+        }
+        this.mainExpression = mainExpression;
         this.arguments = arguments;
         if (this.arguments == null) {
             this.arguments = new ArrayList<>();
@@ -84,5 +90,9 @@ public class DynamicFunctionCallExpression extends PostfixExpression {
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitDynamicFunctionCallExpression(this, argument);
+    }
+
+    public Expression getMainExpression() {
+        return this.mainExpression;
     }
 }
