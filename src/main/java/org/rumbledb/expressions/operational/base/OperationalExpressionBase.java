@@ -95,11 +95,6 @@ public abstract class OperationalExpressionBase extends Expression {
             case ">=":
                 return Operator.GC_GE;
 
-            case "+":
-                return Operator.PLUS;
-            case "-":
-                return Operator.MINUS;
-
             case "*":
                 return Operator.MUL;
             case "DIV":
@@ -108,9 +103,6 @@ public abstract class OperationalExpressionBase extends Expression {
                 return Operator.IDIV;
             case "MOD":
                 return Operator.MOD;
-
-            case "||":
-                return Operator.CONCAT;
         }
 
         throw new OurBadException("Operator not recognized.");
@@ -119,14 +111,8 @@ public abstract class OperationalExpressionBase extends Expression {
     public static String getStringFromOperator(Operator operator) {
         switch (operator) {
 
-            case PLUS:
-                return "+";
-            case MINUS:
-                return "-";
             case MUL:
                 return "*";
-            case CONCAT:
-                return "||";
             default:
                 return operator.toString().toLowerCase();
         }
@@ -248,14 +234,10 @@ public abstract class OperationalExpressionBase extends Expression {
             }
         },
 
-        PLUS,
-        MINUS,
         MUL,
         DIV,
         MOD,
-        IDIV,
-
-        CONCAT;
+        IDIV;
 
         public Item apply(Item left, Item right) {
             return null;

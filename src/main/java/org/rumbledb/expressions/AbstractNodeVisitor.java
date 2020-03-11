@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions;
 
+import org.rumbledb.expressions.arithmetic.AdditiveExpression;
 import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchExpression;
@@ -40,12 +41,11 @@ import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
+import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
-import org.rumbledb.expressions.operational.AdditiveExpression;
 import org.rumbledb.expressions.operational.ComparisonExpression;
 import org.rumbledb.expressions.operational.MultiplicativeExpression;
-import org.rumbledb.expressions.operational.StringConcatExpression;
 import org.rumbledb.expressions.postfix.ArrayLookupExpression;
 import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
