@@ -66,12 +66,8 @@ public class DynamicFunctionCallExpression extends Expression {
 
     /**
      * DynamicFunctionCall is always locally evaluated as execution mode cannot be determined at static analysis phase.
-     * This behavior is different from all other postfix extensions, hence this override is required.
+     * This behavior is different from all other postfix extensions, hence no override is required.
      */
-    @Override
-    public void initHighestExecutionMode() {
-        this.highestExecutionMode = ExecutionMode.LOCAL;
-    }
 
     @Override
     public String serializationString(boolean prefix) {
