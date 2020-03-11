@@ -4,13 +4,13 @@ import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
 public class TypePromotionClosure implements Function<Item, Item> {
     private String exceptionMessage;
     private SequenceType sequenceType;
     private ExceptionMetadata metadata;
+    private static final long serialVersionUID = 1L;
 
     public TypePromotionClosure(String exceptionMessage, SequenceType sequenceType, ExceptionMetadata metadata) {
         this.exceptionMessage = exceptionMessage;
