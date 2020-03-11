@@ -18,23 +18,28 @@
  *
  */
 
-package org.rumbledb.expressions.operational;
+package org.rumbledb.expressions.logic;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.operational.base.NaryExpressionBase;
+import org.rumbledb.expressions.Node;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class AndExpression extends NaryExpressionBase {
+public class AndExpression extends Expression {
+    private Expression leftExpression;
+    private Expression rightExpression;
 
     public AndExpression(
-            Expression mainExpression,
-            List<Expression> rhs,
+            Expression leftExpression,
+            Expression rightExpression,
             ExceptionMetadata metadata
     ) {
-        super(mainExpression, rhs, Operator.AND, metadata);
+        super(metadata);
+        this.leftExpression = leftExpression;
+        this.rightExpression = rightExpression;
     }
 
     @Override
@@ -45,13 +50,18 @@ public class AndExpression extends NaryExpressionBase {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(andExpr ";
-        result += this.mainExpression.serializationString(true);
-        if (this.getRightExpressions() != null && this.getRightExpressions().size() > 0) {
-            for (Expression expr : this.getRightExpressions()) {
-                result += " and " + expr.serializationString(true);
-            }
-        }
+        result += this.leftExpression.serializationString(true);
+        result += " and ";
+        result += this.rightExpression.serializationString(true);
         result += ")";
+        return result;
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        List<Node> result = new ArrayList<>();
+        result.add(leftExpression);
+        result.add(rightExpression);
         return result;
     }
 

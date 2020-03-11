@@ -18,42 +18,52 @@
  *
  */
 
-package org.rumbledb.expressions.operational;
-
+package org.rumbledb.expressions.logic;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.operational.base.NaryExpressionBase;
+import org.rumbledb.expressions.Node;
 
+import java.util.ArrayList;
 import java.util.List;
 
-
-public class OrExpression extends NaryExpressionBase {
+public class OrExpression extends Expression {
+    private Expression leftExpression;
+    private Expression rightExpression;
 
     public OrExpression(
-            Expression mainExpression,
-            List<Expression> rhs,
+            Expression leftExpression,
+            Expression rightExpression,
             ExceptionMetadata metadata
     ) {
-        super(mainExpression, rhs, Operator.OR, metadata);
-    }
-
-    @Override
-    public String serializationString(boolean prefix) {
-        String result = (prefix ? "(exprSingle " : "") + "(orExpr ";
-        result += this.mainExpression.serializationString(true);
-        if (this.getRightExpressions() != null && this.getRightExpressions().size() > 0) {
-            for (Expression expr : this.getRightExpressions()) {
-                result += " or " + expr.serializationString(true);
-            }
-        }
-        result += ")";
-        return result;
+        super(metadata);
+        this.leftExpression = leftExpression;
+        this.rightExpression = rightExpression;
     }
 
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitOrExpr(this, argument);
     }
+
+    @Override
+    public String serializationString(boolean prefix) {
+        String result = "(andExpr ";
+        result += this.leftExpression.serializationString(true);
+        result += " or ";
+        result += this.rightExpression.serializationString(true);
+        result += ")";
+        return result;
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        List<Node> result = new ArrayList<>();
+        result.add(leftExpression);
+        result.add(rightExpression);
+        return result;
+    }
+
+
 }

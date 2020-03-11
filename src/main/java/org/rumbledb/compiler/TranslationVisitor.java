@@ -52,14 +52,14 @@ import org.rumbledb.expressions.flowr.OrderByClause;
 import org.rumbledb.expressions.flowr.OrderByClauseExpr;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.WhereClause;
+import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
+import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.operational.AdditiveExpression;
-import org.rumbledb.expressions.operational.AndExpression;
 import org.rumbledb.expressions.operational.ComparisonExpression;
 import org.rumbledb.expressions.operational.MultiplicativeExpression;
-import org.rumbledb.expressions.operational.OrExpression;
 import org.rumbledb.expressions.operational.RangeExpression;
 import org.rumbledb.expressions.operational.StringConcatExpression;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
@@ -445,29 +445,28 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     // region operational
     @Override
     public Node visitOrExpr(JsoniqParser.OrExprContext ctx) {
-        List<Expression> rhs = new ArrayList<>();
-        Expression mainExpression = (Expression) this.visitAndExpr(ctx.main_expr);
+        Expression result = (Expression) this.visitAndExpr(ctx.main_expr);
         if (ctx.rhs == null || ctx.rhs.isEmpty()) {
-            return mainExpression;
+            return result;
         }
         for (JsoniqParser.AndExprContext child : ctx.rhs) {
-            rhs.add((Expression) this.visitAndExpr(child));
+            Expression rightExpression = (Expression) this.visitAndExpr(child);
+            result = new OrExpression(result, rightExpression, createMetadataFromContext(ctx));
         }
-        return new OrExpression(mainExpression, rhs, createMetadataFromContext(ctx));
+        return result;
     }
 
     @Override
     public Node visitAndExpr(JsoniqParser.AndExprContext ctx) {
-        List<Expression> rhs = new ArrayList<>();
-        Expression mainExpression = (Expression) this.visitNotExpr(ctx.main_expr);
+        Expression result = (Expression) this.visitNotExpr(ctx.main_expr);
         if (ctx.rhs == null || ctx.rhs.isEmpty()) {
-            return mainExpression;
+            return result;
         }
         for (JsoniqParser.NotExprContext child : ctx.rhs) {
-
-            rhs.add((Expression) this.visitNotExpr(child));
+            Expression rightExpression = (Expression) this.visitNotExpr(child);
+            result = new AndExpression(result, rightExpression, createMetadataFromContext(ctx));
         }
-        return new AndExpression(mainExpression, rhs, createMetadataFromContext(ctx));
+        return result;
     }
 
     @Override

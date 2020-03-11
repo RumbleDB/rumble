@@ -162,9 +162,6 @@ public abstract class OperationalExpressionBase extends Expression {
     }
 
     public enum Operator {
-        OR,
-        AND,
-
         // Value Comparison -- 0 or 1 item with compatible types are compared
         VC_EQ {
             @Override
