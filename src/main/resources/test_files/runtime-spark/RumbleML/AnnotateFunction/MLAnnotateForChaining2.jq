@@ -1,24 +1,14 @@
-(:JIQS: ShouldRun; Output="({ "id" : 0, "col1" : 6, "binarized_col1" : 1, "binarized_col2" : 0 }, { "id" : 1, "col1" : 3, "binarized_col1" : 0, "binarized_col2" : 0 }, { "id" : 2, "col1" : 4, "binarized_col1" : 0, "binarized_col2" : 0 }, { "id" : 3, "col1" : 4.5, "binarized_col1" : 0, "binarized_col2" : 0 }, { "id" : 4, "col1" : 5.3, "binarized_col1" : 1, "binarized_col2" : 0 }, { "id" : 5, "col1" : 9.2, "binarized_col1" : 1, "binarized_col2" : 0 })" :)
-let $local-data := (
-    {"id": 0, "col1": 6.0},
-    {"id": 1, "col1": 3.0},
-    {"id": 2, "col1": 4.0},
-    {"id": 3, "col1": 4.5},
-    {"id": 4, "col1": 5.3},
-    {"id": 5, "col1": 9.2}
-)
-let $df-data := annotate($local-data, {"id": "integer", "col1": "double"})
+(:JIQS: ShouldRun; Output="({ "id" : 1, "age" : 20, "weight" : 68.8, "binarized_weight" : 0, "binarized_weight2" : 0 }, { "id" : 2, "age" : 35, "weight" : 72.4, "binarized_weight" : 1, "binarized_weight2" : 0 }, { "id" : 3, "age" : 50, "weight" : 76.3, "binarized_weight" : 1, "binarized_weight2" : 0 })" :)
+let $data := structured-json-file("./src/main/resources/queries/rumbleML/sample-ml-data-age-weight.json")
 
-let $tokenizer := get-transformer("Binarizer")
-let $intermediate-data := $tokenizer(
-    $df-data,
-    {"inputCol": "col1", "outputCol": "binarized_col1", "threshold": 5.0}
-)
-let $df-intermediate-data := annotate($intermediate-data, {"id": "integer", "col1": "double", "binarized_col1": "double"})
+let $binarizer := get-transformer("Binarizer")
+let $intermediate-data := $binarizer($data, {"inputCol": "weight", "outputCol": "binarized_weight", "threshold": 70.0})
 
-for $i in $tokenizer(
+let $df-intermediate-data := annotate($intermediate-data, {"id": "integer", "age": "integer", "weight": "decimal", "binarized_weight": "double"})
+
+for $i in $binarizer(
     $df-intermediate-data,
-    {"inputCol": "binarized_col1", "outputCol": "binarized_col2", "threshold": 2.0}
+    {"inputCol": "binarized_weight", "outputCol": "binarized_weight2", "threshold": 2.0}
 )
 return $i
 

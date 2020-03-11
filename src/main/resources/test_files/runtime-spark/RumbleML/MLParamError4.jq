@@ -7,7 +7,7 @@ let $local-data := (
     {"id": 4, "col1": 5.3},
     {"id": 5, "col1": 9.2}
 )
-let $df-data := annotate($local-data, {"id": "integer", "col1": "double"})
+let $df-data := annotate($local-data, {"id": "integer", "col1": "decimal"})
 
 let $est := get-estimator("KMeans")
 let $tra := $est(
