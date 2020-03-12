@@ -50,16 +50,16 @@ public class MultiplicativeExpression extends Expression {
         }
 
         public static MultiplicativeOperator fromSymbol(String symbol) {
-            if (symbol.contentEquals(MUL.toString())) {
+            if (symbol.equals(MUL.toString())) {
                 return MUL;
             }
-            if (symbol.contentEquals(DIV.toString())) {
+            if (symbol.equals(DIV.toString())) {
                 return DIV;
             }
-            if (symbol.contentEquals(MOD.toString())) {
+            if (symbol.equals(MOD.toString())) {
                 return MOD;
             }
-            if (symbol.contentEquals(IDIV.toString())) {
+            if (symbol.equals(IDIV.toString())) {
                 return IDIV;
             }
             throw new OurBadException("Unrecognized multiplicative symbol: " + symbol);
