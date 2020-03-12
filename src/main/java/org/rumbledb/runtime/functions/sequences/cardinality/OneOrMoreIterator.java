@@ -20,18 +20,20 @@
 
 package org.rumbledb.runtime.functions.sequences.cardinality;
 
+import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.SequenceExceptionExactlyOne;
 import org.rumbledb.exceptions.SequenceExceptionOneOrMore;
+import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
 
-public class OneOrMoreIterator extends CardinalityFunctionIterator {
-
+public class OneOrMoreIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
@@ -43,14 +45,24 @@ public class OneOrMoreIterator extends CardinalityFunctionIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(arguments, executionMode, iteratorMetadata);
+        this.iterator = this.children.get(0);
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
+    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
+        JavaRDD<Item> childRDD = this.iterator.getRDD(context);
+        if (!childRDD.isEmpty()) {
+            return childRDD;
+        }
+        throw new SequenceExceptionOneOrMore(
+                "fn:one-or-more() called with a sequence containing less than 1 item",
+                getMetadata()
+        );
+    }
 
-        this.iterator = this.children.get(0);
-        this.iterator.open(context);
+    @Override
+    public void openLocal() {
+        this.iterator.open(this.currentDynamicContextForLocalExecution);
         if (!this.iterator.hasNext()) {
             throw new SequenceExceptionOneOrMore(
                     "fn:one-or-more() called with a sequence containing less than 1 item",
@@ -61,7 +73,29 @@ public class OneOrMoreIterator extends CardinalityFunctionIterator {
     }
 
     @Override
-    public Item next() {
+    protected void closeLocal() {
+        this.iterator.close();
+    }
+
+    @Override
+    protected void resetLocal(DynamicContext context) {
+        this.iterator.reset(this.currentDynamicContextForLocalExecution);
+        if (!this.iterator.hasNext()) {
+            throw new SequenceExceptionOneOrMore(
+                    "fn:one-or-more() called with a sequence containing less than 1 item",
+                    getMetadata()
+            );
+        }
+        setNextResult();
+    }
+
+    @Override
+    protected boolean hasNextLocal() {
+        return this.hasNext;
+    }
+
+    @Override
+    public Item nextLocal() {
         if (this.hasNext) {
             Item result = this.nextResult; // save the result to be returned
             setNextResult(); // calculate and store the next result
