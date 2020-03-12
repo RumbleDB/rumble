@@ -25,8 +25,6 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import sparksoniq.jsoniq.ExecutionMode;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
