@@ -24,6 +24,7 @@ import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.types.ItemType;
 import java.io.IOException;
@@ -136,7 +137,7 @@ public abstract class Item implements SerializableItem {
      * @return the list of the array members.
      */
     public List<Item> getItems() {
-        throw new RuntimeException("Item is not an array.");
+        throw new OurBadException("Item '" + this.serialize() + "' is not an array.");
     }
 
     /**
@@ -146,7 +147,7 @@ public abstract class Item implements SerializableItem {
      * @return the member at position position.
      */
     public Item getItemAt(int position) {
-        throw new RuntimeException("Item is not an array.");
+        throw new OurBadException("Item '" + this.serialize() + "' is not an array.");
     }
 
     /**
@@ -155,7 +156,7 @@ public abstract class Item implements SerializableItem {
      * @param item an item.
      */
     public void putItem(Item item) {
-        throw new RuntimeException("Item is not an array.");
+        throw new OurBadException("Item '" + this.serialize() + "' is not an array.");
     }
 
     /**
@@ -164,7 +165,7 @@ public abstract class Item implements SerializableItem {
      * @return the list of the keys.
      */
     public List<String> getKeys() {
-        throw new RuntimeException("Item is not an object.");
+        throw new OurBadException(" Item '" + this.serialize() + "' is not an object.");
     }
 
     /**
@@ -173,7 +174,7 @@ public abstract class Item implements SerializableItem {
      * @return the list of the value items.
      */
     public List<Item> getValues() {
-        throw new RuntimeException("Item is not an object.");
+        throw new OurBadException(" Item '" + this.serialize() + "' is not an object.");
     }
 
     /**
@@ -183,7 +184,7 @@ public abstract class Item implements SerializableItem {
      * @return the value associated with key.
      */
     public Item getItemByKey(String key) {
-        throw new RuntimeException("Item is not an object.");
+        throw new OurBadException(" Item '" + this.serialize() + "' is not an object.");
     }
 
     /**
@@ -193,7 +194,7 @@ public abstract class Item implements SerializableItem {
      * @param value a value.
      */
     public void putItemByKey(String key, Item value) {
-        throw new RuntimeException("Item is not an object.");
+        throw new OurBadException(" Item '" + this.serialize() + "' is not an object.");
     }
 
     /**
@@ -202,7 +203,7 @@ public abstract class Item implements SerializableItem {
      * @return the size as an int.
      */
     public int getSize() {
-        throw new RuntimeException("Item is not an array.");
+        throw new OurBadException(" Item '" + this.serialize() + "' is not an array.");
     }
 
     /**
@@ -211,7 +212,7 @@ public abstract class Item implements SerializableItem {
      * @return the string value.
      */
     public String getStringValue() {
-        throw new RuntimeException("Item is not a string.");
+        throw new OurBadException(" Item '" + this.serialize() + "' is not a string.");
     }
 
     /**
@@ -220,7 +221,7 @@ public abstract class Item implements SerializableItem {
      * @return the boolean value.
      */
     public boolean getBooleanValue() {
-        throw new RuntimeException("Item is not a boolean.");
+        throw new OurBadException(" Item '" + this.serialize() + "' is not a boolean.");
     }
 
     /**
@@ -229,7 +230,7 @@ public abstract class Item implements SerializableItem {
      * @return the double value.
      */
     public double getDoubleValue() {
-        throw new RuntimeException("Item is not a double.");
+        throw new OurBadException(" Item '" + this.serialize() + "' is not a double.");
     }
 
     /**
@@ -238,7 +239,7 @@ public abstract class Item implements SerializableItem {
      * @return the integer value as an int.
      */
     public int getIntegerValue() {
-        throw new RuntimeException("Item is not an integer.");
+        throw new OurBadException(" Item '" + this.serialize() + "' is not an integer.");
     }
 
     /**
@@ -247,7 +248,7 @@ public abstract class Item implements SerializableItem {
      * @return the decimal value as a BigDecimal.
      */
     public BigDecimal getDecimalValue() {
-        throw new RuntimeException("Item is not a big decimal.");
+        throw new OurBadException(" Item '" + this.serialize() + "' is not a big decimal.");
     }
 
     /**
@@ -256,7 +257,7 @@ public abstract class Item implements SerializableItem {
      * @return the period value as a Period.
      */
     public Period getDurationValue() {
-        throw new RuntimeException("Item is not a duration.");
+        throw new OurBadException(" Item '" + this.serialize() + "' is not a duration.");
     }
 
     /**
@@ -265,7 +266,7 @@ public abstract class Item implements SerializableItem {
      * @return the dateTime value as a DateTime.
      */
     public DateTime getDateTimeValue() {
-        throw new RuntimeException("Item does not have a DateTime.");
+        throw new OurBadException(" Item '" + this.serialize() + "' does not have a DateTime.");
     }
 
     /**
@@ -274,7 +275,7 @@ public abstract class Item implements SerializableItem {
      * @return the binary value as an array of bytes.
      */
     public byte[] getBinaryValue() {
-        throw new RuntimeException("Item is not a hexBinary.");
+        throw new OurBadException(" Item '" + this.serialize() + "' is not a hexBinary.");
     }
 
     /**

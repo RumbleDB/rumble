@@ -20,32 +20,40 @@
 
 package org.rumbledb.runtime.operational;
 
+import java.util.Arrays;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
+import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.operational.base.BinaryOperationBaseIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 
 
-public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
+public class AdditiveOperationIterator extends LocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
     private Item left;
     private Item right;
+    private boolean isMinus;
+    private RuntimeIterator leftIterator;
+    private RuntimeIterator rightIterator;
 
     public AdditiveOperationIterator(
-            RuntimeIterator left,
-            RuntimeIterator right,
-            OperationalExpressionBase.Operator operator,
+            RuntimeIterator leftIterator,
+            RuntimeIterator rightIterator,
+            boolean isMinus,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
     ) {
-        super(left, right, operator, executionMode, iteratorMetadata);
+        super(Arrays.asList(leftIterator, rightIterator), executionMode, iteratorMetadata);
+        this.leftIterator = leftIterator;
+        this.rightIterator = rightIterator;
+        this.isMinus = isMinus;
     }
 
     @Override
@@ -53,18 +61,14 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
         if (this.hasNext) {
             this.hasNext = false;
             try {
-                switch (this.operator) {
-                    case PLUS:
-                        return this.left.add(this.right);
-                    case MINUS:
-                        return this.left.subtract(this.right);
-                    default:
-                        throw new IteratorFlowException("Non recognized additive operator.", getMetadata());
+                if (!this.isMinus) {
+                    return this.left.add(this.right);
                 }
+                return this.left.subtract(this.right);
             } catch (RuntimeException e) {
                 throw new UnexpectedTypeException(
                         " \""
-                            + this.operator.name().toLowerCase()
+                            + (this.isMinus ? "-" : "+")
                             + "\": operation not possible with parameters of type \""
                             + this.left.getDynamicType().toString()
                             + "\" and \""
@@ -89,7 +93,12 @@ public class AdditiveOperationIterator extends BinaryOperationBaseIterator {
         } else {
             this.left = this.leftIterator.next();
             this.right = this.rightIterator.next();
-            this.checkBinaryOperation(this.left, this.right, this.operator);
+            BinaryOperationBaseIterator.checkBinaryOperation(
+                this.left,
+                this.right,
+                (this.isMinus ? "-" : "+"),
+                getMetadata()
+            );
             this.hasNext = true;
             if (this.leftIterator.hasNext() || this.rightIterator.hasNext()) {
                 throw new UnexpectedTypeException(

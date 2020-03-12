@@ -20,32 +20,37 @@
 
 package org.rumbledb.runtime.operational;
 
+import java.util.Arrays;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.operational.base.BinaryOperationBaseIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 
-public class RangeOperationIterator extends BinaryOperationBaseIterator {
+public class RangeOperationIterator extends LocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
+    private RuntimeIterator leftIterator;
+    private RuntimeIterator rightIterator;
     private int left;
     private int right;
     private int index;
 
     public RangeOperationIterator(
-            RuntimeIterator left,
-            RuntimeIterator right,
+            RuntimeIterator leftIterator,
+            RuntimeIterator rightiterator,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
     ) {
-        super(left, right, OperationalExpressionBase.Operator.TO, executionMode, iteratorMetadata);
+        super(Arrays.asList(leftIterator, rightiterator), executionMode, iteratorMetadata);
+        this.leftIterator = leftIterator;
+        this.rightIterator = rightiterator;
     }
 
     public boolean hasNext() {

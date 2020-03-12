@@ -22,43 +22,31 @@ public class DataFrameUtils {
             JavaRDD<Item> itemRDD,
             ObjectItem schemaItem
     ) {
-        validateSchemaAgainstAnItem(schemaItem, (ObjectItem) itemRDD.take(1).get(0));
-        StructType schema = generateSchemaFromSchemaItem(schemaItem);
+        ObjectItem firstDataItem = (ObjectItem) itemRDD.take(1).get(0);
+        validateSchemaAgainstAnItem(schemaItem, firstDataItem);
+        StructType schema = generateDataFrameSchemaFromSchemaItem(schemaItem);
         JavaRDD<Row> rowRDD = itemRDD.map(
             new Function<Item, Row>() {
                 private static final long serialVersionUID = 1L;
 
                 @Override
                 public Row call(Item item) {
-                    return ItemParser.getRowFromItem(item);
+                    return ItemParser.getRowFromItemUsingSchema(item, schema);
                 }
             }
         );
-        try {
-            Dataset<Row> result = SparkSessionManager.getInstance()
-                .getOrCreateSession()
-                .createDataFrame(rowRDD, schema);
-            result.take(1);
-            return result;
-        } catch (ClassCastException | IllegalArgumentException ex) {
-            throw new MLInvalidDataFrameSchemaException("Error while applying the schema: " + ex.getMessage());
-        }
+        return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
     }
 
     public static Dataset<Row> convertLocalItemsToDataFrame(
             List<Item> items,
             ObjectItem schemaItem
     ) {
-        validateSchemaAgainstAnItem(schemaItem, (ObjectItem) items.get(0));
-        StructType schema = generateSchemaFromSchemaItem(schemaItem);
-        List<Row> rows = ItemParser.getRowsFromItems(items);
-        try {
-            Dataset<Row> result = SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema);
-            result.take(1);
-            return result;
-        } catch (ClassCastException | IllegalArgumentException ex) {
-            throw new MLInvalidDataFrameSchemaException("Error while applying the schema: " + ex.getMessage());
-        }
+        ObjectItem firstDataItem = (ObjectItem) items.get(0);
+        validateSchemaAgainstAnItem(schemaItem, firstDataItem);
+        StructType schema = generateDataFrameSchemaFromSchemaItem(schemaItem);
+        List<Row> rows = ItemParser.getRowsFromItemsUsingSchema(items, schema);
+        return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema);
     }
 
     private static void validateSchemaAgainstAnItem(
@@ -68,8 +56,8 @@ public class DataFrameUtils {
         for (String schemaColumn : schemaItem.getKeys()) {
             if (!dataItem.getKeys().contains(schemaColumn)) {
                 throw new MLInvalidDataFrameSchemaException(
-                        "Columns defined in schema must fully match the columns of input data: "
-                            + "missing type information for '"
+                        "Fields defined in schema must fully match the fields of input data: "
+                            + "redundant type information for non-existent field '"
                             + schemaColumn
                             + "' column."
                 );
@@ -79,106 +67,139 @@ public class DataFrameUtils {
         for (String dataColumn : dataItem.getKeys()) {
             if (!schemaItem.getKeys().contains(dataColumn)) {
                 throw new MLInvalidDataFrameSchemaException(
-                        "Columns defined in schema must fully match the columns of input data: "
-                            + "redundant type information for non-existent column '"
+                        "Fields defined in schema must fully match the fields of input data: "
+                            + "missing type information for '"
                             + dataColumn
-                            + "'."
+                            + "' field."
                 );
             }
         }
     }
 
-    private static StructType generateSchemaFromSchemaItem(ObjectItem schemaItem) {
+    private static StructType generateDataFrameSchemaFromSchemaItem(ObjectItem schemaItem) {
         List<StructField> fields = new ArrayList<>();
         try {
             for (String columnName : schemaItem.getKeys()) {
-                String itemTypeName = schemaItem.getItemByKey(columnName).getStringValue();
-                StructField field = DataTypes.createStructField(
+                StructField field = generateStructFieldFromNameAndItem(
                     columnName,
-                    ItemParser.getDataFrameDataTypeFromItemTypeName(itemTypeName),
-                    true
+                    schemaItem.getItemByKey(columnName)
                 );
                 fields.add(field);
             }
         } catch (IllegalArgumentException ex) {
             throw new MLInvalidDataFrameSchemaException(
-                    "Error while applying the schema: " + ex.getMessage()
+                    "Error while applying the schema; " + ex.getMessage()
             );
         }
         return DataTypes.createStructType(fields);
     }
 
-    public static void validateSchemaAgainstDataFrame(
+    private static StructField generateStructFieldFromNameAndItem(String columnName, Item item) {
+        DataType type = generateDataTypeFromItem(item);
+        return DataTypes.createStructField(columnName, type, true);
+    }
+
+    private static DataType generateDataTypeFromItem(Item item) {
+        if (item.isArray()) {
+            validateArrayItemInSchema(item);
+            Item arrayContentsTypeItem = item.getItems().get(0);
+            DataType arrayContentsType = generateDataTypeFromItem(arrayContentsTypeItem);
+            return DataTypes.createArrayType(arrayContentsType);
+        }
+
+        if (item.isObject()) {
+            return generateDataFrameSchemaFromSchemaItem((ObjectItem) item);
+        }
+
+        if (item.isString()) {
+            String itemTypeName = item.getStringValue();
+            return ItemParser.getDataFrameDataTypeFromItemTypeName(itemTypeName);
+        }
+
+        throw new MLInvalidDataFrameSchemaException(
+                "Schema can only contain arrays, objects or strings: " + item.serialize() + " is not accepted"
+        );
+    }
+
+    private static void validateArrayItemInSchema(Item item) {
+        List<Item> arrayTypes = item.getItems();
+        if (arrayTypes.size() == 0) {
+            throw new MLInvalidDataFrameSchemaException(
+                    "Arrays in schema must define a type for their contents."
+            );
+        }
+        if (arrayTypes.size() > 1) {
+            throw new MLInvalidDataFrameSchemaException(
+                    "Arrays in schema can define only a single type for their contents: "
+                        + item.serialize()
+                        + " is invalid."
+            );
+        }
+    }
+
+    public static void validateSchemaItemAgainstDataFrame(
             ObjectItem schemaItem,
             StructType dataFrameSchema
     ) {
+        StructType generatedSchema = generateDataFrameSchemaFromSchemaItem(schemaItem);
         for (StructField column : dataFrameSchema.fields()) {
             final String columnName = column.name();
             final DataType columnDataType = column.dataType();
-            boolean columnMatched = schemaItem.getKeys().stream().anyMatch(userSchemaColumnName -> {
-                if (!columnName.equals(userSchemaColumnName)) {
+
+            boolean columnMatched = Arrays.stream(generatedSchema.fields()).anyMatch(structField -> {
+                String generatedColumnName = structField.name();
+                if (!generatedColumnName.equals(columnName)) {
                     return false;
                 }
 
-                String userSchemaColumnTypeName = schemaItem.getItemByKey(userSchemaColumnName).getStringValue();
-                DataType userSchemaColumnDataType;
-                try {
-                    userSchemaColumnDataType = ItemParser.getDataFrameDataTypeFromItemTypeName(
-                        userSchemaColumnTypeName
-                    );
-                } catch (IllegalArgumentException ex) {
-                    throw new MLInvalidDataFrameSchemaException(
-                            "Error while applying the schema: " + ex.getMessage()
-                    );
-                }
-
-                if (isUserTypeApplicable(userSchemaColumnDataType, columnDataType)) {
+                DataType generatedDataType = structField.dataType();
+                if (isUserTypeApplicable(generatedDataType, columnDataType)) {
                     return true;
                 }
 
                 throw new MLInvalidDataFrameSchemaException(
-                        "Columns defined in schema must fully match the columns of input data: "
+                        "Fields defined in schema must fully match the fields of input data: "
                             + "expected '"
                             + ItemParser.getItemTypeNameFromDataFrameDataType(columnDataType)
-                            + "' type for column '"
+                            + "' type for field '"
                             + columnName
                             + "', but found '"
-                            + userSchemaColumnTypeName
+                            + ItemParser.getItemTypeNameFromDataFrameDataType(generatedDataType)
                             + "'"
                 );
             });
 
             if (!columnMatched) {
                 throw new MLInvalidDataFrameSchemaException(
-                        "Columns defined in schema must fully match the columns of input data: "
+                        "Fields defined in schema must fully match the fields of input data: "
                             + "missing type information for '"
                             + columnName
-                            + "' column."
+                            + "' field."
                 );
             }
         }
 
-        for (String userSchemaColumnName : schemaItem.getKeys()) {
-            boolean userColumnMatched = Arrays.stream(dataFrameSchema.fields())
-                .anyMatch(
-                    structField -> userSchemaColumnName.equals(structField.name())
-                );
+        for (String generatedSchemaColumnName : generatedSchema.fieldNames()) {
+            boolean userColumnMatched = Arrays.asList(dataFrameSchema.fieldNames()).contains(generatedSchemaColumnName);
 
             if (!userColumnMatched) {
                 throw new MLInvalidDataFrameSchemaException(
-                        "Columns defined in schema must fully match the columns of input data: "
-                            + "redundant type information for non-existent column '"
-                            + userSchemaColumnName
+                        "Fields defined in schema must fully match the fields of input data: "
+                            + "redundant type information for non-existent field '"
+                            + generatedSchemaColumnName
                             + "'."
                 );
             }
         }
     }
 
-    private static boolean isUserTypeApplicable(DataType userSchemaColumnDataType, DataType columnDataType) {
+    private static boolean isUserTypeApplicable(
+            DataType userSchemaColumnDataType,
+            DataType columnDataType
+    ) {
         return userSchemaColumnDataType.equals(columnDataType)
             ||
-            (userSchemaColumnDataType.equals(DataTypes.DoubleType) && columnDataType.equals(DataTypes.LongType))
+            (userSchemaColumnDataType.equals(ItemParser.decimalType) && columnDataType.equals(DataTypes.LongType))
             ||
             (userSchemaColumnDataType.equals(DataTypes.DoubleType) && columnDataType.equals(DataTypes.FloatType))
             ||

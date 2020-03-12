@@ -29,6 +29,8 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.arithmetic.AdditiveExpression;
+import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchCase;
@@ -47,19 +49,16 @@ import org.rumbledb.expressions.flowr.LetClauseVar;
 import org.rumbledb.expressions.flowr.OrderByClause;
 import org.rumbledb.expressions.flowr.OrderByClauseExpr;
 import org.rumbledb.expressions.flowr.WhereClause;
+import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
+import org.rumbledb.expressions.logic.OrExpression;
+import org.rumbledb.expressions.miscellaneous.RangeExpression;
+import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
-import org.rumbledb.expressions.operational.AdditiveExpression;
-import org.rumbledb.expressions.operational.AndExpression;
 import org.rumbledb.expressions.operational.ComparisonExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
-import org.rumbledb.expressions.operational.MultiplicativeExpression;
-import org.rumbledb.expressions.operational.OrExpression;
-import org.rumbledb.expressions.operational.RangeExpression;
-import org.rumbledb.expressions.operational.StringConcatExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
-import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.expressions.postfix.ArrayLookupExpression;
 import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
@@ -616,33 +615,21 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     // region operational
     @Override
     public RuntimeIterator visitAdditiveExpr(AdditiveExpression expression, RuntimeIterator argument) {
-        RuntimeIterator left, right;
-        // convert nary to tree of iterators
-        if (expression.getOperators().size() > 1) {
-            right = this.visit(
-                expression.getRightExpressions().get(expression.getRightExpressions().size() - 1),
-                argument
-            );
-            AdditiveExpression remainingExpressions = new AdditiveExpression(
-                    expression.getMainExpression(),
-                    expression.getRightExpressions().subList(0, expression.getRightExpressions().size() - 1),
-                    expression.getOperators().subList(0, expression.getOperators().size() - 1),
-                    expression.getMetadata()
-            );
-            remainingExpressions.initHighestExecutionMode();
-            left = this.visit(
-                remainingExpressions,
-                argument
-            );
-        } else {
-            left = this.visit(expression.getMainExpression(), argument);
-            right = this.visit(expression.getRightExpressions().get(0), argument);
-        }
+        Expression leftExpression = (Expression) expression.getChildren().get(0);
+        Expression rightExpression = (Expression) expression.getChildren().get(1);
+        RuntimeIterator left = this.visit(
+            leftExpression,
+            argument
+        );
+        RuntimeIterator right = this.visit(
+            rightExpression,
+            argument
+        );
 
         return new AdditiveOperationIterator(
                 left,
                 right,
-                expression.getOperators().get(expression.getOperators().size() - 1),
+                expression.isMinus(),
                 expression.getHighestExecutionMode(),
                 expression.getMetadata()
         );
@@ -650,33 +637,21 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitMultiplicativeExpr(MultiplicativeExpression expression, RuntimeIterator argument) {
-        RuntimeIterator left, right;
-        // convert nary to tree of iterators
-        if (expression.getOperators().size() > 1) {
-            right = this.visit(
-                expression.getRightExpressions().get(expression.getRightExpressions().size() - 1),
-                argument
-            );
-            MultiplicativeExpression remainingExpressions = new MultiplicativeExpression(
-                    expression.getMainExpression(),
-                    expression.getRightExpressions().subList(0, expression.getRightExpressions().size() - 1),
-                    expression.getOperators().subList(0, expression.getOperators().size() - 1),
-                    expression.getMetadata()
-            );
-            remainingExpressions.initHighestExecutionMode();
-            left = this.visit(
-                remainingExpressions,
-                argument
-            );
-        } else {
-            left = this.visit(expression.getMainExpression(), argument);
-            right = this.visit(expression.getRightExpressions().get(0), argument);
-        }
+        Expression leftExpression = (Expression) expression.getChildren().get(0);
+        Expression rightExpression = (Expression) expression.getChildren().get(1);
+        RuntimeIterator left = this.visit(
+            leftExpression,
+            argument
+        );
+        RuntimeIterator right = this.visit(
+            rightExpression,
+            argument
+        );
 
         return new MultiplicativeOperationIterator(
                 left,
                 right,
-                expression.getOperators().get(expression.getOperators().size() - 1),
+                expression.getMultiplicativeOperator(),
                 expression.getHighestExecutionMode(),
                 expression.getMetadata()
         );
@@ -684,27 +659,16 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitAndExpr(AndExpression expression, RuntimeIterator argument) {
-        RuntimeIterator left, right;
-        // convert nary to tree of iterators
-        if (expression.getRightExpressions().size() > 1) {
-            right = this.visit(
-                expression.getRightExpressions().get(expression.getRightExpressions().size() - 1),
-                argument
-            );
-            AndExpression remainingExpressiongs = new AndExpression(
-                    expression.getMainExpression(),
-                    expression.getRightExpressions().subList(0, expression.getRightExpressions().size() - 1),
-                    expression.getMetadata()
-            );
-            remainingExpressiongs.initHighestExecutionMode();
-            left = this.visit(
-                remainingExpressiongs,
-                argument
-            );
-        } else {
-            left = this.visit(expression.getMainExpression(), argument);
-            right = this.visit(expression.getRightExpressions().get(0), argument);
-        }
+        Expression leftExpression = (Expression) expression.getChildren().get(0);
+        Expression rightExpression = (Expression) expression.getChildren().get(1);
+        RuntimeIterator left = this.visit(
+            leftExpression,
+            argument
+        );
+        RuntimeIterator right = this.visit(
+            rightExpression,
+            argument
+        );
 
         return new AndOperationIterator(
                 left,
@@ -716,28 +680,16 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitOrExpr(OrExpression expression, RuntimeIterator argument) {
-        RuntimeIterator left, right;
-        // convert nary to tree of iterators
-        if (expression.getRightExpressions().size() > 1) {
-            right = this.visit(
-                expression.getRightExpressions().get(expression.getRightExpressions().size() - 1),
-                argument
-            );
-            OrExpression remainingExpressions = new OrExpression(
-                    expression.getMainExpression(),
-                    expression.getRightExpressions()
-                        .subList(0, expression.getRightExpressions().size() - 1),
-                    expression.getMetadata()
-            );
-            remainingExpressions.initHighestExecutionMode();
-            left = this.visit(
-                remainingExpressions,
-                argument
-            );
-        } else {
-            left = this.visit(expression.getMainExpression(), argument);
-            right = this.visit(expression.getRightExpressions().get(0), argument);
-        }
+        Expression leftExpression = (Expression) expression.getChildren().get(0);
+        Expression rightExpression = (Expression) expression.getChildren().get(1);
+        RuntimeIterator left = this.visit(
+            leftExpression,
+            argument
+        );
+        RuntimeIterator right = this.visit(
+            rightExpression,
+            argument
+        );
 
         return new OrOperationIterator(
                 left,
@@ -769,8 +721,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitRangeExpr(RangeExpression expression, RuntimeIterator argument) {
-        RuntimeIterator left = this.visit(expression.getMainExpression(), argument);
-        RuntimeIterator right = this.visit(expression.getRightExpression(), argument);
+        RuntimeIterator left = this.visit(expression.getChildren().get(0), argument);
+        RuntimeIterator right = this.visit(expression.getChildren().get(1), argument);
         return new RangeOperationIterator(
                 left,
                 right,
@@ -794,29 +746,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitStringConcatExpr(StringConcatExpression expression, RuntimeIterator argument) {
-        RuntimeIterator left, right;
-        // convert nary to tree of iterators
-        if (expression.getRightExpressions().size() > 1) {
-            right = this.visit(
-                expression.getRightExpressions().get(expression.getRightExpressions().size() - 1),
-                argument
-            );
-            StringConcatExpression remainingExpressions = new StringConcatExpression(
-                    expression.getMainExpression(),
-                    expression.getRightExpressions()
-                        .subList(0, expression.getRightExpressions().size() - 1),
-                    expression.getMetadata()
-            );
-            remainingExpressions.initHighestExecutionMode();
-            left = this.visit(
-                remainingExpressions,
-                argument
-            );
-        } else {
-            left = this.visit(expression.getMainExpression(), argument);
-            right = this.visit(expression.getRightExpressions().get(0), argument);
-        }
-
+        RuntimeIterator left = this.visit(expression.getChildren().get(0), argument);
+        RuntimeIterator right = this.visit(expression.getChildren().get(1), argument);
         return new StringConcatIterator(
                 left,
                 right,

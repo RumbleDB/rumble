@@ -18,42 +18,48 @@
  *
  */
 
-package org.rumbledb.expressions.operational;
+package org.rumbledb.expressions.miscellaneous;
 
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.operational.base.NaryExpressionBase;
+import org.rumbledb.expressions.Node;
 
+import java.util.Arrays;
 import java.util.List;
 
+public class StringConcatExpression extends Expression {
+    private Expression leftExpression;
+    private Expression rightExpression;
 
-public class OrExpression extends NaryExpressionBase {
-
-    public OrExpression(
-            Expression mainExpression,
-            List<Expression> rhs,
+    public StringConcatExpression(
+            Expression leftExpression,
+            Expression rightExpression,
             ExceptionMetadata metadata
     ) {
-        super(mainExpression, rhs, Operator.OR, metadata);
+        super(metadata);
+        this.leftExpression = leftExpression;
+        this.rightExpression = rightExpression;
+    }
+
+    @Override
+    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
+        return visitor.visitStringConcatExpr(this, argument);
     }
 
     @Override
     public String serializationString(boolean prefix) {
-        String result = (prefix ? "(exprSingle " : "") + "(orExpr ";
-        result += this.mainExpression.serializationString(true);
-        if (this.getRightExpressions() != null && this.getRightExpressions().size() > 0) {
-            for (Expression expr : this.getRightExpressions()) {
-                result += " or " + expr.serializationString(true);
-            }
-        }
+        String result = "(andExpr ";
+        result += this.leftExpression.serializationString(true);
+        result += " || ";
+        result += this.rightExpression.serializationString(true);
         result += ")";
         return result;
     }
 
     @Override
-    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        return visitor.visitOrExpr(this, argument);
+    public List<Node> getChildren() {
+        return Arrays.asList(leftExpression, rightExpression);
     }
 }

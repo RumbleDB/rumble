@@ -18,36 +18,52 @@
  *
  */
 
-package org.rumbledb.expressions.operational;
+package org.rumbledb.expressions.logic;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.operational.base.BinaryExpressionBase;
+import org.rumbledb.expressions.Node;
 
+import java.util.ArrayList;
+import java.util.List;
 
-public class RangeExpression extends BinaryExpressionBase {
+public class OrExpression extends Expression {
+    private Expression leftExpression;
+    private Expression rightExpression;
 
-    public RangeExpression(Expression mainExpression, Expression rhs, ExceptionMetadata metadata) {
-        super(mainExpression, rhs, Operator.TO, metadata);
+    public OrExpression(
+            Expression leftExpression,
+            Expression rightExpression,
+            ExceptionMetadata metadata
+    ) {
+        super(metadata);
+        this.leftExpression = leftExpression;
+        this.rightExpression = rightExpression;
     }
 
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        return visitor.visitRangeExpr(this, argument);
+        return visitor.visitOrExpr(this, argument);
     }
 
     @Override
     public String serializationString(boolean prefix) {
-        String result = "(rangeExpr ";
-        result += this.mainExpression.serializationString(true);
-        if (this.getRightExpression() != null) {
-            result += " "
-                + this.getOperator().toString().toLowerCase()
-                + " "
-                + this.getRightExpression().serializationString(true);
-        }
+        String result = "(andExpr ";
+        result += this.leftExpression.serializationString(true);
+        result += " or ";
+        result += this.rightExpression.serializationString(true);
         result += ")";
         return result;
     }
+
+    @Override
+    public List<Node> getChildren() {
+        List<Node> result = new ArrayList<>();
+        result.add(leftExpression);
+        result.add(rightExpression);
+        return result;
+    }
+
+
 }

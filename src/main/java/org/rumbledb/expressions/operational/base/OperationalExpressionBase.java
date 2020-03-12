@@ -94,44 +94,13 @@ public abstract class OperationalExpressionBase extends Expression {
                 return Operator.GC_GT;
             case ">=":
                 return Operator.GC_GE;
-
-            case "+":
-                return Operator.PLUS;
-            case "-":
-                return Operator.MINUS;
-
-            case "*":
-                return Operator.MUL;
-            case "DIV":
-                return Operator.DIV;
-            case "IDIV":
-                return Operator.IDIV;
-            case "MOD":
-                return Operator.MOD;
-
-            case "TO":
-                return Operator.TO;
-            case "||":
-                return Operator.CONCAT;
         }
 
         throw new OurBadException("Operator not recognized.");
     }
 
     public static String getStringFromOperator(Operator operator) {
-        switch (operator) {
-
-            case PLUS:
-                return "+";
-            case MINUS:
-                return "-";
-            case MUL:
-                return "*";
-            case CONCAT:
-                return "||";
-            default:
-                return operator.toString().toLowerCase();
-        }
+        return operator.toString().toLowerCase();
     }
 
     public void validateOperators(List<Operator> validOps, List<Operator> ops) {
@@ -162,9 +131,6 @@ public abstract class OperationalExpressionBase extends Expression {
     }
 
     public enum Operator {
-        OR,
-        AND,
-
         // Value Comparison -- 0 or 1 item with compatible types are compared
         VC_EQ {
             @Override
@@ -251,17 +217,7 @@ public abstract class OperationalExpressionBase extends Expression {
                 int comparison = left.compareTo(right);
                 return ItemFactory.getInstance().createBooleanItem(comparison > 0 || comparison == 0);
             }
-        },
-
-        PLUS,
-        MINUS,
-        MUL,
-        DIV,
-        MOD,
-        IDIV,
-
-        TO,
-        CONCAT;
+        };
 
         public Item apply(Item left, Item right) {
             return null;
