@@ -46,8 +46,21 @@ public class ComparisonExpression extends Expression {
         GC_GE(">=");
 
         private String name;
+        private boolean isValueComparison;
 
         ComparisonOperator(String name) {
+            switch (name) {
+                case "eq":
+                case "ne":
+                case "le":
+                case "lt":
+                case "ge":
+                case "gt":
+                    isValueComparison = true;
+                    break;
+                default:
+                    isValueComparison = false;
+            }
             this.name = name;
         }
 
@@ -57,17 +70,7 @@ public class ComparisonExpression extends Expression {
         }
 
         public boolean isValueComparison() {
-            return this == VC_EQ
-                ||
-                this == VC_NE
-                ||
-                this == VC_LT
-                ||
-                this == VC_LE
-                ||
-                this == VC_GT
-                ||
-                this == VC_GE;
+            return isValueComparison;
         }
 
         public static ComparisonOperator fromSymbol(String symbol) {
@@ -143,7 +146,7 @@ public class ComparisonExpression extends Expression {
 
     @Override
     public List<Node> getChildren() {
-        return Arrays.asList(leftExpression, rightExpression);
+        return Arrays.asList(this.leftExpression, this.rightExpression);
     }
 
     public ComparisonOperator getComparisonOperator() {
