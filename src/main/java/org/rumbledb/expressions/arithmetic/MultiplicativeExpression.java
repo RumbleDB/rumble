@@ -101,6 +101,6 @@ public class MultiplicativeExpression extends Expression {
             case "idiv":
                 return MultiplicativeOperator.IDIV;
         }
-        throw new OurBadException("Unrecognized multiplicative symbo: " + symbol);
+        throw new OurBadException("Unrecognized multiplicative symbol: " + symbol);
     }
 }
