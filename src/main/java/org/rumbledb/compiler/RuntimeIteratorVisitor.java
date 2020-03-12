@@ -59,7 +59,6 @@ import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.operational.ComparisonExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
-import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.expressions.postfix.ArrayLookupExpression;
 import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;

@@ -27,7 +27,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
-import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.operational.base.BinaryOperationBaseIterator;
