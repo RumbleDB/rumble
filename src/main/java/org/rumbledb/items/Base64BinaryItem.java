@@ -10,7 +10,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.operational.ComparisonExpression;
+import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.types.ItemType;
 import javax.xml.bind.DatatypeConverter;
 import java.util.Arrays;
@@ -161,7 +161,7 @@ public class Base64BinaryItem extends AtomicItem {
             case GC_EQ:
             case VC_NE:
             case GC_NE:
-                super.compareItem(other, comparisonOperator, metadata);
+                return super.compareItem(other, comparisonOperator, metadata);
             default:
                 throw new UnexpectedTypeException(
                         "\""

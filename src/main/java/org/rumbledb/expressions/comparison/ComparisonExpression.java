@@ -18,7 +18,7 @@
  *
  */
 
-package org.rumbledb.expressions.operational;
+package org.rumbledb.expressions.comparison;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;

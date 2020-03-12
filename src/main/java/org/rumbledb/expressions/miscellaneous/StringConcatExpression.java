@@ -60,6 +60,6 @@ public class StringConcatExpression extends Expression {
 
     @Override
     public List<Node> getChildren() {
-        return Arrays.asList(leftExpression, rightExpression);
+        return Arrays.asList(this.leftExpression, this.rightExpression);
     }
 }

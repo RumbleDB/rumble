@@ -25,7 +25,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.operational.ComparisonExpression;
+import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -165,42 +165,6 @@ public class ComparisonOperationIterator extends LocalRuntimeIterator {
         if (!left.isAtomic()) {
             throw new IteratorFlowException("Invalid comparison expression", getMetadata());
         }
-        Item comparisonResult = null;
-        switch (this.comparisonOperator) {
-            case VC_EQ:
-            case GC_EQ: {
-                int comparison = left.compareTo(right);
-                comparisonResult = ItemFactory.getInstance().createBooleanItem(comparison == 0);
-            }
-            case VC_NE:
-            case GC_NE: {
-                int comparison = left.compareTo(right);
-                comparisonResult = ItemFactory.getInstance().createBooleanItem(comparison != 0);
-            }
-            case VC_LT:
-            case GC_LT: {
-                int comparison = left.compareTo(right);
-                comparisonResult = ItemFactory.getInstance().createBooleanItem(comparison < 0);
-            }
-            case VC_LE:
-            case GC_LE: {
-                int comparison = left.compareTo(right);
-                comparisonResult = ItemFactory.getInstance().createBooleanItem(comparison <= 0);
-            }
-            case VC_GT:
-            case GC_GT: {
-                int comparison = left.compareTo(right);
-                comparisonResult = ItemFactory.getInstance().createBooleanItem(comparison > 0);
-            }
-            case VC_GE:
-            case GC_GE: {
-                int comparison = left.compareTo(right);
-                comparisonResult = ItemFactory.getInstance().createBooleanItem(comparison > 0);
-            }
-        }
-        if (comparisonResult == null) {
-            throw new IteratorFlowException("Unrecognized operator found", getMetadata());
-        }
-        return comparisonResult;
+        return left.compareItem(right, this.comparisonOperator, getMetadata());
     }
 }

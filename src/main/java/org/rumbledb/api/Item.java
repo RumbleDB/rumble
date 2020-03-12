@@ -25,7 +25,7 @@ import org.joda.time.Period;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.expressions.operational.ComparisonExpression;
+import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.types.ItemType;
 import java.io.IOException;
@@ -133,43 +133,41 @@ public abstract class Item implements SerializableItem {
             ComparisonExpression.ComparisonOperator comparisonOperator,
             ExceptionMetadata metadata
     ) {
-        Item comparisonResult = null;
+        // Subclasses should override this method to perform additional typechecks,
+        // and then invoke it on super.
         switch (comparisonOperator) {
             case VC_EQ:
             case GC_EQ: {
                 int comparison = this.compareTo(other);
-                comparisonResult = ItemFactory.getInstance().createBooleanItem(comparison == 0);
+                return ItemFactory.getInstance().createBooleanItem(comparison == 0);
             }
             case VC_NE:
             case GC_NE: {
                 int comparison = this.compareTo(other);
-                comparisonResult = ItemFactory.getInstance().createBooleanItem(comparison != 0);
+                return ItemFactory.getInstance().createBooleanItem(comparison != 0);
             }
             case VC_LT:
             case GC_LT: {
                 int comparison = this.compareTo(other);
-                comparisonResult = ItemFactory.getInstance().createBooleanItem(comparison < 0);
+                return ItemFactory.getInstance().createBooleanItem(comparison < 0);
             }
             case VC_LE:
             case GC_LE: {
                 int comparison = this.compareTo(other);
-                comparisonResult = ItemFactory.getInstance().createBooleanItem(comparison <= 0);
+                return ItemFactory.getInstance().createBooleanItem(comparison <= 0);
             }
             case VC_GT:
             case GC_GT: {
                 int comparison = this.compareTo(other);
-                comparisonResult = ItemFactory.getInstance().createBooleanItem(comparison > 0);
+                return ItemFactory.getInstance().createBooleanItem(comparison > 0);
             }
             case VC_GE:
             case GC_GE: {
                 int comparison = this.compareTo(other);
-                comparisonResult = ItemFactory.getInstance().createBooleanItem(comparison > 0);
+                return ItemFactory.getInstance().createBooleanItem(comparison >= 0);
             }
         }
-        if (comparisonResult == null) {
-            throw new IteratorFlowException("Unrecognized operator found", metadata);
-        }
-        return comparisonResult;
+        throw new IteratorFlowException("Unrecognized operator found", metadata);
     }
 
     /**
