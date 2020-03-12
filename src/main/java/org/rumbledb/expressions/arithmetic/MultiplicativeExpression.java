@@ -91,15 +91,17 @@ public class MultiplicativeExpression extends Expression {
     }
 
     public static MultiplicativeOperator getMultiplicativeOperatorFromSymbol(String symbol) {
-        switch (symbol) {
-            case "*":
-                return MultiplicativeOperator.MUL;
-            case "div":
-                return MultiplicativeOperator.DIV;
-            case "mod":
-                return MultiplicativeOperator.MOD;
-            case "idiv":
-                return MultiplicativeOperator.IDIV;
+        if (symbol.contentEquals(MultiplicativeOperator.MUL.toString())) {
+            return MultiplicativeOperator.MUL;
+        }
+        if (symbol.contentEquals(MultiplicativeOperator.DIV.toString())) {
+            return MultiplicativeOperator.DIV;
+        }
+        if (symbol.contentEquals(MultiplicativeOperator.MOD.toString())) {
+            return MultiplicativeOperator.MOD;
+        }
+        if (symbol.contentEquals(MultiplicativeOperator.IDIV.toString())) {
+            return MultiplicativeOperator.IDIV;
         }
         throw new OurBadException("Unrecognized multiplicative symbol: " + symbol);
     }
