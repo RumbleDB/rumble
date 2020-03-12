@@ -1118,7 +1118,7 @@ public class Functions {
             "item*",
             "item*",
             TailFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
         );
         /**
          * function that returns a sequence constructed by inserting an item or a sequence of items at a given position
