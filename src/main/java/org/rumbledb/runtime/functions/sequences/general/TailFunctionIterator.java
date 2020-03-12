@@ -111,7 +111,7 @@ public class TailFunctionIterator extends HybridRuntimeIterator {
         JavaRDD<Item> childRDD = this.iterator.getRDD(context);
         if (!childRDD.isEmpty()) {
             Item firstItem = childRDD.first();
-            return childRDD.filter(item -> !item.equals(firstItem) );
+            return childRDD.filter(item -> !item.equals(firstItem));
         }
         return childRDD;
     }
