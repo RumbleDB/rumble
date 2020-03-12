@@ -26,7 +26,7 @@ import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
+import org.rumbledb.expressions.operational.ComparisonExpression;
 import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
 
@@ -132,7 +132,11 @@ public class BooleanItem extends AtomicItem {
     }
 
     @Override
-    public Item compareItem(Item other, OperationalExpressionBase.Operator operator, ExceptionMetadata metadata) {
+    public Item compareItem(
+            Item other,
+            ComparisonExpression.ComparisonOperator comparisonOperator,
+            ExceptionMetadata metadata
+    ) {
         if (!other.isBoolean() && !other.isNull()) {
             throw new UnexpectedTypeException(
                     "Invalid args for boolean comparison "
@@ -143,7 +147,7 @@ public class BooleanItem extends AtomicItem {
                     metadata
             );
         }
-        return operator.apply(this, other);
+        return super.compareItem(other, comparisonOperator, metadata);
     }
 
     @Override

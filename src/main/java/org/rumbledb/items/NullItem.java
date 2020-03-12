@@ -25,7 +25,7 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
+import org.rumbledb.expressions.operational.ComparisonExpression;
 import org.rumbledb.types.ItemType;
 
 public class NullItem extends AtomicItem {
@@ -107,8 +107,12 @@ public class NullItem extends AtomicItem {
     }
 
     @Override
-    public Item compareItem(Item other, OperationalExpressionBase.Operator operator, ExceptionMetadata metadata) {
-        return operator.apply(this, other);
+    public Item compareItem(
+            Item other,
+            ComparisonExpression.ComparisonOperator comparisonOperator,
+            ExceptionMetadata metadata
+    ) {
+        return super.compareItem(other, comparisonOperator, metadata);
     }
 
     @Override

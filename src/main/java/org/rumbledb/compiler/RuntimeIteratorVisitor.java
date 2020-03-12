@@ -733,12 +733,12 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitComparisonExpr(ComparisonExpression expression, RuntimeIterator argument) {
-        RuntimeIterator left = this.visit(expression.getMainExpression(), argument);
-        RuntimeIterator right = this.visit(expression.getRightExpression(), argument);
+        RuntimeIterator left = this.visit(expression.getChildren().get(0), argument);
+        RuntimeIterator right = this.visit(expression.getChildren().get(1), argument);
         return new ComparisonOperationIterator(
                 left,
                 right,
-                expression.getOperator(),
+                expression.getComparisonOperator(),
                 expression.getHighestExecutionMode(),
                 expression.getMetadata()
         );

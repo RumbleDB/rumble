@@ -84,7 +84,7 @@ public class MultiplicativeExpression extends Expression {
 
     @Override
     public String serializationString(boolean prefix) {
-        String result = "(additiveExpr ";
+        String result = "(multiplicativeExpr ";
         result += this.getChildren().get(0).serializationString(true);
         result += this.multiplicativeOperator;
         result += this.getChildren().get(1).serializationString(true);

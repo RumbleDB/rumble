@@ -62,7 +62,6 @@ import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.operational.ComparisonExpression;
-import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.expressions.postfix.ArrayLookupExpression;
 import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
@@ -489,11 +488,10 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         }
         JsoniqParser.StringConcatExprContext child = ctx.rhs.get(0);
         Expression childExpression = (Expression) this.visitStringConcatExpr(child);
-
         return new ComparisonExpression(
                 mainExpression,
                 childExpression,
-                OperationalExpressionBase.getOperatorFromString(ctx.op.get(0).getText()),
+                ComparisonExpression.ComparisonOperator.fromSymbol(ctx.op.get(0).getText()),
                 createMetadataFromContext(ctx)
         );
     }
