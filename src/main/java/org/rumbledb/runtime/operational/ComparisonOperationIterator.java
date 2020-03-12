@@ -25,11 +25,10 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-import org.rumbledb.expressions.operational.base.OperationalExpressionBase.Operator;
+import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.operational.base.BinaryOperationBaseIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 
@@ -37,37 +36,28 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 
-public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
+public class ComparisonOperationIterator extends LocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private static final Operator[] valueComparisonOperators = new Operator[] {
-        Operator.VC_GE,
-        Operator.VC_GT,
-        Operator.VC_EQ,
-        Operator.VC_NE,
-        Operator.VC_LE,
-        Operator.VC_LT };
-    private static final Operator[] generalComparisonOperators = new Operator[] {
-        Operator.GC_GE,
-        Operator.GC_GT,
-        Operator.GC_EQ,
-        Operator.GC_NE,
-        Operator.GC_LE,
-        Operator.GC_LT };
-    private boolean isValueComparison;
     private Item left;
     private Item right;
+    private ComparisonExpression.ComparisonOperator comparisonOperator;
+    private RuntimeIterator leftIterator;
+    private RuntimeIterator rightIterator;
 
 
     public ComparisonOperationIterator(
-            RuntimeIterator left,
-            RuntimeIterator right,
-            OperationalExpressionBase.Operator operator,
+            RuntimeIterator leftIterator,
+            RuntimeIterator rightIterator,
+            ComparisonExpression.ComparisonOperator comparisonOperator,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
     ) {
-        super(left, right, operator, executionMode, iteratorMetadata);
+        super(Arrays.asList(leftIterator, rightIterator), executionMode, iteratorMetadata);
+        this.leftIterator = leftIterator;
+        this.rightIterator = rightIterator;
+        this.comparisonOperator = comparisonOperator;
     }
 
     @Override
@@ -76,7 +66,7 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
             this.hasNext = false;
 
             // use stored values for value comparison
-            if (this.isValueComparison) {
+            if (this.comparisonOperator.isValueComparison()) {
                 return comparePair(this.left, this.right);
             } else {
                 // fetch all values and perform comparison
@@ -106,7 +96,7 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
         this.rightIterator.open(this.currentDynamicContextForLocalExecution);
 
         // value comparison may return an empty sequence
-        if (Arrays.asList(valueComparisonOperators).contains(this.operator)) {
+        if (this.comparisonOperator.isValueComparison()) {
             // if EMPTY SEQUENCE - eg. () or ((),())
             // this check is added here to provide lazy evaluation: eg. () eq (2,3) = () instead of exception
             if (!(this.leftIterator.hasNext() && this.rightIterator.hasNext())) {
@@ -123,10 +113,9 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
                     );
                 }
 
-                this.isValueComparison = true;
                 this.hasNext = true;
             }
-        } else if (Arrays.asList(generalComparisonOperators).contains(this.operator)) {
+        } else {
             // general comparison always returns a boolean
             this.hasNext = true;
         }
@@ -173,14 +162,9 @@ public class ComparisonOperationIterator extends BinaryOperationBaseIterator {
             );
         }
 
-        if (left.isAtomic()) {
-            Item comparisonResult = left.compareItem(right, this.operator, getMetadata());
-            if (comparisonResult != null) {
-                return comparisonResult;
-            }
-            throw new IteratorFlowException("Unrecognized operator found", getMetadata());
-        } else {
+        if (!left.isAtomic()) {
             throw new IteratorFlowException("Invalid comparison expression", getMetadata());
         }
+        return left.compareItem(right, this.comparisonOperator, getMetadata());
     }
 }
