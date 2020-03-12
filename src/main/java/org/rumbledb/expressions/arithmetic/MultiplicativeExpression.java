@@ -43,10 +43,10 @@ public class MultiplicativeExpression extends Expression {
         MultiplicativeOperator(String name) {
             this.name = name;
         }
-        
+
         @Override
         public String toString() {
-        	return this.name;
+            return this.name;
         }
     };
 
