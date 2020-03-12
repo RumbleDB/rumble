@@ -107,7 +107,7 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
             } catch (RuntimeException e) {
                 throw new UnexpectedTypeException(
                         " \""
-                            + this.multiplicativeOperator.toString().toLowerCase()
+                            + this.multiplicativeOperator.toString()
                             + "\": operation not possible with parameters of type \""
                             + this.left.getDynamicType().toString()
                             + "\" and \""
