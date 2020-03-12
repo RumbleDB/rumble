@@ -124,7 +124,7 @@ public abstract class Item implements SerializableItem {
      * Function that compare two items according to the operator defined for the comparison.
      *
      * @param other another Item
-     * @param operator the operator used for the comparison
+     * @param comparisonOperator the operator used for the comparison
      * @param metadata Metadata useful for throwing exceptions
      * @return BooleanItem result of the comparison
      */
