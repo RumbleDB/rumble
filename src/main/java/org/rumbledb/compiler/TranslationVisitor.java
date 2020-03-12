@@ -557,7 +557,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             result = new MultiplicativeExpression(
                     result,
                     rightExpression,
-                    MultiplicativeExpression.getMultiplicativeOperatorFromSymbol(ctx.op.get(i).getText()),
+                    MultiplicativeExpression.MultiplicativeOperator.fromSymbol(ctx.op.get(i).getText()),
                     createMetadataFromContext(ctx)
             );
         }
