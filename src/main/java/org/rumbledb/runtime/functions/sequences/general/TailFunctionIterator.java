@@ -21,7 +21,6 @@
 package org.rumbledb.runtime.functions.sequences.general;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.function.Function2;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -30,7 +29,6 @@ import org.rumbledb.runtime.RuntimeIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 
-import java.util.Iterator;
 import java.util.List;
 
 public class TailFunctionIterator extends HybridRuntimeIterator {
@@ -112,8 +110,8 @@ public class TailFunctionIterator extends HybridRuntimeIterator {
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
         JavaRDD<Item> childRDD = this.iterator.getRDD(context);
         if (!childRDD.isEmpty()) {
-            Function2<Integer, Iterator<Item>, Iterator<Item>> filter = new RemoveFirstItemClosure();
-            return childRDD.mapPartitionsWithIndex(filter, false);
+            Item firstItem = childRDD.first();
+            return childRDD.filter(item -> !item.equals(firstItem) );
         }
         return childRDD;
     }
