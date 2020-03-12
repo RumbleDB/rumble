@@ -22,6 +22,7 @@ package org.rumbledb.expressions.postfix;
 
 
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -29,10 +30,16 @@ import org.rumbledb.expressions.Node;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ArrayUnboxingExpression extends PostfixExpression {
+public class ArrayUnboxingExpression extends Expression {
 
-    public ArrayUnboxingExpression(Expression main, ExceptionMetadata metadata) {
-        super(main, metadata);
+    private Expression mainExpression;
+
+    public ArrayUnboxingExpression(Expression mainExpression, ExceptionMetadata metadata) {
+        super(metadata);
+        if (mainExpression == null) {
+            throw new OurBadException("Main expression cannot be null in a postfix expression.");
+        }
+        this.mainExpression = mainExpression;
     }
 
     @Override
@@ -51,6 +58,15 @@ public class ArrayUnboxingExpression extends PostfixExpression {
         List<Node> result = new ArrayList<>();
         result.add(this.mainExpression);
         return result;
+    }
+
+    public Expression getMainExpression() {
+        return this.mainExpression;
+    }
+
+    @Override
+    public void initHighestExecutionMode() {
+        this.highestExecutionMode = this.mainExpression.getHighestExecutionMode();
     }
 
 }

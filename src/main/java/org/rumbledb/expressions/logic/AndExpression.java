@@ -18,51 +18,49 @@
  *
  */
 
-package org.rumbledb.expressions.operational;
-
+package org.rumbledb.expressions.logic;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.operational.base.NaryExpressionBase;
+import org.rumbledb.expressions.Node;
 
 import java.util.Arrays;
 import java.util.List;
 
-public class AdditiveExpression extends NaryExpressionBase {
+public class AndExpression extends Expression {
+    private Expression leftExpression;
+    private Expression rightExpression;
 
-    public static final Operator[] operators = new Operator[] { Operator.PLUS, Operator.MINUS };
-
-    public AdditiveExpression(
-            Expression mainExpression,
-            List<Expression> rhs,
-            List<Operator> ops,
+    public AndExpression(
+            Expression leftExpression,
+            Expression rightExpression,
             ExceptionMetadata metadata
     ) {
-        super(mainExpression, rhs, ops, metadata);
-        validateOperators(Arrays.asList(operators), ops);
+        super(metadata);
+        this.leftExpression = leftExpression;
+        this.rightExpression = rightExpression;
     }
 
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        return visitor.visitAdditiveExpr(this, argument);
+        return visitor.visitAndExpr(this, argument);
     }
 
     @Override
     public String serializationString(boolean prefix) {
-        String result = "(additiveExpr ";
-        result += this.mainExpression.serializationString(true);
-        if (this.getRightExpressions() != null && this.getRightExpressions().size() > 0) {
-            for (Expression expr : this.getRightExpressions()) {
-                result += " "
-                    +
-                    getStringFromOperator(this.multipleOperators.get(this.getRightExpressions().indexOf(expr)))
-                    + " "
-                    + expr.serializationString(true);
-            }
-        }
+        String result = "(andExpr ";
+        result += this.leftExpression.serializationString(true);
+        result += " and ";
+        result += this.rightExpression.serializationString(true);
         result += ")";
         return result;
     }
+
+    @Override
+    public List<Node> getChildren() {
+        return Arrays.asList(leftExpression, rightExpression);
+    }
+
 
 }

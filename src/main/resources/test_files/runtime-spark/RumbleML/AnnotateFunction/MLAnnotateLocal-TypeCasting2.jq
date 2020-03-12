@@ -5,5 +5,7 @@ annotate(
         {"id": 2, "age":  35, "weight": 72.4},
         {"id": 3, "age":  50, "weight": 76.3}
     ),
-    {"id": "integer", "age": "integer", "weight": "decimal"}
+    {"id": "integer", "age": "integer", "weight": "double"}
 )
+
+(: decimal to double cast on weight column :)

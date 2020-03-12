@@ -54,13 +54,13 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
         if (inputDataIterator.isDataFrame()) {
             Dataset<Row> inputDataAsDataFrame = inputDataIterator.getDataFrame(context);
             try {
-                DataFrameUtils.validateSchemaAgainstDataFrame(
+                DataFrameUtils.validateSchemaItemAgainstDataFrame(
                     schemaItem,
                     inputDataAsDataFrame.schema()
                 );
             } catch (MLInvalidDataFrameSchemaException ex) {
                 throw new MLInvalidDataFrameSchemaException(
-                        "Schema error in annotate(): " + ex.getJSONiqErrorMessage(),
+                        "Schema error in annotate(); " + ex.getJSONiqErrorMessage(),
                         getMetadata()
                 );
             }
@@ -73,7 +73,7 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
                 return DataFrameUtils.convertItemRDDToDataFrame(rdd, schemaItem);
             } catch (MLInvalidDataFrameSchemaException ex) {
                 throw new MLInvalidDataFrameSchemaException(
-                        "Schema error in annotate(): " + ex.getJSONiqErrorMessage(),
+                        "Schema error in annotate(); " + ex.getJSONiqErrorMessage(),
                         getMetadata()
                 );
             }
@@ -84,7 +84,7 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
             return DataFrameUtils.convertLocalItemsToDataFrame(items, schemaItem);
         } catch (MLInvalidDataFrameSchemaException ex) {
             throw new MLInvalidDataFrameSchemaException(
-                    "Schema error in annotate(): " + ex.getJSONiqErrorMessage(),
+                    "Schema error in annotate(); " + ex.getJSONiqErrorMessage(),
                     getMetadata()
             );
         }

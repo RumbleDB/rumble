@@ -21,17 +21,17 @@
 package org.rumbledb.expressions.postfix;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import sparksoniq.jsoniq.ExecutionMode;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class DynamicFunctionCallExpression extends PostfixExpression {
+public class DynamicFunctionCallExpression extends Expression {
 
+    private Expression mainExpression;
     private List<Expression> arguments;
 
     public DynamicFunctionCallExpression(
@@ -39,7 +39,11 @@ public class DynamicFunctionCallExpression extends PostfixExpression {
             List<Expression> arguments,
             ExceptionMetadata metadata
     ) {
-        super(mainExpression, metadata);
+        super(metadata);
+        if (mainExpression == null) {
+            throw new OurBadException("Main expression cannot be null in a postfix expression.");
+        }
+        this.mainExpression = mainExpression;
         this.arguments = arguments;
         if (this.arguments == null) {
             this.arguments = new ArrayList<>();
@@ -60,12 +64,8 @@ public class DynamicFunctionCallExpression extends PostfixExpression {
 
     /**
      * DynamicFunctionCall is always locally evaluated as execution mode cannot be determined at static analysis phase.
-     * This behavior is different from all other postfix extensions, hence this override is required.
+     * This behavior is different from all other postfix extensions, hence no override is required.
      */
-    @Override
-    public void initHighestExecutionMode() {
-        this.highestExecutionMode = ExecutionMode.LOCAL;
-    }
 
     @Override
     public String serializationString(boolean prefix) {
@@ -84,5 +84,9 @@ public class DynamicFunctionCallExpression extends PostfixExpression {
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitDynamicFunctionCallExpression(this, argument);
+    }
+
+    public Expression getMainExpression() {
+        return this.mainExpression;
     }
 }

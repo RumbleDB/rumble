@@ -1,13 +1,6 @@
-(:JIQS: ShouldRun; Output="({ "id" : 0, "col1" : 6, "binarized_col1" : 1 }, { "id" : 1, "col1" : 3, "binarized_col1" : 0 }, { "id" : 2, "col1" : 4, "binarized_col1" : 0 }, { "id" : 3, "col1" : 4.5, "binarized_col1" : 0 }, { "id" : 4, "col1" : 5.3, "binarized_col1" : 0 }, { "id" : 5, "col1" : 9.2, "binarized_col1" : 1 })" :)
-let $local-data := (
-    {"id": 0, "col1": 6.0},
-    {"id": 1, "col1": 3.0},
-    {"id": 2, "col1": 4.0},
-    {"id": 3, "col1": 4.5},
-    {"id": 4, "col1": 5.3},
-    {"id": 5, "col1": 9.2}
+(:JIQS: ShouldRun; Output="({ "age" : 20, "id" : 1, "weight" : 68.8, "binarized_weight" : 0 }, { "age" : 35, "id" : 2, "weight" : 72.4, "binarized_weight" : 1 }, { "age" : 50, "id" : 3, "weight" : 76.3, "binarized_weight" : 1 })" :)
+let $transformer := get-transformer("Binarizer")
+return $transformer(
+    (structured-json-file("./src/main/resources/queries/rumbleML/sample-ml-data-age-weight.json")),
+    {"inputCol": "weight", "outputCol": "binarized_weight", "threshold": 70.0}
 )
-let $df-data := annotate($local-data, {"id": "integer", "col1": "double"})
-
-let $tokenizer := get-transformer("Binarizer")
-return $tokenizer($df-data, {"inputCol": "col1", "outputCol": "binarized_col1", "threshold": 5.3})

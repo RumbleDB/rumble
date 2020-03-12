@@ -18,36 +18,45 @@
  *
  */
 
-package org.rumbledb.expressions.operational;
+package org.rumbledb.expressions.miscellaneous;
 
+import java.util.Arrays;
+import java.util.List;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.operational.base.NaryExpressionBase;
+import org.rumbledb.expressions.Node;
 
-import java.util.List;
 
-public class StringConcatExpression extends NaryExpressionBase {
-    public StringConcatExpression(Expression mainExpression, List<Expression> rhs, ExceptionMetadata metadata) {
-        super(mainExpression, rhs, Operator.CONCAT, metadata);
+public class RangeExpression extends Expression {
+
+    private Expression leftExpression;
+    private Expression rightExpression;
+
+    public RangeExpression(Expression leftExpression, Expression rightExpression, ExceptionMetadata metadata) {
+        super(metadata);
+        this.leftExpression = leftExpression;
+        this.rightExpression = rightExpression;
     }
 
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        return visitor.visitStringConcatExpr(this, argument);
+        return visitor.visitRangeExpr(this, argument);
     }
 
     @Override
     public String serializationString(boolean prefix) {
-        String result = "(stringConcatExpr ";
-        result += this.mainExpression.serializationString(true);
-        if (this.getRightExpressions() != null && this.getRightExpressions().size() > 0) {
-            for (Expression expr : this.getRightExpressions()) {
-                result += " || " + expr.serializationString(true);
-            }
-        }
+        String result = "(rangeExpr ";
+        result += this.getChildren().get(0).serializationString(true);
+        result += " to  ";
+        result += this.getChildren().get(1).serializationString(true);
         result += ")";
         return result;
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        return Arrays.asList(leftExpression, rightExpression);
     }
 }
