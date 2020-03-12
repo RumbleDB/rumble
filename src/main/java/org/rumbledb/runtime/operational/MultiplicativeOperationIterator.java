@@ -29,7 +29,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.operational.base.BinaryOperationBaseIterator;
+import org.rumbledb.runtime.operational.base.ComparisonUtil;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 
@@ -69,7 +69,7 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
         } else {
             this.left = this.leftIterator.next();
             this.right = this.rightIterator.next();
-            BinaryOperationBaseIterator.checkBinaryOperation(
+            ComparisonUtil.checkBinaryOperation(
                 this.left,
                 this.right,
                 this.multiplicativeOperator.toString(),
