@@ -34,6 +34,7 @@ import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.arithmetic.AdditiveExpression;
+import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchCase;
@@ -61,7 +62,6 @@ import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.operational.ComparisonExpression;
-import org.rumbledb.expressions.operational.MultiplicativeExpression;
 import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.expressions.postfix.ArrayLookupExpression;
 import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
@@ -547,20 +547,21 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitMultiplicativeExpr(JsoniqParser.MultiplicativeExprContext ctx) {
-        List<Expression> rhs = new ArrayList<>();
-        Expression mainExpression = (Expression) this.visitInstanceOfExpr(ctx.main_expr);
+        Expression result = (Expression) this.visitInstanceOfExpr(ctx.main_expr);
         if (ctx.rhs == null || ctx.rhs.isEmpty()) {
-            return mainExpression;
+            return result;
         }
-        for (JsoniqParser.InstanceOfExprContext child : ctx.rhs) {
-            rhs.add((Expression) this.visitInstanceOfExpr(child));
+        for (int i = 0; i < ctx.rhs.size(); ++i) {
+            JsoniqParser.InstanceOfExprContext child = ctx.rhs.get(i);
+            Expression rightExpression = (Expression) this.visitInstanceOfExpr(child);
+            result = new MultiplicativeExpression(
+                    result,
+                    rightExpression,
+                    MultiplicativeExpression.getMultiplicativeOperatorFromSymbol(ctx.op.get(i).getText()),
+                    createMetadataFromContext(ctx)
+            );
         }
-        return new MultiplicativeExpression(
-                mainExpression,
-                rhs,
-                OperationalExpressionBase.getOperatorFromOpList(ctx.op),
-                createMetadataFromContext(ctx)
-        );
+        return result;
     }
 
     @Override

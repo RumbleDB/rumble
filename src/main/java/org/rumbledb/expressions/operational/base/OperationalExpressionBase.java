@@ -94,28 +94,13 @@ public abstract class OperationalExpressionBase extends Expression {
                 return Operator.GC_GT;
             case ">=":
                 return Operator.GC_GE;
-
-            case "*":
-                return Operator.MUL;
-            case "DIV":
-                return Operator.DIV;
-            case "IDIV":
-                return Operator.IDIV;
-            case "MOD":
-                return Operator.MOD;
         }
 
         throw new OurBadException("Operator not recognized.");
     }
 
     public static String getStringFromOperator(Operator operator) {
-        switch (operator) {
-
-            case MUL:
-                return "*";
-            default:
-                return operator.toString().toLowerCase();
-        }
+        return operator.toString().toLowerCase();
     }
 
     public void validateOperators(List<Operator> validOps, List<Operator> ops) {
@@ -232,12 +217,7 @@ public abstract class OperationalExpressionBase extends Expression {
                 int comparison = left.compareTo(right);
                 return ItemFactory.getInstance().createBooleanItem(comparison > 0 || comparison == 0);
             }
-        },
-
-        MUL,
-        DIV,
-        MOD,
-        IDIV;
+        };
 
         public Item apply(Item left, Item right) {
             return null;
