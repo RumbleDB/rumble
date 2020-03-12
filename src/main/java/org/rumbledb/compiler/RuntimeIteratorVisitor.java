@@ -32,6 +32,7 @@ import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.arithmetic.AdditiveExpression;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.UnaryExpression;
+import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchCase;
 import org.rumbledb.expressions.control.SwitchExpression;
@@ -56,7 +57,6 @@ import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
-import org.rumbledb.expressions.operational.ComparisonExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.postfix.ArrayLookupExpression;
@@ -733,12 +733,12 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitComparisonExpr(ComparisonExpression expression, RuntimeIterator argument) {
-        RuntimeIterator left = this.visit(expression.getMainExpression(), argument);
-        RuntimeIterator right = this.visit(expression.getRightExpression(), argument);
+        RuntimeIterator left = this.visit(expression.getChildren().get(0), argument);
+        RuntimeIterator right = this.visit(expression.getChildren().get(1), argument);
         return new ComparisonOperationIterator(
                 left,
                 right,
-                expression.getOperator(),
+                expression.getComparisonOperator(),
                 expression.getHighestExecutionMode(),
                 expression.getMetadata()
         );

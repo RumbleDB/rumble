@@ -24,33 +24,8 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-import org.rumbledb.runtime.LocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-import sparksoniq.jsoniq.ExecutionMode;
 
-public abstract class BinaryOperationBaseIterator extends LocalRuntimeIterator {
-
-
-    private static final long serialVersionUID = 1L;
-    protected final RuntimeIterator leftIterator;
-    protected final RuntimeIterator rightIterator;
-    protected final OperationalExpressionBase.Operator operator;
-
-    protected BinaryOperationBaseIterator(
-            RuntimeIterator left,
-            RuntimeIterator right,
-            OperationalExpressionBase.Operator operator,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
-    ) {
-        super(null, executionMode, iteratorMetadata);
-        this.children.add(left);
-        this.children.add(right);
-        this.leftIterator = left;
-        this.rightIterator = right;
-        this.operator = operator;
-    }
+public abstract class ComparisonUtil {
 
     public static void checkBinaryOperation(Item left, Item right, String sign, ExceptionMetadata metadata) {
         if (!left.isAtomic()) {

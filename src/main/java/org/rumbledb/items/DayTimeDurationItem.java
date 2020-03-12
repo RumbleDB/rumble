@@ -8,7 +8,7 @@ import org.joda.time.PeriodType;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
+import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
 
@@ -88,9 +88,13 @@ public class DayTimeDurationItem extends DurationItem {
     }
 
     @Override
-    public Item compareItem(Item other, OperationalExpressionBase.Operator operator, ExceptionMetadata metadata) {
+    public Item compareItem(
+            Item other,
+            ComparisonExpression.ComparisonOperator comparisonOperator,
+            ExceptionMetadata metadata
+    ) {
         if (other.isDuration() && !other.isDayTimeDuration() && !other.isYearMonthDuration()) {
-            return other.compareItem(this, operator, metadata);
+            return other.compareItem(this, comparisonOperator, metadata);
         } else if (!other.isDayTimeDuration() && !other.isNull()) {
             throw new UnexpectedTypeException(
                     "\""
@@ -101,7 +105,7 @@ public class DayTimeDurationItem extends DurationItem {
                     metadata
             );
         }
-        return operator.apply(this, other);
+        return super.compareItem(other, comparisonOperator, metadata);
     }
 
     @Override
