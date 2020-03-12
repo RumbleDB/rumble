@@ -15,7 +15,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
+import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.types.ItemType;
 
 import java.util.regex.Pattern;
@@ -297,7 +297,11 @@ public class DateTimeItem extends AtomicItem {
     }
 
     @Override
-    public Item compareItem(Item other, OperationalExpressionBase.Operator operator, ExceptionMetadata metadata) {
+    public Item compareItem(
+            Item other,
+            ComparisonExpression.ComparisonOperator comparisonOperator,
+            ExceptionMetadata metadata
+    ) {
         if (!other.isDateTime() && !other.isNull()) {
             throw new UnexpectedTypeException(
                     "\""
@@ -308,7 +312,7 @@ public class DateTimeItem extends AtomicItem {
                     metadata
             );
         }
-        return operator.apply(this, other);
+        return super.compareItem(other, comparisonOperator, metadata);
     }
 
     @Override
