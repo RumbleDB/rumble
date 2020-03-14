@@ -7,6 +7,7 @@ import org.rumbledb.exceptions.ComponentSpecifierNotAvailableException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IncorrectSyntaxFormatDateTimeException;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
@@ -33,6 +34,208 @@ public class FormatDateFunctionIterator extends LocalFunctionCallIterator {
         super(arguments, executionMode, iteratorMetadata);
     }
 
+    private String parsePresentationModifiers(String presentationModifiers) {
+        String presentationModifier1 = "";
+
+        int presentationModifiersLength = presentationModifiers.length();
+        if (presentationModifiersLength == 1) {
+            presentationModifier1 = presentationModifiers;
+        } else {
+            char lastChar = presentationModifiers.charAt(
+                presentationModifiersLength - 1
+            );
+            String message;
+            switch (lastChar) {
+                case 'a':
+                    message = String.format(
+                        "\"%s\": alphabetic numbering not supported",
+                        this.pictureStringItem.serialize()
+                    );
+                    throw new UnsupportedFeatureException(message, getMetadata());
+                case 't':
+                    presentationModifier1 = presentationModifiers.substring(
+                        0,
+                        presentationModifiersLength - 1
+                    );
+                    break;
+                case 'c':
+                    presentationModifier1 = presentationModifiers.substring(
+                        0,
+                        presentationModifiersLength - 1
+                    );
+                    break;
+                case 'o':
+                    message = String.format(
+                        "\"%s\": ordinal numbering not supported",
+                        this.pictureStringItem.serialize()
+                    );
+                    throw new UnsupportedFeatureException(message, getMetadata());
+                default:
+                    presentationModifier1 = presentationModifiers;
+            }
+        }
+
+        return presentationModifier1;
+    }
+
+    int parseWidthModifier(String widthModifier) {
+        int width = -1;
+        if (widthModifier.length() == 0) {
+            String message = String.format(
+                "\"%s\": incorrect syntax",
+                this.pictureStringItem.serialize()
+            );
+            throw new IncorrectSyntaxFormatDateTimeException(
+                    message,
+                    getMetadata()
+            );
+        }
+        if (!widthModifier.equals("*"))
+            width = Integer.parseInt(widthModifier);
+        return width;
+    }
+
+    private String parseVariableMarker(String variableMarker, StringBuilder result) {
+        if (variableMarker.length() == 0) {
+            String message = String.format(
+                "\"%s\": incorrect syntax",
+                this.pictureStringItem.serialize()
+            );
+            throw new IncorrectSyntaxFormatDateTimeException(message, getMetadata());
+        }
+        char componentSpecifier;
+        switch (variableMarker.charAt(0)) {
+            case 'Y':
+                componentSpecifier = 'Y';
+                break;
+            case 'M':
+                componentSpecifier = 'M';
+                break;
+            case 'd':
+                componentSpecifier = 'D';
+                break;
+            case 'D':
+                componentSpecifier = 'd';
+                break;
+            case 'F':
+                componentSpecifier = 'u';
+                break;
+            default:
+                String message = String.format(
+                    "\"%s\": a component specifier refers to components"
+                        + " that are not available in the %s type",
+                    this.pictureStringItem.serialize(),
+                    "date"
+                );
+                throw new ComponentSpecifierNotAvailableException(message, getMetadata());
+        }
+
+        String presentationModifier1 = "";
+        Integer minWidth = 1;
+        Integer maxWidth = -1;
+
+        String variableMarkerOptionalModifiers = variableMarker.substring(1);
+
+        if (variableMarkerOptionalModifiers.length() > 0) {
+            List<String> variableMarkerModifiers =
+                Arrays.asList(variableMarkerOptionalModifiers.split(","));
+            int variableMarkerModifiersSize = variableMarkerModifiers.size();
+
+            if (variableMarkerModifiersSize > 2) {
+                // only one comma accepted for picture argument
+                String message = String.format(
+                    "\"%s\": groups not supported",
+                    this.pictureStringItem.serialize()
+                );
+                throw new UnsupportedFeatureException(message, getMetadata());
+            } else {
+                if (variableMarkerModifiersSize >= 1) {
+                    // presentation modifiers present
+                    String presentationModifiers = variableMarkerModifiers.get(0);
+                    presentationModifier1 = parsePresentationModifiers(presentationModifiers);
+                }
+                if (variableMarkerModifiersSize == 2) {
+                    // width modifier present
+                    String variableMarkerOptionalWidthModifiers = variableMarkerModifiers.get(1);
+                    if (variableMarkerOptionalWidthModifiers.length() > 0) {
+                        List<String> widthModifier =
+                            Arrays.asList(variableMarkerOptionalWidthModifiers.split("-"));
+                        int widthModifierSize = widthModifier.size();
+                        if (widthModifierSize >= 1) {
+                            minWidth = parseWidthModifier(widthModifier.get(0));
+                            if (minWidth < 1)
+                                minWidth = 1;
+                        }
+                        if (widthModifierSize == 2) {
+                            maxWidth = parseWidthModifier(widthModifier.get(1));
+                        }
+                        if (widthModifierSize > 2) {
+                            String message = String.format(
+                                "\"%s\": incorrect syntax",
+                                this.pictureStringItem.serialize()
+                            );
+                            throw new IncorrectSyntaxFormatDateTimeException(
+                                    message,
+                                    getMetadata()
+                            );
+                        }
+                    } else {
+                        String message = String.format(
+                            "\"%s\": incorrect syntax",
+                            this.pictureStringItem.serialize()
+                        );
+                        throw new IncorrectSyntaxFormatDateTimeException(message, getMetadata());
+                    }
+                }
+            }
+        }
+
+        StringBuilder pattern = new StringBuilder();
+        if (presentationModifier1.length() > 0) {
+            if (presentationModifier1.equals("Nn")) {
+                if (maxWidth < 1)
+                    maxWidth = 10;
+                if (
+                    componentSpecifier == 'd'
+                        || componentSpecifier == 'D'
+                        || componentSpecifier == 'u'
+                )
+                    componentSpecifier = 'E';
+            } else {
+                char presentationModifierStart = presentationModifier1.charAt(0);
+                // check if numeric sequence as format token
+                if (presentationModifierStart >= '0' && presentationModifierStart <= '9') {
+                    int toReduce = 2;
+                    if (componentSpecifier == 'Y')
+                        toReduce = 4;
+                    int prefixLength;
+                    if (maxWidth < 1)
+                        prefixLength = presentationModifier1.length() - toReduce;
+                    else
+                        prefixLength = maxWidth - toReduce;
+                    for (int j = 0; j < prefixLength; ++j)
+                        pattern.append('0');
+                    maxWidth = toReduce;
+                } else {
+                    String message = String.format(
+                        "\"%s\": first presentation modifier not supported: %s",
+                        this.pictureStringItem.serialize(),
+                        presentationModifier1
+                    );
+                    throw new UnsupportedFeatureException(message, getMetadata());
+                }
+            }
+        } else {
+            if (maxWidth < 1)
+                maxWidth = 1;
+        }
+
+        for (int j = minWidth; j <= maxWidth; ++j)
+            pattern.append(componentSpecifier);
+
+        return pattern.toString();
+    }
+
     @Override
     public Item next() {
         if (this.hasNext) {
@@ -45,192 +248,18 @@ public class FormatDateFunctionIterator extends LocalFunctionCallIterator {
                 DateTime dateValue = this.valueDateItem.getDateTimeValue();
                 String pictureString = this.pictureStringItem.getStringValue();
 
-                // Start sequence
                 int startOfSequence = 0;
-                boolean variableMarkerSequence;
-                if (pictureString.charAt(0) == '[') {
-                    variableMarkerSequence = true;
-                    startOfSequence = 1;
-                } else {
-                    variableMarkerSequence = false;
-                    startOfSequence = 0;
-                }
+                boolean variableMarkerSequence = false;
 
                 StringBuilder result = new StringBuilder();
 
                 // Iterate over picture
-                for (int i = 1; i < pictureString.length(); i++) {
+                for (int i = 0; i < pictureString.length(); i++) {
                     char c = pictureString.charAt(i);
                     if (variableMarkerSequence) {
                         if (c == ']') {
                             String variableMarker = pictureString.substring(startOfSequence, i);
-
-                            // get component specifier (required)
-                            if (variableMarker.length() == 0) {
-                                String message = String.format(
-                                    "\"%s\": incorrect syntax",
-                                    this.pictureStringItem.serialize()
-                                );
-                                throw new IncorrectSyntaxFormatDateTimeException(message, getMetadata());
-                            }
-
-                            char componentSpecifier;
-                            switch (variableMarker.charAt(0)) {
-                                case 'Y':
-                                    componentSpecifier = 'Y';
-                                    break;
-                                case 'M':
-                                    componentSpecifier = 'M';
-                                    break;
-                                case 'd':
-                                    componentSpecifier = 'D';
-                                    break;
-                                case 'D':
-                                    componentSpecifier = 'd';
-                                    break;
-                                case 'F':
-                                    componentSpecifier = 'u';
-                                    break;
-                                default:
-                                    String message = String.format(
-                                        "\"%s\": a component specifier refers to components"
-                                            + " that are not available in the %s type",
-                                        this.pictureStringItem.serialize(),
-                                        "date"
-                                    );
-                                    throw new ComponentSpecifierNotAvailableException(message, getMetadata());
-                            }
-
-                            String presentationModifier1 = "";
-                            char presentationModifier2 = '0';
-                            int minWidth = 1;
-                            int maxWidth = -1;
-
-                            String variableMarkerOptionalModifiers = variableMarker.substring(1);
-
-                            if (variableMarkerOptionalModifiers.length() > 0) {
-                                List<String> variableMarkerModifiers =
-                                    Arrays.asList(variableMarkerOptionalModifiers.split(","));
-                                int variableMarkerModifiersSize = variableMarkerModifiers.size();
-
-                                if (variableMarkerModifiersSize > 2) {
-                                    // Groups not supported. Only one comma accepted for picture argument.
-                                    String message = String.format(
-                                        "\"%s\": incorrect syntax",
-                                        this.pictureStringItem.serialize()
-                                    );
-                                    throw new IncorrectSyntaxFormatDateTimeException(message, getMetadata());
-                                } else {
-                                    if (variableMarkerModifiersSize >= 1) {
-                                        // component specifier present
-                                        String presentationModifiers = variableMarkerModifiers.get(0);
-                                        int presentationModifiersLength = presentationModifiers.length();
-                                        if (presentationModifiersLength == 1) {
-                                            presentationModifier1 = variableMarkerModifiers.get(0);
-                                        } else {
-                                            char lastChar = presentationModifiers.charAt(
-                                                presentationModifiersLength - 1
-                                            );
-                                            switch (lastChar) {
-                                                case 'a':
-                                                    presentationModifier2 = 'a';
-                                                    presentationModifier1 = presentationModifiers.substring(
-                                                        0,
-                                                        presentationModifiersLength - 1
-                                                    );
-                                                    break;
-                                                case 't':
-                                                    presentationModifier2 = 't';
-                                                    presentationModifier1 = presentationModifiers.substring(
-                                                        0,
-                                                        presentationModifiersLength - 1
-                                                    );
-                                                    break;
-                                                case 'c':
-                                                    presentationModifier2 = 'c';
-                                                    presentationModifier1 = presentationModifiers.substring(
-                                                        0,
-                                                        presentationModifiersLength - 1
-                                                    );
-                                                    break;
-                                                case 'o':
-                                                    presentationModifier2 = 'o';
-                                                    presentationModifier1 = presentationModifiers.substring(
-                                                        0,
-                                                        presentationModifiersLength - 1
-                                                    );
-                                                    break;
-                                                default:
-                                                    presentationModifier1 = presentationModifiers;
-                                            }
-                                        }
-                                    }
-                                    if (variableMarkerModifiersSize == 2) {
-                                        // width modifier present
-                                        String variableMarkerOptionalWidthModifiers = variableMarkerModifiers.get(1);
-                                        if (variableMarkerOptionalWidthModifiers.length() > 0) {
-                                            List<String> widthModifier =
-                                                Arrays.asList(variableMarkerOptionalWidthModifiers.split("-"));
-                                            int widthModifierSize = widthModifier.size();
-                                            if (widthModifierSize >= 1 && !widthModifier.get(0).equals("*")) {
-                                                minWidth = Integer.parseInt(widthModifier.get(0));
-                                            }
-                                            if (widthModifierSize == 2 && !widthModifier.get(1).equals("*")) {
-                                                maxWidth = Integer.parseInt(widthModifier.get(1));
-                                            }
-                                            if (widthModifierSize > 2) {
-                                                String message = String.format(
-                                                    "\"%s\": incorrect syntax",
-                                                    this.pictureStringItem.serialize()
-                                                );
-                                                throw new IncorrectSyntaxFormatDateTimeException(
-                                                        message,
-                                                        getMetadata()
-                                                );
-                                            }
-                                        } else {
-                                            String message = String.format(
-                                                "\"%s\": incorrect syntax",
-                                                this.pictureStringItem.serialize()
-                                            );
-                                            throw new IncorrectSyntaxFormatDateTimeException(message, getMetadata());
-                                        }
-
-                                    }
-                                }
-                            }
-
-                            StringBuilder pattern = new StringBuilder();
-                            if (presentationModifier1.length() > 0) {
-                                if (
-                                    presentationModifier1.equals("Nn")
-                                        || presentationModifier1.equals("N")
-                                        || presentationModifier1.equals("n")
-                                ) {
-                                    if (maxWidth < 1)
-                                        maxWidth = 10;
-                                    if (
-                                        componentSpecifier == 'd'
-                                            || componentSpecifier == 'D'
-                                            || componentSpecifier == 'F'
-                                    )
-                                        componentSpecifier = 'E';
-                                } else {
-                                    char presentationModifierStart = presentationModifier1.charAt(0);
-                                    // check if numeric sequence as format token
-                                    if (presentationModifierStart >= '0' && presentationModifierStart <= '9') {
-                                        if (maxWidth < 1)
-                                            maxWidth = presentationModifier1.length();
-                                    } else {
-                                        maxWidth = 1;
-                                    }
-                                }
-                            } else {
-                                if (maxWidth < 1)
-                                    maxWidth = 1;
-                            }
-                            for (int j = minWidth; j <= maxWidth; ++j)
-                                pattern.append(componentSpecifier);
+                            String pattern = parseVariableMarker(variableMarker, result);
 
                             SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern.toString());
                             Calendar formatCalendar = Calendar.getInstance();
@@ -246,16 +275,38 @@ public class FormatDateFunctionIterator extends LocalFunctionCallIterator {
                         }
                     } else {
                         if (c == ']') {
-                            String message = String.format(
-                                "\"%s\": incorrect syntax",
-                                this.pictureStringItem.serialize()
-                            );
-                            throw new IncorrectSyntaxFormatDateTimeException(message, getMetadata());
+                            if (i == pictureString.length() - 1 || pictureString.charAt(i + 1) != ']') {
+                                String message = String.format(
+                                    "\"%s\": incorrect syntax",
+                                    this.pictureStringItem.serialize()
+                                );
+                                throw new IncorrectSyntaxFormatDateTimeException(message, getMetadata());
+                            } else {
+                                String literalSubstring = pictureString.substring(startOfSequence, i + 1);
+                                result.append(literalSubstring);
+                                startOfSequence = i + 2;
+                                i++;
+                            }
                         } else if (c == '[') {
-                            String literalSubstring = pictureString.substring(startOfSequence, i);
-                            result.append(literalSubstring);
-                            variableMarkerSequence = true;
-                            startOfSequence = i + 1;
+                            if (i == pictureString.length() - 1) {
+                                String message = String.format(
+                                    "\"%s\": incorrect syntax",
+                                    this.pictureStringItem.serialize()
+                                );
+                                throw new IncorrectSyntaxFormatDateTimeException(message, getMetadata());
+                            }
+
+                            if (pictureString.charAt(i + 1) == '[') {
+                                String literalSubstring = pictureString.substring(startOfSequence, i + 1);
+                                result.append(literalSubstring);
+                                startOfSequence = i + 2;
+                                i++;
+                            } else {
+                                String literalSubstring = pictureString.substring(startOfSequence, i);
+                                result.append(literalSubstring);
+                                variableMarkerSequence = true;
+                                startOfSequence = i + 1;
+                            }
                         }
                     }
                 }
