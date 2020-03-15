@@ -10,4 +10,3 @@ deep-equal(csv-file("./src/main/resources/queries/cities.csv"), csv-file("./src/
 deep-equal(csv-file("./src/main/resources/queries/cities.csv"), json-file("./src/main/resources/queries/conf-ex.json", 10))
 
 (: all parallelized inputs :)
-
