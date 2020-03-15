@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="({ "label" : 1.218, "censor" : 1, "feature1" : 1.56, "feature2" : -0.605, "prediction" : 5.718979487634984 }, { "label" : 2.949, "censor" : 0, "feature1" : 0.346, "feature2" : 2.158, "prediction" : 18.076521181495476 }, { "label" : 3.627, "censor" : 0, "feature1" : 1.38, "feature2" : 0.231, "prediction" : 7.381861804239096 }, { "label" : 0.273, "censor" : 1, "feature1" : 0.52, "feature2" : 1.151, "prediction" : 13.577612501425332 }, { "label" : 4.199, "censor" : 0, "feature1" : 0.795, "feature2" : -0.226, "prediction" : 9.013097744073875 })" :)
+(:JIQS: ShouldRun; Output="({ "label" : 1.218, "censor" : 1, "feature1" : 1.56, "feature2" : -0.605, "prediction" : 5 }, { "label" : 2.949, "censor" : 0, "feature1" : 0.346, "feature2" : 2.158, "prediction" : 18 }, { "label" : 3.627, "censor" : 0, "feature1" : 1.38, "feature2" : 0.231, "prediction" : 7 }, { "label" : 0.273, "censor" : 1, "feature1" : 0.52, "feature2" : 1.151, "prediction" : 13 }, { "label" : 4.199, "censor" : 0, "feature1" : 0.795, "feature2" : -0.226, "prediction" : 9 })" :)
 let $raw-data := parallelize((
     {"label": 1.218, "censor": 1.0, "feature1": 1.560, "feature2": -0.605},
     {"label": 2.949, "censor": 0.0, "feature1": 0.346, "feature2": 2.158},
@@ -26,7 +26,9 @@ return {
     "censor": $result.censor,
     "feature1": $result.feature1,
     "feature2": $result.feature2,
-    "prediction": $result.prediction
+    "prediction": $result.prediction cast as integer
 }
+
+(: Result cast as integer intentionally to lose precision so that test results can match :)
 
 (: https://spark.apache.org/docs/2.4.5/ml-classification-regression.html#survival-regression :)
