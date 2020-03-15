@@ -20,9 +20,11 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
+import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.ExecutionMode;
@@ -31,10 +33,11 @@ import sparksoniq.semantics.DynamicContext;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ReverseFunctionIterator extends LocalFunctionCallIterator {
+public class ReverseFunctionIterator extends HybridRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
+    private RuntimeIterator sequenceIterator;
     private List<Item> results;
     private int currentIndex = 0;
 
@@ -44,10 +47,54 @@ public class ReverseFunctionIterator extends LocalFunctionCallIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(parameters, executionMode, iteratorMetadata);
+        this.sequenceIterator = this.children.get(0);
     }
 
     @Override
-    public Item next() {
+    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
+        return null;
+    }
+
+    @Override
+    protected void openLocal() {
+        this.results = new ArrayList<>();
+        this.currentIndex = 0;
+
+        List<Item> items = sequenceIterator.materialize(this.currentDynamicContextForLocalExecution);
+
+        for (int i = items.size() - 1; i >= 0; i--) {
+            this.results.add(items.get(i));
+        }
+
+        this.hasNext = this.results.size() != 0;
+    }
+
+    @Override
+    protected void closeLocal() {
+        this.sequenceIterator.close();
+    }
+
+    @Override
+    protected void resetLocal(DynamicContext context) {
+        this.results = new ArrayList<>();
+        this.currentIndex = 0;
+
+        List<Item> items = sequenceIterator.materialize(this.currentDynamicContextForLocalExecution);
+
+        for (int i = items.size() - 1; i >= 0; i--) {
+            this.results.add(items.get(i));
+        }
+
+        this.hasNext = this.results.size() != 0;
+    }
+
+    @Override
+    protected boolean hasNextLocal() {
+        return this.hasNext;
+    }
+
+    @Override
+    protected Item nextLocal() {
         if (this.hasNext()) {
             return getResult();
         }
@@ -62,22 +109,5 @@ public class ReverseFunctionIterator extends LocalFunctionCallIterator {
             this.hasNext = false;
         }
         return this.results.get(this.currentIndex++);
-    }
-
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.results = new ArrayList<>();
-        this.currentIndex = 0;
-
-        RuntimeIterator sequenceIterator = this.children.get(0);
-
-        List<Item> items = sequenceIterator.materialize(this.currentDynamicContextForLocalExecution);
-
-        for (int i = items.size() - 1; i >= 0; i--) {
-            this.results.add(items.get(i));
-        }
-
-        this.hasNext = this.results.size() != 0;
     }
 }
