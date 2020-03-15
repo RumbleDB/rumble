@@ -64,11 +64,12 @@ public class DeepEqualFunctionIterator extends LocalFunctionCallIterator {
             if (sequenceIterator1.isRDD() && sequenceIterator2.isRDD()) {
                 JavaRDD<Item> rdd1 = sequenceIterator1.getRDD(this.currentDynamicContextForLocalExecution);
                 JavaRDD<Item> rdd2 = sequenceIterator2.getRDD(this.currentDynamicContextForLocalExecution);
-                FlatMapFunction2<Iterator<Item>, Iterator<Item>, Boolean> filter = new SameElementsAndLengthClosure();
-                JavaRDD<Boolean> differences = rdd1.zipPartitions(rdd2, filter);
-                return ItemFactory.getInstance().createBooleanItem(differences.isEmpty());
+                if (rdd1.partitions().size() == rdd2.partitions().size()) {
+                    FlatMapFunction2<Iterator<Item>, Iterator<Item>, Boolean> filter = new SameElementsAndLengthClosure();
+                    JavaRDD<Boolean> differences = rdd1.zipPartitions(rdd2, filter);
+                    return ItemFactory.getInstance().createBooleanItem(differences.isEmpty());
+                }
             }
-
             List<Item> items1 = sequenceIterator1.materialize(this.currentDynamicContextForLocalExecution);
             List<Item> items2 = sequenceIterator2.materialize(this.currentDynamicContextForLocalExecution);
 
