@@ -49,52 +49,21 @@ import sparksoniq.semantics.StaticContext;
  */
 public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
-    // indicate whether an error should be thrown if an duplicate user defined function declaration is detected
-    private boolean ignoreDuplicateUserDefinedFunctionError;
+    private VisitorConfig visitorConfig;
 
-    public StaticContextVisitor() {
-        this.setConfigForInitialPass();
+    StaticContextVisitor() {
+        this.visitorConfig = VisitorConfig.staticContextVisitorInitialPassConfig;
     }
 
-    /**
-     * The initial pass should collect all function declaration information to support hoisting.
-     * User defined functions'(UDF) signatures should not collide with each other or built-in functions.
-     * As Some functions may not be known yet, missing functions should not raise errors.
-     * Since unknown functions have unset execution modes, errors should not be raised for accessing these.
-     */
-    public void setConfigForInitialPass() {
-        this.ignoreDuplicateUserDefinedFunctionError = false;
-        FunctionCallExpression.suppressMissingFunctionErrors = true;
-        Node.suppressUnsetExecutionModeAccessedErrors = true;
-    }
-
-    /**
-     * Intermediate passes should update the execution modes of expressions as more UDFs can be resolved.
-     * As all UDFs should be known at this stage, missing functions should raise errors
-     * As UDFs may still have unresolved execution modes, errors should not be raised for accessing these.
-     */
-    public void setConfigForIntermediatePasses() {
-        // Updates on UDFs are currently performed by redeclaration, hence collision errors are disabled
-        this.ignoreDuplicateUserDefinedFunctionError = true;
-        FunctionCallExpression.suppressMissingFunctionErrors = false;
-        Node.suppressUnsetExecutionModeAccessedErrors = true;
-    }
-
-    /**
-     * All expression execution mode and UDF information should be available in the final pass
-     */
-    public void setConfigForFinalPass() {
-        // Updates on UDFs are currently performed by redeclaration, hence collision errors are disabled
-        this.ignoreDuplicateUserDefinedFunctionError = true;
-        FunctionCallExpression.suppressMissingFunctionErrors = false;
-        Node.suppressUnsetExecutionModeAccessedErrors = false;
+    void setVisitorConfig(VisitorConfig visitorConfig) {
+        this.visitorConfig = visitorConfig;
     }
 
     @Override
     protected StaticContext defaultAction(Node node, StaticContext argument) {
         StaticContext generatedContext = visitDescendants(node, argument);
         // initialize execution mode by visiting children and expressions first, then calling initialize methods
-        node.initHighestExecutionMode();
+        node.initHighestExecutionMode(this.visitorConfig);
         return generatedContext;
     }
 
@@ -140,9 +109,9 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             );
         // visit the body first to make its execution mode available while adding the function to the catalog
         this.visit(expression.getBody(), functionDeclarationContext);
-        expression.initHighestExecutionMode();
+        expression.initHighestExecutionMode(this.visitorConfig);
         expression.registerUserDefinedFunctionExecutionMode(
-            this.ignoreDuplicateUserDefinedFunctionError
+            this.visitorConfig
         );
         return functionDeclarationContext;
     }
@@ -150,7 +119,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitFunctionCall(FunctionCallExpression expression, StaticContext argument) {
         StaticContext generatedContext = visitDescendants(expression, argument);
-        expression.initFunctionCallHighestExecutionMode();
+        expression.initFunctionCallHighestExecutionMode(this.visitorConfig);
         return generatedContext;
     }
     // endregion
@@ -172,7 +141,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitForClauseVar(ForClauseVar expression, StaticContext argument) {
         // TODO visit at...
         this.visit(expression.getExpression(), argument);
-        expression.initHighestExecutionAndVariableHighestStorageModes();
+        expression.initHighestExecutionAndVariableHighestStorageModes(this.visitorConfig);
 
         StaticContext result = visitFlowrVarDeclaration(expression, argument);
         if (expression.getPositionalVariableReference() != null) {
@@ -189,7 +158,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitLetClauseVar(LetClauseVar expression, StaticContext argument) {
         this.visit(expression.getExpression(), argument);
-        expression.initHighestExecutionAndVariableHighestStorageModes();
+        expression.initHighestExecutionAndVariableHighestStorageModes(this.visitorConfig);
         return visitFlowrVarDeclaration(expression, argument);
     }
 
@@ -200,7 +169,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             // if a variable declaration takes place
             this.visit(expression.getExpression(), argument);
             // initialize execution and storage modes and then add the variable to the context
-            expression.initHighestExecutionAndVariableHighestStorageModes();
+            expression.initHighestExecutionAndVariableHighestStorageModes(this.visitorConfig);
             groupByClauseContext = visitFlowrVarDeclaration(expression, argument);
         } else {
             // if a variable is only referenced, use the context as is
@@ -213,7 +182,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitCountClause(CountClause expression, StaticContext argument) {
-        expression.initHighestExecutionMode();
+        expression.initHighestExecutionMode(this.visitorConfig);
         StaticContext result = new StaticContext(argument);
         result.addVariable(
             expression.getCountVariable().getVariableName(),
@@ -232,7 +201,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             expression.getVariableReference().getVariableName(),
             expression.getSequenceType(),
             expression.getMetadata(),
-            expression.getVariableHighestStorageMode()
+            expression.getVariableHighestStorageMode(this.visitorConfig)
         );
         return result;
     }
@@ -248,7 +217,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         // validate expression with the defined variables
         this.visit(expression.getEvaluationExpression(), contextWithQuantifiedExpressionVariables);
-        expression.initHighestExecutionMode();
+        expression.initHighestExecutionMode(this.visitorConfig);
         // return the given context unchanged as defined variables go out of scope
         return argument;
     }
@@ -257,7 +226,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitQuantifiedExpressionVar(QuantifiedExpressionVar expression, StaticContext argument) {
         // validate expression with starting context
         this.visit(expression.getExpression(), argument);
-        expression.initHighestExecutionMode();
+        expression.initHighestExecutionMode(this.visitorConfig);
 
         // create a child context, add the variable and return it
         StaticContext result = new StaticContext(argument);
@@ -303,7 +272,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             );
             this.visit(expression.getDefaultCase().getReturnExpression(), defaultCaseStaticContext);
         }
-        expression.initHighestExecutionMode();
+        expression.initHighestExecutionMode(this.visitorConfig);
         // return the given context unchanged as defined variables go out of scope
         return argument;
     }

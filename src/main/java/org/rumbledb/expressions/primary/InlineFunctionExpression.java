@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.primary;
 
 
+import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -72,20 +73,19 @@ public class InlineFunctionExpression extends Expression {
 
     @Override
     public List<Node> getChildren() {
-        List<Node> result = new ArrayList<>();
-        return result;
+        return new ArrayList<>();
     }
 
     public void registerUserDefinedFunctionExecutionMode(
-            boolean ignoreDuplicateUserDefinedFunctionError
+            VisitorConfig visitorConfig
     ) {
         FunctionIdentifier identifier = new FunctionIdentifier(this.name, this.params.size());
         // if named(static) function declaration
         if (!this.name.equals("")) {
             Functions.addUserDefinedFunctionExecutionMode(
                 identifier,
-                this.body.getHighestExecutionMode(),
-                ignoreDuplicateUserDefinedFunctionError,
+                this.body.getHighestExecutionMode(visitorConfig),
+                visitorConfig.suppressErrorsForFunctionSignatureCollision(),
                 this.getMetadata()
             );
         }

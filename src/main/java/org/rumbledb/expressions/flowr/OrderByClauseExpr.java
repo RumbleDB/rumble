@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions.flowr;
 
+import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -50,7 +51,7 @@ public class OrderByClauseExpr extends Clause {
     }
 
     @Override
-    public void initHighestExecutionMode() {
+    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
         // OrderByClauseExpr's execution mode is not used. Leave it unset
         this.highestExecutionMode = ExecutionMode.UNSET;
     }

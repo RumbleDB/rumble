@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions.flowr;
 
+import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.Expression;
@@ -80,13 +81,19 @@ public abstract class FlworVarDecl extends Clause {
     }
 
     @Override
-    public final void initHighestExecutionMode() {
+    public final void initHighestExecutionMode(VisitorConfig visitorConfig) {
         throw new OurBadException("Flwor variable declarations do not use the highestExecutionMode initializer");
     }
 
-    public abstract void initHighestExecutionAndVariableHighestStorageModes();
+    public abstract void initHighestExecutionAndVariableHighestStorageModes(VisitorConfig visitorConfig);
 
-    public ExecutionMode getVariableHighestStorageMode() {
+    public ExecutionMode getVariableHighestStorageMode(VisitorConfig visitorConfig) {
+        if (
+            !visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
+                && this.variableHighestStorageMode == ExecutionMode.UNSET
+        ) {
+            throw new OurBadException("An variable storage mode is accessed without being set.");
+        }
         return this.variableHighestStorageMode;
     }
 

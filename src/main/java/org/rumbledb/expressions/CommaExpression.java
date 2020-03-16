@@ -21,6 +21,7 @@
 package org.rumbledb.expressions;
 
 
+import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.jsoniq.ExecutionMode;
 
@@ -64,19 +65,19 @@ public class CommaExpression extends Expression {
     }
 
     @Override
-    public void initHighestExecutionMode() {
+    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
         if (bypassCurrentExpressionForExecutionModeOperations()) {
             return;
         }
-        super.initHighestExecutionMode();
+        super.initHighestExecutionMode(visitorConfig);
     }
 
     @Override
-    public ExecutionMode getHighestExecutionMode() {
+    public ExecutionMode getHighestExecutionMode(VisitorConfig visitorConfig) {
         if (bypassCurrentExpressionForExecutionModeOperations()) {
-            return this.expressions.get(0).getHighestExecutionMode();
+            return this.expressions.get(0).getHighestExecutionMode(visitorConfig);
         }
-        return super.getHighestExecutionMode();
+        return super.getHighestExecutionMode(visitorConfig);
     }
 
     @Override

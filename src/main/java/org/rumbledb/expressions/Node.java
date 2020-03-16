@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions;
 
+import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import sparksoniq.jsoniq.ExecutionMode;
@@ -33,9 +34,6 @@ import java.util.function.Predicate;
  * JSONiq query. Nodes include expressions, clauses, function declarations, etc.
  */
 public abstract class Node {
-
-    // flag to suppress error throwing when unset execution mode value is fetched from a node
-    public static boolean suppressUnsetExecutionModeAccessedErrors = false;
 
     private ExceptionMetadata metadata;
 
@@ -56,7 +54,7 @@ public abstract class Node {
      * overridden by subclasses that support higher execution modes. By
      * default, the highest execution mode is assumed to be local.
      */
-    public void initHighestExecutionMode() {
+    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
         this.highestExecutionMode = ExecutionMode.LOCAL;
     }
 
@@ -75,8 +73,11 @@ public abstract class Node {
      * 
      * @return the highest execution mode.
      */
-    public ExecutionMode getHighestExecutionMode() {
-        if (!Node.suppressUnsetExecutionModeAccessedErrors && this.highestExecutionMode == ExecutionMode.UNSET) {
+    public ExecutionMode getHighestExecutionMode(VisitorConfig visitorConfig) {
+        if (
+            !visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
+                && this.highestExecutionMode == ExecutionMode.UNSET
+        ) {
             throw new OurBadException("An execution mode is accessed without being set.");
         }
         return this.highestExecutionMode;

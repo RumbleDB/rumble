@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions.primary;
 
+import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
@@ -39,9 +40,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class FunctionCallExpression extends Expression {
-
-    // flag to suppress error throwing when an unrecognized function is referenced
-    public static boolean suppressMissingFunctionErrors = false;
 
     private final String functionName;
     private final List<Expression> arguments; // null for placeholder
@@ -69,11 +67,11 @@ public class FunctionCallExpression extends Expression {
     }
 
     @Override
-    public final void initHighestExecutionMode() {
+    public final void initHighestExecutionMode(VisitorConfig visitorConfig) {
         throw new OurBadException("Function call expressions do not use the highestExecutionMode initializer");
     }
 
-    public void initFunctionCallHighestExecutionMode() {
+    public void initFunctionCallHighestExecutionMode(VisitorConfig visitorConfig) {
         FunctionIdentifier identifier = new FunctionIdentifier(this.functionName, this.arguments.size());
         if (Functions.checkBuiltInFunctionExists(identifier)) {
             if (this.isPartialApplication) {
@@ -83,7 +81,7 @@ public class FunctionCallExpression extends Expression {
                 );
             }
             BuiltinFunction builtinFunction = Functions.getBuiltInFunction(identifier);
-            this.highestExecutionMode = this.getBuiltInFunctionExecutionMode(builtinFunction);
+            this.highestExecutionMode = this.getBuiltInFunctionExecutionMode(builtinFunction, visitorConfig);
             return;
         }
 
@@ -96,7 +94,7 @@ public class FunctionCallExpression extends Expression {
             return;
         }
 
-        if (!FunctionCallExpression.suppressMissingFunctionErrors) {
+        if (!visitorConfig.suppressErrorsForCallingMissingFunctions()) {
             throw new UnknownFunctionCallException(
                     identifier.getName(),
                     identifier.getArity(),
@@ -105,7 +103,10 @@ public class FunctionCallExpression extends Expression {
         }
     }
 
-    private ExecutionMode getBuiltInFunctionExecutionMode(BuiltinFunction builtinFunction) {
+    private ExecutionMode getBuiltInFunctionExecutionMode(
+            BuiltinFunction builtinFunction,
+            VisitorConfig visitorConfig
+    ) {
         BuiltinFunctionExecutionMode functionExecutionMode = builtinFunction.getBuiltinFunctionExecutionMode();
         if (functionExecutionMode == BuiltinFunctionExecutionMode.LOCAL) {
             return ExecutionMode.LOCAL;
@@ -117,7 +118,7 @@ public class FunctionCallExpression extends Expression {
             return ExecutionMode.DATAFRAME;
         }
         if (functionExecutionMode == BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT) {
-            ExecutionMode firstArgumentExecutionMode = this.arguments.get(0).getHighestExecutionMode();
+            ExecutionMode firstArgumentExecutionMode = this.arguments.get(0).getHighestExecutionMode(visitorConfig);
             if (firstArgumentExecutionMode.isDataFrame()) {
                 return ExecutionMode.DATAFRAME;
             }
@@ -129,7 +130,7 @@ public class FunctionCallExpression extends Expression {
         if (
             functionExecutionMode == BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT_BUT_DATAFRAME_FALLSBACK_TO_LOCAL
         ) {
-            ExecutionMode firstArgumentExecutionMode = this.arguments.get(0).getHighestExecutionMode();
+            ExecutionMode firstArgumentExecutionMode = this.arguments.get(0).getHighestExecutionMode(visitorConfig);
             if (
                 firstArgumentExecutionMode.isRDD()
                     && !firstArgumentExecutionMode.isDataFrame()

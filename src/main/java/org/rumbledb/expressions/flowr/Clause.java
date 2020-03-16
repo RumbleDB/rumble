@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions.flowr;
 
+import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Node;
 
@@ -55,8 +56,8 @@ public abstract class Clause extends Node {
      * This method is overridden in clauses such as for and let for special behavior
      */
     @Override
-    public void initHighestExecutionMode() {
-        this.highestExecutionMode = this.previousClause.getHighestExecutionMode();
+    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
+        this.highestExecutionMode = this.previousClause.getHighestExecutionMode(visitorConfig);
     }
 
     @Override

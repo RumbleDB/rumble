@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions.flowr;
 
+import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -68,12 +69,13 @@ public class ForClauseVar extends FlworVarDecl {
     }
 
     @Override
-    public void initHighestExecutionAndVariableHighestStorageModes() {
+    public void initHighestExecutionAndVariableHighestStorageModes(VisitorConfig visitorConfig) {
         this.highestExecutionMode =
-            (this.expression.getHighestExecutionMode().isRDD()
-                || (this.previousClause != null && this.previousClause.getHighestExecutionMode().isDataFrame()))
-                    ? ExecutionMode.DATAFRAME
-                    : ExecutionMode.LOCAL;
+            (this.expression.getHighestExecutionMode(visitorConfig).isRDD()
+                || (this.previousClause != null
+                    && this.previousClause.getHighestExecutionMode(visitorConfig).isDataFrame()))
+                        ? ExecutionMode.DATAFRAME
+                        : ExecutionMode.LOCAL;
 
         this.variableHighestStorageMode = ExecutionMode.LOCAL;
     }

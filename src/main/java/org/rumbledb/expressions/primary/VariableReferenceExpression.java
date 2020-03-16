@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.primary;
 
 
+import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -63,7 +64,7 @@ public class VariableReferenceExpression extends Expression implements Serializa
     }
 
     @Override
-    public final void initHighestExecutionMode() {
+    public final void initHighestExecutionMode(VisitorConfig visitorConfig) {
         // Variable reference execution mode can only be resolved in conjunction with a static context
         // variable reference's execution mode gets initialized in staticContextVisitor by a setter
         throw new OurBadException("Variable references do not use the highestExecutionMode initializer");
