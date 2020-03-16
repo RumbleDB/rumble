@@ -506,33 +506,20 @@ public class Functions {
         userDefinedFunctionIdentifiersWithUnsetExecutionModes = new ArrayList<>();
     }
 
-    public static RuntimeIterator getUserDefinedFunctionCallIterator(
-            FunctionIdentifier identifier,
-            ExecutionMode executionMode,
-            ExceptionMetadata metadata,
-            List<RuntimeIterator> arguments
-    ) {
-        if (Functions.checkUserDefinedFunctionExists(identifier)) {
-            return buildUserDefinedFunctionCallIterator(
-                getUserDefinedFunction(identifier),
-                executionMode,
-                metadata,
-                arguments
-            );
-        }
-        throw new UnknownFunctionCallException(
-                identifier.getName(),
-                identifier.getArity(),
-                metadata
-        );
+    public static void clearUserDefinedFunctions() {
+        userDefinedFunctionsExecutionMode.clear();
+        userDefinedFunctions.clear();
+    }
 
+    public static boolean checkUserDefinedFunctionExecutionModeExists(FunctionIdentifier identifier) {
+        return userDefinedFunctionsExecutionMode.containsKey(identifier);
     }
 
     public static ExecutionMode getUserDefinedFunctionExecutionMode(
             FunctionIdentifier identifier,
             ExceptionMetadata metadata
     ) {
-        if (userDefinedFunctionsExecutionMode.containsKey(identifier)) {
+        if (checkUserDefinedFunctionExecutionModeExists(identifier)) {
             return userDefinedFunctionsExecutionMode.get(identifier);
         }
         throw new UnknownFunctionCallException(
@@ -541,43 +528,6 @@ public class Functions {
                 metadata
         );
 
-    }
-
-    public static RuntimeIterator buildUserDefinedFunctionCallIterator(
-            FunctionItem functionItem,
-            ExecutionMode executionMode,
-            ExceptionMetadata metadata,
-            List<RuntimeIterator> arguments
-    ) {
-        FunctionItemCallIterator functionCallIterator = new FunctionItemCallIterator(
-                functionItem,
-                arguments,
-                executionMode,
-                metadata
-        );
-        if (!functionItem.getSignature().getReturnType().equals(mostGeneralSequenceType)) {
-            return new TypePromotionIterator(
-                    functionCallIterator,
-                    functionItem.getSignature().getReturnType(),
-                    "Invalid return type for "
-                        + (functionItem.getIdentifier().getName().equals("")
-                            ? ""
-                            : (functionItem.getIdentifier().getName()) + " ")
-                        + "function. ",
-                    executionMode,
-                    metadata
-            );
-        }
-        return functionCallIterator;
-    }
-
-    public static void clearUserDefinedFunctions() {
-        userDefinedFunctionsExecutionMode.clear();
-        userDefinedFunctions.clear();
-    }
-
-    public static List<FunctionIdentifier> getUserDefinedFunctionIdentifiersWithUnsetExecutionModes() {
-        return userDefinedFunctionIdentifiersWithUnsetExecutionModes;
     }
 
     public static void addUserDefinedFunctionExecutionMode(
@@ -620,6 +570,60 @@ public class Functions {
             && executionMode != ExecutionMode.UNSET;
     }
 
+    public static List<FunctionIdentifier> getUserDefinedFunctionIdentifiersWithUnsetExecutionModes() {
+        return userDefinedFunctionIdentifiersWithUnsetExecutionModes;
+    }
+
+    public static RuntimeIterator getUserDefinedFunctionCallIterator(
+            FunctionIdentifier identifier,
+            ExecutionMode executionMode,
+            ExceptionMetadata metadata,
+            List<RuntimeIterator> arguments
+    ) {
+        if (Functions.checkUserDefinedFunctionExists(identifier)) {
+            return buildUserDefinedFunctionCallIterator(
+                getUserDefinedFunction(identifier),
+                executionMode,
+                metadata,
+                arguments
+            );
+        }
+        throw new UnknownFunctionCallException(
+                identifier.getName(),
+                identifier.getArity(),
+                metadata
+        );
+
+    }
+
+    public static RuntimeIterator buildUserDefinedFunctionCallIterator(
+            FunctionItem functionItem,
+            ExecutionMode executionMode,
+            ExceptionMetadata metadata,
+            List<RuntimeIterator> arguments
+    ) {
+        FunctionItemCallIterator functionCallIterator = new FunctionItemCallIterator(
+                functionItem,
+                arguments,
+                executionMode,
+                metadata
+        );
+        if (!functionItem.getSignature().getReturnType().equals(mostGeneralSequenceType)) {
+            return new TypePromotionIterator(
+                    functionCallIterator,
+                    functionItem.getSignature().getReturnType(),
+                    "Invalid return type for "
+                        + (functionItem.getIdentifier().getName().equals("")
+                            ? ""
+                            : (functionItem.getIdentifier().getName()) + " ")
+                        + "function. ",
+                    executionMode,
+                    metadata
+            );
+        }
+        return functionCallIterator;
+    }
+
     public static void addUserDefinedFunction(FunctionItem function, ExceptionMetadata meta) {
         FunctionIdentifier functionIdentifier = function.getIdentifier();
         if (
@@ -629,10 +633,6 @@ public class Functions {
             throw new DuplicateFunctionIdentifierException(functionIdentifier, meta);
         }
         userDefinedFunctions.put(functionIdentifier, function);
-    }
-
-    public static boolean checkUserDefinedFunctionExecutionModeExists(FunctionIdentifier identifier) {
-        return userDefinedFunctionsExecutionMode.containsKey(identifier);
     }
 
     public static boolean checkUserDefinedFunctionExists(FunctionIdentifier identifier) {
