@@ -72,11 +72,11 @@ public class CommaExpression extends Expression {
     }
 
     @Override
-    public ExecutionMode getHighestExecutionMode(boolean ignoreUnsetError) {
+    public ExecutionMode getHighestExecutionMode() {
         if (bypassCurrentExpressionForExecutionModeOperations()) {
-            return this.expressions.get(0).getHighestExecutionMode(ignoreUnsetError);
+            return this.expressions.get(0).getHighestExecutionMode();
         }
-        return super.getHighestExecutionMode(ignoreUnsetError);
+        return super.getHighestExecutionMode();
     }
 
     @Override

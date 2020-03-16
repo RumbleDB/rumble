@@ -44,47 +44,50 @@ import org.rumbledb.types.SequenceType;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.StaticContext;
 
+/**
+ * Static context visitor implements a multi-pass algorithm that enables function hoisting
+ */
 public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     // indicate whether an error should be thrown if an duplicate user defined function declaration is detected
     private boolean ignoreDuplicateUserDefinedFunctionError;
 
-    // indicate whether an error should be thrown if a function call is made for a non-existing function
-    private boolean ignoreMissingFunctionError;
-
-    private boolean ignoreUnsetExecutionModeAccessDuringFunctionDeclaration;
-
     public StaticContextVisitor() {
         this.setConfigForInitialPass();
     }
 
-    // static context visitor's multipass algorithm enables function hoisting
-
-    // initial pass collects function declaration information
+    /**
+     * The initial pass should collect all function declaration information to support hoisting.
+     * User defined functions'(UDF) signatures should not collide with each other or built-in functions.
+     * As Some functions may not be known yet, missing functions should not raise errors.
+     * Since unknown functions have unset execution modes, errors should not be raised for accessing these.
+     */
     public void setConfigForInitialPass() {
-        // initial pass ensures that built-in functions are not redeclared or a single function definition is duplicated
         this.ignoreDuplicateUserDefinedFunctionError = false;
-        // functions calls that refer to undeclared functions will have their execution mode unset
-        this.ignoreMissingFunctionError = true;
-        // function declarations make undefined/unset function calls in their body will also have their execution mode
-        // unset
-        this.ignoreUnsetExecutionModeAccessDuringFunctionDeclaration = true;
+        FunctionCallExpression.suppressMissingFunctionErrors = true;
+        Node.suppressUnsetExecutionModeAccessedErrors = true;
     }
 
-    // intermediate passes set execution mode for functions that refer to other functions
+    /**
+     * Intermediate passes should update the execution modes of expressions as more UDFs can be resolved.
+     * As all UDFs should be known at this stage, missing functions should raise errors
+     * As UDFs may still have unresolved execution modes, errors should not be raised for accessing these.
+     */
     public void setConfigForIntermediatePasses() {
-        // user defined functions will be redeclared in consequent passes to update their execution modes
+        // Updates on UDFs are currently performed by redeclaration, hence collision errors are disabled
         this.ignoreDuplicateUserDefinedFunctionError = true;
-        // since all function declaration information is available, functions cannot be missing anymore
-        this.ignoreMissingFunctionError = false;
-        this.ignoreUnsetExecutionModeAccessDuringFunctionDeclaration = true;
+        FunctionCallExpression.suppressMissingFunctionErrors = false;
+        Node.suppressUnsetExecutionModeAccessedErrors = true;
     }
 
-    // final pass ensures that all function calls have their execution modes set
+    /**
+     * All expression execution mode and UDF information should be available in the final pass
+     */
     public void setConfigForFinalPass() {
+        // Updates on UDFs are currently performed by redeclaration, hence collision errors are disabled
         this.ignoreDuplicateUserDefinedFunctionError = true;
-        this.ignoreMissingFunctionError = false;
-        this.ignoreUnsetExecutionModeAccessDuringFunctionDeclaration = false;
+        FunctionCallExpression.suppressMissingFunctionErrors = false;
+        Node.suppressUnsetExecutionModeAccessedErrors = false;
     }
 
     @Override
@@ -139,8 +142,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         this.visit(expression.getBody(), functionDeclarationContext);
         expression.initHighestExecutionMode();
         expression.registerUserDefinedFunctionExecutionMode(
-            this.ignoreDuplicateUserDefinedFunctionError,
-            this.ignoreUnsetExecutionModeAccessDuringFunctionDeclaration
+            this.ignoreDuplicateUserDefinedFunctionError
         );
         return functionDeclarationContext;
     }
@@ -148,7 +150,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitFunctionCall(FunctionCallExpression expression, StaticContext argument) {
         StaticContext generatedContext = visitDescendants(expression, argument);
-        expression.initFunctionCallHighestExecutionMode(this.ignoreMissingFunctionError);
+        expression.initFunctionCallHighestExecutionMode();
         return generatedContext;
     }
     // endregion

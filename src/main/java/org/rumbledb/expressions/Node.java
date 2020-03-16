@@ -34,6 +34,9 @@ import java.util.function.Predicate;
  */
 public abstract class Node {
 
+    // flag to suppress error throwing when unset execution mode value is fetched from a node
+    public static boolean suppressUnsetExecutionModeAccessedErrors = false;
+
     private ExceptionMetadata metadata;
 
     protected ExecutionMode highestExecutionMode = ExecutionMode.UNSET;
@@ -65,32 +68,15 @@ public abstract class Node {
      * overridden by subclasses that support higher execution modes. By
      * default, the highest execution mode is assumed to be local.
      *
-     * If the mode is unset, which should not happen, an unexpected error will be thrown.
-     *
      * When extending this method, make sure to perform a super() call to prevent UNSET accesses.
      *
+     * if Node.suppressUnsetExecutionModeAccessedErrors is false, then an error is thrown if an UNSET mode is found.
+     * if Node.suppressUnsetExecutionModeAccessedErrors is true, it might silently return UNSET.
+     * 
      * @return the highest execution mode.
      */
-    public final ExecutionMode getHighestExecutionMode() {
-        return getHighestExecutionMode(false);
-    }
-
-    /**
-     * Gets the highest execution mode of this node, which determines
-     * whether evaluation will be done locally, with RDDs or with DataFrames.
-     *
-     * This method is used during the static analysis. It is meant to be
-     * overridden by subclasses that support higher execution modes. By
-     * default, the highest execution mode is assumed to be local.
-     *
-     * When extending this method, make sure to perform a super() call to prevent UNSET accesses.
-     *
-     * @param ignoreUnsetError if true, then an error is thrown if an UNSET mode is found.
-     *        If false, it might silently return UNSET.
-     * @return the highest execution mode.
-     */
-    public ExecutionMode getHighestExecutionMode(boolean ignoreUnsetError) {
-        if (!ignoreUnsetError && this.highestExecutionMode == ExecutionMode.UNSET) {
+    public ExecutionMode getHighestExecutionMode() {
+        if (!Node.suppressUnsetExecutionModeAccessedErrors && this.highestExecutionMode == ExecutionMode.UNSET) {
             throw new OurBadException("An execution mode is accessed without being set.");
         }
         return this.highestExecutionMode;

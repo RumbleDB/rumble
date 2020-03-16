@@ -77,15 +77,14 @@ public class InlineFunctionExpression extends Expression {
     }
 
     public void registerUserDefinedFunctionExecutionMode(
-            boolean ignoreDuplicateUserDefinedFunctionError,
-            boolean ignoreUnsetExecutionModeAccessDuringFunctionDeclaration
+            boolean ignoreDuplicateUserDefinedFunctionError
     ) {
         FunctionIdentifier identifier = new FunctionIdentifier(this.name, this.params.size());
         // if named(static) function declaration
         if (!this.name.equals("")) {
             Functions.addUserDefinedFunctionExecutionMode(
                 identifier,
-                this.body.getHighestExecutionMode(ignoreUnsetExecutionModeAccessDuringFunctionDeclaration),
+                this.body.getHighestExecutionMode(),
                 ignoreDuplicateUserDefinedFunctionError,
                 this.getMetadata()
             );

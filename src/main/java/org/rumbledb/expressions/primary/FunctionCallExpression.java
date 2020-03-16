@@ -40,6 +40,9 @@ import java.util.stream.Collectors;
 
 public class FunctionCallExpression extends Expression {
 
+    // flag to suppress error throwing when an unrecognized function is referenced
+    public static boolean suppressMissingFunctionErrors = false;
+
     private final String functionName;
     private final List<Expression> arguments; // null for placeholder
     private final boolean isPartialApplication;
@@ -70,7 +73,7 @@ public class FunctionCallExpression extends Expression {
         throw new OurBadException("Function call expressions do not use the highestExecutionMode initializer");
     }
 
-    public void initFunctionCallHighestExecutionMode(boolean ignoreMissingFunctionError) {
+    public void initFunctionCallHighestExecutionMode() {
         FunctionIdentifier identifier = new FunctionIdentifier(this.functionName, this.arguments.size());
         if (Functions.checkBuiltInFunctionExists(identifier)) {
             if (this.isPartialApplication) {
@@ -93,7 +96,7 @@ public class FunctionCallExpression extends Expression {
             return;
         }
 
-        if (!ignoreMissingFunctionError) {
+        if (!FunctionCallExpression.suppressMissingFunctionErrors) {
             throw new UnknownFunctionCallException(
                     identifier.getName(),
                     identifier.getArity(),

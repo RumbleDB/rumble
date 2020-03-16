@@ -84,9 +84,9 @@ public class FlworExpression extends Expression {
     }
 
     @Override
-    public ExecutionMode getHighestExecutionMode(boolean ignoreUnsetError) {
+    public ExecutionMode getHighestExecutionMode() {
         // overall flwor expression's execution mode is stored in the return clause
-        return this.returnClause.getHighestExecutionMode(ignoreUnsetError);
+        return this.returnClause.getHighestExecutionMode();
     }
 
     public List<Node> getChildren() {
