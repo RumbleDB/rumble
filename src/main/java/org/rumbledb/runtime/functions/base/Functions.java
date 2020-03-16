@@ -152,131 +152,131 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.abs;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.accumulate;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.acos;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.adjust_dateTime_to_timezone1;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.adjust_dateTime_to_timezone2;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.adjust_date_to_timezone1;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.adjust_date_to_timezone2;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.adjust_time_to_timezone1;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.adjust_time_to_timezone2;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.annotate;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.asin;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.atan;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.atan2;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.avg;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.base64Binary;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.boolean_function;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.ceiling;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.concat;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.contains;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.cos;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.count;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.date;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.dateTime;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.dayTimeDuration;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.day_from_date;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.day_from_dateTime;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.days_from_duration;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.decimal_function;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.deep_equal;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.descendant_arrays;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.descendant_objects;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.descendant_pairs;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.distinct_values;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.double_function;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.duration;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.empty;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.ends_with;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.exactly_one;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.exists;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.exp;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.exp10;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.flatten;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.floor;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.get_estimator;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.get_transformer;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.head;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.hexBinary;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.hours_from_dateTime;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.hours_from_duration;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.hours_from_time;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.index_of;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.insert_before;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.integer_function;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.intersect;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.json_doc;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.json_file1;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.json_file2;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.keys;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.last;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.libsvm_file;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.log;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.log10;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.matches;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.max;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.members;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.min;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.minutes_from_dateTime;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.minutes_from_duration;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.minutes_from_time;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.month_from_date;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.month_from_dateTime;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.months_from_duration;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.normalize_space;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.null_function;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.one_or_more;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.parallelizeFunction1;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.parallelizeFunction2;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.parquet_file;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.pi;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.position;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.pow;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.project;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.remove;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.remove_keys;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.reverse;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.round1;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.round2;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.round_half_to_even1;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.round_half_to_even2;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.seconds_from_dateTime;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.seconds_from_duration;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.seconds_from_time;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.sin;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.size;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.sqrt;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.starts_with;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.string_function;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.string_join1;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.string_join2;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.string_length;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.structured_json_file;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.subsequence2;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.subsequence3;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.substring2;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.substring3;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.substring_after;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.substring_before;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.sum1;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.sum2;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.tail;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.tan;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.text_file1;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.text_file2;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.time;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.timezone_from_date;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.timezone_from_dateTime;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.timezone_from_time;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.tokenize1;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.tokenize2;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.values;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.yearMonthDuration;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.year_from_date;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.year_from_dateTime;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.years_from_duration;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.zero_or_one;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.abs;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.accumulate;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.acos;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.adjust_dateTime_to_timezone1;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.adjust_dateTime_to_timezone2;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.adjust_date_to_timezone1;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.adjust_date_to_timezone2;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.adjust_time_to_timezone1;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.adjust_time_to_timezone2;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.annotate;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.asin;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.atan;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.atan2;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.avg;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.base64Binary;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.boolean_function;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.ceiling;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.concat;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.contains;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.cos;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.count;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.date;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.dateTime;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.dayTimeDuration;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.day_from_date;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.day_from_dateTime;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.days_from_duration;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.decimal_function;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.deep_equal;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.descendant_arrays;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.descendant_objects;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.descendant_pairs;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.distinct_values;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.double_function;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.duration;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.empty;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.ends_with;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.exactly_one;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.exists;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.exp;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.exp10;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.flatten;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.floor;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.get_estimator;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.get_transformer;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.head;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.hexBinary;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.hours_from_dateTime;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.hours_from_duration;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.hours_from_time;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.index_of;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.insert_before;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.integer_function;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.intersect;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.json_doc;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.json_file1;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.json_file2;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.keys;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.last;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.libsvm_file;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.log;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.log10;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.matches;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.max;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.members;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.min;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.minutes_from_dateTime;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.minutes_from_duration;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.minutes_from_time;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.month_from_date;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.month_from_dateTime;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.months_from_duration;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.normalize_space;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.null_function;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.one_or_more;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.parallelizeFunction1;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.parallelizeFunction2;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.parquet_file;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.pi;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.position;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.pow;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.project;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.remove;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.remove_keys;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.reverse;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.round1;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.round2;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.round_half_to_even1;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.round_half_to_even2;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.seconds_from_dateTime;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.seconds_from_duration;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.seconds_from_time;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.sin;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.size;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.sqrt;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.starts_with;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.string_function;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.string_join1;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.string_join2;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.string_length;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.structured_json_file;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.subsequence2;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.subsequence3;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.substring2;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.substring3;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.substring_after;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.substring_before;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.sum1;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.sum2;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.tail;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.tan;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.text_file1;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.text_file2;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.time;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.timezone_from_date;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.timezone_from_dateTime;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.timezone_from_time;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.tokenize1;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.tokenize2;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.values;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.yearMonthDuration;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.year_from_date;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.year_from_dateTime;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.years_from_duration;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.zero_or_one;
 import static org.rumbledb.types.SequenceType.mostGeneralSequenceType;
 
 public class Functions {
@@ -287,7 +287,7 @@ public class Functions {
     private static HashMap<FunctionIdentifier, ExecutionMode> userDefinedFunctionsExecutionMode;
     private static HashMap<FunctionIdentifier, FunctionItem> userDefinedFunctions;
 
-    private static List<FunctionIdentifier> currentUnsetUserDefinedFunctionIdentifiers;
+    private static List<FunctionIdentifier> userDefinedFunctionIdentifiersWithUnsetExecutionModes;
 
     private static final Map<String, SequenceType> sequenceTypes;
 
@@ -503,66 +503,7 @@ public class Functions {
     static {
         userDefinedFunctionsExecutionMode = new HashMap<>();
         userDefinedFunctions = new HashMap<>();
-        currentUnsetUserDefinedFunctionIdentifiers = new ArrayList<>();
-    }
-
-    public static boolean checkBuiltInFunctionExists(FunctionIdentifier identifier) {
-        return builtInFunctions.containsKey(identifier);
-    }
-
-    public static BuiltinFunction getBuiltInFunction(FunctionIdentifier identifier) {
-        return builtInFunctions.get(identifier);
-    }
-
-    public static RuntimeIterator getBuiltInFunctionIterator(
-            FunctionIdentifier identifier,
-            List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata metadata
-    ) {
-        BuiltinFunction builtinFunction = builtInFunctions.get(identifier);
-
-        for (int i = 0; i < arguments.size(); i++) {
-            if (!builtinFunction.getSignature().getParameterTypes().get(i).equals(mostGeneralSequenceType)) {
-                TypePromotionIterator typePromotionIterator = new TypePromotionIterator(
-                        arguments.get(i),
-                        builtinFunction.getSignature().getParameterTypes().get(i),
-                        "Invalid argument for function " + identifier.getName() + ". ",
-                        arguments.get(i).getHighestExecutionMode(),
-                        arguments.get(i).getMetadata()
-                );
-
-                arguments.set(i, typePromotionIterator);
-            }
-        }
-
-        RuntimeIterator functionCallIterator;
-        try {
-            Constructor<? extends RuntimeIterator> constructor = builtinFunction.getFunctionIteratorClass()
-                .getConstructor(
-                    List.class,
-                    ExecutionMode.class,
-                    ExceptionMetadata.class
-                );
-            functionCallIterator = constructor.newInstance(arguments, executionMode, metadata);
-        } catch (ReflectiveOperationException ex) {
-            throw new UnknownFunctionCallException(
-                    identifier.getName(),
-                    arguments.size(),
-                    metadata
-            );
-        }
-
-        if (!builtinFunction.getSignature().getReturnType().equals(mostGeneralSequenceType)) {
-            return new TypePromotionIterator(
-                    functionCallIterator,
-                    builtinFunction.getSignature().getReturnType(),
-                    "Invalid return type for function " + identifier.getName() + ". ",
-                    functionCallIterator.getHighestExecutionMode(),
-                    functionCallIterator.getMetadata()
-            );
-        }
-        return functionCallIterator;
+        userDefinedFunctionIdentifiersWithUnsetExecutionModes = new ArrayList<>();
     }
 
     public static RuntimeIterator getUserDefinedFunctionCallIterator(
@@ -635,8 +576,8 @@ public class Functions {
         userDefinedFunctions.clear();
     }
 
-    public static List<FunctionIdentifier> getCurrentUnsetUserDefinedFunctionIdentifiers() {
-        return currentUnsetUserDefinedFunctionIdentifiers;
+    public static List<FunctionIdentifier> getUserDefinedFunctionIdentifiersWithUnsetExecutionModes() {
+        return userDefinedFunctionIdentifiersWithUnsetExecutionModes;
     }
 
     public static void addUserDefinedFunctionExecutionMode(
@@ -655,9 +596,9 @@ public class Functions {
         }
 
         if (isAddingNewUnsetUserDefinedFunction(functionIdentifier, executionMode)) {
-            currentUnsetUserDefinedFunctionIdentifiers.add(functionIdentifier);
+            userDefinedFunctionIdentifiersWithUnsetExecutionModes.add(functionIdentifier);
         } else if (isUpdatingUnsetUserDefinedFunctionToNonUnset(functionIdentifier, executionMode)) {
-            currentUnsetUserDefinedFunctionIdentifiers.remove(functionIdentifier);
+            userDefinedFunctionIdentifiersWithUnsetExecutionModes.remove(functionIdentifier);
         }
         userDefinedFunctionsExecutionMode.put(functionIdentifier, executionMode);
     }
@@ -696,6 +637,70 @@ public class Functions {
 
     public static boolean checkUserDefinedFunctionExists(FunctionIdentifier identifier) {
         return userDefinedFunctions.containsKey(identifier);
+    }
+
+    public static FunctionItem getUserDefinedFunction(FunctionIdentifier identifier) {
+        FunctionItem functionItem = userDefinedFunctions.get(identifier);
+        return functionItem.deepCopy();
+    }
+
+    public static boolean checkBuiltInFunctionExists(FunctionIdentifier identifier) {
+        return builtInFunctions.containsKey(identifier);
+    }
+
+    public static BuiltinFunction getBuiltInFunction(FunctionIdentifier identifier) {
+        return builtInFunctions.get(identifier);
+    }
+
+    public static RuntimeIterator getBuiltInFunctionIterator(
+            FunctionIdentifier identifier,
+            List<RuntimeIterator> arguments,
+            ExecutionMode executionMode,
+            ExceptionMetadata metadata
+    ) {
+        BuiltinFunction builtinFunction = builtInFunctions.get(identifier);
+
+        for (int i = 0; i < arguments.size(); i++) {
+            if (!builtinFunction.getSignature().getParameterTypes().get(i).equals(mostGeneralSequenceType)) {
+                TypePromotionIterator typePromotionIterator = new TypePromotionIterator(
+                        arguments.get(i),
+                        builtinFunction.getSignature().getParameterTypes().get(i),
+                        "Invalid argument for function " + identifier.getName() + ". ",
+                        arguments.get(i).getHighestExecutionMode(),
+                        arguments.get(i).getMetadata()
+                );
+
+                arguments.set(i, typePromotionIterator);
+            }
+        }
+
+        RuntimeIterator functionCallIterator;
+        try {
+            Constructor<? extends RuntimeIterator> constructor = builtinFunction.getFunctionIteratorClass()
+                .getConstructor(
+                    List.class,
+                    ExecutionMode.class,
+                    ExceptionMetadata.class
+                );
+            functionCallIterator = constructor.newInstance(arguments, executionMode, metadata);
+        } catch (ReflectiveOperationException ex) {
+            throw new UnknownFunctionCallException(
+                    identifier.getName(),
+                    arguments.size(),
+                    metadata
+            );
+        }
+
+        if (!builtinFunction.getSignature().getReturnType().equals(mostGeneralSequenceType)) {
+            return new TypePromotionIterator(
+                    functionCallIterator,
+                    builtinFunction.getSignature().getReturnType(),
+                    "Invalid return type for function " + identifier.getName() + ". ",
+                    functionCallIterator.getHighestExecutionMode(),
+                    functionCallIterator.getMetadata()
+            );
+        }
+        return functionCallIterator;
     }
 
     private static BuiltinFunction createBuiltinFunction(
@@ -780,12 +785,7 @@ public class Functions {
         );
     }
 
-    public static FunctionItem getUserDefinedFunction(FunctionIdentifier identifier) {
-        FunctionItem functionItem = userDefinedFunctions.get(identifier);
-        return functionItem.deepCopy();
-    }
-
-    static final class FunctionNames {
+    static final class BuiltinFunctions {
         /**
          * function that returns the context position
          */
