@@ -28,7 +28,7 @@ import java.io.Serializable;
 public class ItemType implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private final String name;
+    private String name;
 
     public static final ItemType objectItem = new ItemType("object");
     public static final ItemType atomicItem = new ItemType("atomic");
@@ -50,6 +50,9 @@ public class ItemType implements Serializable {
     public static final ItemType base64BinaryItem = new ItemType("base64Binary");
     public static final ItemType item = new ItemType("item");
     public static final ItemType functionItem = new ItemType("function");
+
+    public ItemType() {
+    }
 
     private ItemType(String name) {
         this.name = name;
@@ -120,24 +123,32 @@ public class ItemType implements Serializable {
         throw new OurBadException("Type unrecognized: " + name);
     }
 
+    @Override
+    public boolean equals(Object other) {
+        if (!(other instanceof ItemType)) {
+            return false;
+        }
+        return this.name.equals(((ItemType) other).getName());
+    }
+
 
     boolean isSubtypeOf(ItemType superType) {
-        if (superType == item) {
+        if (superType.equals(item)) {
             return true;
         }
-        if (superType == JSONItem) {
-            return this == objectItem
-                || this == arrayItem
-                || this == JSONItem
-                || this == nullItem;
+        if (superType.equals(JSONItem)) {
+            return this.equals(objectItem)
+                || this.equals(arrayItem)
+                || this.equals(JSONItem)
+                || this.equals(nullItem);
         }
 
-        if (superType == atomicItem) {
-            return this == stringItem
-                || this == integerItem
-                || this == decimalItem
-                || this == doubleItem
-                || this == booleanItem;
+        if (superType.equals(atomicItem)) {
+            return this.equals(stringItem)
+                || this.equals(integerItem)
+                || this.equals(decimalItem)
+                || this.equals(doubleItem)
+                || this.equals(booleanItem);
         }
 
         return false;
