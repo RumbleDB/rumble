@@ -386,12 +386,14 @@ public class ItemParser implements Serializable {
     private static Object getRowColumnFromItemUsingDataType(Item item, DataType dataType) {
         try {
             if (dataType instanceof ArrayType) {
-                List<Object> arrayContents = new ArrayList<>();
+                List<Item> arrayItems = item.getItems();
+                Object[] arrayItemsForRow = new Object[arrayItems.size()];
                 DataType elementType = ((ArrayType) dataType).elementType();
-                for (Item arrayItem : item.getItems()) {
-                    arrayContents.add(getRowColumnFromItemUsingDataType(arrayItem, elementType));
+                for (int i = 0; i < arrayItems.size(); i++) {
+                    Item arrayItem = item.getItemAt(i);
+                    arrayItemsForRow[i] = getRowColumnFromItemUsingDataType(arrayItem, elementType);
                 }
-                return arrayContents;
+                return arrayItemsForRow;
             }
 
             if (dataType instanceof StructType) {

@@ -206,7 +206,7 @@ public class RumbleMLUtils {
             return vectorAssembler.transform(inputDataset);
         } catch (IllegalArgumentException e) {
             throw new InvalidRumbleMLParamException(
-                    "Parameter provided to FeatureColumns causes the following error: " + e.getMessage(),
+                    "Parameter provided to featuresCol causes the following error: " + e.getMessage(),
                     metadata
             );
         }
