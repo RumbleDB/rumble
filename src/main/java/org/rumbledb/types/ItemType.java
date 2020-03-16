@@ -23,37 +23,40 @@ package org.rumbledb.types;
 
 import org.rumbledb.exceptions.OurBadException;
 
-public enum ItemType {
+import java.io.Serializable;
 
-    objectItem("object"),
-    atomicItem("atomic"),
-    stringItem("string"),
-    integerItem("integer"),
-    decimalItem("decimal"),
-    doubleItem("double"),
-    booleanItem("boolean"),
-    arrayItem("array"),
-    nullItem("null"),
-    JSONItem("json-item"),
-    durationItem("duration"),
-    yearMonthDurationItem("yearMonthDuration"),
-    dayTimeDurationItem("dayTimeDuration"),
-    dateTimeItem("dateTime"),
-    dateItem("date"),
-    timeItem("time"),
-    hexBinaryItem("hexBinary"),
-    base64BinaryItem("base64Binary"),
-    item("item"),
-    functionItem("function");
+public class ItemType implements Serializable {
 
+    private static final long serialVersionUID = 1L;
     private final String name;
 
-    ItemType(String name) {
+    public static final ItemType objectItem = new ItemType("object");
+    public static final ItemType atomicItem = new ItemType("atomic");
+    public static final ItemType stringItem = new ItemType("string");
+    public static final ItemType integerItem = new ItemType("integer");
+    public static final ItemType decimalItem = new ItemType("decimal");
+    public static final ItemType doubleItem = new ItemType("double");
+    public static final ItemType booleanItem = new ItemType("boolean");
+    public static final ItemType arrayItem = new ItemType("array");
+    public static final ItemType nullItem = new ItemType("null");
+    public static final ItemType JSONItem = new ItemType("json-item");
+    public static final ItemType durationItem = new ItemType("duration");
+    public static final ItemType yearMonthDurationItem = new ItemType("yearMonthDuration");
+    public static final ItemType dayTimeDurationItem = new ItemType("dayTimeDuration");
+    public static final ItemType dateTimeItem = new ItemType("dateTime");
+    public static final ItemType dateItem = new ItemType("date");
+    public static final ItemType timeItem = new ItemType("time");
+    public static final ItemType hexBinaryItem = new ItemType("hexBinary");
+    public static final ItemType base64BinaryItem = new ItemType("base64Binary");
+    public static final ItemType item = new ItemType("item");
+    public static final ItemType functionItem = new ItemType("function");
+
+    private ItemType(String name) {
         this.name = name;
     }
 
     public String getName() {
-        return name;
+        return this.name;
     }
 
     public static ItemType getItemTypeByName(String name) {
