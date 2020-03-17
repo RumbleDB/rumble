@@ -329,23 +329,32 @@ public class ItemParser implements Serializable {
     public static String getItemTypeNameFromDataFrameDataType(DataType dataType) {
         if (DataTypes.BooleanType.equals(dataType)) {
             return ItemType.booleanItem.getName();
-        } else if (DataTypes.IntegerType.equals(dataType) || DataTypes.ShortType.equals(dataType)) {
+        }
+        if (DataTypes.IntegerType.equals(dataType) || DataTypes.ShortType.equals(dataType)) {
             return ItemType.integerItem.getName();
-        } else if (DataTypes.DoubleType.equals(dataType) || DataTypes.FloatType.equals(dataType)) {
+        }
+        if (DataTypes.DoubleType.equals(dataType) || DataTypes.FloatType.equals(dataType)) {
             return ItemType.doubleItem.getName();
-        } else if (dataType.equals(decimalType) || DataTypes.LongType.equals(dataType)) {
+        }
+        if (dataType.equals(decimalType) || DataTypes.LongType.equals(dataType)) {
             return ItemType.decimalItem.getName();
-        } else if (DataTypes.StringType.equals(dataType)) {
+        }
+        if (DataTypes.StringType.equals(dataType)) {
             return ItemType.stringItem.getName();
-        } else if (DataTypes.NullType.equals(dataType)) {
+        }
+        if (DataTypes.NullType.equals(dataType)) {
             return ItemType.nullItem.getName();
-        } else if (DataTypes.DateType.equals(dataType)) {
+        }
+        if (DataTypes.DateType.equals(dataType)) {
             return ItemType.dateItem.getName();
-        } else if (DataTypes.TimestampType.equals(dataType)) {
+        }
+        if (DataTypes.TimestampType.equals(dataType)) {
             return ItemType.dateTimeItem.getName();
-        } else if (DataTypes.BinaryType.equals(dataType)) {
+        }
+        if (DataTypes.BinaryType.equals(dataType)) {
             return ItemType.hexBinaryItem.getName();
-        } else if (vectorType.equals(dataType)) {
+        }
+        if (vectorType.equals(dataType)) {
             return "object";
         }
         throw new OurBadException("Unexpected DataFrame data type found: '" + dataType.toString() + "'.");
