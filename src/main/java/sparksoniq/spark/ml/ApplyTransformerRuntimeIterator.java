@@ -71,7 +71,7 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
                 );
             }
 
-            inputDataset = RumbleMLUtils.generateAndAddFeaturesColumn(
+            inputDataset = RumbleMLUtils.generateAndAddVectorizedFeaturesColumn(
                 inputDataset,
                 featuresColValue,
                 getMetadata()
