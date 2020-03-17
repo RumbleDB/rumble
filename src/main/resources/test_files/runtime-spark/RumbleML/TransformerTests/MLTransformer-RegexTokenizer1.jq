@@ -4,10 +4,10 @@ let $data := annotate(
     { "label": "integer", "binaryLabel": "integer", "name": "string", "age": "double", "weight": "double", "booleanCol": "boolean", "nullCol": "null", "stringCol": "string", "stringArrayCol": ["string"], "intArrayCol": ["integer"],  "doubleArrayCol": ["double"],  "doubleArrayArrayCol": [["double"]] }
 )
 
-let $transformer := get-transformer("Tokenizer")
+let $transformer := get-transformer("RegexTokenizer")
 for $result in $transformer(
     $data,
-    {"inputCol": "stringCol", "outputCol": "output"}
+    {"inputCol": "stringCol", "outputCol": "output", "pattern": "\\W"}
 )
 return {
     "label": $result.label,

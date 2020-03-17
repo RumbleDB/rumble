@@ -4,7 +4,7 @@ let $data := annotate(
     { "label": "integer", "binaryLabel": "integer", "name": "string", "age": "double", "weight": "double", "booleanCol": "boolean", "nullCol": "null", "stringCol": "string", "stringArrayCol": ["string"], "intArrayCol": ["integer"],  "doubleArrayCol": ["double"],  "doubleArrayArrayCol": [["double"]] }
 )
 
-let $est := get-estimator("LogisticRegression")
+let $est := get-estimator("DecisionTreeClassifier")
 let $tra := $est(
     $data,
     { "featuresCol": ["age", "weight"] }

@@ -4,10 +4,10 @@ let $data := annotate(
     { "label": "integer", "binaryLabel": "integer", "name": "string", "age": "double", "weight": "double", "booleanCol": "boolean", "nullCol": "null", "stringCol": "string", "stringArrayCol": ["string"], "intArrayCol": ["integer"],  "doubleArrayCol": ["double"],  "doubleArrayArrayCol": [["double"]] }
 )
 
-let $est := get-estimator("LogisticRegression")
+let $est := get-estimator("GBTRegressor")
 let $tra := $est(
     $data,
-    { "featuresCol": ["age", "weight"] }
+    { "featuresCol": ["age", "weight"], "maxIter": 10}
 )
 for $result in $tra(
     $data,
