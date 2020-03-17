@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -27,6 +28,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import scala.Tuple2;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 
@@ -52,7 +54,9 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
-        return null;
+        JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(context);
+        JavaPairRDD<Long, Item> zippedRDD = childRDD.zipWithIndex().mapToPair(Tuple2::swap);
+        return zippedRDD.sortByKey(false).map(item -> item._2);
     }
 
     @Override
