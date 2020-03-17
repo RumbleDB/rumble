@@ -1195,7 +1195,7 @@ public class Functions {
             "item*",
             "item+",
             OneOrMoreIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
         );
         /**
          * function that returns $arg if it contains exactly one item. Otherwise, raises an error.
