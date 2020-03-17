@@ -37,6 +37,7 @@ import org.rumbledb.types.SequenceType;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
@@ -236,5 +237,20 @@ public class FunctionItem extends Item {
     @Override
     public ItemType getDynamicType() {
         return ItemType.functionItem;
+    }
+
+    public FunctionItem deepCopy() {
+        try {
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(bos);
+            oos.writeObject(this);
+            oos.flush();
+            byte[] data = bos.toByteArray();
+            ByteArrayInputStream bis = new ByteArrayInputStream(data);
+            ObjectInputStream ois = new ObjectInputStream(bis);
+            return (FunctionItem) ois.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            throw new OurBadException("Error while deep copying the function body runtimeIterator");
+        }
     }
 }
