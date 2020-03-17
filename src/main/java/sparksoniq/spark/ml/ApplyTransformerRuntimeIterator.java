@@ -98,6 +98,8 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
                 || this.transformerShortName.equals("VectorIndexerModel")
                 || this.transformerShortName.equals("DCT")
                 || this.transformerShortName.equals("ElementwiseProduct")
+                || this.transformerShortName.equals("Normalizer")
+                || this.transformerShortName.equals("PolynomialExpansion")
                 || this.transformerShortName.equals("VectorSizeHint")
                 || this.transformerShortName.equals("VectorSlicer");
 
