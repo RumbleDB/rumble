@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions.flowr;
 
+import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -78,15 +79,15 @@ public class FlworExpression extends Expression {
     }
 
     @Override
-    public void initHighestExecutionMode() {
+    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
         // overall flwor expression's execution mode is never used and remains unset
         this.highestExecutionMode = ExecutionMode.UNSET;
     }
 
     @Override
-    public ExecutionMode getHighestExecutionMode(boolean ignoreUnsetError) {
+    public ExecutionMode getHighestExecutionMode(VisitorConfig visitorConfig) {
         // overall flwor expression's execution mode is stored in the return clause
-        return this.returnClause.getHighestExecutionMode(ignoreUnsetError);
+        return this.returnClause.getHighestExecutionMode(visitorConfig);
     }
 
     public List<Node> getChildren() {

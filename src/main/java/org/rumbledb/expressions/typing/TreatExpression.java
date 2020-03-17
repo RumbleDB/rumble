@@ -3,6 +3,7 @@ package org.rumbledb.expressions.typing;
 import java.util.Collections;
 import java.util.List;
 
+import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -36,19 +37,24 @@ public class TreatExpression extends Expression {
     }
 
     @Override
-    public void initHighestExecutionMode() {
-        this.highestExecutionMode = calculateIsRDDFromSequenceTypeAndExpression(this.sequenceType, this.mainExpression);
+    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
+        this.highestExecutionMode = calculateIsRDDFromSequenceTypeAndExpression(
+            this.sequenceType,
+            this.mainExpression,
+            visitorConfig
+        );
     }
 
     public static ExecutionMode calculateIsRDDFromSequenceTypeAndExpression(
             SequenceType sequenceType,
-            Expression expression
+            Expression expression,
+            VisitorConfig visitorConfig
     ) {
         if (
             !sequenceType.isEmptySequence()
                 && sequenceType.getArity() != SequenceType.Arity.One
                 && sequenceType.getArity() != SequenceType.Arity.OneOrZero
-                && expression.getHighestExecutionMode().isRDD()
+                && expression.getHighestExecutionMode(visitorConfig).isRDD()
         ) {
             return ExecutionMode.RDD;
         }

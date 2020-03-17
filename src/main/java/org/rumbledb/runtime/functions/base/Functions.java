@@ -642,13 +642,13 @@ public class Functions {
     public static void addUserDefinedFunctionExecutionMode(
             FunctionIdentifier functionIdentifier,
             ExecutionMode executionMode,
-            boolean ignoreDuplicateUserDefinedFunctionError,
+            boolean suppressErrorsForFunctionSignatureCollision,
             ExceptionMetadata meta
     ) {
         if (
             builtInFunctions.containsKey(functionIdentifier)
                 ||
-                (!ignoreDuplicateUserDefinedFunctionError
+                (!suppressErrorsForFunctionSignatureCollision
                     && userDefinedFunctionsExecutionMode.containsKey(functionIdentifier))
         ) {
             throw new DuplicateFunctionIdentifierException(functionIdentifier, meta);

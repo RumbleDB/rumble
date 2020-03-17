@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.flowr;
 
 
+import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -42,13 +43,15 @@ public class LetClauseVar extends FlworVarDecl {
     }
 
     @Override
-    public void initHighestExecutionAndVariableHighestStorageModes() {
+    public void initHighestExecutionAndVariableHighestStorageModes(VisitorConfig visitorConfig) {
         this.highestExecutionMode =
-            (this.previousClause == null) ? ExecutionMode.LOCAL : this.previousClause.getHighestExecutionMode();
+            (this.previousClause == null)
+                ? ExecutionMode.LOCAL
+                : this.previousClause.getHighestExecutionMode(visitorConfig);
 
         // if let clause is local, defined variables are stored according to the execution mode of the expression
         if (this.highestExecutionMode == ExecutionMode.LOCAL) {
-            this.variableHighestStorageMode = this.expression.getHighestExecutionMode();
+            this.variableHighestStorageMode = this.expression.getHighestExecutionMode(visitorConfig);
         } else {
             this.variableHighestStorageMode = ExecutionMode.LOCAL;
         }
