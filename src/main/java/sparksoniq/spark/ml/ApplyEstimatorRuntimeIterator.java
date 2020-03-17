@@ -26,6 +26,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import static sparksoniq.spark.ml.RumbleMLCatalog.featuresColParamDefaultValue;
 import static sparksoniq.spark.ml.RumbleMLCatalog.featuresColParamName;
@@ -100,9 +101,9 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
         Transformer fittedModel;
         try {
             fittedModel = this.estimator.fit(inputDataset, paramMap);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | NoSuchElementException e) {
             throw new InvalidRumbleMLParamException(
-                    "Parameter provided to "
+                    "Parameters provided to "
                         + this.estimatorShortName
                         + " causes the following error: "
                         + e.getMessage(),
