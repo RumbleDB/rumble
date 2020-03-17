@@ -22,7 +22,6 @@ package org.rumbledb.runtime.functions.base;
 
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -155,11 +154,6 @@ import sparksoniq.spark.ml.AnnotateFunctionIterator;
 import sparksoniq.spark.ml.GetEstimatorFunctionIterator;
 import sparksoniq.spark.ml.GetTransformerFunctionIterator;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -317,103 +311,70 @@ public class Functions {
 
     private static List<FunctionIdentifier> currentUnsetUserDefinedFunctionIdentifiers;
 
-    private static final Map<String, ItemType> itemTypes;
-
-    static {
-        itemTypes = new HashMap<>();
-        itemTypes.put("item", ItemType.item);
-
-        itemTypes.put("object", ItemType.objectItem);
-        itemTypes.put("array", ItemType.arrayItem);
-
-        itemTypes.put("atomic", ItemType.atomicItem);
-        itemTypes.put("string", ItemType.stringItem);
-        itemTypes.put("integer", ItemType.integerItem);
-        itemTypes.put("decimal", ItemType.decimalItem);
-        itemTypes.put("double", ItemType.doubleItem);
-        itemTypes.put("boolean", ItemType.booleanItem);
-
-        itemTypes.put("duration", ItemType.durationItem);
-        itemTypes.put("yearMonthDuration", ItemType.yearMonthDurationItem);
-        itemTypes.put("dayTimeDuration", ItemType.dayTimeDurationItem);
-
-        itemTypes.put("dateTime", ItemType.dateTimeItem);
-        itemTypes.put("date", ItemType.dateItem);
-        itemTypes.put("time", ItemType.timeItem);
-
-        itemTypes.put("anyURI", ItemType.anyURIItem);
-
-        itemTypes.put("hexBinary", ItemType.hexBinaryItem);
-        itemTypes.put("base64Binary", ItemType.base64BinaryItem);
-
-        itemTypes.put("null", ItemType.nullItem);
-
-    }
 
     private static final Map<String, SequenceType> sequenceTypes;
 
     static {
         sequenceTypes = new HashMap<>();
-        sequenceTypes.put("item", new SequenceType(itemTypes.get("item"), SequenceType.Arity.One));
-        sequenceTypes.put("item?", new SequenceType(itemTypes.get("item"), SequenceType.Arity.OneOrZero));
-        sequenceTypes.put("item*", new SequenceType(itemTypes.get("item"), SequenceType.Arity.ZeroOrMore));
-        sequenceTypes.put("item+", new SequenceType(itemTypes.get("item"), SequenceType.Arity.OneOrMore));
+        sequenceTypes.put("item", new SequenceType(ItemType.item, SequenceType.Arity.One));
+        sequenceTypes.put("item?", new SequenceType(ItemType.item, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("item*", new SequenceType(ItemType.item, SequenceType.Arity.ZeroOrMore));
+        sequenceTypes.put("item+", new SequenceType(ItemType.item, SequenceType.Arity.OneOrMore));
 
-        sequenceTypes.put("object", new SequenceType(itemTypes.get("object"), SequenceType.Arity.One));
-        sequenceTypes.put("object+", new SequenceType(itemTypes.get("object"), SequenceType.Arity.OneOrMore));
-        sequenceTypes.put("object*", new SequenceType(itemTypes.get("object"), SequenceType.Arity.ZeroOrMore));
+        sequenceTypes.put("object", new SequenceType(ItemType.objectItem, SequenceType.Arity.One));
+        sequenceTypes.put("object+", new SequenceType(ItemType.objectItem, SequenceType.Arity.OneOrMore));
+        sequenceTypes.put("object*", new SequenceType(ItemType.objectItem, SequenceType.Arity.ZeroOrMore));
 
-        sequenceTypes.put("array?", new SequenceType(itemTypes.get("array"), SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("array?", new SequenceType(ItemType.arrayItem, SequenceType.Arity.OneOrZero));
 
-        sequenceTypes.put("atomic", new SequenceType(itemTypes.get("atomic"), SequenceType.Arity.One));
-        sequenceTypes.put("atomic?", new SequenceType(itemTypes.get("atomic"), SequenceType.Arity.OneOrZero));
-        sequenceTypes.put("atomic*", new SequenceType(itemTypes.get("atomic"), SequenceType.Arity.ZeroOrMore));
+        sequenceTypes.put("atomic", new SequenceType(ItemType.atomicItem, SequenceType.Arity.One));
+        sequenceTypes.put("atomic?", new SequenceType(ItemType.atomicItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("atomic*", new SequenceType(ItemType.atomicItem, SequenceType.Arity.ZeroOrMore));
 
-        sequenceTypes.put("string", new SequenceType(itemTypes.get("string"), SequenceType.Arity.One));
-        sequenceTypes.put("string?", new SequenceType(itemTypes.get("string"), SequenceType.Arity.OneOrZero));
-        sequenceTypes.put("string*", new SequenceType(itemTypes.get("string"), SequenceType.Arity.ZeroOrMore));
+        sequenceTypes.put("string", new SequenceType(ItemType.stringItem, SequenceType.Arity.One));
+        sequenceTypes.put("string?", new SequenceType(ItemType.stringItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("string*", new SequenceType(ItemType.stringItem, SequenceType.Arity.ZeroOrMore));
 
-        sequenceTypes.put("integer", new SequenceType(itemTypes.get("integer"), SequenceType.Arity.One));
-        sequenceTypes.put("integer?", new SequenceType(itemTypes.get("integer"), SequenceType.Arity.OneOrZero));
-        sequenceTypes.put("integer*", new SequenceType(itemTypes.get("integer"), SequenceType.Arity.ZeroOrMore));
+        sequenceTypes.put("integer", new SequenceType(ItemType.integerItem, SequenceType.Arity.One));
+        sequenceTypes.put("integer?", new SequenceType(ItemType.integerItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("integer*", new SequenceType(ItemType.integerItem, SequenceType.Arity.ZeroOrMore));
 
-        sequenceTypes.put("decimal?", new SequenceType(itemTypes.get("decimal"), SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("decimal?", new SequenceType(ItemType.decimalItem, SequenceType.Arity.OneOrZero));
 
-        sequenceTypes.put("double", new SequenceType(itemTypes.get("double"), SequenceType.Arity.One));
-        sequenceTypes.put("double?", new SequenceType(itemTypes.get("double"), SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("double", new SequenceType(ItemType.doubleItem, SequenceType.Arity.One));
+        sequenceTypes.put("double?", new SequenceType(ItemType.doubleItem, SequenceType.Arity.OneOrZero));
 
-        sequenceTypes.put("boolean", new SequenceType(itemTypes.get("boolean"), SequenceType.Arity.One));
-        sequenceTypes.put("boolean?", new SequenceType(itemTypes.get("boolean"), SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("boolean", new SequenceType(ItemType.booleanItem, SequenceType.Arity.One));
+        sequenceTypes.put("boolean?", new SequenceType(ItemType.booleanItem, SequenceType.Arity.OneOrZero));
 
-        sequenceTypes.put("duration?", new SequenceType(itemTypes.get("duration"), SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("duration?", new SequenceType(ItemType.durationItem, SequenceType.Arity.OneOrZero));
 
         sequenceTypes.put(
             "yearMonthDuration?",
-            new SequenceType(itemTypes.get("yearMonthDuration"), SequenceType.Arity.OneOrZero)
+            new SequenceType(ItemType.yearMonthDurationItem, SequenceType.Arity.OneOrZero)
         );
 
         sequenceTypes.put(
             "dayTimeDuration?",
-            new SequenceType(itemTypes.get("dayTimeDuration"), SequenceType.Arity.OneOrZero)
+            new SequenceType(ItemType.dayTimeDurationItem, SequenceType.Arity.OneOrZero)
         );
 
-        sequenceTypes.put("dateTime?", new SequenceType(itemTypes.get("dateTime"), SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("dateTime?", new SequenceType(ItemType.dateTimeItem, SequenceType.Arity.OneOrZero));
 
-        sequenceTypes.put("date?", new SequenceType(itemTypes.get("date"), SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("date?", new SequenceType(ItemType.dateItem, SequenceType.Arity.OneOrZero));
 
-        sequenceTypes.put("time?", new SequenceType(itemTypes.get("time"), SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("time?", new SequenceType(ItemType.timeItem, SequenceType.Arity.OneOrZero));
 
-        sequenceTypes.put("anyURI?", new SequenceType(itemTypes.get("anyURI"), SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("anyURI?", new SequenceType(ItemType.anyURIItem, SequenceType.Arity.OneOrZero));
 
-        sequenceTypes.put("hexBinary?", new SequenceType(itemTypes.get("hexBinary"), SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("hexBinary?", new SequenceType(ItemType.hexBinaryItem, SequenceType.Arity.OneOrZero));
 
         sequenceTypes.put(
             "base64Binary?",
-            new SequenceType(itemTypes.get("base64Binary"), SequenceType.Arity.OneOrZero)
+            new SequenceType(ItemType.base64BinaryItem, SequenceType.Arity.OneOrZero)
         );
 
-        sequenceTypes.put("null?", new SequenceType(itemTypes.get("null"), SequenceType.Arity.OneOrZero));
-
+        sequenceTypes.put("null?", new SequenceType(ItemType.nullItem, SequenceType.Arity.OneOrZero));
     }
 
 
@@ -719,13 +680,13 @@ public class Functions {
     public static void addUserDefinedFunctionExecutionMode(
             FunctionIdentifier functionIdentifier,
             ExecutionMode executionMode,
-            boolean ignoreDuplicateUserDefinedFunctionError,
+            boolean suppressErrorsForFunctionSignatureCollision,
             ExceptionMetadata meta
     ) {
         if (
             builtInFunctions.containsKey(functionIdentifier)
                 ||
-                (!ignoreDuplicateUserDefinedFunctionError
+                (!suppressErrorsForFunctionSignatureCollision
                     && userDefinedFunctionsExecutionMode.containsKey(functionIdentifier))
         ) {
             throw new DuplicateFunctionIdentifierException(functionIdentifier, meta);
@@ -859,18 +820,7 @@ public class Functions {
 
     public static FunctionItem getUserDefinedFunction(FunctionIdentifier identifier) {
         FunctionItem functionItem = userDefinedFunctions.get(identifier);
-        try {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(bos);
-            oos.writeObject(functionItem);
-            oos.flush();
-            byte[] data = bos.toByteArray();
-            ByteArrayInputStream bis = new ByteArrayInputStream(data);
-            ObjectInputStream ois = new ObjectInputStream(bis);
-            return (FunctionItem) ois.readObject();
-        } catch (IOException | ClassNotFoundException e) {
-            throw new OurBadException("Error while deep copying the function body runtimeIterator");
-        }
+        return functionItem.deepCopy();
     }
 
     static final class FunctionNames {

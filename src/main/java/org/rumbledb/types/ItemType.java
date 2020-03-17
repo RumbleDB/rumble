@@ -27,235 +27,140 @@ import java.io.Serializable;
 
 public class ItemType implements Serializable {
 
-
     private static final long serialVersionUID = 1L;
-    private ItemTypes type;
-    public static final ItemType objectItem = new ItemType(ItemTypes.ObjectItem);
-    public static final ItemType atomicItem = new ItemType(ItemTypes.AtomicItem);
-    public static final ItemType stringItem = new ItemType(ItemTypes.StringItem);
-    public static final ItemType integerItem = new ItemType(ItemTypes.IntegerItem);
-    public static final ItemType decimalItem = new ItemType(ItemTypes.DecimalItem);
-    public static final ItemType doubleItem = new ItemType(ItemTypes.DoubleItem);
-    public static final ItemType booleanItem = new ItemType(ItemTypes.BooleanItem);
-    public static final ItemType arrayItem = new ItemType(ItemTypes.ArrayItem);
-    public static final ItemType nullItem = new ItemType(ItemTypes.NullItem);
-    public static final ItemType JSONItem = new ItemType(ItemTypes.JSONItem);
-    public static final ItemType durationItem = new ItemType(ItemTypes.DurationItem);
-    public static final ItemType yearMonthDurationItem = new ItemType(ItemTypes.YearMonthDurationItem);
-    public static final ItemType dayTimeDurationItem = new ItemType(ItemTypes.DayTimeDurationItem);
-    public static final ItemType dateTimeItem = new ItemType(ItemTypes.DateTimeItem);
-    public static final ItemType dateItem = new ItemType(ItemTypes.DateItem);
-    public static final ItemType timeItem = new ItemType(ItemTypes.TimeItem);
-    public static final ItemType anyURIItem = new ItemType(ItemTypes.AnyURIItem);
-    public static final ItemType hexBinaryItem = new ItemType(ItemTypes.HexBinaryItem);
-    public static final ItemType base64BinaryItem = new ItemType(ItemTypes.Base64BinaryItem);
-    public static final ItemType item = new ItemType(ItemTypes.Item);
-    public static final ItemType functionItem = new ItemType(ItemTypes.FunctionItem);
+    private String name;
+
+    public static final ItemType objectItem = new ItemType("object");
+    public static final ItemType atomicItem = new ItemType("atomic");
+    public static final ItemType stringItem = new ItemType("string");
+    public static final ItemType integerItem = new ItemType("integer");
+    public static final ItemType decimalItem = new ItemType("decimal");
+    public static final ItemType doubleItem = new ItemType("double");
+    public static final ItemType booleanItem = new ItemType("boolean");
+    public static final ItemType arrayItem = new ItemType("array");
+    public static final ItemType nullItem = new ItemType("null");
+    public static final ItemType JSONItem = new ItemType("json-item");
+    public static final ItemType durationItem = new ItemType("duration");
+    public static final ItemType yearMonthDurationItem = new ItemType("yearMonthDuration");
+    public static final ItemType dayTimeDurationItem = new ItemType("dayTimeDuration");
+    public static final ItemType dateTimeItem = new ItemType("dateTime");
+    public static final ItemType dateItem = new ItemType("date");
+    public static final ItemType timeItem = new ItemType("time");
+    public static final ItemType hexBinaryItem = new ItemType("hexBinary");
+    public static final ItemType anyURIItem = new ItemType("anyURI");
+    public static final ItemType base64BinaryItem = new ItemType("base64Binary");
+    public static final ItemType item = new ItemType("item");
+    public static final ItemType functionItem = new ItemType("function");
 
     public ItemType() {
     }
 
-    private ItemType(ItemTypes type) {
-        this.type = type;
-
+    private ItemType(String name) {
+        this.name = name;
     }
 
-    public ItemType(String text) {
-        text = text.toLowerCase();
-        switch (text) {
-            case "object":
-                this.type = ItemTypes.ObjectItem;
-                return;
-            case "atomic":
-                this.type = ItemTypes.AtomicItem;
-                return;
-            case "string":
-                this.type = ItemTypes.StringItem;
-                return;
-            case "integer":
-                this.type = ItemTypes.IntegerItem;
-                return;
-            case "decimal":
-                this.type = ItemTypes.DecimalItem;
-                return;
-            case "double":
-                this.type = ItemTypes.DoubleItem;
-                return;
-            case "boolean":
-                this.type = ItemTypes.BooleanItem;
-                return;
-            case "null":
-                this.type = ItemTypes.NullItem;
-                return;
-            case "array":
-                this.type = ItemTypes.ArrayItem;
-                return;
-            case "json-item":
-                this.type = ItemTypes.JSONItem;
-                return;
-            case "duration":
-                this.type = ItemTypes.DurationItem;
-                return;
-            case "yearmonthduration":
-                this.type = ItemTypes.YearMonthDurationItem;
-                return;
-            case "daytimeduration":
-                this.type = ItemTypes.DayTimeDurationItem;
-                return;
-            case "datetime":
-                this.type = ItemTypes.DateTimeItem;
-                return;
-            case "date":
-                this.type = ItemTypes.DateItem;
-                return;
-            case "time":
-                this.type = ItemTypes.TimeItem;
-                return;
-            case "anyuri":
-                this.type = ItemTypes.AnyURIItem;
-                return;
-            case "hexbinary":
-                this.type = ItemTypes.HexBinaryItem;
-                return;
-            case "base64binary":
-                this.type = ItemTypes.Base64BinaryItem;
-                return;
-            case "item":
-                this.type = ItemTypes.Item;
-                return;
-            default:
-                throw new OurBadException("Type unrecognized: " + text);
+    public String getName() {
+        return this.name;
+    }
+
+    public static ItemType getItemTypeByName(String name) {
+        if (name.equals(objectItem.name)) {
+            return objectItem;
         }
+        if (name.equals(atomicItem.name)) {
+            return atomicItem;
+        }
+        if (name.equals(stringItem.name)) {
+            return stringItem;
+        }
+        if (name.equals(integerItem.name)) {
+            return integerItem;
+        }
+        if (name.equals(decimalItem.name)) {
+            return decimalItem;
+        }
+        if (name.equals(doubleItem.name)) {
+            return doubleItem;
+        }
+        if (name.equals(booleanItem.name)) {
+            return booleanItem;
+        }
+        if (name.equals(nullItem.name)) {
+            return nullItem;
+        }
+        if (name.equals(arrayItem.name)) {
+            return arrayItem;
+        }
+        if (name.equals(JSONItem.name)) {
+            return JSONItem;
+        }
+        if (name.equals(durationItem.name)) {
+            return durationItem;
+        }
+        if (name.equals(yearMonthDurationItem.name)) {
+            return yearMonthDurationItem;
+        }
+        if (name.equals(dayTimeDurationItem.name)) {
+            return dayTimeDurationItem;
+        }
+        if (name.equals(dateTimeItem.name)) {
+            return dateTimeItem;
+        }
+        if (name.equals(dateItem.name)) {
+            return dateItem;
+        }
+        if (name.equals(timeItem.name)) {
+            return timeItem;
+        }
+        if (name.equals(anyURIItem.name)) {
+            return anyURIItem;
+        }
+        if (name.equals(hexBinaryItem.name)) {
+            return hexBinaryItem;
+        }
+        if (name.equals(base64BinaryItem.name)) {
+            return base64BinaryItem;
+        }
+        if (name.equals(item.name)) {
+            return item;
+        }
+        throw new OurBadException("Type unrecognized: " + name);
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (!(other instanceof ItemType)) {
+            return false;
+        }
+        return this.name.equals(((ItemType) other).getName());
     }
 
 
-    private ItemTypes getType() {
-        return this.type;
-    }
-
-    public boolean isSubtypeOf(ItemType superType) {
-        if (superType.equals(ItemType.item)) {
+    boolean isSubtypeOf(ItemType superType) {
+        if (superType.equals(item)) {
             return true;
         }
-        if (superType.getType() == ItemTypes.JSONItem) {
-            if (
-                this.type == ItemTypes.ObjectItem
-                    || this.type == ItemTypes.ArrayItem
-                    || this.type == ItemTypes.JSONItem
-                    || this.type == ItemTypes.NullItem
-            ) {
-                return true;
-            }
-            return false;
+        if (superType.equals(JSONItem)) {
+            return this.equals(objectItem)
+                || this.equals(arrayItem)
+                || this.equals(JSONItem)
+                || this.equals(nullItem);
         }
 
-        if (superType.equals(ItemType.atomicItem)) {
-            if (
-                this.type == ItemTypes.StringItem
-                    || this.type == ItemTypes.IntegerItem
-                    || this.type == ItemTypes.DecimalItem
-                    || this.type == ItemTypes.DoubleItem
-                    || this.type == ItemTypes.BooleanItem
-                    || this.type == ItemTypes.AnyURIItem
-            ) {
-                return true;
-            }
-            return false;
+        if (superType.equals(atomicItem)) {
+            return this.equals(stringItem)
+                || this.equals(integerItem)
+                || this.equals(decimalItem)
+                || this.equals(doubleItem)
+                || this.equals(booleanItem)
+                || this.equals(anyURIItem);
         }
 
         return false;
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (!(o instanceof ItemType)) {
-            return false;
-        }
-        ItemType itemType = (ItemType) o;
-        return this.getType().equals(itemType.getType());
-    }
-
-
-    @Override
     public String toString() {
-        switch (this.type) {
-            case Item:
-                return "item";
-            case IntegerItem:
-                return "integer";
-            case DecimalItem:
-                return "decimal";
-            case DoubleItem:
-                return "double";
-            case AtomicItem:
-                return "atomic";
-            case StringItem:
-                return "string";
-            case BooleanItem:
-                return "boolean";
-            case AnyURIItem:
-                return "anyURI";
-            case NullItem:
-                return "null";
-            case JSONItem:
-                return "json-item";
-            case ArrayItem:
-                return "array";
-            case ObjectItem:
-                return "object";
-            case Base64BinaryItem:
-                return "base64Binary";
-            case HexBinaryItem:
-                return "hexBinary";
-            case DateItem:
-                return "date";
-            case DateTimeItem:
-                return "dateTime";
-            case DayTimeDurationItem:
-                return "dayTimeDuration";
-            case DurationItem:
-                return "duration";
-            case FunctionItem:
-                return "function(*)";
-            case TimeItem:
-                return "time";
-            case YearMonthDurationItem:
-                return "yearMonthDuration";
-        }
-        throw new OurBadException("Unrecognized type.");
-    }
-
-    private enum ItemTypes {
-        Item,
-
-        JSONItem,
-        ObjectItem,
-        ArrayItem,
-
-        AtomicItem,
-        StringItem,
-        IntegerItem,
-        DecimalItem,
-        DoubleItem,
-        BooleanItem,
-
-        DurationItem,
-        YearMonthDurationItem,
-        DayTimeDurationItem,
-
-        DateTimeItem,
-        DateItem,
-        TimeItem,
-
-        AnyURIItem,
-
-        HexBinaryItem,
-        Base64BinaryItem,
-
-        FunctionItem,
-
-        NullItem;
-
-
+        return this.name;
     }
 }

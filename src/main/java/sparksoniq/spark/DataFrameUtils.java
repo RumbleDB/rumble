@@ -102,7 +102,7 @@ public class DataFrameUtils {
     private static DataType generateDataTypeFromItem(Item item) {
         if (item.isArray()) {
             validateArrayItemInSchema(item);
-            Item arrayContentsTypeItem = item.getItems().get(0);
+            Item arrayContentsTypeItem = item.getItemAt(0);
             DataType arrayContentsType = generateDataTypeFromItem(arrayContentsTypeItem);
             return DataTypes.createArrayType(arrayContentsType);
         }

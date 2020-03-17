@@ -1,14 +1,22 @@
-(:JIQS: ShouldRun; Output="({ "label" : 0, "features" : { }, "prediction" : 0 }, { "label" : 1, "features" : { "0" : 0.1, "1" : 0.1, "2" : 0.1 }, "prediction" : 0 }, { "label" : 2, "features" : { "0" : 0.2, "1" : 0.2, "2" : 0.2 }, "prediction" : 0 }, { "label" : 3, "features" : { "0" : 9, "1" : 9, "2" : 9 }, "prediction" : 1 }, { "label" : 4, "features" : { "0" : 9.1, "1" : 9.1, "2" : 9.1 }, "prediction" : 1 }, { "label" : 5, "features" : { "0" : 9.2, "1" : 9.2, "2" : 9.2 }, "prediction" : 1 })" :)
+(:JIQS: ShouldRun; Output="({ "binaryLabel" : 0, "name" : "a", "age" : 20, "weight" : 50, "prediction" : 1 }, { "binaryLabel" : 0, "name" : "b", "age" : 21, "weight" : 55.3, "prediction" : 1 }, { "binaryLabel" : 0, "name" : "c", "age" : 22, "weight" : 60.6, "prediction" : 1 }, { "binaryLabel" : 1, "name" : "d", "age" : 23, "weight" : 65.9, "prediction" : 0 }, { "binaryLabel" : 1, "name" : "e", "age" : 24, "weight" : 70.3, "prediction" : 0 }, { "binaryLabel" : 1, "name" : "f", "age" : 25, "weight" : 75.6, "prediction" : 0 })" :)
+let $data := annotate(
+    json-file("./src/main/resources/queries/rumbleML/sample-ml-data-flat.json"),
+    { "label": "integer", "binaryLabel": "integer", "name": "string", "age": "double", "weight": "double", "booleanCol": "boolean", "nullCol": "null", "stringCol": "string", "stringArrayCol": ["string"], "intArrayCol": ["integer"],  "doubleArrayCol": ["double"],  "doubleArrayArrayCol": [["double"]] }
+)
+
 let $est := get-estimator("KMeans")
 let $tra := $est(
-    libsvm-file("./src/main/resources/queries/rumbleML/sample-libsvm-data-kmeans.txt"),
-    {
-        "k": 2,
-        "seed": 1
-    }
+    $data,
+    { "k": 2, "seed": 1, "featuresCol": ["age", "weight"] }
 )
-let $result := $tra(
-    libsvm-file("./src/main/resources/queries/rumbleML/sample-libsvm-data-kmeans.txt"),
-    { }
+for $result in $tra(
+    $data,
+    { "featuresCol": ["age", "weight"] }
 )
-return $result
+return {
+    "binaryLabel": $result.binaryLabel,
+    "name": $result.name,
+    "age": $result.age,
+    "weight": $result.weight,
+    "prediction": $result.prediction
+}
