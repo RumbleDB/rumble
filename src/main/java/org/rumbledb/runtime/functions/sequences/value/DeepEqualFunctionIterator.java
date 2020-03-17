@@ -20,7 +20,9 @@
 
 package org.rumbledb.runtime.functions.sequences.value;
 
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.Optional;
 import org.apache.spark.api.java.function.FlatMapFunction2;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -28,6 +30,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import scala.Tuple2;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 
@@ -69,6 +72,16 @@ public class DeepEqualFunctionIterator extends LocalFunctionCallIterator {
                         new SameElementsAndLengthClosure();
                     JavaRDD<Boolean> differences = rdd1.zipPartitions(rdd2, filter);
                     return ItemFactory.getInstance().createBooleanItem(differences.isEmpty());
+                } else {
+                    JavaPairRDD<Long, Item> rdd1Zipped = rdd1.zipWithIndex().mapToPair(Tuple2::swap);
+                    JavaPairRDD<Long, Item> rdd2Zipped = rdd2.zipWithIndex().mapToPair(Tuple2::swap);
+                    JavaPairRDD<Long, Tuple2<Optional<Item>, Optional<Item>>> rddJoined = rdd1Zipped.fullOuterJoin(
+                        rdd2Zipped
+                    );
+                    JavaPairRDD<Long, Tuple2<Optional<Item>, Optional<Item>>> rddFiltered = rddJoined.filter(
+                        tuple -> !tuple._2()._1().equals(tuple._2()._2())
+                    );
+                    return ItemFactory.getInstance().createBooleanItem(rddFiltered.isEmpty());
                 }
             }
             List<Item> items1 = sequenceIterator1.materialize(this.currentDynamicContextForLocalExecution);
