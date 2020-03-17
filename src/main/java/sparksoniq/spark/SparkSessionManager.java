@@ -100,7 +100,7 @@ public class SparkSessionManager {
     }
 
     private void initializeKryoSerialization() {
-        this.configuration.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
+        //this.configuration.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
         Class<?>[] serializedClasses = new Class[] {
             Item.class,
             ArrayItem.class,
@@ -117,7 +117,7 @@ public class SparkSessionManager {
             RuntimeIterator.class,
             RuntimeTupleIterator.class };
 
-        this.configuration.registerKryoClasses(serializedClasses);
+        //this.configuration.registerKryoClasses(serializedClasses);
     }
 
 
