@@ -36,7 +36,7 @@ public class ObjectProjectClosure implements FlatMapFunction<Item, Item> {
             }
         }
 
-        results.add(new ObjectItem(keys, values, itemMetadata));
+        results.add(new ObjectItem(keys, values, this.itemMetadata));
         return results.iterator();
     }
 };
