@@ -21,8 +21,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static sparksoniq.spark.ml.RumbleMLCatalog.rumbleMLGeneratedFeatureColumnName;
-
 public class RumbleMLUtils {
     public static ParamMap convertRumbleObjectItemToSparkMLParamMap(
             String transformerShortName,
@@ -37,7 +35,7 @@ public class RumbleMLUtils {
             Item paramValue = paramMapItem.getValues().get(paramIndex);
 
             RumbleMLCatalog.validateTransformerParameterByName(transformerShortName, paramName, metadata);
-            String paramJavaTypeName = RumbleMLCatalog.getParamJavaTypeName(paramName, metadata);
+            String paramJavaTypeName = RumbleMLCatalog.getJavaTypeNameOfParamByName(paramName, metadata);
 
             Object paramValueInJava = convertParamItemToJava(paramName, paramValue, paramJavaTypeName, metadata);
 
@@ -74,7 +72,7 @@ public class RumbleMLUtils {
             Item paramValue = paramMapItem.getValues().get(paramIndex);
 
             RumbleMLCatalog.validateEstimatorParameterByName(estimatorShortName, paramName, metadata);
-            String paramJavaTypeName = RumbleMLCatalog.getParamJavaTypeName(paramName, metadata);
+            String paramJavaTypeName = RumbleMLCatalog.getJavaTypeNameOfParamByName(paramName, metadata);
 
             Object paramValueInJava = convertParamItemToJava(paramName, paramValue, paramJavaTypeName, metadata);
 
@@ -193,20 +191,25 @@ public class RumbleMLUtils {
         return ItemFactory.getInstance().createObjectItem(keys, values, metadata);
     }
 
-    public static Dataset<Row> generateAndAddVectorizedFeaturesColumn(
+    public static Dataset<Row> generateAndAddVectorizedColumn(
             Dataset<Row> inputDataset,
-            Object featuresColValue,
+            String paramNameExposedToTheUser,
+            Object arrayOfInputColumnNames,
+            String outputColumnName,
             ExceptionMetadata metadata
     ) {
         VectorAssembler vectorAssembler = new VectorAssembler();
-        vectorAssembler.setInputCols((String[]) featuresColValue);
-        vectorAssembler.setOutputCol(rumbleMLGeneratedFeatureColumnName);
+        vectorAssembler.setInputCols((String[]) arrayOfInputColumnNames);
+        vectorAssembler.setOutputCol(outputColumnName);
 
         try {
             return vectorAssembler.transform(inputDataset);
         } catch (IllegalArgumentException e) {
             throw new InvalidRumbleMLParamException(
-                    "Parameter provided to featuresCol causes the following error: " + e.getMessage(),
+                    "Parameter provided to "
+                        + paramNameExposedToTheUser
+                        + " causes the following error: "
+                        + e.getMessage(),
                     metadata
             );
         }

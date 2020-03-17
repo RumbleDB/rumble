@@ -16,9 +16,12 @@ import java.util.List;
 public class RumbleMLCatalog {
     public static final String featuresColParamName = "featuresCol";
     public static final String featuresColParamDefaultValue = "features";
-    public static final String rumbleMLFeatureColumnsJavaTypeName = "String[]";
-    public static final String rumbleMLGeneratedFeatureColumnName = "59992242-914d-4357-bcc8-10b1c134476b";
+    public static final String rumbleMLFeaturesColJavaTypeName = "String[]";
+    public static final String rumbleMLNameOfVectorizedFeaturesCol = "59992242-914d-4357-bcc8-10b1c134476b";
 
+    public static final String inputColParamName = "inputCol";
+    public static final String rumbleMLInputColJavaTypeName = "String[]";
+    public static final String rumbleMLNameOfVectorizedInputCol = "fd289b98-4410-4423-96bd-001bb703e8d3";
 
     private static final HashMap<String, String> estimatorFullClassNames;
     private static final HashMap<String, String> transformerFullClassNames;
@@ -1260,7 +1263,7 @@ public class RumbleMLCatalog {
         }
     }
 
-    private static void validateJavaTypeName(String name, ExceptionMetadata metadata) {
+    private static void validateParamName(String name, ExceptionMetadata metadata) {
         if (!paramJavaTypeNames.containsKey(name)) {
             throw new UnrecognizedRumbleMLParamReferenceException(
                     "Parameter \""
@@ -1272,8 +1275,8 @@ public class RumbleMLCatalog {
     }
 
 
-    public static String getParamJavaTypeName(String name, ExceptionMetadata metadata) {
-        validateJavaTypeName(name, metadata);
+    public static String getJavaTypeNameOfParamByName(String name, ExceptionMetadata metadata) {
+        validateParamName(name, metadata);
         return paramJavaTypeNames.get(name);
     }
 

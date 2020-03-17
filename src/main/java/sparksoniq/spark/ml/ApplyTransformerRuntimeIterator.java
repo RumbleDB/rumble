@@ -1,5 +1,6 @@
 package sparksoniq.spark.ml;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.param.ParamMap;
 import org.apache.spark.sql.Dataset;
@@ -19,8 +20,10 @@ import java.util.NoSuchElementException;
 
 import static sparksoniq.spark.ml.RumbleMLCatalog.featuresColParamDefaultValue;
 import static sparksoniq.spark.ml.RumbleMLCatalog.featuresColParamName;
-import static sparksoniq.spark.ml.RumbleMLCatalog.rumbleMLFeatureColumnsJavaTypeName;
-import static sparksoniq.spark.ml.RumbleMLCatalog.rumbleMLGeneratedFeatureColumnName;
+import static sparksoniq.spark.ml.RumbleMLCatalog.inputColParamName;
+import static sparksoniq.spark.ml.RumbleMLCatalog.rumbleMLFeaturesColJavaTypeName;
+import static sparksoniq.spark.ml.RumbleMLCatalog.rumbleMLNameOfVectorizedFeaturesCol;
+import static sparksoniq.spark.ml.RumbleMLCatalog.rumbleMLNameOfVectorizedInputCol;
 import static sparksoniq.spark.ml.RumbleMLUtils.convertRumbleObjectItemToSparkMLParamMap;
 
 
@@ -67,19 +70,69 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
                 featuresColValue = RumbleMLUtils.convertParamItemToJava(
                     featuresColParamName,
                     featureColumnsParam,
-                    rumbleMLFeatureColumnsJavaTypeName,
+                    rumbleMLFeaturesColJavaTypeName,
                     getMetadata()
                 );
             }
 
-            inputDataset = RumbleMLUtils.generateAndAddVectorizedFeaturesColumn(
+            inputDataset = RumbleMLUtils.generateAndAddVectorizedColumn(
                 inputDataset,
+                featuresColParamName,
                 featuresColValue,
+                rumbleMLNameOfVectorizedFeaturesCol,
                 getMetadata()
             );
             isFeaturesColumnGenerated = true;
 
-            this.setTransformerFeaturesColFieldToGeneratedColumn();
+            this.setTransformerStringParamToValue(featuresColParamName, rumbleMLNameOfVectorizedFeaturesCol);
+        }
+
+        boolean transformerExpectsVectorizedInputColParam =
+            this.transformerShortName.equals("BucketedRandomProjectionLSHModel")
+                || this.transformerShortName.equals("IDFModel")
+                || this.transformerShortName.equals("MaxAbsScalerModel")
+                || this.transformerShortName.equals("MinHashLSHModel")
+                || this.transformerShortName.equals("MinMaxScalerModel")
+                || this.transformerShortName.equals("PCAModel")
+                || this.transformerShortName.equals("StandardScalerModel")
+                || this.transformerShortName.equals("VectorIndexerModel")
+                || this.transformerShortName.equals("DCT")
+                || this.transformerShortName.equals("ElementwiseProduct")
+                || this.transformerShortName.equals("VectorSizeHint")
+                || this.transformerShortName.equals("VectorSlicer");
+
+        if (transformerExpectsVectorizedInputColParam) {
+            Item inputColParam = paramMapItem.getItemByKey(inputColParamName);
+            if (inputColParam == null) {
+                throw new InvalidRumbleMLParamException(
+                        "Parameters provided to "
+                            + this.transformerShortName
+                            + " causes the following error: "
+                            + "Missing parameter value for '"
+                            + inputColParamName
+                            + "'.",
+                        getMetadata()
+                );
+            }
+
+            paramMapItem = RumbleMLUtils.removeParameter(paramMapItem, inputColParamName, getMetadata());
+
+            Object inputColValue = RumbleMLUtils.convertParamItemToJava(
+                featuresColParamName,
+                inputColParam,
+                rumbleMLFeaturesColJavaTypeName,
+                getMetadata()
+            );
+
+            inputDataset = RumbleMLUtils.generateAndAddVectorizedColumn(
+                inputDataset,
+                inputColParamName,
+                inputColValue,
+                rumbleMLNameOfVectorizedInputCol,
+                getMetadata()
+            );
+
+            this.setTransformerStringParamToValue(inputColParamName, rumbleMLNameOfVectorizedInputCol);
         }
 
 
@@ -93,7 +146,10 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
         try {
             Dataset<Row> result = this.transformer.transform(inputDataset, paramMap);
             if (transformerExpectsFeaturesColParam && isFeaturesColumnGenerated) {
-                result = result.drop(rumbleMLGeneratedFeatureColumnName);
+                result = result.drop(rumbleMLNameOfVectorizedFeaturesCol);
+            }
+            if (transformerExpectsVectorizedInputColParam) {
+                result = result.drop(rumbleMLNameOfVectorizedInputCol);
             }
 
             return result;
@@ -154,14 +210,14 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
         return paramMapItemList.get(0);
     }
 
-    private void setTransformerFeaturesColFieldToGeneratedColumn() {
+    private void setTransformerStringParamToValue(String paramName, String value) {
         try {
             this.transformer
                 .getClass()
-                .getMethod("setFeaturesCol", String.class)
-                .invoke(this.transformer, rumbleMLGeneratedFeatureColumnName);
+                .getMethod("set" + StringUtils.capitalize(paramName), String.class)
+                .invoke(this.transformer, value);
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-            throw new OurBadException("Failed to set featuresCol on the transformer");
+            throw new OurBadException("Failed to set " + paramName + " on the transformer");
         }
     }
 }
