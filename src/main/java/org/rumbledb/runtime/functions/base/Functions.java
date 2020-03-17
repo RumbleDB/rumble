@@ -1145,7 +1145,8 @@ public class Functions {
             RemoveFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
-        /**`
+        /**
+         * `
          * function that reverses the order of items in a sequence.
          */
         static final BuiltinFunction reverse = createBuiltinFunction(
