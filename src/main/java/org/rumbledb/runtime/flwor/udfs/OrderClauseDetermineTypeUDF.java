@@ -24,11 +24,11 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import org.apache.spark.sql.api.java.UDF2;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.clauses.OrderByClauseSparkIterator;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.semantics.DynamicContext;
@@ -124,31 +124,7 @@ public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, W
             iterator.close();
 
             if (this.nextItem == null) {
-                this.result.add("empty-sequence");
-            } else if (this.nextItem.isNull()) {
-                this.result.add("null");
-            } else if (this.nextItem.isBoolean()) {
-                this.result.add("boolean");
-            } else if (this.nextItem.isString()) {
-                this.result.add("string");
-            } else if (this.nextItem.isInteger()) {
-                this.result.add("integer");
-            } else if (this.nextItem.isDouble()) {
-                this.result.add("double");
-            } else if (this.nextItem.isDecimal()) {
-                this.result.add("decimal");
-            } else if (this.nextItem.isYearMonthDuration()) {
-                this.result.add("yearMonthDuration");
-            } else if (this.nextItem.isDayTimeDuration()) {
-                this.result.add("dayTimeDuration");
-            } else if (this.nextItem.isDuration()) {
-                this.result.add("duration");
-            } else if (this.nextItem.isDateTime()) {
-                this.result.add("dateTime");
-            } else if (this.nextItem.isDate()) {
-                this.result.add("date");
-            } else if (this.nextItem.isTime()) {
-                this.result.add("time");
+                this.result.add(OrderByClauseSparkIterator.StringFlagForEmptySequence);
             } else if (this.nextItem.isArray() || this.nextItem.isObject()) {
                 throw new UnexpectedTypeException(
                         "Order by variable can not contain arrays or objects.",
@@ -165,7 +141,7 @@ public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, W
                         expressionWithIterator.getIterator().getMetadata()
                 );
             } else {
-                throw new OurBadException("Unexpected type found.");
+                this.result.add(this.nextItem.getDynamicType().getName());
             }
         }
         return this.result;

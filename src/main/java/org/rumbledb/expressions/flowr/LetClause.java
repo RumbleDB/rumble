@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions.flowr;
 
+import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -57,9 +58,9 @@ public class LetClause extends Clause {
     }
 
     @Override
-    public void initHighestExecutionMode() {
+    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
         // call isDataFrame on the last letVariable
-        this.highestExecutionMode = this.letVars.get(this.letVars.size() - 1).getHighestExecutionMode();
+        this.highestExecutionMode = this.letVars.get(this.letVars.size() - 1).getHighestExecutionMode(visitorConfig);
     }
 
     @Override

@@ -47,7 +47,7 @@
                     <source>1.8</source>
                     <target>1.8</target>
                     <compilerArguments>
-                        <properties>${basedir}/org.eclipse.jdt.core.prefs</properties>
+                        <properties>${project.basedir}/org.eclipse.jdt.core.prefs</properties>
                     </compilerArguments>
                 </configuration>
                 <dependencies>
@@ -179,9 +179,18 @@
                 </executions>
                 <configuration>
                     <java>
+                        <includes>
+                            <!-- include all java files in "java" folders under "src" -->
+                            <include>src/**/java/**/*.java</include>
+                        </includes>
+
+                        <excludes>
+                            <exclude>src/main/java/org/rumbledb/parser/*</exclude>
+                        </excludes>
                         <eclipse>
-                            <file>${basedir}/spotless-formatter-eclipse-jdt-configurations.xml</file>
+                            <file>${project.basedir}/spotless-formatter-eclipse-jdt-configurations.xml</file>
                         </eclipse>
+                        <removeUnusedImports/>
                     </java>
                 </configuration>
             </plugin>

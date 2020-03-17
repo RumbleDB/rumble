@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions.flowr;
 
+import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -58,10 +59,10 @@ public class ForClause extends Clause {
     }
 
     @Override
-    public void initHighestExecutionMode() {
+    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
         // call isDataFrame on the last forVariable
         this.highestExecutionMode =
-            this.forVariables.get(this.forVariables.size() - 1).getHighestExecutionMode();
+            this.forVariables.get(this.forVariables.size() - 1).getHighestExecutionMode(visitorConfig);
     }
 
     @Override

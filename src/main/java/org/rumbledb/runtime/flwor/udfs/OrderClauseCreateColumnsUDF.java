@@ -34,6 +34,7 @@ import org.rumbledb.items.NullItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
+import org.rumbledb.types.ItemType;
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.semantics.DynamicContext;
 
@@ -150,38 +151,34 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
                     // extract type information for the sorting column
                     String typeName = this.allColumnTypes.get(expressionIndex);
                     try {
-                        switch (typeName) {
-                            case "boolean":
-                                this.results.add(nextItem.getBooleanValue());
-                                break;
-                            case "string":
-                                this.results.add(nextItem.getStringValue());
-                                break;
-                            case "integer":
-                                this.results.add(nextItem.castToIntegerValue());
-                                break;
-                            case "double":
-                                this.results.add(nextItem.castToDoubleValue());
-                                break;
-                            case "decimal":
-                                this.results.add(nextItem.castToDecimalValue());
-                                break;
-                            case "duration":
-                            case "yearMonthDuration":
-                            case "dayTimeDuration":
-                                this.results.add(
-                                    nextItem.getDurationValue().toDurationFrom(Instant.now()).getMillis()
-                                );
-                                break;
-                            case "dateTime":
-                            case "date":
-                            case "time":
-                                this.results.add(nextItem.getDateTimeValue().getMillis());
-                                break;
-                            default:
-                                throw new OurBadException(
-                                        "Unexpected ordering type found while creating columns."
-                                );
+                        if (typeName.equals(ItemType.booleanItem.getName())) {
+                            this.results.add(nextItem.getBooleanValue());
+                        } else if (typeName.equals(ItemType.stringItem.getName())) {
+                            this.results.add(nextItem.getStringValue());
+                        } else if (typeName.equals(ItemType.integerItem.getName())) {
+                            this.results.add(nextItem.castToIntegerValue());
+                        } else if (typeName.equals(ItemType.doubleItem.getName())) {
+                            this.results.add(nextItem.castToDoubleValue());
+                        } else if (typeName.equals(ItemType.decimalItem.getName())) {
+                            this.results.add(nextItem.castToDecimalValue());
+                        } else if (
+                            typeName.equals(ItemType.durationItem.getName())
+                                || typeName.equals(ItemType.yearMonthDurationItem.getName())
+                                || typeName.equals(ItemType.dayTimeDurationItem.getName())
+                        ) {
+                            this.results.add(
+                                nextItem.getDurationValue().toDurationFrom(Instant.now()).getMillis()
+                            );
+                        } else if (
+                            typeName.equals(ItemType.dateTimeItem.getName())
+                                || typeName.equals(ItemType.dateItem.getName())
+                                || typeName.equals(ItemType.timeItem.getName())
+                        ) {
+                            this.results.add(nextItem.getDateTimeValue().getMillis());
+                        } else {
+                            throw new OurBadException(
+                                    "Unexpected ordering type found while creating columns."
+                            );
                         }
                     } catch (RuntimeException e) {
                         throw new OurBadException(

@@ -40,6 +40,7 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 import org.rumbledb.runtime.flwor.udfs.OrderClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.OrderClauseDetermineTypeUDF;
+import org.rumbledb.types.ItemType;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworKeyComparator;
@@ -54,8 +55,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import static org.rumbledb.items.parsing.ItemParser.decimalType;
+
 public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
+    public static final String StringFlagForEmptySequence = "empty-sequence";
     private static final long serialVersionUID = 1L;
     private final boolean isStable;
     private final List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator;
@@ -252,41 +256,46 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             for (int columnIndex = 0; columnIndex < columnsTypesOfRowAsList.size(); columnIndex++) {
                 String columnType = (String) columnsTypesOfRowAsList.get(columnIndex);
 
-                if (!columnType.equals("empty-sequence") && !columnType.equals("null")) {
+                if (!columnType.equals(StringFlagForEmptySequence) && !columnType.equals(ItemType.nullItem.getName())) {
                     String currentColumnType = typesForAllColumns.get(columnIndex);
                     if (currentColumnType == null) {
                         typesForAllColumns.put(columnIndex, columnType);
                     } else if (
-                        (currentColumnType.equals("integer")
-                            || currentColumnType.equals("double")
-                            || currentColumnType.equals("decimal"))
-                            && (columnType.equals("integer")
-                                || columnType.equals("double")
-                                || columnType.equals("decimal"))
+                        (currentColumnType.equals(ItemType.integerItem.getName())
+                            || currentColumnType.equals(ItemType.doubleItem.getName())
+                            || currentColumnType.equals(ItemType.decimalItem.getName()))
+                            && (columnType.equals(ItemType.integerItem.getName())
+                                || columnType.equals(ItemType.doubleItem.getName())
+                                || columnType.equals(ItemType.decimalItem.getName()))
                     ) {
                         // the numeric type calculation is identical to Item::getNumericResultType()
-                        if (currentColumnType.equals("double") || columnType.equals("double")) {
-                            typesForAllColumns.put(columnIndex, "double");
-                        } else if (currentColumnType.equals("decimal") || columnType.equals("decimal")) {
-                            typesForAllColumns.put(columnIndex, "decimal");
+                        if (
+                            currentColumnType.equals(ItemType.doubleItem.getName())
+                                || columnType.equals(ItemType.doubleItem.getName())
+                        ) {
+                            typesForAllColumns.put(columnIndex, ItemType.doubleItem.getName());
+                        } else if (
+                            currentColumnType.equals(ItemType.decimalItem.getName())
+                                || columnType.equals(ItemType.decimalItem.getName())
+                        ) {
+                            typesForAllColumns.put(columnIndex, ItemType.decimalItem.getName());
                         } else {
                             // do nothing, type is already set to integer
                         }
                     } else if (
-                        (currentColumnType.equals("dayTimeDuration")
-                            || currentColumnType.equals("yearMonthDuration")
-                            || currentColumnType.equals("duration"))
-                            && (columnType.equals("dayTimeDuration")
-                                || columnType.equals("yearMonthDuration")
-                                || columnType.equals("duration"))
+                        (currentColumnType.equals(ItemType.dayTimeDurationItem.getName())
+                            || currentColumnType.equals(ItemType.yearMonthDurationItem.getName())
+                            || currentColumnType.equals(ItemType.durationItem.getName()))
+                            && (columnType.equals(ItemType.dayTimeDurationItem.getName())
+                                || columnType.equals(ItemType.yearMonthDurationItem.getName())
+                                || columnType.equals(ItemType.durationItem.getName()))
                     ) {
-                        typesForAllColumns.put(columnIndex, "duration");
+                        typesForAllColumns.put(columnIndex, ItemType.durationItem.getName());
                     } else if (!currentColumnType.equals(columnType)) {
                         throw new UnexpectedTypeException(
                                 "Order by variable must contain values of a single type.",
                                 getMetadata()
                         );
-                        // TODO-can add tests with different types
                     }
                 }
             }
@@ -307,35 +316,32 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
             // create fields for the given value types
             columnName = columnIndex + "-valueField";
-            switch (columnTypeString) {
-                case "boolean":
-                    columnType = DataTypes.BooleanType;
-                    break;
-                case "string":
-                    columnType = DataTypes.StringType;
-                    break;
-                case "integer":
-                    columnType = DataTypes.IntegerType;
-                    break;
-                case "double":
-                    columnType = DataTypes.DoubleType;
-                    break;
-                case "decimal":
-                    columnType = DataTypes.createDecimalType();
-                    break;
-                case "duration":
-                case "yearMonthDuration":
-                case "dayTimeDuration":
-                case "dateTime":
-                case "date":
-                case "time":
-                    columnType = DataTypes.LongType;
-                    break;
-                default:
-                    throw new SparksoniqRuntimeException(
-                            "Unexpected ordering type found while determining UDF return type."
-                    );
+            if (columnTypeString.equals(ItemType.booleanItem.getName())) {
+                columnType = DataTypes.BooleanType;
+            } else if (columnTypeString.equals(ItemType.stringItem.getName())) {
+                columnType = DataTypes.StringType;
+            } else if (columnTypeString.equals(ItemType.integerItem.getName())) {
+                columnType = DataTypes.IntegerType;
+            } else if (columnTypeString.equals(ItemType.doubleItem.getName())) {
+                columnType = DataTypes.DoubleType;
+            } else if (columnTypeString.equals(ItemType.decimalItem.getName())) {
+                columnType = decimalType;
+                // columnType = DataTypes.createDecimalType();
+            } else if (
+                columnTypeString.equals(ItemType.durationItem.getName())
+                    || columnTypeString.equals(ItemType.yearMonthDurationItem.getName())
+                    || columnTypeString.equals(ItemType.dayTimeDurationItem.getName())
+                    || columnTypeString.equals(ItemType.dateTimeItem.getName())
+                    || columnTypeString.equals(ItemType.dateItem.getName())
+                    || columnTypeString.equals(ItemType.timeItem.getName())
+            ) {
+                columnType = DataTypes.LongType;
+            } else {
+                throw new SparksoniqRuntimeException(
+                        "Unexpected ordering type found while determining UDF return type."
+                );
             }
+
             typedFields.add(DataTypes.createStructField(columnName, columnType, true));
 
             OrderByClauseAnnotatedChildIterator expressionWithIterator = this.expressionsWithIterator.get(columnIndex);

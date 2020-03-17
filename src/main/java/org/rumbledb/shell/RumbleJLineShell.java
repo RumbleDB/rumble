@@ -132,7 +132,11 @@ public class RumbleJLineShell {
                 this.currentLine = RumbleJLineShell.EXIT_COMMAND;
             } else if (ex instanceof SparkException) {
                 Throwable sparkExceptionCause = ex.getCause();
-                handleException(sparkExceptionCause, showErrorInfo);;
+                if (sparkExceptionCause != null) {
+                    handleException(sparkExceptionCause, showErrorInfo);
+                } else {
+                    handleException(new SparksoniqRuntimeException(ex.getMessage()), showErrorInfo);
+                }
             } else if (ex instanceof SparksoniqRuntimeException) {
                 System.err.println("⚠️  ️" + ex.getMessage());
                 if (showErrorInfo) {

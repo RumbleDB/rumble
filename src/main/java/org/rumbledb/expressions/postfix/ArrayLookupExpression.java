@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions.postfix;
 
+import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -61,8 +62,8 @@ public class ArrayLookupExpression extends Expression {
     }
 
     @Override
-    public void initHighestExecutionMode() {
-        this.highestExecutionMode = this.mainExpression.getHighestExecutionMode();
+    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
+        this.highestExecutionMode = this.mainExpression.getHighestExecutionMode(visitorConfig);
     }
 
     @Override

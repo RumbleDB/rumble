@@ -18,7 +18,7 @@ public class VisitorHelpers {
         StaticContextVisitor visitor = new StaticContextVisitor();
         visitor.visit(node, null);
 
-        visitor.setConfigForIntermediatePasses();
+        visitor.setVisitorConfig(VisitorConfig.staticContextVisitorIntermediatePassConfig);
         int prevUnsetCount = Functions.getCurrentUnsetUserDefinedFunctionIdentifiers().size();
         while (true) {
             visitor.visit(node, null);
@@ -36,7 +36,7 @@ public class VisitorHelpers {
             prevUnsetCount = currentUnsetCount;
         }
 
-        visitor.setConfigForFinalPass();
+        visitor.setVisitorConfig(VisitorConfig.staticContextVisitorFinalPassConfig);
         visitor.visit(node, null);
     }
 
