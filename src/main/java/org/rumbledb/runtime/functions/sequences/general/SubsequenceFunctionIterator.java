@@ -22,7 +22,6 @@ package org.rumbledb.runtime.functions.sequences.general;
 
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaSparkContext;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -31,6 +30,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.spark.SparkSessionManager;
 
 import java.util.List;
 
@@ -79,7 +79,7 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
             }
             return filteredRDD.map(x -> x._1);
         }
-        return (new JavaSparkContext()).emptyRDD();
+        return SparkSessionManager.getInstance().getJavaSparkContext().emptyRDD();
     }
 
     @Override
