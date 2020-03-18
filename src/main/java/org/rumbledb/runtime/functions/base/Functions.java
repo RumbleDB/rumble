@@ -1112,19 +1112,19 @@ public class Functions {
         static final BuiltinFunction subsequence2 = createBuiltinFunction(
             "subsequence",
             "item*",
-            "item*",
+            "double",
             "item*",
             SubsequenceFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
         );
         static final BuiltinFunction subsequence3 = createBuiltinFunction(
             "subsequence",
             "item*",
-            "item*",
-            "item*",
+            "double",
+            "double",
             "item*",
             SubsequenceFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
         );
 
         /**
