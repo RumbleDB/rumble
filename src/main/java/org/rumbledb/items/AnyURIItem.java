@@ -25,7 +25,6 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypes;
 
 import java.net.URI;
 import java.net.URISyntaxException;
