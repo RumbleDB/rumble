@@ -26,6 +26,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import static sparksoniq.spark.ml.RumbleMLCatalog.featuresColParamDefaultValue;
 import static sparksoniq.spark.ml.RumbleMLCatalog.featuresColParamName;
@@ -61,11 +62,12 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
         Dataset<Row> inputDataset = getInputDataset(this.currentDynamicContextForLocalExecution);
         Item paramMapItem = getParamMapItem(this.currentDynamicContextForLocalExecution);
 
-        boolean estimatorExpectsFeaturesColParam = RumbleMLCatalog
-            .getEstimatorParams(this.estimatorShortName, getMetadata())
-            .contains(featuresColParamName);
+        boolean estimatorExpectsVectorizedFeaturesColParam = !this.estimatorShortName.equals("RFormula")
+            && RumbleMLCatalog
+                .getEstimatorParams(this.estimatorShortName, getMetadata())
+                .contains(featuresColParamName);
 
-        if (estimatorExpectsFeaturesColParam) {
+        if (estimatorExpectsVectorizedFeaturesColParam) {
             Object featuresColValue = new String[] { featuresColParamDefaultValue };
 
             if (paramMapItem.getItemByKey(featuresColParamName) != null) {
@@ -80,13 +82,13 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
                 );
             }
 
-            inputDataset = RumbleMLUtils.generateAndAddFeaturesColumn(
+            inputDataset = RumbleMLUtils.generateAndAddVectorizedFeaturesColumn(
                 inputDataset,
                 featuresColValue,
                 getMetadata()
             );
 
-            this.setEstimatorFeaturesColFieldToGeneratedColumn();
+            this.setEstimatorFeaturesColToGeneratedFeaturesColumn();
         }
 
         ParamMap paramMap = convertRumbleObjectItemToSparkMLParamMap(
@@ -99,9 +101,9 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
         Transformer fittedModel;
         try {
             fittedModel = this.estimator.fit(inputDataset, paramMap);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | NoSuchElementException e) {
             throw new InvalidRumbleMLParamException(
-                    "Parameter provided to "
+                    "Parameters provided to "
                         + this.estimatorShortName
                         + " causes the following error: "
                         + e.getMessage(),
@@ -183,7 +185,7 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
         );
     }
 
-    private void setEstimatorFeaturesColFieldToGeneratedColumn() {
+    private void setEstimatorFeaturesColToGeneratedFeaturesColumn() {
         try {
             this.estimator
                 .getClass()

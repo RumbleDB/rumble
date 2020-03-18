@@ -263,7 +263,12 @@ public class ItemParser implements Serializable {
             }
             values.add(ItemFactory.getInstance().createArrayItem(members));
         } else if (fieldType instanceof VectorUDT) {
-            Vector vector = (Vector) row.get(i);
+            Vector vector;
+            if (row != null) {
+                vector = (Vector) row.get(i);
+            } else {
+                vector = (Vector) o;
+            }
             if (vector instanceof DenseVector) {
                 // a dense vector is mapped to a rumble array
                 DenseVector denseVector = (DenseVector) vector;
