@@ -15,6 +15,7 @@ import sparksoniq.semantics.DynamicContext;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import static sparksoniq.spark.ml.RumbleMLCatalog.featuresColParamDefaultValue;
 import static sparksoniq.spark.ml.RumbleMLCatalog.featuresColParamName;
@@ -71,7 +72,7 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
                 );
             }
 
-            inputDataset = RumbleMLUtils.generateAndAddFeaturesColumn(
+            inputDataset = RumbleMLUtils.generateAndAddVectorizedFeaturesColumn(
                 inputDataset,
                 featuresColValue,
                 getMetadata()
@@ -96,10 +97,10 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
             }
 
             return result;
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | NoSuchElementException e) {
             if (e.getMessage().matches(".*DecimalType.*is not supported.*")) {
                 throw new InvalidRumbleMLParamException(
-                        "Parameter provided to "
+                        "Parameters provided to "
                             + this.transformerShortName
                             + " causes the following error: "
                             + "Transformer can not operate on data of decimal type given in inputCol. "
@@ -108,7 +109,7 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
                 );
             }
             throw new InvalidRumbleMLParamException(
-                    "Parameter provided to "
+                    "Parameters provided to "
                         + this.transformerShortName
                         + " causes the following error: "
                         + e.getMessage(),

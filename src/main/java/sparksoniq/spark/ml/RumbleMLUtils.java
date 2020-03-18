@@ -193,7 +193,7 @@ public class RumbleMLUtils {
         return ItemFactory.getInstance().createObjectItem(keys, values, metadata);
     }
 
-    public static Dataset<Row> generateAndAddFeaturesColumn(
+    public static Dataset<Row> generateAndAddVectorizedFeaturesColumn(
             Dataset<Row> inputDataset,
             Object featuresColValue,
             ExceptionMetadata metadata
