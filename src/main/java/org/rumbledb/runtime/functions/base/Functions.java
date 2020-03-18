@@ -237,7 +237,8 @@ import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.one_or
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.parallelizeFunction1;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.parallelizeFunction2;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.parquet_file;
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.root_file;
+import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.root_file1;
+import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.root_file2;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.pi;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.position;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.pow;
@@ -408,7 +409,8 @@ public class Functions {
         builtInFunctions.put(parallelizeFunction1.getIdentifier(), parallelizeFunction1);
         builtInFunctions.put(parallelizeFunction2.getIdentifier(), parallelizeFunction2);
         builtInFunctions.put(parquet_file.getIdentifier(), parquet_file);
-        builtInFunctions.put(root_file.getIdentifier(), root_file);
+        builtInFunctions.put(root_file1.getIdentifier(), root_file1);
+        builtInFunctions.put(root_file2.getIdentifier(), root_file2);
 
         builtInFunctions.put(count.getIdentifier(), count);
         builtInFunctions.put(boolean_function.getIdentifier(), boolean_function);
@@ -953,9 +955,20 @@ public class Functions {
         /**
          * function that parses a ROOT file
          */
-        static final BuiltinFunction root_file = createBuiltinFunction(
+        static final BuiltinFunction root_file1 = createBuiltinFunction(
             "root-file",
-            "string?",
+            "string",
+            "item*",
+            RootFileFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
+        );
+        /**
+         * function that parses a ROOT file
+         */
+        static final BuiltinFunction root_file2 = createBuiltinFunction(
+            "root-file",
+            "string",
+            "string",
             "item*",
             RootFileFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME

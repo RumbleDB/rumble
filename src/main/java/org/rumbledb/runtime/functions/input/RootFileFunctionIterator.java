@@ -21,8 +21,10 @@
 package org.rumbledb.runtime.functions.input;
 
 import org.apache.spark.sql.AnalysisException;
+import org.apache.spark.sql.DataFrameReader;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
@@ -48,16 +50,24 @@ public class RootFileFunctionIterator extends DataFrameRuntimeIterator {
     @Override
     public Dataset<Row> getDataFrame(DynamicContext context) {
         RuntimeIterator urlIterator = this.children.get(0);
+        String path = null;
+        if (this.children.size() > 1) {
+            RuntimeIterator pathIterator = this.children.get(1);
+            Item pathItem = pathIterator.materializeFirstItemOrNull(context);
+            path = pathItem.getStringValue();
+        }
         urlIterator.open(context);
         String url = urlIterator.next().getStringValue();
         urlIterator.close();
         try {
-            return SparkSessionManager.getInstance()
+            DataFrameReader reader = SparkSessionManager.getInstance()
                 .getOrCreateSession()
                 .read()
-                .format("root")
-                .option("tree", "tree")
-                .load(url);
+                .format("root");
+            if (path != null) {
+                reader.option("tree", path);
+            }
+            return reader.load(url);
         } catch (Exception e) {
             if (e instanceof AnalysisException) {
                 throw new CannotRetrieveResourceException("File " + url + " not found.", getMetadata());
