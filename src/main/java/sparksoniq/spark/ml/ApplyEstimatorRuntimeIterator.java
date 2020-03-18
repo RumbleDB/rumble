@@ -61,11 +61,12 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
         Dataset<Row> inputDataset = getInputDataset(this.currentDynamicContextForLocalExecution);
         Item paramMapItem = getParamMapItem(this.currentDynamicContextForLocalExecution);
 
-        boolean estimatorExpectsFeaturesColParam = RumbleMLCatalog
-            .getEstimatorParams(this.estimatorShortName, getMetadata())
-            .contains(featuresColParamName);
+        boolean estimatorExpectsVectorizedFeaturesColParam = !this.estimatorShortName.equals("RFormula")
+            && RumbleMLCatalog
+                .getEstimatorParams(this.estimatorShortName, getMetadata())
+                .contains(featuresColParamName);
 
-        if (estimatorExpectsFeaturesColParam) {
+        if (estimatorExpectsVectorizedFeaturesColParam) {
             Object featuresColValue = new String[] { featuresColParamDefaultValue };
 
             if (paramMapItem.getItemByKey(featuresColParamName) != null) {
@@ -80,13 +81,13 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
                 );
             }
 
-            inputDataset = RumbleMLUtils.generateAndAddFeaturesColumn(
+            inputDataset = RumbleMLUtils.generateAndAddVectorizedFeaturesColumn(
                 inputDataset,
                 featuresColValue,
                 getMetadata()
             );
 
-            this.setEstimatorFeaturesColFieldToGeneratedColumn();
+            this.setEstimatorFeaturesColToGeneratedFeaturesColumn();
         }
 
         ParamMap paramMap = convertRumbleObjectItemToSparkMLParamMap(
@@ -183,7 +184,7 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
         );
     }
 
-    private void setEstimatorFeaturesColFieldToGeneratedColumn() {
+    private void setEstimatorFeaturesColToGeneratedFeaturesColumn() {
         try {
             this.estimator
                 .getClass()
