@@ -18,13 +18,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import static sparksoniq.spark.ml.RumbleMLCatalog.featuresColParamDefaultValue;
-import static sparksoniq.spark.ml.RumbleMLCatalog.featuresColParamName;
-import static sparksoniq.spark.ml.RumbleMLCatalog.inputColParamName;
-import static sparksoniq.spark.ml.RumbleMLCatalog.rumbleMLFeaturesColJavaTypeName;
-import static sparksoniq.spark.ml.RumbleMLCatalog.rumbleMLInputColJavaTypeName;
-import static sparksoniq.spark.ml.RumbleMLCatalog.rumbleMLNameOfVectorizedFeaturesCol;
-import static sparksoniq.spark.ml.RumbleMLCatalog.rumbleMLNameOfVectorizedInputCol;
+import static sparksoniq.spark.ml.RumbleMLCatalog.specialParams;
 import static sparksoniq.spark.ml.RumbleMLUtils.convertRumbleObjectItemToSparkMLParamMap;
 
 
@@ -50,94 +44,73 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
         Dataset<Row> inputDataset = getInputDataset(context);
         Item paramMapItem = getParamMapItem(context);
 
-        boolean transformerExpectsFeaturesColParam = RumbleMLCatalog
-            .getTransformerParams(this.transformerShortName, getMetadata())
-            .contains(featuresColParamName);
-
-        boolean isFeaturesColumnGenerated = false;
-
-        if (transformerExpectsFeaturesColParam) {
-            Object featuresColValue = new String[] { featuresColParamDefaultValue };
-            if (paramMapItem.getItemByKey(featuresColParamName) != null) {
-                RumbleMLCatalog.validateTransformerParameterByName(
+        // update input dataset and paramMapItem based on the needs of special params
+        for (String specialParamName : RumbleMLCatalog.specialParams) {
+            if (
+                !RumbleMLCatalog.getTransformerParams(this.transformerShortName, getMetadata())
+                    .contains(specialParamName)
+            ) {
+                continue;
+            }
+            boolean shouldVectorizeColumnContents = RumbleMLCatalog
+                .shouldTransformerColumnReferencedByParamContainVectors(
                     this.transformerShortName,
-                    featuresColParamName,
+                    specialParamName,
                     getMetadata()
                 );
 
-                Item featureColumnsParam = paramMapItem.getItemByKey(featuresColParamName);
-                paramMapItem = RumbleMLUtils.removeParameter(paramMapItem, featuresColParamName, getMetadata());
+            if (shouldVectorizeColumnContents) {
+                Object paramValue;
+                String javaTypeName = RumbleMLCatalog.getJavaTypeNameOfOfSpecialParam(specialParamName);
 
-                featuresColValue = RumbleMLUtils.convertParamItemToJava(
-                    featuresColParamName,
-                    featureColumnsParam,
-                    rumbleMLFeaturesColJavaTypeName,
-                    getMetadata()
-                );
-            }
+                Item paramItemForSpecialParam = paramMapItem.getItemByKey(specialParamName);
+                if (paramItemForSpecialParam == null) {
+                    if (RumbleMLCatalog.specialParamHasNoDefaultvalue(specialParamName)) {
+                        throw new InvalidRumbleMLParamException(
+                                "Parameters provided to "
+                                    + this.transformerShortName
+                                    + " causes the following error: "
+                                    + "Missing parameter value for '"
+                                    + specialParamName
+                                    + "'.",
+                                getMetadata()
+                        );
+                    }
+                    if (javaTypeName.equals("String[]")) {
+                        paramValue = new String[] { RumbleMLCatalog.getDefaultValueOfSpecialParam(specialParamName) };
+                    } else {
+                        throw new OurBadException(
+                                "Unhandled javaTypeName '"
+                                    + javaTypeName
+                                    + "' found while handling the default value of special param '"
+                                    + specialParamName
+                                    + "'."
+                        );
+                    }
+                } else {
+                    // remove this param from the map to prevent processing the param again
+                    paramMapItem = RumbleMLUtils.removeParameter(paramMapItem, specialParamName, getMetadata());
 
-            inputDataset = RumbleMLUtils.generateAndAddVectorizedColumn(
-                inputDataset,
-                featuresColParamName,
-                featuresColValue,
-                rumbleMLNameOfVectorizedFeaturesCol,
-                getMetadata()
-            );
-            isFeaturesColumnGenerated = true;
-
-            this.setTransformerStringParamToValue(featuresColParamName, rumbleMLNameOfVectorizedFeaturesCol);
-        }
-
-        boolean transformerExpectsVectorizedInputColParam =
-            this.transformerShortName.equals("BucketedRandomProjectionLSHModel")
-                || this.transformerShortName.equals("IDFModel")
-                || this.transformerShortName.equals("MaxAbsScalerModel")
-                || this.transformerShortName.equals("MinHashLSHModel")
-                || this.transformerShortName.equals("MinMaxScalerModel")
-                || this.transformerShortName.equals("PCAModel")
-                || this.transformerShortName.equals("StandardScalerModel")
-                || this.transformerShortName.equals("VectorIndexerModel")
-                || this.transformerShortName.equals("DCT")
-                || this.transformerShortName.equals("ElementwiseProduct")
-                || this.transformerShortName.equals("Normalizer")
-                || this.transformerShortName.equals("PolynomialExpansion")
-                || this.transformerShortName.equals("VectorSizeHint")
-                || this.transformerShortName.equals("VectorSlicer");
-
-        if (transformerExpectsVectorizedInputColParam) {
-            Item inputColParam = paramMapItem.getItemByKey(inputColParamName);
-            if (inputColParam == null) {
-                throw new InvalidRumbleMLParamException(
-                        "Parameters provided to "
-                            + this.transformerShortName
-                            + " causes the following error: "
-                            + "Missing parameter value for '"
-                            + inputColParamName
-                            + "'.",
+                    paramValue = RumbleMLUtils.convertParamItemToJava(
+                        specialParamName,
+                        paramItemForSpecialParam,
+                        javaTypeName,
                         getMetadata()
+                    );
+                }
+
+                String nameOfColumnToGenerate = RumbleMLCatalog.getUUIDOfOfSpecialParam(specialParamName);
+                inputDataset = RumbleMLUtils.createDataFrameContainingVectorizedColumn(
+                    inputDataset,
+                    specialParamName,
+                    paramValue,
+                    nameOfColumnToGenerate,
+                    getMetadata()
                 );
+
+                this.setTransformerStringParamToValue(specialParamName, nameOfColumnToGenerate);
             }
-
-            paramMapItem = RumbleMLUtils.removeParameter(paramMapItem, inputColParamName, getMetadata());
-
-            Object inputColValue = RumbleMLUtils.convertParamItemToJava(
-                featuresColParamName,
-                inputColParam,
-                rumbleMLInputColJavaTypeName,
-                getMetadata()
-            );
-
-            inputDataset = RumbleMLUtils.generateAndAddVectorizedColumn(
-                inputDataset,
-                inputColParamName,
-                inputColValue,
-                rumbleMLNameOfVectorizedInputCol,
-                getMetadata()
-            );
-
-            this.setTransformerStringParamToValue(inputColParamName, rumbleMLNameOfVectorizedInputCol);
         }
-
 
         ParamMap paramMap = convertRumbleObjectItemToSparkMLParamMap(
             this.transformerShortName,
@@ -148,11 +121,24 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
 
         try {
             Dataset<Row> result = this.transformer.transform(inputDataset, paramMap);
-            if (transformerExpectsFeaturesColParam && isFeaturesColumnGenerated) {
-                result = result.drop(rumbleMLNameOfVectorizedFeaturesCol);
-            }
-            if (transformerExpectsVectorizedInputColParam) {
-                result = result.drop(rumbleMLNameOfVectorizedInputCol);
+
+            for (String specialParamName : specialParams) {
+                if (
+                    !RumbleMLCatalog.getTransformerParams(this.transformerShortName, getMetadata())
+                        .contains(specialParamName)
+                ) {
+                    continue;
+                }
+                boolean isTemporaryColumnGenerated = RumbleMLCatalog
+                    .shouldTransformerColumnReferencedByParamContainVectors(
+                        this.transformerShortName,
+                        specialParamName,
+                        getMetadata()
+                    );
+                if (isTemporaryColumnGenerated) {
+                    String nameOfTemporaryColumn = RumbleMLCatalog.getUUIDOfOfSpecialParam(specialParamName);
+                    result = result.drop(nameOfTemporaryColumn);
+                }
             }
 
             return result;

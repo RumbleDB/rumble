@@ -19,7 +19,6 @@ import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.runtime.functions.base.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
-
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 
@@ -29,13 +28,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import static sparksoniq.spark.ml.RumbleMLCatalog.featuresColParamDefaultValue;
-import static sparksoniq.spark.ml.RumbleMLCatalog.featuresColParamName;
-import static sparksoniq.spark.ml.RumbleMLCatalog.inputColParamName;
-import static sparksoniq.spark.ml.RumbleMLCatalog.rumbleMLFeaturesColJavaTypeName;
-import static sparksoniq.spark.ml.RumbleMLCatalog.rumbleMLInputColJavaTypeName;
-import static sparksoniq.spark.ml.RumbleMLCatalog.rumbleMLNameOfVectorizedFeaturesCol;
-import static sparksoniq.spark.ml.RumbleMLCatalog.rumbleMLNameOfVectorizedInputCol;
 import static sparksoniq.spark.ml.RumbleMLUtils.convertRumbleObjectItemToSparkMLParamMap;
 
 
@@ -66,80 +58,71 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
         Dataset<Row> inputDataset = getInputDataset(this.currentDynamicContextForLocalExecution);
         Item paramMapItem = getParamMapItem(this.currentDynamicContextForLocalExecution);
 
-        boolean estimatorExpectsVectorizedFeaturesColParam = !this.estimatorShortName.equals("RFormula")
-            && RumbleMLCatalog
-                .getEstimatorParams(this.estimatorShortName, getMetadata())
-                .contains(featuresColParamName);
-
-        if (estimatorExpectsVectorizedFeaturesColParam) {
-            Object featuresColValue = new String[] { featuresColParamDefaultValue };
-
-            if (paramMapItem.getItemByKey(featuresColParamName) != null) {
-                Item featureColumnsParam = paramMapItem.getItemByKey(featuresColParamName);
-                paramMapItem = RumbleMLUtils.removeParameter(paramMapItem, featuresColParamName, getMetadata());
-
-                featuresColValue = RumbleMLUtils.convertParamItemToJava(
-                    featuresColParamName,
-                    featureColumnsParam,
-                    rumbleMLFeaturesColJavaTypeName,
+        // update input dataset and paramMapItem based on the needs of special params
+        for (String specialParamName : RumbleMLCatalog.specialParams) {
+            if (
+                !RumbleMLCatalog.getEstimatorParams(this.estimatorShortName, getMetadata()).contains(specialParamName)
+            ) {
+                continue;
+            }
+            boolean shouldVectorizeColumnContents = RumbleMLCatalog
+                .shouldEstimatorColumnReferencedByParamContainVectors(
+                    this.estimatorShortName,
+                    specialParamName,
                     getMetadata()
                 );
-            }
 
-            inputDataset = RumbleMLUtils.generateAndAddVectorizedColumn(
-                inputDataset,
-                featuresColParamName,
-                featuresColValue,
-                rumbleMLNameOfVectorizedFeaturesCol,
-                getMetadata()
-            );
+            if (shouldVectorizeColumnContents) {
+                Object paramValue;
+                String javaTypeName = RumbleMLCatalog.getJavaTypeNameOfOfSpecialParam(specialParamName);
 
-            this.setEstimatorStringParamToValue(featuresColParamName, rumbleMLNameOfVectorizedFeaturesCol);
-        }
+                Item paramItemForSpecialParam = paramMapItem.getItemByKey(specialParamName);
+                if (paramItemForSpecialParam == null) {
+                    if (RumbleMLCatalog.specialParamHasNoDefaultvalue(specialParamName)) {
+                        throw new InvalidRumbleMLParamException(
+                                "Parameters provided to "
+                                    + this.estimatorShortName
+                                    + " causes the following error: "
+                                    + "Missing parameter value for '"
+                                    + specialParamName
+                                    + "'.",
+                                getMetadata()
+                        );
+                    }
+                    if (javaTypeName.equals("String[]")) {
+                        paramValue = new String[] { RumbleMLCatalog.getDefaultValueOfSpecialParam(specialParamName) };
+                    } else {
+                        throw new OurBadException(
+                                "Unhandled javaTypeName '"
+                                    + javaTypeName
+                                    + "' found while handling the default value of special param '"
+                                    + specialParamName
+                                    + "'."
+                        );
+                    }
+                } else {
+                    // remove this param from the map to prevent processing the param again
+                    paramMapItem = RumbleMLUtils.removeParameter(paramMapItem, specialParamName, getMetadata());
 
-        boolean estimatorExpectsVectorizedInputColParam =
-            this.estimatorShortName.equals("BucketedRandomProjectionLSH")
-                || this.estimatorShortName.equals("IDF")
-                || this.estimatorShortName.equals("MaxAbsScaler")
-                || this.estimatorShortName.equals("MinHashLSH")
-                || this.estimatorShortName.equals("MinMaxScaler")
-                || this.estimatorShortName.equals("PCA")
-                || this.estimatorShortName.equals("StandardScaler")
-                || this.estimatorShortName.equals("VectorIndexer");
-
-
-        if (estimatorExpectsVectorizedInputColParam) {
-            Item inputColParam = paramMapItem.getItemByKey(inputColParamName);
-            if (inputColParam == null) {
-                throw new InvalidRumbleMLParamException(
-                        "Parameters provided to "
-                            + this.estimatorShortName
-                            + " causes the following error: "
-                            + "Missing parameter value for '"
-                            + inputColParamName
-                            + "'.",
+                    paramValue = RumbleMLUtils.convertParamItemToJava(
+                        specialParamName,
+                        paramItemForSpecialParam,
+                        javaTypeName,
                         getMetadata()
+                    );
+                }
+
+                String nameOfColumnToGenerate = RumbleMLCatalog.getUUIDOfOfSpecialParam(specialParamName);
+                inputDataset = RumbleMLUtils.createDataFrameContainingVectorizedColumn(
+                    inputDataset,
+                    specialParamName,
+                    paramValue,
+                    nameOfColumnToGenerate,
+                    getMetadata()
                 );
+
+                this.setEstimatorStringParamToValue(specialParamName, nameOfColumnToGenerate);
             }
-
-            paramMapItem = RumbleMLUtils.removeParameter(paramMapItem, inputColParamName, getMetadata());
-
-            Object inputColValue = RumbleMLUtils.convertParamItemToJava(
-                featuresColParamName,
-                inputColParam,
-                rumbleMLInputColJavaTypeName,
-                getMetadata()
-            );
-
-            inputDataset = RumbleMLUtils.generateAndAddVectorizedColumn(
-                inputDataset,
-                inputColParamName,
-                inputColValue,
-                rumbleMLNameOfVectorizedInputCol,
-                getMetadata()
-            );
-
-            this.setEstimatorStringParamToValue(inputColParamName, rumbleMLNameOfVectorizedInputCol);
         }
 
         ParamMap paramMap = convertRumbleObjectItemToSparkMLParamMap(

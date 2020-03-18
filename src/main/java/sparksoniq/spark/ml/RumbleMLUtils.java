@@ -191,7 +191,7 @@ public class RumbleMLUtils {
         return ItemFactory.getInstance().createObjectItem(keys, values, metadata);
     }
 
-    public static Dataset<Row> generateAndAddVectorizedColumn(
+    public static Dataset<Row> createDataFrameContainingVectorizedColumn(
             Dataset<Row> inputDataset,
             String paramNameExposedToTheUser,
             Object arrayOfInputColumnNames,
