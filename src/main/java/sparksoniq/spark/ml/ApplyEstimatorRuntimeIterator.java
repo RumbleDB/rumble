@@ -33,6 +33,7 @@ import static sparksoniq.spark.ml.RumbleMLCatalog.featuresColParamDefaultValue;
 import static sparksoniq.spark.ml.RumbleMLCatalog.featuresColParamName;
 import static sparksoniq.spark.ml.RumbleMLCatalog.inputColParamName;
 import static sparksoniq.spark.ml.RumbleMLCatalog.rumbleMLFeaturesColJavaTypeName;
+import static sparksoniq.spark.ml.RumbleMLCatalog.rumbleMLInputColJavaTypeName;
 import static sparksoniq.spark.ml.RumbleMLCatalog.rumbleMLNameOfVectorizedFeaturesCol;
 import static sparksoniq.spark.ml.RumbleMLCatalog.rumbleMLNameOfVectorizedInputCol;
 import static sparksoniq.spark.ml.RumbleMLUtils.convertRumbleObjectItemToSparkMLParamMap;
@@ -126,7 +127,7 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
             Object inputColValue = RumbleMLUtils.convertParamItemToJava(
                 featuresColParamName,
                 inputColParam,
-                rumbleMLFeaturesColJavaTypeName,
+                rumbleMLInputColJavaTypeName,
                 getMetadata()
             );
 
