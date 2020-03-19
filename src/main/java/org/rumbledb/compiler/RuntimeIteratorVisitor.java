@@ -142,6 +142,12 @@ import java.util.stream.Collectors;
 
 public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator> {
 
+    private VisitorConfig visitorConfig;
+
+    public RuntimeIteratorVisitor() {
+        this.visitorConfig = VisitorConfig.runtimeIteratorVisitorConfig;
+    }
+
     @Override
     public RuntimeIterator visit(Node node, RuntimeIterator argument) {
         return node.accept(this, argument);
@@ -167,7 +173,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         } else {
             return new CommaExpressionIterator(
                     result,
-                    expression.getHighestExecutionMode(),
+                    expression.getHighestExecutionMode(this.visitorConfig),
                     expression.getMetadata()
             );
         }
@@ -199,7 +205,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     (expression.getReturnClause()).getReturnExpr(),
                     argument
                 ),
-                expression.getReturnClause().getHighestExecutionMode(),
+                expression.getReturnClause().getHighestExecutionMode(this.visitorConfig),
                 expression.getReturnClause().getMetadata()
         );
     }
@@ -215,7 +221,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 if (var.getSequenceType() != SequenceType.mostGeneralSequenceType) {
                     ExecutionMode executionMode = TreatExpression.calculateIsRDDFromSequenceTypeAndExpression(
                         var.getSequenceType(),
-                        var.getExpression()
+                        var.getExpression(),
+                        this.visitorConfig
                     );
                     assignmentIterator = new TreatIterator(
                             assignmentIterator,
@@ -230,7 +237,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                         previousIterator,
                         var.getVariableReference().getVariableName(),
                         assignmentIterator,
-                        var.getHighestExecutionMode(),
+                        var.getHighestExecutionMode(this.visitorConfig),
                         clause.getMetadata()
                 );
             }
@@ -240,7 +247,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 if (var.getSequenceType() != SequenceType.mostGeneralSequenceType) {
                     ExecutionMode executionMode = TreatExpression.calculateIsRDDFromSequenceTypeAndExpression(
                         var.getSequenceType(),
-                        var.getExpression()
+                        var.getExpression(),
+                        this.visitorConfig
                     );
                     assignmentIterator = new TreatIterator(
                             assignmentIterator,
@@ -255,7 +263,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                         previousIterator,
                         var.getVariableReference().getVariableName(),
                         assignmentIterator,
-                        var.getHighestExecutionMode(),
+                        var.getHighestExecutionMode(this.visitorConfig),
                         clause.getMetadata()
                 );
             }
@@ -269,7 +277,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     if (var.getSequenceType() != SequenceType.mostGeneralSequenceType) {
                         ExecutionMode executionMode = TreatExpression.calculateIsRDDFromSequenceTypeAndExpression(
                             var.getSequenceType(),
-                            groupByExpression
+                            groupByExpression,
+                            this.visitorConfig
                         );
                         groupByExpressionIterator = new TreatIterator(
                                 groupByExpressionIterator,
@@ -296,7 +305,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             previousIterator = new GroupByClauseSparkIterator(
                     previousIterator,
                     groupingExpressions,
-                    clause.getHighestExecutionMode(),
+                    clause.getHighestExecutionMode(this.visitorConfig),
                     clause.getMetadata()
             );
         } else if (clause instanceof OrderByClause) {
@@ -315,21 +324,21 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     previousIterator,
                     expressionsWithIterator,
                     ((OrderByClause) clause).isStable(),
-                    clause.getHighestExecutionMode(),
+                    clause.getHighestExecutionMode(this.visitorConfig),
                     clause.getMetadata()
             );
         } else if (clause instanceof WhereClause) {
             previousIterator = new WhereClauseSparkIterator(
                     previousIterator,
                     this.visit(((WhereClause) clause).getWhereExpression(), argument),
-                    clause.getHighestExecutionMode(),
+                    clause.getHighestExecutionMode(this.visitorConfig),
                     clause.getMetadata()
             );
         } else if (clause instanceof CountClause) {
             previousIterator = new CountClauseSparkIterator(
                     previousIterator,
                     this.visit(((CountClause) clause).getCountVariable(), argument),
-                    clause.getHighestExecutionMode(),
+                    clause.getHighestExecutionMode(this.visitorConfig),
                     clause.getMetadata()
             );
         }
@@ -346,7 +355,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         return new VariableReferenceIterator(
                 expression.getVariableName(),
                 expression.getType(),
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -360,7 +369,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         return new PredicateIterator(
                 mainIterator,
                 filterIterator,
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -372,7 +381,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         return new ArrayLookupIterator(
                 mainIterator,
                 lookupIterator,
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -384,7 +393,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         return new ObjectLookupIterator(
                 mainIterator,
                 lookupIterator,
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -406,7 +415,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         return new DynamicFunctionCallIterator(
                 mainIterator,
                 arguments,
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -416,7 +425,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator mainIterator = this.visit(expression.getMainExpression(), argument);
         return new ArrayUnboxingIterator(
                 mainIterator,
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -429,7 +438,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         }
         return new ArrayRuntimeIterator(
                 result,
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -443,7 +452,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                         .stream()
                         .map(arg -> this.visit(arg, argument))
                         .collect(Collectors.toList()),
-                    expression.getHighestExecutionMode(),
+                    expression.getHighestExecutionMode(this.visitorConfig),
                     expression.getMetadata()
             );
             return iterator;
@@ -459,7 +468,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             iterator = new ObjectConstructorRuntimeIterator(
                     keys,
                     values,
-                    expression.getHighestExecutionMode(),
+                    expression.getHighestExecutionMode(this.visitorConfig),
                     expression.getMetadata()
             );
             return iterator;
@@ -468,7 +477,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitContextExpr(ContextItemExpression expression, RuntimeIterator argument) {
-        return new ContextExpressionIterator(expression.getHighestExecutionMode(), expression.getMetadata());
+        return new ContextExpressionIterator(
+                expression.getHighestExecutionMode(this.visitorConfig),
+                expression.getMetadata()
+        );
     }
 
     @Override
@@ -489,7 +501,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             // unnamed (inline function declaration)
             return new FunctionRuntimeIterator(
                     function,
-                    expression.getHighestExecutionMode(),
+                    expression.getHighestExecutionMode(this.visitorConfig),
                     expression.getMetadata()
             );
         } else {
@@ -520,14 +532,14 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             return Functions.getBuiltInFunctionIterator(
                 identifier,
                 arguments,
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 iteratorMetadata
             );
         }
         return new StaticUserDefinedFunctionCallIterator(
                 identifier,
                 arguments,
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 iteratorMetadata
         );
     }
@@ -548,7 +560,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             FunctionItem function = Functions.getUserDefinedFunction(identifier);
             return new FunctionRuntimeIterator(
                     function,
-                    expression.getHighestExecutionMode(),
+                    expression.getHighestExecutionMode(this.visitorConfig),
                     expression.getMetadata()
             );
         }
@@ -565,7 +577,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     public RuntimeIterator visitInteger(IntegerLiteralExpression expression, RuntimeIterator argument) {
         return new IntegerRuntimeIterator(
                 expression.getValue(),
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -574,7 +586,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     public RuntimeIterator visitString(StringLiteralExpression expression, RuntimeIterator argument) {
         return new StringRuntimeIterator(
                 expression.getValue(),
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -583,7 +595,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     public RuntimeIterator visitDouble(DoubleLiteralExpression expression, RuntimeIterator argument) {
         return new DoubleRuntimeIterator(
                 expression.getValue(),
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -592,21 +604,24 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     public RuntimeIterator visitDecimal(DecimalLiteralExpression expression, RuntimeIterator argument) {
         return new DecimalRuntimeIterator(
                 expression.getValue(),
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
 
     @Override
     public RuntimeIterator visitNull(NullLiteralExpression expression, RuntimeIterator argument) {
-        return new NullRuntimeIterator(expression.getHighestExecutionMode(), expression.getMetadata());
+        return new NullRuntimeIterator(
+                expression.getHighestExecutionMode(this.visitorConfig),
+                expression.getMetadata()
+        );
     }
 
     @Override
     public RuntimeIterator visitBoolean(BooleanLiteralExpression expression, RuntimeIterator argument) {
         return new BooleanRuntimeIterator(
                 expression.getValue(),
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -630,7 +645,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 left,
                 right,
                 expression.isMinus(),
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -652,7 +667,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 left,
                 right,
                 expression.getMultiplicativeOperator(),
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -673,7 +688,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         return new AndOperationIterator(
                 left,
                 right,
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -694,7 +709,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         return new OrOperationIterator(
                 left,
                 right,
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -703,7 +718,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     public RuntimeIterator visitNotExpr(NotExpression expression, RuntimeIterator argument) {
         return new NotOperationIterator(
                 this.visit(expression.getMainExpression(), argument),
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -714,7 +729,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         return new UnaryOperationIterator(
                 this.visit(expression.getMainExpression(), argument),
                 expression.isNegated(),
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -726,7 +741,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         return new RangeOperationIterator(
                 left,
                 right,
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -739,7 +754,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 left,
                 right,
                 expression.getComparisonOperator(),
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -751,7 +766,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         return new StringConcatIterator(
                 left,
                 right,
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -762,7 +777,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         return new InstanceOfIterator(
                 childExpression,
                 expression.getSequenceType(),
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -774,7 +789,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 childExpression,
                 expression.getsequenceType(),
                 true,
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -785,7 +800,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         return new CastableIterator(
                 childExpression,
                 expression.getSequenceType(),
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -796,7 +811,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         return new CastIterator(
                 childExpression,
                 expression.getSequenceType(),
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -813,7 +828,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 expression.getOperator(),
                 variables,
                 evaluationExpression,
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -824,7 +839,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 expression.getVariableReference().getVariableName(),
                 expression.getSequenceType(),
                 this.visit(expression.getExpression(), argument),
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -837,7 +852,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 this.visit(expression.getCondition(), argument),
                 this.visit(expression.getBranch(), argument),
                 this.visit(expression.getElseBranch(), argument),
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -856,7 +871,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 this.visit(expression.getTestCondition(), argument),
                 cases,
                 this.visit(expression.getDefaultExpression(), argument),
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -884,7 +899,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 this.visit(expression.getTestCondition(), argument),
                 cases,
                 defaultCase,
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }

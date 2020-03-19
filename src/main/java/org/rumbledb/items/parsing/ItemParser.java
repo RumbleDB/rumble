@@ -42,6 +42,7 @@ import org.rumbledb.exceptions.MLInvalidDataFrameSchemaException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SparksoniqRuntimeException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.types.ItemType;
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -262,7 +263,12 @@ public class ItemParser implements Serializable {
             }
             values.add(ItemFactory.getInstance().createArrayItem(members));
         } else if (fieldType instanceof VectorUDT) {
-            Vector vector = (Vector) row.get(i);
+            Vector vector;
+            if (row != null) {
+                vector = (Vector) row.get(i);
+            } else {
+                vector = (Vector) o;
+            }
             if (vector instanceof DenseVector) {
                 // a dense vector is mapped to a rumble array
                 DenseVector denseVector = (DenseVector) vector;
@@ -292,52 +298,68 @@ public class ItemParser implements Serializable {
     }
 
     public static DataType getDataFrameDataTypeFromItemTypeName(String itemTypeName) {
-        switch (itemTypeName) {
-            case "boolean":
-                return DataTypes.BooleanType;
-            case "integer":
-                return DataTypes.IntegerType;
-            case "double":
-                return DataTypes.DoubleType;
-            case "decimal":
-                return decimalType;
-            case "string":
-                return DataTypes.StringType;
-            case "null":
-                return DataTypes.NullType;
-            case "date":
-                return DataTypes.DateType;
-            case "datetime":
-                return DataTypes.TimestampType;
-            case "hexbinary":
-                return DataTypes.BinaryType;
-            case "object":
-                return vectorType;
-            default:
-                throw new IllegalArgumentException("Unexpected item type found: '" + itemTypeName + "'.");
+        if (itemTypeName.equals(ItemType.booleanItem.getName())) {
+            return DataTypes.BooleanType;
         }
+        if (itemTypeName.equals(ItemType.integerItem.getName())) {
+            return DataTypes.IntegerType;
+        }
+        if (itemTypeName.equals(ItemType.doubleItem.getName())) {
+            return DataTypes.DoubleType;
+        }
+        if (itemTypeName.equals(ItemType.decimalItem.getName())) {
+            return decimalType;
+        }
+        if (itemTypeName.equals(ItemType.stringItem.getName())) {
+            return DataTypes.StringType;
+        }
+        if (itemTypeName.equals(ItemType.nullItem.getName())) {
+            return DataTypes.NullType;
+        }
+        if (itemTypeName.equals(ItemType.dateItem.getName())) {
+            return DataTypes.DateType;
+        }
+        if (itemTypeName.equals(ItemType.dateTimeItem.getName())) {
+            return DataTypes.TimestampType;
+        }
+        if (itemTypeName.equals(ItemType.hexBinaryItem.getName())) {
+            return DataTypes.BinaryType;
+        }
+        if (itemTypeName.equals("object")) {
+            return vectorType;
+        }
+        throw new IllegalArgumentException("Unexpected item type found: '" + itemTypeName + "'.");
     }
 
     public static String getItemTypeNameFromDataFrameDataType(DataType dataType) {
         if (DataTypes.BooleanType.equals(dataType)) {
-            return "boolean";
-        } else if (DataTypes.IntegerType.equals(dataType) || DataTypes.ShortType.equals(dataType)) {
-            return "integer";
-        } else if (DataTypes.DoubleType.equals(dataType) || DataTypes.FloatType.equals(dataType)) {
-            return "double";
-        } else if (dataType.equals(decimalType) || DataTypes.LongType.equals(dataType)) {
-            return "decimal";
-        } else if (DataTypes.StringType.equals(dataType)) {
-            return "string";
-        } else if (DataTypes.NullType.equals(dataType)) {
-            return "null";
-        } else if (DataTypes.DateType.equals(dataType)) {
-            return "date";
-        } else if (DataTypes.TimestampType.equals(dataType)) {
-            return "datetime";
-        } else if (DataTypes.BinaryType.equals(dataType)) {
-            return "hexbinary";
-        } else if (vectorType.equals(dataType)) {
+            return ItemType.booleanItem.getName();
+        }
+        if (DataTypes.IntegerType.equals(dataType) || DataTypes.ShortType.equals(dataType)) {
+            return ItemType.integerItem.getName();
+        }
+        if (DataTypes.DoubleType.equals(dataType) || DataTypes.FloatType.equals(dataType)) {
+            return ItemType.doubleItem.getName();
+        }
+        if (dataType.equals(decimalType) || DataTypes.LongType.equals(dataType)) {
+            return ItemType.decimalItem.getName();
+        }
+        if (DataTypes.StringType.equals(dataType)) {
+            return ItemType.stringItem.getName();
+        }
+        if (DataTypes.NullType.equals(dataType)) {
+            return ItemType.nullItem.getName();
+        }
+        if (DataTypes.DateType.equals(dataType)) {
+            return ItemType.dateItem.getName();
+        }
+        if (DataTypes.TimestampType.equals(dataType)) {
+            return ItemType.dateTimeItem.getName();
+        }
+        if (DataTypes.BinaryType.equals(dataType)) {
+            return ItemType.hexBinaryItem.getName();
+        }
+        if (vectorType.equals(dataType)) {
             return "object";
         }
         throw new OurBadException("Unexpected DataFrame data type found: '" + dataType.toString() + "'.");

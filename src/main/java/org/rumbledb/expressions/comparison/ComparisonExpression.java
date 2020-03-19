@@ -56,10 +56,10 @@ public class ComparisonExpression extends Expression {
                 case "lt":
                 case "ge":
                 case "gt":
-                    isValueComparison = true;
+                    this.isValueComparison = true;
                     break;
                 default:
-                    isValueComparison = false;
+                    this.isValueComparison = false;
             }
             this.name = name;
         }
@@ -70,7 +70,7 @@ public class ComparisonExpression extends Expression {
         }
 
         public boolean isValueComparison() {
-            return isValueComparison;
+            return this.isValueComparison;
         }
 
         public static ComparisonOperator fromSymbol(String symbol) {

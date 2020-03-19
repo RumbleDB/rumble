@@ -819,7 +819,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         if (ctx.item == null) {
             return SequenceType.emptySequence;
         }
-        ItemType itemType = new ItemType(ctx.item.getText());
+        ItemType itemType = ItemType.getItemTypeByName(ctx.item.getText());
         if (ctx.question.size() > 0) {
             return new SequenceType(
                     itemType,
@@ -846,7 +846,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             return SequenceType.emptySequence;
         }
 
-        ItemType itemType = new ItemType(ctx.item.getText());
+        ItemType itemType = ItemType.getItemTypeByName(ctx.item.getText());
         if (ctx.question.size() > 0) {
             return new SequenceType(
                     itemType,

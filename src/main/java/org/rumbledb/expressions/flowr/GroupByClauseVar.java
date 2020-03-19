@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions.flowr;
 
+import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -49,7 +50,7 @@ public class GroupByClauseVar extends FlworVarDecl {
     }
 
     @Override
-    public void initHighestExecutionAndVariableHighestStorageModes() {
+    public void initHighestExecutionAndVariableHighestStorageModes(VisitorConfig visitorConfig) {
         // Execution mode of groupByClause's expressions are not used while defining execution mode of
         // GroupByClauseRuntimeIterator
         this.highestExecutionMode = ExecutionMode.UNSET;
