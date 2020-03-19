@@ -39,6 +39,8 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator sequenceIterator;
+    private RuntimeIterator positionIterator;
+    private RuntimeIterator lengthIterator;
     private Item nextResult;
     private int startPosition;
     private int currentLength;
@@ -51,22 +53,17 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
     ) {
         super(parameters, executionMode, iteratorMetadata);
         this.sequenceIterator = this.children.get(0);
-
-        Item positionItem = this.children.get(1)
-            .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-        this.startPosition = (int) Math.round(positionItem.getDoubleValue());
-
-        this.length = -1;
+        this.positionIterator = this.children.get(1);
         if (this.children.size() == 3) {
-            RuntimeIterator lengthIterator = this.children.get(2);
-            Item lengthItem = lengthIterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-            this.length = (int) Math.round(lengthItem.getDoubleValue());
+            this.lengthIterator = this.children.get(2);
         }
     }
 
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(context);
+        setVariables(context);
+
         if (!childRDD.isEmpty() || this.length == 0) {
             JavaPairRDD<Item, Long> zippedRDD = childRDD.zipWithIndex();
             JavaPairRDD<Item, Long> filteredRDD;
@@ -74,7 +71,7 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
                 filteredRDD = zippedRDD.filter((input) -> input._2() >= this.startPosition - 1);
             } else {
                 filteredRDD = zippedRDD.filter(
-                    (input) -> input._2() >= this.startPosition - 1 && input._2() < this.startPosition - 1 + this.length
+                        (input) -> input._2() >= this.startPosition - 1 && input._2() < this.startPosition - 1 + this.length
                 );
             }
             return filteredRDD.map(x -> x._1);
@@ -85,8 +82,9 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
     @Override
     protected void openLocal() {
         int currentPosition = 1; // JSONiq indices start from 1
-
+        setVariables(this.currentDynamicContextForLocalExecution);
         this.currentLength = this.length;
+
         // first, perform all parameter checks (above)
         // if length is 0, just return empty sequence
         if (this.currentLength == 0) {
@@ -178,7 +176,20 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
         throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "subsequence function", getMetadata());
     }
 
-    public void setNextResult() {
+    private void setVariables(DynamicContext context) {
+        Item positionItem = this.positionIterator
+                .materializeFirstItemOrNull(context);
+        this.startPosition = (int) Math.round(positionItem.getDoubleValue());
+        
+        this.length = -1;
+        if (this.children.size() == 3) {
+            Item lengthItem = this.lengthIterator
+                    .materializeFirstItemOrNull(context);
+            this.length = (int) Math.round(lengthItem.getDoubleValue());
+        }
+    }
+
+    private void setNextResult() {
         this.nextResult = null;
 
         if (this.currentLength != 0) {
