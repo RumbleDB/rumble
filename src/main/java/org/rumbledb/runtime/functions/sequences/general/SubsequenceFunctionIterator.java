@@ -62,7 +62,7 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(context);
-        setVariables(context);
+        setInstanceVariables(context);
 
         if (!childRDD.isEmpty() || this.length == 0) {
             JavaPairRDD<Item, Long> zippedRDD = childRDD.zipWithIndex();
@@ -81,41 +81,8 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void openLocal() {
-        int currentPosition = 1; // JSONiq indices start from 1
-        setVariables(this.currentDynamicContextForLocalExecution);
-        this.currentLength = this.length;
-
-        // first, perform all parameter checks (above)
-        // if length is 0, just return empty sequence
-        if (this.currentLength == 0) {
-            this.hasNext = false;
-            return;
-        } else {
-            this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
-
-            // find the start of the subsequence
-            while (this.sequenceIterator.hasNext()) {
-                if (currentPosition < this.startPosition) {
-                    this.sequenceIterator.next(); // skip item
-                } else {
-                    this.nextResult = this.sequenceIterator.next();
-                    // if length is specified, decrement it
-                    if (this.currentLength != -1) {
-                        this.currentLength--;
-                    }
-                    break;
-                }
-                currentPosition++;
-            }
-        }
-
-        // if startPosition overshoots, return empty sequence
-        if (this.nextResult == null) {
-            this.hasNext = false;
-            this.sequenceIterator.close();
-        } else {
-            this.hasNext = true;
-        }
+        setInstanceVariables(this.currentDynamicContextForLocalExecution);
+        initializeLocal();
     }
 
     @Override
@@ -125,40 +92,7 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void resetLocal(DynamicContext context) {
-        int currentPosition = 1; // JSONiq indices start from 1
-
-        this.currentLength = this.length;
-        // first, perform all parameter checks (above)
-        // if length is 0, just return empty sequence
-        if (this.currentLength == 0) {
-            this.hasNext = false;
-            return;
-        } else {
-            this.sequenceIterator.reset(this.currentDynamicContextForLocalExecution);
-
-            // find the start of the subsequence
-            while (this.sequenceIterator.hasNext()) {
-                if (currentPosition < this.startPosition) {
-                    this.sequenceIterator.next(); // skip item
-                } else {
-                    this.nextResult = this.sequenceIterator.next();
-                    // if length is specified, decrement it
-                    if (this.currentLength != -1) {
-                        this.currentLength--;
-                    }
-                    break;
-                }
-                currentPosition++;
-            }
-        }
-
-        // if startPosition overshoots, return empty sequence
-        if (this.nextResult == null) {
-            this.hasNext = false;
-            this.sequenceIterator.close();
-        } else {
-            this.hasNext = true;
-        }
+        initializeLocal();
     }
 
     @Override
@@ -176,11 +110,51 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
         throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "subsequence function", getMetadata());
     }
 
-    private void setVariables(DynamicContext context) {
+    private void initializeLocal() {
+        int currentPosition = 1; // JSONiq indices start from 1
+
+        this.currentLength = this.length;
+        // if length is 0, just return empty sequence
+        if (this.currentLength == 0) {
+            this.hasNext = false;
+            return;
+        } else {
+            if (this.sequenceIterator.isOpen()) {
+                this.sequenceIterator.reset(this.currentDynamicContextForLocalExecution);
+            } else {
+                this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
+            }
+
+            // find the start of the subsequence
+            while (this.sequenceIterator.hasNext()) {
+                if (currentPosition < this.startPosition) {
+                    this.sequenceIterator.next(); // skip item
+                } else {
+                    this.nextResult = this.sequenceIterator.next();
+                    // if length is specified, decrement it
+                    if (this.currentLength != -1) {
+                        this.currentLength--;
+                    }
+                    break;
+                }
+                currentPosition++;
+            }
+        }
+
+        // if startPosition overshoots, return empty sequence
+        if (this.nextResult == null) {
+            this.hasNext = false;
+            this.sequenceIterator.close();
+        } else {
+            this.hasNext = true;
+        }
+    }
+
+    private void setInstanceVariables(DynamicContext context) {
         Item positionItem = this.positionIterator
                 .materializeFirstItemOrNull(context);
         this.startPosition = (int) Math.round(positionItem.getDoubleValue());
-        
+
         this.length = -1;
         if (this.children.size() == 3) {
             Item lengthItem = this.lengthIterator
