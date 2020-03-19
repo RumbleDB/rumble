@@ -42,7 +42,6 @@ import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.FlworExpression;
 import org.rumbledb.expressions.flowr.ForClause;
-import org.rumbledb.expressions.flowr.ForClauseVar;
 import org.rumbledb.expressions.flowr.GroupByClause;
 import org.rumbledb.expressions.flowr.GroupByClauseVar;
 import org.rumbledb.expressions.flowr.LetClause;
@@ -216,21 +215,21 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             RuntimeTupleIterator previousIterator
     ) {
         if (clause instanceof ForClause) {
-        	ForClause forClause = (ForClause) clause;
+            ForClause forClause = (ForClause) clause;
             RuntimeIterator assignmentIterator = this.visit(forClause.getExpression(), argument);
             if (forClause.getSequenceType() != SequenceType.mostGeneralSequenceType) {
-	            ExecutionMode executionMode = TreatExpression.calculateIsRDDFromSequenceTypeAndExpression(
-	            		forClause.getSequenceType(),
-	            		forClause.getExpression(),
-	                this.visitorConfig
-	            );
-	            assignmentIterator = new TreatIterator(
-	                    assignmentIterator,
-	                    forClause.getSequenceType(),
-	                    false,
-	                    executionMode,
-	                    clause.getMetadata()
-	            );
+                ExecutionMode executionMode = TreatExpression.calculateIsRDDFromSequenceTypeAndExpression(
+                    forClause.getSequenceType(),
+                    forClause.getExpression(),
+                    this.visitorConfig
+                );
+                assignmentIterator = new TreatIterator(
+                        assignmentIterator,
+                        forClause.getSequenceType(),
+                        false,
+                        executionMode,
+                        clause.getMetadata()
+                );
             }
 
             previousIterator = new ForClauseSparkIterator(

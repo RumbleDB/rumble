@@ -22,6 +22,7 @@ package org.rumbledb.expressions.flowr;
 
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -46,13 +47,13 @@ public class ForClause extends Clause {
 
 
     public ForClause(
-    		String variableName,
+            String variableName,
             boolean allowEmpty,
             SequenceType sequenceType,
             String positionalVariableName,
             Expression expression,
-            ExceptionMetadata metadata)
-    {
+            ExceptionMetadata metadata
+    ) {
         super(FLWOR_CLAUSES.FOR, metadata);
         if (variableName == null) {
             throw new SemanticException("For clause must have a variable", metadata);
@@ -86,9 +87,9 @@ public class ForClause extends Clause {
     public SequenceType getSequenceType() {
         return this.sequenceType;
     }
-    
+
     public Expression getExpression() {
-    	return this.expression;
+        return this.expression;
     }
 
     @Override
@@ -108,6 +109,16 @@ public class ForClause extends Clause {
         this.variableHighestStorageMode = ExecutionMode.LOCAL;
     }
 
+    public ExecutionMode getVariableHighestStorageMode(VisitorConfig visitorConfig) {
+        if (
+            !visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
+                && this.variableHighestStorageMode == ExecutionMode.UNSET
+        ) {
+            throw new OurBadException("An variable storage mode is accessed without being set.");
+        }
+        return this.variableHighestStorageMode;
+    }
+
     @Override
     public List<Node> getChildren() {
         return Collections.singletonList(expression);
@@ -120,18 +131,18 @@ public class ForClause extends Clause {
 
     @Override
     public String serializationString(boolean prefix) {
-    	 String result = "(forClause " + this.variableName + " ";
-         if (this.sequenceType != null) {
-             result += "as " + this.sequenceType.toString() + " ";
-         }
-         if (this.allowEmpty) {
-             result += "allowing empty ";
-         }
-         if (this.positionalVariableName != null) {
-             result += "at " + this.positionalVariableName + " ";
-         }
-         result += "in " + this.expression.serializationString(true);
-         result += "))";
-         return result;
+        String result = "(forClause " + this.variableName + " ";
+        if (this.sequenceType != null) {
+            result += "as " + this.sequenceType.toString() + " ";
+        }
+        if (this.allowEmpty) {
+            result += "allowing empty ";
+        }
+        if (this.positionalVariableName != null) {
+            result += "at " + this.positionalVariableName + " ";
+        }
+        result += "in " + this.expression.serializationString(true);
+        result += "))";
+        return result;
     }
 }
